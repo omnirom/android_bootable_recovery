@@ -112,18 +112,17 @@ static int write_all(int fd, const std::vector<uint8_t>& buffer, size_t size) {
 }
 
 static bool discard_blocks(int fd, off64_t offset, uint64_t size) {
-    // Don't discard blocks unless the update is a retry run.
-    if (!is_retry) {
-        return true;
-    }
-
-    uint64_t args[2] = {static_cast<uint64_t>(offset), size};
-    int status = ioctl(fd, BLKDISCARD, &args);
-    if (status == -1) {
-        PLOG(ERROR) << "BLKDISCARD ioctl failed";
-        return false;
-    }
+  // Don't discard blocks unless the update is a retry run.
+  if (!is_retry) {
     return true;
+  }
+
+  uint64_t args[2] = { static_cast<uint64_t>(offset), size };
+  if (ioctl(fd, BLKDISCARD, &args) == -1) {
+    PLOG(ERROR) << "BLKDISCARD ioctl failed";
+    return false;
+  }
+  return true;
 }
 
 static bool check_lseek(int fd, off64_t offset, int whence) {
@@ -151,11 +150,11 @@ class RangeSinkWriter {
  public:
   RangeSinkWriter(int fd, const RangeSet& tgt)
       : fd_(fd), tgt_(tgt), next_range_(0), current_range_left_(0) {
-    CHECK_NE(tgt.count, static_cast<size_t>(0));
+    CHECK_NE(tgt.size(), static_cast<size_t>(0));
   };
 
   bool Finished() const {
-    return next_range_ == tgt_.count && current_range_left_ == 0;
+    return next_range_ == tgt_.size() && current_range_left_ == 0;
   }
 
   size_t Write(const uint8_t* data, size_t size) {
@@ -168,10 +167,10 @@ class RangeSinkWriter {
     while (size > 0) {
       // Move to the next range as needed.
       if (current_range_left_ == 0) {
-        if (next_range_ < tgt_.count) {
-          off64_t offset = static_cast<off64_t>(tgt_.pos[next_range_ * 2]) * BLOCKSIZE;
-          current_range_left_ =
-              (tgt_.pos[next_range_ * 2 + 1] - tgt_.pos[next_range_ * 2]) * BLOCKSIZE;
+        if (next_range_ < tgt_.size()) {
+          const Range& range = tgt_[next_range_];
+          off64_t offset = static_cast<off64_t>(range.first) * BLOCKSIZE;
+          current_range_left_ = (range.second - range.first) * BLOCKSIZE;
           next_range_++;
           if (!discard_blocks(fd_, offset, current_range_left_)) {
             break;
@@ -281,31 +280,28 @@ static void* unzip_new_data(void* cookie) {
 }
 
 static int ReadBlocks(const RangeSet& src, std::vector<uint8_t>& buffer, int fd) {
-    size_t p = 0;
-    uint8_t* data = buffer.data();
-
-    for (size_t i = 0; i < src.count; ++i) {
-        if (!check_lseek(fd, (off64_t) src.pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
-            return -1;
-        }
-
-        size_t size = (src.pos[i * 2 + 1] - src.pos[i * 2]) * BLOCKSIZE;
-
-        if (read_all(fd, data + p, size) == -1) {
-            return -1;
-        }
-
-        p += size;
+  size_t p = 0;
+  for (const auto& range : src) {
+    if (!check_lseek(fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
+      return -1;
     }
 
-    return 0;
+    size_t size = (range.second - range.first) * BLOCKSIZE;
+    if (read_all(fd, buffer.data() + p, size) == -1) {
+      return -1;
+    }
+
+    p += size;
+  }
+
+  return 0;
 }
 
 static int WriteBlocks(const RangeSet& tgt, const std::vector<uint8_t>& buffer, int fd) {
   size_t written = 0;
-  for (size_t i = 0; i < tgt.count; ++i) {
-    off64_t offset = static_cast<off64_t>(tgt.pos[i * 2]) * BLOCKSIZE;
-    size_t size = (tgt.pos[i * 2 + 1] - tgt.pos[i * 2]) * BLOCKSIZE;
+  for (const auto& range : tgt) {
+    off64_t offset = static_cast<off64_t>(range.first) * BLOCKSIZE;
+    size_t size = (range.second - range.first) * BLOCKSIZE;
     if (!discard_blocks(fd, offset, size)) {
       return -1;
     }
@@ -386,21 +382,18 @@ static void PrintHashForCorruptedSourceBlocks(const CommandParameters& params,
   // If there's no stashed blocks, content in the buffer is consecutive and has the same
   // order as the source blocks.
   if (pos == params.tokens.size()) {
-    locs.count = 1;
-    locs.size = src.size;
-    locs.pos = { 0, src.size };
+    locs = RangeSet(std::vector<Range>{ Range{ 0, src.blocks() } });
   } else {
     // Otherwise, the next token is the offset of the source blocks in the target range.
     // Example: for the tokens <4,63946,63947,63948,63979> <4,6,7,8,39> <stashed_blocks>;
     // We want to print SHA-1 for the data in buffer[6], buffer[8], buffer[9] ... buffer[38];
     // this corresponds to the 32 src blocks #63946, #63948, #63949 ... #63978.
     locs = RangeSet::Parse(params.tokens[pos++]);
-    CHECK_EQ(src.size, locs.size);
-    CHECK_EQ(locs.pos.size() % 2, static_cast<size_t>(0));
+    CHECK_EQ(src.blocks(), locs.blocks());
   }
 
-  LOG(INFO) << "printing hash in hex for " << src.size << " source blocks";
-  for (size_t i = 0; i < src.size; i++) {
+  LOG(INFO) << "printing hash in hex for " << src.blocks() << " source blocks";
+  for (size_t i = 0; i < src.blocks(); i++) {
     size_t block_num = src.GetBlockNumber(i);
     size_t buffer_index = locs.GetBlockNumber(i);
     CHECK_LE((buffer_index + 1) * BLOCKSIZE, buffer.size());
@@ -418,9 +411,9 @@ static void PrintHashForCorruptedStashedBlocks(const std::string& id,
                                                const std::vector<uint8_t>& buffer,
                                                const RangeSet& src) {
   LOG(INFO) << "printing hash in hex for stash_id: " << id;
-  CHECK_EQ(src.size * BLOCKSIZE, buffer.size());
+  CHECK_EQ(src.blocks() * BLOCKSIZE, buffer.size());
 
-  for (size_t i = 0; i < src.size; i++) {
+  for (size_t i = 0; i < src.blocks(); i++) {
     size_t block_num = src.GetBlockNumber(i);
 
     uint8_t digest[SHA_DIGEST_LENGTH];
@@ -440,7 +433,7 @@ static void PrintHashForMissingStashedBlocks(const std::string& id, int fd) {
 
   LOG(INFO) << "print hash in hex for source blocks in missing stash: " << id;
   const RangeSet& src = stash_map[id];
-  std::vector<uint8_t> buffer(src.size * BLOCKSIZE);
+  std::vector<uint8_t> buffer(src.blocks() * BLOCKSIZE);
   if (ReadBlocks(src, buffer, fd) == -1) {
       LOG(ERROR) << "failed to read source blocks for stash: " << id;
       return;
@@ -532,81 +525,77 @@ static void DeleteStash(const std::string& base) {
 
 static int LoadStash(CommandParameters& params, const std::string& id, bool verify, size_t* blocks,
                      std::vector<uint8_t>& buffer, bool printnoent) {
-    // In verify mode, if source range_set was saved for the given hash,
-    // check contents in the source blocks first. If the check fails,
-    // search for the stashed files on /cache as usual.
-    if (!params.canwrite) {
-        if (stash_map.find(id) != stash_map.end()) {
-            const RangeSet& src = stash_map[id];
-            allocate(src.size * BLOCKSIZE, buffer);
+  // In verify mode, if source range_set was saved for the given hash, check contents in the source
+  // blocks first. If the check fails, search for the stashed files on /cache as usual.
+  if (!params.canwrite) {
+    if (stash_map.find(id) != stash_map.end()) {
+      const RangeSet& src = stash_map[id];
+      allocate(src.blocks() * BLOCKSIZE, buffer);
 
-            if (ReadBlocks(src, buffer, params.fd) == -1) {
-                LOG(ERROR) << "failed to read source blocks in stash map.";
-                return -1;
-            }
-            if (VerifyBlocks(id, buffer, src.size, true) != 0) {
-                LOG(ERROR) << "failed to verify loaded source blocks in stash map.";
-                PrintHashForCorruptedStashedBlocks(id, buffer, src);
-                return -1;
-            }
-            return 0;
-        }
-    }
-
-    size_t blockcount = 0;
-
-    if (!blocks) {
-        blocks = &blockcount;
-    }
-
-    std::string fn = GetStashFileName(params.stashbase, id, "");
-
-    struct stat sb;
-    int res = stat(fn.c_str(), &sb);
-
-    if (res == -1) {
-        if (errno != ENOENT || printnoent) {
-            PLOG(ERROR) << "stat \"" << fn << "\" failed";
-            PrintHashForMissingStashedBlocks(id, params.fd);
-        }
+      if (ReadBlocks(src, buffer, params.fd) == -1) {
+        LOG(ERROR) << "failed to read source blocks in stash map.";
         return -1;
-    }
-
-    LOG(INFO) << " loading " << fn;
-
-    if ((sb.st_size % BLOCKSIZE) != 0) {
-        LOG(ERROR) << fn << " size " << sb.st_size << " not multiple of block size " << BLOCKSIZE;
+      }
+      if (VerifyBlocks(id, buffer, src.blocks(), true) != 0) {
+        LOG(ERROR) << "failed to verify loaded source blocks in stash map.";
+        PrintHashForCorruptedStashedBlocks(id, buffer, src);
         return -1;
+      }
+      return 0;
     }
+  }
 
-    android::base::unique_fd fd(TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_RDONLY)));
-    if (fd == -1) {
-        PLOG(ERROR) << "open \"" << fn << "\" failed";
-        return -1;
+  size_t blockcount = 0;
+  if (!blocks) {
+    blocks = &blockcount;
+  }
+
+  std::string fn = GetStashFileName(params.stashbase, id, "");
+
+  struct stat sb;
+  if (stat(fn.c_str(), &sb) == -1) {
+    if (errno != ENOENT || printnoent) {
+      PLOG(ERROR) << "stat \"" << fn << "\" failed";
+      PrintHashForMissingStashedBlocks(id, params.fd);
     }
+    return -1;
+  }
 
-    allocate(sb.st_size, buffer);
+  LOG(INFO) << " loading " << fn;
 
-    if (read_all(fd, buffer, sb.st_size) == -1) {
-        return -1;
+  if ((sb.st_size % BLOCKSIZE) != 0) {
+    LOG(ERROR) << fn << " size " << sb.st_size << " not multiple of block size " << BLOCKSIZE;
+    return -1;
+  }
+
+  android::base::unique_fd fd(TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_RDONLY)));
+  if (fd == -1) {
+    PLOG(ERROR) << "open \"" << fn << "\" failed";
+    return -1;
+  }
+
+  allocate(sb.st_size, buffer);
+
+  if (read_all(fd, buffer, sb.st_size) == -1) {
+    return -1;
+  }
+
+  *blocks = sb.st_size / BLOCKSIZE;
+
+  if (verify && VerifyBlocks(id, buffer, *blocks, true) != 0) {
+    LOG(ERROR) << "unexpected contents in " << fn;
+    if (stash_map.find(id) == stash_map.end()) {
+      LOG(ERROR) << "failed to find source blocks number for stash " << id
+                 << " when executing command: " << params.cmdname;
+    } else {
+      const RangeSet& src = stash_map[id];
+      PrintHashForCorruptedStashedBlocks(id, buffer, src);
     }
+    DeleteFile(fn);
+    return -1;
+  }
 
-    *blocks = sb.st_size / BLOCKSIZE;
-
-    if (verify && VerifyBlocks(id, buffer, *blocks, true) != 0) {
-        LOG(ERROR) << "unexpected contents in " << fn;
-        if (stash_map.find(id) == stash_map.end()) {
-            LOG(ERROR) << "failed to find source blocks number for stash " << id
-                       << " when executing command: " << params.cmdname;
-        } else {
-            const RangeSet& src = stash_map[id];
-            PrintHashForCorruptedStashedBlocks(id, buffer, src);
-        }
-        DeleteFile(fn);
-        return -1;
-    }
-
-    return 0;
+  return 0;
 }
 
 static int WriteStash(const std::string& base, const std::string& id, int blocks,
@@ -780,21 +769,19 @@ static int FreeStash(const std::string& base, const std::string& id) {
   return 0;
 }
 
+// Source contains packed data, which we want to move to the locations given in locs in the dest
+// buffer. source and dest may be the same buffer.
 static void MoveRange(std::vector<uint8_t>& dest, const RangeSet& locs,
-        const std::vector<uint8_t>& source) {
-    // source contains packed data, which we want to move to the
-    // locations given in locs in the dest buffer.  source and dest
-    // may be the same buffer.
-
-    const uint8_t* from = source.data();
-    uint8_t* to = dest.data();
-    size_t start = locs.size;
-    for (int i = locs.count-1; i >= 0; --i) {
-        size_t blocks = locs.pos[i*2+1] - locs.pos[i*2];
-        start -= blocks;
-        memmove(to + (locs.pos[i*2] * BLOCKSIZE), from + (start * BLOCKSIZE),
-                blocks * BLOCKSIZE);
-    }
+                      const std::vector<uint8_t>& source) {
+  const uint8_t* from = source.data();
+  uint8_t* to = dest.data();
+  size_t start = locs.blocks();
+  // Must do the movement backward.
+  for (auto it = locs.crbegin(); it != locs.crend(); it++) {
+    size_t blocks = it->second - it->first;
+    start -= blocks;
+    memmove(to + (it->first * BLOCKSIZE), from + (start * BLOCKSIZE), blocks * BLOCKSIZE);
+  }
 }
 
 /**
@@ -933,13 +920,13 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* 
   // <tgt_range>
   tgt = RangeSet::Parse(params.tokens[params.cpos++]);
 
-  std::vector<uint8_t> tgtbuffer(tgt.size * BLOCKSIZE);
+  std::vector<uint8_t> tgtbuffer(tgt.blocks() * BLOCKSIZE);
   if (ReadBlocks(tgt, tgtbuffer, params.fd) == -1) {
     return -1;
   }
 
   // Return now if target blocks already have expected content.
-  if (VerifyBlocks(tgthash, tgtbuffer, tgt.size, false) == 0) {
+  if (VerifyBlocks(tgthash, tgtbuffer, tgt.blocks(), false) == 0) {
     return 1;
   }
 
@@ -1023,7 +1010,7 @@ static int PerformCommandMove(CommandParameters& params) {
     params.freestash.clear();
   }
 
-  params.written += tgt.size;
+  params.written += tgt.blocks();
 
   return 0;
 }
@@ -1045,11 +1032,11 @@ static int PerformCommandStash(CommandParameters& params) {
 
   RangeSet src = RangeSet::Parse(params.tokens[params.cpos++]);
 
-  allocate(src.size * BLOCKSIZE, params.buffer);
+  allocate(src.blocks() * BLOCKSIZE, params.buffer);
   if (ReadBlocks(src, params.buffer, params.fd) == -1) {
     return -1;
   }
-  blocks = src.size;
+  blocks = src.blocks();
   stash_map[id] = src;
 
   if (VerifyBlocks(id, params.buffer, blocks, true) != 0) {
@@ -1088,46 +1075,45 @@ static int PerformCommandFree(CommandParameters& params) {
 }
 
 static int PerformCommandZero(CommandParameters& params) {
+  if (params.cpos >= params.tokens.size()) {
+    LOG(ERROR) << "missing target blocks for zero";
+    return -1;
+  }
 
-    if (params.cpos >= params.tokens.size()) {
-        LOG(ERROR) << "missing target blocks for zero";
+  RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
+
+  LOG(INFO) << "  zeroing " << tgt.blocks() << " blocks";
+
+  allocate(BLOCKSIZE, params.buffer);
+  memset(params.buffer.data(), 0, BLOCKSIZE);
+
+  if (params.canwrite) {
+    for (const auto& range : tgt) {
+      off64_t offset = static_cast<off64_t>(range.first) * BLOCKSIZE;
+      size_t size = (range.second - range.first) * BLOCKSIZE;
+      if (!discard_blocks(params.fd, offset, size)) {
         return -1;
-    }
+      }
 
-    RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
+      if (!check_lseek(params.fd, offset, SEEK_SET)) {
+        return -1;
+      }
 
-    LOG(INFO) << "  zeroing " << tgt.size << " blocks";
-
-    allocate(BLOCKSIZE, params.buffer);
-    memset(params.buffer.data(), 0, BLOCKSIZE);
-
-    if (params.canwrite) {
-        for (size_t i = 0; i < tgt.count; ++i) {
-            off64_t offset = static_cast<off64_t>(tgt.pos[i * 2]) * BLOCKSIZE;
-            size_t size = (tgt.pos[i * 2 + 1] - tgt.pos[i * 2]) * BLOCKSIZE;
-            if (!discard_blocks(params.fd, offset, size)) {
-                return -1;
-            }
-
-            if (!check_lseek(params.fd, offset, SEEK_SET)) {
-                return -1;
-            }
-
-            for (size_t j = tgt.pos[i * 2]; j < tgt.pos[i * 2 + 1]; ++j) {
-                if (write_all(params.fd, params.buffer, BLOCKSIZE) == -1) {
-                    return -1;
-                }
-            }
+      for (size_t j = range.first; j < range.second; ++j) {
+        if (write_all(params.fd, params.buffer, BLOCKSIZE) == -1) {
+          return -1;
         }
+      }
     }
+  }
 
-    if (params.cmdname[0] == 'z') {
-        // Update only for the zero command, as the erase command will call
-        // this if DEBUG_ERASE is defined.
-        params.written += tgt.size;
-    }
+  if (params.cmdname[0] == 'z') {
+    // Update only for the zero command, as the erase command will call
+    // this if DEBUG_ERASE is defined.
+    params.written += tgt.blocks();
+  }
 
-    return 0;
+  return 0;
 }
 
 static int PerformCommandNew(CommandParameters& params) {
@@ -1139,7 +1125,7 @@ static int PerformCommandNew(CommandParameters& params) {
   RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
 
   if (params.canwrite) {
-    LOG(INFO) << " writing " << tgt.size << " blocks of new data";
+    LOG(INFO) << " writing " << tgt.blocks() << " blocks of new data";
 
     RangeSinkWriter writer(params.fd, tgt);
     pthread_mutex_lock(&params.nti.mu);
@@ -1153,7 +1139,7 @@ static int PerformCommandNew(CommandParameters& params) {
     pthread_mutex_unlock(&params.nti.mu);
   }
 
-  params.written += tgt.size;
+  params.written += tgt.blocks();
 
   return 0;
 }
@@ -1195,7 +1181,7 @@ static int PerformCommandDiff(CommandParameters& params) {
 
   if (params.canwrite) {
     if (status == 0) {
-      LOG(INFO) << "patching " << blocks << " blocks to " << tgt.size;
+      LOG(INFO) << "patching " << blocks << " blocks to " << tgt.blocks();
       Value patch_value(
           VAL_BLOB, std::string(reinterpret_cast<const char*>(params.patch_start + offset), len));
 
@@ -1223,7 +1209,7 @@ static int PerformCommandDiff(CommandParameters& params) {
         LOG(ERROR) << "range sink underrun?";
       }
     } else {
-      LOG(INFO) << "skipping " << blocks << " blocks already patched to " << tgt.size << " ["
+      LOG(INFO) << "skipping " << blocks << " blocks already patched to " << tgt.blocks() << " ["
                 << params.cmdline << "]";
     }
   }
@@ -1233,52 +1219,52 @@ static int PerformCommandDiff(CommandParameters& params) {
     params.freestash.clear();
   }
 
-  params.written += tgt.size;
+  params.written += tgt.blocks();
 
   return 0;
 }
 
 static int PerformCommandErase(CommandParameters& params) {
-    if (DEBUG_ERASE) {
-        return PerformCommandZero(params);
-    }
+  if (DEBUG_ERASE) {
+    return PerformCommandZero(params);
+  }
 
-    struct stat sb;
-    if (fstat(params.fd, &sb) == -1) {
-        PLOG(ERROR) << "failed to fstat device to erase";
+  struct stat sb;
+  if (fstat(params.fd, &sb) == -1) {
+    PLOG(ERROR) << "failed to fstat device to erase";
+    return -1;
+  }
+
+  if (!S_ISBLK(sb.st_mode)) {
+    LOG(ERROR) << "not a block device; skipping erase";
+    return -1;
+  }
+
+  if (params.cpos >= params.tokens.size()) {
+    LOG(ERROR) << "missing target blocks for erase";
+    return -1;
+  }
+
+  RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
+
+  if (params.canwrite) {
+    LOG(INFO) << " erasing " << tgt.blocks() << " blocks";
+
+    for (const auto& range : tgt) {
+      uint64_t blocks[2];
+      // offset in bytes
+      blocks[0] = range.first * static_cast<uint64_t>(BLOCKSIZE);
+      // length in bytes
+      blocks[1] = (range.second - range.first) * static_cast<uint64_t>(BLOCKSIZE);
+
+      if (ioctl(params.fd, BLKDISCARD, &blocks) == -1) {
+        PLOG(ERROR) << "BLKDISCARD ioctl failed";
         return -1;
+      }
     }
+  }
 
-    if (!S_ISBLK(sb.st_mode)) {
-        LOG(ERROR) << "not a block device; skipping erase";
-        return -1;
-    }
-
-    if (params.cpos >= params.tokens.size()) {
-        LOG(ERROR) << "missing target blocks for erase";
-        return -1;
-    }
-
-    RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
-
-    if (params.canwrite) {
-        LOG(INFO) << " erasing " << tgt.size << " blocks";
-
-        for (size_t i = 0; i < tgt.count; ++i) {
-            uint64_t blocks[2];
-            // offset in bytes
-            blocks[0] = tgt.pos[i * 2] * (uint64_t) BLOCKSIZE;
-            // length in bytes
-            blocks[1] = (tgt.pos[i * 2 + 1] - tgt.pos[i * 2]) * (uint64_t) BLOCKSIZE;
-
-            if (ioctl(params.fd, BLKDISCARD, &blocks) == -1) {
-                PLOG(ERROR) << "BLKDISCARD ioctl failed";
-                return -1;
-            }
-        }
-    }
-
-    return 0;
+  return 0;
 }
 
 // Definitions for transfer list command functions
@@ -1645,14 +1631,14 @@ Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique
   SHA1_Init(&ctx);
 
   std::vector<uint8_t> buffer(BLOCKSIZE);
-  for (size_t i = 0; i < rs.count; ++i) {
-    if (!check_lseek(fd, (off64_t)rs.pos[i * 2] * BLOCKSIZE, SEEK_SET)) {
+  for (const auto& range : rs) {
+    if (!check_lseek(fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
       ErrorAbort(state, kLseekFailure, "failed to seek %s: %s", blockdev_filename->data.c_str(),
                  strerror(errno));
       return StringValue("");
     }
 
-    for (size_t j = rs.pos[i * 2]; j < rs.pos[i * 2 + 1]; ++j) {
+    for (size_t j = range.first; j < range.second; ++j) {
       if (read_all(fd, buffer, BLOCKSIZE) == -1) {
         ErrorAbort(state, kFreadFailure, "failed to read %s: %s", blockdev_filename->data.c_str(),
                    strerror(errno));
@@ -1700,7 +1686,7 @@ Value* CheckFirstBlockFn(const char* name, State* state,
     return StringValue("");
   }
 
-  RangeSet blk0{ 1 /*count*/, 1 /*size*/, std::vector<size_t>{ 0, 1 } /*position*/ };
+  RangeSet blk0(std::vector<Range>{ Range{ 0, 1 } });
   std::vector<uint8_t> block0_buffer(BLOCKSIZE);
 
   if (ReadBlocks(blk0, block0_buffer, fd) == -1) {
@@ -1770,24 +1756,20 @@ Value* BlockImageRecoverFn(const char* name, State* state,
   }
 
   fec_status status;
-
   if (!fh.get_status(status)) {
     ErrorAbort(state, kLibfecFailure, "failed to read FEC status");
     return StringValue("");
   }
 
-  RangeSet rs = RangeSet::Parse(ranges->data);
-
   uint8_t buffer[BLOCKSIZE];
-
-  for (size_t i = 0; i < rs.count; ++i) {
-    for (size_t j = rs.pos[i * 2]; j < rs.pos[i * 2 + 1]; ++j) {
+  for (const auto& range : RangeSet::Parse(ranges->data)) {
+    for (size_t j = range.first; j < range.second; ++j) {
       // Stay within the data area, libfec validates and corrects metadata
-      if (status.data_size <= (uint64_t)j * BLOCKSIZE) {
+      if (status.data_size <= static_cast<uint64_t>(j) * BLOCKSIZE) {
         continue;
       }
 
-      if (fh.pread(buffer, BLOCKSIZE, (off64_t)j * BLOCKSIZE) != BLOCKSIZE) {
+      if (fh.pread(buffer, BLOCKSIZE, static_cast<off64_t>(j) * BLOCKSIZE) != BLOCKSIZE) {
         ErrorAbort(state, kLibfecFailure, "failed to recover %s (block %zu): %s",
                    filename->data.c_str(), j, strerror(errno));
         return StringValue("");

@@ -25,14 +25,15 @@
 
 TEST(RangeSetTest, Parse_smoke) {
   RangeSet rs = RangeSet::Parse("2,1,10");
-  ASSERT_EQ(static_cast<size_t>(1), rs.count);
-  ASSERT_EQ((std::vector<size_t>{ 1, 10 }), rs.pos);
-  ASSERT_EQ(static_cast<size_t>(9), rs.size);
+  ASSERT_EQ(static_cast<size_t>(1), rs.size());
+  ASSERT_EQ((Range{ 1, 10 }), rs[0]);
+  ASSERT_EQ(static_cast<size_t>(9), rs.blocks());
 
   RangeSet rs2 = RangeSet::Parse("4,15,20,1,10");
-  ASSERT_EQ(static_cast<size_t>(2), rs2.count);
-  ASSERT_EQ((std::vector<size_t>{ 15, 20, 1, 10 }), rs2.pos);
-  ASSERT_EQ(static_cast<size_t>(14), rs2.size);
+  ASSERT_EQ(static_cast<size_t>(2), rs2.size());
+  ASSERT_EQ((Range{ 15, 20 }), rs2[0]);
+  ASSERT_EQ((Range{ 1, 10 }), rs2[1]);
+  ASSERT_EQ(static_cast<size_t>(14), rs2.blocks());
 
   // Leading zeros are fine. But android::base::ParseUint() doesn't like trailing zeros like "10 ".
   ASSERT_EQ(rs, RangeSet::Parse(" 2, 1,   10"));
@@ -81,4 +82,31 @@ TEST(RangeSetTest, GetBlockNumber) {
 
   // Out of bound.
   ASSERT_EXIT(rs.GetBlockNumber(9), ::testing::KilledBySignal(SIGABRT), "");
+}
+
+TEST(RangeSetTest, equality) {
+  ASSERT_EQ(RangeSet::Parse("2,1,6"), RangeSet::Parse("2,1,6"));
+
+  ASSERT_NE(RangeSet::Parse("2,1,6"), RangeSet::Parse("2,1,7"));
+  ASSERT_NE(RangeSet::Parse("2,1,6"), RangeSet::Parse("2,2,7"));
+
+  // The orders of Range's matter. "4,1,5,8,10" != "4,8,10,1,5".
+  ASSERT_NE(RangeSet::Parse("4,1,5,8,10"), RangeSet::Parse("4,8,10,1,5"));
+}
+
+TEST(RangeSetTest, iterators) {
+  RangeSet rs = RangeSet::Parse("4,1,5,8,10");
+  std::vector<Range> ranges;
+  for (const auto& range : rs) {
+    ranges.push_back(range);
+  }
+  ASSERT_EQ((std::vector<Range>{ Range{ 1, 5 }, Range{ 8, 10 } }), ranges);
+
+  ranges.clear();
+
+  // Reverse iterators.
+  for (auto it = rs.crbegin(); it != rs.crend(); it++) {
+    ranges.push_back(*it);
+  }
+  ASSERT_EQ((std::vector<Range>{ Range{ 8, 10 }, Range{ 1, 5 } }), ranges);
 }
