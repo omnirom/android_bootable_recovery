@@ -117,6 +117,13 @@ static bool write_misc_partition(const void* p, size_t size, const std::string& 
   return true;
 }
 
+std::string get_bootloader_message_blk_device(std::string* err) {
+  std::string misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) return "";
+  if (!wait_for_device(misc_blk_device, err)) return "";
+  return misc_blk_device;
+}
+
 bool read_bootloader_message_from(bootloader_message* boot, const std::string& misc_blk_device,
                                   std::string* err) {
   return read_misc_partition(boot, sizeof(*boot), misc_blk_device,
