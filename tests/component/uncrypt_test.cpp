@@ -30,8 +30,6 @@
 #include <bootloader_message/bootloader_message.h>
 #include <gtest/gtest.h>
 
-#include "common/component_test_util.h"
-
 using namespace std::string_literals;
 
 static const std::string UNCRYPT_SOCKET = "/dev/socket/uncrypt";
@@ -65,7 +63,8 @@ class UncryptTest : public ::testing::Test {
 
     ASSERT_TRUE(success) << "uncrypt service is not available.";
 
-    has_misc = parse_misc();
+    std::string err;
+    has_misc = !get_bootloader_message_blk_device(&err).empty();
   }
 
   void SetupOrClearBcb(bool isSetup, const std::string& message,
