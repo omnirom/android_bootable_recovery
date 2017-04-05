@@ -1099,6 +1099,13 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, const unsigned
                                          fd, extra_params);
   if (load_count < 0) {
       printf("Cannot load dm-crypt mapping table.\n");
+
+      // Remove the dm-crypt device, otherwise it cannot be used later on by other
+      // processes (eg vold_decrypt) or further testing/debugging in recovery
+      ioctl_init(io, DM_CRYPT_BUF_SIZE, name, 0);
+      if (ioctl(fd, DM_DEV_REMOVE, io)) {
+        printf("Cannot remove dm-crypt device %i\n", errno);
+      }
       goto errout;
   } else if (load_count > 1) {
       printf("Took %d tries to load dmcrypt table.\n", load_count);
@@ -1109,6 +1116,13 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, const unsigned
 
   if (ioctl(fd, DM_DEV_SUSPEND, io)) {
     printf("Cannot resume the dm-crypt device\n");
+
+    // Remove the dm-crypt device, otherwise it cannot be used later on by other
+    // processes (eg vold_decrypt) or further testing/debugging in recovery
+    ioctl_init(io, DM_CRYPT_BUF_SIZE, name, 0);
+    if (ioctl(fd, DM_DEV_REMOVE, io)) {
+      printf("Cannot remove dm-crypt device %i\n", errno);
+    }
     goto errout;
   }
 
