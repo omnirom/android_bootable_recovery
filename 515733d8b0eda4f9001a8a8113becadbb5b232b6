@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9828ed82_180d2a3d",
+        "filename": "twrpDigest/twrpMD5.hpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-04-05T15:31:59Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "515733d8b0eda4f9001a8a8113becadbb5b232b6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9828ed82_f8093e30",
+        "filename": "twrpDigest/twrpSHA.hpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-04-05T15:31:59Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "515733d8b0eda4f9001a8a8113becadbb5b232b6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9828ed82_b813b65a",
+        "filename": "twrpDigest/twrpSHA.hpp",
+        "patchSetId": 68
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-04-05T15:31:59Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "515733d8b0eda4f9001a8a8113becadbb5b232b6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
