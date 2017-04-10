@@ -55,6 +55,7 @@ endif
 LOCAL_MODULE := librecovery
 LOCAL_STATIC_LIBRARIES := \
     libminui \
+    libvintf_recovery \
     libcrypto_utils \
     libcrypto \
     libbase
@@ -114,6 +115,9 @@ LOCAL_STATIC_LIBRARIES := \
     libfs_mgr \
     libcrypto_utils \
     libcrypto \
+    libvintf_recovery \
+    libvintf \
+    libtinyxml2 \
     libbase \
     libcutils \
     libutils \

@@ -132,6 +132,9 @@ LOCAL_STATIC_LIBRARIES := \
     libdivsufsort64 \
     libfs_mgr \
     liblog \
+    libvintf_recovery \
+    libvintf \
+    libtinyxml2 \
     libselinux \
     libext4_utils \
     libsparse \
