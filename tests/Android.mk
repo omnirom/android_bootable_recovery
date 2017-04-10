@@ -93,6 +93,7 @@ LOCAL_SRC_FILES := \
     component/bootloader_message_test.cpp \
     component/edify_test.cpp \
     component/imgdiff_test.cpp \
+    component/install_test.cpp \
     component/sideload_test.cpp \
     component/uncrypt_test.cpp \
     component/updater_test.cpp \
@@ -117,6 +118,7 @@ LOCAL_STATIC_LIBRARIES := \
     libbsdiff \
     libbspatch \
     libotafault \
+    librecovery \
     libupdater \
     libbootloader_message \
     libverifier \
@@ -131,7 +133,6 @@ LOCAL_STATIC_LIBRARIES := \
     libsparse \
     libcrypto_utils \
     libcrypto \
-    libcutils \
     libbz \
     libziparchive \
     libutils \

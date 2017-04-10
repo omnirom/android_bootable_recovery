@@ -37,4 +37,8 @@ bool verify_package(const unsigned char* package_data, size_t package_size);
 // Return true if succeed, otherwise return false.
 bool read_metadata_from_package(ZipArchiveHandle zip, std::string* meta_data);
 
+// Verifes the compatibility info in a Treble-compatible package. Returns true directly if the
+// entry doesn't exist.
+bool verify_package_compatibility(ZipArchiveHandle package_zip);
+
 #endif  // RECOVERY_INSTALL_H_
