@@ -607,3 +607,69 @@ TEST_F(UpdaterTest, block_image_update) {
   ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
   CloseArchive(handle);
 }
+
+TEST_F(UpdaterTest, new_data_short_write) {
+  // Create a zip file with new_data.
+  TemporaryFile zip_file;
+  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
+  ZipWriter zip_writer(zip_file_ptr);
+
+  // Add the empty new data.
+  ASSERT_EQ(0, zip_writer.StartEntry("empty_new_data", 0));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  // Add the short written new data.
+  ASSERT_EQ(0, zip_writer.StartEntry("short_new_data", 0));
+  std::string new_data_short = std::string(10, 'a');
+  ASSERT_EQ(0, zip_writer.WriteBytes(new_data_short.data(), new_data_short.size()));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  // Add the data of exactly one block.
+  ASSERT_EQ(0, zip_writer.StartEntry("exact_new_data", 0));
+  std::string new_data_exact = std::string(4096, 'a');
+  ASSERT_EQ(0, zip_writer.WriteBytes(new_data_exact.data(), new_data_exact.size()));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  // Add a dummy patch data.
+  ASSERT_EQ(0, zip_writer.StartEntry("patch_data", 0));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+
+  std::vector<std::string> transfer_list = {
+    "4",
+    "1",
+    "0",
+    "0",
+    "new 2,0,1",
+  };
+  ASSERT_EQ(0, zip_writer.StartEntry("transfer_list", 0));
+  std::string commands = android::base::Join(transfer_list, '\n');
+  ASSERT_EQ(0, zip_writer.WriteBytes(commands.data(), commands.size()));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  ASSERT_EQ(0, zip_writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file_ptr));
+
+  MemMapping map;
+  ASSERT_EQ(0, sysMapFile(zip_file.path, &map));
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
+
+  // Set up the handler, command_pipe, patch offset & length.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+  TemporaryFile temp_pipe;
+  updater_info.cmd_pipe = fopen(temp_pipe.path, "wb");
+  updater_info.package_zip_addr = map.addr;
+  updater_info.package_zip_len = map.length;
+
+  // Updater should report the failure gracefully rather than stuck in deadlock.
+  TemporaryFile update_file;
+  std::string script_empty_data = "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list"), "empty_new_data", "patch_data"))";
+  expect("", script_empty_data.c_str(), kNoCause, &updater_info);
+
+  std::string script_short_data = "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list"), "short_new_data", "patch_data"))";
+  expect("", script_short_data.c_str(), kNoCause, &updater_info);
+
+  // Expect to write 1 block of new data successfully.
+  std::string script_exact_data = "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list"), "exact_new_data", "patch_data"))";
+  expect("t", script_exact_data.c_str(), kNoCause, &updater_info);
+}
