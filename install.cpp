@@ -489,6 +489,70 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
   return INSTALL_SUCCESS;
 }
 
+// Verifes the compatibility info in a Treble-compatible package. Returns true directly if the
+// entry doesn't exist. Note that the compatibility info is packed in a zip file inside the OTA
+// package.
+bool verify_package_compatibility(ZipArchiveHandle package_zip) {
+  LOG(INFO) << "Verifying package compatibility...";
+
+  static constexpr const char* COMPATIBILITY_ZIP_ENTRY = "compatibility.zip";
+  ZipString compatibility_entry_name(COMPATIBILITY_ZIP_ENTRY);
+  ZipEntry compatibility_entry;
+  if (FindEntry(package_zip, compatibility_entry_name, &compatibility_entry) != 0) {
+    LOG(INFO) << "Package doesn't contain " << COMPATIBILITY_ZIP_ENTRY << " entry";
+    return true;
+  }
+
+  std::string zip_content(compatibility_entry.uncompressed_length, '\0');
+  int32_t ret;
+  if ((ret = ExtractToMemory(package_zip, &compatibility_entry,
+                             reinterpret_cast<uint8_t*>(&zip_content[0]),
+                             compatibility_entry.uncompressed_length)) != 0) {
+    LOG(ERROR) << "Failed to read " << COMPATIBILITY_ZIP_ENTRY << ": " << ErrorCodeString(ret);
+    return false;
+  }
+
+  ZipArchiveHandle zip_handle;
+  ret = OpenArchiveFromMemory(static_cast<void*>(const_cast<char*>(zip_content.data())),
+                              zip_content.size(), COMPATIBILITY_ZIP_ENTRY, &zip_handle);
+  if (ret != 0) {
+    LOG(ERROR) << "Failed to OpenArchiveFromMemory: " << ErrorCodeString(ret);
+    return false;
+  }
+
+  // Iterate all the entries inside COMPATIBILITY_ZIP_ENTRY and read the contents.
+  void* cookie;
+  ret = StartIteration(zip_handle, &cookie, nullptr, nullptr);
+  if (ret != 0) {
+    LOG(ERROR) << "Failed to start iterating zip entries: " << ErrorCodeString(ret);
+    CloseArchive(zip_handle);
+    return false;
+  }
+  std::unique_ptr<void, decltype(&EndIteration)> guard(cookie, EndIteration);
+
+  std::vector<std::string> compatibility_info;
+  ZipEntry info_entry;
+  ZipString info_name;
+  while (Next(cookie, &info_entry, &info_name) == 0) {
+    std::string content(info_entry.uncompressed_length, '\0');
+    int32_t ret = ExtractToMemory(zip_handle, &info_entry, reinterpret_cast<uint8_t*>(&content[0]),
+                                  info_entry.uncompressed_length);
+    if (ret != 0) {
+      LOG(ERROR) << "Failed to read " << info_name.name << ": " << ErrorCodeString(ret);
+      CloseArchive(zip_handle);
+      return false;
+    }
+    compatibility_info.emplace_back(std::move(content));
+  }
+  EndIteration(cookie);
+  CloseArchive(zip_handle);
+
+  // TODO(b/36814503): Enable the actual verification when VintfObject::CheckCompatibility() lands.
+  // VintfObject::CheckCompatibility returns zero on success.
+  // return (android::vintf::VintfObject::CheckCompatibility(compatibility_info, true) == 0);
+  return true;
+}
+
 static int
 really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
                        std::vector<std::string>& log_buffer, int retry_count, int* max_temperature)
@@ -534,6 +598,15 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
         sysReleaseMap(&map);
         CloseArchive(zip);
         return INSTALL_CORRUPT;
+    }
+
+    // Additionally verify the compatibility of the package.
+    if (!verify_package_compatibility(zip)) {
+      LOG(ERROR) << "Failed to verify package compatibility";
+      log_buffer.push_back(android::base::StringPrintf("error: %d", kPackageCompatibilityFailure));
+      sysReleaseMap(&map);
+      CloseArchive(zip);
+      return INSTALL_CORRUPT;
     }
 
     // Verify and install the contents of the package.
