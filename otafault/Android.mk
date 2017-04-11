@@ -23,7 +23,12 @@ otafault_static_libs := \
     libbase \
     liblog
 
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := \
+    -Werror \
+    -Wthread-safety \
+    -Wthread-safety-negative \
+    -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS
+
 LOCAL_SRC_FILES := config.cpp ota_io.cpp
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libotafault
