@@ -22,7 +22,8 @@ enum ErrorCode {
   kLowBattery = 20,
   kZipVerificationFailure,
   kZipOpenFailure,
-  kBootreasonInBlacklist
+  kBootreasonInBlacklist,
+  kPackageCompatibilityFailure,
 };
 
 enum CauseCode {
