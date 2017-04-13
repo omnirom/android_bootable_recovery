@@ -47,6 +47,11 @@ LOCAL_SRC_FILES := \
     install.cpp
 LOCAL_CFLAGS := -Wno-unused-parameter -Werror
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
+
+ifeq ($(AB_OTA_UPDATER),true)
+    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
+endif
+
 LOCAL_MODULE := librecovery
 LOCAL_STATIC_LIBRARIES := \
     libminui \
