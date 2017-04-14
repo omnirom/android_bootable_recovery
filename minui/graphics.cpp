@@ -553,3 +553,13 @@ void gr_set_font(__attribute__ ((unused))const char* name) {
 	gr_init_font();
 	return;
 }
+
+const GRFont* gr_sys_font() {
+	return gr_font;
+}
+
+void gr_font_size(const GRFont* font, int *x, int *y)
+{
+    *x = font->char_width;
+    *y = font->char_height;
+}
