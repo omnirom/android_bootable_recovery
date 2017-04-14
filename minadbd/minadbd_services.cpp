@@ -21,24 +21,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <thread>
+
 #include "adb.h"
 #include "fdevent.h"
 #include "fuse_adb_provider.h"
 #include "sysdeps.h"
-
-typedef struct stinfo stinfo;
-
-struct stinfo {
-    void (*func)(int fd, void *cookie);
-    int fd;
-    void *cookie;
-};
-
-void service_bootstrap_func(void* x) {
-    stinfo* sti = reinterpret_cast<stinfo*>(x);
-    sti->func(sti->fd, sti->cookie);
-    free(sti);
-}
 
 static void sideload_host_service(int sfd, void* data) {
     char* args = reinterpret_cast<char*>(data);
@@ -66,19 +54,7 @@ static int create_service_thread(void (*func)(int, void *), void *cookie) {
         return -1;
     }
 
-    stinfo* sti = static_cast<stinfo*>(malloc(sizeof(stinfo)));
-    if(sti == 0) fatal("cannot allocate stinfo");
-    sti->func = func;
-    sti->cookie = cookie;
-    sti->fd = s[1];
-
-    if (!adb_thread_create(service_bootstrap_func, sti)) {
-        free(sti);
-        adb_close(s[0]);
-        adb_close(s[1]);
-        printf("cannot create service thread\n");
-        return -1;
-    }
+    std::thread([s, func, cookie]() { func(s[1], cookie); }).detach();
 
     VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
     return s[0];
