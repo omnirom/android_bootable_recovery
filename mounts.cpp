@@ -62,13 +62,6 @@ bool scan_mounted_volumes() {
     return true;
 }
 
-MountedVolume* find_mounted_volume_by_device(const char* device) {
-    for (size_t i = 0; i < g_mounts_state.size(); ++i) {
-        if (g_mounts_state[i]->device == device) return g_mounts_state[i];
-    }
-    return nullptr;
-}
-
 MountedVolume* find_mounted_volume_by_mount_point(const char* mount_point) {
     for (size_t i = 0; i < g_mounts_state.size(); ++i) {
         if (g_mounts_state[i]->mount_point == mount_point) return g_mounts_state[i];
@@ -84,16 +77,6 @@ int unmount_mounted_volume(MountedVolume* volume) {
   int result = umount(mount_point.c_str());
   if (result == -1) {
     PLOG(WARNING) << "Failed to umount " << mount_point;
-  }
-  return result;
-}
-
-int remount_read_only(MountedVolume* volume) {
-  int result = mount(volume->device.c_str(), volume->mount_point.c_str(),
-                     volume->filesystem.c_str(),
-                     MS_NOATIME | MS_NODEV | MS_NODIRATIME | MS_RDONLY | MS_REMOUNT, 0);
-  if (result == -1) {
-    PLOG(WARNING) << "Failed to remount read-only " << volume->mount_point;
   }
   return result;
 }
