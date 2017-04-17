@@ -40,16 +40,14 @@ void print_usage(void) {
 	printf("Allows command line usage of TWRP via openrecoveryscript commands.\n");
 	printf("Some common commands include:\n");
 	printf("  install /path/to/update.zip\n");
-	printf("  backup BSDC backupname\n");
-	printf("  restore backupname BSDC\n");
-	printf("  factoryreset\n");
-	printf("  wipe cache\n");
+	printf("  backup <SDCRBAEM> [backupname]\n");
+	printf("  restore <SDCRBAEM> [backupname]\n");
+	printf("  wipe <partition name>\n");
 	printf("  sideload\n");
-	printf("  set variable value\n");
-	printf("  get variable\n");
-	printf("  decrypt password\n");
+	printf("  set <variable> [value]\n");
+	printf("  decrypt <password>\n");
 	printf("  remountrw\n");
-	printf("\nSee more documentation at http://teamw.in/openrecoveryscript\n");
+	printf("\nSee more documentation at https://twrp.me/faq/openrecoveryscript.html\n");
 }
 
 int do_setcap(const char* filename, const char* capabilities)
