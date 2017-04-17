@@ -544,7 +544,6 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
     }
     compatibility_info.emplace_back(std::move(content));
   }
-  EndIteration(cookie);
   CloseArchive(zip_handle);
 
   // TODO(b/36814503): Enable the actual verification when VintfObject::CheckCompatibility() lands.
