@@ -85,6 +85,10 @@ LOCAL_CFLAGS := \
     -Werror \
     -D_FILE_OFFSET_BITS=64
 
+ifeq ($(AB_OTA_UPDATER),true)
+LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
+endif
+
 LOCAL_MODULE := recovery_component_test
 LOCAL_COMPATIBILITY_SUITE := device-tests
 LOCAL_C_INCLUDES := bootable/recovery
