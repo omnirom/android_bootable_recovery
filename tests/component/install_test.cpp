@@ -16,12 +16,18 @@
 
 #include <stdio.h>
 
+#include <string>
+#include <vector>
+
+#include <android-base/properties.h>
+#include <android-base/strings.h>
 #include <android-base/test_utils.h>
 #include <gtest/gtest.h>
 #include <ziparchive/zip_archive.h>
 #include <ziparchive/zip_writer.h>
 
 #include "install.h"
+#include "private/install.h"
 
 TEST(InstallTest, verify_package_compatibility_no_entry) {
   TemporaryFile temp_file;
@@ -54,4 +60,85 @@ TEST(InstallTest, verify_package_compatibility_invalid_entry) {
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
   ASSERT_FALSE(verify_package_compatibility(zip));
   CloseArchive(zip);
+}
+
+TEST(InstallTest, update_binary_command_smoke) {
+#ifdef AB_OTA_UPDATER
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.fd, "w");
+  ZipWriter writer(zip_file);
+  ASSERT_EQ(0, writer.StartEntry("payload.bin", kCompressStored));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.StartEntry("payload_properties.txt", kCompressStored));
+  const std::string properties = "some_properties";
+  ASSERT_EQ(0, writer.WriteBytes(properties.data(), properties.size()));
+  ASSERT_EQ(0, writer.FinishEntry());
+  // A metadata entry is mandatory.
+  ASSERT_EQ(0, writer.StartEntry("META-INF/com/android/metadata", kCompressStored));
+  std::string device = android::base::GetProperty("ro.product.device", "");
+  ASSERT_NE("", device);
+  std::string timestamp = android::base::GetProperty("ro.build.date.utc", "");
+  ASSERT_NE("", timestamp);
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB", "pre-device=" + device, "post-timestamp=" + timestamp,
+      },
+      "\n");
+  ASSERT_EQ(0, writer.WriteBytes(metadata.data(), metadata.size()));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  int status_fd = 10;
+  std::string path = "/path/to/update.zip";
+  std::vector<std::string> cmd;
+  ASSERT_EQ(0, update_binary_command(path, zip, 0, status_fd, &cmd));
+  ASSERT_EQ("/sbin/update_engine_sideload", cmd[0]);
+  ASSERT_EQ("--payload=file://" + path, cmd[1]);
+  ASSERT_EQ("--headers=" + properties, cmd[3]);
+  ASSERT_EQ("--status_fd=" + std::to_string(status_fd), cmd[4]);
+  CloseArchive(zip);
+#else
+  // Cannot test update_binary_command() because it tries to extract update-binary to /tmp.
+  GTEST_LOG_(INFO) << "Test skipped on non-A/B device.";
+#endif  // AB_OTA_UPDATER
+}
+
+TEST(InstallTest, update_binary_command_invalid) {
+#ifdef AB_OTA_UPDATER
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.fd, "w");
+  ZipWriter writer(zip_file);
+  // Missing payload_properties.txt.
+  ASSERT_EQ(0, writer.StartEntry("payload.bin", kCompressStored));
+  ASSERT_EQ(0, writer.FinishEntry());
+  // A metadata entry is mandatory.
+  ASSERT_EQ(0, writer.StartEntry("META-INF/com/android/metadata", kCompressStored));
+  std::string device = android::base::GetProperty("ro.product.device", "");
+  ASSERT_NE("", device);
+  std::string timestamp = android::base::GetProperty("ro.build.date.utc", "");
+  ASSERT_NE("", timestamp);
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB", "pre-device=" + device, "post-timestamp=" + timestamp,
+      },
+      "\n");
+  ASSERT_EQ(0, writer.WriteBytes(metadata.data(), metadata.size()));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  int status_fd = 10;
+  std::string path = "/path/to/update.zip";
+  std::vector<std::string> cmd;
+  ASSERT_EQ(INSTALL_CORRUPT, update_binary_command(path, zip, 0, status_fd, &cmd));
+  CloseArchive(zip);
+#else
+  // Cannot test update_binary_command() because it tries to extract update-binary to /tmp.
+  GTEST_LOG_(INFO) << "Test skipped on non-A/B device.";
+#endif  // AB_OTA_UPDATER
 }
