@@ -75,9 +75,6 @@ on late-init
     trigger early-boot
     trigger boot
 
-on property:sys.powerctl=*
-   powerctl ${sys.powerctl}
-
 service ueventd /sbin/ueventd
     critical
     seclabel u:r:ueventd:s0
