@@ -890,7 +890,10 @@ Value* RebootNowFn(const char* name, State* state, const std::vector<std::unique
     return StringValue("");
   }
 
-  const std::string reboot_cmd = "reboot," + property;
+  std::string reboot_cmd = "reboot," + property;
+  if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
+    reboot_cmd += ",quiescent";
+  }
   android::base::SetProperty(ANDROID_RB_PROPERTY, reboot_cmd);
 
   sleep(5);
