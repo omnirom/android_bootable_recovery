@@ -14,6 +14,10 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# Needed by build/make/core/Makefile.
+RECOVERY_API_VERSION := 3
+RECOVERY_FSTAB_VERSION := 2
+
 # libfusesideload (static library)
 # ===============================
 include $(CLEAR_VARS)
@@ -36,6 +40,27 @@ LOCAL_MODULE := libmounts
 LOCAL_STATIC_LIBRARIES := libbase
 include $(BUILD_STATIC_LIBRARY)
 
+# librecovery (static library)
+# ===============================
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := \
+    install.cpp
+LOCAL_CFLAGS := -Wno-unused-parameter -Werror
+LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
+
+ifeq ($(AB_OTA_UPDATER),true)
+    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
+endif
+
+LOCAL_MODULE := librecovery
+LOCAL_STATIC_LIBRARIES := \
+    libminui \
+    libcrypto_utils \
+    libcrypto \
+    libbase
+
+include $(BUILD_STATIC_LIBRARY)
+
 # recovery (static executable)
 # ===============================
 include $(CLEAR_VARS)
@@ -45,7 +70,6 @@ LOCAL_SRC_FILES := \
     asn1_decoder.cpp \
     device.cpp \
     fuse_sdcard_provider.cpp \
-    install.cpp \
     recovery.cpp \
     roots.cpp \
     rotate_logs.cpp \
@@ -65,8 +89,6 @@ LOCAL_REQUIRED_MODULES := mkfs.f2fs
 endif
 endif
 
-RECOVERY_API_VERSION := 3
-RECOVERY_FSTAB_VERSION := 2
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 LOCAL_CFLAGS += -Wno-unused-parameter -Werror
 LOCAL_CLANG := true
@@ -76,6 +98,7 @@ LOCAL_C_INCLUDES += \
     system/core/adb \
 
 LOCAL_STATIC_LIBRARIES := \
+    librecovery \
     libbatterymonitor \
     libbootloader_message \
     libext4_utils \
