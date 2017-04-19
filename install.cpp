@@ -569,7 +569,7 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   }
 
   MemMapping map;
-  if (sysMapFile(path.c_str(), &map) != 0) {
+  if (!map.MapFile(path)) {
     LOG(ERROR) << "failed to map file";
     return INSTALL_CORRUPT;
   }
@@ -577,7 +577,6 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   // Verify package.
   if (!verify_package(map.addr, map.length)) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
-    sysReleaseMap(&map);
     return INSTALL_CORRUPT;
   }
 
@@ -588,7 +587,6 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
     LOG(ERROR) << "Can't open " << path << " : " << ErrorCodeString(err);
     log_buffer->push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
 
-    sysReleaseMap(&map);
     CloseArchive(zip);
     return INSTALL_CORRUPT;
   }
@@ -596,7 +594,6 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   // Additionally verify the compatibility of the package.
   if (!verify_package_compatibility(zip)) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kPackageCompatibilityFailure));
-    sysReleaseMap(&map);
     CloseArchive(zip);
     return INSTALL_CORRUPT;
   }
@@ -611,7 +608,6 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   ui->SetEnableReboot(true);
   ui->Print("\n");
 
-  sysReleaseMap(&map);
   CloseArchive(zip);
   return result;
 }
