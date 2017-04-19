@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9828ed82_bf5cb81c",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 919,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-04-19T20:31:57Z",
+      "side": 1,
+      "message": "Seems like we should use TWPartition::Set_Backup_FileName though the end result is the same.",
+      "revId": "75dba250dc8e12bd82cdca38a145f3d922b80582",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9828ed82_df5f8410",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 921,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-04-19T20:31:57Z",
+      "side": 1,
+      "message": "Extra ; here",
+      "revId": "75dba250dc8e12bd82cdca38a145f3d922b80582",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
