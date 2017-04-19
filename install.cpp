@@ -56,8 +56,6 @@
 
 using namespace std::chrono_literals;
 
-static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
-
 // Default allocation of progress bar segments to operations
 static constexpr int VERIFICATION_PROGRESS_TIME = 60;
 static constexpr float VERIFICATION_PROGRESS_FRACTION = 0.25;
@@ -79,53 +77,51 @@ static int parse_build_number(const std::string& str) {
     return -1;
 }
 
-bool read_metadata_from_package(ZipArchiveHandle zip, std::string* meta_data) {
-    ZipString metadata_path(METADATA_PATH);
-    ZipEntry meta_entry;
-    if (meta_data == nullptr) {
-        LOG(ERROR) << "string* meta_data can't be nullptr";
-        return false;
-    }
-    if (FindEntry(zip, metadata_path, &meta_entry) != 0) {
-        LOG(ERROR) << "Failed to find " << METADATA_PATH << " in update package";
-        return false;
-    }
+bool read_metadata_from_package(ZipArchiveHandle zip, std::string* metadata) {
+  CHECK(metadata != nullptr);
 
-    meta_data->resize(meta_entry.uncompressed_length, '\0');
-    if (ExtractToMemory(zip, &meta_entry, reinterpret_cast<uint8_t*>(&(*meta_data)[0]),
-                        meta_entry.uncompressed_length) != 0) {
-        LOG(ERROR) << "Failed to read metadata in update package";
-        return false;
-    }
-    return true;
+  static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
+  ZipString path(METADATA_PATH);
+  ZipEntry entry;
+  if (FindEntry(zip, path, &entry) != 0) {
+    LOG(ERROR) << "Failed to find " << METADATA_PATH;
+    return false;
+  }
+
+  uint32_t length = entry.uncompressed_length;
+  metadata->resize(length, '\0');
+  int32_t err = ExtractToMemory(zip, &entry, reinterpret_cast<uint8_t*>(&(*metadata)[0]), length);
+  if (err != 0) {
+    LOG(ERROR) << "Failed to extract " << METADATA_PATH << ": " << ErrorCodeString(err);
+    return false;
+  }
+  return true;
 }
 
 // Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
 static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::string>& log_buffer) {
-    std::string meta_data;
-    if (!read_metadata_from_package(zip, &meta_data)) {
-        return;
+  std::string metadata;
+  if (!read_metadata_from_package(zip, &metadata)) {
+    return;
+  }
+  // Examples of the pre-build and post-build strings in metadata:
+  //   pre-build-incremental=2943039
+  //   post-build-incremental=2951741
+  std::vector<std::string> lines = android::base::Split(metadata, "\n");
+  for (const std::string& line : lines) {
+    std::string str = android::base::Trim(line);
+    if (android::base::StartsWith(str, "pre-build-incremental")) {
+      int source_build = parse_build_number(str);
+      if (source_build != -1) {
+        log_buffer.push_back(android::base::StringPrintf("source_build: %d", source_build));
+      }
+    } else if (android::base::StartsWith(str, "post-build-incremental")) {
+      int target_build = parse_build_number(str);
+      if (target_build != -1) {
+        log_buffer.push_back(android::base::StringPrintf("target_build: %d", target_build));
+      }
     }
-    // Examples of the pre-build and post-build strings in metadata:
-    // pre-build-incremental=2943039
-    // post-build-incremental=2951741
-    std::vector<std::string> lines = android::base::Split(meta_data, "\n");
-    for (const std::string& line : lines) {
-        std::string str = android::base::Trim(line);
-        if (android::base::StartsWith(str, "pre-build-incremental")){
-            int source_build = parse_build_number(str);
-            if (source_build != -1) {
-                log_buffer.push_back(android::base::StringPrintf("source_build: %d",
-                        source_build));
-            }
-        } else if (android::base::StartsWith(str, "post-build-incremental")) {
-            int target_build = parse_build_number(str);
-            if (target_build != -1) {
-                log_buffer.push_back(android::base::StringPrintf("target_build: %d",
-                        target_build));
-            }
-        }
-    }
+  }
 }
 
 // Extract the update binary from the open zip archive |zip| located at |path| and store into |cmd|
