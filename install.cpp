@@ -48,7 +48,6 @@
 
 #include "common.h"
 #include "error_code.h"
-#include "minui/minui.h"
 #include "otautil/SysUtil.h"
 #include "otautil/ThermalUtil.h"
 #include "roots.h"
@@ -57,15 +56,11 @@
 
 using namespace std::chrono_literals;
 
-#define PUBLIC_KEYS_FILE "/res/keys"
 static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
-static constexpr const char* UNCRYPT_STATUS = "/cache/recovery/uncrypt_status";
 
 // Default allocation of progress bar segments to operations
 static constexpr int VERIFICATION_PROGRESS_TIME = 60;
 static constexpr float VERIFICATION_PROGRESS_FRACTION = 0.25;
-static constexpr float DEFAULT_FILES_PROGRESS_FRACTION = 0.4;
-static constexpr float DEFAULT_IMAGE_PROGRESS_FRACTION = 0.1;
 
 static std::condition_variable finish_log_temperature;
 
@@ -621,80 +616,80 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     return result;
 }
 
-int
-install_package(const char* path, bool* wipe_cache, const char* install_file,
-                bool needs_mount, int retry_count)
-{
-    modified_flash = true;
-    auto start = std::chrono::system_clock::now();
+int install_package(const char* path, bool* wipe_cache, const char* install_file, bool needs_mount,
+                    int retry_count) {
+  modified_flash = true;
+  auto start = std::chrono::system_clock::now();
 
-    int start_temperature = GetMaxValueFromThermalZone();
-    int max_temperature = start_temperature;
+  int start_temperature = GetMaxValueFromThermalZone();
+  int max_temperature = start_temperature;
 
-    int result;
-    std::vector<std::string> log_buffer;
-    if (setup_install_mounts() != 0) {
-        LOG(ERROR) << "failed to set up expected mounts for install; aborting";
-        result = INSTALL_ERROR;
+  int result;
+  std::vector<std::string> log_buffer;
+  if (setup_install_mounts() != 0) {
+    LOG(ERROR) << "failed to set up expected mounts for install; aborting";
+    result = INSTALL_ERROR;
+  } else {
+    result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count,
+                                    &max_temperature);
+  }
+
+  // Measure the time spent to apply OTA update in seconds.
+  std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
+  int time_total = static_cast<int>(duration.count());
+
+  bool has_cache = volume_for_path("/cache") != nullptr;
+  // Skip logging the uncrypt_status on devices without /cache.
+  if (has_cache) {
+    static constexpr const char* UNCRYPT_STATUS = "/cache/recovery/uncrypt_status";
+    if (ensure_path_mounted(UNCRYPT_STATUS) != 0) {
+      LOG(WARNING) << "Can't mount " << UNCRYPT_STATUS;
     } else {
-        result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count,
-                                        &max_temperature);
-    }
-
-    // Measure the time spent to apply OTA update in seconds.
-    std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
-    int time_total = static_cast<int>(duration.count());
-
-    bool has_cache = volume_for_path("/cache") != nullptr;
-    // Skip logging the uncrypt_status on devices without /cache.
-    if (has_cache) {
-      if (ensure_path_mounted(UNCRYPT_STATUS) != 0) {
-        LOG(WARNING) << "Can't mount " << UNCRYPT_STATUS;
+      std::string uncrypt_status;
+      if (!android::base::ReadFileToString(UNCRYPT_STATUS, &uncrypt_status)) {
+        PLOG(WARNING) << "failed to read uncrypt status";
+      } else if (!android::base::StartsWith(uncrypt_status, "uncrypt_")) {
+        LOG(WARNING) << "corrupted uncrypt_status: " << uncrypt_status;
       } else {
-        std::string uncrypt_status;
-        if (!android::base::ReadFileToString(UNCRYPT_STATUS, &uncrypt_status)) {
-          PLOG(WARNING) << "failed to read uncrypt status";
-        } else if (!android::base::StartsWith(uncrypt_status, "uncrypt_")) {
-          LOG(WARNING) << "corrupted uncrypt_status: " << uncrypt_status;
-        } else {
-          log_buffer.push_back(android::base::Trim(uncrypt_status));
-        }
+        log_buffer.push_back(android::base::Trim(uncrypt_status));
       }
     }
+  }
 
-    // The first two lines need to be the package name and install result.
-    std::vector<std::string> log_header = {
-        path,
-        result == INSTALL_SUCCESS ? "1" : "0",
-        "time_total: " + std::to_string(time_total),
-        "retry: " + std::to_string(retry_count),
-    };
+  // The first two lines need to be the package name and install result.
+  std::vector<std::string> log_header = {
+    path,
+    result == INSTALL_SUCCESS ? "1" : "0",
+    "time_total: " + std::to_string(time_total),
+    "retry: " + std::to_string(retry_count),
+  };
 
-    int end_temperature = GetMaxValueFromThermalZone();
-    max_temperature = std::max(end_temperature, max_temperature);
-    if (start_temperature > 0) {
-      log_buffer.push_back("temperature_start: " + std::to_string(start_temperature));
-    }
-    if (end_temperature > 0) {
-      log_buffer.push_back("temperature_end: " + std::to_string(end_temperature));
-    }
-    if (max_temperature > 0) {
-      log_buffer.push_back("temperature_max: " + std::to_string(max_temperature));
-    }
+  int end_temperature = GetMaxValueFromThermalZone();
+  max_temperature = std::max(end_temperature, max_temperature);
+  if (start_temperature > 0) {
+    log_buffer.push_back("temperature_start: " + std::to_string(start_temperature));
+  }
+  if (end_temperature > 0) {
+    log_buffer.push_back("temperature_end: " + std::to_string(end_temperature));
+  }
+  if (max_temperature > 0) {
+    log_buffer.push_back("temperature_max: " + std::to_string(max_temperature));
+  }
 
-    std::string log_content = android::base::Join(log_header, "\n") + "\n" +
-            android::base::Join(log_buffer, "\n") + "\n";
-    if (!android::base::WriteStringToFile(log_content, install_file)) {
-        PLOG(ERROR) << "failed to write " << install_file;
-    }
+  std::string log_content =
+      android::base::Join(log_header, "\n") + "\n" + android::base::Join(log_buffer, "\n") + "\n";
+  if (!android::base::WriteStringToFile(log_content, install_file)) {
+    PLOG(ERROR) << "failed to write " << install_file;
+  }
 
-    // Write a copy into last_log.
-    LOG(INFO) << log_content;
+  // Write a copy into last_log.
+  LOG(INFO) << log_content;
 
-    return result;
+  return result;
 }
 
 bool verify_package(const unsigned char* package_data, size_t package_size) {
+  static constexpr const char* PUBLIC_KEYS_FILE = "/res/keys";
   std::vector<Certificate> loadedKeys;
   if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
     LOG(ERROR) << "Failed to load keys";
