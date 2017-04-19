@@ -62,6 +62,56 @@ TEST(InstallTest, verify_package_compatibility_invalid_entry) {
   CloseArchive(zip);
 }
 
+TEST(InstallTest, read_metadata_from_package_smoke) {
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.fd, "w");
+  ZipWriter writer(zip_file);
+  ASSERT_EQ(0, writer.StartEntry("META-INF/com/android/metadata", kCompressStored));
+  const std::string content("abcdefg");
+  ASSERT_EQ(0, writer.WriteBytes(content.data(), content.size()));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  std::string metadata;
+  ASSERT_TRUE(read_metadata_from_package(zip, &metadata));
+  ASSERT_EQ(content, metadata);
+  CloseArchive(zip);
+
+  TemporaryFile temp_file2;
+  FILE* zip_file2 = fdopen(temp_file2.fd, "w");
+  ZipWriter writer2(zip_file2);
+  ASSERT_EQ(0, writer2.StartEntry("META-INF/com/android/metadata", kCompressDeflated));
+  ASSERT_EQ(0, writer2.WriteBytes(content.data(), content.size()));
+  ASSERT_EQ(0, writer2.FinishEntry());
+  ASSERT_EQ(0, writer2.Finish());
+  ASSERT_EQ(0, fclose(zip_file2));
+
+  ASSERT_EQ(0, OpenArchive(temp_file2.path, &zip));
+  metadata.clear();
+  ASSERT_TRUE(read_metadata_from_package(zip, &metadata));
+  ASSERT_EQ(content, metadata);
+  CloseArchive(zip);
+}
+
+TEST(InstallTest, read_metadata_from_package_no_entry) {
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.fd, "w");
+  ZipWriter writer(zip_file);
+  ASSERT_EQ(0, writer.StartEntry("dummy_entry", kCompressStored));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  std::string metadata;
+  ASSERT_FALSE(read_metadata_from_package(zip, &metadata));
+  CloseArchive(zip);
+}
+
 TEST(InstallTest, update_binary_command_smoke) {
 #ifdef AB_OTA_UPDATER
   TemporaryFile temp_file;
