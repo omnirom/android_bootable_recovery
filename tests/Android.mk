@@ -86,6 +86,11 @@ LOCAL_CFLAGS := \
     -D_FILE_OFFSET_BITS=64
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+
+ifeq ($(AB_OTA_UPDATER),true)
+LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
+endif
+
 LOCAL_MODULE := recovery_component_test
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SRC_FILES := \
