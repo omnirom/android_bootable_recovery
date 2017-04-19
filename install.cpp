@@ -44,6 +44,7 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <vintf/VintfObjectRecovery.h>
 #include <ziparchive/zip_archive.h>
 
 #include "common.h"
@@ -535,10 +536,15 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
   }
   CloseArchive(zip_handle);
 
-  // TODO(b/36814503): Enable the actual verification when VintfObject::CheckCompatibility() lands.
-  // VintfObject::CheckCompatibility returns zero on success.
-  // return (android::vintf::VintfObject::CheckCompatibility(compatibility_info, true) == 0);
-  return true;
+  // VintfObjectRecovery::CheckCompatibility returns zero on success.
+  std::string err;
+  int result = android::vintf::VintfObjectRecovery::CheckCompatibility(compatibility_info, &err);
+  if (result == 0) {
+    return true;
+  }
+
+  LOG(ERROR) << "Failed to verify package compatibility (result " << result << "): " << err;
+  return false;
 }
 
 static int
@@ -590,7 +596,6 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
 
     // Additionally verify the compatibility of the package.
     if (!verify_package_compatibility(zip)) {
-      LOG(ERROR) << "Failed to verify package compatibility";
       log_buffer.push_back(android::base::StringPrintf("error: %d", kPackageCompatibilityFailure));
       sysReleaseMap(&map);
       CloseArchive(zip);
