@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <string>
 #include <thread>
 
 #include "adb.h"
@@ -28,33 +29,30 @@
 #include "fuse_adb_provider.h"
 #include "sysdeps.h"
 
-static void sideload_host_service(int sfd, void* data) {
-    char* args = reinterpret_cast<char*>(data);
+static void sideload_host_service(int sfd, const std::string& args) {
     int file_size;
     int block_size;
-    if (sscanf(args, "%d:%d", &file_size, &block_size) != 2) {
-        printf("bad sideload-host arguments: %s\n", args);
+    if (sscanf(args.c_str(), "%d:%d", &file_size, &block_size) != 2) {
+        printf("bad sideload-host arguments: %s\n", args.c_str());
         exit(1);
     }
-    free(args);
 
     printf("sideload-host file size %d block size %d\n", file_size, block_size);
 
     int result = run_adb_fuse(sfd, file_size, block_size);
 
     printf("sideload_host finished\n");
-    sleep(1);
     exit(result == 0 ? 0 : 1);
 }
 
-static int create_service_thread(void (*func)(int, void *), void *cookie) {
+static int create_service_thread(void (*func)(int, const std::string&), const std::string& args) {
     int s[2];
     if (adb_socketpair(s)) {
         printf("cannot create service socket pair\n");
         return -1;
     }
 
-    std::thread([s, func, cookie]() { func(s[1], cookie); }).detach();
+    std::thread([s, func, args]() { func(s[1], args); }).detach();
 
     VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
     return s[0];
@@ -69,7 +67,7 @@ int service_to_fd(const char* name, const atransport* transport) {
         // sideload-host).
         exit(3);
     } else if (!strncmp(name, "sideload-host:", 14)) {
-        char* arg = strdup(name + 14);
+        std::string arg(name + 14);
         ret = create_service_thread(sideload_host_service, arg);
     }
     if (ret >= 0) {
