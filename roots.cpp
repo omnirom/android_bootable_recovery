@@ -27,7 +27,8 @@
 #include <fcntl.h>
 
 #include <android-base/logging.h>
-#include <ext4_utils/make_ext4fs.h>
+#include <android-base/properties.h>
+#include <android-base/stringprintf.h>
 #include <ext4_utils/wipe.h>
 #include <fs_mgr.h>
 
@@ -215,11 +216,60 @@ int format_volume(const char* volume, const char* directory) {
         }
         int result;
         if (strcmp(v->fs_type, "ext4") == 0) {
-            if (v->erase_blk_size != 0 && v->logical_blk_size != 0) {
-                result = make_ext4fs_directory_align(v->blk_device, length, volume, sehandle,
-                        directory, v->erase_blk_size, v->logical_blk_size);
-            } else {
-                result = make_ext4fs_directory(v->blk_device, length, volume, sehandle, directory);
+          static constexpr int block_size = 4096;
+          int raid_stride = v->logical_blk_size / block_size;
+          int raid_stripe_width = v->erase_blk_size / block_size;
+
+          // stride should be the max of 8kb and logical block size
+          if (v->logical_blk_size != 0 && v->logical_blk_size < 8192) {
+            raid_stride = 8192 / block_size;
+          }
+
+          const char* mke2fs_argv[] = { "/sbin/mke2fs_static",
+                                        "-F",
+                                        "-t",
+                                        "ext4",
+                                        "-b",
+                                        nullptr,
+                                        nullptr,
+                                        nullptr,
+                                        nullptr,
+                                        nullptr,
+                                        nullptr };
+
+          int i = 5;
+          std::string block_size_str = std::to_string(block_size);
+          mke2fs_argv[i++] = block_size_str.c_str();
+
+          std::string ext_args;
+          if (v->erase_blk_size != 0 && v->logical_blk_size != 0) {
+            ext_args = android::base::StringPrintf("stride=%d,stripe-width=%d", raid_stride,
+                                                   raid_stripe_width);
+            mke2fs_argv[i++] = "-E";
+            mke2fs_argv[i++] = ext_args.c_str();
+          }
+
+          mke2fs_argv[i++] = v->blk_device;
+
+          std::string size_str = std::to_string(length / block_size);
+          if (length != 0) {
+            mke2fs_argv[i++] = size_str.c_str();
+          }
+
+          result = exec_cmd(mke2fs_argv[0], const_cast<char**>(mke2fs_argv));
+          if (result == 0 && directory != nullptr) {
+            const char* e2fsdroid_argv[] = { "/sbin/e2fsdroid_static",
+                                             "-e",
+                                             "-S",
+                                             "/file_contexts",
+                                             "-f",
+                                             directory,
+                                             "-a",
+                                             volume,
+                                             v->blk_device,
+                                             nullptr };
+
+            result = exec_cmd(e2fsdroid_argv[0], const_cast<char**>(e2fsdroid_argv));
             }
         } else {   /* Has to be f2fs because we checked earlier. */
             if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0 && length < 0) {
