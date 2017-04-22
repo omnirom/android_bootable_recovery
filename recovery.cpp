@@ -1593,14 +1593,22 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (!sideload_auto_reboot && (status == INSTALL_ERROR || status == INSTALL_CORRUPT)) {
-        copy_logs();
+    if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
         ui->SetBackground(RecoveryUI::ERROR);
+        if (!ui->IsTextVisible()) {
+            sleep(5);
+        }
     }
 
     Device::BuiltinAction after = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
-    if ((status != INSTALL_SUCCESS && status != INSTALL_SKIPPED && !sideload_auto_reboot) ||
-            ui->IsTextVisible()) {
+    // 1. If the recovery menu is visible, prompt and wait for commands.
+    // 2. If the state is INSTALL_NONE, wait for commands. (i.e. In user build, manually reboot into
+    //    recovery to sideload a package.)
+    // 3. sideload_auto_reboot is an option only available in user-debug build, reboot the device
+    //    without waiting.
+    // 4. In all other cases, reboot the device. Therefore, normal users will observe the device
+    //    reboot after it shows the "error" screen for 5s.
+    if ((status == INSTALL_NONE && !sideload_auto_reboot) || ui->IsTextVisible()) {
         Device::BuiltinAction temp = prompt_and_wait(device, status);
         if (temp != Device::NO_ACTION) {
             after = temp;
