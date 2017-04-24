@@ -45,7 +45,7 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     install.cpp
-LOCAL_CFLAGS := -Wno-unused-parameter -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
 ifeq ($(AB_OTA_UPDATER),true)
