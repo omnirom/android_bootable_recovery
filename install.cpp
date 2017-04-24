@@ -211,7 +211,7 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
   return 0;
 }
 
-int update_binary_command(const std::string& path, ZipArchiveHandle zip, int retry_count,
+int update_binary_command(const std::string& path, ZipArchiveHandle zip, int /* retry_count */,
                           int status_fd, std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
   int ret = check_newer_ab_build(zip);
