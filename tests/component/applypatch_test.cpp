@@ -105,9 +105,6 @@ class ApplyPatchTest : public ::testing::Test {
   static size_t new_size;
 };
 
-std::string ApplyPatchTest::old_file;
-std::string ApplyPatchTest::new_file;
-
 static void cp(const std::string& src, const std::string& tgt) {
   std::string cmd = "cp " + src + " " + tgt;
   system(cmd.c_str());
@@ -132,48 +129,8 @@ class ApplyPatchCacheTest : public ApplyPatchTest {
   }
 };
 
-class ApplyPatchFullTest : public ApplyPatchCacheTest {
- public:
-  static void SetUpTestCase() {
-    ApplyPatchTest::SetUpTestCase();
-
-    output_f = new TemporaryFile();
-    output_loc = std::string(output_f->path);
-
-    struct FileContents fc;
-
-    ASSERT_EQ(0, LoadFileContents(&rand_file[0], &fc));
-    patches.push_back(
-        std::make_unique<Value>(VAL_BLOB, std::string(fc.data.begin(), fc.data.end())));
-
-    ASSERT_EQ(0, LoadFileContents(&patch_file[0], &fc));
-    patches.push_back(
-        std::make_unique<Value>(VAL_BLOB, std::string(fc.data.begin(), fc.data.end())));
-  }
-
-  static void TearDownTestCase() {
-    delete output_f;
-    patches.clear();
-  }
-
-  static std::vector<std::unique_ptr<Value>> patches;
-  static TemporaryFile* output_f;
-  static std::string output_loc;
-};
-
-class ApplyPatchDoubleCacheTest : public ApplyPatchFullTest {
- public:
-  virtual void SetUp() {
-    ApplyPatchCacheTest::SetUp();
-    cp(cache_file, "/cache/reallysaved.file");
-  }
-
-  virtual void TearDown() {
-    cp("/cache/reallysaved.file", cache_file);
-    ApplyPatchCacheTest::TearDown();
-  }
-};
-
+std::string ApplyPatchTest::old_file;
+std::string ApplyPatchTest::new_file;
 std::string ApplyPatchTest::rand_file;
 std::string ApplyPatchTest::patch_file;
 std::string ApplyPatchTest::cache_file;
@@ -183,10 +140,6 @@ std::string ApplyPatchTest::bad_sha1_a;
 std::string ApplyPatchTest::bad_sha1_b;
 size_t ApplyPatchTest::old_size;
 size_t ApplyPatchTest::new_size;
-
-std::vector<std::unique_ptr<Value>> ApplyPatchFullTest::patches;
-TemporaryFile* ApplyPatchFullTest::output_f;
-std::string ApplyPatchFullTest::output_loc;
 
 TEST_F(ApplyPatchTest, CheckModeSkip) {
   std::vector<std::string> sha1s;
