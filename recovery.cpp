@@ -40,7 +40,6 @@
 #include <string>
 #include <vector>
 
-#include <adb.h>
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
