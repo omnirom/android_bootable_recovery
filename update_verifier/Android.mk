@@ -14,12 +14,43 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# libupdate_verifier (static library)
+# ===============================
 include $(CLEAR_VARS)
 
-LOCAL_CLANG := true
-LOCAL_SRC_FILES := update_verifier.cpp
+LOCAL_SRC_FILES := \
+    update_verifier.cpp
+
+LOCAL_MODULE := libupdate_verifier
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    libcutils \
+    android.hardware.boot@1.0
+
+LOCAL_CFLAGS := -Wall -Werror
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/include
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/include
+
+ifeq ($(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_VERITY),true)
+LOCAL_CFLAGS += -DPRODUCT_SUPPORTS_VERITY=1
+endif
+
+include $(BUILD_STATIC_LIBRARY)
+
+# update_verifier (executable)
+# ===============================
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+    update_verifier_main.cpp
 
 LOCAL_MODULE := update_verifier
+LOCAL_STATIC_LIBRARIES := \
+    libupdate_verifier
 LOCAL_SHARED_LIBRARIES := \
     libbase \
     libcutils \
@@ -29,13 +60,8 @@ LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     android.hardware.boot@1.0
 
-LOCAL_CFLAGS := -Werror
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
+LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_INIT_RC := update_verifier.rc
-
-ifeq ($(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_VERITY),true)
-    LOCAL_CFLAGS += -DPRODUCT_SUPPORTS_VERITY=1
-endif
 
 include $(BUILD_EXECUTABLE)

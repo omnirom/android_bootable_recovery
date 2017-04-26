@@ -35,6 +35,8 @@
  * verifier reaches the end after the verification.
  */
 
+#include "update_verifier/update_verifier.h"
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -59,12 +61,6 @@ using android::hardware::boot::V1_0::IBootControl;
 using android::hardware::boot::V1_0::BoolResult;
 using android::hardware::boot::V1_0::CommandResult;
 
-constexpr auto CARE_MAP_FILE = "/data/ota_package/care_map.txt";
-constexpr auto DM_PATH_PREFIX = "/sys/block/";
-constexpr auto DM_PATH_SUFFIX = "/dm/name";
-constexpr auto DEV_PATH = "/dev/block/";
-constexpr int BLOCKSIZE = 4096;
-
 // Find directories in format of "/sys/block/dm-X".
 static int dm_name_filter(const dirent* de) {
   if (android::base::StartsWith(de->d_name, "dm-")) {
@@ -82,6 +78,7 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
   // (or "vendor"), then dm-X is a dm-wrapped system/vendor partition.
   // Afterwards, update_verifier will read every block on the care_map_file of
   // "/dev/block/dm-X" to ensure the partition's integrity.
+  static constexpr auto DM_PATH_PREFIX = "/sys/block/";
   dirent** namelist;
   int n = scandir(DM_PATH_PREFIX, &namelist, dm_name_filter, alphasort);
   if (n == -1) {
@@ -93,6 +90,8 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
     return false;
   }
 
+  static constexpr auto DM_PATH_SUFFIX = "/dm/name";
+  static constexpr auto DEV_PATH = "/dev/block/";
   std::string dm_block_device;
   while (n--) {
     std::string path = DM_PATH_PREFIX + std::string(namelist[n]->d_name) + DM_PATH_SUFFIX;
@@ -143,6 +142,7 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
       return false;
     }
 
+    static constexpr int BLOCKSIZE = 4096;
     if (lseek64(fd.get(), static_cast<off64_t>(range_start) * BLOCKSIZE, SEEK_SET) == -1) {
       PLOG(ERROR) << "lseek to " << range_start << " failed";
       return false;
@@ -161,7 +161,7 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
   return true;
 }
 
-static bool verify_image(const std::string& care_map_name) {
+bool verify_image(const std::string& care_map_name) {
     android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
     // If the device is flashed before the current boot, it may not have care_map.txt
     // in /data/ota_package. To allow the device to continue booting in this situation,
@@ -205,7 +205,7 @@ static int reboot_device() {
   while (true) pause();
 }
 
-int main(int argc, char** argv) {
+int update_verifier(int argc, char** argv) {
   for (int i = 1; i < argc; i++) {
     LOG(INFO) << "Started with arg " << i << ": " << argv[i];
   }
@@ -238,6 +238,7 @@ int main(int argc, char** argv) {
       return reboot_device();
     }
 
+    static constexpr auto CARE_MAP_FILE = "/data/ota_package/care_map.txt";
     if (!verify_image(CARE_MAP_FILE)) {
       LOG(ERROR) << "Failed to verify all blocks in care map file.";
       return reboot_device();
