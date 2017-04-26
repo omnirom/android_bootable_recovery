@@ -377,20 +377,6 @@ TEST(ApplyPatchModesTest, CheckModeInvalidArgs) {
   ASSERT_EQ(2, applypatch_modes(2, (const char* []){ "applypatch", "-c" }));
 }
 
-TEST(ApplyPatchModesTest, SpaceModeInvalidArgs) {
-  // Insufficient args.
-  ASSERT_EQ(2, applypatch_modes(2, (const char* []){ "applypatch", "-s" }));
-
-  // Invalid bytes arg.
-  ASSERT_EQ(1, applypatch_modes(3, (const char* []){ "applypatch", "-s", "x" }));
-
-  // 0 is invalid.
-  ASSERT_EQ(1, applypatch_modes(3, (const char* []){ "applypatch", "-s", "0" }));
-
-  // 0x10 is fine.
-  ASSERT_EQ(0, applypatch_modes(3, (const char* []){ "applypatch", "-s", "0x10" }));
-}
-
 TEST(ApplyPatchModesTest, ShowLicenses) {
   ASSERT_EQ(0, applypatch_modes(2, (const char* []){ "applypatch", "-l" }));
 }
