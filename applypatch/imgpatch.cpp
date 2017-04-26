@@ -100,7 +100,10 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value*
         printf("source data too short\n");
         return -1;
       }
-      ApplyBSDiffPatch(old_data + src_start, src_len, patch, patch_offset, sink, ctx);
+      if (ApplyBSDiffPatch(old_data + src_start, src_len, patch, patch_offset, sink, ctx) != 0) {
+        printf("Failed to apply bsdiff patch.\n");
+        return -1;
+      }
     } else if (type == CHUNK_RAW) {
       const char* raw_header = &patch->data[pos];
       pos += 4;
