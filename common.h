@@ -43,4 +43,6 @@ void ui_print(const char* format, ...);
 
 bool is_ro_debuggable();
 
+bool reboot(const std::string& command);
+
 #endif  // RECOVERY_COMMON_H
