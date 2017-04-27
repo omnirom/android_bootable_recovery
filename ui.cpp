@@ -227,7 +227,7 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
 
           case RecoveryUI::REBOOT:
             if (reboot_enabled) {
-                android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,");
+                reboot("reboot,");
                 while (true) { pause(); }
             }
             break;
