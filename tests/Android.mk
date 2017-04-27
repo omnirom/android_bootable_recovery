@@ -89,6 +89,10 @@ ifeq ($(AB_OTA_UPDATER),true)
 LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
 endif
 
+ifeq ($(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_VERITY),true)
+LOCAL_CFLAGS += -DPRODUCT_SUPPORTS_VERITY=1
+endif
+
 LOCAL_MODULE := recovery_component_test
 LOCAL_COMPATIBILITY_SUITE := device-tests
 LOCAL_C_INCLUDES := bootable/recovery
@@ -101,6 +105,7 @@ LOCAL_SRC_FILES := \
     component/sideload_test.cpp \
     component/uncrypt_test.cpp \
     component/updater_test.cpp \
+    component/update_verifier_test.cpp \
     component/verifier_test.cpp
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
@@ -128,6 +133,7 @@ LOCAL_STATIC_LIBRARIES := \
     libverifier \
     libotautil \
     libmounts \
+    libupdate_verifier \
     libdivsufsort \
     libdivsufsort64 \
     libfs_mgr \
