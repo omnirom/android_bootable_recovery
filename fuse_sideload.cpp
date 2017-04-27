@@ -226,11 +226,13 @@ static int handle_open(void* /* data */, struct fuse_data* fd, const struct fuse
     return NO_STATUS;
 }
 
-static int handle_flush(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
+static int handle_flush(void* /* data */, struct fuse_data* /* fd */,
+                        const struct fuse_in_header* /* hdr */) {
     return 0;
 }
 
-static int handle_release(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
+static int handle_release(void* /* data */, struct fuse_data* /* fd */,
+                          const struct fuse_in_header* /* hdr */) {
     return 0;
 }
 

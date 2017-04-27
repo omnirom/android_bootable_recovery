@@ -22,11 +22,10 @@ RECOVERY_FSTAB_VERSION := 2
 # ===============================
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := fuse_sideload.cpp
-LOCAL_CLANG := true
-LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 LOCAL_MODULE := libfusesideload
-LOCAL_STATIC_LIBRARIES := libcutils libc libcrypto
+LOCAL_STATIC_LIBRARIES := libcrypto
 include $(BUILD_STATIC_LIBRARY)
 
 # libmounts (static library)
