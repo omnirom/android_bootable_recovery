@@ -44,6 +44,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -142,17 +143,21 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
       return false;
     }
 
-    static constexpr int BLOCKSIZE = 4096;
+    static constexpr size_t BLOCKSIZE = 4096;
     if (lseek64(fd.get(), static_cast<off64_t>(range_start) * BLOCKSIZE, SEEK_SET) == -1) {
       PLOG(ERROR) << "lseek to " << range_start << " failed";
       return false;
     }
 
-    size_t size = (range_end - range_start) * BLOCKSIZE;
-    std::vector<uint8_t> buf(size);
-    if (!android::base::ReadFully(fd.get(), buf.data(), size)) {
-      PLOG(ERROR) << "Failed to read blocks " << range_start << " to " << range_end;
-      return false;
+    size_t remain = (range_end - range_start) * BLOCKSIZE;
+    while (remain > 0) {
+      size_t to_read = std::min(remain, 1024 * BLOCKSIZE);
+      std::vector<uint8_t> buf(to_read);
+      if (!android::base::ReadFully(fd.get(), buf.data(), to_read)) {
+        PLOG(ERROR) << "Failed to read blocks " << range_start << " to " << range_end;
+        return false;
+      }
+      remain -= to_read;
     }
     blk_count += (range_end - range_start);
   }
