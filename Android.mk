@@ -340,7 +340,9 @@ else
     LOCAL_CFLAGS += -DTW_EXCLUDE_ENCRYPTED_BACKUPS
 endif
 ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),)
-  ifeq ($(TARGET_CPU_VARIANT),krait)
+  ifneq ($(filter msm8226 msm8x26 msm8610 msm8974 msm8x74 msm8084 msm8x84 apq8084 msm8909 msm8916 msm8992 msm8994 msm8952 msm8996 msm8937 msm8953 msm8998,$(TARGET_BOARD_PLATFORM)),)
+    LOCAL_CFLAGS += -DQCOM_RTC_FIX
+  else ifeq ($(TARGET_CPU_VARIANT),krait)
     LOCAL_CFLAGS += -DQCOM_RTC_FIX
   endif
 else ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),true)
