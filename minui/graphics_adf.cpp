@@ -28,7 +28,8 @@
 
 #include "minui/minui.h"
 
-MinuiBackendAdf::MinuiBackendAdf() : intf_fd(-1), dev(), n_surfaces(0), surfaces() {}
+MinuiBackendAdf::MinuiBackendAdf()
+    : intf_fd(-1), dev(), current_surface(0), n_surfaces(0), surfaces() {}
 
 int MinuiBackendAdf::SurfaceInit(const drm_mode_modeinfo* mode, GRSurfaceAdf* surf) {
   *surf = {};
