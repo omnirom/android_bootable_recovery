@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9828ed82_ff2d9d8f",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 916,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-05-01T15:41:03Z",
+      "side": 1,
+      "message": "May need to change this exclusion as well.",
+      "revId": "6355b56c931aab444f90f38e5d9ebfdf965ae75f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
