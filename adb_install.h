@@ -17,8 +17,6 @@
 #ifndef _ADB_INSTALL_H
 #define _ADB_INSTALL_H
 
-class RecoveryUI;
-
-int apply_from_adb(RecoveryUI* h, bool* wipe_cache, const char* install_file);
+int apply_from_adb(bool* wipe_cache, const char* install_file);
 
 #endif
