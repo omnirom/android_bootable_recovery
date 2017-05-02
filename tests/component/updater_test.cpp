@@ -570,7 +570,7 @@ TEST_F(UpdaterTest, block_image_update) {
   ASSERT_EQ(0, fclose(zip_file_ptr));
 
   MemMapping map;
-  ASSERT_EQ(0, sysMapFile(zip_file.path, &map));
+  ASSERT_TRUE(map.MapFile(zip_file.path));
   ZipArchiveHandle handle;
   ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
 
@@ -646,7 +646,7 @@ TEST_F(UpdaterTest, new_data_short_write) {
   ASSERT_EQ(0, fclose(zip_file_ptr));
 
   MemMapping map;
-  ASSERT_EQ(0, sysMapFile(zip_file.path, &map));
+  ASSERT_TRUE(map.MapFile(zip_file.path));
   ZipArchiveHandle handle;
   ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
 

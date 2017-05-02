@@ -27,27 +27,23 @@ TEST(SysUtilTest, InvalidArgs) {
   MemMapping mapping;
 
   // Invalid argument.
-  ASSERT_EQ(-1, sysMapFile(nullptr, &mapping));
-  ASSERT_EQ(-1, sysMapFile("/somefile", nullptr));
+  ASSERT_FALSE(mapping.MapFile(""));
 }
 
-TEST(SysUtilTest, sysMapFileRegularFile) {
+TEST(SysUtilTest, MapFileRegularFile) {
   TemporaryFile temp_file1;
   std::string content = "abc";
   ASSERT_TRUE(android::base::WriteStringToFile(content, temp_file1.path));
 
-  // sysMapFile() should map the file to one range.
+  // MemMapping::MapFile() should map the file to one range.
   MemMapping mapping;
-  ASSERT_EQ(0, sysMapFile(temp_file1.path, &mapping));
+  ASSERT_TRUE(mapping.MapFile(temp_file1.path));
   ASSERT_NE(nullptr, mapping.addr);
   ASSERT_EQ(content.size(), mapping.length);
-  ASSERT_EQ(1U, mapping.ranges.size());
-
-  sysReleaseMap(&mapping);
-  ASSERT_EQ(0U, mapping.ranges.size());
+  ASSERT_EQ(1U, mapping.ranges());
 }
 
-TEST(SysUtilTest, sysMapFileBlockMap) {
+TEST(SysUtilTest, MapFileBlockMap) {
   // Create a file that has 10 blocks.
   TemporaryFile package;
   std::string content;
@@ -63,78 +59,72 @@ TEST(SysUtilTest, sysMapFileBlockMap) {
   std::string block_map_content = std::string(package.path) + "\n40960 4096\n1\n0 10\n";
   ASSERT_TRUE(android::base::WriteStringToFile(block_map_content, block_map_file.path));
 
-  ASSERT_EQ(0, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_TRUE(mapping.MapFile(filename));
   ASSERT_EQ(file_size, mapping.length);
-  ASSERT_EQ(1U, mapping.ranges.size());
+  ASSERT_EQ(1U, mapping.ranges());
 
   // It's okay to not have the trailing '\n'.
   block_map_content = std::string(package.path) + "\n40960 4096\n1\n0 10";
   ASSERT_TRUE(android::base::WriteStringToFile(block_map_content, block_map_file.path));
 
-  ASSERT_EQ(0, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_TRUE(mapping.MapFile(filename));
   ASSERT_EQ(file_size, mapping.length);
-  ASSERT_EQ(1U, mapping.ranges.size());
+  ASSERT_EQ(1U, mapping.ranges());
 
   // Or having multiple trailing '\n's.
   block_map_content = std::string(package.path) + "\n40960 4096\n1\n0 10\n\n\n";
   ASSERT_TRUE(android::base::WriteStringToFile(block_map_content, block_map_file.path));
 
-  ASSERT_EQ(0, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_TRUE(mapping.MapFile(filename));
   ASSERT_EQ(file_size, mapping.length);
-  ASSERT_EQ(1U, mapping.ranges.size());
+  ASSERT_EQ(1U, mapping.ranges());
 
   // Multiple ranges.
   block_map_content = std::string(package.path) + "\n40960 4096\n3\n0 3\n3 5\n5 10\n";
   ASSERT_TRUE(android::base::WriteStringToFile(block_map_content, block_map_file.path));
 
-  ASSERT_EQ(0, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_TRUE(mapping.MapFile(filename));
   ASSERT_EQ(file_size, mapping.length);
-  ASSERT_EQ(3U, mapping.ranges.size());
-
-  sysReleaseMap(&mapping);
-  ASSERT_EQ(0U, mapping.ranges.size());
+  ASSERT_EQ(3U, mapping.ranges());
 }
 
-TEST(SysUtilTest, sysMapFileBlockMapInvalidBlockMap) {
+TEST(SysUtilTest, MapFileBlockMapInvalidBlockMap) {
   MemMapping mapping;
   TemporaryFile temp_file;
   std::string filename = std::string("@") + temp_file.path;
 
   // Block map file is too short.
   ASSERT_TRUE(android::base::WriteStringToFile("/somefile\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_FALSE(mapping.MapFile(filename));
 
   ASSERT_TRUE(android::base::WriteStringToFile("/somefile\n4096 4096\n0\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_FALSE(mapping.MapFile(filename));
 
   // Block map file has unexpected number of lines.
   ASSERT_TRUE(android::base::WriteStringToFile("/somefile\n4096 4096\n1\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_FALSE(mapping.MapFile(filename));
 
   ASSERT_TRUE(android::base::WriteStringToFile("/somefile\n4096 4096\n2\n0 1\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_FALSE(mapping.MapFile(filename));
 
   // Invalid size/blksize/range_count.
   ASSERT_TRUE(android::base::WriteStringToFile("/somefile\nabc 4096\n1\n0 1\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_FALSE(mapping.MapFile(filename));
 
   ASSERT_TRUE(android::base::WriteStringToFile("/somefile\n4096 4096\n\n0 1\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_FALSE(mapping.MapFile(filename));
 
   // size/blksize/range_count don't match.
   ASSERT_TRUE(android::base::WriteStringToFile("/somefile\n0 4096\n1\n0 1\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_FALSE(mapping.MapFile(filename));
 
   ASSERT_TRUE(android::base::WriteStringToFile("/somefile\n4096 0\n1\n0 1\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_FALSE(mapping.MapFile(filename));
 
   ASSERT_TRUE(android::base::WriteStringToFile("/somefile\n4096 4096\n0\n0 1\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
+  ASSERT_FALSE(mapping.MapFile(filename));
 
   // Invalid block dev path.
   ASSERT_TRUE(android::base::WriteStringToFile("/doesntexist\n4096 4096\n1\n0 1\n", temp_file.path));
-  ASSERT_EQ(-1, sysMapFile(filename.c_str(), &mapping));
-
-  sysReleaseMap(&mapping);
-  ASSERT_EQ(0U, mapping.ranges.size());
+  ASSERT_FALSE(mapping.MapFile(filename));
 }
