@@ -51,6 +51,7 @@
 #include "error_code.h"
 #include "otautil/SysUtil.h"
 #include "otautil/ThermalUtil.h"
+#include "private/install.h"
 #include "roots.h"
 #include "ui.h"
 #include "verifier.h"
@@ -124,12 +125,6 @@ static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::stri
     }
   }
 }
-
-// Extract the update binary from the open zip archive |zip| located at |path| and store into |cmd|
-// the command line that should be called. The |status_fd| is the file descriptor the child process
-// should use to report back the progress of the update.
-int update_binary_command(const std::string& path, ZipArchiveHandle zip, int retry_count,
-                          int status_fd, std::vector<std::string>* cmd);
 
 #ifdef AB_OTA_UPDATER
 
@@ -211,8 +206,9 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
   return 0;
 }
 
-int update_binary_command(const std::string& path, ZipArchiveHandle zip, int /* retry_count */,
-                          int status_fd, std::vector<std::string>* cmd) {
+int update_binary_command(const std::string& package, ZipArchiveHandle zip,
+                          const std::string& binary_path, int /* retry_count */, int status_fd,
+                          std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
   int ret = check_newer_ab_build(zip);
   if (ret != 0) {
@@ -246,8 +242,8 @@ int update_binary_command(const std::string& path, ZipArchiveHandle zip, int /* 
   }
   long payload_offset = payload_entry.offset;
   *cmd = {
-    "/sbin/update_engine_sideload",
-    "--payload=file://" + path,
+    binary_path,
+    "--payload=file://" + package,
     android::base::StringPrintf("--offset=%ld", payload_offset),
     "--headers=" + std::string(payload_properties.begin(), payload_properties.end()),
     android::base::StringPrintf("--status_fd=%d", status_fd),
@@ -257,8 +253,9 @@ int update_binary_command(const std::string& path, ZipArchiveHandle zip, int /* 
 
 #else  // !AB_OTA_UPDATER
 
-int update_binary_command(const std::string& path, ZipArchiveHandle zip, int retry_count,
-                          int status_fd, std::vector<std::string>* cmd) {
+int update_binary_command(const std::string& package, ZipArchiveHandle zip,
+                          const std::string& binary_path, int retry_count, int status_fd,
+                          std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
 
   // On traditional updates we extract the update binary from the package.
@@ -270,11 +267,10 @@ int update_binary_command(const std::string& path, ZipArchiveHandle zip, int ret
     return INSTALL_CORRUPT;
   }
 
-  const char* binary = "/tmp/update_binary";
-  unlink(binary);
-  int fd = creat(binary, 0755);
+  unlink(binary_path.c_str());
+  int fd = creat(binary_path.c_str(), 0755);
   if (fd == -1) {
-    PLOG(ERROR) << "Failed to create " << binary;
+    PLOG(ERROR) << "Failed to create " << binary_path;
     return INSTALL_ERROR;
   }
 
@@ -286,10 +282,10 @@ int update_binary_command(const std::string& path, ZipArchiveHandle zip, int ret
   }
 
   *cmd = {
-    binary,
+    binary_path,
     EXPAND(RECOVERY_API_VERSION),  // defined in Android.mk
     std::to_string(status_fd),
-    path,
+    package,
   };
   if (retry_count > 0) {
     cmd->push_back("retry");
@@ -308,7 +304,7 @@ static void log_max_temperature(int* max_temperature) {
 }
 
 // If the package contains an update binary, extract it and run it.
-static int try_update_binary(const std::string& path, ZipArchiveHandle zip, bool* wipe_cache,
+static int try_update_binary(const std::string& package, ZipArchiveHandle zip, bool* wipe_cache,
                              std::vector<std::string>* log_buffer, int retry_count,
                              int* max_temperature) {
   read_source_target_build(zip, log_buffer);
@@ -317,7 +313,13 @@ static int try_update_binary(const std::string& path, ZipArchiveHandle zip, bool
   pipe(pipefd);
 
   std::vector<std::string> args;
-  int ret = update_binary_command(path, zip, retry_count, pipefd[1], &args);
+#ifdef AB_OTA_UPDATER
+  int ret = update_binary_command(package, zip, "/sbin/update_engine_sideload", retry_count,
+                                  pipefd[1], &args);
+#else
+  int ret = update_binary_command(package, zip, "/tmp/update-binary", retry_count, pipefd[1],
+                                  &args);
+#endif
   if (ret) {
     close(pipefd[0]);
     close(pipefd[1]);
@@ -472,7 +474,7 @@ static int try_update_binary(const std::string& path, ZipArchiveHandle zip, bool
     return INSTALL_RETRY;
   }
   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    LOG(ERROR) << "Error in " << path << " (Status " << WEXITSTATUS(status) << ")";
+    LOG(ERROR) << "Error in " << package << " (Status " << WEXITSTATUS(status) << ")";
     return INSTALL_ERROR;
   }
 
