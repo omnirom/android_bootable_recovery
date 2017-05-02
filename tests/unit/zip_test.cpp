@@ -66,9 +66,9 @@ TEST(ZipTest, ExtractPackageRecursive) {
 }
 
 TEST(ZipTest, OpenFromMemory) {
-  MemMapping map;
   std::string zip_path = from_testdata_base("ziptest_dummy-update.zip");
-  ASSERT_EQ(0, sysMapFile(zip_path.c_str(), &map));
+  MemMapping map;
+  ASSERT_TRUE(map.MapFile(zip_path));
 
   // Map an update package into memory and open the archive from there.
   ZipArchiveHandle handle;
@@ -85,6 +85,5 @@ TEST(ZipTest, OpenFromMemory) {
   ASSERT_EQ(0, ExtractEntryToFile(handle, &binary_entry, tmp_binary.fd));
 
   CloseArchive(handle);
-  sysReleaseMap(&map);
 }
 
