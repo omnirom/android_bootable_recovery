@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
 
   const char* package_filename = argv[3];
   MemMapping map;
-  if (sysMapFile(package_filename, &map) != 0) {
+  if (!map.MapFile(package_filename)) {
     LOG(ERROR) << "failed to map package " << argv[3];
     return 3;
   }
@@ -213,7 +213,6 @@ int main(int argc, char** argv) {
   if (updater_info.package_zip) {
     CloseArchive(updater_info.package_zip);
   }
-  sysReleaseMap(&map);
 
   return 0;
 }

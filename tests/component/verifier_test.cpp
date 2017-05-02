@@ -40,7 +40,7 @@ class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
   void SetUp() override {
     std::vector<std::string> args = GetParam();
     std::string package = from_testdata_base(args[0]);
-    if (sysMapFile(package.c_str(), &memmap) != 0) {
+    if (!memmap.MapFile(package)) {
       FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
     }
 
