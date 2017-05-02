@@ -23,10 +23,9 @@
 enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE, INSTALL_SKIPPED,
         INSTALL_RETRY };
 
-// Install the package specified by root_path.  If INSTALL_SUCCESS is
-// returned and *wipe_cache is true on exit, caller should wipe the
-// cache partition.
-int install_package(const char* root_path, bool* wipe_cache, const char* install_file,
+// Installs the given update package. If INSTALL_SUCCESS is returned and *wipe_cache is true on
+// exit, caller should wipe the cache partition.
+int install_package(const std::string& package, bool* wipe_cache, const std::string& install_file,
                     bool needs_mount, int retry_count);
 
 // Verify the package by ota keys. Return true if the package is verified successfully,
@@ -35,9 +34,9 @@ bool verify_package(const unsigned char* package_data, size_t package_size);
 
 // Read meta data file of the package, write its content in the string pointed by meta_data.
 // Return true if succeed, otherwise return false.
-bool read_metadata_from_package(ZipArchiveHandle zip, std::string* meta_data);
+bool read_metadata_from_package(ZipArchiveHandle zip, std::string* metadata);
 
-// Verifes the compatibility info in a Treble-compatible package. Returns true directly if the
+// Verifies the compatibility info in a Treble-compatible package. Returns true directly if the
 // entry doesn't exist.
 bool verify_package_compatibility(ZipArchiveHandle package_zip);
 
