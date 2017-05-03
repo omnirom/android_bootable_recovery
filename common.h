@@ -22,8 +22,8 @@
 
 #include <string>
 
-#define STRINGIFY(x) #x
-#define EXPAND(x) STRINGIFY(x)
+static constexpr int kRecoveryApiVersion = RECOVERY_API_VERSION;  // Defined in Android.mk.
+static_assert(kRecoveryApiVersion >= 3, "Invalid recovery API version.");
 
 class RecoveryUI;
 
