@@ -126,6 +126,7 @@ LOCAL_STATIC_LIBRARIES := \
     libimgpatch \
     libbsdiff \
     libbspatch \
+    libfusesideload \
     libotafault \
     librecovery \
     libupdater \

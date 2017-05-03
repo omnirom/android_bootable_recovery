@@ -25,7 +25,9 @@ LOCAL_SRC_FILES := fuse_sideload.cpp
 LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 LOCAL_MODULE := libfusesideload
-LOCAL_STATIC_LIBRARIES := libcrypto
+LOCAL_STATIC_LIBRARIES := \
+    libcrypto \
+    libbase
 include $(BUILD_STATIC_LIBRARY)
 
 # libmounts (static library)
