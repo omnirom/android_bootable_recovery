@@ -907,6 +907,7 @@ int OpenRecoveryScript::Restore_ADB_Backup(void) {
 					part_settings.partition_count = partition_count;
 					part_settings.adbbackup = true;
 					part_settings.adb_compression = twimghdr.compressed;
+					part_settings.Part->Set_Backup_FileName(part_settings.Part->Get_Backup_Name() + "." + part_settings.Part->Current_File_System + ".win");
 					part_settings.total_restore_size += part_settings.Part->Get_Restore_Size(&part_settings);
 					part_settings.PM_Method = PM_RESTORE;
 					ProgressTracking progress(part_settings.total_restore_size);

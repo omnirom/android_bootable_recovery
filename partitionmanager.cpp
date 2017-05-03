@@ -928,6 +928,10 @@ int TWPartitionManager::Run_Backup(bool adbbackup) {
 bool TWPartitionManager::Restore_Partition(PartitionSettings *part_settings) {
 	time_t Start, Stop;
 
+	if (part_settings->adbbackup) {
+		part_settings->Part->Set_Backup_FileName(part_settings->Part->Backup_Name + "." + part_settings->Part->Current_File_System + ".win");
+	}
+
 	TWFunc::SetPerformanceMode(true);
 
 	time(&Start);

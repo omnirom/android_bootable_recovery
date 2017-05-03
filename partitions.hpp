@@ -119,6 +119,8 @@ public:
 	int Decrypt_Adopted();
 	void Revert_Adopted();
 	void Partition_Post_Processing(bool Display_Error);                       // Apply partition specific settings after fstab processed
+	void Set_Backup_FileName(string fname);                                   // Set Backup_FileName for partition
+	string Get_Backup_Name();                                                 // Get Backup_Name for partition
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 public:
