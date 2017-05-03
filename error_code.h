@@ -24,6 +24,7 @@ enum ErrorCode {
   kZipOpenFailure,
   kBootreasonInBlacklist,
   kPackageCompatibilityFailure,
+  kScriptExecutionFailure,
 };
 
 enum CauseCode {
