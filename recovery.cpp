@@ -125,6 +125,10 @@ static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
 static constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
 static constexpr const char* DEFAULT_LOCALE = "en-US";
 
+// We define RECOVERY_API_VERSION in Android.mk, which will be picked up by build system and packed
+// into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
+static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
+
 static std::string locale;
 static bool has_cache = false;
 
@@ -1498,7 +1502,7 @@ int main(int argc, char **argv) {
     property_list(print_property, NULL);
     printf("\n");
 
-    ui->Print("Supported API: %d\n", RECOVERY_API_VERSION);
+    ui->Print("Supported API: %d\n", kRecoveryApiVersion);
 
     int status = INSTALL_SUCCESS;
 
