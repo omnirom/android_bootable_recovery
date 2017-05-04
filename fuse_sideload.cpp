@@ -61,6 +61,9 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
+#include <string>
+
+#include <android-base/stringprintf.h>
 #include <openssl/sha.h>
 
 #include "fuse_sideload.h"
@@ -364,164 +367,163 @@ static int handle_read(void* data, struct fuse_data* fd, const struct fuse_in_he
     return NO_STATUS;
 }
 
-int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
-                      uint64_t file_size, uint32_t block_size)
-{
-    int result;
+int run_fuse_sideload(struct provider_vtab* vtab, void* cookie, uint64_t file_size,
+                      uint32_t block_size) {
+  // If something's already mounted on our mountpoint, try to remove it. (Mostly in case of a
+  // previous abnormal exit.)
+  umount2(FUSE_SIDELOAD_HOST_MOUNTPOINT, MNT_FORCE);
 
-    // If something's already mounted on our mountpoint, try to remove
-    // it.  (Mostly in case of a previous abnormal exit.)
-    umount2(FUSE_SIDELOAD_HOST_MOUNTPOINT, MNT_FORCE);
+  // fs/fuse/inode.c in kernel code uses the greater of 4096 and the passed-in max_read.
+  if (block_size < 4096) {
+    fprintf(stderr, "block size (%u) is too small\n", block_size);
+    return -1;
+  }
+  if (block_size > (1 << 22)) {  // 4 MiB
+    fprintf(stderr, "block size (%u) is too large\n", block_size);
+    return -1;
+  }
 
-    if (block_size < 1024) {
-        fprintf(stderr, "block size (%u) is too small\n", block_size);
-        return -1;
-    }
-    if (block_size > (1<<22)) {   // 4 MiB
-        fprintf(stderr, "block size (%u) is too large\n", block_size);
-        return -1;
-    }
+  struct fuse_data fd = {};
+  fd.vtab = vtab;
+  fd.cookie = cookie;
+  fd.file_size = file_size;
+  fd.block_size = block_size;
+  fd.file_blocks = (file_size == 0) ? 0 : (((file_size - 1) / block_size) + 1);
 
-    struct fuse_data fd;
-    memset(&fd, 0, sizeof(fd));
-    fd.vtab = vtab;
-    fd.cookie = cookie;
-    fd.file_size = file_size;
-    fd.block_size = block_size;
-    fd.file_blocks = (file_size == 0) ? 0 : (((file_size-1) / block_size) + 1);
+  int result;
+  if (fd.file_blocks > (1 << 18)) {
+    fprintf(stderr, "file has too many blocks (%u)\n", fd.file_blocks);
+    result = -1;
+    goto done;
+  }
 
-    if (fd.file_blocks > (1<<18)) {
-        fprintf(stderr, "file has too many blocks (%u)\n", fd.file_blocks);
-        result = -1;
-        goto done;
-    }
+  fd.hashes = (uint8_t*)calloc(fd.file_blocks, SHA256_DIGEST_LENGTH);
+  if (fd.hashes == NULL) {
+    fprintf(stderr, "failed to allocate %d bites for hashes\n",
+            fd.file_blocks * SHA256_DIGEST_LENGTH);
+    result = -1;
+    goto done;
+  }
 
-    fd.hashes = (uint8_t*)calloc(fd.file_blocks, SHA256_DIGEST_LENGTH);
-    if (fd.hashes == NULL) {
-        fprintf(stderr, "failed to allocate %d bites for hashes\n",
-                fd.file_blocks * SHA256_DIGEST_LENGTH);
-        result = -1;
-        goto done;
-    }
+  fd.uid = getuid();
+  fd.gid = getgid();
 
-    fd.uid = getuid();
-    fd.gid = getgid();
+  fd.curr_block = -1;
+  fd.block_data = (uint8_t*)malloc(block_size);
+  if (fd.block_data == NULL) {
+    fprintf(stderr, "failed to allocate %d bites for block_data\n", block_size);
+    result = -1;
+    goto done;
+  }
+  fd.extra_block = (uint8_t*)malloc(block_size);
+  if (fd.extra_block == NULL) {
+    fprintf(stderr, "failed to allocate %d bites for extra_block\n", block_size);
+    result = -1;
+    goto done;
+  }
 
-    fd.curr_block = -1;
-    fd.block_data = (uint8_t*)malloc(block_size);
-    if (fd.block_data == NULL) {
-        fprintf(stderr, "failed to allocate %d bites for block_data\n", block_size);
-        result = -1;
-        goto done;
-    }
-    fd.extra_block = (uint8_t*)malloc(block_size);
-    if (fd.extra_block == NULL) {
-        fprintf(stderr, "failed to allocate %d bites for extra_block\n", block_size);
-        result = -1;
-        goto done;
-    }
+  fd.ffd = open("/dev/fuse", O_RDWR);
+  if (fd.ffd < 0) {
+    perror("open /dev/fuse");
+    result = -1;
+    goto done;
+  }
 
-    fd.ffd = open("/dev/fuse", O_RDWR);
-    if (fd.ffd < 0) {
-        perror("open /dev/fuse");
-        result = -1;
-        goto done;
-    }
+  {
+    std::string opts = android::base::StringPrintf(
+        "fd=%d,user_id=%d,group_id=%d,max_read=%u,allow_other,rootmode=040000", fd.ffd, fd.uid,
+        fd.gid, block_size);
 
-    char opts[256];
-    snprintf(opts, sizeof(opts),
-             ("fd=%d,user_id=%d,group_id=%d,max_read=%u,"
-              "allow_other,rootmode=040000"),
-             fd.ffd, fd.uid, fd.gid, block_size);
-
-    result = mount("/dev/fuse", FUSE_SIDELOAD_HOST_MOUNTPOINT,
-                   "fuse", MS_NOSUID | MS_NODEV | MS_RDONLY | MS_NOEXEC, opts);
+    result = mount("/dev/fuse", FUSE_SIDELOAD_HOST_MOUNTPOINT, "fuse",
+                   MS_NOSUID | MS_NODEV | MS_RDONLY | MS_NOEXEC, opts.c_str());
     if (result < 0) {
-        perror("mount");
-        goto done;
+      perror("mount");
+      goto done;
     }
-    uint8_t request_buffer[sizeof(struct fuse_in_header) + PATH_MAX*8];
-    for (;;) {
-        ssize_t len = TEMP_FAILURE_RETRY(read(fd.ffd, request_buffer, sizeof(request_buffer)));
-        if (len == -1) {
-            perror("read request");
-            if (errno == ENODEV) {
-                result = -1;
-                break;
-            }
-            continue;
-        }
+  }
 
-        if ((size_t)len < sizeof(struct fuse_in_header)) {
-            fprintf(stderr, "request too short: len=%zu\n", (size_t)len);
-            continue;
-        }
-
-        struct fuse_in_header* hdr = (struct fuse_in_header*) request_buffer;
-        void* data = request_buffer + sizeof(struct fuse_in_header);
-
-        result = -ENOSYS;
-
-        switch (hdr->opcode) {
-             case FUSE_INIT:
-                result = handle_init(data, &fd, hdr);
-                break;
-
-             case FUSE_LOOKUP:
-                result = handle_lookup(data, &fd, hdr);
-                break;
-
-            case FUSE_GETATTR:
-                result = handle_getattr(data, &fd, hdr);
-                break;
-
-            case FUSE_OPEN:
-                result = handle_open(data, &fd, hdr);
-                break;
-
-            case FUSE_READ:
-                result = handle_read(data, &fd, hdr);
-                break;
-
-            case FUSE_FLUSH:
-                result = handle_flush(data, &fd, hdr);
-                break;
-
-            case FUSE_RELEASE:
-                result = handle_release(data, &fd, hdr);
-                break;
-
-            default:
-                fprintf(stderr, "unknown fuse request opcode %d\n", hdr->opcode);
-                break;
-        }
-
-        if (result == NO_STATUS_EXIT) {
-            result = 0;
-            break;
-        }
-
-        if (result != NO_STATUS) {
-            struct fuse_out_header outhdr;
-            outhdr.len = sizeof(outhdr);
-            outhdr.error = result;
-            outhdr.unique = hdr->unique;
-            TEMP_FAILURE_RETRY(write(fd.ffd, &outhdr, sizeof(outhdr)));
-        }
+  uint8_t request_buffer[sizeof(struct fuse_in_header) + PATH_MAX * 8];
+  for (;;) {
+    ssize_t len = TEMP_FAILURE_RETRY(read(fd.ffd, request_buffer, sizeof(request_buffer)));
+    if (len == -1) {
+      perror("read request");
+      if (errno == ENODEV) {
+        result = -1;
+        break;
+      }
+      continue;
     }
 
-  done:
-    fd.vtab->close(fd.cookie);
-
-    result = umount2(FUSE_SIDELOAD_HOST_MOUNTPOINT, MNT_DETACH);
-    if (result < 0) {
-        printf("fuse_sideload umount failed: %s\n", strerror(errno));
+    if (static_cast<size_t>(len) < sizeof(struct fuse_in_header)) {
+      fprintf(stderr, "request too short: len=%zd\n", len);
+      continue;
     }
 
-    if (fd.ffd) close(fd.ffd);
-    free(fd.hashes);
-    free(fd.block_data);
-    free(fd.extra_block);
+    struct fuse_in_header* hdr = reinterpret_cast<struct fuse_in_header*>(request_buffer);
+    void* data = request_buffer + sizeof(struct fuse_in_header);
 
-    return result;
+    result = -ENOSYS;
+
+    switch (hdr->opcode) {
+      case FUSE_INIT:
+        result = handle_init(data, &fd, hdr);
+        break;
+
+      case FUSE_LOOKUP:
+        result = handle_lookup(data, &fd, hdr);
+        break;
+
+      case FUSE_GETATTR:
+        result = handle_getattr(data, &fd, hdr);
+        break;
+
+      case FUSE_OPEN:
+        result = handle_open(data, &fd, hdr);
+        break;
+
+      case FUSE_READ:
+        result = handle_read(data, &fd, hdr);
+        break;
+
+      case FUSE_FLUSH:
+        result = handle_flush(data, &fd, hdr);
+        break;
+
+      case FUSE_RELEASE:
+        result = handle_release(data, &fd, hdr);
+        break;
+
+      default:
+        fprintf(stderr, "unknown fuse request opcode %d\n", hdr->opcode);
+        break;
+    }
+
+    if (result == NO_STATUS_EXIT) {
+      result = 0;
+      break;
+    }
+
+    if (result != NO_STATUS) {
+      struct fuse_out_header outhdr;
+      outhdr.len = sizeof(outhdr);
+      outhdr.error = result;
+      outhdr.unique = hdr->unique;
+      TEMP_FAILURE_RETRY(write(fd.ffd, &outhdr, sizeof(outhdr)));
+    }
+  }
+
+done:
+  fd.vtab->close(fd.cookie);
+
+  result = umount2(FUSE_SIDELOAD_HOST_MOUNTPOINT, MNT_DETACH);
+  if (result < 0) {
+    printf("fuse_sideload umount failed: %s\n", strerror(errno));
+  }
+
+  if (fd.ffd) close(fd.ffd);
+  free(fd.hashes);
+  free(fd.block_data);
+  free(fd.extra_block);
+
+  return result;
 }
