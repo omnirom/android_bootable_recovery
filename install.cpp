@@ -287,7 +287,7 @@ int update_binary_command(const std::string& path, ZipArchiveHandle zip, int ret
 
   *cmd = {
     binary,
-    std::to_string(kRecoveryApiVersion),
+    EXPAND(RECOVERY_API_VERSION),  // defined in Android.mk
     std::to_string(status_fd),
     path,
   };
