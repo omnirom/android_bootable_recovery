@@ -232,14 +232,14 @@ int format_volume(const char* volume, const char* directory) {
                            << ") not supported on " << v->fs_type;
                 return -1;
             }
-            char *num_sectors;
-            if (asprintf(&num_sectors, "%zd", length / 512) <= 0) {
+            char *num_sectors = nullptr;
+            if (length >= 512 && asprintf(&num_sectors, "%zd", length / 512) <= 0) {
                 LOG(ERROR) << "format_volume: failed to create " << v->fs_type
                            << " command for " << v->blk_device;
                 return -1;
             }
             const char *f2fs_path = "/sbin/mkfs.f2fs";
-            const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", v->blk_device, num_sectors, NULL};
+            const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", v->blk_device, num_sectors, nullptr};
 
             result = exec_cmd(f2fs_path, (char* const*)f2fs_argv);
             free(num_sectors);
