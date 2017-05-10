@@ -40,12 +40,6 @@
 #include "minui.h"
 #include "graphics.h"
 
-struct GRFont {
-    GRSurface* texture;
-    int cwidth;
-    int cheight;
-};
-
 static GRFont* gr_font = NULL;
 static minui_backend* gr_backend = NULL;
 
@@ -68,17 +62,35 @@ static bool outside(int x, int y)
 {
     return x < 0 || x >= gr_draw->width || y < 0 || y >= gr_draw->height;
 }
-
+//#define TW_USE_MINUI_CUSTOM_FONTS 1
+#ifndef TW_USE_MINUI_CUSTOM_FONTS
 int gr_measure(const char *s)
 {
-    return gr_font->cwidth * strlen(s);
+    return gr_font->char_width * strlen(s);
 }
 
 void gr_font_size(int *x, int *y)
 {
-    *x = gr_font->cwidth;
-    *y = gr_font->cheight;
+    *x = gr_font->char_width;
+    *y = gr_font->char_height;
 }
+#else // TW_USE_MINUI_CUSTOM_FONTS
+const GRFont* gr_sys_font()
+{
+    return gr_font;
+}
+
+int gr_measure(const GRFont* font, const char *s)
+{
+    return font->char_width * strlen(s);
+}
+
+void gr_font_size(const GRFont* font, int *x, int *y)
+{
+    *x = font->char_width;
+    *y = font->char_height;
+}
+#endif // TW_USE_MINUI_CUSTOM_FONTS
 
 void blend_16bpp(unsigned char* px, unsigned r5, unsigned g5, unsigned b5, unsigned char a)
 {
@@ -146,36 +158,67 @@ static void text_blend(unsigned char* src_p, int src_row_bytes,
     }
 }
 
+#ifndef TW_USE_MINUI_CUSTOM_FONTS
 void gr_text(int x, int y, const char *s, bool bold)
 {
     GRFont* font = gr_font;
 
     if (!font->texture || gr_current_a == 0) return;
 
-    bold = bold && (font->texture->height != font->cheight);
+    bold = bold && (font->texture->height != font->char_height);
 
     x += overscan_offset_x;
     y += overscan_offset_y;
 
     unsigned char ch;
     while ((ch = *s++)) {
-        if (outside(x, y) || outside(x+font->cwidth-1, y+font->cheight-1)) break;
+        if (outside(x, y) || outside(x+font->char_width-1, y+font->char_height-1)) break;
 
         if (ch < ' ' || ch > '~') {
             ch = '?';
         }
 
-        unsigned char* src_p = font->texture->data + ((ch - ' ') * font->cwidth) +
-                               (bold ? font->cheight * font->texture->row_bytes : 0);
+        unsigned char* src_p = font->texture->data + ((ch - ' ') * font->char_width) +
+                               (bold ? font->char_height * font->texture->row_bytes : 0);
         unsigned char* dst_p = gr_draw->data + y*gr_draw->row_bytes + x*gr_draw->pixel_bytes;
 
         text_blend(src_p, font->texture->row_bytes,
                    dst_p, gr_draw->row_bytes,
-                   font->cwidth, font->cheight);
+                   font->char_width, font->char_height);
 
-        x += font->cwidth;
+        x += font->char_width;
     }
 }
+#else //TW_USE_MINUI_CUSTOM_FONTS
+void gr_text(const GRFont* font, int x, int y, const char *s, bool bold)
+{
+    if (!font->texture || gr_current_a == 0) return;
+
+    bold = bold && (font->texture->height != font->char_height);
+
+    x += overscan_offset_x;
+    y += overscan_offset_y;
+
+    unsigned char ch;
+    while ((ch = *s++)) {
+        if (outside(x, y) || outside(x+font->char_width-1, y+font->char_height-1)) break;
+
+        if (ch < ' ' || ch > '~') {
+            ch = '?';
+        }
+
+        unsigned char* src_p = font->texture->data + ((ch - ' ') * font->char_width) +
+                               (bold ? font->char_height * font->texture->row_bytes : 0);
+        unsigned char* dst_p = gr_draw->data + y*gr_draw->row_bytes + x*gr_draw->pixel_bytes;
+
+        text_blend(src_p, font->texture->row_bytes,
+                   dst_p, gr_draw->row_bytes,
+                   font->char_width, font->char_height);
+
+        x += font->char_width;
+    }
+}
+#endif //TW_USE_MINUI_CUSTOM_FONTS
 
 void gr_texticon(int x, int y, GRSurface* icon) {
     if (icon == NULL) return;
@@ -383,6 +426,7 @@ unsigned int gr_get_height(GRSurface* surface) {
     return surface->height;
 }
 
+#ifndef TW_USE_MINUI_CUSTOM_FONTS
 static void gr_init_font(void)
 {
     gr_font = reinterpret_cast<GRFont*>(calloc(sizeof(*gr_font), 1));
@@ -392,8 +436,8 @@ static void gr_init_font(void)
         // The font image should be a 96x2 array of character images.  The
         // columns are the printable ASCII characters 0x20 - 0x7f.  The
         // top row is regular text; the bottom row is bold.
-        gr_font->cwidth = gr_font->texture->width / 96;
-        gr_font->cheight = gr_font->texture->height / 2;
+        gr_font->char_width = gr_font->texture->width / 96;
+        gr_font->char_height = gr_font->texture->height / 2;
     } else {
         printf("failed to read font: res=%d\n", res);
 
@@ -414,10 +458,72 @@ static void gr_init_font(void)
             bits += (data & 0x7f);
         }
 
-        gr_font->cwidth = font.cwidth;
-        gr_font->cheight = font.cheight;
+        gr_font->char_width = font.char_width;
+        gr_font->char_height = font.char_height;
     }
 }
+
+void gr_set_font(__attribute__ ((unused))const char* name) {
+	//this cm function is made to change font. Don't care, just init the font:
+	gr_init_font();
+	return;
+}
+#else
+int gr_init_font(const char* name, GRFont** dest) {
+    GRFont* font = reinterpret_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
+    if (font == nullptr) {
+        return -1;
+    }
+
+    int res = res_create_alpha_surface(name, &(font->texture));
+    if (res < 0) {
+        free(font);
+        return res;
+    }
+
+    // The font image should be a 96x2 array of character images.  The
+    // columns are the printable ASCII characters 0x20 - 0x7f.  The
+    // top row is regular text; the bottom row is bold.
+    font->char_width = font->texture->width / 96;
+    font->char_height = font->texture->height / 2;
+
+    *dest = font;
+
+    return 0;
+}
+
+static void gr_init_font(void)
+{
+    int res = gr_init_font("font", &gr_font);
+    if (res == 0) {
+        return;
+    }
+
+    printf("failed to read font: res=%d\n", res);
+
+
+    // fall back to the compiled-in font.
+    gr_font = reinterpret_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
+    gr_font->texture = reinterpret_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
+    gr_font->texture->width = font.width;
+    gr_font->texture->height = font.height;
+    gr_font->texture->row_bytes = font.width;
+    gr_font->texture->pixel_bytes = 1;
+
+    unsigned char* bits = reinterpret_cast<unsigned char*>(malloc(font.width * font.height));
+    gr_font->texture->data = reinterpret_cast<unsigned char*>(bits);
+
+    unsigned char data;
+    unsigned char* in = font.rundata;
+    while((data = *in++)) {
+        memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
+        bits += (data & 0x7f);
+    }
+
+    gr_font->char_width = font.char_width;
+    gr_font->char_height = font.char_height;
+}
+#endif
 
 #if 0
 // Exercises many of the gr_*() functions; useful for testing.
@@ -546,10 +652,4 @@ int gr_fb_height(void)
 void gr_fb_blank(bool blank)
 {
     gr_backend->blank(gr_backend, blank);
-}
-
-void gr_set_font(__attribute__ ((unused))const char* name) {
-	//this cm function is made to change font. Don't care, just init the font:
-	gr_init_font();
-	return;
 }

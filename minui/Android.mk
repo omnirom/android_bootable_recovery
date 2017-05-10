@@ -79,6 +79,9 @@ endif
 ifneq ($(BOARD_USE_CUSTOM_RECOVERY_FONT),)
   LOCAL_CFLAGS += -DBOARD_USE_CUSTOM_RECOVERY_FONT=$(BOARD_USE_CUSTOM_RECOVERY_FONT)
 endif
+ifneq ($(wildcard system/core/healthd/animation.h),)
+    LOCAL_CFLAGS += -DTW_USE_MINUI_CUSTOM_FONTS
+endif
 include $(BUILD_STATIC_LIBRARY)
 
 # Used by OEMs for factory test images.

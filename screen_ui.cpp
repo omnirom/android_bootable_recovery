@@ -53,8 +53,6 @@ static double now() {
 ScreenRecoveryUI::ScreenRecoveryUI() :
     currentIcon(NONE),
     locale(nullptr),
-    intro_done(false),
-    current_frame(0),
     progressBarType(EMPTY),
     progressScopeStart(0),
     progressScopeSize(0),
@@ -75,6 +73,8 @@ ScreenRecoveryUI::ScreenRecoveryUI() :
     file_viewer_text_(nullptr),
     intro_frames(0),
     loop_frames(0),
+    current_frame(0),
+    intro_done(false),
     animation_fps(30), // TODO: there's currently no way to infer this.
     stage(-1),
     max_stage(-1),
@@ -259,7 +259,7 @@ void ScreenRecoveryUI::DrawHorizontalRule(int* y) {
 }
 
 void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) {
-    gr_text(x, *y, line, bold);
+    gr_text(gr_sys_font(), x, *y, line, bold);
     *y += char_height_ + 4;
 }
 
@@ -315,10 +315,10 @@ void ScreenRecoveryUI::draw_screen_locked() {
                     gr_fill(0, y - 2, gr_fb_width(), y + char_height_ + 2);
                     // Bold white text for the selected item.
                     SetColor(MENU_SEL_FG);
-                    gr_text(4, y, menu_[i], true);
+                    gr_text(gr_sys_font(), 4, y, menu_[i], true);
                     SetColor(MENU);
                 } else {
-                    gr_text(4, y, menu_[i], false);
+                    gr_text(gr_sys_font(), 4, y, menu_[i], false);
                 }
                 y += char_height_ + 4;
             }
@@ -334,7 +334,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
         for (int ty = gr_fb_height() - char_height_;
              ty >= y && count < text_rows_;
              ty -= char_height_, ++count) {
-            gr_text(0, ty, text_[row], false);
+            gr_text(gr_sys_font(), 0, ty, text_[row], false);
             --row;
             if (row < 0) row = text_rows_ - 1;
         }
@@ -447,8 +447,17 @@ void ScreenRecoveryUI::SetSystemUpdateText(bool security_update) {
     Redraw();
 }
 
-void ScreenRecoveryUI::Init() {
+void ScreenRecoveryUI::InitTextParams() {
     gr_init();
+
+    gr_font_size(gr_sys_font(), &char_width_, &char_height_);
+    text_rows_ = gr_fb_height() / char_height_;
+    text_cols_ = gr_fb_width() / char_width_;
+}
+
+void ScreenRecoveryUI::Init() {
+    RecoveryUI::Init();
+    InitTextParams();
 
     density_ = static_cast<float>(property_get_int32("ro.sf.lcd_density", 160)) / 160.f;
 
@@ -456,10 +465,6 @@ void ScreenRecoveryUI::Init() {
     layout_ = (gr_fb_width() > gr_fb_height()) ? LANDSCAPE : PORTRAIT;
     // Are we the large variant of our base layout?
     if (gr_fb_height() > PixelsFromDp(800)) ++layout_;
-
-    gr_font_size(&char_width_, &char_height_);
-    text_rows_ = gr_fb_height() / char_height_;
-    text_cols_ = gr_fb_width() / char_width_;
 
     text_ = Alloc2d(text_rows_, text_cols_ + 1);
     file_viewer_text_ = Alloc2d(text_rows_, text_cols_ + 1);
@@ -487,37 +492,42 @@ void ScreenRecoveryUI::Init() {
     LoadAnimation();
 
     pthread_create(&progress_thread_, nullptr, ProgressThreadStartRoutine, this);
-
-    RecoveryUI::Init();
 }
 
 void ScreenRecoveryUI::LoadAnimation() {
-    // How many frames of intro and loop do we have?
     std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/res/images"), closedir);
     dirent* de;
+    std::vector<std::string> intro_frame_names;
+    std::vector<std::string> loop_frame_names;
+
     while ((de = readdir(dir.get())) != nullptr) {
-        int value;
-        if (sscanf(de->d_name, "intro%d", &value) == 1 && intro_frames < (value + 1)) {
-            intro_frames = value + 1;
-        } else if (sscanf(de->d_name, "loop%d", &value) == 1 && loop_frames < (value + 1)) {
-            loop_frames = value + 1;
+        int value, num_chars;
+        if (sscanf(de->d_name, "intro%d%n.png", &value, &num_chars) == 1) {
+            intro_frame_names.emplace_back(de->d_name, num_chars);
+        } else if (sscanf(de->d_name, "loop%d%n.png", &value, &num_chars) == 1) {
+            loop_frame_names.emplace_back(de->d_name, num_chars);
         }
     }
+
+    intro_frames = intro_frame_names.size();
+    loop_frames = loop_frame_names.size();
 
     // It's okay to not have an intro.
     if (intro_frames == 0) intro_done = true;
     // But you must have an animation.
     if (loop_frames == 0) abort();
 
+    std::sort(intro_frame_names.begin(), intro_frame_names.end());
+    std::sort(loop_frame_names.begin(), loop_frame_names.end());
+
     introFrames = new GRSurface*[intro_frames];
-    for (int i = 0; i < intro_frames; ++i) {
-        // TODO: remember the names above, so we don't have to hard-code the number of 0s.
-        LoadBitmap(android::base::StringPrintf("intro%05d", i).c_str(), &introFrames[i]);
+    for (size_t i = 0; i < intro_frames; i++) {
+        LoadBitmap(intro_frame_names.at(i).c_str(), &introFrames[i]);
     }
 
     loopFrames = new GRSurface*[loop_frames];
-    for (int i = 0; i < loop_frames; ++i) {
-        LoadBitmap(android::base::StringPrintf("loop%05d", i).c_str(), &loopFrames[i]);
+    for (size_t i = 0; i < loop_frames; i++) {
+        LoadBitmap(loop_frame_names.at(i).c_str(), &loopFrames[i]);
     }
 }
 

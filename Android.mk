@@ -652,9 +652,9 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
     include $(commands_recovery_local_path)/minadbd/Android.mk \
         $(commands_recovery_local_path)/minui/Android.mk
 else
-    TARGET_GLOBAL_CFLAGS += -DTW_USE_OLD_MINUI_H
-    include $(commands_recovery_local_path)/minadbd.old/Android.mk \
-        $(commands_recovery_local_path)/minui.old/Android.mk
+    TARGET_GLOBAL_CFLAGS += -DTW_USE_MINUI_21
+    include $(commands_recovery_local_path)/minadbd21/Android.mk \
+        $(commands_recovery_local_path)/minui21/Android.mk
 endif
 
 #includes for TWRP
