@@ -305,7 +305,7 @@
 		<string name="settings_gen_hdr">Allgemein</string>
 		<string name="settings_gen_s_hdr">Allgemein</string>
 		<string name="settings_gen_btn">Allgemein</string>
-		<string name="use_rmrf_chk">Verwende rm -rf anstelle von formatieren</string>
+		<string name="use_rmrf_chk">Verwende rm -rf anstatt formatieren</string>
 		<string name="use24clock_chk">24-Stunden-Format</string>
 		<string name="rev_navbar_chk">Navigationsleiste umkehren</string>
 		<string name="simact_chk">Benutzeraktionen für Design-Test simulieren</string>
