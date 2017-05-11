@@ -26,7 +26,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/properties.h>
+#include <android-base/unique_fd.h>
 
 #include "common.h"
 #include "fuse_sideload.h"
@@ -34,16 +37,22 @@
 #include "ui.h"
 
 static void set_usb_driver(bool enabled) {
-  int fd = open("/sys/class/android_usb/android0/enable", O_WRONLY);
-  if (fd < 0) {
-    ui->Print("failed to open driver control: %s\n", strerror(errno));
+  // USB configfs doesn't use /s/c/a/a/enable.
+  if (android::base::GetBoolProperty("sys.usb.configfs", false)) {
     return;
   }
-  if (TEMP_FAILURE_RETRY(write(fd, enabled ? "1" : "0", 1)) == -1) {
-    ui->Print("failed to set driver control: %s\n", strerror(errno));
+
+  static constexpr const char* USB_DRIVER_CONTROL = "/sys/class/android_usb/android0/enable";
+  android::base::unique_fd fd(open(USB_DRIVER_CONTROL, O_WRONLY));
+  if (fd == -1) {
+    PLOG(ERROR) << "Failed to open driver control";
+    return;
   }
-  if (close(fd) < 0) {
-    ui->Print("failed to close driver control: %s\n", strerror(errno));
+  // Not using android::base::WriteStringToFile since that will open with O_CREAT and give EPERM
+  // when USB_DRIVER_CONTROL doesn't exist. When it gives EPERM, we don't know whether that's due
+  // to non-existent USB_DRIVER_CONTROL or indeed a permission issue.
+  if (!android::base::WriteStringToFd(enabled ? "1" : "0", fd)) {
+    PLOG(ERROR) << "Failed to set driver control";
   }
 }
 
