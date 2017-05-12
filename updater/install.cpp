@@ -317,9 +317,11 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
     std::string num_sectors = std::to_string(size / 512);
 
     const char* f2fs_path = "/sbin/mkfs.f2fs";
-    const char* const f2fs_argv[] = { "mkfs.f2fs", "-t", "-d1", location.c_str(),
-                                      num_sectors.c_str(), nullptr };
-    int status = exec_cmd(f2fs_path, const_cast<char* const*>(f2fs_argv));
+    const char* f2fs_argv[] = {
+      "mkfs.f2fs", "-t", "-d1", location.c_str(), (size < 512) ? nullptr : num_sectors.c_str(),
+      nullptr
+    };
+    int status = exec_cmd(f2fs_path, const_cast<char**>(f2fs_argv));
     if (status != 0) {
       LOG(ERROR) << name << ": mkfs.f2fs failed (" << status << ") on " << location;
       return StringValue("");
