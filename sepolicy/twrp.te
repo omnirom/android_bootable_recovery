@@ -1,4 +1,4 @@
 recovery_only(`
   # Allow recovery to set permissive mode
-  permissive recovery;
+  userdebug_or_eng(`permissive recovery');
 ')
