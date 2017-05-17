@@ -1305,20 +1305,20 @@ static bool is_battery_ok() {
     }
 }
 
-static void set_retry_bootloader_message(int retry_count, int argc, char** argv) {
-    std::vector<std::string> options;
-    for (int i = 1; i < argc; ++i) {
-        if (strstr(argv[i], "retry_count") == nullptr) {
-            options.push_back(argv[i]);
-        }
+static void set_retry_bootloader_message(int retry_count, const std::vector<std::string>& args) {
+  std::vector<std::string> options;
+  for (const auto& arg : args) {
+    if (!android::base::StartsWith(arg, "--retry_count")) {
+      options.push_back(arg);
     }
+  }
 
-    // Increment the retry counter by 1.
-    options.push_back(android::base::StringPrintf("--retry_count=%d", retry_count+1));
-    std::string err;
-    if (!update_bootloader_message(options, &err)) {
-        LOG(ERROR) << err;
-    }
+  // Increment the retry counter by 1.
+  options.push_back(android::base::StringPrintf("--retry_count=%d", retry_count + 1));
+  std::string err;
+  if (!update_bootloader_message(options, &err)) {
+    LOG(ERROR) << err;
+  }
 }
 
 static bool bootreason_in_blacklist() {
@@ -1535,7 +1535,7 @@ int main(int argc, char **argv) {
                 // times before we abandon this OTA update.
                 if (status == INSTALL_RETRY && retry_count < EIO_RETRY_COUNT) {
                     copy_logs();
-                    set_retry_bootloader_message(retry_count, argc, argv);
+                    set_retry_bootloader_message(retry_count, args);
                     // Print retry count on screen.
                     ui->Print("Retry attempt %d\n", retry_count);
 
