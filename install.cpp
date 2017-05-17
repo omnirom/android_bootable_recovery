@@ -51,6 +51,7 @@
 #include "error_code.h"
 #include "otautil/SysUtil.h"
 #include "otautil/ThermalUtil.h"
+#include "private/install.h"
 #include "roots.h"
 #include "ui.h"
 #include "verifier.h"
@@ -100,7 +101,7 @@ bool read_metadata_from_package(ZipArchiveHandle zip, std::string* metadata) {
 }
 
 // Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
-static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::string>& log_buffer) {
+static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::string>* log_buffer) {
   std::string metadata;
   if (!read_metadata_from_package(zip, &metadata)) {
     return;
@@ -114,22 +115,16 @@ static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::stri
     if (android::base::StartsWith(str, "pre-build-incremental")) {
       int source_build = parse_build_number(str);
       if (source_build != -1) {
-        log_buffer.push_back(android::base::StringPrintf("source_build: %d", source_build));
+        log_buffer->push_back(android::base::StringPrintf("source_build: %d", source_build));
       }
     } else if (android::base::StartsWith(str, "post-build-incremental")) {
       int target_build = parse_build_number(str);
       if (target_build != -1) {
-        log_buffer.push_back(android::base::StringPrintf("target_build: %d", target_build));
+        log_buffer->push_back(android::base::StringPrintf("target_build: %d", target_build));
       }
     }
   }
 }
-
-// Extract the update binary from the open zip archive |zip| located at |path| and store into |cmd|
-// the command line that should be called. The |status_fd| is the file descriptor the child process
-// should use to report back the progress of the update.
-int update_binary_command(const std::string& path, ZipArchiveHandle zip, int retry_count,
-                          int status_fd, std::vector<std::string>* cmd);
 
 #ifdef AB_OTA_UPDATER
 
@@ -211,8 +206,9 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
   return 0;
 }
 
-int update_binary_command(const std::string& path, ZipArchiveHandle zip, int /* retry_count */,
-                          int status_fd, std::vector<std::string>* cmd) {
+int update_binary_command(const std::string& package, ZipArchiveHandle zip,
+                          const std::string& binary_path, int /* retry_count */, int status_fd,
+                          std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
   int ret = check_newer_ab_build(zip);
   if (ret != 0) {
@@ -246,8 +242,8 @@ int update_binary_command(const std::string& path, ZipArchiveHandle zip, int /* 
   }
   long payload_offset = payload_entry.offset;
   *cmd = {
-    "/sbin/update_engine_sideload",
-    "--payload=file://" + path,
+    binary_path,
+    "--payload=file://" + package,
     android::base::StringPrintf("--offset=%ld", payload_offset),
     "--headers=" + std::string(payload_properties.begin(), payload_properties.end()),
     android::base::StringPrintf("--status_fd=%d", status_fd),
@@ -257,8 +253,9 @@ int update_binary_command(const std::string& path, ZipArchiveHandle zip, int /* 
 
 #else  // !AB_OTA_UPDATER
 
-int update_binary_command(const std::string& path, ZipArchiveHandle zip, int retry_count,
-                          int status_fd, std::vector<std::string>* cmd) {
+int update_binary_command(const std::string& package, ZipArchiveHandle zip,
+                          const std::string& binary_path, int retry_count, int status_fd,
+                          std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
 
   // On traditional updates we extract the update binary from the package.
@@ -270,11 +267,10 @@ int update_binary_command(const std::string& path, ZipArchiveHandle zip, int ret
     return INSTALL_CORRUPT;
   }
 
-  const char* binary = "/tmp/update_binary";
-  unlink(binary);
-  int fd = creat(binary, 0755);
+  unlink(binary_path.c_str());
+  int fd = creat(binary_path.c_str(), 0755);
   if (fd == -1) {
-    PLOG(ERROR) << "Failed to create " << binary;
+    PLOG(ERROR) << "Failed to create " << binary_path;
     return INSTALL_ERROR;
   }
 
@@ -286,10 +282,10 @@ int update_binary_command(const std::string& path, ZipArchiveHandle zip, int ret
   }
 
   *cmd = {
-    binary,
+    binary_path,
     EXPAND(RECOVERY_API_VERSION),  // defined in Android.mk
     std::to_string(status_fd),
-    path,
+    package,
   };
   if (retry_count > 0) {
     cmd->push_back("retry");
@@ -308,8 +304,8 @@ static void log_max_temperature(int* max_temperature) {
 }
 
 // If the package contains an update binary, extract it and run it.
-static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_cache,
-                             std::vector<std::string>& log_buffer, int retry_count,
+static int try_update_binary(const std::string& package, ZipArchiveHandle zip, bool* wipe_cache,
+                             std::vector<std::string>* log_buffer, int retry_count,
                              int* max_temperature) {
   read_source_target_build(zip, log_buffer);
 
@@ -317,7 +313,13 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
   pipe(pipefd);
 
   std::vector<std::string> args;
-  int ret = update_binary_command(path, zip, retry_count, pipefd[1], &args);
+#ifdef AB_OTA_UPDATER
+  int ret = update_binary_command(package, zip, "/sbin/update_engine_sideload", retry_count,
+                                  pipefd[1], &args);
+#else
+  int ret = update_binary_command(package, zip, "/tmp/update-binary", retry_count, pipefd[1],
+                                  &args);
+#endif
   if (ret) {
     close(pipefd[0]);
     close(pipefd[1]);
@@ -452,7 +454,7 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
     } else if (command == "log") {
       if (!args.empty()) {
         // Save the logging request from updater and write to last_install later.
-        log_buffer.push_back(args);
+        log_buffer->push_back(args);
       } else {
         LOG(ERROR) << "invalid \"log\" parameters: " << line;
       }
@@ -472,7 +474,7 @@ static int try_update_binary(const char* path, ZipArchiveHandle zip, bool* wipe_
     return INSTALL_RETRY;
   }
   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    LOG(ERROR) << "Error in " << path << " (Status " << WEXITSTATUS(status) << ")";
+    LOG(ERROR) << "Error in " << package << " (Status " << WEXITSTATUS(status) << ")";
     return INSTALL_ERROR;
   }
 
@@ -547,78 +549,77 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
   return false;
 }
 
-static int
-really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
-                       std::vector<std::string>& log_buffer, int retry_count, int* max_temperature)
-{
-    ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
-    ui->Print("Finding update package...\n");
-    // Give verification half the progress bar...
-    ui->SetProgressType(RecoveryUI::DETERMINATE);
-    ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
-    LOG(INFO) << "Update location: " << path;
+static int really_install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
+                                  std::vector<std::string>* log_buffer, int retry_count,
+                                  int* max_temperature) {
+  ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
+  ui->Print("Finding update package...\n");
+  // Give verification half the progress bar...
+  ui->SetProgressType(RecoveryUI::DETERMINATE);
+  ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
+  LOG(INFO) << "Update location: " << path;
 
-    // Map the update package into memory.
-    ui->Print("Opening update package...\n");
+  // Map the update package into memory.
+  ui->Print("Opening update package...\n");
 
-    if (path && needs_mount) {
-        if (path[0] == '@') {
-            ensure_path_mounted(path+1);
-        } else {
-            ensure_path_mounted(path);
-        }
+  if (needs_mount) {
+    if (path[0] == '@') {
+      ensure_path_mounted(path.substr(1).c_str());
+    } else {
+      ensure_path_mounted(path.c_str());
     }
+  }
 
-    MemMapping map;
-    if (sysMapFile(path, &map) != 0) {
-        LOG(ERROR) << "failed to map file";
-        return INSTALL_CORRUPT;
-    }
+  MemMapping map;
+  if (!map.MapFile(path)) {
+    LOG(ERROR) << "failed to map file";
+    return INSTALL_CORRUPT;
+  }
 
-    // Verify package.
-    if (!verify_package(map.addr, map.length)) {
-        log_buffer.push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
-        sysReleaseMap(&map);
-        return INSTALL_CORRUPT;
-    }
+  // Verify package.
+  if (!verify_package(map.addr, map.length)) {
+    log_buffer->push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
+    return INSTALL_CORRUPT;
+  }
 
-    // Try to open the package.
-    ZipArchiveHandle zip;
-    int err = OpenArchiveFromMemory(map.addr, map.length, path, &zip);
-    if (err != 0) {
-        LOG(ERROR) << "Can't open " << path << " : " << ErrorCodeString(err);
-        log_buffer.push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
+  // Try to open the package.
+  ZipArchiveHandle zip;
+  int err = OpenArchiveFromMemory(map.addr, map.length, path.c_str(), &zip);
+  if (err != 0) {
+    LOG(ERROR) << "Can't open " << path << " : " << ErrorCodeString(err);
+    log_buffer->push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
 
-        sysReleaseMap(&map);
-        CloseArchive(zip);
-        return INSTALL_CORRUPT;
-    }
-
-    // Additionally verify the compatibility of the package.
-    if (!verify_package_compatibility(zip)) {
-      log_buffer.push_back(android::base::StringPrintf("error: %d", kPackageCompatibilityFailure));
-      sysReleaseMap(&map);
-      CloseArchive(zip);
-      return INSTALL_CORRUPT;
-    }
-
-    // Verify and install the contents of the package.
-    ui->Print("Installing update...\n");
-    if (retry_count > 0) {
-        ui->Print("Retry attempt: %d\n", retry_count);
-    }
-    ui->SetEnableReboot(false);
-    int result = try_update_binary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature);
-    ui->SetEnableReboot(true);
-    ui->Print("\n");
-
-    sysReleaseMap(&map);
     CloseArchive(zip);
-    return result;
+    return INSTALL_CORRUPT;
+  }
+
+  // Additionally verify the compatibility of the package.
+  if (!verify_package_compatibility(zip)) {
+    log_buffer->push_back(android::base::StringPrintf("error: %d", kPackageCompatibilityFailure));
+    CloseArchive(zip);
+    return INSTALL_CORRUPT;
+  }
+
+  // Verify and install the contents of the package.
+  ui->Print("Installing update...\n");
+  if (retry_count > 0) {
+    ui->Print("Retry attempt: %d\n", retry_count);
+  }
+  ui->SetEnableReboot(false);
+  int result = try_update_binary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature);
+  ui->SetEnableReboot(true);
+  ui->Print("\n");
+
+  CloseArchive(zip);
+  return result;
 }
 
-int install_package(const char* path, bool* wipe_cache, const char* install_file, bool needs_mount,
-                    int retry_count) {
+int install_package(const std::string& path, bool* wipe_cache, const std::string& install_file,
+                    bool needs_mount, int retry_count) {
+  CHECK(!path.empty());
+  CHECK(!install_file.empty());
+  CHECK(wipe_cache != nullptr);
+
   modified_flash = true;
   auto start = std::chrono::system_clock::now();
 
@@ -631,7 +632,7 @@ int install_package(const char* path, bool* wipe_cache, const char* install_file
     LOG(ERROR) << "failed to set up expected mounts for install; aborting";
     result = INSTALL_ERROR;
   } else {
-    result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count,
+    result = really_install_package(path, wipe_cache, needs_mount, &log_buffer, retry_count,
                                     &max_temperature);
   }
 

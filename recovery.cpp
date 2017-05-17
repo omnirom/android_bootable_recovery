@@ -1155,7 +1155,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         {
           bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
           if (adb) {
-            status = apply_from_adb(ui, &should_wipe_cache, TEMPORARY_INSTALL_FILE);
+            status = apply_from_adb(&should_wipe_cache, TEMPORARY_INSTALL_FILE);
           } else {
             status = apply_from_sdcard(device, &should_wipe_cache);
           }
@@ -1584,7 +1584,7 @@ int main(int argc, char **argv) {
         if (!sideload_auto_reboot) {
             ui->ShowText(true);
         }
-        status = apply_from_adb(ui, &should_wipe_cache, TEMPORARY_INSTALL_FILE);
+        status = apply_from_adb(&should_wipe_cache, TEMPORARY_INSTALL_FILE);
         if (status == INSTALL_SUCCESS && should_wipe_cache) {
             if (!wipe_cache(false, device)) {
                 status = INSTALL_ERROR;
