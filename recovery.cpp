@@ -1429,15 +1429,18 @@ static bool bootreason_in_blacklist() {
 }
 
 static void log_failure_code(ErrorCode code, const char *update_package) {
-    FILE* install_log = fopen_path(TEMPORARY_INSTALL_FILE, "w");
-    if (install_log != nullptr) {
-        fprintf(install_log, "%s\n", update_package);
-        fprintf(install_log, "0\n");
-        fprintf(install_log, "error: %d\n", code);
-        fclose(install_log);
-    } else {
-        LOGE("failed to open last_install: %s\n", strerror(errno));
+    std::vector<std::string> log_buffer = {
+        update_package,
+        "0",  // install result
+        "error: " + std::to_string(code),
+    };
+    std::string log_content = android::base::Join(log_buffer, "\n");
+    if (!android::base::WriteStringToFile(log_content, TEMPORARY_INSTALL_FILE)) {
+        LOGE("failed to write %s: %s\n", TEMPORARY_INSTALL_FILE, strerror(errno));
     }
+
+    // Also write the info into last_log.
+    LOGI("%s\n", log_content.c_str());
 }
 
 static ssize_t logbasename(

@@ -727,7 +727,7 @@
 		<page name="reboot_system_routine">
 			<action>
 				<action function="set">tw_action=reboot</action>
-				<action function="set">tw_reboot_param=system</action>
+				<action function="set">tw_action_param=system</action>
 				<action function="set">tw_has_action2=0</action>
 				<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
 				<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
@@ -2935,6 +2935,7 @@
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=poweroff</action>
 					<action function="set">tw_reboot_param=poweroff</action>
 					<action function="set">tw_has_action2=0</action>
 					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
@@ -2953,6 +2954,7 @@
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=recovery</action>
 					<action function="set">tw_reboot_param=recovery</action>
 					<action function="set">tw_has_action2=0</action>
 					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
@@ -2971,6 +2973,7 @@
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=bootloader</action>
 					<action function="set">tw_reboot_param=bootloader</action>
 					<action function="set">tw_has_action2=0</action>
 					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
@@ -2989,6 +2992,7 @@
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=download</action>
 					<action function="set">tw_reboot_param=download</action>
 					<action function="set">tw_has_action2=0</action>
 					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>

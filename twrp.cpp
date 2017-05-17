@@ -49,7 +49,7 @@ extern "C" {
 #include "adb.h"
 #else
 extern "C" {
-#include "minadbd.old/adb.h"
+#include "minadbd21/adb.h"
 }
 #endif
 

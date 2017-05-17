@@ -5,11 +5,15 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	mtdutils.c \
-	mounts.c 
+	mounts.c
 
 ifneq ($(filter rk30xx rk3188,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SRC_FILES += rk3xhack.c
 LOCAL_CFLAGS += -DRK3X
+endif
+
+ifeq ($(TARGET_MTD_BY_NAME),true)
+LOCAL_CFLAGS += -DBYNAME
 endif
 
 LOCAL_MODULE := libmtdutils
@@ -22,11 +26,15 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	mtdutils.c \
-	mounts.c 
+	mounts.c
 
 ifneq ($(filter rk30xx rk3188,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SRC_FILES += rk3xhack.c
 LOCAL_CFLAGS += -DRK3X
+endif
+
+ifeq ($(TARGET_MTD_BY_NAME),true)
+LOCAL_CFLAGS += -DBYNAME
 endif
 
 LOCAL_MODULE := libmtdutils

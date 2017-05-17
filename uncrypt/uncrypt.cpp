@@ -118,6 +118,7 @@
 #define LOG_TAG "uncrypt"
 #include <log/log.h>
 
+#include "error_code.h"
 #include "unique_fd.h"
 
 #define WINDOW_SIZE 5
@@ -134,6 +135,7 @@
 // devices, on which /cache partitions always exist.
 static const std::string CACHE_BLOCK_MAP = "/cache/recovery/block.map";
 static const std::string UNCRYPT_PATH_FILE = "/cache/recovery/uncrypt_file";
+static const std::string UNCRYPT_STATUS = "/cache/recovery/uncrypt_status";
 static const std::string UNCRYPT_SOCKET = "uncrypt";
 
 static struct fstab* fstab = nullptr;
@@ -234,25 +236,25 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     std::string err;
     if (!android::base::RemoveFileIfExists(map_file, &err)) {
         ALOGE("failed to remove the existing map file %s: %s", map_file, err.c_str());
-        return -1;
+        return kUncryptFileRemoveError;
     }
     std::string tmp_map_file = std::string(map_file) + ".tmp";
     unique_fd mapfd(open(tmp_map_file.c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR));
     if (!mapfd) {
         ALOGE("failed to open %s: %s\n", tmp_map_file.c_str(), strerror(errno));
-        return -1;
+        return kUncryptFileOpenError;
     }
 
     // Make sure we can write to the socket.
     if (!write_status_to_socket(0, socket)) {
         ALOGE("failed to write to socket %d\n", socket);
-        return -1;
+        return kUncryptSocketWriteError;
     }
 
     struct stat sb;
     if (stat(path, &sb) != 0) {
         ALOGE("failed to stat %s", path);
-        return -1;
+        return kUncryptFileStatError;
     }
 
     ALOGI(" block size: %ld bytes", static_cast<long>(sb.st_blksize));
@@ -266,7 +268,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
                        blk_dev, sb.st_size, static_cast<long>(sb.st_blksize));
     if (!android::base::WriteStringToFd(s, mapfd.get())) {
         ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
-        return -1;
+        return kUncryptWriteError;
     }
 
     std::vector<std::vector<unsigned char>> buffers;
@@ -279,7 +281,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     unique_fd fd(open(path, O_RDONLY));
     if (!fd) {
         ALOGE("failed to open %s for reading: %s", path, strerror(errno));
-        return -1;
+        return kUncryptFileOpenError;
     }
 
     unique_fd wfd(-1);
@@ -287,7 +289,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         wfd = open(blk_dev, O_WRONLY);
         if (!wfd) {
             ALOGE("failed to open fd for writing: %s", strerror(errno));
-            return -1;
+            return kUncryptBlockOpenError;
         }
     }
 
@@ -306,13 +308,13 @@ static int produce_block_map(const char* path, const char* map_file, const char*
             int block = head_block;
             if (ioctl(fd.get(), FIBMAP, &block) != 0) {
                 ALOGE("failed to find block %d", head_block);
-                return -1;
+                return kUncryptIoctlError;
             }
             add_block_to_ranges(ranges, block);
             if (encrypted) {
                 if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd.get(),
                         static_cast<off64_t>(sb.st_blksize) * block) != 0) {
-                    return -1;
+                    return kUncryptWriteError;
                 }
             }
             head = (head + 1) % WINDOW_SIZE;
@@ -325,7 +327,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
                     std::min(static_cast<off64_t>(sb.st_blksize), sb.st_size - pos));
             if (!android::base::ReadFully(fd.get(), buffers[tail].data(), to_read)) {
                 ALOGE("failed to read: %s", strerror(errno));
-                return -1;
+                return kUncryptReadError;
             }
             pos += to_read;
         } else {
@@ -342,13 +344,13 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         int block = head_block;
         if (ioctl(fd.get(), FIBMAP, &block) != 0) {
             ALOGE("failed to find block %d", head_block);
-            return -1;
+            return kUncryptIoctlError;
         }
         add_block_to_ranges(ranges, block);
         if (encrypted) {
             if (write_at_offset(buffers[head].data(), sb.st_blksize, wfd.get(),
                     static_cast<off64_t>(sb.st_blksize) * block) != 0) {
-                return -1;
+                return kUncryptWriteError;
             }
         }
         head = (head + 1) % WINDOW_SIZE;
@@ -358,41 +360,41 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     if (!android::base::WriteStringToFd(
             android::base::StringPrintf("%zu\n", ranges.size() / 2), mapfd.get())) {
         ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
-        return -1;
+        return kUncryptWriteError;
     }
     for (size_t i = 0; i < ranges.size(); i += 2) {
         if (!android::base::WriteStringToFd(
                 android::base::StringPrintf("%d %d\n", ranges[i], ranges[i+1]), mapfd.get())) {
             ALOGE("failed to write %s: %s", tmp_map_file.c_str(), strerror(errno));
-            return -1;
+            return kUncryptWriteError;
         }
     }
 
     if (fsync(mapfd.get()) == -1) {
         ALOGE("failed to fsync \"%s\": %s", tmp_map_file.c_str(), strerror(errno));
-        return -1;
+        return kUncryptFileSyncError;
     }
     if (close(mapfd.get()) == -1) {
         ALOGE("failed to close %s: %s", tmp_map_file.c_str(), strerror(errno));
-        return -1;
+        return kUncryptFileCloseError;
     }
     mapfd = -1;
 
     if (encrypted) {
         if (fsync(wfd.get()) == -1) {
             ALOGE("failed to fsync \"%s\": %s", blk_dev, strerror(errno));
-            return -1;
+            return kUncryptFileSyncError;
         }
         if (close(wfd.get()) == -1) {
             ALOGE("failed to close %s: %s", blk_dev, strerror(errno));
-            return -1;
+            return kUncryptFileCloseError;
         }
         wfd = -1;
     }
 
     if (rename(tmp_map_file.c_str(), map_file) == -1) {
         ALOGE("failed to rename %s to %s: %s", tmp_map_file.c_str(), map_file, strerror(errno));
-        return -1;
+        return kUncryptFileRenameError;
     }
     // Sync dir to make rename() result written to disk.
     std::string file_name = map_file;
@@ -400,15 +402,15 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     unique_fd dfd(open(dir_name.c_str(), O_RDONLY | O_DIRECTORY));
     if (!dfd) {
         ALOGE("failed to open dir %s: %s", dir_name.c_str(), strerror(errno));
-        return -1;
+        return kUncryptFileOpenError;
     }
     if (fsync(dfd.get()) == -1) {
         ALOGE("failed to fsync %s: %s", dir_name.c_str(), strerror(errno));
-        return -1;
+        return kUncryptFileSyncError;
     }
     if (close(dfd.get()) == -1) {
         ALOGE("failed to close %s: %s", dir_name.c_str(), strerror(errno));
-        return -1;
+        return kUncryptFileCloseError;
     }
     dfd = -1;
     return 0;
@@ -448,30 +450,58 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
     // and /sdcard we leave the file alone.
     if (strncmp(path, "/data/", 6) == 0) {
         ALOGI("writing block map %s", map_file);
-        if (produce_block_map(path, map_file, blk_dev, encrypted, socket) != 0) {
-            return 1;
-        }
+        return produce_block_map(path, map_file, blk_dev, encrypted, socket);
     }
 
     return 0;
 }
 
+static void log_uncrypt_error_code(UncryptErrorCode error_code) {
+    if (!android::base::WriteStringToFile(android::base::StringPrintf(
+            "uncrypt_error: %d\n", error_code), UNCRYPT_STATUS)) {
+        ALOGW("failed to write to %s: %s", UNCRYPT_STATUS.c_str(), strerror(errno));
+    }
+}
+
 static bool uncrypt_wrapper(const char* input_path, const char* map_file, const int socket) {
+    // Initialize the uncrypt error to kUncryptErrorPlaceholder.
+    log_uncrypt_error_code(kUncryptErrorPlaceholder);
+
     std::string package;
     if (input_path == nullptr) {
         if (!find_uncrypt_package(UNCRYPT_PATH_FILE, &package)) {
             write_status_to_socket(-1, socket);
+            // Overwrite the error message.
+            log_uncrypt_error_code(kUncryptPackageMissingError);
             return false;
         }
         input_path = package.c_str();
     }
     CHECK(map_file != nullptr);
+
+    auto start = std::chrono::system_clock::now();
     int status = uncrypt(input_path, map_file, socket);
+    std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
+    int count = static_cast<int>(duration.count());
+
+    std::string uncrypt_message = android::base::StringPrintf("uncrypt_time: %d\n", count);
     if (status != 0) {
+        // Log the time cost and error code if uncrypt fails.
+        uncrypt_message += android::base::StringPrintf("uncrypt_error: %d\n", status);
+        if (!android::base::WriteStringToFile(uncrypt_message, UNCRYPT_STATUS)) {
+            ALOGW("failed to write to %s: %s", UNCRYPT_STATUS.c_str(), strerror(errno));
+        }
+
         write_status_to_socket(-1, socket);
         return false;
     }
+
+    if (!android::base::WriteStringToFile(uncrypt_message, UNCRYPT_STATUS)) {
+        ALOGW("failed to write to %s: %s", UNCRYPT_STATUS.c_str(), strerror(errno));
+    }
+
     write_status_to_socket(100, socket);
+
     return true;
 }
 
@@ -561,6 +591,7 @@ int main(int argc, char** argv) {
     }
 
     if ((fstab = read_fstab()) == nullptr) {
+        log_uncrypt_error_code(kUncryptFstabReadError);
         return 1;
     }
 
@@ -569,18 +600,21 @@ int main(int argc, char** argv) {
     unique_fd service_socket(android_get_control_socket(UNCRYPT_SOCKET.c_str()));
     if (!service_socket) {
         ALOGE("failed to open socket \"%s\": %s", UNCRYPT_SOCKET.c_str(), strerror(errno));
+        log_uncrypt_error_code(kUncryptSocketOpenError);
         return 1;
     }
     fcntl(service_socket.get(), F_SETFD, FD_CLOEXEC);
 
     if (listen(service_socket.get(), 1) == -1) {
         ALOGE("failed to listen on socket %d: %s", service_socket.get(), strerror(errno));
+        log_uncrypt_error_code(kUncryptSocketListenError);
         return 1;
     }
 
     unique_fd socket_fd(accept4(service_socket.get(), nullptr, nullptr, SOCK_CLOEXEC));
     if (!socket_fd) {
         ALOGE("failed to accept on socket %d: %s", service_socket.get(), strerror(errno));
+        log_uncrypt_error_code(kUncryptSocketAcceptError);
         return 1;
     }
 
