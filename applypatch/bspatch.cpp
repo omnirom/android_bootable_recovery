@@ -23,10 +23,14 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#include <string>
+
+#include <android-base/logging.h>
 #include <bspatch.h>
 #include <openssl/sha.h>
 
 #include "applypatch/applypatch.h"
+#include "print_sha1.h"
 
 void ShowBSDiffLicense() {
     puts("The bsdiff library used herein is:\n"
@@ -67,18 +71,24 @@ int ApplyBSDiffPatch(const unsigned char* old_data, size_t old_size, const Value
     if (ctx) SHA1_Update(ctx, data, len);
     return len;
   };
-  return bsdiff::bspatch(old_data, old_size,
-                         reinterpret_cast<const uint8_t*>(&patch->data[patch_offset]),
-                         patch->data.size(), sha_sink);
-}
 
-int ApplyBSDiffPatchMem(const unsigned char* old_data, size_t old_size, const Value* patch,
-                        size_t patch_offset, std::vector<unsigned char>* new_data) {
-  auto vector_sink = [new_data](const uint8_t* data, size_t len) {
-    new_data->insert(new_data->end(), data, data + len);
-    return len;
-  };
-  return bsdiff::bspatch(old_data, old_size,
-                         reinterpret_cast<const uint8_t*>(&patch->data[patch_offset]),
-                         patch->data.size(), vector_sink);
+  CHECK(patch != nullptr);
+  CHECK_LE(patch_offset, patch->data.size());
+
+  int result = bsdiff::bspatch(old_data, old_size,
+                               reinterpret_cast<const uint8_t*>(&patch->data[patch_offset]),
+                               patch->data.size() - patch_offset, sha_sink);
+  if (result != 0) {
+    LOG(ERROR) << "bspatch failed, result: " << result;
+    // print SHA1 of the patch in the case of a data error.
+    if (result == 2) {
+      uint8_t digest[SHA_DIGEST_LENGTH];
+      SHA1(reinterpret_cast<const uint8_t*>(patch->data.data() + patch_offset),
+           patch->data.size() - patch_offset, digest);
+      std::string patch_sha1 = print_sha1(digest);
+      LOG(ERROR) << "Patch may be corrupted, offset: " << patch_offset << ", SHA1: "
+                 << patch_sha1;
+    }
+  }
+  return result;
 }
