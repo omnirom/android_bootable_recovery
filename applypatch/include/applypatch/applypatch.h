@@ -69,8 +69,6 @@ int SaveFileContents(const char* filename, const FileContents* file);
 void ShowBSDiffLicense();
 int ApplyBSDiffPatch(const unsigned char* old_data, size_t old_size, const Value* patch,
                      size_t patch_offset, SinkFn sink, SHA_CTX* ctx);
-int ApplyBSDiffPatchMem(const unsigned char* old_data, size_t old_size, const Value* patch,
-                        size_t patch_offset, std::vector<unsigned char>* new_data);
 
 // imgpatch.cpp
 int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value* patch, SinkFn sink,
