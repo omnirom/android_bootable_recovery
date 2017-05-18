@@ -412,16 +412,9 @@
 			</checkbox>
 
 			<checkbox>
-				<condition var1="tw_is_multirom" var2="0"/>
 				<placement x="%indent%" y="%row13a_y%"/>
 				<text>{@install_reboot_chk=Reboot after installation is complete}</text>
 				<data variable="tw_install_reboot"/>
-			</checkbox>
-			<checkbox>
-				<condition var1="tw_is_multirom" var2="1"/>
-				<placement x="%indent%" y="%row13a_y%"/>
-				<text>Inject MultiROM after installation</text>
-				<data variable="tw_auto_inject_mrom"/>
 			</checkbox>
 
 			<checkbox>
@@ -429,6 +422,21 @@
 				<placement x="%indent%" y="%row15_y%"/>
 				<text>{@inject_twrp_chk=Inject TWRP after install}</text>
 				<data variable="tw_inject_after_zip"/>
+			</checkbox>
+
+			<checkbox>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<condition var1="tw_has_injecttwrp" var2="0"/>
+				<placement x="%indent%" y="%row15_y%"/>
+				<text>Inject MultiROM after installation</text>
+				<data variable="tw_auto_inject_mrom"/>
+			</checkbox>
+			<checkbox>
+				<condition var1="tw_is_multirom" var2="1"/>
+				<condition var1="tw_has_injecttwrp" var2="1"/>
+				<placement x="%indent%" y="%row16a_y%"/>
+				<text>Inject MultiROM after installation</text>
+				<data variable="tw_auto_inject_mrom"/>
 			</checkbox>
 
 			<button style="main_button_half_height">
@@ -3229,7 +3237,6 @@
 					<data variable="tw_signed_zip_verify"/>
 				</listitem>
 				<listitem name="{@install_reboot_chk=Reboot after installation is complete}">
-					<condition var1="tw_is_multirom" var2="0"/>
 					<data variable="tw_install_reboot"/>
 				</listitem>
 				<listitem name="{@use_rmrf_chk=Use rm -rf instead of formatting}">

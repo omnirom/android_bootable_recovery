@@ -1064,7 +1064,12 @@ void GUIAction::reinject_after_flash()
 	if(DataManager::GetIntValue(TW_AUTO_INJECT_MROM) == 1 && MultiROM::folderExists())
 	{
 		gui_print("Injecting boot.img with MultiROM...\n");
-		MultiROM::injectBoot(MultiROM::getBootDev(), true);
+		if (MultiROM::injectBoot(MultiROM::getBootDev(), true))
+			DataManager::SetValue("mrom_inject_failed", 0);
+		else {
+			DataManager::SetValue("mrom_inject_failed", 1);
+			gui_print_color("error", "Error injecting MultiROM into boot sector!");
+		}
 	}
 #endif //TARGET_RECOVERY_IS_MULTIROM
 }
@@ -1100,6 +1105,10 @@ int GUIAction::flash(std::string arg)
 	}
 
 	reinject_after_flash();
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if (ret_val == 0)
+		ret_val = DataManager::GetIntValue("mrom_inject_failed");
+#endif
 	PartitionManager.Update_System_Details();
 	operation_end(ret_val);
 	// This needs to be after the operation_end call so we change pages before we change variables that we display on the screen
@@ -1598,6 +1607,10 @@ int GUIAction::adbsideload(std::string arg __unused)
 		property_set("ctl.start", "adbd");
 		TWFunc::Toggle_MTP(mtp_was_enabled);
 		reinject_after_flash();
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+		if (ret == 0)
+			ret = DataManager::GetIntValue("mrom_inject_failed");
+#endif
 		operation_end(ret);
 	}
 	return 0;
@@ -2429,6 +2442,10 @@ int GUIAction::multirom_sideload(std::string arg __unused)
 
 	TWFunc::Toggle_MTP(mtp_was_enabled);
 	reinject_after_flash();
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if (ret == 0)
+		ret = DataManager::GetIntValue("mrom_inject_failed");
+#endif
 	operation_end(ret);
 
 	DataManager::SetValue("multirom_rom_name_title", 0);
