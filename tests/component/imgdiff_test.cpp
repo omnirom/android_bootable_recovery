@@ -551,3 +551,42 @@ TEST(ImgdiffTest, image_mode_single_entry_long) {
 
   verify_patched_image(src, patch, tgt);
 }
+
+TEST(ImgpatchTest, image_mode_patch_corruption) {
+  // src: "abcdefgh" + gzipped "xyz" (echo -n "xyz" | gzip -f | hd).
+  const std::vector<char> src_data = { 'a',    'b',    'c',    'd',    'e',    'f',    'g',
+                                       'h',    '\x1f', '\x8b', '\x08', '\x00', '\xc4', '\x1e',
+                                       '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xac',
+                                       '\x02', '\x00', '\x67', '\xba', '\x8e', '\xeb', '\x03',
+                                       '\x00', '\x00', '\x00' };
+  const std::string src(src_data.cbegin(), src_data.cend());
+  TemporaryFile src_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src, src_file.path));
+
+  // tgt: "abcdefgxyz" + gzipped "xxyyzz".
+  const std::vector<char> tgt_data = {
+    'a',    'b',    'c',    'd',    'e',    'f',    'g',    'x',    'y',    'z',    '\x1f', '\x8b',
+    '\x08', '\x00', '\x62', '\x1f', '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xa8', '\xac',
+    '\xac', '\xaa', '\x02', '\x00', '\x96', '\x30', '\x06', '\xb7', '\x06', '\x00', '\x00', '\x00'
+  };
+  const std::string tgt(tgt_data.cbegin(), tgt_data.cend());
+  TemporaryFile tgt_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(tgt, tgt_file.path));
+
+  TemporaryFile patch_file;
+  std::vector<const char*> args = {
+    "imgdiff", src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  // Verify.
+  std::string patch;
+  ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch));
+  verify_patched_image(src, patch, tgt);
+
+  // Corrupt the end of the patch and expect the ApplyImagePatch to fail.
+  patch.insert(patch.end() - 10, 10, '0');
+  ASSERT_EQ(-1, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
+                                reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
+                                [](const unsigned char* /*data*/, size_t len) { return len; }));
+}
