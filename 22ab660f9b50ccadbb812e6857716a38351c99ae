@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "677911b6_5f4bb98c",
+        "filename": "Android.mk",
+        "patchSetId": 9
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1001332
+      },
+      "writtenOn": "2017-05-18T14:21:17Z",
+      "side": 1,
+      "message": "This part is probably still problematic; see Ethan\u0027s comments at https://gerrit.omnirom.org/#/c/20888.",
+      "range": {
+        "startLine": 181,
+        "startChar": 0,
+        "endLine": 188,
+        "endChar": 5
+      },
+      "revId": "22ab660f9b50ccadbb812e6857716a38351c99ae",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
