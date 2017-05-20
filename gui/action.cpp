@@ -2226,6 +2226,8 @@ int GUIAction::multirom_delete(std::string arg __unused)
 	operation_start("Delete ROM");
 	if(!MultiROM::erase(DataManager::GetStrValue("tw_multirom_rom_name")))
 		op_status = 1;
+	else
+		DataManager::SetValue("tw_back", "multirom_list");
 	PartitionManager.Update_System_Details();
 	operation_end(op_status);
 	return 0;
