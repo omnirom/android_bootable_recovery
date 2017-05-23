@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8e05f8c5_30b74123",
+        "filename": "data.cpp",
+        "patchSetId": 74
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-05-23T03:10:46Z",
+      "side": 1,
+      "message": "mConst instead of mData",
+      "revId": "674bae2a95da207dc7ee360032e705952d5f262c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5498c4c7_740b34ea",
+        "filename": "data.cpp",
+        "patchSetId": 74
+      },
+      "lineNbr": 716,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-05-23T03:10:46Z",
+      "side": 1,
+      "message": "mConst instead of mData",
+      "revId": "674bae2a95da207dc7ee360032e705952d5f262c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fe3b36be_99b84127",
+        "filename": "twinstall.cpp",
+        "patchSetId": 74
+      },
+      "lineNbr": 329,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-05-23T03:10:46Z",
+      "side": 1,
+      "message": "Should we be changing the gui_msg here (and below) when we still only support md5?",
+      "revId": "674bae2a95da207dc7ee360032e705952d5f262c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "56425382_614387d5",
+        "filename": "twrpDigest/twrpDigest.hpp",
+        "patchSetId": 74
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-05-23T03:10:46Z",
+      "side": 1,
+      "message": "Should this just be a void instead of bool? Both of the real functions just automatically return true. The functions that both call return a void.",
+      "revId": "674bae2a95da207dc7ee360032e705952d5f262c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
