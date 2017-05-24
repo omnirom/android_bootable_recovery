@@ -112,8 +112,9 @@ static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
-// We will try to apply the update package 5 times at most in case of an I/O error.
-static const int EIO_RETRY_COUNT = 4;
+// We will try to apply the update package 5 times at most in case of an I/O error or
+// bspatch | imgpatch error.
+static const int RETRY_LIMIT = 4;
 static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
 // GmsCore enters recovery mode to install package when having enough battery
 // percentage. Normally, the threshold is 40% without charger and 20% with charger.
@@ -1530,9 +1531,9 @@ int main(int argc, char **argv) {
             }
             if (status != INSTALL_SUCCESS) {
                 ui->Print("Installation aborted.\n");
-                // When I/O error happens, reboot and retry installation EIO_RETRY_COUNT
+                // When I/O error happens, reboot and retry installation RETRY_LIMIT
                 // times before we abandon this OTA update.
-                if (status == INSTALL_RETRY && retry_count < EIO_RETRY_COUNT) {
+                if (status == INSTALL_RETRY && retry_count < RETRY_LIMIT) {
                     copy_logs();
                     set_retry_bootloader_message(retry_count, args);
                     // Print retry count on screen.
