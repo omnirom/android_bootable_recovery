@@ -1202,6 +1202,7 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	bool restore_script = false;
 	EdifyHacker hacker;
 	std::string boot, sysimg, loop_device;
+	DIR *dp_keep_busy[3] = { NULL, NULL, NULL };
 	TWPartition *data, *sys;
 
 	gui_print("Flashing ZIP file %s\n", file.c_str());
@@ -1244,9 +1245,17 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	// Installer, it will take over the screen and buttons and we won't be able to manually wake the screen
 	blankTimer.resetTimerAndUnblank();
 
+	dp_keep_busy[0] = opendir("/cache");
+	dp_keep_busy[1] = opendir("/system");
+	dp_keep_busy[2] = opendir("/data");
+
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, 0);
 	status = TWinstall_zip(file.c_str(), &wipe_cache);
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, verify_status);
+
+	if (dp_keep_busy[0]) closedir(dp_keep_busy[0]);
+	if (dp_keep_busy[1]) closedir(dp_keep_busy[1]);
+	if (dp_keep_busy[2]) closedir(dp_keep_busy[2]);
 
 	if((hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES) && system_args("busybox umount -d /tmpsystem") != 0)
 		system_args("dev=\"$(losetup | grep 'system\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
@@ -1290,6 +1299,7 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 	int status, verify_status = 0;
 	EdifyHacker hacker;
 	bool restore_script = false;
+	DIR *dp_keep_busy[3] = { NULL, NULL, NULL };
 
 	gui_print("Flashing ZIP file %s\n", file.c_str());
 
@@ -1309,9 +1319,17 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 
 	blankTimer.resetTimerAndUnblank(); // same as above (about AROMA Installer)
 
+	dp_keep_busy[0] = opendir("/cache");
+	dp_keep_busy[1] = opendir("/system");
+	dp_keep_busy[2] = opendir("/data");
+
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, 0);
 	status = TWinstall_zip(file.c_str(), wipe_cache);
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, verify_status);
+
+	if (dp_keep_busy[0]) closedir(dp_keep_busy[0]);
+	if (dp_keep_busy[1]) closedir(dp_keep_busy[1]);
+	if (dp_keep_busy[2]) closedir(dp_keep_busy[2]);
 
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 	{
