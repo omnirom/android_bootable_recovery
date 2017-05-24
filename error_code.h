@@ -44,6 +44,7 @@ enum CauseCode {
   kTune2FsFailure,
   kRebootFailure,
   kPackageExtractFileFailure,
+  kPatchApplicationFailure,
   kVendorFailure = 200
 };
 
