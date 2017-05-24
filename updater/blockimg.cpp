@@ -1213,6 +1213,7 @@ static int PerformCommandDiff(CommandParameters& params) {
                                       std::placeholders::_2),
                             nullptr, nullptr) != 0) {
           LOG(ERROR) << "Failed to apply image patch.";
+          failure_type = kPatchApplicationFailure;
           return -1;
         }
       } else {
@@ -1221,6 +1222,7 @@ static int PerformCommandDiff(CommandParameters& params) {
                                        std::placeholders::_2),
                              nullptr) != 0) {
           LOG(ERROR) << "Failed to apply bsdiff patch.";
+          failure_type = kPatchApplicationFailure;
           return -1;
         }
       }
