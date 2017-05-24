@@ -20,13 +20,13 @@
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
 		<string name="data_backup">Data (excl. storage)</string>
-		<string name="sdcard">SDCard</string>
+		<string name="sdcard">SD Card</string>
 		<string name="internal">Internal Storage</string>
-		<string name="microsd">Micro SDCard</string>
+		<string name="microsd">Micro SD Card</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Secure</string>
 		<string name="dalvik">Dalvik / ART Cache</string>
-		<!-- This is a rarely used partition on a Micro SD card for a very old app2sd system -->
+		<!-- This is a rarely used partition on a Micro SD Card for a very old app2sd system -->
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted Storage</string>
@@ -394,7 +394,7 @@
 		<string name="swipe_to_confirm">Swipe to Confirm</string>
 		<string name="part_sd_hdr">Partition SD Card</string>
 		<string name="invalid_partsd_sel">You must select a removable device</string>
-		<string name="part_sd_lose">You will lose all files on your SD card!</string>
+		<string name="part_sd_lose">You will lose all files on your SD Card!</string>
 		<string name="part_sd_undo">This action cannot be undone!</string>
 		<string name="part_sd_ext_sz">EXT Size:</string>
 		<string name="part_sd_swap_sz">Swap Size:</string>
