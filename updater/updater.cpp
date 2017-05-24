@@ -202,6 +202,10 @@ int main(int argc, char** argv) {
     // Cause code should provide additional information about the abort.
     if (state.cause_code != kNoCause) {
       fprintf(cmd_pipe, "log cause: %d\n", state.cause_code);
+      if (state.cause_code == kPatchApplicationFailure) {
+        LOG(INFO) << "Patch application failed, retry update.";
+        fprintf(cmd_pipe, "retry_update\n");
+      }
     }
 
     if (updater_info.package_zip) {
