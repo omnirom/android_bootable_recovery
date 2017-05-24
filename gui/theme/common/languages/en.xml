@@ -20,9 +20,9 @@
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
 		<string name="data_backup">Data (excl. storage)</string>
-		<string name="sdcard">SDCard</string>
+		<string name="sdcard">SD card</string>
 		<string name="internal">Internal Storage</string>
-		<string name="microsd">Micro SDCard</string>
+		<string name="microsd">Micro SD card</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Secure</string>
 		<string name="dalvik">Dalvik / ART Cache</string>
@@ -376,12 +376,12 @@
 		<string name="sel_lang_btn">Select Language</string>
 		<string name="set_language_btn">Set Language</string>
 		<string name="advanced_hdr">Advanced</string>
-		<string name="copy_log_confirm">Copy Log to SD Card?</string>
-		<string name="copying_log" version="2">Copying Logs to SD Card...</string>
+		<string name="copy_log_confirm">Copy Log to SD card?</string>
+		<string name="copying_log" version="2">Copying Logs to SD card...</string>
 		<string name="copy_log_complete" version="2">Logs Copy Complete</string>
 		<string name="fix_context_btn">Fix Contexts</string>
-		<string name="part_sd_btn">Partition SD Card</string>
-		<string name="part_sd_s_btn">SD Card</string>
+		<string name="part_sd_btn">Partition SD card</string>
+		<string name="part_sd_s_btn">SD card</string>
 		<string name="file_manager_btn">File Manager</string>
 		<string name="language_hdr">Language</string>
 		<string name="terminal_btn">Terminal</string>
@@ -392,7 +392,7 @@
 		<string name="injecting_twrp">Re-Injecting TWRP...</string>
 		<string name="inject_twrp_complete">TWRP Injection Complete</string>
 		<string name="swipe_to_confirm">Swipe to Confirm</string>
-		<string name="part_sd_hdr">Partition SD Card</string>
+		<string name="part_sd_hdr">Partition SD card</string>
 		<string name="invalid_partsd_sel">You must select a removable device</string>
 		<string name="part_sd_lose">You will lose all files on your SD card!</string>
 		<string name="part_sd_undo">This action cannot be undone!</string>
@@ -403,7 +403,7 @@
 		<string name="file_system">File System:</string>
 		<string name="swipe_part_sd">Swipe to Partition</string>
 		<string name="swipe_part_sd_s">Partition</string>
-		<string name="partitioning_sd">Partitioning SD Card...</string>
+		<string name="partitioning_sd">Partitioning SD card...</string>
 		<string name="partitioning_sd2">This will take a few minutes.</string>
 		<string name="part_sd_complete">Partitioning Complete</string>
 		<string name="dumlock_hdr">HTC Dumlock</string>
@@ -551,7 +551,7 @@
 		<string name="decrypt_success_dev">Data successfully decrypted, new block device: '{1}'</string>
 		<string name="decrypt_success_nodev">Data successfully decrypted</string>
 		<string name="done">Done.</string>
-		<string name="start_partition_sd">Partitioning SD Card...</string>
+		<string name="start_partition_sd">Partitioning SD card...</string>
 		<string name="partition_sd_locate">Unable to locate device to partition.</string>
 		<string name="ext_swap_size">EXT + Swap size is larger than sdcard size.</string>
 		<string name="remove_part_table">Removing partition table...</string>
@@ -679,7 +679,7 @@
 		<string name="curr_date">(Current Date)</string>
 		<string name="backup_name_len">Backup name is too long.</string>
 		<string name="backup_name_invalid">Backup name '{1}' contains invalid character: '{1}'</string>
-		<string name="no_real_sdcard">This device does not have a real SD Card! Aborting!</string>
+		<string name="no_real_sdcard">This device does not have a real SD card! Aborting!</string>
 		<string name="cancel_sideload">Cancelling ADB sideload...</string>
 		<string name="change_fs_err">Error changing file system.</string>
 		<string name="theme_ver_err">Custom theme version does not match TWRP version. Using stock theme.</string>
