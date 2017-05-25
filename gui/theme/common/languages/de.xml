@@ -286,9 +286,9 @@
 		<string name="turning_off">Ausschalten...</string>
 		<string name="swipe_power_off">Gerät ausschalten</string>
 		<string name="swipe_power_off_s">Ausschalten</string>
-		<string name="sys_ro_hdr">Unveränderte Systempartition</string>
+		<string name="sys_ro_hdr">Unveränderte System-Partition</string>
 		<string name="sys_ro_keep">System-Partition schreibgeschützt einhängen?</string>
-		<string name="sys_rop1">TWRP kann die System Partition unverändert lassen,</string>
+		<string name="sys_rop1">TWRP kann die System-Partition unverändert lassen,</string>
 		<string name="sys_rop2">um das Aufspielen offizieller Updates zu erleichtern.</string>
 		<string name="sys_rop3">Jedoch kann dann das Hersteller-ROM TWRP wieder</string>
 		<string name="sys_rop4">überschreiben und TWRP kann keinen Root-Zugriff einrichten.</string>
@@ -305,7 +305,7 @@
 		<string name="settings_gen_hdr">Allgemein</string>
 		<string name="settings_gen_s_hdr">Allgemein</string>
 		<string name="settings_gen_btn">Allgemein</string>
-		<string name="use_rmrf_chk">rekursiv löschen anstatt formatieren</string>
+		<string name="use_rmrf_chk">Verwende rm -rf anstatt zu formatieren</string>
 		<string name="use24clock_chk">24-Stunden-Format</string>
 		<string name="rev_navbar_chk">Navigationsleiste umkehren</string>
 		<string name="simact_chk">Benutzeraktionen für Design-Test simulieren</string>
@@ -550,7 +550,7 @@
 		<string name="decrypt_success_dev">Erfolgreich entschlüsselt, neues Blockgerät: '{1}'</string>
 		<string name="decrypt_success_nodev">Erfolgreich entschlüsseltd</string>
 		<string name="done">Abgeschlossen.</string>
-		<string name="start_partition_sd">Partitioniere SD Karte...</string>
+		<string name="start_partition_sd">Partitioniere SD-Karte...</string>
 		<string name="partition_sd_locate">Zu partitionierendes Gerät nicht gefunden.</string>
 		<string name="ext_swap_size">EXT + Auslagerung ist grösser als die SD-Karte.</string>
 		<string name="remove_part_table">Entferne Partitionstabelle...</string>
