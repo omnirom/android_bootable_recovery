@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "443decdc_6234f5b6",
+        "filename": "adbbu/adbbumain.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-05-27T21:00:41Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "f9bacf35232d7286cd92e5ebde0841e11cf0da78",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "dff54ebf_aa684477",
+        "filename": "adbbu/adbbumain.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-05-27T21:00:41Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "f9bacf35232d7286cd92e5ebde0841e11cf0da78",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7a131cf6_4539a05b",
+        "filename": "adbbu/adbbumain.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-05-27T21:00:41Z",
+      "side": 1,
+      "message": "change to define",
+      "revId": "f9bacf35232d7286cd92e5ebde0841e11cf0da78",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "501e5aad_cac79fd7",
+        "filename": "adbbu/adbbumain.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-05-27T21:00:41Z",
+      "side": 1,
+      "message": "change to define",
+      "revId": "f9bacf35232d7286cd92e5ebde0841e11cf0da78",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9cc7445b_675626e2",
+        "filename": "adbbu/adbbumain.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-05-27T21:00:41Z",
+      "side": 1,
+      "message": "change to define",
+      "revId": "f9bacf35232d7286cd92e5ebde0841e11cf0da78",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
