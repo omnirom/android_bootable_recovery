@@ -26,12 +26,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
+#include <android-base/memory.h>
 #include <applypatch/applypatch.h>
 #include <applypatch/imgdiff.h>
-#include <android-base/memory.h>
 #include <openssl/sha.h>
 #include <zlib.h>
 
@@ -41,6 +43,86 @@ static inline int64_t Read8(const void *address) {
 
 static inline int32_t Read4(const void *address) {
   return android::base::get_unaligned<int32_t>(address);
+}
+
+// This function is a wrapper of ApplyBSDiffPatch(). It has a custom sink function to deflate the
+// patched data and stream the deflated data to output.
+static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_len,
+                                            const Value* patch, size_t patch_offset,
+                                            const char* deflate_header, SinkFn sink, SHA_CTX* ctx) {
+  size_t expected_target_length = static_cast<size_t>(Read8(deflate_header + 32));
+  int level = Read4(deflate_header + 40);
+  int method = Read4(deflate_header + 44);
+  int window_bits = Read4(deflate_header + 48);
+  int mem_level = Read4(deflate_header + 52);
+  int strategy = Read4(deflate_header + 56);
+
+  std::unique_ptr<z_stream, decltype(&deflateEnd)> strm(new z_stream(), deflateEnd);
+  strm->zalloc = Z_NULL;
+  strm->zfree = Z_NULL;
+  strm->opaque = Z_NULL;
+  strm->avail_in = 0;
+  strm->next_in = nullptr;
+  int ret = deflateInit2(strm.get(), level, method, window_bits, mem_level, strategy);
+  if (ret != Z_OK) {
+    LOG(ERROR) << "Failed to init uncompressed data deflation: " << ret;
+    return false;
+  }
+
+  // Define a custom sink wrapper that feeds to bspatch. It deflates the available patch data on
+  // the fly and outputs the compressed data to the given sink.
+  size_t actual_target_length = 0;
+  size_t total_written = 0;
+  static constexpr size_t buffer_size = 32768;
+  auto compression_sink = [&](const uint8_t* data, size_t len) -> size_t {
+    // The input patch length for an update never exceeds INT_MAX.
+    strm->avail_in = len;
+    strm->next_in = data;
+    do {
+      std::vector<uint8_t> buffer(buffer_size);
+      strm->avail_out = buffer_size;
+      strm->next_out = buffer.data();
+      if (actual_target_length + len < expected_target_length) {
+        ret = deflate(strm.get(), Z_NO_FLUSH);
+      } else {
+        ret = deflate(strm.get(), Z_FINISH);
+      }
+      if (ret != Z_OK && ret != Z_STREAM_END) {
+        LOG(ERROR) << "Failed to deflate stream: " << ret;
+        // zero length indicates an error in the sink function of bspatch().
+        return 0;
+      }
+
+      size_t have = buffer_size - strm->avail_out;
+      total_written += have;
+      if (sink(buffer.data(), have) != have) {
+        LOG(ERROR) << "Failed to write " << have << " compressed bytes to output.";
+        return 0;
+      }
+      if (ctx) SHA1_Update(ctx, buffer.data(), have);
+    } while ((strm->avail_in != 0 || strm->avail_out == 0) && ret != Z_STREAM_END);
+
+    actual_target_length += len;
+    return len;
+  };
+
+  if (ApplyBSDiffPatch(src_data, src_len, patch, patch_offset, compression_sink, nullptr) != 0) {
+    return false;
+  }
+
+  if (ret != Z_STREAM_END) {
+    LOG(ERROR) << "ret is expected to be Z_STREAM_END, but it's " << ret;
+    return false;
+  }
+
+  if (expected_target_length != actual_target_length) {
+    LOG(ERROR) << "target length is expected to be " << expected_target_length << ", but it's "
+               << actual_target_length;
+    return false;
+  }
+  LOG(DEBUG) << "bspatch writes " << total_written << " bytes in total to streaming output.";
+
+  return true;
 }
 
 int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const unsigned char* patch_data,
@@ -137,12 +219,6 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value*
       size_t src_len = static_cast<size_t>(Read8(deflate_header + 8));
       size_t patch_offset = static_cast<size_t>(Read8(deflate_header + 16));
       size_t expanded_len = static_cast<size_t>(Read8(deflate_header + 24));
-      size_t target_len = static_cast<size_t>(Read8(deflate_header + 32));
-      int level = Read4(deflate_header + 40);
-      int method = Read4(deflate_header + 44);
-      int windowBits = Read4(deflate_header + 48);
-      int memLevel = Read4(deflate_header + 52);
-      int strategy = Read4(deflate_header + 56);
 
       if (src_start + src_len > old_size) {
         printf("source data too short\n");
@@ -199,60 +275,12 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value*
         }
       }
 
-      // Next, apply the bsdiff patch (in memory) to the uncompressed data.
-      std::vector<uint8_t> uncompressed_target_data;
-      // TODO: replace the custom sink function passed into ApplyBSDiffPatch so that it wraps the
-      // given sink function to stream output to save memory.
-      if (ApplyBSDiffPatch(expanded_source.data(), expanded_len, patch, patch_offset,
-        [&uncompressed_target_data](const uint8_t* data, size_t len) {
-          uncompressed_target_data.insert(uncompressed_target_data.end(), data, data + len);
-          return len;
-        }, nullptr) != 0) {
-        return -1;
-      }
-      if (uncompressed_target_data.size() != target_len) {
-        printf("expected target len to be %zu, but it's %zu\n", target_len,
-               uncompressed_target_data.size());
+      if (!ApplyBSDiffPatchAndStreamOutput(expanded_source.data(), expanded_len, patch,
+                                           patch_offset, deflate_header, sink, ctx)) {
+        LOG(ERROR) << "Fail to apply streaming bspatch.";
         return -1;
       }
 
-      // Now compress the target data and append it to the output.
-
-      // we're done with the expanded_source data buffer, so we'll
-      // reuse that memory to receive the output of deflate.
-      if (expanded_source.size() < 32768U) {
-        expanded_source.resize(32768U);
-      }
-
-      {
-        std::vector<unsigned char>& temp_data = expanded_source;
-
-        // now the deflate stream
-        z_stream strm;
-        strm.zalloc = Z_NULL;
-        strm.zfree = Z_NULL;
-        strm.opaque = Z_NULL;
-        strm.avail_in = uncompressed_target_data.size();
-        strm.next_in = uncompressed_target_data.data();
-        int ret = deflateInit2(&strm, level, method, windowBits, memLevel, strategy);
-        if (ret != Z_OK) {
-          printf("failed to init uncompressed data deflation: %d\n", ret);
-          return -1;
-        }
-        do {
-          strm.avail_out = temp_data.size();
-          strm.next_out = temp_data.data();
-          ret = deflate(&strm, Z_FINISH);
-          size_t have = temp_data.size() - strm.avail_out;
-
-          if (sink(temp_data.data(), have) != have) {
-            printf("failed to write %zd compressed bytes to output\n", have);
-            return -1;
-          }
-          if (ctx) SHA1_Update(ctx, temp_data.data(), have);
-        } while (ret != Z_STREAM_END);
-        deflateEnd(&strm);
-      }
     } else {
       printf("patch chunk %d is unknown type %d\n", i, type);
       return -1;
