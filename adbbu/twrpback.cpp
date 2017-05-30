@@ -663,6 +663,11 @@ int twrpback::restore(void) {
 						}
 						totalbytes += readbytes;
 						memcpy(&structcmd, result, sizeof(result));
+						if (strnlen(structcmd.type, sizeof(structcmd.type)) >= sizeof(structcmd.type)) {
+							adblogwrite("ADB control type isn't NULL-terminated\n");
+							close_restore_fds();
+							return -1;
+						}
 						cmdstr = structcmd.type;
 
 						if (cmdstr.substr(0, sizeof(MD5TRAILER) - 1) == MD5TRAILER) {
