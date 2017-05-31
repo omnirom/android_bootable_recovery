@@ -39,7 +39,6 @@ LOCAL_SRC_FILES := \
     unit/rangeset_test.cpp \
     unit/sysutil_test.cpp \
     unit/zip_test.cpp \
-    unit/ziputil_test.cpp
 
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SHARED_LIBRARIES := liblog
