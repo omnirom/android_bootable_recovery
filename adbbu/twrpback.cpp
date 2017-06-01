@@ -133,6 +133,7 @@ int twrpback::backup(std::string command) {
 		}
 	}
 
+	memset(operation, 0, sizeof(operation));
 	sprintf(operation, "adbbackup %s", command.c_str());
 	if (write(write_fd, operation, sizeof(operation)) != sizeof(operation)) {
 		adblogwrite("Unable to write to ORS_INPUT_FILE\n");
@@ -173,8 +174,7 @@ int twrpback::backup(std::string command) {
 			struct AdbBackupControlType structcmd;
 
 			memcpy(&structcmd, cmd, sizeof(cmd));
-			std::string cmdstr(structcmd.type);
-			std::string cmdtype = cmdstr.substr(0, sizeof(structcmd.type) - 1);
+			std::string cmdtype = structcmd.get_type();
 
 			//we received an error, exit and unlink
 			if (cmdtype == TWERROR) {
@@ -396,7 +396,6 @@ int twrpback::backup(std::string command) {
 
 int twrpback::restore(void) {
 	twrpDigest adb_md5;
-	char cmd[MAX_ADB_READ];
 	char result[MAX_ADB_READ];
 	struct AdbBackupControlType structcmd;
 	int adb_control_twrp_fd, errctr = 0;
@@ -436,6 +435,7 @@ int twrpback::restore(void) {
 		}
 	}
 
+	memset(operation, 0, sizeof(operation));
 	sprintf(operation, "adbrestore");
 	if (write(write_fd, operation, sizeof(operation)) != sizeof(operation)) {
 		adblogwrite("Unable to write to ORS_INPUT_FILE\n");
@@ -489,8 +489,7 @@ int twrpback::restore(void) {
 		if (read(adb_control_bu_fd, &cmd, sizeof(cmd)) > 0) {
 			struct AdbBackupControlType structcmd;
 			memcpy(&structcmd, cmd, sizeof(cmd));
-			std::string cmdstr(structcmd.type);
-			std::string cmdtype = cmdstr.substr(0, sizeof(structcmd.type) - 1);
+			std::string cmdtype = structcmd.get_type();
 
 			//If we receive TWEOF from TWRP close adb data fifo
 			if (cmdtype == TWEOF) {
@@ -516,13 +515,11 @@ int twrpback::restore(void) {
 		}
 		//If we should read from the adb stream, write commands and data to TWRP
 		if (read_from_adb) {
-			std::string cmdstr;
 			int readbytes;
 			if ((readbytes = fread(result, 1, sizeof(result), adbd_fp)) == sizeof(result)) {
 				totalbytes += readbytes;
 				memcpy(&structcmd, result, sizeof(result));
-				cmdstr = structcmd.type;
-				std::string cmdtype = cmdstr.substr(0, sizeof(structcmd.type) - 1);
+				std::string cmdtype = structcmd.get_type();
 
 				//Tell TWRP we have read the entire adb stream
 				if (cmdtype == TWENDADB) {
@@ -663,9 +660,9 @@ int twrpback::restore(void) {
 						}
 						totalbytes += readbytes;
 						memcpy(&structcmd, result, sizeof(result));
-						cmdstr = structcmd.type;
+						std::string cmdtype = structcmd.get_type();
 
-						if (cmdstr.substr(0, sizeof(MD5TRAILER) - 1) == MD5TRAILER) {
+						if (cmdtype.substr(0, sizeof(MD5TRAILER) - 1) == MD5TRAILER) {
 							struct AdbBackupFileTrailer md5tr;
 							uint32_t crc, md5trcrc, md5ident, md5identmatch;
 
@@ -775,6 +772,11 @@ int main(int argc, char **argv) {
 		tw.adblogwrite("Unable to create TW_ADB_TWRP_CONTROL fifo: " + str.str() + "\n");
 		unlink(TW_ADB_TWRP_CONTROL);
 		unlink(TW_ADB_BU_CONTROL);
+		return -1;
+	}
+
+	if (argc <= 1) {
+		tw.adblogwrite("No parameters given, exiting...\n");
 		return -1;
 	}
 

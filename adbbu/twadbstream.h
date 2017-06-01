@@ -65,6 +65,11 @@ struct AdbBackupControlType {
 	char type[16];					//stores the type of command, TWENDADB, TWCNT, TWEOF, TWMD5, TWDATA and TWERROR
 	uint32_t crc;					//stores the zlib 32 bit crc of the AdbBackupControlType struct to allow for making sure we are processing metadata
 	char space[484];				//stores space to align the struct to 512 bytes
+
+	//return a C++ string while not reading outside the type char array
+	std::string get_type() {
+		return std::string(type, strnlen(type, sizeof(type)-1));
+	}
 };
 
 //general info for file metadata stored in adb backup header
