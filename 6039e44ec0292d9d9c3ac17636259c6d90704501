@@ -16,6 +16,24 @@
       "revId": "6039e44ec0292d9d9c3ac17636259c6d90704501",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "445a51ea_8c927325",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1002010
+      },
+      "writtenOn": "2017-06-02T15:18:29Z",
+      "side": 1,
+      "message": "The `operation` buffer isn\u0027t initialized before this call.\n - `sprintf` will only write the string + a 0-byte, not the full buffer\n - Then we write the full (partially uninitialized) buffer to write_fd.\n\nWhile it will work just fine (assuming the receiving end reads until the first 0-byte), IIRC this was flagged by a memory checker (Valgrind?).",
+      "parentUuid": "3fa7f02e_69942151",
+      "revId": "6039e44ec0292d9d9c3ac17636259c6d90704501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
