@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4d614107_797001b2",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 1002010
+      },
+      "writtenOn": "2017-06-02T15:18:29Z",
+      "side": 1,
+      "message": "I might be getting a bit paranoid here, but this way it\u0027s impossible to overflow the `operation` buffer with many / long command line parameters.",
+      "revId": "c3b917fc05d24636fb1d357372582051afa2b3a7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d61e5ee5_6b1e9a55",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 784,
+      "author": {
+        "id": 1002010
+      },
+      "writtenOn": "2017-06-02T15:18:29Z",
+      "side": 1,
+      "message": "Whoops I forgot the unlink() here...",
+      "revId": "c3b917fc05d24636fb1d357372582051afa2b3a7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
