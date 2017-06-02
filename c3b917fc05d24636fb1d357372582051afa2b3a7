@@ -33,6 +33,24 @@
       "revId": "c3b917fc05d24636fb1d357372582051afa2b3a7",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "27cdf7db_6e77cf03",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 784,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-06-02T22:54:54Z",
+      "side": 1,
+      "message": "Can you just call close_restore_fds() here?",
+      "parentUuid": "d61e5ee5_6b1e9a55",
+      "revId": "c3b917fc05d24636fb1d357372582051afa2b3a7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
