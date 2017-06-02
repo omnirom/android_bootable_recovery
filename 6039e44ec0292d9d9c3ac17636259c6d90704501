@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3fa7f02e_69942151",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-06-02T13:27:02Z",
+      "side": 1,
+      "message": "Do we need to memset here?",
+      "revId": "6039e44ec0292d9d9c3ac17636259c6d90704501",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
