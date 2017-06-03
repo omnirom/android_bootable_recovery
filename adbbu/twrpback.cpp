@@ -330,7 +330,7 @@ int twrpback::backup(std::string command) {
 		//to the adb stream.
 		//If the stream is compressed, we need to always write the data.
 		if (writedata || compressed) {
-			while ((bytes = read(adb_read_fd, &result, sizeof(result))) == MAX_ADB_READ) {
+			while ((bytes = read(adb_read_fd, &result, sizeof(result))) > 0) {
 				if (firstDataPacket) {
 					struct AdbBackupControlType data_block;
 
