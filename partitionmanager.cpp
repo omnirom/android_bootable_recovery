@@ -1510,9 +1510,9 @@ void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 			DataManager::SetValue("tw_storage_path", "/data/media/0");
 			DataManager::SetValue("tw_settings_path", "/data/media/0");
 			dat->UnMount(false);
-			Output_Partition(dat);
 		}
 		Update_System_Details();
+		Output_Partition(dat);
 		UnMount_Main_Partitions();
 	} else
 		LOGERR("Unable to locate data partition.\n");
@@ -2509,7 +2509,7 @@ void TWPartitionManager::Decrypt_Adopted() {
 
 							if (strcasecmp(GUID.c_str(), guid->value()) == 0) {
 								xml_attribute<>* attr = volume->first_attribute("nickname");
-								if (attr) {
+								if (attr && attr->value() && strlen(attr->value()) > 0) {
 									(*adopt)->Storage_Name = attr->value();
 									(*adopt)->Display_Name = (*adopt)->Storage_Name;
 									(*adopt)->Backup_Display_Name = (*adopt)->Storage_Name;
@@ -2528,7 +2528,6 @@ void TWPartitionManager::Decrypt_Adopted() {
 										Dat->Mount(false);
 										(*adopt)->UnMount(false);
 										(*adopt)->Mount(false);
-										Output_Partition((*adopt));
 									}
 								}
 								break;
@@ -2537,6 +2536,8 @@ void TWPartitionManager::Decrypt_Adopted() {
 						volume = volume->next_sibling("volume");
 					}
 				}
+				Update_System_Details();
+				Output_Partition((*adopt));
 			}
 		}
 	}
