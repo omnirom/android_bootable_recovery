@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "10c8f462_102c70d0",
+        "filename": "gui/theme/common/languages/de.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 1001854
+      },
+      "writtenOn": "2017-06-07T06:20:06Z",
+      "side": 1,
+      "message": "\"anstatt formatieren\" -\u003e \"anstatt zu formatieren\"",
+      "revId": "8a6cc99a62c4e7296ce80afc42e57f2791889c1e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
