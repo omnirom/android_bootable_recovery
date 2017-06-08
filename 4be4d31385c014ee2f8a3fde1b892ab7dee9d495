@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "07743178_7a88e53d",
+        "filename": "exclude.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-06-08T00:06:06Z",
+      "side": 1,
+      "message": "Does this compile under omni4.4 and omni.5.1?",
+      "revId": "4be4d31385c014ee2f8a3fde1b892ab7dee9d495",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8afbc52f_30c5b612",
+        "filename": "exclude.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-06-08T00:06:06Z",
+      "side": 1,
+      "message": "white space",
+      "revId": "4be4d31385c014ee2f8a3fde1b892ab7dee9d495",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
