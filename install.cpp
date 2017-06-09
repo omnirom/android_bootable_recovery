@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <functional>
@@ -294,11 +295,12 @@ int update_binary_command(const std::string& package, ZipArchiveHandle zip,
 }
 #endif  // !AB_OTA_UPDATER
 
-static void log_max_temperature(int* max_temperature) {
+static void log_max_temperature(int* max_temperature, const std::atomic<bool>& logger_finished) {
   CHECK(max_temperature != nullptr);
   std::mutex mtx;
   std::unique_lock<std::mutex> lck(mtx);
-  while (finish_log_temperature.wait_for(lck, 20s) == std::cv_status::timeout) {
+  while (!logger_finished.load() &&
+         finish_log_temperature.wait_for(lck, 20s) == std::cv_status::timeout) {
     *max_temperature = std::max(*max_temperature, GetMaxValueFromThermalZone());
   }
 }
@@ -403,7 +405,8 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   }
   close(pipefd[1]);
 
-  std::thread temperature_logger(log_max_temperature, max_temperature);
+  std::atomic<bool> logger_finished(false);
+  std::thread temperature_logger(log_max_temperature, max_temperature, std::ref(logger_finished));
 
   *wipe_cache = false;
   bool retry_update = false;
@@ -467,6 +470,7 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   int status;
   waitpid(pid, &status, 0);
 
+  logger_finished.store(true);
   finish_log_temperature.notify_one();
   temperature_logger.join();
 
