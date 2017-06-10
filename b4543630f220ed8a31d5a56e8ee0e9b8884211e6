@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d9cace55_76f7ced9",
+        "filename": "twrpDigestDriver.cpp",
+        "patchSetId": 77
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-06-10T15:34:31Z",
+      "side": 1,
+      "message": "Missing #include \u003cunistd.h\u003e\nFails to compile in 7.1 trees due to missing read, sync, and close.",
+      "revId": "b4543630f220ed8a31d5a56e8ee0e9b8884211e6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
