@@ -2124,7 +2124,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media_Func(const string& parent __unu
 				}
 				rmdir(dir.c_str());
 			} else if (de->d_type == DT_REG || de->d_type == DT_LNK || de->d_type == DT_FIFO || de->d_type == DT_SOCK) {
-				if (!unlink(dir.c_str()))
+				if (unlink(dir.c_str()) != 0)
 					LOGINFO("Unable to unlink '%s': %s\n", dir.c_str(), strerror(errno));
 			}
 		}
