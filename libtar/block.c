@@ -62,6 +62,7 @@ th_read_internal(TAR *t)
 {
 	int i;
 	int num_zero_blocks = 0;
+	const char leaked_string[] = "I:Closing tar\n";
 
 #ifdef DEBUG
 	printf("==> th_read_internal(TAR=\"%s\")\n", t->pathname);
@@ -69,6 +70,25 @@ th_read_internal(TAR *t)
 
 	while ((i = tar_block_read(t, &(t->th_buf))) == T_BLOCKSIZE)
 	{
+		// remove bad leak: "I:Closing tar\n"
+		if (!strncmp((char *)(&(t->th_buf)), leaked_string, sizeof(leaked_string)-1)) {
+			char *p = (char *)(&(t->th_buf));
+			int is_empty = 1;
+			int j = sizeof(leaked_string)-1;
+			while (j < T_BLOCKSIZE) {
+				if (p[j++]) {
+					is_empty = 0;
+					break;
+				}
+			}
+			if (is_empty) {
+				printf("WARNING: leaked 'I:Closing tar' detected!! Removing it and proceeding\n");
+				memset(p, 0, sizeof(leaked_string)-1); // set them to null
+				char buf[sizeof(leaked_string)-1]; // read 14 bytes more to get rid of them from the stream
+				(*((t)->type->readfunc))((t)->fd, (char *)(buf), sizeof(buf));
+			}
+		}
+
 		/* two all-zero blocks mark EOF */
 		if (t->th_buf.name[0] == '\0')
 		{
