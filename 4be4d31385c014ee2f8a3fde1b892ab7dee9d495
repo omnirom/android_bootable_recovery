@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "50e6bd63_70e614a3",
+        "filename": "exclude.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1001725
+      },
+      "writtenOn": "2017-06-14T14:55:07Z",
+      "side": 1,
+      "message": "I\u0027m guessing this is a rhetorical question, right?\nI have been using only 6.0 sources to build TWRP.\nWhat to do you suggest? Revert back to a while loop?",
+      "parentUuid": "07743178_7a88e53d",
+      "revId": "4be4d31385c014ee2f8a3fde1b892ab7dee9d495",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8afbc52f_30c5b612",
         "filename": "exclude.cpp",
         "patchSetId": 5
