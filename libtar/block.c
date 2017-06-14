@@ -69,6 +69,19 @@ th_read_internal(TAR *t)
 
 	while ((i = tar_block_read(t, &(t->th_buf))) == T_BLOCKSIZE)
 	{
+		// remove bad leak: "I:Closing tar\n"
+		char *p = strstr(&(t->th_buf), "I:Closing tar\n");
+		if (p) {
+			printf("WARNING: leaked 'I:Closing tar' detected!! Removing it and proceeding\n");
+
+			// set them to null
+			memset(p, 0, 14);
+
+			// read 14 bytes more to get rid of them from the stream
+			char buf[15];
+			(*((t)->type->readfunc))((t)->fd, (char *)(buf), 14);
+		}
+
 		/* two all-zero blocks mark EOF */
 		if (t->th_buf.name[0] == '\0')
 		{
