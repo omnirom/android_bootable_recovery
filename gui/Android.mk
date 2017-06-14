@@ -151,7 +151,7 @@ ifeq ($(TW_CUSTOM_THEME),)
                 endif
             else ifeq ($(shell test $(GUI_WIDTH) -eq $(GUI_HEIGHT); echo $$?),0)
                 # watch_hdpi does not yet exist
-                TW_THEME := watch_mdpi
+                TW_THEME := round_watch_mdpi
             endif
         endif
         endif
