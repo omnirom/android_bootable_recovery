@@ -256,6 +256,10 @@ void ScreenRecoveryUI::DrawHorizontalRule(int* y) {
     *y += 4;
 }
 
+void ScreenRecoveryUI::DrawHighlightBar(int x, int y, int width, int height) const {
+    gr_fill(x, y, x + width, y + height);
+}
+
 void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) const {
     gr_text(gr_sys_font(), x, *y, line, bold);
     *y += char_height_ + 4;
@@ -310,15 +314,14 @@ void ScreenRecoveryUI::draw_screen_locked() {
                 if (i == menu_sel) {
                     // Draw the highlight bar.
                     SetColor(IsLongPress() ? MENU_SEL_BG_ACTIVE : MENU_SEL_BG);
-                    gr_fill(0, y - 2, gr_fb_width(), y + char_height_ + 2);
+                    DrawHighlightBar(0, y - 2, gr_fb_width(), char_height_ + 4);
                     // Bold white text for the selected item.
                     SetColor(MENU_SEL_FG);
-                    gr_text(gr_sys_font(), 4, y, menu_[i], true);
+                    DrawTextLine(TEXT_INDENT, &y, menu_[i], true);
                     SetColor(MENU);
                 } else {
-                    gr_text(gr_sys_font(), 4, y, menu_[i], false);
+                    DrawTextLine(TEXT_INDENT, &y, menu_[i], false);
                 }
-                y += char_height_ + 4;
             }
             DrawHorizontalRule(&y);
         }
@@ -329,10 +332,11 @@ void ScreenRecoveryUI::draw_screen_locked() {
         SetColor(LOG);
         int row = (text_top_ + text_rows_ - 1) % text_rows_;
         size_t count = 0;
-        for (int ty = gr_fb_height() - char_height_;
+        for (int ty = gr_fb_height() - char_height_ - log_bottom_offset_;
              ty >= y && count < text_rows_;
              ty -= char_height_, ++count) {
-            gr_text(gr_sys_font(), 0, ty, text_[row], false);
+            int temp_y = ty;
+            DrawTextLine(0, &temp_y, text_[row], false);
             --row;
             if (row < 0) row = text_rows_ - 1;
         }
@@ -453,6 +457,7 @@ bool ScreenRecoveryUI::InitTextParams() {
     gr_font_size(gr_sys_font(), &char_width_, &char_height_);
     text_rows_ = gr_fb_height() / char_height_;
     text_cols_ = gr_fb_width() / char_width_;
+    log_bottom_offset_ = 0;
     return true;
 }
 
