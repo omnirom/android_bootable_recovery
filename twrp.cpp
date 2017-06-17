@@ -44,6 +44,7 @@ extern "C" {
 #include "data.hpp"
 #include "partitions.hpp"
 #include "openrecoveryscript.hpp"
+#include "adbauth/adb_auth.hpp"
 #include "variables.h"
 #ifdef TW_USE_NEW_MINADBD
 #include "adb.h"
@@ -301,6 +302,9 @@ int main(int argc, char **argv) {
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
 	}
+
+	// Start background thread listening for adbd authentication requests
+	adb_auth_start();
 
 #ifdef TW_HAS_MTP
 	char mtp_crash_check[PROPERTY_VALUE_MAX];

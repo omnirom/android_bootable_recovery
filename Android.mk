@@ -119,7 +119,7 @@ endif
 LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
 
-LOCAL_STATIC_LIBRARIES += libguitwrp
+LOCAL_STATIC_LIBRARIES += libguitwrp libadbauth
 LOCAL_SHARED_LIBRARIES += libaosprecovery libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libtwadbbu libbootloader_message
 LOCAL_SHARED_LIBRARIES += libcrecovery libtwadbbu libtwrpdigest
 
@@ -669,6 +669,7 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/libcrecovery/Android.mk \
     $(commands_recovery_local_path)/libblkid/Android.mk \
     $(commands_recovery_local_path)/minuitwrp/Android.mk \
+    $(commands_recovery_local_path)/adbauth/Android.mk \
     $(commands_recovery_local_path)/openaes/Android.mk \
     $(commands_recovery_local_path)/toolbox/Android.mk \
     $(commands_recovery_local_path)/twrpTarMain/Android.mk \
