@@ -107,6 +107,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     // Log text overlay, displayed when a magic key is pressed.
     char** text_;
     size_t text_col_, text_row_, text_top_;
+    int log_bottom_offset_;
 
     bool show_text;
     bool show_text_ever;   // has show_text ever been true?
@@ -165,8 +166,9 @@ class ScreenRecoveryUI : public RecoveryUI {
     virtual int GetProgressBaseline();
     virtual int GetTextBaseline();
 
-    void DrawHorizontalRule(int* y);
-    void DrawTextLine(int x, int* y, const char* line, bool bold) const;
+    virtual void DrawHorizontalRule(int* y);
+    virtual void DrawHighlightBar(int x, int y, int width, int height) const;
+    virtual void DrawTextLine(int x, int* y, const char* line, bool bold) const;
     void DrawTextLines(int x, int* y, const char* const* lines) const;
 };
 
