@@ -25,6 +25,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <selinux/android.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
 #include <ziparchive/zip_archive.h>
@@ -139,9 +140,8 @@ int main(int argc, char** argv) {
     return 6;
   }
 
-  struct selinux_opt seopts[] = { { SELABEL_OPT_PATH, "/file_contexts" } };
-
-  sehandle = selabel_open(SELABEL_CTX_FILE, seopts, 1);
+  sehandle = selinux_android_file_context_handle();
+  selinux_android_set_sehandle(sehandle);
 
   if (!sehandle) {
     fprintf(cmd_pipe, "ui_print Warning: No file_contexts\n");

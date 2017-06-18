@@ -54,6 +54,7 @@
 #include <healthd/BatteryMonitor.h>
 #include <private/android_logger.h> /* private pmsg functions */
 #include <private/android_filesystem_config.h>  /* for AID_SYSTEM */
+#include <selinux/android.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
 #include <ziparchive/zip_archive.h>
@@ -1481,12 +1482,8 @@ int main(int argc, char **argv) {
     ui->SetBackground(RecoveryUI::NONE);
     if (show_text) ui->ShowText(true);
 
-    struct selinux_opt seopts[] = {
-        { SELABEL_OPT_PATH, "/file_contexts" }
-    };
-
-    sehandle = selabel_open(SELABEL_CTX_FILE, seopts, 1);
-
+    sehandle = selinux_android_file_context_handle();
+    selinux_android_set_sehandle(sehandle);
     if (!sehandle) {
         ui->Print("Warning: No file_contexts\n");
     }
