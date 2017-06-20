@@ -302,9 +302,32 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
   }
 
   if (fs_type == "ext4") {
-    int status = make_ext4fs(location.c_str(), size, mount_point.c_str(), sehandle);
+    const char* mke2fs_argv[] = { "/sbin/mke2fs_static", "-t",    "ext4", "-b", "4096",
+                                  location.c_str(),      nullptr, nullptr };
+    std::string size_str;
+    if (size != 0) {
+      size_str = std::to_string(size / 4096LL);
+      mke2fs_argv[6] = size_str.c_str();
+    }
+
+    int status = exec_cmd(mke2fs_argv[0], const_cast<char**>(mke2fs_argv));
     if (status != 0) {
-      LOG(ERROR) << name << ": make_ext4fs failed (" << status << ") on " << location;
+      LOG(WARNING) << name << ": mke2fs failed (" << status << ") on " << location
+                   << ", falling back to make_ext4fs";
+      status = make_ext4fs(location.c_str(), size, mount_point.c_str(), sehandle);
+      if (status != 0) {
+        LOG(ERROR) << name << ": make_ext4fs failed (" << status << ") on " << location;
+        return StringValue("");
+      }
+      return StringValue(location);
+    }
+
+    const char* e2fsdroid_argv[] = { "/sbin/e2fsdroid_static", "-e",   "-S",
+                                     "/file_contexts",         "-a",   mount_point.c_str(),
+                                     location.c_str(),         nullptr };
+    status = exec_cmd(e2fsdroid_argv[0], const_cast<char**>(e2fsdroid_argv));
+    if (status != 0) {
+      LOG(ERROR) << name << ": e2fsdroid failed (" << status << ") on " << location;
       return StringValue("");
     }
     return StringValue(location);
