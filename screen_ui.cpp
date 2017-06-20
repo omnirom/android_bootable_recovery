@@ -43,8 +43,6 @@
 #include "screen_ui.h"
 #include "ui.h"
 
-#define TEXT_INDENT     4
-
 // Return the current time as a double (including fractions of a second).
 static double now() {
     struct timeval tv;
@@ -53,7 +51,8 @@ static double now() {
 }
 
 ScreenRecoveryUI::ScreenRecoveryUI()
-    : currentIcon(NONE),
+    : density_(static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f),
+      currentIcon(NONE),
       progressBarType(EMPTY),
       progressScopeStart(0),
       progressScopeSize(0),
@@ -79,6 +78,8 @@ ScreenRecoveryUI::ScreenRecoveryUI()
       animation_fps(30),  // TODO: there's currently no way to infer this.
       stage(-1),
       max_stage(-1),
+      margin_width_(0),
+      margin_height_(0),
       updateMutex(PTHREAD_MUTEX_INITIALIZER) {}
 
 GRSurface* ScreenRecoveryUI::GetCurrentFrame() {
@@ -282,65 +283,66 @@ static const char* LONG_PRESS_HELP[] = {
     NULL
 };
 
-// Redraw everything on the screen.  Does not flip pages.
-// Should only be called with updateMutex locked.
+// Redraws everything on the screen. Does not flip pages. Should only be called with updateMutex
+// locked.
 void ScreenRecoveryUI::draw_screen_locked() {
-    if (!show_text) {
-        draw_background_locked();
-        draw_foreground_locked();
-    } else {
-        gr_color(0, 0, 0, 255);
-        gr_clear();
+  if (!show_text) {
+    draw_background_locked();
+    draw_foreground_locked();
+    return;
+  }
 
-        int y = 0;
-        if (show_menu) {
-            std::string recovery_fingerprint =
-                    android::base::GetProperty("ro.bootimage.build.fingerprint", "");
+  gr_color(0, 0, 0, 255);
+  gr_clear();
 
-            SetColor(INFO);
-            DrawTextLine(TEXT_INDENT, &y, "Android Recovery", true);
-            for (auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
-                DrawTextLine(TEXT_INDENT, &y, chunk.c_str(), false);
-            }
-            DrawTextLines(TEXT_INDENT, &y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
+  static constexpr int TEXT_INDENT = 4;
+  int x = TEXT_INDENT + margin_width_;
+  int y = margin_height_;
+  if (show_menu) {
+    std::string recovery_fingerprint =
+        android::base::GetProperty("ro.bootimage.build.fingerprint", "");
 
-            SetColor(HEADER);
-            DrawTextLines(TEXT_INDENT, &y, menu_headers_);
-
-            SetColor(MENU);
-            DrawHorizontalRule(&y);
-            y += 4;
-            for (int i = 0; i < menu_items; ++i) {
-                if (i == menu_sel) {
-                    // Draw the highlight bar.
-                    SetColor(IsLongPress() ? MENU_SEL_BG_ACTIVE : MENU_SEL_BG);
-                    DrawHighlightBar(0, y - 2, gr_fb_width(), char_height_ + 4);
-                    // Bold white text for the selected item.
-                    SetColor(MENU_SEL_FG);
-                    DrawTextLine(TEXT_INDENT, &y, menu_[i], true);
-                    SetColor(MENU);
-                } else {
-                    DrawTextLine(TEXT_INDENT, &y, menu_[i], false);
-                }
-            }
-            DrawHorizontalRule(&y);
-        }
-
-        // display from the bottom up, until we hit the top of the
-        // screen, the bottom of the menu, or we've displayed the
-        // entire text buffer.
-        SetColor(LOG);
-        int row = (text_top_ + text_rows_ - 1) % text_rows_;
-        size_t count = 0;
-        for (int ty = gr_fb_height() - char_height_ - log_bottom_offset_;
-             ty >= y && count < text_rows_;
-             ty -= char_height_, ++count) {
-            int temp_y = ty;
-            DrawTextLine(0, &temp_y, text_[row], false);
-            --row;
-            if (row < 0) row = text_rows_ - 1;
-        }
+    SetColor(INFO);
+    DrawTextLine(x, &y, "Android Recovery", true);
+    for (const auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
+      DrawTextLine(x, &y, chunk.c_str(), false);
     }
+    DrawTextLines(x, &y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
+
+    SetColor(HEADER);
+    DrawTextLines(x, &y, menu_headers_);
+
+    SetColor(MENU);
+    DrawHorizontalRule(&y);
+    y += 4;
+    for (int i = 0; i < menu_items; ++i) {
+      if (i == menu_sel) {
+        // Draw the highlight bar.
+        SetColor(IsLongPress() ? MENU_SEL_BG_ACTIVE : MENU_SEL_BG);
+        DrawHighlightBar(0, y - 2, gr_fb_width(), char_height_ + 4);
+        // Bold white text for the selected item.
+        SetColor(MENU_SEL_FG);
+        DrawTextLine(x, &y, menu_[i], true);
+        SetColor(MENU);
+      } else {
+        DrawTextLine(x, &y, menu_[i], false);
+      }
+    }
+    DrawHorizontalRule(&y);
+  }
+
+  // Display from the bottom up, until we hit the top of the screen, the bottom of the menu, or
+  // we've displayed the entire text buffer.
+  SetColor(LOG);
+  int row = (text_top_ + text_rows_ - 1) % text_rows_;
+  size_t count = 0;
+  for (int ty = gr_fb_height() - margin_height_ - char_height_ - log_bottom_offset_;
+       ty >= y && count < text_rows_; ty -= char_height_, ++count) {
+    int temp_y = ty;
+    DrawTextLine(x, &temp_y, text_[row], false);
+    --row;
+    if (row < 0) row = text_rows_ - 1;
+  }
 }
 
 // Redraw everything on the screen and flip the screen (make it visible).
@@ -450,15 +452,15 @@ void ScreenRecoveryUI::SetSystemUpdateText(bool security_update) {
 }
 
 bool ScreenRecoveryUI::InitTextParams() {
-    if (gr_init() < 0) {
-      return false;
-    }
+  if (gr_init() < 0) {
+    return false;
+  }
 
-    gr_font_size(gr_sys_font(), &char_width_, &char_height_);
-    text_rows_ = gr_fb_height() / char_height_;
-    text_cols_ = gr_fb_width() / char_width_;
-    log_bottom_offset_ = 0;
-    return true;
+  gr_font_size(gr_sys_font(), &char_width_, &char_height_);
+  text_rows_ = (gr_fb_height() - margin_height_ * 2) / char_height_;
+  text_cols_ = (gr_fb_width() - margin_width_ * 2) / char_width_;
+  log_bottom_offset_ = 0;
+  return true;
 }
 
 bool ScreenRecoveryUI::Init(const std::string& locale) {
@@ -466,8 +468,6 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
   if (!InitTextParams()) {
     return false;
   }
-
-  density_ = static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f;
 
   // Are we portrait or landscape?
   layout_ = (gr_fb_width() > gr_fb_height()) ? LANDSCAPE : PORTRAIT;
