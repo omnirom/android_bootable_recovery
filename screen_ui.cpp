@@ -51,7 +51,9 @@ static double now() {
 }
 
 ScreenRecoveryUI::ScreenRecoveryUI()
-    : density_(static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f),
+    : kMarginWidth(RECOVERY_UI_MARGIN_WIDTH),
+      kMarginHeight(RECOVERY_UI_MARGIN_HEIGHT),
+      density_(static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f),
       currentIcon(NONE),
       progressBarType(EMPTY),
       progressScopeStart(0),
@@ -78,8 +80,6 @@ ScreenRecoveryUI::ScreenRecoveryUI()
       animation_fps(30),  // TODO: there's currently no way to infer this.
       stage(-1),
       max_stage(-1),
-      margin_width_(0),
-      margin_height_(0),
       updateMutex(PTHREAD_MUTEX_INITIALIZER) {}
 
 GRSurface* ScreenRecoveryUI::GetCurrentFrame() {
@@ -296,8 +296,8 @@ void ScreenRecoveryUI::draw_screen_locked() {
   gr_clear();
 
   static constexpr int TEXT_INDENT = 4;
-  int x = TEXT_INDENT + margin_width_;
-  int y = margin_height_;
+  int x = TEXT_INDENT + kMarginWidth;
+  int y = kMarginHeight;
   if (show_menu) {
     std::string recovery_fingerprint =
         android::base::GetProperty("ro.bootimage.build.fingerprint", "");
@@ -336,7 +336,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
   SetColor(LOG);
   int row = (text_top_ + text_rows_ - 1) % text_rows_;
   size_t count = 0;
-  for (int ty = gr_fb_height() - margin_height_ - char_height_ - log_bottom_offset_;
+  for (int ty = gr_fb_height() - kMarginHeight - char_height_ - log_bottom_offset_;
        ty >= y && count < text_rows_; ty -= char_height_, ++count) {
     int temp_y = ty;
     DrawTextLine(x, &temp_y, text_[row], false);
@@ -457,8 +457,8 @@ bool ScreenRecoveryUI::InitTextParams() {
   }
 
   gr_font_size(gr_sys_font(), &char_width_, &char_height_);
-  text_rows_ = (gr_fb_height() - margin_height_ * 2) / char_height_;
-  text_cols_ = (gr_fb_width() - margin_width_ * 2) / char_width_;
+  text_rows_ = (gr_fb_height() - kMarginHeight * 2) / char_height_;
+  text_cols_ = (gr_fb_width() - kMarginWidth * 2) / char_width_;
   log_bottom_offset_ = 0;
   return true;
 }
