@@ -72,6 +72,11 @@ class ScreenRecoveryUI : public RecoveryUI {
     void SetColor(UIElement e);
 
   protected:
+    // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
+    // rounded corners).
+    const int kMarginWidth;
+    const int kMarginHeight;
+
     // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
     const float density_;
 
@@ -137,11 +142,6 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     int char_width_;
     int char_height_;
-
-    // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
-    // rounded corners).
-    int margin_width_;
-    int margin_height_;
 
     pthread_mutex_t updateMutex;
 
