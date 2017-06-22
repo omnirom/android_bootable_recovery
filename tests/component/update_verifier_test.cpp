@@ -24,7 +24,7 @@
 class UpdateVerifierTest : public ::testing::Test {
  protected:
   void SetUp() override {
-#ifdef PRODUCT_SUPPORTS_VERITY
+#if defined(PRODUCT_SUPPORTS_VERITY) || defined(BOARD_AVB_ENABLE)
     verity_supported = true;
 #else
     verity_supported = false;
