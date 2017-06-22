@@ -39,6 +39,10 @@ ifeq ($(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_VERITY),true)
 LOCAL_CFLAGS += -DPRODUCT_SUPPORTS_VERITY=1
 endif
 
+ifeq ($(BOARD_AVB_ENABLE),true)
+LOCAL_CFLAGS += -DBOARD_AVB_ENABLE=1
+endif
+
 include $(BUILD_STATIC_LIBRARY)
 
 # update_verifier (executable)
