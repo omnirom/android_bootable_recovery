@@ -99,12 +99,21 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
     std::string content;
     if (!android::base::ReadFileToString(path, &content)) {
       PLOG(WARNING) << "Failed to read " << path;
-    } else if (android::base::Trim(content) == partition) {
-      dm_block_device = DEV_PATH + std::string(namelist[n]->d_name);
-      while (n--) {
-        free(namelist[n]);
+    } else {
+      std::string dm_block_name = android::base::Trim(content);
+#ifdef BOARD_AVB_ENABLE
+      // AVB is using 'vroot' for the root block device but we're expecting 'system'.
+      if (dm_block_name == "vroot") {
+        dm_block_name = "system";
       }
-      break;
+#endif
+      if (dm_block_name == partition) {
+        dm_block_device = DEV_PATH + std::string(namelist[n]->d_name);
+        while (n--) {
+          free(namelist[n]);
+        }
+        break;
+      }
     }
     free(namelist[n]);
   }
@@ -229,7 +238,7 @@ int update_verifier(int argc, char** argv) {
   if (is_successful == BoolResult::FALSE) {
     // The current slot has not booted successfully.
 
-#ifdef PRODUCT_SUPPORTS_VERITY
+#if defined(PRODUCT_SUPPORTS_VERITY) || defined(BOARD_AVB_ENABLE)
     std::string verity_mode = android::base::GetProperty("ro.boot.veritymode", "");
     if (verity_mode.empty()) {
       LOG(ERROR) << "Failed to get dm-verity mode.";
