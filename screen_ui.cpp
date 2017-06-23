@@ -338,7 +338,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
   SetColor(LOG);
   int row = (text_top_ + text_rows_ - 1) % text_rows_;
   size_t count = 0;
-  for (int ty = gr_fb_height() - kMarginHeight - char_height_ - log_bottom_offset_;
+  for (int ty = gr_fb_height() - kMarginHeight - char_height_;
        ty >= y && count < text_rows_; ty -= char_height_, ++count) {
     int temp_y = ty;
     DrawTextLine(x, &temp_y, text_[row], false);
@@ -461,7 +461,6 @@ bool ScreenRecoveryUI::InitTextParams() {
   gr_font_size(gr_sys_font(), &char_width_, &char_height_);
   text_rows_ = (gr_fb_height() - kMarginHeight * 2) / char_height_;
   text_cols_ = (gr_fb_width() - kMarginWidth * 2) / char_width_;
-  log_bottom_offset_ = 0;
   return true;
 }
 
