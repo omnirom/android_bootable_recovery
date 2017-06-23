@@ -18,39 +18,18 @@
 
 #include <minui/minui.h>
 
-VrRecoveryUI::VrRecoveryUI() :
-  x_offset(400),
-  y_offset(400),
-  stereo_offset(100) {
-}
+VrRecoveryUI::VrRecoveryUI() : kStereoOffset(RECOVERY_UI_VR_STEREO_OFFSET) {}
 
 bool VrRecoveryUI::InitTextParams() {
-  if (gr_init() < 0) {
-    return false;
-  }
-
-  gr_font_size(gr_sys_font(), &char_width_, &char_height_);
+  if (!ScreenRecoveryUI::InitTextParams()) return false;
   int mid_divide = gr_fb_width() / 2;
-  text_rows_ = (gr_fb_height() - 2 * y_offset) / char_height_;
-  text_cols_ = (mid_divide - x_offset - stereo_offset) / char_width_;
-  log_bottom_offset_ = gr_fb_height() - 2 * y_offset;
+  text_cols_ = (mid_divide - kMarginWidth - kStereoOffset) / char_width_;
   return true;
-}
-
-void VrRecoveryUI::DrawHorizontalRule(int* y) {
-  SetColor(MENU);
-  *y += 4;
-  gr_fill(0, *y + y_offset, gr_fb_width(), *y + y_offset + 2);
-  *y += 4;
-}
-
-void VrRecoveryUI::DrawHighlightBar(int x, int y, int width, int height) const {
-  gr_fill(x, y + y_offset, x + width, y + y_offset + height);
 }
 
 void VrRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) const {
   int mid_divide = gr_fb_width() / 2;
-  gr_text(gr_sys_font(), x + x_offset + stereo_offset, *y + y_offset, line, bold);
-  gr_text(gr_sys_font(), x + x_offset - stereo_offset + mid_divide, *y + y_offset, line, bold);
+  gr_text(gr_sys_font(), x + kStereoOffset, *y, line, bold);
+  gr_text(gr_sys_font(), x - kStereoOffset + mid_divide, *y, line, bold);
   *y += char_height_ + 4;
 }
