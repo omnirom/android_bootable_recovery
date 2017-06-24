@@ -47,12 +47,11 @@ class WearRecoveryUI : public ScreenRecoveryUI {
   // outer of window
   int outer_height, outer_width;
 
-  // Unusable rows when displaying the recovery menu, including the lines
-  // for headers (Android Recovery, build id and etc) and the bottom lines
-  // that may otherwise go out of the screen.
+  // Unusable rows when displaying the recovery menu, including the lines for headers (Android
+  // Recovery, build id and etc) and the bottom lines that may otherwise go out of the screen.
   int menu_unusable_rows;
 
-  int GetProgressBaseline() override;
+  int GetProgressBaseline() const override;
 
   bool InitTextParams() override;
 

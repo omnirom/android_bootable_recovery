@@ -61,7 +61,7 @@ WearRecoveryUI::WearRecoveryUI()
   self = this;
 }
 
-int WearRecoveryUI::GetProgressBaseline() {
+int WearRecoveryUI::GetProgressBaseline() const {
   return progress_bar_y;
 }
 
