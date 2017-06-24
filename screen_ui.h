@@ -113,7 +113,6 @@ class ScreenRecoveryUI : public RecoveryUI {
     // Log text overlay, displayed when a magic key is pressed.
     char** text_;
     size_t text_col_, text_row_, text_top_;
-    int log_bottom_offset_;
 
     bool show_text;
     bool show_text_ever;   // has show_text ever been true?
