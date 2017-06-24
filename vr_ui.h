@@ -26,12 +26,10 @@ class VrRecoveryUI : public ScreenRecoveryUI {
   protected:
     // Pixel offsets to move drawing functions to visible range.
     // Can vary per device depending on screen size and lens distortion.
-    int x_offset, y_offset, stereo_offset;
+    const int kStereoOffset;
 
     bool InitTextParams() override;
 
-    void DrawHorizontalRule(int* y) override;
-    void DrawHighlightBar(int x, int y, int width, int height) const override;
     void DrawTextLine(int x, int* y, const char* line, bool bold) const override;
 };
 
