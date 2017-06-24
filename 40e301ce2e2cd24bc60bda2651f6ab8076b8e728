@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4439df46_88b83084",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-06-24T12:36:10Z",
+      "side": 1,
+      "message": "Need to add apq8064 to the list and it might still be good to retain the ifeq krait and put this list in an elif as a backup to the check for krait.",
+      "revId": "40e301ce2e2cd24bc60bda2651f6ab8076b8e728",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
