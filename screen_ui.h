@@ -72,10 +72,16 @@ class ScreenRecoveryUI : public RecoveryUI {
     void SetColor(UIElement e);
 
   protected:
-    Icon currentIcon;
+    // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
+    // rounded corners).
+    const int kMarginWidth;
+    const int kMarginHeight;
 
     // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
-    float density_;
+    const float density_;
+
+    Icon currentIcon;
+
     // The layout to use.
     int layout_;
 
@@ -107,7 +113,6 @@ class ScreenRecoveryUI : public RecoveryUI {
     // Log text overlay, displayed when a magic key is pressed.
     char** text_;
     size_t text_col_, text_row_, text_top_;
-    int log_bottom_offset_;
 
     bool show_text;
     bool show_text_ever;   // has show_text ever been true?
@@ -136,6 +141,7 @@ class ScreenRecoveryUI : public RecoveryUI {
 
     int char_width_;
     int char_height_;
+
     pthread_mutex_t updateMutex;
 
     virtual bool InitTextParams();
