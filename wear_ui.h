@@ -22,64 +22,64 @@
 #include <string>
 
 class WearRecoveryUI : public ScreenRecoveryUI {
-  public:
-    WearRecoveryUI();
+ public:
+  WearRecoveryUI();
 
-    bool Init(const std::string& locale) override;
+  bool Init(const std::string& locale) override;
 
-    void SetStage(int current, int max) override;
+  void SetStage(int current, int max) override;
 
-    // printing messages
-    void Print(const char* fmt, ...) override;
-    void PrintOnScreenOnly(const char* fmt, ...) override __printflike(2, 3);
-    void ShowFile(const char* filename) override;
-    void ShowFile(FILE* fp) override;
+  // printing messages
+  void Print(const char* fmt, ...) override;
+  void PrintOnScreenOnly(const char* fmt, ...) override __printflike(2, 3);
+  void ShowFile(const char* filename) override;
+  void ShowFile(FILE* fp) override;
 
-    // menu display
-    void StartMenu(const char* const * headers, const char* const * items,
-                   int initial_selection) override;
-    int SelectMenu(int sel) override;
+  // menu display
+  void StartMenu(const char* const* headers, const char* const* items,
+                 int initial_selection) override;
+  int SelectMenu(int sel) override;
 
-  protected:
-    // progress bar vertical position, it's centered horizontally
-    int progress_bar_y;
+ protected:
+  // progress bar vertical position, it's centered horizontally
+  int progress_bar_y;
 
-    // outer of window
-    int outer_height, outer_width;
+  // outer of window
+  int outer_height, outer_width;
 
-    // Unusable rows when displaying the recovery menu, including the lines
-    // for headers (Android Recovery, build id and etc) and the bottom lines
-    // that may otherwise go out of the screen.
-    int menu_unusable_rows;
+  // Unusable rows when displaying the recovery menu, including the lines
+  // for headers (Android Recovery, build id and etc) and the bottom lines
+  // that may otherwise go out of the screen.
+  int menu_unusable_rows;
 
-    int GetProgressBaseline() override;
+  int GetProgressBaseline() override;
 
-    bool InitTextParams() override;
+  bool InitTextParams() override;
 
-    void update_progress_locked() override;
+  void update_progress_locked() override;
 
-    void PrintV(const char*, bool, va_list) override;
+  void PrintV(const char*, bool, va_list) override;
 
-  private:
-    GRSurface* backgroundIcon[5];
+ private:
+  GRSurface* backgroundIcon[5];
 
-    static const int kMaxCols = 96;
-    static const int kMaxRows = 96;
+  static const int kMaxCols = 96;
+  static const int kMaxRows = 96;
 
-    // Number of text rows seen on screen
-    int visible_text_rows;
+  // Number of text rows seen on screen
+  int visible_text_rows;
 
-    const char* const* menu_headers_;
-    int menu_start, menu_end;
+  const char* const* menu_headers_;
+  int menu_start, menu_end;
 
-    pthread_t progress_t;
+  pthread_t progress_t;
 
-    void draw_background_locked() override;
-    void draw_screen_locked() override;
-    void draw_progress_locked();
+  void draw_background_locked() override;
+  void draw_screen_locked() override;
+  void draw_progress_locked();
 
-    void PutChar(char);
-    void ClearText();
+  void PutChar(char);
+  void ClearText();
 };
 
 #endif  // RECOVERY_WEAR_UI_H
