@@ -71,23 +71,23 @@ RecoveryUI::RecoveryUI()
 }
 
 void RecoveryUI::OnKeyDetected(int key_code) {
-    if (key_code == KEY_POWER) {
-        has_power_key = true;
-    } else if (key_code == KEY_DOWN || key_code == KEY_VOLUMEDOWN) {
-        has_down_key = true;
-    } else if (key_code == KEY_UP || key_code == KEY_VOLUMEUP) {
-        has_up_key = true;
-    }
+  if (key_code == KEY_POWER) {
+    has_power_key = true;
+  } else if (key_code == KEY_DOWN || key_code == KEY_VOLUMEDOWN) {
+    has_down_key = true;
+  } else if (key_code == KEY_UP || key_code == KEY_VOLUMEUP) {
+    has_up_key = true;
+  }
 }
 
 // Reads input events, handles special hot keys, and adds to the key queue.
 static void* InputThreadLoop(void*) {
-    while (true) {
-        if (!ev_wait(-1)) {
-            ev_dispatch();
-        }
+  while (true) {
+    if (!ev_wait(-1)) {
+      ev_dispatch();
     }
-    return nullptr;
+  }
+  return nullptr;
 }
 
 bool RecoveryUI::InitScreensaver() {
@@ -141,39 +141,39 @@ bool RecoveryUI::Init(const std::string& locale) {
 }
 
 int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
-    struct input_event ev;
-    if (ev_get_input(fd, epevents, &ev) == -1) {
-        return -1;
-    }
+  struct input_event ev;
+  if (ev_get_input(fd, epevents, &ev) == -1) {
+    return -1;
+  }
 
-    if (ev.type == EV_SYN) {
-        return 0;
-    } else if (ev.type == EV_REL) {
-        if (ev.code == REL_Y) {
-            // accumulate the up or down motion reported by
-            // the trackball.  When it exceeds a threshold
-            // (positive or negative), fake an up/down
-            // key event.
-            rel_sum += ev.value;
-            if (rel_sum > 3) {
-                ProcessKey(KEY_DOWN, 1);   // press down key
-                ProcessKey(KEY_DOWN, 0);   // and release it
-                rel_sum = 0;
-            } else if (rel_sum < -3) {
-                ProcessKey(KEY_UP, 1);     // press up key
-                ProcessKey(KEY_UP, 0);     // and release it
-                rel_sum = 0;
-            }
-        }
-    } else {
-        rel_sum = 0;
-    }
-
-    if (ev.type == EV_KEY && ev.code <= KEY_MAX) {
-        ProcessKey(ev.code, ev.value);
-    }
-
+  if (ev.type == EV_SYN) {
     return 0;
+  } else if (ev.type == EV_REL) {
+    if (ev.code == REL_Y) {
+      // accumulate the up or down motion reported by
+      // the trackball.  When it exceeds a threshold
+      // (positive or negative), fake an up/down
+      // key event.
+      rel_sum += ev.value;
+      if (rel_sum > 3) {
+        ProcessKey(KEY_DOWN, 1);  // press down key
+        ProcessKey(KEY_DOWN, 0);  // and release it
+        rel_sum = 0;
+      } else if (rel_sum < -3) {
+        ProcessKey(KEY_UP, 1);  // press up key
+        ProcessKey(KEY_UP, 0);  // and release it
+        rel_sum = 0;
+      }
+    }
+  } else {
+    rel_sum = 0;
+  }
+
+  if (ev.type == EV_KEY && ev.code <= KEY_MAX) {
+    ProcessKey(ev.code, ev.value);
+  }
+
+  return 0;
 }
 
 // Process a key-up or -down event.  A key is "registered" when it is
@@ -189,82 +189,84 @@ int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
 //
 // updown == 1 for key down events; 0 for key up events
 void RecoveryUI::ProcessKey(int key_code, int updown) {
-    bool register_key = false;
-    bool long_press = false;
-    bool reboot_enabled;
+  bool register_key = false;
+  bool long_press = false;
+  bool reboot_enabled;
 
-    pthread_mutex_lock(&key_queue_mutex);
-    key_pressed[key_code] = updown;
-    if (updown) {
-        ++key_down_count;
-        key_last_down = key_code;
-        key_long_press = false;
-        key_timer_t* info = new key_timer_t;
-        info->ui = this;
-        info->key_code = key_code;
-        info->count = key_down_count;
-        pthread_t thread;
-        pthread_create(&thread, nullptr, &RecoveryUI::time_key_helper, info);
-        pthread_detach(thread);
-    } else {
-        if (key_last_down == key_code) {
-            long_press = key_long_press;
-            register_key = true;
-        }
-        key_last_down = -1;
+  pthread_mutex_lock(&key_queue_mutex);
+  key_pressed[key_code] = updown;
+  if (updown) {
+    ++key_down_count;
+    key_last_down = key_code;
+    key_long_press = false;
+    key_timer_t* info = new key_timer_t;
+    info->ui = this;
+    info->key_code = key_code;
+    info->count = key_down_count;
+    pthread_t thread;
+    pthread_create(&thread, nullptr, &RecoveryUI::time_key_helper, info);
+    pthread_detach(thread);
+  } else {
+    if (key_last_down == key_code) {
+      long_press = key_long_press;
+      register_key = true;
     }
-    reboot_enabled = enable_reboot;
-    pthread_mutex_unlock(&key_queue_mutex);
+    key_last_down = -1;
+  }
+  reboot_enabled = enable_reboot;
+  pthread_mutex_unlock(&key_queue_mutex);
 
-    if (register_key) {
-        switch (CheckKey(key_code, long_press)) {
-          case RecoveryUI::IGNORE:
-            break;
+  if (register_key) {
+    switch (CheckKey(key_code, long_press)) {
+      case RecoveryUI::IGNORE:
+        break;
 
-          case RecoveryUI::TOGGLE:
-            ShowText(!IsTextVisible());
-            break;
+      case RecoveryUI::TOGGLE:
+        ShowText(!IsTextVisible());
+        break;
 
-          case RecoveryUI::REBOOT:
-            if (reboot_enabled) {
-                reboot("reboot,");
-                while (true) { pause(); }
-            }
-            break;
-
-          case RecoveryUI::ENQUEUE:
-            EnqueueKey(key_code);
-            break;
+      case RecoveryUI::REBOOT:
+        if (reboot_enabled) {
+          reboot("reboot,");
+          while (true) {
+            pause();
+          }
         }
+        break;
+
+      case RecoveryUI::ENQUEUE:
+        EnqueueKey(key_code);
+        break;
     }
+  }
 }
 
 void* RecoveryUI::time_key_helper(void* cookie) {
-    key_timer_t* info = static_cast<key_timer_t*>(cookie);
-    info->ui->time_key(info->key_code, info->count);
-    delete info;
-    return nullptr;
+  key_timer_t* info = static_cast<key_timer_t*>(cookie);
+  info->ui->time_key(info->key_code, info->count);
+  delete info;
+  return nullptr;
 }
 
 void RecoveryUI::time_key(int key_code, int count) {
-    usleep(750000);  // 750 ms == "long"
-    bool long_press = false;
-    pthread_mutex_lock(&key_queue_mutex);
-    if (key_last_down == key_code && key_down_count == count) {
-        long_press = key_long_press = true;
-    }
-    pthread_mutex_unlock(&key_queue_mutex);
-    if (long_press) KeyLongPress(key_code);
+  usleep(750000);  // 750 ms == "long"
+  bool long_press = false;
+  pthread_mutex_lock(&key_queue_mutex);
+  if (key_last_down == key_code && key_down_count == count) {
+    long_press = key_long_press = true;
+  }
+  pthread_mutex_unlock(&key_queue_mutex);
+  if (long_press) KeyLongPress(key_code);
 }
 
 void RecoveryUI::EnqueueKey(int key_code) {
-    pthread_mutex_lock(&key_queue_mutex);
-    const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
-    if (key_queue_len < queue_max) {
-        key_queue[key_queue_len++] = key_code;
-        pthread_cond_signal(&key_queue_cond);
-    }
-    pthread_mutex_unlock(&key_queue_mutex);
+  pthread_mutex_lock(&key_queue_mutex);
+  const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
+  if (key_queue_len < queue_max) {
+    key_queue[key_queue_len++] = key_code;
+    pthread_cond_signal(&key_queue_cond);
+  }
+  pthread_mutex_unlock(&key_queue_mutex);
 }
 
 int RecoveryUI::WaitKey() {
@@ -330,98 +332,96 @@ int RecoveryUI::WaitKey() {
 }
 
 bool RecoveryUI::IsUsbConnected() {
-    int fd = open("/sys/class/android_usb/android0/state", O_RDONLY);
-    if (fd < 0) {
-        printf("failed to open /sys/class/android_usb/android0/state: %s\n",
-               strerror(errno));
-        return 0;
-    }
+  int fd = open("/sys/class/android_usb/android0/state", O_RDONLY);
+  if (fd < 0) {
+    printf("failed to open /sys/class/android_usb/android0/state: %s\n", strerror(errno));
+    return 0;
+  }
 
-    char buf;
-    // USB is connected if android_usb state is CONNECTED or CONFIGURED.
-    int connected = (TEMP_FAILURE_RETRY(read(fd, &buf, 1)) == 1) && (buf == 'C');
-    if (close(fd) < 0) {
-        printf("failed to close /sys/class/android_usb/android0/state: %s\n",
-               strerror(errno));
-    }
-    return connected;
+  char buf;
+  // USB is connected if android_usb state is CONNECTED or CONFIGURED.
+  int connected = (TEMP_FAILURE_RETRY(read(fd, &buf, 1)) == 1) && (buf == 'C');
+  if (close(fd) < 0) {
+    printf("failed to close /sys/class/android_usb/android0/state: %s\n", strerror(errno));
+  }
+  return connected;
 }
 
 bool RecoveryUI::IsKeyPressed(int key) {
-    pthread_mutex_lock(&key_queue_mutex);
-    int pressed = key_pressed[key];
-    pthread_mutex_unlock(&key_queue_mutex);
-    return pressed;
+  pthread_mutex_lock(&key_queue_mutex);
+  int pressed = key_pressed[key];
+  pthread_mutex_unlock(&key_queue_mutex);
+  return pressed;
 }
 
 bool RecoveryUI::IsLongPress() {
-    pthread_mutex_lock(&key_queue_mutex);
-    bool result = key_long_press;
-    pthread_mutex_unlock(&key_queue_mutex);
-    return result;
+  pthread_mutex_lock(&key_queue_mutex);
+  bool result = key_long_press;
+  pthread_mutex_unlock(&key_queue_mutex);
+  return result;
 }
 
 bool RecoveryUI::HasThreeButtons() {
-    return has_power_key && has_up_key && has_down_key;
+  return has_power_key && has_up_key && has_down_key;
 }
 
 void RecoveryUI::FlushKeys() {
-    pthread_mutex_lock(&key_queue_mutex);
-    key_queue_len = 0;
-    pthread_mutex_unlock(&key_queue_mutex);
+  pthread_mutex_lock(&key_queue_mutex);
+  key_queue_len = 0;
+  pthread_mutex_unlock(&key_queue_mutex);
 }
 
 RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
+  pthread_mutex_lock(&key_queue_mutex);
+  key_long_press = false;
+  pthread_mutex_unlock(&key_queue_mutex);
+
+  // If we have power and volume up keys, that chord is the signal to toggle the text display.
+  if (HasThreeButtons()) {
+    if (key == KEY_VOLUMEUP && IsKeyPressed(KEY_POWER)) {
+      return TOGGLE;
+    }
+  } else {
+    // Otherwise long press of any button toggles to the text display,
+    // and there's no way to toggle back (but that's pretty useless anyway).
+    if (is_long_press && !IsTextVisible()) {
+      return TOGGLE;
+    }
+
+    // Also, for button-limited devices, a long press is translated to KEY_ENTER.
+    if (is_long_press && IsTextVisible()) {
+      EnqueueKey(KEY_ENTER);
+      return IGNORE;
+    }
+  }
+
+  // Press power seven times in a row to reboot.
+  if (key == KEY_POWER) {
     pthread_mutex_lock(&key_queue_mutex);
-    key_long_press = false;
+    bool reboot_enabled = enable_reboot;
     pthread_mutex_unlock(&key_queue_mutex);
 
-    // If we have power and volume up keys, that chord is the signal to toggle the text display.
-    if (HasThreeButtons()) {
-        if (key == KEY_VOLUMEUP && IsKeyPressed(KEY_POWER)) {
-            return TOGGLE;
-        }
-    } else {
-        // Otherwise long press of any button toggles to the text display,
-        // and there's no way to toggle back (but that's pretty useless anyway).
-        if (is_long_press && !IsTextVisible()) {
-            return TOGGLE;
-        }
-
-        // Also, for button-limited devices, a long press is translated to KEY_ENTER.
-        if (is_long_press && IsTextVisible()) {
-            EnqueueKey(KEY_ENTER);
-            return IGNORE;
-        }
+    if (reboot_enabled) {
+      ++consecutive_power_keys;
+      if (consecutive_power_keys >= 7) {
+        return REBOOT;
+      }
     }
+  } else {
+    consecutive_power_keys = 0;
+  }
 
-    // Press power seven times in a row to reboot.
-    if (key == KEY_POWER) {
-        pthread_mutex_lock(&key_queue_mutex);
-        bool reboot_enabled = enable_reboot;
-        pthread_mutex_unlock(&key_queue_mutex);
-
-        if (reboot_enabled) {
-            ++consecutive_power_keys;
-            if (consecutive_power_keys >= 7) {
-                return REBOOT;
-            }
-        }
-    } else {
-        consecutive_power_keys = 0;
-    }
-
-    last_key = key;
-    return (IsTextVisible() || screensaver_state_ == ScreensaverState::OFF) ? ENQUEUE : IGNORE;
+  last_key = key;
+  return (IsTextVisible() || screensaver_state_ == ScreensaverState::OFF) ? ENQUEUE : IGNORE;
 }
 
 void RecoveryUI::KeyLongPress(int) {
 }
 
 void RecoveryUI::SetEnableReboot(bool enabled) {
-    pthread_mutex_lock(&key_queue_mutex);
-    enable_reboot = enabled;
-    pthread_mutex_unlock(&key_queue_mutex);
+  pthread_mutex_lock(&key_queue_mutex);
+  enable_reboot = enabled;
+  pthread_mutex_unlock(&key_queue_mutex);
 }
 
 void RecoveryUI::SetLocale(const std::string& new_locale) {
