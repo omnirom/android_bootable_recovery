@@ -20,17 +20,17 @@
 #include "screen_ui.h"
 
 class VrRecoveryUI : public ScreenRecoveryUI {
-  public:
-    VrRecoveryUI();
+ public:
+  VrRecoveryUI();
 
-  protected:
-    // Pixel offsets to move drawing functions to visible range.
-    // Can vary per device depending on screen size and lens distortion.
-    const int kStereoOffset;
+ protected:
+  // Pixel offsets to move drawing functions to visible range.
+  // Can vary per device depending on screen size and lens distortion.
+  const int kStereoOffset;
 
-    bool InitTextParams() override;
+  bool InitTextParams() override;
 
-    void DrawTextLine(int x, int* y, const char* line, bool bold) const override;
+  void DrawTextLine(int x, int* y, const char* line, bool bold) const override;
 };
 
 #endif  // RECOVERY_VR_UI_H
