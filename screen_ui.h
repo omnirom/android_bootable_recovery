@@ -30,152 +30,158 @@ struct GRSurface;
 // Implementation of RecoveryUI appropriate for devices with a screen
 // (shows an icon + a progress bar, text logging, menu, etc.)
 class ScreenRecoveryUI : public RecoveryUI {
-  public:
-    ScreenRecoveryUI();
+ public:
+  ScreenRecoveryUI();
 
-    bool Init(const std::string& locale) override;
+  bool Init(const std::string& locale) override;
 
-    // overall recovery state ("background image")
-    void SetBackground(Icon icon);
-    void SetSystemUpdateText(bool security_update);
+  // overall recovery state ("background image")
+  void SetBackground(Icon icon);
+  void SetSystemUpdateText(bool security_update);
 
-    // progress indicator
-    void SetProgressType(ProgressType type) override;
-    void ShowProgress(float portion, float seconds) override;
-    void SetProgress(float fraction) override;
+  // progress indicator
+  void SetProgressType(ProgressType type) override;
+  void ShowProgress(float portion, float seconds) override;
+  void SetProgress(float fraction) override;
 
-    void SetStage(int current, int max) override;
+  void SetStage(int current, int max) override;
 
-    // text log
-    void ShowText(bool visible) override;
-    bool IsTextVisible() override;
-    bool WasTextEverVisible() override;
+  // text log
+  void ShowText(bool visible) override;
+  bool IsTextVisible() override;
+  bool WasTextEverVisible() override;
 
-    // printing messages
-    void Print(const char* fmt, ...) __printflike(2, 3);
-    void PrintOnScreenOnly(const char* fmt, ...) __printflike(2, 3);
-    void ShowFile(const char* filename);
+  // printing messages
+  void Print(const char* fmt, ...) __printflike(2, 3);
+  void PrintOnScreenOnly(const char* fmt, ...) __printflike(2, 3);
+  void ShowFile(const char* filename);
 
-    // menu display
-    void StartMenu(const char* const * headers, const char* const * items,
-                   int initial_selection);
-    int SelectMenu(int sel);
-    void EndMenu();
+  // menu display
+  void StartMenu(const char* const* headers, const char* const* items, int initial_selection);
+  int SelectMenu(int sel);
+  void EndMenu();
 
-    void KeyLongPress(int);
+  void KeyLongPress(int);
 
-    void Redraw();
+  void Redraw();
 
-    enum UIElement {
-        HEADER, MENU, MENU_SEL_BG, MENU_SEL_BG_ACTIVE, MENU_SEL_FG, LOG, TEXT_FILL, INFO
-    };
-    void SetColor(UIElement e);
+  enum UIElement {
+    HEADER,
+    MENU,
+    MENU_SEL_BG,
+    MENU_SEL_BG_ACTIVE,
+    MENU_SEL_FG,
+    LOG,
+    TEXT_FILL,
+    INFO
+  };
+  void SetColor(UIElement e);
 
-  protected:
-    // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
-    // rounded corners).
-    const int kMarginWidth;
-    const int kMarginHeight;
+ protected:
+  // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
+  // rounded corners).
+  const int kMarginWidth;
+  const int kMarginHeight;
 
-    // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
-    const float density_;
+  // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
+  const float density_;
 
-    Icon currentIcon;
+  Icon currentIcon;
 
-    // The layout to use.
-    int layout_;
+  // The layout to use.
+  int layout_;
 
-    GRSurface* error_icon;
+  GRSurface* error_icon;
 
-    GRSurface* erasing_text;
-    GRSurface* error_text;
-    GRSurface* installing_text;
-    GRSurface* no_command_text;
+  GRSurface* erasing_text;
+  GRSurface* error_text;
+  GRSurface* installing_text;
+  GRSurface* no_command_text;
 
-    GRSurface** introFrames;
-    GRSurface** loopFrames;
+  GRSurface** introFrames;
+  GRSurface** loopFrames;
 
-    GRSurface* progressBarEmpty;
-    GRSurface* progressBarFill;
-    GRSurface* stageMarkerEmpty;
-    GRSurface* stageMarkerFill;
+  GRSurface* progressBarEmpty;
+  GRSurface* progressBarFill;
+  GRSurface* stageMarkerEmpty;
+  GRSurface* stageMarkerFill;
 
-    ProgressType progressBarType;
+  ProgressType progressBarType;
 
-    float progressScopeStart, progressScopeSize, progress;
-    double progressScopeTime, progressScopeDuration;
+  float progressScopeStart, progressScopeSize, progress;
+  double progressScopeTime, progressScopeDuration;
 
-    // true when both graphics pages are the same (except for the progress bar).
-    bool pagesIdentical;
+  // true when both graphics pages are the same (except for the progress bar).
+  bool pagesIdentical;
 
-    size_t text_cols_, text_rows_;
+  size_t text_cols_, text_rows_;
 
-    // Log text overlay, displayed when a magic key is pressed.
-    char** text_;
-    size_t text_col_, text_row_, text_top_;
+  // Log text overlay, displayed when a magic key is pressed.
+  char** text_;
+  size_t text_col_, text_row_, text_top_;
 
-    bool show_text;
-    bool show_text_ever;   // has show_text ever been true?
+  bool show_text;
+  bool show_text_ever;  // has show_text ever been true?
 
-    char** menu_;
-    const char* const* menu_headers_;
-    bool show_menu;
-    int menu_items, menu_sel;
+  char** menu_;
+  const char* const* menu_headers_;
+  bool show_menu;
+  int menu_items, menu_sel;
 
-    // An alternate text screen, swapped with 'text_' when we're viewing a log file.
-    char** file_viewer_text_;
+  // An alternate text screen, swapped with 'text_' when we're viewing a log file.
+  char** file_viewer_text_;
 
-    pthread_t progress_thread_;
+  pthread_t progress_thread_;
 
-    // Number of intro frames and loop frames in the animation.
-    size_t intro_frames;
-    size_t loop_frames;
+  // Number of intro frames and loop frames in the animation.
+  size_t intro_frames;
+  size_t loop_frames;
 
-    size_t current_frame;
-    bool intro_done;
+  size_t current_frame;
+  bool intro_done;
 
-    // Number of frames per sec (default: 30) for both parts of the animation.
-    int animation_fps;
+  // Number of frames per sec (default: 30) for both parts of the animation.
+  int animation_fps;
 
-    int stage, max_stage;
+  int stage, max_stage;
 
-    int char_width_;
-    int char_height_;
+  int char_width_;
+  int char_height_;
 
-    pthread_mutex_t updateMutex;
+  pthread_mutex_t updateMutex;
 
-    virtual bool InitTextParams();
+  virtual bool InitTextParams();
 
-    virtual void draw_background_locked();
-    virtual void draw_foreground_locked();
-    virtual void draw_screen_locked();
-    virtual void update_screen_locked();
-    virtual void update_progress_locked();
+  virtual void draw_background_locked();
+  virtual void draw_foreground_locked();
+  virtual void draw_screen_locked();
+  virtual void update_screen_locked();
+  virtual void update_progress_locked();
 
-    GRSurface* GetCurrentFrame();
-    GRSurface* GetCurrentText();
+  GRSurface* GetCurrentFrame();
+  GRSurface* GetCurrentText();
 
-    static void* ProgressThreadStartRoutine(void* data);
-    void ProgressThreadLoop();
+  static void* ProgressThreadStartRoutine(void* data);
+  void ProgressThreadLoop();
 
-    virtual void ShowFile(FILE*);
-    virtual void PrintV(const char*, bool, va_list);
-    void PutChar(char);
-    void ClearText();
+  virtual void ShowFile(FILE*);
+  virtual void PrintV(const char*, bool, va_list);
+  void PutChar(char);
+  void ClearText();
 
-    void LoadAnimation();
-    void LoadBitmap(const char* filename, GRSurface** surface);
-    void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
+  void LoadAnimation();
+  void LoadBitmap(const char* filename, GRSurface** surface);
+  void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
 
-    int PixelsFromDp(int dp) const;
-    virtual int GetAnimationBaseline();
-    virtual int GetProgressBaseline();
-    virtual int GetTextBaseline();
+  int PixelsFromDp(int dp) const;
+  virtual int GetAnimationBaseline();
+  virtual int GetProgressBaseline();
+  virtual int GetTextBaseline();
 
-    virtual void DrawHorizontalRule(int* y);
-    virtual void DrawHighlightBar(int x, int y, int width, int height) const;
-    virtual void DrawTextLine(int x, int* y, const char* line, bool bold) const;
-    void DrawTextLines(int x, int* y, const char* const* lines) const;
+  virtual void DrawHorizontalRule(int* y);
+  virtual void DrawHighlightBar(int x, int y, int width, int height) const;
+  virtual void DrawTextLine(int x, int* y, const char* line, bool bold) const;
+  void DrawTextLines(int x, int* y, const char* const* lines) const;
 };
 
 #endif  // RECOVERY_UI_H
