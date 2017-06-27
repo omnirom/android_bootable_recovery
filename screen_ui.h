@@ -36,8 +36,8 @@ class ScreenRecoveryUI : public RecoveryUI {
   bool Init(const std::string& locale) override;
 
   // overall recovery state ("background image")
-  void SetBackground(Icon icon);
-  void SetSystemUpdateText(bool security_update);
+  void SetBackground(Icon icon) override;
+  void SetSystemUpdateText(bool security_update) override;
 
   // progress indicator
   void SetProgressType(ProgressType type) override;
@@ -52,16 +52,17 @@ class ScreenRecoveryUI : public RecoveryUI {
   bool WasTextEverVisible() override;
 
   // printing messages
-  void Print(const char* fmt, ...) __printflike(2, 3);
-  void PrintOnScreenOnly(const char* fmt, ...) __printflike(2, 3);
-  void ShowFile(const char* filename);
+  void Print(const char* fmt, ...) override __printflike(2, 3);
+  void PrintOnScreenOnly(const char* fmt, ...) override __printflike(2, 3);
+  void ShowFile(const char* filename) override;
 
   // menu display
-  void StartMenu(const char* const* headers, const char* const* items, int initial_selection);
-  int SelectMenu(int sel);
-  void EndMenu();
+  void StartMenu(const char* const* headers, const char* const* items,
+                 int initial_selection) override;
+  int SelectMenu(int sel) override;
+  void EndMenu() override;
 
-  void KeyLongPress(int);
+  void KeyLongPress(int) override;
 
   void Redraw();
 
@@ -75,7 +76,7 @@ class ScreenRecoveryUI : public RecoveryUI {
     TEXT_FILL,
     INFO
   };
-  void SetColor(UIElement e);
+  void SetColor(UIElement e) const;
 
  protected:
   // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
@@ -158,8 +159,8 @@ class ScreenRecoveryUI : public RecoveryUI {
   virtual void update_screen_locked();
   virtual void update_progress_locked();
 
-  GRSurface* GetCurrentFrame();
-  GRSurface* GetCurrentText();
+  GRSurface* GetCurrentFrame() const;
+  GRSurface* GetCurrentText() const;
 
   static void* ProgressThreadStartRoutine(void* data);
   void ProgressThreadLoop();
@@ -174,11 +175,11 @@ class ScreenRecoveryUI : public RecoveryUI {
   void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
 
   int PixelsFromDp(int dp) const;
-  virtual int GetAnimationBaseline();
-  virtual int GetProgressBaseline();
-  virtual int GetTextBaseline();
+  virtual int GetAnimationBaseline() const;
+  virtual int GetProgressBaseline() const;
+  virtual int GetTextBaseline() const;
 
-  virtual void DrawHorizontalRule(int* y);
+  virtual void DrawHorizontalRule(int* y) const;
   virtual void DrawHighlightBar(int x, int y, int width, int height) const;
   virtual void DrawTextLine(int x, int* y, const char* line, bool bold) const;
   void DrawTextLines(int x, int* y, const char* const* lines) const;
