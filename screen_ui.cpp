@@ -82,14 +82,14 @@ ScreenRecoveryUI::ScreenRecoveryUI()
       max_stage(-1),
       updateMutex(PTHREAD_MUTEX_INITIALIZER) {}
 
-GRSurface* ScreenRecoveryUI::GetCurrentFrame() {
+GRSurface* ScreenRecoveryUI::GetCurrentFrame() const {
   if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
     return intro_done ? loopFrames[current_frame] : introFrames[current_frame];
   }
   return error_icon;
 }
 
-GRSurface* ScreenRecoveryUI::GetCurrentText() {
+GRSurface* ScreenRecoveryUI::GetCurrentText() const {
   switch (currentIcon) {
     case ERASING:
       return erasing_text;
@@ -132,16 +132,16 @@ static constexpr int kLayouts[LAYOUT_MAX][DIMENSION_MAX] = {
   { 262,  52, 112, },  // LANDSCAPE_LARGE
 };
 
-int ScreenRecoveryUI::GetAnimationBaseline() {
+int ScreenRecoveryUI::GetAnimationBaseline() const {
   return GetTextBaseline() - PixelsFromDp(kLayouts[layout_][ICON]) - gr_get_height(loopFrames[0]);
 }
 
-int ScreenRecoveryUI::GetTextBaseline() {
+int ScreenRecoveryUI::GetTextBaseline() const {
   return GetProgressBaseline() - PixelsFromDp(kLayouts[layout_][TEXT]) -
          gr_get_height(installing_text);
 }
 
-int ScreenRecoveryUI::GetProgressBaseline() {
+int ScreenRecoveryUI::GetProgressBaseline() const {
   return gr_fb_height() - PixelsFromDp(kLayouts[layout_][PROGRESS]) -
          gr_get_height(progressBarFill);
 }
@@ -224,7 +224,7 @@ void ScreenRecoveryUI::draw_foreground_locked() {
   }
 }
 
-void ScreenRecoveryUI::SetColor(UIElement e) {
+void ScreenRecoveryUI::SetColor(UIElement e) const {
   switch (e) {
     case INFO:
       gr_color(249, 194, 0, 255);
@@ -254,7 +254,7 @@ void ScreenRecoveryUI::SetColor(UIElement e) {
   }
 }
 
-void ScreenRecoveryUI::DrawHorizontalRule(int* y) {
+void ScreenRecoveryUI::DrawHorizontalRule(int* y) const {
   SetColor(MENU);
   *y += 4;
   gr_fill(0, *y, gr_fb_width(), *y + 2);
