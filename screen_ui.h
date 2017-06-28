@@ -179,10 +179,14 @@ class ScreenRecoveryUI : public RecoveryUI {
   virtual int GetProgressBaseline() const;
   virtual int GetTextBaseline() const;
 
-  virtual void DrawHorizontalRule(int* y) const;
+  // Draws a highlight bar at (x, y) - (x + width, y + height).
   virtual void DrawHighlightBar(int x, int y, int width, int height) const;
-  virtual void DrawTextLine(int x, int* y, const char* line, bool bold) const;
-  void DrawTextLines(int x, int* y, const char* const* lines) const;
+  // Draws a horizontal rule at Y. Returns the offset it should be moving along Y-axis.
+  virtual int DrawHorizontalRule(int y) const;
+  // Draws a line of text. Returns the offset it should be moving along Y-axis.
+  virtual int DrawTextLine(int x, int y, const char* line, bool bold) const;
+  // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
+  int DrawTextLines(int x, int y, const char* const* lines) const;
 };
 
 #endif  // RECOVERY_UI_H

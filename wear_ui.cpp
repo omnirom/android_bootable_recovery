@@ -95,7 +95,7 @@ void WearRecoveryUI::draw_background_locked() {
   }
 }
 
-static const char* HEADERS[] = {
+static const char* SWIPE_HELP[] = {
   "Swipe up/down to move.",
   "Swipe left/right to select.",
   "",
@@ -119,15 +119,15 @@ void WearRecoveryUI::draw_screen_locked() {
       std::string recovery_fingerprint =
           android::base::GetProperty("ro.bootimage.build.fingerprint", "");
       SetColor(HEADER);
-      DrawTextLine(x + 4, &y, "Android Recovery", true);
+      y += DrawTextLine(x + 4, y, "Android Recovery", true);
       for (auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
-        DrawTextLine(x + 4, &y, chunk.c_str(), false);
+        y += DrawTextLine(x + 4, y, chunk.c_str(), false);
       }
 
       // This is actually the help strings.
-      DrawTextLines(x + 4, &y, HEADERS);
+      y += DrawTextLines(x + 4, y, SWIPE_HELP);
       SetColor(HEADER);
-      DrawTextLines(x + 4, &y, menu_headers_);
+      y += DrawTextLines(x + 4, y, menu_headers_);
 
       // Show the current menu item number in relation to total number if
       // items don't fit on the screen.

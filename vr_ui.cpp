@@ -27,9 +27,9 @@ bool VrRecoveryUI::InitTextParams() {
   return true;
 }
 
-void VrRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) const {
+int VrRecoveryUI::DrawTextLine(int x, int y, const char* line, bool bold) const {
   int mid_divide = gr_fb_width() / 2;
-  gr_text(gr_sys_font(), x + kStereoOffset, *y, line, bold);
-  gr_text(gr_sys_font(), x - kStereoOffset + mid_divide, *y, line, bold);
-  *y += char_height_ + 4;
+  gr_text(gr_sys_font(), x + kStereoOffset, y, line, bold);
+  gr_text(gr_sys_font(), x - kStereoOffset + mid_divide, y, line, bold);
+  return char_height_ + 4;
 }
