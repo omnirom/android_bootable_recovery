@@ -75,10 +75,8 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
   void draw_background_locked() override;
   void draw_screen_locked() override;
-  void draw_progress_locked();
 
   void PutChar(char);
-  void ClearText();
 };
 
 #endif  // RECOVERY_WEAR_UI_H
