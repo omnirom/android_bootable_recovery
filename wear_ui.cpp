@@ -363,17 +363,6 @@ void WearRecoveryUI::ShowFile(const char* filename) {
   fclose(fp);
 }
 
-void WearRecoveryUI::ClearText() {
-  pthread_mutex_lock(&updateMutex);
-  text_col_ = 0;
-  text_row_ = 0;
-  text_top_ = 1;
-  for (size_t i = 0; i < text_rows_; ++i) {
-    memset(text_[i], 0, text_cols_ + 1);
-  }
-  pthread_mutex_unlock(&updateMutex);
-}
-
 void WearRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
