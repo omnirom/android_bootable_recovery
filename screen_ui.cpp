@@ -112,24 +112,24 @@ int ScreenRecoveryUI::PixelsFromDp(int dp) const {
 
 //          | portrait    large        landscape      large
 // ---------+-------------------------------------------------
-//      gap |   220dp     366dp            142dp      284dp
+//      gap |
 // icon     |                   (200dp)
 //      gap |    68dp      68dp             56dp      112dp
 // text     |                    (14sp)
 //      gap |    32dp      32dp             26dp       52dp
 // progress |                     (2dp)
-//      gap |   194dp     340dp            131dp      262dp
+//      gap |
 
-// Note that "baseline" is actually the *top* of each icon (because that's how our drawing
-// routines work), so that's the more useful measurement for calling code.
+// Note that "baseline" is actually the *top* of each icon (because that's how our drawing routines
+// work), so that's the more useful measurement for calling code. We use even top and bottom gaps.
 
 enum Layout { PORTRAIT = 0, PORTRAIT_LARGE = 1, LANDSCAPE = 2, LANDSCAPE_LARGE = 3, LAYOUT_MAX };
-enum Dimension { PROGRESS = 0, TEXT = 1, ICON = 2, DIMENSION_MAX };
+enum Dimension { TEXT = 0, ICON = 1, DIMENSION_MAX };
 static constexpr int kLayouts[LAYOUT_MAX][DIMENSION_MAX] = {
-  { 194,  32,  68, },  // PORTRAIT
-  { 340,  32,  68, },  // PORTRAIT_LARGE
-  { 131,  26,  56, },  // LANDSCAPE
-  { 262,  52, 112, },  // LANDSCAPE_LARGE
+  { 32,  68, },  // PORTRAIT
+  { 32,  68, },  // PORTRAIT_LARGE
+  { 26,  56, },  // LANDSCAPE
+  { 52, 112, },  // LANDSCAPE_LARGE
 };
 
 int ScreenRecoveryUI::GetAnimationBaseline() const {
@@ -142,8 +142,11 @@ int ScreenRecoveryUI::GetTextBaseline() const {
 }
 
 int ScreenRecoveryUI::GetProgressBaseline() const {
-  return gr_fb_height() - PixelsFromDp(kLayouts[layout_][PROGRESS]) -
-         gr_get_height(progressBarFill);
+  int elements_sum = gr_get_height(loopFrames[0]) + PixelsFromDp(kLayouts[layout_][ICON]) +
+                     gr_get_height(installing_text) + PixelsFromDp(kLayouts[layout_][TEXT]) +
+                     gr_get_height(progressBarFill);
+  int bottom_gap = (gr_fb_height() - elements_sum) / 2;
+  return gr_fb_height() - bottom_gap - gr_get_height(progressBarFill);
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
