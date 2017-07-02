@@ -177,9 +177,8 @@ void ScreenRecoveryUI::draw_background_locked() {
   }
 }
 
-// Draws the animation and progress bar (if any) on the screen.
-// Does not flip pages.
-// Should only be called with updateMutex locked.
+// Draws the animation and progress bar (if any) on the screen. Does not flip pages. Should only be
+// called with updateMutex locked.
 void ScreenRecoveryUI::draw_foreground_locked() {
   if (currentIcon != NONE) {
     GRSurface* frame = GetCurrentFrame();
@@ -257,26 +256,26 @@ void ScreenRecoveryUI::SetColor(UIElement e) const {
   }
 }
 
-void ScreenRecoveryUI::DrawHorizontalRule(int* y) const {
-  SetColor(MENU);
-  *y += 4;
-  gr_fill(0, *y, gr_fb_width(), *y + 2);
-  *y += 4;
+int ScreenRecoveryUI::DrawHorizontalRule(int y) const {
+  gr_fill(0, y + 4, gr_fb_width(), y + 6);
+  return 8;
 }
 
 void ScreenRecoveryUI::DrawHighlightBar(int x, int y, int width, int height) const {
   gr_fill(x, y, x + width, y + height);
 }
 
-void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) const {
-  gr_text(gr_sys_font(), x, *y, line, bold);
-  *y += char_height_ + 4;
+int ScreenRecoveryUI::DrawTextLine(int x, int y, const char* line, bool bold) const {
+  gr_text(gr_sys_font(), x, y, line, bold);
+  return char_height_ + 4;
 }
 
-void ScreenRecoveryUI::DrawTextLines(int x, int* y, const char* const* lines) const {
+int ScreenRecoveryUI::DrawTextLines(int x, int y, const char* const* lines) const {
+  int offset = 0;
   for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
-    DrawTextLine(x, y, lines[i], false);
+    offset += DrawTextLine(x, y + offset, lines[i], false);
   }
+  return offset;
 }
 
 static const char* REGULAR_HELP[] = {
@@ -310,18 +309,17 @@ void ScreenRecoveryUI::draw_screen_locked() {
         android::base::GetProperty("ro.bootimage.build.fingerprint", "");
 
     SetColor(INFO);
-    DrawTextLine(x, &y, "Android Recovery", true);
+    y += DrawTextLine(x, y, "Android Recovery", true);
     for (const auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
-      DrawTextLine(x, &y, chunk.c_str(), false);
+      y += DrawTextLine(x, y, chunk.c_str(), false);
     }
-    DrawTextLines(x, &y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
+    y += DrawTextLines(x, y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 
     SetColor(HEADER);
-    DrawTextLines(x, &y, menu_headers_);
+    y += DrawTextLines(x, y, menu_headers_);
 
     SetColor(MENU);
-    DrawHorizontalRule(&y);
-    y += 4;
+    y += DrawHorizontalRule(y) + 4;
     for (int i = 0; i < menu_items; ++i) {
       if (i == menu_sel) {
         // Draw the highlight bar.
@@ -329,13 +327,13 @@ void ScreenRecoveryUI::draw_screen_locked() {
         DrawHighlightBar(0, y - 2, gr_fb_width(), char_height_ + 4);
         // Bold white text for the selected item.
         SetColor(MENU_SEL_FG);
-        DrawTextLine(x, &y, menu_[i], true);
+        y += DrawTextLine(x, y, menu_[i], true);
         SetColor(MENU);
       } else {
-        DrawTextLine(x, &y, menu_[i], false);
+        y += DrawTextLine(x, y, menu_[i], false);
       }
     }
-    DrawHorizontalRule(&y);
+    y += DrawHorizontalRule(y);
   }
 
   // Display from the bottom up, until we hit the top of the screen, the bottom of the menu, or
@@ -345,8 +343,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
   size_t count = 0;
   for (int ty = gr_fb_height() - kMarginHeight - char_height_; ty >= y && count < text_rows_;
        ty -= char_height_, ++count) {
-    int temp_y = ty;
-    DrawTextLine(x, &temp_y, text_[row], false);
+    DrawTextLine(x, ty, text_[row], false);
     --row;
     if (row < 0) row = text_rows_ - 1;
   }
