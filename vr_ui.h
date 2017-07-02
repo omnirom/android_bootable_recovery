@@ -30,7 +30,7 @@ class VrRecoveryUI : public ScreenRecoveryUI {
 
   bool InitTextParams() override;
 
-  void DrawTextLine(int x, int* y, const char* line, bool bold) const override;
+  int DrawTextLine(int x, int y, const char* line, bool bold) const override;
 };
 
 #endif  // RECOVERY_VR_UI_H
