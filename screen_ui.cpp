@@ -112,24 +112,24 @@ int ScreenRecoveryUI::PixelsFromDp(int dp) const {
 
 //          | portrait    large        landscape      large
 // ---------+-------------------------------------------------
-//      gap |   220dp     366dp            142dp      284dp
+//      gap |
 // icon     |                   (200dp)
 //      gap |    68dp      68dp             56dp      112dp
 // text     |                    (14sp)
 //      gap |    32dp      32dp             26dp       52dp
 // progress |                     (2dp)
-//      gap |   194dp     340dp            131dp      262dp
+//      gap |
 
-// Note that "baseline" is actually the *top* of each icon (because that's how our drawing
-// routines work), so that's the more useful measurement for calling code.
+// Note that "baseline" is actually the *top* of each icon (because that's how our drawing routines
+// work), so that's the more useful measurement for calling code. We use even top and bottom gaps.
 
 enum Layout { PORTRAIT = 0, PORTRAIT_LARGE = 1, LANDSCAPE = 2, LANDSCAPE_LARGE = 3, LAYOUT_MAX };
-enum Dimension { PROGRESS = 0, TEXT = 1, ICON = 2, DIMENSION_MAX };
+enum Dimension { TEXT = 0, ICON = 1, DIMENSION_MAX };
 static constexpr int kLayouts[LAYOUT_MAX][DIMENSION_MAX] = {
-  { 194,  32,  68, },  // PORTRAIT
-  { 340,  32,  68, },  // PORTRAIT_LARGE
-  { 131,  26,  56, },  // LANDSCAPE
-  { 262,  52, 112, },  // LANDSCAPE_LARGE
+  { 32,  68, },  // PORTRAIT
+  { 32,  68, },  // PORTRAIT_LARGE
+  { 26,  56, },  // LANDSCAPE
+  { 52, 112, },  // LANDSCAPE_LARGE
 };
 
 int ScreenRecoveryUI::GetAnimationBaseline() const {
@@ -142,8 +142,11 @@ int ScreenRecoveryUI::GetTextBaseline() const {
 }
 
 int ScreenRecoveryUI::GetProgressBaseline() const {
-  return gr_fb_height() - PixelsFromDp(kLayouts[layout_][PROGRESS]) -
-         gr_get_height(progressBarFill);
+  int elements_sum = gr_get_height(loopFrames[0]) + PixelsFromDp(kLayouts[layout_][ICON]) +
+                     gr_get_height(installing_text) + PixelsFromDp(kLayouts[layout_][TEXT]) +
+                     gr_get_height(progressBarFill);
+  int bottom_gap = (gr_fb_height() - elements_sum) / 2;
+  return gr_fb_height() - bottom_gap - gr_get_height(progressBarFill);
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
@@ -174,9 +177,8 @@ void ScreenRecoveryUI::draw_background_locked() {
   }
 }
 
-// Draws the animation and progress bar (if any) on the screen.
-// Does not flip pages.
-// Should only be called with updateMutex locked.
+// Draws the animation and progress bar (if any) on the screen. Does not flip pages. Should only be
+// called with updateMutex locked.
 void ScreenRecoveryUI::draw_foreground_locked() {
   if (currentIcon != NONE) {
     GRSurface* frame = GetCurrentFrame();
@@ -254,26 +256,26 @@ void ScreenRecoveryUI::SetColor(UIElement e) const {
   }
 }
 
-void ScreenRecoveryUI::DrawHorizontalRule(int* y) const {
-  SetColor(MENU);
-  *y += 4;
-  gr_fill(0, *y, gr_fb_width(), *y + 2);
-  *y += 4;
+int ScreenRecoveryUI::DrawHorizontalRule(int y) const {
+  gr_fill(0, y + 4, gr_fb_width(), y + 6);
+  return 8;
 }
 
 void ScreenRecoveryUI::DrawHighlightBar(int x, int y, int width, int height) const {
   gr_fill(x, y, x + width, y + height);
 }
 
-void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) const {
-  gr_text(gr_sys_font(), x, *y, line, bold);
-  *y += char_height_ + 4;
+int ScreenRecoveryUI::DrawTextLine(int x, int y, const char* line, bool bold) const {
+  gr_text(gr_sys_font(), x, y, line, bold);
+  return char_height_ + 4;
 }
 
-void ScreenRecoveryUI::DrawTextLines(int x, int* y, const char* const* lines) const {
+int ScreenRecoveryUI::DrawTextLines(int x, int y, const char* const* lines) const {
+  int offset = 0;
   for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
-    DrawTextLine(x, y, lines[i], false);
+    offset += DrawTextLine(x, y + offset, lines[i], false);
   }
+  return offset;
 }
 
 static const char* REGULAR_HELP[] = {
@@ -307,18 +309,17 @@ void ScreenRecoveryUI::draw_screen_locked() {
         android::base::GetProperty("ro.bootimage.build.fingerprint", "");
 
     SetColor(INFO);
-    DrawTextLine(x, &y, "Android Recovery", true);
+    y += DrawTextLine(x, y, "Android Recovery", true);
     for (const auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
-      DrawTextLine(x, &y, chunk.c_str(), false);
+      y += DrawTextLine(x, y, chunk.c_str(), false);
     }
-    DrawTextLines(x, &y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
+    y += DrawTextLines(x, y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 
     SetColor(HEADER);
-    DrawTextLines(x, &y, menu_headers_);
+    y += DrawTextLines(x, y, menu_headers_);
 
     SetColor(MENU);
-    DrawHorizontalRule(&y);
-    y += 4;
+    y += DrawHorizontalRule(y) + 4;
     for (int i = 0; i < menu_items; ++i) {
       if (i == menu_sel) {
         // Draw the highlight bar.
@@ -326,13 +327,13 @@ void ScreenRecoveryUI::draw_screen_locked() {
         DrawHighlightBar(0, y - 2, gr_fb_width(), char_height_ + 4);
         // Bold white text for the selected item.
         SetColor(MENU_SEL_FG);
-        DrawTextLine(x, &y, menu_[i], true);
+        y += DrawTextLine(x, y, menu_[i], true);
         SetColor(MENU);
       } else {
-        DrawTextLine(x, &y, menu_[i], false);
+        y += DrawTextLine(x, y, menu_[i], false);
       }
     }
-    DrawHorizontalRule(&y);
+    y += DrawHorizontalRule(y);
   }
 
   // Display from the bottom up, until we hit the top of the screen, the bottom of the menu, or
@@ -342,8 +343,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
   size_t count = 0;
   for (int ty = gr_fb_height() - kMarginHeight - char_height_; ty >= y && count < text_rows_;
        ty -= char_height_, ++count) {
-    int temp_y = ty;
-    DrawTextLine(x, &temp_y, text_[row], false);
+    DrawTextLine(x, ty, text_[row], false);
     --row;
     if (row < 0) row = text_rows_ - 1;
   }
