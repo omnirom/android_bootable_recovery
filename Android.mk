@@ -85,9 +85,11 @@ LOCAL_MODULE := recovery
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
+LOCAL_REQUIRED_MODULES := e2fsdroid_static mke2fs_static mke2fs.conf
+
 ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
 ifeq ($(HOST_OS),linux)
-LOCAL_REQUIRED_MODULES := mkfs.f2fs
+LOCAL_REQUIRED_MODULES += mkfs.f2fs
 endif
 endif
 
@@ -120,6 +122,7 @@ LOCAL_STATIC_LIBRARIES := \
     libverifier \
     libbatterymonitor \
     libbootloader_message \
+    libfs_mgr \
     libext4_utils \
     libsparse \
     libziparchive \
@@ -130,7 +133,6 @@ LOCAL_STATIC_LIBRARIES := \
     libfusesideload \
     libminui \
     libpng \
-    libfs_mgr \
     libcrypto_utils \
     libcrypto \
     libvintf_recovery \
@@ -159,7 +161,7 @@ else
 endif
 
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
-LOCAL_REQUIRED_MODULES := recovery-persist recovery-refresh
+LOCAL_REQUIRED_MODULES += recovery-persist recovery-refresh
 endif
 
 include $(BUILD_EXECUTABLE)
