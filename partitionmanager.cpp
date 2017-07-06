@@ -529,14 +529,12 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 	time(&start);
 
 	if (part_settings->Part->Backup(part_settings, &tar_fork_pid)) {
-		bool digestSuccess = false;
+		sync();
+		sync();
 		string Full_Filename = part_settings->Backup_Folder + "/" + part_settings->Part->Backup_FileName;
-		if (part_settings->generate_digest) {
-
-			if (part_settings->adbbackup)
-				digestSuccess = true;
-			else
-				digestSuccess = twrpDigestDriver::Make_Digest(Full_Filename);
+		if (!part_settings->adbbackup && part_settings->generate_digest) {
+			if (!twrpDigestDriver::Make_Digest(Full_Filename))
+				goto backup_error;
 		}
 
 		if (part_settings->Part->Has_SubPartition) {
@@ -547,18 +545,13 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 				if ((*subpart)->Can_Be_Backed_Up && (*subpart)->Is_SubPartition && (*subpart)->SubPartition_Of == parentPart->Mount_Point) {
 					part_settings->Part = *subpart;
 					if (!(*subpart)->Backup(part_settings, &tar_fork_pid)) {
-						Clean_Backup_Folder(part_settings->Backup_Folder);
-						TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
-						tw_set_default_metadata(backup_log.c_str());
-						TWFunc::SetPerformanceMode(false);
-						return false;
+						goto backup_error;
 					}
 					sync();
 					sync();
 					if (!part_settings->adbbackup && part_settings->generate_digest) {
 						if (!twrpDigestDriver::Make_Digest(Full_Filename)) {
-							TWFunc::SetPerformanceMode(false);
-							return false;
+							goto backup_error;
 						}
 					}
 				}
@@ -577,15 +570,14 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 		}
 
 		TWFunc::SetPerformanceMode(false);
-		return digestSuccess;
-	} else {
-		Clean_Backup_Folder(part_settings->Backup_Folder);
-		TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
-		tw_set_default_metadata(backup_log.c_str());
-		TWFunc::SetPerformanceMode(false);
-		return false;
+		return true;
 	}
-	return 0;
+backup_error:
+	Clean_Backup_Folder(part_settings->Backup_Folder);
+	TWFunc::copy_file("/tmp/recovery.log", backup_log, 0644);
+	tw_set_default_metadata(backup_log.c_str());
+	TWFunc::SetPerformanceMode(false);
+	return false;
 }
 
 void TWPartitionManager::Clean_Backup_Folder(string Backup_Folder) {
