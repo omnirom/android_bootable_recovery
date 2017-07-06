@@ -347,11 +347,13 @@ th_read(TAR *t)
 			{
 				start += E4CRYPT_TAG_LEN;
 				char *end = strchr(start, '\n');
+				if(!end)
+					end = strchr(start, '\0');
 				if(end)
 				{
-				    t->th_buf.e4crypt_policy = strndup(start, end-start);
+					t->th_buf.e4crypt_policy = strndup(start, end-start);
 #ifdef DEBUG
-				    printf("    th_read(): E4Crypt policy detected: %s\n", t->th_buf.e4crypt_policy);
+					printf("    th_read(): E4Crypt policy detected: %s\n", t->th_buf.e4crypt_policy);
 #endif
 				}
 			}
@@ -563,7 +565,7 @@ th_write(TAR *t)
 #endif
 		/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *content* *newline* */
 		//                                                       size   newline
-		sz = E4CRYPT_TAG_LEN + EXT4_KEY_DESCRIPTOR_HEX + 3  +    1;
+		sz = E4CRYPT_TAG_LEN + strlen(t->th_buf.e4crypt_policy) + 3  +    1;
 
 		if(sz >= 100) // another ascci digit for size
 			++sz;
