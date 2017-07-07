@@ -693,6 +693,20 @@ static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
         continue;
       }
 
+      // The footer contains the size of the uncompressed data.  Double-check to make sure that it
+      // matches the size of the data we got when we actually did the decompression.
+      size_t footer_index = pos + raw_data_len + GZIP_FOOTER_LEN - 4;
+      if (sz - footer_index < 4) {
+        printf("Warning: invalid footer position; treating as a nomal chunk\n");
+        continue;
+      }
+      size_t footer_size = get_unaligned<uint32_t>(img->data() + footer_index);
+      if (footer_size != uncompressed_len) {
+        printf("Warning: footer size %zu != decompressed size %zu; treating as a nomal chunk\n",
+               footer_size, uncompressed_len);
+        continue;
+      }
+
       ImageChunk body(CHUNK_DEFLATE, pos, img, raw_data_len);
       uncompressed_data.resize(uncompressed_len);
       body.SetUncompressedData(std::move(uncompressed_data));
@@ -704,17 +718,6 @@ static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
       chunks->emplace_back(CHUNK_NORMAL, pos, img, GZIP_FOOTER_LEN);
 
       pos += GZIP_FOOTER_LEN;
-
-      // The footer (that we just skipped over) contains the size of
-      // the uncompressed data.  Double-check to make sure that it
-      // matches the size of the data we got when we actually did
-      // the decompression.
-      size_t footer_size = get_unaligned<uint32_t>(img->data() + pos - 4);
-      if (footer_size != body.DataLengthForPatch()) {
-        printf("Error: footer size %zu != decompressed size %zu\n", footer_size,
-               body.GetRawDataLength());
-        return false;
-      }
     } else {
       // Use a normal chunk to take all the contents until the next gzip chunk (or EOF); we expect
       // the number of chunks to be small (5 for typical boot and recovery images).
