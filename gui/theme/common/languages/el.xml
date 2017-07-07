@@ -648,5 +648,6 @@
         <string name="theme_ver_err">Η έκδοση του θέματος δεν ταιριάζει με αυτή του TWRP. Χρήση προεπιλεγμένου θέματος.</string>
         <string name="up_a_level">(προηγ. επίπεδο)</string>
         <string name="install_reboot">Επανεκκίνηση σε 5 δευτ.</string>
+        <string name="exclude_dalvik_cache_from_backup">Παράλ. dalvik-cache κατά την δημ. αντιγρ. ασφ.</string>
     </resources>
 </language>

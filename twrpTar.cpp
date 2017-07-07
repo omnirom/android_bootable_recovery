@@ -1311,7 +1311,7 @@ int twrpTar::openTar() {
 			if (execlp("pigz", "pigz", "-d", "-c", NULL) < 0) {
 				close(pigzfd[1]);
 				close(input_fd);
-				LOGINFO("execlp openaes ERROR!\n");
+				LOGINFO("execlp pigz ERROR!\n");
 				gui_err("restore_error=Error during restore process.");
 				_exit(-1);
 			}

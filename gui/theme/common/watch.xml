@@ -2031,6 +2031,10 @@
 				<listitem name="{@disable_backup_space_chk=Disable free space check before backup}">
 					<data variable="tw_disable_free_space"/>
 				</listitem>
+				<listitem name="{@exclude_dalvik_cache_from_backup=Exclude dalvik-cache from backup}">
+					<condition var1="tw_can_exclude_dalvik" var2="1"/>
+					<data variable="tw_exclude_dalvik"/>
+				</listitem>
 			</listbox>
 
 			<button>

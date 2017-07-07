@@ -35,6 +35,7 @@ public:
 	bool check_absolute_skip_dirs(const string& path);
 	bool check_skip_dirs(const string& path);
 	void clear_relative_dir(string dir);
+	void clear_absolute_dir(string dir);
 private:
 	vector<string> absolutedir;
 	vector<string> relativedir;

@@ -41,7 +41,8 @@ TWExclude::TWExclude() {
 }
 
 void TWExclude::add_relative_dir(const string& dir) {
-	relativedir.push_back(dir);
+	if (!check_relative_skip_dirs(dir))
+		relativedir.push_back(dir);
 }
 
 void TWExclude::clear_relative_dir(string dir) {
@@ -55,10 +56,25 @@ void TWExclude::clear_relative_dir(string dir) {
 }
 
 void TWExclude::add_absolute_dir(const string& dir) {
-	absolutedir.push_back(TWFunc::Remove_Trailing_Slashes(dir));
+	string normalized_dir = TWFunc::Remove_Trailing_Slashes(dir);
+	if (!check_absolute_skip_dirs(normalized_dir))
+		absolutedir.push_back(TWFunc::Remove_Trailing_Slashes(dir));
+}
+
+void TWExclude::clear_absolute_dir(string dir) {
+	vector<string>::iterator iter = absolutedir.begin();
+	while (iter != absolutedir.end()) {
+		if (*iter == dir)
+			iter = absolutedir.erase(iter);
+		else
+			iter++;
+	}
 }
 
 uint64_t TWExclude::Get_Folder_Size(const string& Path) {
+	if (!TWFunc::Path_Exists(Path))
+		return 0;
+
 	DIR* d;
 	struct dirent* de;
 	struct stat st;
