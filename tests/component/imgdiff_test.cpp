@@ -328,6 +328,39 @@ TEST(ImgdiffTest, image_mode_simple) {
   verify_patched_image(src, patch, tgt);
 }
 
+TEST(ImgdiffTest, image_mode_bad_gzip) {
+  // Modify the uncompressed length in the gzip footer.
+  const std::vector<char> src_data = { 'a',    'b',    'c',    'd',    'e',    'f',    'g',
+                                       'h',    '\x1f', '\x8b', '\x08', '\x00', '\xc4', '\x1e',
+                                       '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xac',
+                                       '\x02', '\x00', '\x67', '\xba', '\x8e', '\xeb', '\x03',
+                                       '\xff', '\xff', '\xff' };
+  const std::string src(src_data.cbegin(), src_data.cend());
+  TemporaryFile src_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src, src_file.path));
+
+  // Modify the uncompressed length in the gzip footer.
+  const std::vector<char> tgt_data = {
+    'a',    'b',    'c',    'd',    'e',    'f',    'g',    'x',    'y',    'z',    '\x1f', '\x8b',
+    '\x08', '\x00', '\x62', '\x1f', '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xa8', '\xac',
+    '\xac', '\xaa', '\x02', '\x00', '\x96', '\x30', '\x06', '\xb7', '\x06', '\xff', '\xff', '\xff'
+  };
+  const std::string tgt(tgt_data.cbegin(), tgt_data.cend());
+  TemporaryFile tgt_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(tgt, tgt_file.path));
+
+  TemporaryFile patch_file;
+  std::vector<const char*> args = {
+    "imgdiff", src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  // Verify.
+  std::string patch;
+  ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch));
+  verify_patched_image(src, patch, tgt);
+}
+
 TEST(ImgdiffTest, image_mode_different_num_chunks) {
   // src: "abcdefgh" + gzipped "xyz" (echo -n "xyz" | gzip -f | hd) + gzipped "test".
   const std::vector<char> src_data = {
