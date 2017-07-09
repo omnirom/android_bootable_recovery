@@ -23,10 +23,13 @@ endif
 include $(CLEAR_VARS)
 
 otafault_static_libs := \
-    libbase \
     libminzip \
     libz \
     libselinux
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
+    otafault_static_libs += libbase
+endif
 
 LOCAL_SRC_FILES := config.cpp ota_io.cpp
 LOCAL_MODULE_TAGS := eng

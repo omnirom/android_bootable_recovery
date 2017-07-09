@@ -23,7 +23,9 @@ LOCAL_CPPFLAGS += -Wno-unused-parameter
 LOCAL_CPPFLAGS += -Wno-deprecated-register
 LOCAL_CLANG := true
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
-LOCAL_STATIC_LIBRARIES += libbase
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
+    LOCAL_STATIC_LIBRARIES += libbase
+endif
 
 include $(BUILD_HOST_EXECUTABLE)
 
@@ -39,6 +41,8 @@ LOCAL_CPPFLAGS += -Wno-deprecated-register
 LOCAL_MODULE := libedify
 LOCAL_CLANG := true
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
-LOCAL_STATIC_LIBRARIES += libbase
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
+    LOCAL_STATIC_LIBRARIES += libbase
+endif
 
 include $(BUILD_STATIC_LIBRARY)
