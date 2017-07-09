@@ -21,7 +21,9 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
 #include <string>
+#endif
 
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>

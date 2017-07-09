@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,8 +26,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
 #include <memory>
 #include <string>
+#endif
 
 #include <android-base/strings.h>
 

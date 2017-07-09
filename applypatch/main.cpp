@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
 #include <memory>
 #include <vector>
+#endif
 
 #include "applypatch.h"
 #include "edify/expr.h"
