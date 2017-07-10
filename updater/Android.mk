@@ -47,6 +47,7 @@ updater_common_static_libraries := \
     libcrypto_utils \
     libcutils \
     libtune2fs \
+    libbrotli \
     $(tune2fs_static_libraries)
 
 # libupdater (static library)
