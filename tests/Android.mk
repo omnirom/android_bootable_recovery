@@ -160,6 +160,7 @@ LOCAL_STATIC_LIBRARIES := \
     libfec_rs \
     libsquashfs_utils \
     libcutils \
+    libbrotli \
     $(tune2fs_static_libraries)
 
 testdata_files := $(call find-subdir-files, testdata/*)

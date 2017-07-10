@@ -15,10 +15,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,6 +31,7 @@
 #include <android-base/strings.h>
 #include <android-base/test_utils.h>
 #include <bootloader_message/bootloader_message.h>
+#include <brotli/encode.h>
 #include <bsdiff.h>
 #include <gtest/gtest.h>
 #include <ziparchive/zip_archive.h>
@@ -576,4 +579,68 @@ TEST_F(UpdaterTest, new_data_short_write) {
   std::string script_exact_data = "block_image_update(\"" + std::string(update_file.path) +
       R"(", package_extract_file("transfer_list"), "exact_new_data", "patch_data"))";
   expect("t", script_exact_data.c_str(), kNoCause, &updater_info);
+  CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, brotli_new_data) {
+  // Create a zip file with new_data.
+  TemporaryFile zip_file;
+  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
+  ZipWriter zip_writer(zip_file_ptr);
+
+  // Add a brotli compressed new data entry.
+  ASSERT_EQ(0, zip_writer.StartEntry("new.dat.br", 0));
+
+  auto generator = []() { return rand() % 128; };
+  // Generate 2048 blocks of random data.
+  std::string brotli_new_data;
+  brotli_new_data.reserve(4096 * 2048);
+  generate_n(back_inserter(brotli_new_data), 4096 * 2048, generator);
+
+  size_t encoded_size = BrotliEncoderMaxCompressedSize(brotli_new_data.size());
+  std::vector<uint8_t> encoded_data(encoded_size);
+  ASSERT_TRUE(BrotliEncoderCompress(
+      BROTLI_DEFAULT_QUALITY, BROTLI_DEFAULT_WINDOW, BROTLI_DEFAULT_MODE, brotli_new_data.size(),
+      reinterpret_cast<const uint8_t*>(brotli_new_data.data()), &encoded_size, encoded_data.data()));
+
+  ASSERT_EQ(0, zip_writer.WriteBytes(encoded_data.data(), encoded_size));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  // Add a dummy patch data.
+  ASSERT_EQ(0, zip_writer.StartEntry("patch_data", 0));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+
+  std::vector<std::string> transfer_list = {
+    "4", "2048", "0", "0", "new 4,0,512,512,1024", "new 2,1024,2048",
+  };
+  ASSERT_EQ(0, zip_writer.StartEntry("transfer_list", 0));
+  std::string commands = android::base::Join(transfer_list, '\n');
+  ASSERT_EQ(0, zip_writer.WriteBytes(commands.data(), commands.size()));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  ASSERT_EQ(0, zip_writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file_ptr));
+
+  MemMapping map;
+  ASSERT_TRUE(map.MapFile(zip_file.path));
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
+
+  // Set up the handler, command_pipe, patch offset & length.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+  TemporaryFile temp_pipe;
+  updater_info.cmd_pipe = fopen(temp_pipe.path, "wb");
+  updater_info.package_zip_addr = map.addr;
+  updater_info.package_zip_len = map.length;
+
+  // Check if we can decompress the new data correctly.
+  TemporaryFile update_file;
+  std::string script_new_data =
+      "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list"), "new.dat.br", "patch_data"))";
+  expect("t", script_new_data.c_str(), kNoCause, &updater_info);
+
+  std::string updated_content;
+  ASSERT_TRUE(android::base::ReadFileToString(update_file.path, &updated_content));
+  ASSERT_EQ(brotli_new_data, updated_content);
+  CloseArchive(handle);
 }
