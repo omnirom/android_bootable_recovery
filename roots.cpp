@@ -260,8 +260,6 @@ int format_volume(const char* volume, const char* directory) {
           if (result == 0 && directory != nullptr) {
             const char* e2fsdroid_argv[] = { "/sbin/e2fsdroid_static",
                                              "-e",
-                                             "-S",
-                                             "/file_contexts",
                                              "-f",
                                              directory,
                                              "-a",
@@ -270,7 +268,7 @@ int format_volume(const char* volume, const char* directory) {
                                              nullptr };
 
             result = exec_cmd(e2fsdroid_argv[0], const_cast<char**>(e2fsdroid_argv));
-            }
+          }
         } else {   /* Has to be f2fs because we checked earlier. */
             if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0 && length < 0) {
                 LOG(ERROR) << "format_volume: crypt footer + negative length (" << length
