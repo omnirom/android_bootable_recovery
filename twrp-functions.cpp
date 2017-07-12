@@ -925,14 +925,14 @@ void TWFunc::Fixup_Time_On_Boot()
 	// Like, ats_1 is for modem and ats_2 is for TOD (time of day?).
 	// Look at file time_genoff.h in CodeAurora, qcom-opensource/time-services
 
-	static const char *paths[] = { "/data/system/time/", "/data/time/"  };
+	static const char *paths[] = { "/persist/time/", "/data/system/time/", "/data/time/"  };
 
 	FILE *f;
 	offset = 0;
 	struct dirent *dt;
 	std::string ats_path;
 
-	if (!PartitionManager.Mount_By_Path("/data", false))
+	if (!PartitionManager.Mount_By_Path("/persist", false) && !PartitionManager.Mount_By_Path("/data", false))
 		return;
 
 	// Prefer ats_2, it seems to be the one we want according to logcat on hammerhead
