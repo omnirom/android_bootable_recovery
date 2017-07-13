@@ -301,15 +301,15 @@ void ScreenRecoveryUI::draw_screen_locked() {
   gr_color(0, 0, 0, 255);
   gr_clear();
 
-  static constexpr int TEXT_INDENT = 4;
-  int x = TEXT_INDENT + kMarginWidth;
   int y = kMarginHeight;
   if (show_menu) {
-    std::string recovery_fingerprint =
-        android::base::GetProperty("ro.bootimage.build.fingerprint", "");
+    static constexpr int kMenuIndent = 4;
+    int x = kMarginWidth + kMenuIndent;
 
     SetColor(INFO);
     y += DrawTextLine(x, y, "Android Recovery", true);
+    std::string recovery_fingerprint =
+        android::base::GetProperty("ro.bootimage.build.fingerprint", "");
     for (const auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
       y += DrawTextLine(x, y, chunk.c_str(), false);
     }
@@ -343,7 +343,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
   size_t count = 0;
   for (int ty = gr_fb_height() - kMarginHeight - char_height_; ty >= y && count < text_rows_;
        ty -= char_height_, ++count) {
-    DrawTextLine(x, ty, text_[row], false);
+    DrawTextLine(kMarginWidth, ty, text_[row], false);
     --row;
     if (row < 0) row = text_rows_ - 1;
   }
