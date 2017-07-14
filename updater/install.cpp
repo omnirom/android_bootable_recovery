@@ -322,8 +322,7 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
       return StringValue(location);
     }
 
-    const char* e2fsdroid_argv[] = { "/sbin/e2fsdroid_static", "-e",   "-S",
-                                     "/file_contexts",         "-a",   mount_point.c_str(),
+    const char* e2fsdroid_argv[] = { "/sbin/e2fsdroid_static", "-e",   "-a", mount_point.c_str(),
                                      location.c_str(),         nullptr };
     status = exec_cmd(e2fsdroid_argv[0], const_cast<char**>(e2fsdroid_argv));
     if (status != 0) {
