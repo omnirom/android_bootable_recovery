@@ -999,6 +999,7 @@ int PageSet::LoadVariables(xml_node<>* vars)
 	xml_node<>* child;
 	xml_attribute<> *name, *value, *persist;
 	int p;
+	std::string current_value;
 
 	child = vars->first_node("variable");
 	while (child)
@@ -1052,7 +1053,7 @@ int PageSet::LoadVariables(xml_node<>* vars)
 				int val = val1 - val2;
 
 				DataManager::SetValue(name->value(), val, p);
-			} else {
+			} else if (!(p && DataManager::GetValue(name->value(), current_value) == 0)) {
 				DataManager::SetValue(name->value(), valstr, p);
 			}
 		}
