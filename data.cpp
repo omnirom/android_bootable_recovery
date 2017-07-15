@@ -1003,14 +1003,6 @@ void DataManager::ReadSettingsFile(void)
 #ifndef TW_OEM_BUILD
 	// Load up the values for TWRP - Sleep to let the card be ready
 	char mkdir_path[255], settings_file[255];
-	int is_enc, has_data_media;
-
-	GetValue(TW_IS_ENCRYPTED, is_enc);
-	GetValue(TW_HAS_DATA_MEDIA, has_data_media);
-	if (is_enc == 1 && has_data_media == 1) {
-		LOGINFO("Cannot load settings -- encrypted.\n");
-		return;
-	}
 
 	memset(mkdir_path, 0, sizeof(mkdir_path));
 	memset(settings_file, 0, sizeof(settings_file));

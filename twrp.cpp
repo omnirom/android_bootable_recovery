@@ -128,6 +128,10 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	PartitionManager.Output_Partition_Logging();
+
+	// Read the settings file
+	DataManager::ReadSettingsFile();
+
 	// Load up all the resources
 	gui_loadResources();
 

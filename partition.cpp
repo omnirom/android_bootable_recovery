@@ -347,6 +347,12 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
 			Can_Be_Backed_Up = true;
 			Can_Encrypt_Backup = true;
 			Use_Userdata_Encryption = true;
+		} else if (Mount_Point == "/persist") {
+			Display_Name = "PersistData";
+			Backup_Display_Name = Display_Name;
+			Storage_Name = Display_Name;
+			Is_Settings_Storage = true;
+			Can_Be_Backed_Up = true;
 		} else if (Mount_Point == "/cache") {
 			Display_Name = "Cache";
 			Backup_Display_Name = Display_Name;
@@ -680,8 +686,6 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 			break;
 		case TWFLAG_SETTINGSSTORAGE:
 			Is_Settings_Storage = val;
-			if (Is_Settings_Storage)
-				Is_Storage = true;
 			break;
 		case TWFLAG_STORAGE:
 			Is_Storage = val;

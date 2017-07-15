@@ -95,6 +95,7 @@ TWPartitionManager::TWPartitionManager(void) {
 int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
 	FILE *fstabFile;
 	char fstab_line[MAX_FSTAB_LINE_LENGTH];
+	TWPartition* storage_partition = NULL;
 	TWPartition* settings_partition = NULL;
 	TWPartition* andsec_partition = NULL;
 	unsigned int storageid = 1 << 16;	// upper 16 bits are for physical storage device, we pretend to have only one
@@ -129,6 +130,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		if ((*iter)->Is_Storage) {
 			++storageid;
 			(*iter)->MTP_Storage_ID = storageid;
+			if (!storage_partition) {
+				storage_partition = (*iter);
+			}
 		}
 
 		if (!settings_partition && (*iter)->Is_Settings_Storage && (*iter)->Is_Present)
@@ -142,29 +146,26 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			(*iter)->Has_Android_Secure = false;
 	}
 
-	if (!datamedia && !settings_partition && Find_Partition_By_Path("/sdcard") == NULL && Find_Partition_By_Path("/internal_sd") == NULL && Find_Partition_By_Path("/internal_sdcard") == NULL && Find_Partition_By_Path("/emmc") == NULL) {
+	if (!datamedia && !storage_partition && Find_Partition_By_Path("/sdcard") == NULL && Find_Partition_By_Path("/internal_sd") == NULL && Find_Partition_By_Path("/internal_sdcard") == NULL && Find_Partition_By_Path("/emmc") == NULL) {
 		// Attempt to automatically identify /data/media emulated storage devices
 		TWPartition* Dat = Find_Partition_By_Path("/data");
 		if (Dat) {
 			LOGINFO("Using automatic handling for /data/media emulated storage device.\n");
 			datamedia = true;
 			Dat->Setup_Data_Media();
-			settings_partition = Dat;
+			storage_partition = Dat;
 			// Since /data was not considered a storage partition earlier, we still need to assign an MTP ID
 			++storageid;
 			Dat->MTP_Storage_ID = storageid;
 		}
 	}
+
 	if (!settings_partition) {
-		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-			if ((*iter)->Is_Storage) {
-				settings_partition = (*iter);
-				break;
-			}
-		}
+		settings_partition = storage_partition;
 		if (!settings_partition)
 			LOGERR("Unable to locate storage partition for storing settings file.\n");
 	}
+
 	if (!Write_Fstab()) {
 		if (Display_Error)
 			LOGERR("Error creating fstab\n");
@@ -174,11 +175,14 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 
 	if (andsec_partition) {
 		Setup_Android_Secure_Location(andsec_partition);
-	} else if (settings_partition) {
-		Setup_Android_Secure_Location(settings_partition);
+	} else if (storage_partition) {
+		Setup_Android_Secure_Location(storage_partition);
 	}
 	if (settings_partition) {
-		Setup_Settings_Storage_Partition(settings_partition);
+		Setup_Settings_Partition(settings_partition);
+	}
+	if (storage_partition) {
+		Setup_Storage_Partition(storage_partition);
 	}
 #ifdef TW_INCLUDE_CRYPTO
 	TWPartition* Decrypt_Data = Find_Partition_By_Path("/data");
@@ -247,10 +251,14 @@ int TWPartitionManager::Write_Fstab(void) {
 	return true;
 }
 
-void TWPartitionManager::Setup_Settings_Storage_Partition(TWPartition* Part) {
-	DataManager::SetValue("tw_settings_path", Part->Storage_Path);
-	DataManager::SetValue("tw_storage_path", Part->Storage_Path);
-	LOGINFO("Settings storage is '%s'\n", Part->Storage_Path.c_str());
+void TWPartitionManager::Setup_Settings_Partition(TWPartition* setting_partition) {
+	DataManager::SetValue("tw_settings_path", setting_partition->Storage_Path);
+	LOGINFO("Settings storage is '%s'\n", setting_partition->Storage_Path.c_str());
+}
+
+void TWPartitionManager::Setup_Storage_Partition(TWPartition* storage_partition) {
+	DataManager::SetValue("tw_storage_path", storage_partition->Storage_Path);
+	LOGINFO("Storage is '%s'\n", storage_partition->Storage_Path.c_str());
 }
 
 void TWPartitionManager::Setup_Android_Secure_Location(TWPartition* Part) {
@@ -1459,7 +1467,10 @@ void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 			dat->Storage_Path = "/data/media/0";
 			dat->Symlink_Path = dat->Storage_Path;
 			DataManager::SetValue("tw_storage_path", "/data/media/0");
-			DataManager::SetValue("tw_settings_path", "/data/media/0");
+			std::string settings_path;
+			if (DataManager::GetValue("tw_settings_path", settings_path) != 0) {
+				DataManager::SetValue("tw_settings_path", "/data/media/0");
+			}
 			dat->UnMount(false);
 		}
 		Update_System_Details();
