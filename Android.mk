@@ -72,7 +72,8 @@ ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
         multirom/multirom.cpp \
         multirom/mrominstaller.cpp \
         multirom/multiromedify.cpp \
-		multirom/multirom_Zip.c
+        multirom/multirom_Zip.c \
+        multirom/Process.cpp
 endif
 
 ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)

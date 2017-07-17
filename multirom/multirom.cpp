@@ -7,6 +7,11 @@
 #include <linux/xattr.h>
 #include <sys/xattr.h>
 #include <sys/vfs.h>
+#include <mntent.h>
+
+#include <string>
+#include <vector>
+#include <sstream>
 
 // clone libbootimg to /system/extras/ from
 // https://github.com/Tasssadar/libbootimg.git
@@ -34,6 +39,7 @@
 #include "../fuse_sideload.h"
 #include "../gui/blanktimer.hpp"
 #include "multiromedify.h"
+#include "Process.h"
 
 extern "C" {
 #include "../twcommon.h"
@@ -851,6 +857,7 @@ bool MultiROM::changeMounts(std::string name)
 		m_path.clear();
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
+		rmdir(REALDATA);
 		TWFunc::Toggle_MTP(mtp_was_enabled);
 		return false;
 	}
@@ -861,6 +868,7 @@ bool MultiROM::changeMounts(std::string name)
 		m_path.clear();
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
+		rmdir(REALDATA);
 		TWFunc::Toggle_MTP(mtp_was_enabled);
 		return false;
 	}
@@ -884,6 +892,7 @@ bool MultiROM::changeMounts(std::string name)
 		gui_print("Failed to mount realdata, canceling!\n");
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
+		rmdir(REALDATA);
 		TWFunc::Toggle_MTP(mtp_was_enabled);
 		return false;
 	}
@@ -919,9 +928,8 @@ bool MultiROM::changeMounts(std::string name)
 		DataManager::SetValue("tw_storage_path", path);
 	}
 
+	PartitionManager.Update_System_Details();
 	PartitionManager.Output_Partition_Logging();
-	PartitionManager.Update_Storage_Sizes();
-	PartitionManager.Write_Fstab();
 
 	if(!data->Mount(true) || !sys->Mount(true) || !cache->Mount(true))
 	{
@@ -932,12 +940,10 @@ bool MultiROM::changeMounts(std::string name)
 		realdata->UnMount(false);
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
+		rmdir(REALDATA);
 		TWFunc::Toggle_MTP(mtp_was_enabled);
 		return false;
 	}
-
-	// We really don't want scripts to be able to write to real partitions
-	//system("mv /sbin/umount /sbin/umount.bak"); // this should be handled by multiromedify.cpp
 
 	// SuperSU tries *very* hard to mount /data and /system, even looks through
 	// recovery.fstab and manages to mount the real /system
@@ -951,6 +957,32 @@ bool MultiROM::changeMounts(std::string name)
 	system("cp -a /sbin/umount_shim.sh /sbin/umount");
 
 	return true;
+}
+
+static int KillProcessesUsingPath(const std::string& path) {
+	const char* cpath = path.c_str();
+	if (Process::killProcessesWithOpenFiles(cpath, SIGINT) == 0) {
+		return 0;
+	}
+	sleep(5);
+
+	if (Process::killProcessesWithOpenFiles(cpath, SIGTERM) == 0) {
+		return 0;
+	}
+	sleep(5);
+
+	if (Process::killProcessesWithOpenFiles(cpath, SIGKILL) == 0) {
+		return 0;
+	}
+	sleep(5);
+
+	// Send SIGKILL a second time to determine if we've
+	// actually killed everyone with open files
+	if (Process::killProcessesWithOpenFiles(cpath, SIGKILL) == 0) {
+		return 0;
+	}
+	LOGERR("Failed to kill processes using %s\n", cpath);
+	return -EBUSY;
 }
 
 void MultiROM::restoreMounts()
@@ -967,44 +999,132 @@ void MultiROM::restoreMounts()
 		DataManager::SetValue("tw_storage_path", path);
 	}
 
-	//system("mv /sbin/umount.bak /sbin/umount");
 	system("mv /etc/recovery.fstab.bak /etc/recovery.fstab");
 	system("if [ -e /sbin/mount_real ]; then mv /sbin/mount_real /sbin/mount; fi;");
 	system("if [ -e /sbin/umount_real ]; then mv /sbin/umount_real /sbin/umount; fi;");
 
-	// various versions of 'systemless root' and/or installer scripts keep the unmount, but keep the loop device, so get rid of it first
-	system("sync;"
-		"i=0;"
-		"while [ $i -le 10 ]; do"
-		"    if [ -e \"/dev/block/loop$i\" ]; then"
-		"        losetup -d  \"/dev/block/loop$i\";"
-		"    fi;"
-		"    i=$(( $i + 1 ));"
-		"done;");
+	sync();
+
+	std::string list_loop_devices;
+	std::stringstream ss;
+	std::string line;
+	int rc;
+	int i;
+
+	// Disassociate and unmount 'leftover' loop mounts (su, magisk, etc.)
+	list_loop_devices.clear();
+	TWFunc::Exec_Cmd("losetup -a 2>/dev/null", list_loop_devices);
+	ss << list_loop_devices;
+	while (getline(ss, line)) {
+		size_t pos = line.find_first_of(':');
+		if (pos == std::string::npos)
+			continue;
+
+		std::string loop_dev = line.substr(0, pos);
+		std::string base_name = TWFunc::Get_Filename(line);
+		if (base_name != "boot.img" && base_name != "cache.img" && base_name != "system.img" && base_name != "data.img") {
+			FILE *f;
+			struct mntent *ent;
+
+			f = setmntent("/proc/mounts", "r");
+			if (!f) {
+				LOGERR("Couldn't open /proc/mounts\n");
+			} else {
+				while ((ent = getmntent(f))) {
+					if (loop_dev == ent->mnt_fsname) {
+						LOGINFO("Loop device %s (%s) is still mounted on %s!\n", loop_dev.c_str(), base_name.c_str(), ent->mnt_dir);
+						rc = KillProcessesUsingPath(ent->mnt_dir);
+						LOGINFO("KillProcessesUsingPath %s (rc=%d)\n", ent->mnt_dir, rc);
+						rc = umount(ent->mnt_dir);
+						LOGINFO("Unmounting %s (rc=%d)\n", ent->mnt_dir, rc);
+					}
+				}
+				endmntent(f);
+			}
+			rc = TWFunc::Exec_Cmd("losetup " + loop_dev + " 2>/dev/null; if [ $? == 0 ]; then losetup -d " + loop_dev + "; fi");
+			LOGINFO("Releasing %s (%s) (rc=%d)\n", loop_dev.c_str(), base_name.c_str(), rc);
+		}
+	}
+
+	sync();
+
+	// Is this really needed and entirely safe
+	rc = KillProcessesUsingPath("/cache");
+	LOGINFO("KillProcessesUsingPath /cache (rc=%d)\n", rc);
+	KillProcessesUsingPath("/system");
+	LOGINFO("KillProcessesUsingPath /system (rc=%d)\n", rc);
+	KillProcessesUsingPath("/data");
+	LOGINFO("KillProcessesUsingPath /data (rc=%d)\n", rc);
+	KillProcessesUsingPath("/realdata");
+	LOGINFO("KillProcessesUsingPath /realdata (rc=%d)\n", rc);
+
+	sync();
 
 	// script might have mounted it several times over, we _have_ to umount it all
-	system("sync;"
-		"i=0;"
-		"while"
-		"  [ -n \"$(grep -e /data -e /system -e /realdata -e /cache -e /sdcard /etc/mtab)\" ] &&"
-		"  [ $i -le 10 ];"
-		"do"
-		"    i=$(( $i + 1 ));"
-		"    umount -d /system /data /cache /sdcard /realdata;"
-		"done;"
-		"i=0;"
-		"while [ $i -le 10 ]; do"
-		"    if [ -e \"/dev/block/loop$i\" ]; then"
-		"        losetup -d  \"/dev/block/loop$i\";"
-		"    fi;"
-		"    i=$(( $i + 1 ));"
-		"done;");
+	// Note to self: ^^ really? why? and can't we just loop each partition or do we
+	//               have to loop through all of them?
+	int mounted_count = 0;
+	for (i = 0; i < 10; ++i) {
+		mounted_count = 0;
+
+		if (PartitionManager.Is_Mounted_By_Path("/cache")) {
+			mounted_count++;
+			rc = PartitionManager.UnMount_By_Path("/cache", false);
+			LOGINFO("Unmounting /cache (rc=%d)\n", rc);
+		}
+		if (PartitionManager.Is_Mounted_By_Path("/system")) {
+			mounted_count++;
+			rc = PartitionManager.UnMount_By_Path("/system", false);
+			LOGINFO("Unmounting /system (rc=%d)\n", rc);
+		}
+		if (PartitionManager.Is_Mounted_By_Path("/data")) {
+			mounted_count++;
+			rc = PartitionManager.UnMount_By_Path("/data", false);
+			LOGINFO("Unmounting /data (rc=%d)\n", rc);
+		}
+
+		if (mounted_count == 0)
+			break;
+	}
+
+	if (mounted_count == 0) {
+		if (PartitionManager.Is_Mounted_By_Path("/realdata")) {
+			mounted_count++;
+			rc = PartitionManager.UnMount_By_Path("/realdata", false);
+			LOGINFO("Unmounting /realdata (rc=%d)\n", rc);
+		}
+	} else {
+		// One of the fake partitions couldn't be unmounted so restoring
+		// /realdata is likely to cause problems.
+		// Instead keep using /realdata and inform user to reboot to recovery for
+		// further flashing.
+	}
+
+
+	// Disassociate any remaining loop mounts
+	list_loop_devices.clear();
+	TWFunc::Exec_Cmd("losetup -a 2>/dev/null", list_loop_devices);
+	ss << list_loop_devices;
+	while (getline(ss, line)) {
+		size_t pos = line.find_first_of(':');
+		if (pos == std::string::npos)
+			continue;
+
+		std::string loop_dev = line.substr(0, pos);
+		std::string base_name = TWFunc::Get_Filename(line);
+		rc = TWFunc::Exec_Cmd("losetup -d " + loop_dev);
+		LOGINFO("Releasing %s (%s) rc=%d\n", loop_dev.c_str(), base_name.c_str(), rc);
+	}
+
+	rmdir(REALDATA);
 
 	PartitionManager.Pop_Context();
 	PartitionManager.Update_System_Details();
 
 	PartitionManager.Mount_By_Path("/data", true);
 	PartitionManager.Mount_By_Path("/cache", true);
+
+	PartitionManager.Output_Partition_Logging();
 
 	if(DataManager::GetStrValue(TW_INTERNAL_PATH).find("/realdata/media") == 0)
 	{
