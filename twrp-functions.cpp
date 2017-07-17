@@ -1082,7 +1082,7 @@ std::string TWFunc::to_string(unsigned long value) {
 }
 
 void TWFunc::Disable_Stock_Recovery_Replace(void) {
-	if (PartitionManager.Mount_By_Path("/system", false)) {
+	if (DataManager::GetIntValue("tw_mount_system_ro") == 0 && PartitionManager.Mount_By_Path("/system", false)) {
 		// Disable flashing of stock recovery
 		if (TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
 			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
