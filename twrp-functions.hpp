@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include "twrpDigest/twrpDigest.hpp"
+
 using namespace std;
 
 typedef enum

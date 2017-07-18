@@ -199,7 +199,7 @@
 		<string name="enc_disabled">devre dışı - etkinleştirmek için bir şifre ayarlayın</string>
 		<string name="enc_enabled">etkin</string>
 		<string name="enable_backup_comp_chk">Sıkıştırmayı etkinleştir</string>
-		<string name="skip_md5_backup_chk">Yedekleme sırasında MD5 oluşturmayı geç</string>
+		<string name="skip_digest_backup_chk" version="2">Yedekleme sırasında Digest oluşturmayı geç</string>
 		<string name="disable_backup_space_chk">Boş Alan Denetimini Devre Dışı Bırak</string>
 		<string name="refresh_sizes_btn">Boyutları Yenile</string>
 		<string name="swipe_backup">Yedeklemek için Kaydır</string>
@@ -232,7 +232,7 @@
 		<string name="restore_try_decrypt_s">Çözülmeye Çalışılıyor</string>
 		<string name="restore_backup_date">Yedek tarihi %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Geri Yüklenecek Bölümleri Seç:</string>
-		<string name="restore_enable_md5_chk">Yedek Dosyalarının MD5 Doğrulamasını Etkinleştir</string>
+		<string name="restore_enable_digest_chk" version="2">Yedek Dosyalarının Digest Doğrulamasını Etkinleştir</string>
 		<string name="restore_complete">Geri Yükleme Tamamlandı</string>
 		<string name="swipe_restore">Geri Yüklemek için Kaydır</string>
 		<string name="swipe_restore_s">   Geri Yükle</string>
@@ -458,11 +458,11 @@
 		<string name="mtp_crash">MTP Çöktü, açılışta başlatılmıyor.</string>
 		<string name="decrypt_success">Varsayılan şifre ile çözüldü.</string>
 		<string name="unable_to_decrypt">Varsayılan şifre ile çözülemedi. Veri Biçimlendirmesi yapmanız gerekebilir.</string>
-		<string name="generating_md51">MD5 Oluşturuluyor</string>
-		<string name="generating_md52"> * Md5 oluşturuluyor...</string>
-		<string name="md5_created"> * MD5 Oluşturuldu.</string>
-		<string name="md5_error"> * MD5 Hatası!</string>
-		<string name="md5_compute_error"> * MD5 hesaplama hatası.</string>
+		<string name="generating_digest1" version="2">Digest Oluşturuluyor</string>
+		<string name="generating_digest2" version="2"> * Digest oluşturuluyor...</string>
+		<string name="digest_created" version="2"> * Digest Oluşturuldu.</string>
+		<string name="digest_error" version="2"> * Digest Hatası!</string>
+		<string name="digest_compute_error" version="2"> * Digest hesaplama hatası.</string>
 		<string name="current_date">(Geçerli Tarih)</string>
 		<string name="auto_generate">(Otomatik Oluştur)</string>
 		<string name="unable_to_locate_partition">Yedekleme hesaplamaları için \'{1}\' bölümü bulunamıyor.</string>
@@ -481,8 +481,8 @@
 		<string name="backup_completed">[YEDEKLEME {1} SANİYEDE TAMAMLANDI]</string>
 		<string name="restore_started">[GERİ YÜKLEME BAŞLATILDI]</string>
 		<string name="restore_folder">Geri yükleme klasörü: \'{1}\'</string>
-		<string name="verifying_md5">MD5 Doğrulanıyor</string>
-		<string name="skip_md5">Kullanıcı ayarına göre MD5 denetimi geçiliyor.</string>
+		<string name="verifying_digest" version="2">Digest Doğrulanıyor</string>
+		<string name="skip_digest" version="2">Kullanıcı ayarına göre Digest denetimi geçiliyor.</string>
 		<string name="calc_restore">Geri yükleme ayrıntıları hesaplanıyor...</string>
 		<string name="restore_read_only">{1} geri yüklenemiyor -- salt okunur bağlanmış.</string>
 		<string name="restore_unable_locate">Geri yüklemek için \'{1}\' bölümü bulunamıyor.</string>

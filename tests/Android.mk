@@ -16,6 +16,12 @@
 
 LOCAL_PATH := $(call my-dir)
 
+ifdef project-path-for
+    RECOVERY_PATH := $(call project-path-for,recovery)
+else
+    RECOVERY_PATH := bootable/recovery
+endif
+
 # Unit tests
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
@@ -28,7 +34,7 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_SRC_FILES := unit/asn1_decoder_test.cpp
 LOCAL_SRC_FILES += unit/recovery_test.cpp
 LOCAL_SRC_FILES += unit/locale_test.cpp
-LOCAL_C_INCLUDES := bootable/recovery
+LOCAL_C_INCLUDES := $(RECOVERY_PATH)
 LOCAL_SHARED_LIBRARIES := liblog
 include $(BUILD_NATIVE_TEST)
 
@@ -38,7 +44,7 @@ LOCAL_CLANG := true
 LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 LOCAL_MODULE := recovery_component_test
-LOCAL_C_INCLUDES := bootable/recovery
+LOCAL_C_INCLUDES := $(RECOVERY_PATH)
 LOCAL_SRC_FILES := \
     component/verifier_test.cpp \
     component/applypatch_test.cpp

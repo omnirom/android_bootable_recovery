@@ -215,7 +215,7 @@
 		<string name="enc_disabled">deaktiviert - Passwort festlegen um zu aktivieren</string>
 		<string name="enc_enabled">aktiviert</string>
 		<string name="enable_backup_comp_chk">Komprimierung aktivieren</string>
-		<string name="skip_md5_backup_chk">MD5-Erstellung für die Sicherung überspringen</string>
+		<string name="skip_digest_backup_chk" version="2">Digest-Erstellung für die Sicherung überspringen</string>
 		<string name="disable_backup_space_chk">Prüfung auf freien Speicher deaktivieren</string>
 		<string name="current_boot_slot">Aktiver Slot: %tw_active_slot%</string>
 		<string name="boot_slot_a">Slot A</string>
@@ -253,7 +253,7 @@
 		<string name="restore_try_decrypt_s">Versuche Entschlüsselung</string>
 		<string name="restore_backup_date">Sicherung am %tw_restore_file_date% erstellt</string>
 		<string name="restore_sel_part">Wiederherzustellende Partitionen:</string>
-		<string name="restore_enable_md5_chk">MD5-Prüfung von Sicherungs-Dateien aktivieren</string>
+		<string name="restore_enable_digest_chk" version="2">Digest-Prüfung von Sicherungs-Dateien aktivieren</string>
 		<string name="restore_complete">Wiederherstellen abgeschlossen</string>
 		<string name="swipe_restore">Sicherung wiederherstellen</string>
 		<string name="swipe_restore_s">Wiederherstellen</string>
@@ -494,12 +494,12 @@
 		<string name="mtp_crash">MTP abgestürzt, MTP wird künftig während Bootvorgang nicht gestartet.</string>
 		<string name="decrypt_success">Erfolgreich mit dem Standardpasswort entschlüsselt.</string>
 		<string name="unable_to_decrypt">Entschlüsselung mit Standardpasswort nicht möglich. Eventuell muss die Daten-Partition formatiert werden.</string>
-		<string name="generating_md51">Generiere MD5</string>
-		<!-- Message displayed during a backup if we are generating an MD5, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_md52"> * generiere MD5...</string>
-		<string name="md5_created"> * MD5 erstellt.</string>
-		<string name="md5_error"> * MD5-Fehler!</string>
-		<string name="md5_compute_error"> * Fehler bei MD5-Berechnung.</string>
+		<string name="generating_digest1" version="2">Generiere Digest</string>
+		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
+		<string name="generating_digest2" version="2"> * generiere Digest...</string>
+		<string name="digest_created" version="2"> * Digest erstellt.</string>
+		<string name="digest_error" version="2"> * Digest-Fehler!</string>
+		<string name="digest_compute_error" version="2"> * Fehler bei Digest-Berechnung.</string>
 		<string name="current_date">(Aktuelles Datum)</string>
 		<string name="auto_generate">(Automatisch generiert)</string>
 		<string name="unable_to_locate_partition">Kann '{1}' Partition für Sicherungsberechnungen nicht finden.</string>
@@ -520,8 +520,8 @@
 		<string name="restore_folder">Wiederherstellen aus Ordner: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} fertiggestellt ({2} Sekunden)]</string>
-		<string name="verifying_md5">Überprüfe MD5</string>
-		<string name="skip_md5">Überspringe MD5-Prüfung aufgrund Benutzereinstellungen.</string>
+		<string name="verifying_digest" version="2">Überprüfe Digest</string>
+		<string name="skip_digest" version="2">Überspringe Digest-Prüfung aufgrund Benutzereinstellungen.</string>
 		<string name="calc_restore">Berechne Wiederherstellungsinformationen...</string>
 		<string name="restore_read_only">Kann {1} nicht wiederherstellen -- Partition schreibgeschützt.</string>
 		<string name="restore_unable_locate">Kann wiederherzustellende '{1}'-Partition nicht finden.</string>
@@ -584,9 +584,9 @@
 		<string name="cannot_resize">Größe von {1} kann nicht geändert werden.</string>
 		<string name="repair_resize">{1} wird repariert. Danach wird die Größe geändert.</string>
 		<string name="unable_resize">Größe von {1} kann nicht geändert werden.</string>
-		<string name="no_md5_found">Keine MD5-Datei für '{1}' gefunden. Bitte MD5-Prüfung für Wiederherstellung deaktivieren.</string>
-		<string name="md5_fail_match">MD5-Prüfung für '{1}' fehlgeschlagen.</string>
-		<string name="md5_matched">MD5 matched for '{1}'.</string>
+		<string name="no_digest_found" version="2">Keine Digest-Datei für '{1}' gefunden. Bitte Digest-Prüfung für Wiederherstellung deaktivieren.</string>
+		<string name="digest_fail_match" version="2">Digest-Prüfung für '{1}' fehlgeschlagen.</string>
+		<string name="digest_matched" version="2">Digest matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">TAR-Datei '{1}' konnte nicht entschlüsselt werden.</string>
 		<string name="format_data_msg">Ein Neustart von TWRP kann notwendig sein, damit /data wieder verwendet werden kann.</string>
 		<string name="format_data_err">Formatierung zum Entfernen der Verschlüsselung kann nicht durchgeführt werden.</string>
@@ -608,7 +608,7 @@
 		<string name="backup_folder_set"> * Ordner für Sicherung: {1}</string>
 		<string name="locate_backup_err">Sicherung '{1}' nicht gefunden</string>
 		<string name="set_restore_opt">Setze Wiederherstellungs-Optionen: '{1}':</string>
-		<string name="md5_check_skip">MD5-Prüfung ist deaktiviert</string>
+		<string name="digest_check_skip" version="2">Digest-Prüfung ist deaktiviert</string>
 		<string name="ors_encrypt_restore_err">Eine verschlüsselte Sicherung kann nicht per OpenRecoveryScript wiederhergestellt werden.</string>
 		<string name="mounting">Einhängen</string>
 		<string name="unmounting">Auswerfen</string>
@@ -629,7 +629,7 @@
 		<string name="installing_zip">Installiere Zip '{1}'</string>
 		<string name="select_backup_opt">Setze Sicherungs-Optionen:</string>
 		<string name="compression_on">Komprimierung ist aktiviert</string>
-		<string name="md5_off">MD5-Generierung ist deaktiviert</string>
+		<string name="digest_off" version="2">Digest-Generierung ist deaktiviert</string>
 		<string name="backup_fail">Sicherung fehlgeschlagen</string>
 		<string name="backup_clean">Sicherung fehlgeschlagen, bereinige Sicherungs-Verzeichnis</string>
 		<string name="running_recovery_commands">Führe Recovery-Befehle aus</string>
@@ -637,15 +637,15 @@
 		<string name="running_ors">Führe OpenRecoveryScript aus</string>
 		<string name="ors_complete">OpenRecoveryScript ausgeführt</string>
 		<string name="invalid_zip_format">Invalid zip file format!</string>
-		<string name="check_for_md5">Suche nach MD5-Datei...</string>
+		<string name="check_for_digest" version="2">Suche nach Digest-Datei...</string>
 		<string name="fail_sysmap">'{1}' kann nicht zugeordnet werden</string>
 		<string name="verify_zip_sig">Überprüfe ZIP-Signatur...</string>
 		<string name="verify_zip_fail">Prüfung der ZIP-Signatur fehlgeschlagen!</string>
 		<string name="verify_zip_done">Prüfung der ZIP-Signatur erfolgreich.</string>
 		<string name="zip_corrupt">ZIP-Datei ist beschädigt!</string>
-		<string name="no_md5">MD5-Prüfung übersprungen: keine MD5-Datei gefunden</string>
-		<string name="md5_fail">MD5 stimmt nicht überein</string>
-		<string name="md5_match">MD5 stimmt überein</string>
+		<string name="no_digest" version="2">Digest-Prüfung übersprungen: keine Digest-Datei gefunden</string>
+		<string name="digest_fail" version="2">Digest stimmt nicht überein</string>
+		<string name="digest_match" version="2">Digest stimmt überein</string>
 		<string name="pid_signal">Prozess {1} endete mit Meldung: {2}</string>
 		<string name="pid_error">Prozess {1} endete mit FEHLER: {2}</string>
 		<string name="install_dumlock">Installiere HTC Dumlock in System-Partition...</string>

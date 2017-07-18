@@ -62,8 +62,8 @@ static bool outside(int x, int y)
 {
     return x < 0 || x >= gr_draw->width || y < 0 || y >= gr_draw->height;
 }
-//#define TW_USE_MINUI_CUSTOM_FONTS 1
-#ifndef TW_USE_MINUI_CUSTOM_FONTS
+
+#ifdef TW_NO_MINUI_CUSTOM_FONTS
 int gr_measure(const char *s)
 {
     return gr_font->char_width * strlen(s);
@@ -90,7 +90,7 @@ void gr_font_size(const GRFont* font, int *x, int *y)
     *x = font->char_width;
     *y = font->char_height;
 }
-#endif // TW_USE_MINUI_CUSTOM_FONTS
+#endif // TW_NO_MINUI_CUSTOM_FONTS
 
 void blend_16bpp(unsigned char* px, unsigned r5, unsigned g5, unsigned b5, unsigned char a)
 {
@@ -158,7 +158,7 @@ static void text_blend(unsigned char* src_p, int src_row_bytes,
     }
 }
 
-#ifndef TW_USE_MINUI_CUSTOM_FONTS
+#ifdef TW_NO_MINUI_CUSTOM_FONTS
 void gr_text(int x, int y, const char *s, bool bold)
 {
     GRFont* font = gr_font;
@@ -189,7 +189,7 @@ void gr_text(int x, int y, const char *s, bool bold)
         x += font->char_width;
     }
 }
-#else //TW_USE_MINUI_CUSTOM_FONTS
+#else //TW_NO_MINUI_CUSTOM_FONTS
 void gr_text(const GRFont* font, int x, int y, const char *s, bool bold)
 {
     if (!font->texture || gr_current_a == 0) return;
@@ -218,7 +218,7 @@ void gr_text(const GRFont* font, int x, int y, const char *s, bool bold)
         x += font->char_width;
     }
 }
-#endif //TW_USE_MINUI_CUSTOM_FONTS
+#endif //TW_NO_MINUI_CUSTOM_FONTS
 
 void gr_texticon(int x, int y, GRSurface* icon) {
     if (icon == NULL) return;
@@ -426,7 +426,7 @@ unsigned int gr_get_height(GRSurface* surface) {
     return surface->height;
 }
 
-#ifndef TW_USE_MINUI_CUSTOM_FONTS
+#ifdef TW_NO_MINUI_CUSTOM_FONTS
 static void gr_init_font(void)
 {
     gr_font = reinterpret_cast<GRFont*>(calloc(sizeof(*gr_font), 1));
@@ -468,7 +468,7 @@ void gr_set_font(__attribute__ ((unused))const char* name) {
 	gr_init_font();
 	return;
 }
-#else
+#else // TW_NO_MINUI_CUSTOM_FONTS
 int gr_init_font(const char* name, GRFont** dest) {
     GRFont* font = reinterpret_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
     if (font == nullptr) {
@@ -523,7 +523,7 @@ static void gr_init_font(void)
     gr_font->char_width = font.char_width;
     gr_font->char_height = font.char_height;
 }
-#endif
+#endif // TW_NO_MINUI_CUSTOM_FONTS
 
 #if 0
 // Exercises many of the gr_*() functions; useful for testing.

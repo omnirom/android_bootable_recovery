@@ -14,6 +14,12 @@
 
 LOCAL_PATH := $(call my-dir)
 
+ifdef project-path-for
+    RECOVERY_PATH := $(call project-path-for,recovery)
+else
+    RECOVERY_PATH := bootable/recovery
+endif
+
 include $(CLEAR_VARS)
 
 BOARD_RECOVERY_DEFINES := BOARD_BML_BOOT BOARD_BML_RECOVERY
@@ -33,7 +39,7 @@ LOCAL_CLANG := true
 LOCAL_SRC_FILES := applypatch.cpp bspatch.cpp freecache.cpp imgpatch.cpp utils.cpp
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
-LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_C_INCLUDES += $(RECOVERY_PATH)
 LOCAL_STATIC_LIBRARIES += libbase libotafault libmtdutils libcrypto_static libbz libz
 
 include $(BUILD_STATIC_LIBRARY)
@@ -46,7 +52,7 @@ include $(CLEAR_VARS)
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := bspatch.cpp imgpatch.cpp utils.cpp
 LOCAL_MODULE := libimgpatch
-LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_C_INCLUDES += $(RECOVERY_PATH)
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES += libcrypto_static libbz libz
 
@@ -58,7 +64,7 @@ include $(CLEAR_VARS)
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := main.cpp
 LOCAL_MODULE := applypatch
-LOCAL_C_INCLUDES += bootable/recovery
+LOCAL_C_INCLUDES += $(RECOVERY_PATH)
 LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libmtdutils libcrypto_static libbz \
                           libedify \
 
