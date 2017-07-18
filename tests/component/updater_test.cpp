@@ -592,10 +592,10 @@ TEST_F(UpdaterTest, brotli_new_data) {
   ASSERT_EQ(0, zip_writer.StartEntry("new.dat.br", 0));
 
   auto generator = []() { return rand() % 128; };
-  // Generate 2048 blocks of random data.
+  // Generate 100 blocks of random data.
   std::string brotli_new_data;
-  brotli_new_data.reserve(4096 * 2048);
-  generate_n(back_inserter(brotli_new_data), 4096 * 2048, generator);
+  brotli_new_data.reserve(4096 * 100);
+  generate_n(back_inserter(brotli_new_data), 4096 * 100, generator);
 
   size_t encoded_size = BrotliEncoderMaxCompressedSize(brotli_new_data.size());
   std::vector<uint8_t> encoded_data(encoded_size);
@@ -609,8 +609,19 @@ TEST_F(UpdaterTest, brotli_new_data) {
   ASSERT_EQ(0, zip_writer.StartEntry("patch_data", 0));
   ASSERT_EQ(0, zip_writer.FinishEntry());
 
+  // Write a few small chunks of new data, then a large chunk, and finally a few small chunks.
+  // This helps us to catch potential short writes.
   std::vector<std::string> transfer_list = {
-    "4", "2048", "0", "0", "new 4,0,512,512,1024", "new 2,1024,2048",
+    "4",
+    "100",
+    "0",
+    "0",
+    "new 2,0,1",
+    "new 2,1,2",
+    "new 4,2,50,50,97",
+    "new 2,97,98",
+    "new 2,98,99",
+    "new 2,99,100",
   };
   ASSERT_EQ(0, zip_writer.StartEntry("transfer_list", 0));
   std::string commands = android::base::Join(transfer_list, '\n');
