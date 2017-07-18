@@ -16,6 +16,24 @@
       "revId": "40e301ce2e2cd24bc60bda2651f6ab8076b8e728",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b025b6b_4cb9cc44",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 1000173
+      },
+      "writtenOn": "2017-07-18T15:41:28Z",
+      "side": 1,
+      "message": "There\u0027s no apq8064 target for TARGET_BOARD_PLATFORM (devices use msm8960 as the target). I am not sure if msm8960 uses QC time though",
+      "parentUuid": "4439df46_88b83084",
+      "revId": "40e301ce2e2cd24bc60bda2651f6ab8076b8e728",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
