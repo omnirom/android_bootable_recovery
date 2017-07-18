@@ -38,12 +38,12 @@
 #include "../openrecoveryscript.hpp"
 #include "../fuse_sideload.h"
 #include "../gui/blanktimer.hpp"
+#include "../twrpDigest/twrpMD5.hpp"
 #include "multiromedify.h"
 #include "Process.h"
 
 extern "C" {
 #include "../twcommon.h"
-#include "../digest/md5.h"
 #include "multirom_hooks.h"
 }
 
@@ -2585,7 +2585,7 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 
 	PartitionManager.Set_Restore_Files(path); // Restore_Name is the same as path
 
-	DataManager::SetValue(TW_SKIP_MD5_CHECK_VAR, 0);
+	DataManager::SetValue(TW_SKIP_DIGEST_CHECK_VAR, 0);
 
 	// tw_restore_selected (aka Restore_List) used by Run_Restore has the format = '/boot;/cache;/system;/data;/recovery;'
 	if (!has_data)
@@ -3065,42 +3065,36 @@ void MultiROM::failsafeCheckPartition(const char *path)
 	remove(path);
 }
 
-bool MultiROM::calculateMD5(const char *path, unsigned char *md5sum/*len: 16*/)
+std::string MultiROM::calculateMD5(const char *path)
 {
 	FILE *f = fopen(path, "rb");
 	if(!f)
 	{
 		gui_print("Failed to open file %s to calculate MD5 sum!\n", path);
-		return false;
+		return "ERROR";
 	}
 
-	struct MD5Context md5c;
+	twrpMD5 digest;
 	int len;
 	unsigned char buff[1024];
 
-	MD5Init(&md5c);
+	digest.init();
 	while((len = fread(buff, 1, sizeof(buff), f)) > 0)
-		MD5Update(&md5c, buff, len);
+		digest.update(buff, len);
 
-	MD5Final(md5sum ,&md5c);
 	fclose(f);
-	return true;
+	return digest.return_digest_string();
 }
 
 bool MultiROM::compareFiles(const char *path1, const char *path2)
 {
-	unsigned char md5sum1[MD5LENGTH];
-	unsigned char md5sum2[MD5LENGTH];
+	std::string md5sum1 = calculateMD5(path1);
+	std::string md5sum2 = calculateMD5(path2);
 
-	if(!calculateMD5(path1, md5sum1) || !calculateMD5(path2, md5sum2))
+	if(md5sum1 == "ERROR" || md5sum2 == "ERROR")
 		return false;
 
-	int i;
-	for(i = 0; i < MD5LENGTH; ++i)
-		if(md5sum1[i] != md5sum2[i])
-			return false;
-
-	return true;
+	return (md5sum1 == md5sum2);
 }
 
 int MultiROM::getTrampolineVersion()

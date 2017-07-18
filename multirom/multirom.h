@@ -229,7 +229,7 @@ private:
 
 	static int system_args(const char *fmt, ...);
 	static void translateToRealdata(std::string& path);
-	static bool calculateMD5(const char *path, unsigned char *md5sum/*len: 16*/);
+	static std::string calculateMD5(const char *path);
 	static void normalizeROMPath(std::string& path);
 	static void restoreROMPath();
 
