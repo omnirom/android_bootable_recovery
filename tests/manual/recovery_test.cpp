@@ -141,7 +141,7 @@ class ResourceTest : public testing::TestWithParam<std::string> {
   // under recovery.
   void SetUp() override {
     std::string file_path = GetParam();
-    fp = fopen(file_path.c_str(), "rb");
+    fp = fopen(file_path.c_str(), "rbe");
     ASSERT_NE(nullptr, fp);
 
     unsigned char header[8];

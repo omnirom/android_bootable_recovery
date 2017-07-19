@@ -59,21 +59,21 @@ static void check_and_fclose(FILE *fp, const char *name) {
 }
 
 static void copy_file(const char* source, const char* destination) {
-    FILE* dest_fp = fopen(destination, "w");
-    if (dest_fp == nullptr) {
-        PLOG(ERROR) << "Can't open " << destination;
-    } else {
-        FILE* source_fp = fopen(source, "r");
-        if (source_fp != nullptr) {
-            char buf[4096];
-            size_t bytes;
-            while ((bytes = fread(buf, 1, sizeof(buf), source_fp)) != 0) {
-                fwrite(buf, 1, bytes, dest_fp);
-            }
-            check_and_fclose(source_fp, source);
-        }
-        check_and_fclose(dest_fp, destination);
+  FILE* dest_fp = fopen(destination, "we");
+  if (dest_fp == nullptr) {
+    PLOG(ERROR) << "Can't open " << destination;
+  } else {
+    FILE* source_fp = fopen(source, "re");
+    if (source_fp != nullptr) {
+      char buf[4096];
+      size_t bytes;
+      while ((bytes = fread(buf, 1, sizeof(buf), source_fp)) != 0) {
+        fwrite(buf, 1, bytes, dest_fp);
+      }
+      check_and_fclose(source_fp, source);
     }
+    check_and_fclose(dest_fp, destination);
+  }
 }
 
 static bool rotated = false;
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
      */
     bool has_cache = false;
     static const char mounts_file[] = "/proc/mounts";
-    FILE *fp = fopen(mounts_file, "r");
+    FILE* fp = fopen(mounts_file, "re");
     if (!fp) {
         PLOG(ERROR) << "failed to open " << mounts_file;
     } else {
