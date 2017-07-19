@@ -265,7 +265,7 @@ int update_binary_command(const std::string& package, ZipArchiveHandle zip,
   }
 
   unlink(binary_path.c_str());
-  int fd = creat(binary_path.c_str(), 0755);
+  int fd = open(binary_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0755);
   if (fd == -1) {
     PLOG(ERROR) << "Failed to create " << binary_path;
     return INSTALL_ERROR;
