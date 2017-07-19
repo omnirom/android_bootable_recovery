@@ -250,7 +250,7 @@ static void redirect_stdio(const char* filename) {
         auto start = std::chrono::steady_clock::now();
 
         // Child logger to actually write to the log file.
-        FILE* log_fp = fopen(filename, "a");
+        FILE* log_fp = fopen(filename, "ae");
         if (log_fp == nullptr) {
             PLOG(ERROR) << "fopen \"" << filename << "\" failed";
             close(pipefd[0]);
@@ -419,27 +419,27 @@ static void copy_log_file_to_pmsg(const char* source, const char* destination) {
 static off_t tmplog_offset = 0;
 
 static void copy_log_file(const char* source, const char* destination, bool append) {
-    FILE* dest_fp = fopen_path(destination, append ? "a" : "w");
-    if (dest_fp == nullptr) {
-        PLOG(ERROR) << "Can't open " << destination;
-    } else {
-        FILE* source_fp = fopen(source, "r");
-        if (source_fp != nullptr) {
-            if (append) {
-                fseeko(source_fp, tmplog_offset, SEEK_SET);  // Since last write
-            }
-            char buf[4096];
-            size_t bytes;
-            while ((bytes = fread(buf, 1, sizeof(buf), source_fp)) != 0) {
-                fwrite(buf, 1, bytes, dest_fp);
-            }
-            if (append) {
-                tmplog_offset = ftello(source_fp);
-            }
-            check_and_fclose(source_fp, source);
-        }
-        check_and_fclose(dest_fp, destination);
+  FILE* dest_fp = fopen_path(destination, append ? "ae" : "we");
+  if (dest_fp == nullptr) {
+    PLOG(ERROR) << "Can't open " << destination;
+  } else {
+    FILE* source_fp = fopen(source, "re");
+    if (source_fp != nullptr) {
+      if (append) {
+        fseeko(source_fp, tmplog_offset, SEEK_SET);  // Since last write
+      }
+      char buf[4096];
+      size_t bytes;
+      while ((bytes = fread(buf, 1, sizeof(buf), source_fp)) != 0) {
+        fwrite(buf, 1, bytes, dest_fp);
+      }
+      if (append) {
+        tmplog_offset = ftello(source_fp);
+      }
+      check_and_fclose(source_fp, source);
     }
+    check_and_fclose(dest_fp, destination);
+  }
 }
 
 static void copy_logs() {
@@ -488,7 +488,7 @@ static void finish_recovery() {
     if (!locale.empty() && has_cache) {
         LOG(INFO) << "Saving locale \"" << locale << "\"";
 
-        FILE* fp = fopen_path(LOCALE_FILE, "w");
+        FILE* fp = fopen_path(LOCALE_FILE, "we");
         if (!android::base::WriteStringToFd(locale, fileno(fp))) {
             PLOG(ERROR) << "Failed to save locale to " << LOCALE_FILE;
         }
@@ -552,7 +552,7 @@ static bool erase_volume(const char* volume) {
             }
 
             std::string data(sb.st_size, '\0');
-            FILE* f = fopen(path.c_str(), "rb");
+            FILE* f = fopen(path.c_str(), "rbe");
             fread(&data[0], 1, data.size(), f);
             fclose(f);
 
@@ -580,7 +580,7 @@ static bool erase_volume(const char* volume) {
       ui->Print("Failed to make convert_fbe dir %s\n", strerror(errno));
       return true;
     }
-    FILE* f = fopen(CONVERT_FBE_FILE, "wb");
+    FILE* f = fopen(CONVERT_FBE_FILE, "wbe");
     if (!f) {
       ui->Print("Failed to convert to file encryption %s\n", strerror(errno));
       return true;
