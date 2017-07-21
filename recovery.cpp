@@ -477,40 +477,38 @@ static void copy_logs() {
     sync();
 }
 
-// clear the recovery command and prepare to boot a (hopefully working) system,
+// Clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read). This function is
 // idempotent: call it as many times as you like.
 static void finish_recovery() {
-    // Save the locale to cache, so if recovery is next started up
-    // without a --locale argument (eg, directly from the bootloader)
-    // it will use the last-known locale.
-    if (!locale.empty() && has_cache) {
-        LOG(INFO) << "Saving locale \"" << locale << "\"";
-
-        FILE* fp = fopen_path(LOCALE_FILE, "we");
-        if (!android::base::WriteStringToFd(locale, fileno(fp))) {
-            PLOG(ERROR) << "Failed to save locale to " << LOCALE_FILE;
-        }
-        check_and_fclose(fp, LOCALE_FILE);
+  // Save the locale to cache, so if recovery is next started up without a '--locale' argument
+  // (e.g., directly from the bootloader) it will use the last-known locale.
+  if (!locale.empty() && has_cache) {
+    LOG(INFO) << "Saving locale \"" << locale << "\"";
+    if (ensure_path_mounted(LOCALE_FILE) != 0) {
+      LOG(ERROR) << "Failed to mount " << LOCALE_FILE;
+    } else if (!android::base::WriteStringToFile(locale, LOCALE_FILE)) {
+      PLOG(ERROR) << "Failed to save locale to " << LOCALE_FILE;
     }
+  }
 
-    copy_logs();
+  copy_logs();
 
-    // Reset to normal system boot so recovery won't cycle indefinitely.
-    std::string err;
-    if (!clear_bootloader_message(&err)) {
-        LOG(ERROR) << "Failed to clear BCB message: " << err;
+  // Reset to normal system boot so recovery won't cycle indefinitely.
+  std::string err;
+  if (!clear_bootloader_message(&err)) {
+    LOG(ERROR) << "Failed to clear BCB message: " << err;
+  }
+
+  // Remove the command file, so recovery won't repeat indefinitely.
+  if (has_cache) {
+    if (ensure_path_mounted(COMMAND_FILE) != 0 || (unlink(COMMAND_FILE) && errno != ENOENT)) {
+      LOG(WARNING) << "Can't unlink " << COMMAND_FILE;
     }
+    ensure_path_unmounted(CACHE_ROOT);
+  }
 
-    // Remove the command file, so recovery won't repeat indefinitely.
-    if (has_cache) {
-        if (ensure_path_mounted(COMMAND_FILE) != 0 || (unlink(COMMAND_FILE) && errno != ENOENT)) {
-            LOG(WARNING) << "Can't unlink " << COMMAND_FILE;
-        }
-        ensure_path_unmounted(CACHE_ROOT);
-    }
-
-    sync();  // For good measure.
+  sync();  // For good measure.
 }
 
 struct saved_log_file {
