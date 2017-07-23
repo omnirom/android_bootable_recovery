@@ -1102,6 +1102,7 @@ int twrpTar::createTar() {
 		}
 	} else {
 		// Not compressed or encrypted
+		current_archive_type = UNCOMPRESSED;
 		init_libtar_buffer(0, progress_pipe_fd);
 		if (part_settings->adbbackup) {
 			LOGINFO("Opening TW_ADB_BACKUP uncompressed stream\n");
