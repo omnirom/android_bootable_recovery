@@ -81,3 +81,16 @@ TEST_F(UpdateVerifierTest, verify_image_malformed_care_map) {
   ASSERT_TRUE(android::base::WriteStringToFile(content, temp_file.path));
   ASSERT_FALSE(verify_image(temp_file.path));
 }
+
+TEST_F(UpdateVerifierTest, verify_image_legacy_care_map) {
+  // This test relies on dm-verity support.
+  if (!verity_supported) {
+    GTEST_LOG_(INFO) << "Test skipped on devices without dm-verity support.";
+    return;
+  }
+
+  TemporaryFile temp_file;
+  std::string content = "/dev/block/bootdevice/by-name/system\n2,1,0";
+  ASSERT_TRUE(android::base::WriteStringToFile(content, temp_file.path));
+  ASSERT_TRUE(verify_image(temp_file.path));
+}
