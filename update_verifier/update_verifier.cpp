@@ -175,40 +175,53 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
   return true;
 }
 
+// Returns true to indicate a passing verification (or the error should be ignored); Otherwise
+// returns false on fatal errors, where we should reject the current boot and trigger a fallback.
+// Note that update_verifier should be backward compatible to not reject care_map.txt from old
+// releases, which could otherwise fail to boot into the new release. For example, we've changed
+// the care_map format between N and O. An O update_verifier would fail to work with N
+// care_map.txt. This could be a result of sideloading an O OTA while the device having a pending N
+// update.
 bool verify_image(const std::string& care_map_name) {
-    android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
-    // If the device is flashed before the current boot, it may not have care_map.txt
-    // in /data/ota_package. To allow the device to continue booting in this situation,
-    // we should print a warning and skip the block verification.
-    if (care_map_fd.get() == -1) {
-        PLOG(WARNING) << "Failed to open " << care_map_name;
-        return true;
-    }
-    // Care map file has four lines (two lines if vendor partition is not present):
-    // First line has the block partition name (system/vendor).
-    // Second line holds all ranges of blocks to verify.
-    // The next two lines have the same format but for vendor partition.
-    std::string file_content;
-    if (!android::base::ReadFdToString(care_map_fd.get(), &file_content)) {
-        LOG(ERROR) << "Error reading care map contents to string.";
-        return false;
-    }
-
-    std::vector<std::string> lines;
-    lines = android::base::Split(android::base::Trim(file_content), "\n");
-    if (lines.size() != 2 && lines.size() != 4) {
-        LOG(ERROR) << "Invalid lines in care_map: found " << lines.size()
-                   << " lines, expecting 2 or 4 lines.";
-        return false;
-    }
-
-    for (size_t i = 0; i < lines.size(); i += 2) {
-        if (!read_blocks(lines[i], lines[i+1])) {
-            return false;
-        }
-    }
-
+  android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
+  // If the device is flashed before the current boot, it may not have care_map.txt
+  // in /data/ota_package. To allow the device to continue booting in this situation,
+  // we should print a warning and skip the block verification.
+  if (care_map_fd.get() == -1) {
+    PLOG(WARNING) << "Failed to open " << care_map_name;
     return true;
+  }
+  // Care map file has four lines (two lines if vendor partition is not present):
+  // First line has the block partition name (system/vendor).
+  // Second line holds all ranges of blocks to verify.
+  // The next two lines have the same format but for vendor partition.
+  std::string file_content;
+  if (!android::base::ReadFdToString(care_map_fd.get(), &file_content)) {
+    LOG(ERROR) << "Error reading care map contents to string.";
+    return false;
+  }
+
+  std::vector<std::string> lines;
+  lines = android::base::Split(android::base::Trim(file_content), "\n");
+  if (lines.size() != 2 && lines.size() != 4) {
+    LOG(ERROR) << "Invalid lines in care_map: found " << lines.size()
+               << " lines, expecting 2 or 4 lines.";
+    return false;
+  }
+
+  for (size_t i = 0; i < lines.size(); i += 2) {
+    // We're seeing an N care_map.txt. Skip the verification since it's not compatible with O
+    // update_verifier (the last few metadata blocks can't be read via device mapper).
+    if (android::base::StartsWith(lines[i], "/dev/block/")) {
+      LOG(WARNING) << "Found legacy care_map.txt; skipped.";
+      return true;
+    }
+    if (!read_blocks(lines[i], lines[i+1])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 static int reboot_device() {
