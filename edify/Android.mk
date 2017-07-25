@@ -34,7 +34,6 @@ LOCAL_MODULE := edify_parser
 LOCAL_YACCFLAGS := -v
 LOCAL_CPPFLAGS += -Wno-unused-parameter
 LOCAL_CPPFLAGS += -Wno-deprecated-register
-LOCAL_CLANG := true
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
 LOCAL_STATIC_LIBRARIES += libbase
 
@@ -51,7 +50,6 @@ LOCAL_CFLAGS := -Werror
 LOCAL_CPPFLAGS := -Wno-unused-parameter
 LOCAL_CPPFLAGS += -Wno-deprecated-register
 LOCAL_MODULE := libedify
-LOCAL_CLANG := true
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
 LOCAL_STATIC_LIBRARIES += libbase
 
