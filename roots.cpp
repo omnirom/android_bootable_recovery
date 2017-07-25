@@ -28,6 +28,7 @@
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
+#include <android-base/unique_fd.h>
 #include <cryptfs.h>
 #include <ext4_utils/wipe.h>
 #include <fs_mgr.h>
@@ -165,6 +166,23 @@ static int exec_cmd(const char* path, char* const argv[]) {
     return WEXITSTATUS(status);
 }
 
+static ssize_t get_file_size(int fd, uint64_t reserve_len) {
+  struct stat buf;
+  int ret = fstat(fd, &buf);
+  if (ret) return 0;
+
+  ssize_t computed_size;
+  if (S_ISREG(buf.st_mode)) {
+    computed_size = buf.st_size - reserve_len;
+  } else if (S_ISBLK(buf.st_mode)) {
+    computed_size = get_block_device_size(fd) - reserve_len;
+  } else {
+    computed_size = 0;
+  }
+
+  return computed_size;
+}
+
 int format_volume(const char* volume, const char* directory) {
     Volume* v = volume_for_path(volume);
     if (v == NULL) {
@@ -204,7 +222,16 @@ int format_volume(const char* volume, const char* directory) {
         if (v->length != 0) {
             length = v->length;
         } else if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0) {
-            length = -CRYPT_FOOTER_OFFSET;
+          android::base::unique_fd fd(open(v->blk_device, O_RDONLY));
+          if (fd < 0) {
+            PLOG(ERROR) << "get_file_size: failed to open " << v->blk_device;
+            return -1;
+          }
+          length = get_file_size(fd.get(), CRYPT_FOOTER_OFFSET);
+          if (length <= 0) {
+            LOG(ERROR) << "get_file_size: invalid size " << length << " for " << v->blk_device;
+            return -1;
+          }
         }
         int result;
         if (strcmp(v->fs_type, "ext4") == 0) {
@@ -262,16 +289,6 @@ int format_volume(const char* volume, const char* directory) {
             result = exec_cmd(e2fsdroid_argv[0], const_cast<char**>(e2fsdroid_argv));
           }
         } else {   /* Has to be f2fs because we checked earlier. */
-            if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0 && length < 0) {
-                LOG(ERROR) << "format_volume: crypt footer + negative length (" << length
-                           << ") not supported on " << v->fs_type;
-                return -1;
-            }
-            if (length < 0) {
-                LOG(ERROR) << "format_volume: negative length (" << length
-                           << ") not supported on " << v->fs_type;
-                return -1;
-            }
             char *num_sectors = nullptr;
             if (length >= 512 && asprintf(&num_sectors, "%zd", length / 512) <= 0) {
                 LOG(ERROR) << "format_volume: failed to create " << v->fs_type
