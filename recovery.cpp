@@ -1591,15 +1591,14 @@ int main(int argc, char **argv) {
             ui->Print("Rebooting automatically.\n");
         }
     } else if (!just_exit) {
-        status = INSTALL_NONE;  // No command specified
-        ui->SetBackground(RecoveryUI::NO_COMMAND);
-
-        // http://b/17489952
-        // If this is an eng or userdebug build, automatically turn on the
-        // text display if no command is specified.
-        if (is_ro_debuggable()) {
-            ui->ShowText(true);
-        }
+      // If this is an eng or userdebug build, automatically turn on the text display if no command
+      // is specified. Note that this should be called before setting the background to avoid
+      // flickering the background image.
+      if (is_ro_debuggable()) {
+        ui->ShowText(true);
+      }
+      status = INSTALL_NONE;  // No command specified
+      ui->SetBackground(RecoveryUI::NO_COMMAND);
     }
 
     if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
