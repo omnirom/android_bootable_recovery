@@ -17,12 +17,7 @@
 #ifndef MINZIP_DIRUTIL_H_
 #define MINZIP_DIRUTIL_H_
 
-#include <stdbool.h>
 #include <utime.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct selabel_handle;
 
@@ -42,13 +37,5 @@ struct selabel_handle;
 int dirCreateHierarchy(const char *path, int mode,
         const struct utimbuf *timestamp, bool stripFileName,
         struct selabel_handle* sehnd);
-
-/* rm -rf <path>
- */
-int dirUnlinkHierarchy(const char *path);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // MINZIP_DIRUTIL_H_
