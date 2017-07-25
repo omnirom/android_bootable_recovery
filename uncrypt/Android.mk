@@ -16,7 +16,6 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CLANG := true
 LOCAL_SRC_FILES := uncrypt.cpp
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/..
 LOCAL_MODULE := uncrypt
