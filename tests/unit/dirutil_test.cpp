@@ -116,35 +116,3 @@ TEST(DirUtilTest, create_mode_and_timestamp) {
   ASSERT_EQ(0, rmdir((prefix + "/a/b").c_str()));
   ASSERT_EQ(0, rmdir((prefix + "/a").c_str()));
 }
-
-TEST(DirUtilTest, unlink_invalid) {
-  // File doesn't exist.
-  ASSERT_EQ(-1, dirUnlinkHierarchy("doesntexist"));
-
-  // Nonexistent directory.
-  TemporaryDir td;
-  std::string path(td.path);
-  ASSERT_EQ(-1, dirUnlinkHierarchy((path + "/a").c_str()));
-  ASSERT_EQ(ENOENT, errno);
-}
-
-TEST(DirUtilTest, unlink_smoke) {
-  // Unlink a file.
-  TemporaryFile tf;
-  ASSERT_EQ(0, dirUnlinkHierarchy(tf.path));
-  ASSERT_EQ(-1, access(tf.path, F_OK));
-
-  TemporaryDir td;
-  std::string path(td.path);
-  constexpr mode_t mode = 0700;
-  ASSERT_EQ(0, mkdir((path + "/a").c_str(), mode));
-  ASSERT_EQ(0, mkdir((path + "/a/b").c_str(), mode));
-  ASSERT_EQ(0, mkdir((path + "/a/b/c").c_str(), mode));
-  ASSERT_EQ(0, mkdir((path + "/a/d").c_str(), mode));
-
-  // Remove "../a" recursively.
-  ASSERT_EQ(0, dirUnlinkHierarchy((path + "/a").c_str()));
-
-  // Verify it's gone.
-  ASSERT_EQ(-1, access((path + "/a").c_str(), F_OK));
-}
