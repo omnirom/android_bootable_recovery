@@ -95,34 +95,6 @@ void uiPrintf(State* _Nonnull state, const char* _Nonnull format, ...) {
   uiPrint(state, error_msg);
 }
 
-static bool is_dir(const std::string& dirpath) {
-  struct stat st;
-  return stat(dirpath.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
-}
-
-// Create all parent directories of name, if necessary.
-static bool make_parents(const std::string& name) {
-  size_t prev_end = 0;
-  while (prev_end < name.size()) {
-    size_t next_end = name.find('/', prev_end + 1);
-    if (next_end == std::string::npos) {
-      break;
-    }
-    std::string dir_path = name.substr(0, next_end);
-    if (!is_dir(dir_path)) {
-      int result = mkdir(dir_path.c_str(), 0700);
-      if (result != 0) {
-        PLOG(ERROR) << "failed to mkdir " << dir_path << " when make parents for " << name;
-        return false;
-      }
-
-      LOG(INFO) << "created [" << dir_path << "]";
-    }
-    prev_end = next_end;
-  }
-  return true;
-}
-
 // mount(fs_type, partition_type, location, mount_point)
 // mount(fs_type, partition_type, location, mount_point, mount_options)
 
