@@ -972,7 +972,7 @@ void TWFunc::Fixup_Time_On_Boot()
 	}
 	fclose(f);
 
-	LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %llu\n", ats_path.c_str(), offset);
+	LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %lu\n", ats_path.c_str(), offset);
 
 	gettimeofday(&tv, NULL);
 
