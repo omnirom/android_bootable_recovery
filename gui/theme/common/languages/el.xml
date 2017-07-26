@@ -14,6 +14,7 @@
         <string name="recovery">Recovery</string>
         <string name="cache">Μνήμη cache</string>
         <string name="data">Data</string>
+        <string name="data_backup">Data (εκτός αποθ. χώρου)</string>
         <string name="sdcard">Κάρτα SD</string>
         <string name="internal">Εσωτερικός χώρος αποθήκευσης</string>
         <string name="microsd">Micro SDCard</string>
@@ -41,7 +42,7 @@
         <string name="tab_vibration">ΔΟΝΗΣΗ</string>
         <string name="tab_language">ΓΛΩΣΣΑ</string>
         <string name="install_btn">Εγκατάσταση</string>
-        <string name="wipe_btn">Εκαθάριση</string>
+        <string name="wipe_btn">Εκκαθάριση</string>
         <string name="backup_btn">Αντίγρ. ασφαλ.</string>
         <string name="restore_btn">Επαναφορά</string>
         <string name="mount_btn">Προσάρτηση</string>
@@ -49,10 +50,10 @@
         <string name="advanced_btn">Προηγμένες</string>
         <string name="reboot_btn">Επανεκκίνηση</string>
         <string name="files_btn">Αρχεία</string>
-        <string name="copy_log_btn">Αντιγρ. αρχείου καταγραφής</string>
+        <string name="copy_log_btn">Αντιγρ. αρχ. καταγραφής</string>
         <string name="select_type_hdr">Επιλέξτε τύπο</string>
-        <string name="install_zip_hdr">Εγατάσταση Zip</string>
-        <string name="install_zip_btn">Εγατάσταση Zip</string>
+        <string name="install_zip_hdr">Εγκατάσταση Zip</string>
+        <string name="install_zip_btn">Εγκατάσταση Zip</string>
         <string name="install_image_hdr">Εγκατάσταση εικόνας</string>
         <string name="install_image_btn">Εγκατάσταση εικόνας</string>
         <string name="install_select_file_hdr">Επιλέξτε Αρχείο</string>
@@ -68,18 +69,18 @@
         <string name="zip_warn1">Αυτή η λειτουργία μπορεί να εγκαταστήσει μη συμβατό</string>
         <string name="zip_warn2">λογισμικό και να αχρηστεύσει τη συσκευή σας.</string>
         <string name="zip_back_cancel">Πιέστε το πλήκτρο πίσω για να ακυρώσετε την προσθήκη του zip.</string>
-        <string name="zip_back_clear">Πατήστε το κουμπί πίσω για να καθαρήσετε την ουρά.</string>
+        <string name="zip_back_clear">Πατήστε το κουμπί πίσω για να καθαρίσετε την ουρά.</string>
         <string name="folder">Φάκελος:</string>
         <string name="file">Αρχείο:</string>
         <string name="zip_sig_chk">Επαλήθευση της υπογραφής Zip</string>
-        <string name="inject_twrp_chk">Εισάγωγή TWRP μετά την εγκατάσταση</string>
-        <string name="install_reboot_chk">Εππανεκίνηση μετά την εγκατάσταση</string>
+        <string name="inject_twrp_chk">Εισαγωγή TWRP μετά την εγκατάσταση</string>
+        <string name="install_reboot_chk">Επανεκκίνηση μετά την εγκατάσταση</string>
         <string name="options_hdr">Ρυθμίσεις</string>
         <string name="confirm_flash_hdr">Επιβεβαίωση Flash</string>
         <string name="zip_queue">Ουρά:</string>
         <string name="options">Ρυθμίσεις:</string>
         <string name="swipe_confirm">   Επιβεβαιώστε</string>
-        <string name="zip_add_btn">Προσθ. περισσότερα zip</string>
+        <string name="zip_add_btn">Προσθ. περισσοτέρων zip</string>
         <string name="zip_clear_btn">Εκκαθάριση ουράς Zip</string>
         <string name="install_zip_count_hdr">Εγκαταστήστε Zip %tw_zip_index% από %tw_zip_queue_count%</string>
         <string name="installing_zip_xml">Εγκατάσταση Zip: %tw_file%</string>
@@ -97,7 +98,7 @@
         <string name="wipe_cache_dalvik_confirm">Εκκαθάριση Cache &amp; Dalvik;</string>
         <string name="wiping_cache_dalvik">Εκκαθάριση Cache &amp; Dalvik...</string>
         <string name="wipe_cache_dalvik_complete">Η Εκκαθάριση Cache &amp; Dalvik ολοκληρώθηκε</string>
-        <string name="swipe_wipe">Σύρετε για εκαθάριση</string>
+        <string name="swipe_wipe">Σύρετε για εκκαθάριση</string>
         <string name="swipe_wipe_s">   Εκαθάριση</string>
         <string name="no_os1">Κανένα λειτουργικό σύστημα εγκατεστημένο! Είστε</string>
         <string name="no_osrb">σίγουροι ότι θέλετε να κάνετε επανεκκίνηση;</string>
@@ -105,15 +106,22 @@
         <string name="rebooting">Επανεκκίνηση...</string>
         <string name="swipe_reboot">Σύρετε για Επανεκκίνηση</string>
         <string name="swipe_reboot_s">   Επανεκκίνηση</string>
-        <string name="swipe_flash">Σύρετε για Εγατάσταση</string>
+        <string name="reboot_install_app_hdr">Εγκατάσταση της εφαρμογής TWRP;</string>
+        <string name="reboot_install_app1">Θέλετε να εγκαταστήσετε την Επίσημη Εφαρμογή TWRP;</string>
+        <string name="reboot_install_app2">Η εφαρμογή μπορεί να ελέγχει για νεότερες εκδόσεις του TWRP.</string>
+        <string name="reboot_install_app_prompt_install">Προτροπή για εγκατάσταση της εφαρμογής TWRP εαν δεν είναι εγκατεστημένη</string>
+        <string name="reboot_install_app_system">Εγκατάσταση ως Εφαρμογή Συστήματος</string>
+        <string name="reboot_installing_app">Εγκατάσταση εφαρμογής...</string>
+        <string name="swipe_to_install_app">Σύρετε για εγκατάσταση του TWRP</string>
+        <string name="swipe_flash">Σύρετε για Εγκατάσταση</string>
         <string name="confirm_action">Επιβεβαίωση ενέργειας</string>
         <string name="back_cancel">Πατήστε το κουμπί πίσω για να ακυρώσετε.</string>
         <string name="cancel_btn">Άκυρο</string>
-        <string name="wipe_hdr">Εκαθάριση</string>
+        <string name="wipe_hdr">Εκκαθάριση</string>
         <string name="factory_reset_hdr">Επαναφορά εργοστασιακών ρυθμίσεων</string>
         <string name="factory_reset_btn">Επαναφορά εργοστασιακών ρυθμίσεων</string>
-        <string name="factory_reset1">Εκαθάριση Data, Cache και Dalvik</string>
-        <string name="factory_reset2">(εξαιρέσει εσωτερική αποθήκευσης)</string>
+        <string name="factory_reset1">Εκκαθάριση Data, Cache και Dalvik</string>
+        <string name="factory_reset2">(εξαιρείται η εσωτερική αποθήκευση)</string>
         <string name="factory_reset3">Στις περισσότερες περιπτώσεις αυτή είναι</string>
         <string name="factory_reset4">η μόνη εκκαθάριση που χρειάζεστε.</string>
         <string name="factory_resetting">Επαναφορά εργοστασιακών ρυθμίσεων...</string>
@@ -135,7 +143,7 @@
         <string name="format_data_ptr1">Η Διαμόρφωση Δεδομένων θα διαγράψει όλες τις εφαρμογές,</string>
         <string name="format_data_ptr2">αντίγραφα ασφαλείας, φωτογραφίες, βίντεο, πολυμέσα και</string>
         <string name="format_data_ptr3">αφαιρεί την κρυπτογράφηση στον εσωτερικό χώρο αποθήκευσης.</string>
-        <string name="format_data_adopted">Including Adopted Storage</string>
+        <string name="format_data_adopted">Περιλαμβάνει Adopted Storage</string>
         <string name="format_data_lcp1">Η Διαμόρφωση Δεδομένων θα διαγράψει όλες τις εφαρμογές, αντίγραφα ασφαλείας, φωτογραφίες, βίντεο, πολυμέσα και</string>
         <string name="format_data_lcp2">αφαιρεί την κρυπτογράφηση στον εσωτερικό χώρο αποθήκευσης.</string>
         <string name="format_data_wtc1">Η Διαμόρφωση Δεδομένων θα διαγράψει όλες τις εφαρμογές,</string>
@@ -156,15 +164,15 @@
         <string name="part_size">Μέγεθος: %tw_partition_size%MB</string>
         <string name="part_used">Χρησιμοποιούνται: %tw_partition_used%MB</string>
         <string name="part_free">Ελεύθερα: %tw_partition_free%MB</string>
-        <string name="part_backup_size">Μέγεθος του αντιγράφου ασφαλείας: %tw_partition_backup_size% MB</string>
-        <string name="resize_btn">Αλλάξετε το μέγεθος του Αρχείων Συστήματος</string>
+        <string name="part_backup_size">Μέγεθος αντιγράφου ασφαλείας: %tw_partition_backup_size% MB</string>
+        <string name="resize_btn">Αλλαγή μεγέθους του Αρχείου Συστήματος</string>
         <string name="resize_btn_s">Αλλαγή μεγέθους</string>
         <string name="resize_confirm">Αλλαγή μεγέθους %tw_partition_name%;</string>
         <string name="resizing">Αλλαγή μεγέθους...</string>
         <string name="resize_complete">Η αλλαγή μεγέθους ολοκληρώθηκε</string>
         <string name="swipe_resize">Σύρετε για αλλαγή μεγέθους</string>
         <string name="swipe_resize_s">   Αλλαγή μεγέθους</string>
-        <string name="repair_btn">Επιδιόρθ. Αρχ. Συστήματος</string>
+        <string name="repair_btn">Επιδιόρθωση Αρχ. Συστημ.</string>
         <string name="repair_btn_s">Επιδιόρθωση</string>
         <string name="repair_confirm">Επιδιόρθωση %tw_partition_name%;</string>
         <string name="repairing">Επιδιόρθωση...</string>
@@ -189,16 +197,21 @@
         <string name="storage_hdr">Αποθ. χώρος: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
         <string name="backup_hdr">Αντίγραφα ασφαλείας</string>
         <string name="backup_confirm_hdr">Επιβεβαίωση Αντιγράφων Ασφαλείας</string>
-        <string name="encryption_tab">ΚΡΥΠΤΟΓΑΦΗΣΗ</string>
+        <string name="encryption_tab">ΚΡΥΠΤΟΓΡΑΦΗΣΗ</string>
         <string name="encryption">Κρυπτογράφηση:</string>
         <string name="name">Όνομα:</string>
         <string name="sel_part_backup">Επιλέξτε Τομείς για αντίγραφα ασφαλείας:</string>
         <string name="storage">Αποθ. χώρος:</string>
         <string name="enc_disabled">απενεργοποιημένο - ορίσετε έναν κωδικό για να ενεργοποιήσετε</string>
         <string name="enc_enabled">ενεργοποιημένο</string>
-        <string name="enable_backup_comp_chk">Ενεργοποιήσετε τη συμπίεση</string>
+        <string name="enable_backup_comp_chk">Ενεργοποιήστε τη συμπίεση</string>
         <string name="skip_digest_backup_chk" version="2">Παράλ. δημιουργ. Digest κατά την δημ. αντιγρ. ασφ.</string>
-        <string name="disable_backup_space_chk">Απενεργοποίηση Ελέγχου Ελεύθερου Χώρου</string>
+        <string name="disable_backup_space_chk" version="2">Απενεργοποίηση ελέγχου ελεύθ. χώρου πριν την αντ. ασφ.</string>
+        <string name="current_boot_slot">Τωρινή Θέση: %tw_active_slot%</string>
+        <string name="boot_slot_a">Θέση A</string>
+        <string name="boot_slot_b">Θέση B</string>
+        <string name="changing_boot_slot">Αλλαγή Θέσης Boot</string>
+        <string name="changing_boot_slot_complete">Η Αλλαγή Θέσης Boot Ολοκληρώθηκε</string>
         <string name="refresh_sizes_btn">Ανανέωση Μεγεθών</string>
         <string name="swipe_backup">Σύρετε για δημιουργ. Αντιγρ. Ασφαλ.</string>
         <string name="append_date_btn">Προσαρτημένη Ημ/νία</string>
@@ -239,7 +252,7 @@
         <string name="rename_backup_confirm2">Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!</string>
         <string name="renaming_backup">Μετονομασία αντίγραφου ασφαλείας...</string>
         <string name="rename_backup_complete">Η Μετονομασία Αντ. Ασφαλ. Ολοκληρώθηκε</string>
-        <string name="swipe_to_rename">Σύρετε για Μεταονομασία</string>
+        <string name="swipe_to_rename">Σύρετε για Μετονομασία</string>
         <string name="swipe_rename">   Μετονομασία</string>
         <string name="confirm_hdr">Επιβεβαίωση</string>
         <string name="mount_hdr">Προσάρτηση</string>
@@ -268,13 +281,13 @@
         <string name="sys_rop1">Το TWRP μπορεί να αφήσει τον τομέα συστήματος μη τροποποιημένο</string>
         <string name="sys_rop2">ώστε να κάνει ευκολότερο για σας να λάβετε επίσημες ενημερώσεις.</string>
         <string name="sys_rop3">Το TWRP δεν θα είναι σε θέση να αποτρέψει το λειτουργικό</string>
-        <string name="sys_rop4">να αντικαταστήσει το TWRP και δεν θα προσφέρουν τη δυνατότητα root στη συσκευή σας.</string>
+        <string name="sys_rop4">να αντικαταστήσει το TWRP και δεν θα προσφέρει τη δυνατότητα root στη συσκευή σας.</string>
         <string name="sys_rop5">Η εγκατάσταση zip ή η εκτέλεση εντολών adb μπορούν να</string>
         <string name="sys_rop6">τροποποιήσουν το διαμέρισμα του συστήματος.</string>
         <string name="sys_rol1">Το TWRP μπορεί να αφήσει τον τομέα συστήματος μη τροποποιημένο ώστε να κάνει ευκολότερο για σας να λάβετε επίσημες ενημερώσεις.</string>
-        <string name="sys_rol2">Το TWRP δεν θα είναι σε θέση να αποτρέψει το λειτουργικό να αντικαταστήσει το TWRP και δεν θα προσφέρουν τη δυνατότητα root στη συσκευή σας.</string>
+        <string name="sys_rol2">Το TWRP δεν θα είναι σε θέση να αποτρέψει το λειτουργικό να αντικαταστήσει το TWRP και δεν θα προσφέρει τη δυνατότητα root στη συσκευή σας.</string>
         <string name="sys_rol3">Η Εγκατάσταση zip ή η εκτέλεση εργασιών adb μπορούν να τροποποιήσουν το διαμέρισμα του συστήματος.</string>
-        <string name="sys_ro_never_show_chk">Μην εμφανιστεί ξανά αυτή η οθόνη κατά την εκκίνηση</string>
+        <string name="sys_ro_never_show_chk">Να μην εμφανιστεί ξανά αυτή η οθόνη κατά την εκκίνηση</string>
         <string name="sys_ro_keep_ro_btn">Διατήρηση Ανάγνωσης Μόνο</string>
         <string name="swipe_allow_mod">Σύρετε για να Επιτρέψετε τις Τροποποιήσεις</string>
         <string name="swipe_allow_mod_s">Επιτρέψτε τροποποιήσεις</string>
@@ -352,15 +365,15 @@
         <string name="set_language_btn">Ρύθμιση γλώσσας</string>
         <string name="advanced_hdr">Προηγμένες</string>
         <string name="copy_log_confirm">Αντιγραφή Log στην κάρτα SD;</string>
-        <string name="copying_log">Αντιγραφή Log στην κάρτα SD...</string>
-        <string name="copy_log_complete">Η Αντιγραφή Log Ολοκληρώθηκε</string>
-        <string name="fix_context_btn">Διορθ. περιεχομ.</string>
+        <string name="copying_log" version="2">Αντιγραφή των Logs στην κάρτα SD...</string>
+        <string name="copy_log_complete" version="2">Η Αντιγραφή των Logs Ολοκληρώθηκε</string>
+        <string name="fix_context_btn">Διορθ. δικαιωμ.</string>
         <string name="part_sd_btn">Τομέας κάρτας SD</string>
         <string name="part_sd_s_btn">Κάρτα SD</string>
         <string name="file_manager_btn">Διαχείρ. αρχείων</string>
         <string name="language_hdr">Γλώσσα</string>
         <string name="terminal_btn">Τερματικό</string>
-        <string name="reload_theme_btn">Εκ νέου φόρτ. θέματ.</string>
+        <string name="reload_theme_btn">Επαναφόρτ. θέματ.</string>
         <string name="dumlock_btn">HTC Dumlock</string>
         <string name="inject_twrp_btn">Εισαγωγή TWRP</string>
         <string name="inject_twrp_confirm">Επανεισαγωγή TWRP;</string>
@@ -429,6 +442,7 @@
         <string name="decrypt_data_failed_pattern">Το Μοτίβο απέτυχε, παρακαλώ προσπαθήστε ξανά!</string>
         <string name="decrypt_data_enter_pattern">Εισαγάγετε το μοτίβο.</string>
         <string name="decrypt_data_trying">Προσπάθεια αποκρυπτογράφησης</string>
+        <string name="decrypt_data_vold_os_missing">Αρχεία που λείπουν χρειάζονται για την αποκρυπτογράφηση: {1}</string>
         <string name="term_hdr">Εντολή τερματικού</string>
         <string name="term_s_hdr">Τερματικό</string>
         <string name="term_kill_btn">ΤΕΡΜΑΤΙΣΕ</string>
@@ -441,12 +455,12 @@
         <string name="sideload_confirm">ADB Sideload</string>
         <string name="sideload_usage">Χρήση: adb sideload filename.zip</string>
         <string name="sideload_complete">ADB Sideload ολοκληρώθηκε</string>
-        <string name="fix_contexts_hdr">Διορθώσετε τα δικαιώματα</string>
-        <string name="fix_contexts_note1">Σημείωση: Διόρθωση δικαιωμάτων, σπάνια χρειάζεται.</string>
-        <string name="fix_contexts_note2">Η διόρθωση περιεχομένων SELinux μπορεί να</string>
+        <string name="fix_contexts_hdr">Διόρθωση δικαιωμάτων</string>
+        <string name="fix_contexts_note1">Σημείωση: Η διόρθωση δικαιωμάτων, σπάνια χρειάζεται.</string>
+        <string name="fix_contexts_note2">Η διόρθωση δικαιωμάτων SELinux μπορεί να</string>
         <string name="fix_contexts_note3">κάνει την συσκευή σας να μην ξεκινάει σωστά.</string>
         <string name="swipe_to_fix_contexts">Σύρετε για Διόρθωση Δικαιωμάτων</string>
-        <string name="swipe_fix_contexts">   Διορθ. δικαιώμ.</string>
+        <string name="swipe_fix_contexts">   Διορθ. δικαιωμ.</string>
         <string name="fixing_contexts">Διόρθωση δικαιωμάτων...</string>
         <string name="fix_contexts_complete">Η Διόρθωση δικαιωμάτων ολοκληρώθηκε</string>
         <string name="reboot_hdr">Επανεκκίνηση</string>
@@ -479,28 +493,28 @@
         <string name="total_partitions_backup"> * Συνολικός αριθμός διαμερισμάτων για να δημιουργήσετε αντίγραφα ασφαλείας: {1}</string>
         <string name="total_backup_size"> * Συνολικό μέγεθος όλων των δεδομένων: {1}MB</string>
         <string name="available_space"> * Διαθέσιμος χώρος: {1}MB</string>
-        <string name="unable_locate_storage">Δεν μπορεί να εντοπίσετεί ο αποθ. χώρος.</string>
-        <string name="no_space">Ανεπαρκής χώρος στην αποθ. χώρο.</string>
+        <string name="unable_locate_storage">Δεν μπορεί να εντοπιστεί ο αποθ. χώρος.</string>
+        <string name="no_space">Ανεπαρκής χώρος στον αποθ. χώρο.</string>
         <string name="backup_started">[ΔΗΜΙΟΥΡΓΙΑ ΑΝΤΙΓΡ. ΑΣΦΑΛ.]</string>
-        <string name="backup_folder"> * Κάντε φάκελο αντιγτ. ασφ.: {1}</string>
-        <string name="fail_backup_folder">Απέτυχε δημιουργίας φακέλου αντιγρ. ασφ.</string>
+        <string name="backup_folder"> * Κάντε φάκελο αντιγρ. ασφ.: {1}</string>
+        <string name="fail_backup_folder">Απέτυχε η δημιουργία φακέλου αντιγρ. ασφ.</string>
         <string name="avg_backup_fs">Μέσος ρυθμός αντιγρ. ασφ. αρχείων συστήματος: {1} MB/δευτερ.</string>
         <string name="avg_backup_img">Μέσος ρυθμός αντιγρ. ασφ. εικονικών μονάδων: {1} MB/δευτερ.</string>
-        <string name="total_backed_size">[{1} MB ΣΥΝΟΛΙΚΑ ΑΝΤΙΓΡΑΦΑΚΑΝ]</string>
-        <string name="backup_completed">[ΔΗΜΙΟΥΡΓΙΑ ΑΝΤΙΓΡ. ΑΣΦ. ΟΛΟΚΛΗΡΩΘΗΚΕ ΣΕ {1} ΔΕΥΤΕΡΟΛΕΠΤΑ]</string>
-        <string name="restore_started">[ΕΠΑΝΑΦΟΡΑ ΞΕΚΙΗΣΕ]</string>
+        <string name="total_backed_size">[{1} MB ΣΥΝΟΛΙΚΑ ΑΝΤΙΓΡΑΦΗΚΑΝ]</string>
+        <string name="backup_completed">[Η ΔΗΜΙΟΥΡΓΙΑ ΑΝΤΙΓΡ. ΑΣΦ. ΟΛΟΚΛΗΡΩΘΗΚΕ ΣΕ {1} ΔΕΥΤΕΡΟΛΕΠΤΑ]</string>
+        <string name="restore_started">[ΕΠΑΝΑΦΟΡΑ ΞΕΚΙΝΗΣΕ]</string>
         <string name="restore_folder">Επαναφορά φακέλου: '{1}'</string>
         <string name="restore_part_done">[{1} ολοκληρώθηκαν ({2} δευτερόλεπτα)]</string>
         <string name="verifying_digest" version="2">Επαλήθευση Digest</string>
-        <string name="skip_digest" version="2">Παράλειψη ελέγχου Digest βάση τις ρυθμίσεις χρήστη.</string>
+        <string name="skip_digest" version="2">Παράλειψη ελέγχου Digest βάσει τις ρυθμίσεις χρήστη.</string>
         <string name="calc_restore">Υπολογισμός λεπτομερειών επαναφοράς...</string>
         <string name="restore_read_only">Δεν είναι δυνατό να επαναφέρετε {1} -- τοποθέτηση μόνο για ανάγνωση.</string>
-        <string name="restore_unable_locate">Δεν εντοπίζετε το διαμέρισμα «{1}» για αποκατάσταση.</string>
+        <string name="restore_unable_locate">Δεν εντοπίστηκε το διαμέρισμα «{1}» για αποκατάσταση.</string>
         <string name="no_part_restore">Δεν επιλέχθηκαν τομείς για επαναφορά.</string>
         <string name="restore_part_count">Επαναφορά {1} τομέων...</string>
         <string name="total_restore_size">Το συνολικό μέγεθος επαναφοράς είναι {1}MB</string>
         <string name="updating_system_details">Ενημέρωση λεπτομερειών συστήματος</string>
-        <string name="restore_completed">[ΕΠΑΝΑΦΟΡΑ ΟΛΟΚΛΗΡΩΝΕΤΕ ΣΕ {1} ΔΕΥΤΕΡΟΛΕΠΤΑ]</string>
+        <string name="restore_completed">[ΕΠΑΝΑΦΟΡΑ ΟΛΟΚΛΗΡΩΝΕΤΑΙ ΣΕ {1} ΔΕΥΤΕΡΟΛΕΠΤΑ]</string>
         <string name="error_opening_strerr">Σφάλμα κατά το άνοιγμα: '{1}' ({2})</string>
         <string name="unable_locate_part_backup_name">Δεν εντοπίστηκε διαμέρισμα από το όνομα του αντίγραφου ασφαλείας: '{1}'</string>
         <string name="unable_find_part_path">Δεν μπόρεσε να βρεθεί ο τομέας για τη διαδρομή '{1}'</string>
@@ -512,16 +526,17 @@
         <string name="no_andsec">Δεν βρέθηκαν τομείς android secure.</string>
         <string name="unable_to_locate">Δεν μπορεί να εντοπιστεί {1}.</string>
         <string name="wiping_datamedia">Εκκαθάριση εσωτ. χώρου αποθ. -- /data/media...</string>
-        <string name="unable_to_mount">Αδύνατη προσάρτηση {1}</string>
-        <string name="unable_to_mount_internal">Αδύνατη προσάρτηση του internal_storage</string>
-        <string name="unable_to_mount_storage">Αδύνατη προσάρτηση του χώρου αποθ.</string>
+        <string name="unable_to_mount">Αδύνατη η προσάρτηση {1}</string>
+        <string name="unable_to_mount_internal">Αδύνατη η προσάρτηση του internal_storage</string>
+        <string name="unable_to_mount_storage">Αδύνατη η προσάρτηση του χώρου αποθ.</string>
         <string name="fail_decrypt">Απέτυχε η αποκρυπτογράφηση δεδομένων.</string>
         <string name="no_crypto_support">Δεν έχει μεταγλωττιστεί υποστήριξη κρυπτογράφησης σε αυτό το build.</string>
         <string name="decrypt_success_dev">Τα δεδομένα αποκρυπτογραφήθηκαν, νέο μπλοκάρισμα συσκευής: '{1}'</string>
+        <string name="decrypt_success_nodev">Τα δεδομένα αποκρυπτογραφήθηκαν με επιτυχία</string>
         <string name="done">Έγινε.</string>
         <string name="start_partition_sd">Διαχώριση κάρτας SD...</string>
-        <string name="partition_sd_locate">Δεν μπορείτε να εντοπίσετε η συσκευή για διαχωρισμό.</string>
-        <string name="ext_swap_size">EXT + Αλλαγή μεγέθους είναι μεγαλύτερο από το μέγεθος της κάρτας sd.</string>
+        <string name="partition_sd_locate">Δεν μπορεί να εντοπιστεί η συσκευή για διαχωρισμό.</string>
+        <string name="ext_swap_size">EXT + Η αλλαγή μεγέθους είναι μεγαλύτερη από το μέγεθος της κάρτας sd.</string>
         <string name="remove_part_table">Κατάργηση πίνακα τομέων...</string>
         <string name="unable_rm_part">Δεν είναι δυνατή η κατάργηση του πίνακα τομέων.</string>
         <string name="create_part">Δημιουργία {1} τομέα...</string>
@@ -530,17 +545,17 @@
         <string name="part_complete">Η Διαχώριση ολοκληρώθηκε.</string>
         <string name="unable_to_open">Δεν είναι δυνατό το άνοιγμα '{1}'.</string>
         <string name="mtp_already_enabled">Το MTP ενεργοποιήθηκε ήδη</string>
-        <string name="mtp_fail">Αποτυχία ενεργοποιήσεις MTP</string>
+        <string name="mtp_fail">Αποτυχία ενεργοποιήσης MTP</string>
         <string name="no_mtp">Δεν περιλαμβάνεται η υποστήριξη MTP</string>
         <string name="image_flash_start">[ΕΓΓΡΑΦΗ ΕΙΚΟΝΑΣ ΞΕΚΙΝΗΣΕ]</string>
         <string name="img_to_flash">Εικόνα για εγγραφή: '{1}'</string>
         <string name="flash_unable_locate">Δεν μπορεί να εντοπιστεί ο '{1}' τομέας για εγγραφή.</string>
         <string name="no_part_flash">Δεν επιλέχθηκαν τομείς για εγγραφή.</string>
-        <string name="too_many_flash">Έχουν επιλεγεί πολύ τομείς για εγγραφή.</string>
+        <string name="too_many_flash">Έχουν επιλεγεί πολλοί τομείς για εγγραφή.</string>
         <string name="invalid_flash">Μη έγκυρη εγγραφή τομέα που καθορίζεται.</string>
         <string name="flash_done">[ΕΓΓΡΑΦΗ ΕΙΚΟΝΑΣ ΟΛΟΚΛΗΡΩΘΗΚΕ]</string>
         <string name="wiping">Εκκαθάριση {1}</string>
-        <string name="repair_not_exist">{1} δεν υπάρχει! Δεν μπορεί να επιδιορθώσει!</string>
+        <string name="repair_not_exist">{1} δεν υπάρχει! Δεν μπορεί να επιδιορθωθεί!</string>
         <string name="repairing_using">Επιδιόρθωση {1} χρήση {2}...</string>
         <string name="unable_repair">Δεν είναι δυνατή η επιδιόρθωση {1}.</string>
         <string name="mount_data_footer">Δεν μπόρεσε να προσαρτηθεί το /data και είναι αδύνατη η εύρεση του κρύπτο υποσέλιδου.</string>
@@ -550,11 +565,11 @@
         <string name="cannot_resize">Δεν μπορεί να αλλαχθεί το μέγεθος {1}.</string>
         <string name="repair_resize">Επιδιόρθωση {1} πριν την αλλαγή μεγέθους.</string>
         <string name="unable_resize">Δεν είναι δυνατή η αλλαγή μεγέθους {1}.</string>
-        <string name="no_digest_found" version="2">Δεν βρέθηκε Digest αρχείο για το '{1}'. Παρακαλώ απεπηλέξτε την επαλήθευση Digest για επαναφορά.</string>
-        <string name="digest_fail_match" version="2">Το Digest απέτυχε να ταυτίσει με το '{1}'.</string>
-        <string name="digest_matched" version="2">Digest matched for '{1}'.</string>
+        <string name="no_digest_found" version="2">Δεν βρέθηκε Digest αρχείο για το '{1}'. Παρακαλώ αποεπιλέξτε την επαλήθευση MD5 για επαναφορά.</string>
+        <string name="digest_fail_match" version="2">Το Digest απέτυχε να ταυτιστεί με το '{1}'.</string>
+        <string name="digest_matched" version="2">Το Digest ταυτίζετε με το '{1}'.</string>
         <string name="fail_decrypt_tar">Αποτυχία αποκρυπτογράφησης του αρχείου tar '{1}'</string>
-        <string name="format_data_msg">Ίσως χρειαστεί να επανεκκινήσετε στο recovery για να ξαναχρησιμοποιήσετε το /data.</string>
+        <string name="format_data_msg">Ίσως χρειαστεί να επανεκκινήσετε το recovery για να ξαναχρησιμοποιήσετε το /data.</string>
         <string name="format_data_err">Αδύνατη η διαμόρφωση για να καταργήσετε την κρυπτογράφηση.</string>
         <string name="formatting_using">Διαμόρφωση {1} χρησιμοποιόντας {2}...</string>
         <string name="unable_to_wipe">Αδυναμία εκκαθάρισης {1}.</string>
@@ -562,16 +577,17 @@
         <string name="remove_all">Διαγραφή όλων των αρχείων στο '{1}'</string>
         <string name="wiping_data">Εκκαθάριση δεδομένων χωρίς την εκκαθάριση του /data/media ...</string>
         <string name="backing_up">Δημιουργία Αντιγρ. Ασφαλ. {1}...</string>
+        <string name="backup_storage_warning">Τα αντιγρ. ασφ. του {1} δεν περιλαμβάνουν κανένα αρχείο του εσωτερικού χώρου αποθήκευσης όπως φωτογραφίες ή λήψεις.</string>
         <string name="backing">Δημιουργία Αντιγρ. Ασφαλ.</string>
-        <string name="backup_size">Μέγεθος αρχείο αντιγρ. ασφ. για το «{1}» είναι 0 bytes.</string>
-        <string name="datamedia_fs_restore">Προειδοποίηση: Αυτό το αντίγραφο ασφαλείας /data έγινε με το σύστημα αρχείων {1}! Η δημιουργία αντιγράφων ασφαλείας ενδέχεται να μην εκκίνηση, εκτός και αν επιστρέψετε στο {1}.</string>
+        <string name="backup_size">Μέγεθος αρχείου αντιγρ. ασφ. για το «{1}» είναι 0 bytes.</string>
+        <string name="datamedia_fs_restore">Προειδοποίηση: Αυτό το αντίγραφο ασφαλείας /data έγινε με το σύστημα αρχείων {1}! Η δημιουργία αντιγράφων ασφαλείας ενδέχεται να μην εκκινηθεί, εκτός και αν επιστρέψετε στο {1}.</string>
         <string name="restoring">Επαναφορά {1}...</string>
         <string name="restoring_hdr">Επαναφορά</string>
         <string name="recreate_folder_err">Δεν είναι δυνατή η ανασύνθεση του φακέλου {1}.</string>
         <string name="img_size_err">Το μέγεθος της εικόνας είναι μεγαλύτερο από την συσκευή προορισμού</string>
         <string name="flashing">Εγγραφή {1}...</string>
         <string name="backup_folder_set">Φάκελος αντιγρ. ασφ. ορίστηκε το '{1}'</string>
-        <string name="locate_backup_err">Δεν μπόρεσενα εντοπιστεί το αντιγρ. ασφ. '{1}'</string>
+        <string name="locate_backup_err">Δεν μπόρεσε να εντοπιστεί το αντιγρ. ασφ. '{1}'</string>
         <string name="set_restore_opt">Ρύθμιση επιλογών επαναφοράς: '{1}':</string>
         <string name="digest_check_skip" version="2">Η παράλειψη ελέγχου Digest είναι ενεργή</string>
         <string name="ors_encrypt_restore_err">Δεν μπορεί να χρησιμοποιηθεί το OpenRecoveryScript για να επαναφέρετε ένα κρυπτογραφημένο αντίγραφο ασφαλείας.</string>
@@ -601,7 +617,7 @@
         <string name="recovery_commands_complete">Οι Εντολές Recovery Ολοκληρώθηκαν</string>
         <string name="running_ors">Εκτέλεση OpenRecoveryScript</string>
         <string name="ors_complete">OpenRecoveryScript Ολοκληρώθηκε</string>
-        <string name="no_updater_binary">Δεν βρέθηκε το '{1}' στο αρχείο zip.</string>
+        <string name="invalid_zip_format">Μη έγκυρη μορφή αρχείου zip!</string>
         <string name="check_for_digest" version="2">Έλεγχος για Digest αρχείο...</string>
         <string name="fail_sysmap">Αποτυχία αντιστ. αρχείου '{1}'</string>
         <string name="verify_zip_sig">Επαλήθευση υπογραφής zip...</string>
@@ -618,7 +634,7 @@
         <string name="dumlock_reflash">Επανεγγραφή recovery στο boot...</string>
         <string name="run_script">Εκτέλεση {1} script...</string>
         <string name="rename_stock">Μετονομασία αρχικού recovery στο /system για να αποτρέψετε την αντικατάσταση του TWRP από το λειτουργικό.</string>
-        <string name="split_backup">Σπάσιμο αντίγραφου ασφαλείας σε πολλαπλά αρχεία...</string>
+        <string name="split_backup">Διάσπαση αντίγραφου ασφαλείας σε πολλαπλά αρχεία...</string>
         <string name="backup_error">Σφάλμα κατά τη δημιουργία αντιγράφων ασφαλείας.</string>
         <string name="restore_error">Σφάλμα κατά τη διαδικασία επαναφοράς.</string>
         <string name="split_thread">Διάσπαση thread ID {1} στο αρχείο {2}</string>
@@ -629,7 +645,7 @@
         <string name="simulating">Προσομοίωση ενεργειών...</string>
         <string name="backup_cancel">Δημιουργία αντιγρ. ασφ. ακυρώθηκε</string>
         <string name="config_twrp">Ρύθμιση παραμέτρων TWRP...</string>
-        <string name="config_twrp_err">Αδύνατη ρύθμιση TWRP με αυτό το kernel.</string>
+        <string name="config_twrp_err">Αδύνατη η ρύθμιση TWRP με αυτό το kernel.</string>
         <string name="copy_log">Αντιγραφή καταγραφής αποκατάστασης στο {1}.</string>
         <string name="max_queue">Μέγιστος αριθμός zip!</string>
         <string name="min_queue">Ελάχιστος αριθμός zip!</string>
@@ -646,7 +662,13 @@
         <string name="cancel_sideload">Ακύρωση ADB sideload...</string>
         <string name="change_fs_err">Σφάλμα στην αλλαγή αρχείων συστήματος.</string>
         <string name="theme_ver_err">Η έκδοση του θέματος δεν ταιριάζει με αυτή του TWRP. Χρήση προεπιλεγμένου θέματος.</string>
-        <string name="up_a_level">(προηγ. επίπεδο)</string>
-        <string name="install_reboot">Επανεκκίνηση σε 5 δευτ.</string>
+        <string name="up_a_level">(Προηγ. Επίπεδο)</string>
+        <string name="install_reboot" version="2">Επανεκκίνηση σε %tw_sleep% δευτ.</string>
+        <string name="adbbackup_error">Σφάλμα με την αντιγρ. ασφ. με το ADB. Ακύρωση..."</string>
+        <string name="adbbackup_control_error">Δεν είναι δυνατή η εγγραφή στο κανάλι ελέγχου του adb</string>
+        <string name="twrp_adbbu_option">--η επιλογή twrp απαιτείτε για την ενεργοποίηση των αντ. ασφ. twrp adb</string>
+        <string name="partition_not_found">διαδρομή: {1} δεν βρέθηκε στην λίστα τομέων</string>
+        <string name="copy_kernel_log">Το log του kernel αντιγράφηκε στο {1}</string>
+        <string name="include_kernel_log">Εισαγωγή Kernel Log</string>
     </resources>
 </language>
