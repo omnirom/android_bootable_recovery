@@ -448,20 +448,20 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 static int uncrypt(const char* input_path, const char* map_file, const int socket) {
     LOG(INFO) << "update package is \"" << input_path << "\"";
 
-    // Turn the name of the file we're supposed to convert into an
-    // absolute path, so we can find what filesystem it's on.
+    // Turn the name of the file we're supposed to convert into an absolute path, so we can find
+    // what filesystem it's on.
     char path[PATH_MAX+1];
-    if (realpath(input_path, path) == NULL) {
+    if (realpath(input_path, path) == nullptr) {
         PLOG(ERROR) << "failed to convert \"" << input_path << "\" to absolute path";
-        return 1;
+        return kUncryptRealpathFindError;
     }
 
     bool encryptable;
     bool encrypted;
     const char* blk_dev = find_block_device(path, &encryptable, &encrypted);
-    if (blk_dev == NULL) {
+    if (blk_dev == nullptr) {
         LOG(ERROR) << "failed to find block device for " << path;
-        return 1;
+        return kUncryptBlockDeviceFindError;
     }
 
     // If the filesystem it's on isn't encrypted, we only produce the
