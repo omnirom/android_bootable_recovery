@@ -25,6 +25,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
@@ -152,18 +156,26 @@ int ensure_path_unmounted(const char* path) {
   return unmount_mounted_volume(mv);
 }
 
-static int exec_cmd(const char* path, char* const argv[]) {
-    int status;
-    pid_t child;
-    if ((child = vfork()) == 0) {
-        execv(path, argv);
-        _exit(EXIT_FAILURE);
-    }
-    waitpid(child, &status, 0);
-    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        LOG(ERROR) << path << " failed with status " << WEXITSTATUS(status);
-    }
-    return WEXITSTATUS(status);
+static int exec_cmd(const std::vector<std::string>& args) {
+  CHECK_NE(static_cast<size_t>(0), args.size());
+
+  std::vector<char*> argv(args.size());
+  std::transform(args.cbegin(), args.cend(), argv.begin(),
+                 [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
+  argv.push_back(nullptr);
+
+  pid_t child;
+  if ((child = vfork()) == 0) {
+    execv(argv[0], argv.data());
+    _exit(EXIT_FAILURE);
+  }
+
+  int status;
+  waitpid(child, &status, 0);
+  if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+    LOG(ERROR) << args[0] << " failed with status " << WEXITSTATUS(status);
+  }
+  return WEXITSTATUS(status);
 }
 
 static ssize_t get_file_size(int fd, uint64_t reserve_len) {
@@ -184,132 +196,112 @@ static ssize_t get_file_size(int fd, uint64_t reserve_len) {
 }
 
 int format_volume(const char* volume, const char* directory) {
-    Volume* v = volume_for_path(volume);
-    if (v == NULL) {
-        LOG(ERROR) << "unknown volume \"" << volume << "\"";
-        return -1;
-    }
-    if (strcmp(v->fs_type, "ramdisk") == 0) {
-        // you can't format the ramdisk.
-        LOG(ERROR) << "can't format_volume \"" << volume << "\"";
-        return -1;
-    }
-    if (strcmp(v->mount_point, volume) != 0) {
-        LOG(ERROR) << "can't give path \"" << volume << "\" to format_volume";
-        return -1;
-    }
-
-    if (ensure_path_unmounted(volume) != 0) {
-        LOG(ERROR) << "format_volume failed to unmount \"" << v->mount_point << "\"";
-        return -1;
-    }
-
-    if (strcmp(v->fs_type, "ext4") == 0 || strcmp(v->fs_type, "f2fs") == 0) {
-        // if there's a key_loc that looks like a path, it should be a
-        // block device for storing encryption metadata.  wipe it too.
-        if (v->key_loc != NULL && v->key_loc[0] == '/') {
-            LOG(INFO) << "wiping " << v->key_loc;
-            int fd = open(v->key_loc, O_WRONLY | O_CREAT, 0644);
-            if (fd < 0) {
-                LOG(ERROR) << "format_volume: failed to open " << v->key_loc;
-                return -1;
-            }
-            wipe_block_device(fd, get_file_size(fd));
-            close(fd);
-        }
-
-        ssize_t length = 0;
-        if (v->length != 0) {
-            length = v->length;
-        } else if (v->key_loc != NULL && strcmp(v->key_loc, "footer") == 0) {
-          android::base::unique_fd fd(open(v->blk_device, O_RDONLY));
-          if (fd < 0) {
-            PLOG(ERROR) << "get_file_size: failed to open " << v->blk_device;
-            return -1;
-          }
-          length = get_file_size(fd.get(), CRYPT_FOOTER_OFFSET);
-          if (length <= 0) {
-            LOG(ERROR) << "get_file_size: invalid size " << length << " for " << v->blk_device;
-            return -1;
-          }
-        }
-        int result;
-        if (strcmp(v->fs_type, "ext4") == 0) {
-          static constexpr int block_size = 4096;
-          int raid_stride = v->logical_blk_size / block_size;
-          int raid_stripe_width = v->erase_blk_size / block_size;
-
-          // stride should be the max of 8kb and logical block size
-          if (v->logical_blk_size != 0 && v->logical_blk_size < 8192) {
-            raid_stride = 8192 / block_size;
-          }
-
-          const char* mke2fs_argv[] = { "/sbin/mke2fs_static",
-                                        "-F",
-                                        "-t",
-                                        "ext4",
-                                        "-b",
-                                        nullptr,
-                                        nullptr,
-                                        nullptr,
-                                        nullptr,
-                                        nullptr,
-                                        nullptr };
-
-          int i = 5;
-          std::string block_size_str = std::to_string(block_size);
-          mke2fs_argv[i++] = block_size_str.c_str();
-
-          std::string ext_args;
-          if (v->erase_blk_size != 0 && v->logical_blk_size != 0) {
-            ext_args = android::base::StringPrintf("stride=%d,stripe-width=%d", raid_stride,
-                                                   raid_stripe_width);
-            mke2fs_argv[i++] = "-E";
-            mke2fs_argv[i++] = ext_args.c_str();
-          }
-
-          mke2fs_argv[i++] = v->blk_device;
-
-          std::string size_str = std::to_string(length / block_size);
-          if (length != 0) {
-            mke2fs_argv[i++] = size_str.c_str();
-          }
-
-          result = exec_cmd(mke2fs_argv[0], const_cast<char**>(mke2fs_argv));
-          if (result == 0 && directory != nullptr) {
-            const char* e2fsdroid_argv[] = { "/sbin/e2fsdroid_static",
-                                             "-e",
-                                             "-f",
-                                             directory,
-                                             "-a",
-                                             volume,
-                                             v->blk_device,
-                                             nullptr };
-
-            result = exec_cmd(e2fsdroid_argv[0], const_cast<char**>(e2fsdroid_argv));
-          }
-        } else {   /* Has to be f2fs because we checked earlier. */
-            char *num_sectors = nullptr;
-            if (length >= 512 && asprintf(&num_sectors, "%zd", length / 512) <= 0) {
-                LOG(ERROR) << "format_volume: failed to create " << v->fs_type
-                           << " command for " << v->blk_device;
-                return -1;
-            }
-            const char *f2fs_path = "/sbin/mkfs.f2fs";
-            const char* const f2fs_argv[] = {"mkfs.f2fs", "-t", "-d1", v->blk_device, num_sectors, nullptr};
-
-            result = exec_cmd(f2fs_path, (char* const*)f2fs_argv);
-            free(num_sectors);
-        }
-        if (result != 0) {
-            PLOG(ERROR) << "format_volume: make " << v->fs_type << " failed on " << v->blk_device;
-            return -1;
-        }
-        return 0;
-    }
-
+  const Volume* v = volume_for_path(volume);
+  if (v == nullptr) {
+    LOG(ERROR) << "unknown volume \"" << volume << "\"";
+    return -1;
+  }
+  if (strcmp(v->fs_type, "ramdisk") == 0) {
+    LOG(ERROR) << "can't format_volume \"" << volume << "\"";
+    return -1;
+  }
+  if (strcmp(v->mount_point, volume) != 0) {
+    LOG(ERROR) << "can't give path \"" << volume << "\" to format_volume";
+    return -1;
+  }
+  if (ensure_path_unmounted(volume) != 0) {
+    LOG(ERROR) << "format_volume: Failed to unmount \"" << v->mount_point << "\"";
+    return -1;
+  }
+  if (strcmp(v->fs_type, "ext4") != 0 && strcmp(v->fs_type, "f2fs") != 0) {
     LOG(ERROR) << "format_volume: fs_type \"" << v->fs_type << "\" unsupported";
     return -1;
+  }
+
+  // If there's a key_loc that looks like a path, it should be a block device for storing encryption
+  // metadata. Wipe it too.
+  if (v->key_loc != nullptr && v->key_loc[0] == '/') {
+    LOG(INFO) << "Wiping " << v->key_loc;
+    int fd = open(v->key_loc, O_WRONLY | O_CREAT, 0644);
+    if (fd == -1) {
+      PLOG(ERROR) << "format_volume: Failed to open " << v->key_loc;
+      return -1;
+    }
+    wipe_block_device(fd, get_file_size(fd));
+    close(fd);
+  }
+
+  ssize_t length = 0;
+  if (v->length != 0) {
+    length = v->length;
+  } else if (v->key_loc != nullptr && strcmp(v->key_loc, "footer") == 0) {
+    android::base::unique_fd fd(open(v->blk_device, O_RDONLY));
+    if (fd == -1) {
+      PLOG(ERROR) << "get_file_size: failed to open " << v->blk_device;
+      return -1;
+    }
+    length = get_file_size(fd.get(), CRYPT_FOOTER_OFFSET);
+    if (length <= 0) {
+      LOG(ERROR) << "get_file_size: invalid size " << length << " for " << v->blk_device;
+      return -1;
+    }
+  }
+
+  if (strcmp(v->fs_type, "ext4") == 0) {
+    static constexpr int kBlockSize = 4096;
+    std::vector<std::string> mke2fs_args = {
+      "/sbin/mke2fs_static", "-F", "-t", "ext4", "-b", std::to_string(kBlockSize),
+    };
+
+    int raid_stride = v->logical_blk_size / kBlockSize;
+    int raid_stripe_width = v->erase_blk_size / kBlockSize;
+    // stride should be the max of 8KB and logical block size
+    if (v->logical_blk_size != 0 && v->logical_blk_size < 8192) {
+      raid_stride = 8192 / kBlockSize;
+    }
+    if (v->erase_blk_size != 0 && v->logical_blk_size != 0) {
+      mke2fs_args.push_back("-E");
+      mke2fs_args.push_back(
+          android::base::StringPrintf("stride=%d,stripe-width=%d", raid_stride, raid_stripe_width));
+    }
+    mke2fs_args.push_back(v->blk_device);
+    if (length != 0) {
+      mke2fs_args.push_back(std::to_string(length / kBlockSize));
+    }
+
+    int result = exec_cmd(mke2fs_args);
+    if (result == 0 && directory != nullptr) {
+      std::vector<std::string> e2fsdroid_args = {
+        "/sbin/e2fsdroid_static",
+        "-e",
+        "-f",
+        directory,
+        "-a",
+        volume,
+        v->blk_device,
+      };
+      result = exec_cmd(e2fsdroid_args);
+    }
+
+    if (result != 0) {
+      PLOG(ERROR) << "format_volume: Failed to make ext4 on " << v->blk_device;
+      return -1;
+    }
+    return 0;
+  }
+
+  // Has to be f2fs because we checked earlier.
+  std::vector<std::string> f2fs_args = { "/sbin/mkfs.f2fs", "-t", "-d1", v->blk_device };
+  if (length >= 512) {
+    f2fs_args.push_back(std::to_string(length / 512));
+  }
+
+  int result = exec_cmd(f2fs_args);
+  if (result != 0) {
+    PLOG(ERROR) << "format_volume: Failed to make f2fs on " << v->blk_device;
+    return -1;
+  }
+  return 0;
 }
 
 int format_volume(const char* volume) {
