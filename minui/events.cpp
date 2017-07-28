@@ -53,25 +53,23 @@ static bool test_bit(size_t bit, unsigned long* array) { // NOLINT
     return (array[bit/BITS_PER_LONG] & (1UL << (bit % BITS_PER_LONG))) != 0;
 }
 
-int ev_init(ev_callback input_cb) {
-  bool epollctlfail = false;
-
+int ev_init(ev_callback input_cb, bool allow_touch_inputs) {
   g_epoll_fd = epoll_create(MAX_DEVICES + MAX_MISC_FDS);
   if (g_epoll_fd == -1) {
     return -1;
   }
 
+  bool epollctlfail = false;
   DIR* dir = opendir("/dev/input");
-  if (dir != NULL) {
+  if (dir != nullptr) {
     dirent* de;
     while ((de = readdir(dir))) {
-      // Use unsigned long to match ioctl's parameter type.
-      unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];  // NOLINT
-
-      //            fprintf(stderr,"/dev/input/%s\n", de->d_name);
       if (strncmp(de->d_name, "event", 5)) continue;
       int fd = openat(dirfd(dir), de->d_name, O_RDONLY);
       if (fd == -1) continue;
+
+      // Use unsigned long to match ioctl's parameter type.
+      unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];  // NOLINT
 
       // Read the evbits of the input device.
       if (ioctl(fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) == -1) {
@@ -79,10 +77,13 @@ int ev_init(ev_callback input_cb) {
         continue;
       }
 
-      // We assume that only EV_KEY, EV_REL, and EV_SW event types are ever needed.
+      // We assume that only EV_KEY, EV_REL, and EV_SW event types are ever needed. EV_ABS is also
+      // allowed if allow_touch_inputs is set.
       if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits) && !test_bit(EV_SW, ev_bits)) {
-        close(fd);
-        continue;
+        if (!allow_touch_inputs || !test_bit(EV_ABS, ev_bits)) {
+          close(fd);
+          continue;
+        }
       }
 
       epoll_event ev;
@@ -230,4 +231,28 @@ void ev_iterate_available_keys(const std::function<void(int)>& f) {
             }
         }
     }
+}
+
+void ev_iterate_touch_inputs(const std::function<void(int)>& action) {
+  for (size_t i = 0; i < ev_dev_count; ++i) {
+    // Use unsigned long to match ioctl's parameter type.
+    unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)] = {};  // NOLINT
+    if (ioctl(ev_fdinfo[i].fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) == -1) {
+      continue;
+    }
+    if (!test_bit(EV_ABS, ev_bits)) {
+      continue;
+    }
+
+    unsigned long key_bits[BITS_TO_LONGS(KEY_MAX)] = {};  // NOLINT
+    if (ioctl(ev_fdinfo[i].fd, EVIOCGBIT(EV_ABS, KEY_MAX), key_bits) == -1) {
+      continue;
+    }
+
+    for (int key_code = 0; key_code <= KEY_MAX; ++key_code) {
+      if (test_bit(key_code, key_bits)) {
+        action(key_code);
+      }
+    }
+  }
 }
