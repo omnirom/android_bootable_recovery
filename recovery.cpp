@@ -179,19 +179,19 @@ struct selabel_handle* sehandle;
  *    7b. the user reboots (pulling the battery, etc) into the main system
  */
 
-// open a given path, mounting partitions as necessary
-FILE* fopen_path(const char *path, const char *mode) {
-    if (ensure_path_mounted(path) != 0) {
-        LOG(ERROR) << "Can't mount " << path;
-        return NULL;
-    }
+// Open a given path, mounting partitions as necessary.
+FILE* fopen_path(const char* path, const char* mode) {
+  if (ensure_path_mounted(path) != 0) {
+    LOG(ERROR) << "Can't mount " << path;
+    return nullptr;
+  }
 
-    // When writing, try to create the containing directory, if necessary.
-    // Use generous permissions, the system (init.rc) will reset them.
-    if (strchr("wa", mode[0])) dirCreateHierarchy(path, 0777, NULL, 1, sehandle);
-
-    FILE *fp = fopen(path, mode);
-    return fp;
+  // When writing, try to create the containing directory, if necessary. Use generous permissions,
+  // the system (init.rc) will reset them.
+  if (strchr("wa", mode[0])) {
+    mkdir_recursively(path, 0777, true, sehandle);
+  }
+  return fopen(path, mode);
 }
 
 // close a file, log an error if the error indicator is set
@@ -594,7 +594,7 @@ static bool erase_volume(const char* volume) {
   if (is_cache) {
     // Re-create the log dir and write back the log entries.
     if (ensure_path_mounted(CACHE_LOG_DIR) == 0 &&
-        dirCreateHierarchy(CACHE_LOG_DIR, 0777, nullptr, false, sehandle) == 0) {
+        mkdir_recursively(CACHE_LOG_DIR, 0777, false, sehandle) == 0) {
       for (const auto& log : log_files) {
         if (!android::base::WriteStringToFile(log.data, log.name, log.sb.st_mode, log.sb.st_uid,
                                               log.sb.st_gid)) {
