@@ -26,23 +26,23 @@
 
 TEST(DirUtilTest, create_invalid) {
   // Requesting to create an empty dir is invalid.
-  ASSERT_EQ(-1, dirCreateHierarchy("", 0755, nullptr, false, nullptr));
+  ASSERT_EQ(-1, mkdir_recursively("", 0755, false, nullptr));
   ASSERT_EQ(ENOENT, errno);
 
   // Requesting to strip the name with no slash present.
-  ASSERT_EQ(-1, dirCreateHierarchy("abc", 0755, nullptr, true, nullptr));
+  ASSERT_EQ(-1, mkdir_recursively("abc", 0755, true, nullptr));
   ASSERT_EQ(ENOENT, errno);
 
   // Creating a dir that already exists.
   TemporaryDir td;
-  ASSERT_EQ(0, dirCreateHierarchy(td.path, 0755, nullptr, false, nullptr));
+  ASSERT_EQ(0, mkdir_recursively(td.path, 0755, false, nullptr));
 
   // "///" is a valid dir.
-  ASSERT_EQ(0, dirCreateHierarchy("///", 0755, nullptr, false, nullptr));
+  ASSERT_EQ(0, mkdir_recursively("///", 0755, false, nullptr));
 
   // Request to create a dir, but a file with the same name already exists.
   TemporaryFile tf;
-  ASSERT_EQ(-1, dirCreateHierarchy(tf.path, 0755, nullptr, false, nullptr));
+  ASSERT_EQ(-1, mkdir_recursively(tf.path, 0755, false, nullptr));
   ASSERT_EQ(ENOTDIR, errno);
 }
 
@@ -51,7 +51,7 @@ TEST(DirUtilTest, create_smoke) {
   std::string prefix(td.path);
   std::string path = prefix + "/a/b";
   constexpr mode_t mode = 0755;
-  ASSERT_EQ(0, dirCreateHierarchy(path.c_str(), mode, nullptr, false, nullptr));
+  ASSERT_EQ(0, mkdir_recursively(path, mode, false, nullptr));
 
   // Verify.
   struct stat sb;
@@ -69,7 +69,7 @@ TEST(DirUtilTest, create_strip_filename) {
   TemporaryDir td;
   std::string prefix(td.path);
   std::string path = prefix + "/a/b";
-  ASSERT_EQ(0, dirCreateHierarchy(path.c_str(), 0755, nullptr, true, nullptr));
+  ASSERT_EQ(0, mkdir_recursively(path, 0755, true, nullptr));
 
   // Verify that "../a" exists but not "../a/b".
   struct stat sb;
@@ -83,31 +83,21 @@ TEST(DirUtilTest, create_strip_filename) {
   ASSERT_EQ(0, rmdir((prefix + "/a").c_str()));
 }
 
-TEST(DirUtilTest, create_mode_and_timestamp) {
+TEST(DirUtilTest, create_mode) {
   TemporaryDir td;
   std::string prefix(td.path);
   std::string path = prefix + "/a/b";
-  // Set the timestamp to 8/1/2008.
-  constexpr struct utimbuf timestamp = { 1217592000, 1217592000 };
   constexpr mode_t mode = 0751;
-  ASSERT_EQ(0, dirCreateHierarchy(path.c_str(), mode, &timestamp, false, nullptr));
+  ASSERT_EQ(0, mkdir_recursively(path, mode, false, nullptr));
 
-  // Verify the mode and timestamp for "../a/b".
+  // Verify the mode for "../a/b".
   struct stat sb;
   ASSERT_EQ(0, stat(path.c_str(), &sb)) << strerror(errno);
   ASSERT_TRUE(S_ISDIR(sb.st_mode));
   constexpr mode_t mask = S_IRWXU | S_IRWXG | S_IRWXO;
   ASSERT_EQ(mode, sb.st_mode & mask);
 
-  timespec time;
-  time.tv_sec = 1217592000;
-  time.tv_nsec = 0;
-
-  ASSERT_EQ(time.tv_sec, static_cast<long>(sb.st_atime));
-  ASSERT_EQ(time.tv_sec, static_cast<long>(sb.st_mtime));
-
-  // Verify the mode for "../a". Note that the timestamp for intermediate directories (e.g. "../a")
-  // may not be 'timestamp' according to the current implementation.
+  // Verify the mode for "../a".
   ASSERT_EQ(0, stat((prefix + "/a").c_str(), &sb)) << strerror(errno);
   ASSERT_TRUE(S_ISDIR(sb.st_mode));
   ASSERT_EQ(mode, sb.st_mode & mask);
