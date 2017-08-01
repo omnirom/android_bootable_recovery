@@ -2534,7 +2534,7 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 {
 	struct stat info;
 	std::string base = getRomsPath() + "/" + name;
-	int has_system = 0, has_data = 0;
+	int has_system = 0, has_system_image = 0, has_data = 0;
 
 	if(stat((path + "/boot.emmc.win").c_str(), &info) < 0)
 	{
@@ -2554,14 +2554,16 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 	{
 		if(strstr(dr->d_name, "system.") == dr->d_name)
 			has_system = 1;
+		else if(strstr(dr->d_name, "system_image.emmc.win") == dr->d_name)
+			has_system_image = 1;
 		else if(strstr(dr->d_name, "data.") == dr->d_name)
 			has_data = 1;
 	}
 	closedir(d);
 
-	if(!has_system)
+	if(!has_system && !has_system_image)
 	{
-		gui_print("Backup must contain system image!\n");
+		gui_print("Backup must contain System or System_Image!\n");
 		return false;
 	}
 
@@ -2588,12 +2590,42 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 	DataManager::SetValue(TW_SKIP_DIGEST_CHECK_VAR, 0);
 
 	// tw_restore_selected (aka Restore_List) used by Run_Restore has the format = '/boot;/cache;/system;/data;/recovery;'
-	if (!has_data)
-		DataManager::SetValue("tw_restore_selected", "/system;");
-	else
-		DataManager::SetValue("tw_restore_selected", "/system;/data;");
+	if (has_system)
+	{
+		// Favor System_Files even if there is a System_Image
+		if (!has_data)
+			DataManager::SetValue("tw_restore_selected", "/system;");
+		else
+			DataManager::SetValue("tw_restore_selected", "/system;/data;");
 
-	res = PartitionManager.Run_Restore(path);
+		res = PartitionManager.Run_Restore(path);
+	}
+	else
+	{
+		// System_Image
+		if (mkdir("/tmp/system", 777) == 0) {
+			std::string cmd = "mount -o loop,noatime,ro -t auto";
+			cmd += " \"" + path + "/system_image.emmc.win\"";
+			cmd += " /tmp/system";
+
+			int is_mounted = (TWFunc::Exec_Cmd(cmd) == 0);
+
+			if (is_mounted) {
+				res = copyPartWithXAttrs("/tmp", "", "system", false);
+				umount("/tmp/system");
+				if (res && has_data)
+				{
+					DataManager::SetValue("tw_restore_selected", "/data;");
+					res = PartitionManager.Run_Restore(path);
+				}
+			}
+			else
+				gui_print("Failed to mount System_Image!\n");
+			rmdir("/tmp/system");
+		}
+		else
+			gui_print("Failed to create temporary mountpoint!\n");
+	}
 
 	restoreMounts();
 	return res;
