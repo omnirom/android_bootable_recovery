@@ -110,3 +110,50 @@ TEST(RangeSetTest, iterators) {
   }
   ASSERT_EQ((std::vector<Range>{ Range{ 8, 10 }, Range{ 1, 5 } }), ranges);
 }
+
+TEST(RangeSetTest, tostring) {
+  ASSERT_EQ("2,1,6", RangeSet::Parse("2,1,6").ToString());
+  ASSERT_EQ("4,1,5,8,10", RangeSet::Parse("4,1,5,8,10").ToString());
+  ASSERT_EQ("6,1,3,4,6,15,22", RangeSet::Parse("6,1,3,4,6,15,22").ToString());
+}
+
+TEST(SortedRangeSetTest, insertion) {
+  SortedRangeSet rs({ { 2, 3 }, { 4, 6 }, { 8, 14 } });
+  rs.Insert({ 1, 2 });
+  ASSERT_EQ(SortedRangeSet({ { 1, 3 }, { 4, 6 }, { 8, 14 } }), rs);
+  ASSERT_EQ(static_cast<size_t>(10), rs.blocks());
+  rs.Insert({ 3, 5 });
+  ASSERT_EQ(SortedRangeSet({ { 1, 6 }, { 8, 14 } }), rs);
+  ASSERT_EQ(static_cast<size_t>(11), rs.blocks());
+
+  SortedRangeSet r1({ { 20, 22 }, { 15, 18 } });
+  rs.Insert(r1);
+  ASSERT_EQ(SortedRangeSet({ { 1, 6 }, { 8, 14 }, { 15, 18 }, { 20, 22 } }), rs);
+  ASSERT_EQ(static_cast<size_t>(16), rs.blocks());
+
+  SortedRangeSet r2({ { 2, 7 }, { 15, 21 }, { 20, 25 } });
+  rs.Insert(r2);
+  ASSERT_EQ(SortedRangeSet({ { 1, 7 }, { 8, 14 }, { 15, 25 } }), rs);
+  ASSERT_EQ(static_cast<size_t>(22), rs.blocks());
+}
+
+TEST(SortedRangeSetTest, file_range) {
+  SortedRangeSet rs;
+  rs.Insert(4096, 4096);
+  ASSERT_EQ(SortedRangeSet({ { 1, 2 } }), rs);
+  // insert block 2-9
+  rs.Insert(4096 * 3 - 1, 4096 * 7);
+  ASSERT_EQ(SortedRangeSet({ { 1, 10 } }), rs);
+  // insert block 15-19
+  rs.Insert(4096 * 15 + 1, 4096 * 4);
+  ASSERT_EQ(SortedRangeSet({ { 1, 10 }, { 15, 20 } }), rs);
+
+  // rs overlaps block 2-2
+  ASSERT_TRUE(rs.Overlaps(4096 * 2 - 1, 10));
+  ASSERT_FALSE(rs.Overlaps(4096 * 10, 4096 * 5));
+
+  ASSERT_EQ(static_cast<size_t>(10), rs.GetOffsetInRangeSet(4106));
+  ASSERT_EQ(static_cast<size_t>(40970), rs.GetOffsetInRangeSet(4096 * 16 + 10));
+  // block#10 not in range.
+  ASSERT_EXIT(rs.GetOffsetInRangeSet(40970), ::testing::KilledBySignal(SIGABRT), "");
+}
