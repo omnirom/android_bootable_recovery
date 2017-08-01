@@ -170,6 +170,7 @@ class RecoveryUI {
   int touch_start_Y_;
   bool touch_finger_down_;
   bool touch_swiping_;
+  bool is_bootreason_recovery_ui_;
 
   struct key_timer_t {
     RecoveryUI* ui;
