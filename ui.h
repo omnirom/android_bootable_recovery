@@ -82,6 +82,12 @@ class RecoveryUI {
   // otherwise.
   virtual bool HasThreeButtons();
 
+  // Returns true if it has a power key.
+  virtual bool HasPowerKey() const;
+
+  // Returns true if it supports touch inputs.
+  virtual bool HasTouchScreen() const;
+
   // Erases any queued-up keys.
   virtual void FlushKeys();
 
@@ -129,7 +135,14 @@ class RecoveryUI {
   unsigned int brightness_normal_;
   unsigned int brightness_dimmed_;
 
+  // Whether we should listen for touch inputs (default: false).
+  bool touch_screen_allowed_;
+
  private:
+  // The sensitivity when detecting a swipe.
+  const int kTouchLowThreshold;
+  const int kTouchHighThreshold;
+
   // Key event input queue
   pthread_mutex_t key_queue_mutex;
   pthread_cond_t key_queue_cond;
@@ -147,6 +160,16 @@ class RecoveryUI {
   bool has_power_key;
   bool has_up_key;
   bool has_down_key;
+  bool has_touch_screen;
+
+  // Touch event related variables. See the comments in RecoveryUI::OnInputEvent().
+  int touch_slot_;
+  int touch_X_;
+  int touch_Y_;
+  int touch_start_X_;
+  int touch_start_Y_;
+  bool touch_finger_down_;
+  bool touch_swiping_;
 
   struct key_timer_t {
     RecoveryUI* ui;
@@ -157,6 +180,7 @@ class RecoveryUI {
   pthread_t input_thread_;
 
   void OnKeyDetected(int key_code);
+  void OnTouchDetected(int dx, int dy);
   int OnInputEvent(int fd, uint32_t epevents);
   void ProcessKey(int key_code, int updown);
 
