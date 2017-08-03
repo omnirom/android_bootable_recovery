@@ -69,6 +69,7 @@ RecoveryUI::RecoveryUI()
       has_down_key(false),
       has_touch_screen(false),
       touch_slot_(0),
+      is_bootreason_recovery_ui_(false),
       screensaver_state_(ScreensaverState::DISABLED) {
   pthread_mutex_init(&key_queue_mutex, nullptr);
   pthread_cond_init(&key_queue_cond, nullptr);
@@ -142,6 +143,19 @@ bool RecoveryUI::Init(const std::string& locale) {
 
   if (touch_screen_allowed_) {
     ev_iterate_touch_inputs(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
+
+    // Parse /proc/cmdline to determine if it's booting into recovery with a bootreason of
+    // "recovery_ui". This specific reason is set by some (wear) bootloaders, to allow an easier way
+    // to turn on text mode. It will only be set if the recovery boot is triggered from fastboot, or
+    // with 'adb reboot recovery'. Note that this applies to all build variants. Otherwise the text
+    // mode will be turned on automatically on debuggable builds, even without a swipe.
+    std::string cmdline;
+    if (android::base::ReadFileToString("/proc/cmdline", &cmdline)) {
+      is_bootreason_recovery_ui_ = cmdline.find("bootreason=recovery_ui") != std::string::npos;
+    } else {
+      // Non-fatal, and won't affect Init() result.
+      PLOG(WARNING) << "Failed to read /proc/cmdline";
+    }
   }
 
   if (!InitScreensaver()) {
@@ -165,6 +179,12 @@ void RecoveryUI::OnTouchDetected(int dx, int dy) {
   } else {
     LOG(DEBUG) << "Ignored " << dx << " " << dy << " (low: " << kTouchLowThreshold
                << ", high: " << kTouchHighThreshold << ")";
+    return;
+  }
+
+  // Allow turning on text mode with any swipe, if bootloader has set a bootreason of recovery_ui.
+  if (is_bootreason_recovery_ui_ && !IsTextVisible()) {
+    ShowText(true);
     return;
   }
 
