@@ -51,10 +51,15 @@ static double now() {
 }
 
 WearRecoveryUI::WearRecoveryUI()
-    : progress_bar_y(259), outer_height(0), outer_width(0), menu_unusable_rows(0) {
+    : kProgressBarBaseline(RECOVERY_UI_PROGRESS_BAR_BASELINE), menu_unusable_rows(9) {
+  // TODO: menu_unusable_rows should be computed based on the lines in draw_screen_locked().
+
+  // TODO: The following three variables are likely not needed. The first two are detected
+  // automatically in ScreenRecoveryUI::LoadAnimation(), based on the actual files seen on device.
   intro_frames = 22;
   loop_frames = 60;
-  animation_fps = 30;
+
+  touch_screen_allowed_ = true;
 
   for (size_t i = 0; i < 5; i++) backgroundIcon[i] = NULL;
 
@@ -62,7 +67,7 @@ WearRecoveryUI::WearRecoveryUI()
 }
 
 int WearRecoveryUI::GetProgressBaseline() const {
-  return progress_bar_y;
+  return kProgressBarBaseline;
 }
 
 // Draw background frame on the screen.  Does not flip pages.
@@ -113,8 +118,8 @@ void WearRecoveryUI::draw_screen_locked() {
     SetColor(TEXT_FILL);
     gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
-    int y = outer_height;
-    int x = outer_width;
+    int y = kMarginHeight;
+    int x = kMarginWidth;
     if (show_menu) {
       std::string recovery_fingerprint =
           android::base::GetProperty("ro.bootimage.build.fingerprint", "");
@@ -170,7 +175,7 @@ void WearRecoveryUI::draw_screen_locked() {
     int ty;
     int row = (text_top_ + text_rows_ - 1) % text_rows_;
     size_t count = 0;
-    for (int ty = gr_fb_height() - char_height_ - outer_height; ty > y + 2 && count < text_rows_;
+    for (int ty = gr_fb_height() - char_height_ - kMarginHeight; ty > y + 2 && count < text_rows_;
          ty -= char_height_, ++count) {
       gr_text(gr_sys_font(), x + 4, ty, text_[row], 0);
       --row;
@@ -190,12 +195,12 @@ bool WearRecoveryUI::InitTextParams() {
     return false;
   }
 
-  text_cols_ = (gr_fb_width() - (outer_width * 2)) / char_width_;
+  text_cols_ = (gr_fb_width() - (kMarginWidth * 2)) / char_width_;
 
   if (text_rows_ > kMaxRows) text_rows_ = kMaxRows;
   if (text_cols_ > kMaxCols) text_cols_ = kMaxCols;
 
-  visible_text_rows = (gr_fb_height() - (outer_height * 2)) / char_height_;
+  visible_text_rows = (gr_fb_height() - (kMarginHeight * 2)) / char_height_;
   return true;
 }
 
