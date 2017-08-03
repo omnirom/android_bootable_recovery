@@ -53,6 +53,7 @@ static double now() {
 ScreenRecoveryUI::ScreenRecoveryUI()
     : kMarginWidth(RECOVERY_UI_MARGIN_WIDTH),
       kMarginHeight(RECOVERY_UI_MARGIN_HEIGHT),
+      kAnimationFps(RECOVERY_UI_ANIMATION_FPS),
       density_(static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f),
       currentIcon(NONE),
       progressBarType(EMPTY),
@@ -77,7 +78,6 @@ ScreenRecoveryUI::ScreenRecoveryUI()
       loop_frames(0),
       current_frame(0),
       intro_done(false),
-      animation_fps(30),  // TODO: there's currently no way to infer this.
       stage(-1),
       max_stage(-1),
       updateMutex(PTHREAD_MUTEX_INITIALIZER) {}
@@ -375,7 +375,7 @@ void* ScreenRecoveryUI::ProgressThreadStartRoutine(void* data) {
 }
 
 void ScreenRecoveryUI::ProgressThreadLoop() {
-  double interval = 1.0 / animation_fps;
+  double interval = 1.0 / kAnimationFps;
   while (true) {
     double start = now();
     pthread_mutex_lock(&updateMutex);

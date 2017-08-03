@@ -84,6 +84,9 @@ class ScreenRecoveryUI : public RecoveryUI {
   const int kMarginWidth;
   const int kMarginHeight;
 
+  // Number of frames per sec (default: 30) for both parts of the animation.
+  const int kAnimationFps;
+
   // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
   const float density_;
 
@@ -140,9 +143,6 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   size_t current_frame;
   bool intro_done;
-
-  // Number of frames per sec (default: 30) for both parts of the animation.
-  int animation_fps;
 
   int stage, max_stage;
 
