@@ -196,7 +196,8 @@ class ImageChunk {
   size_t DataLengthForPatch() const;
 
   void Dump() const {
-    printf("type %d start %zu len %zu\n", type_, start_, DataLengthForPatch());
+    printf("type: %d, start: %zu, len: %zu, name: %s\n", type_, start_, DataLengthForPatch(),
+           entry_name_.c_str());
   }
 
   void SetSourceInfo(const ImageChunk& other);
@@ -211,7 +212,7 @@ class ImageChunk {
 
   size_t GetHeaderSize(size_t patch_size) const;
   // Return the offset of the next patch into the patch data.
-  size_t WriteHeaderToFd(int fd, const std::vector<uint8_t>& patch, size_t offset);
+  size_t WriteHeaderToFd(int fd, const std::vector<uint8_t>& patch, size_t offset) const;
 
   /*
    * Cause a gzip chunk to be treated as a normal chunk (ie, as a blob
@@ -232,6 +233,14 @@ class ImageChunk {
   bool ReconstructDeflateChunk();
   bool IsAdjacentNormal(const ImageChunk& other) const;
   void MergeAdjacentNormal(const ImageChunk& other);
+
+  /*
+   * Compute a bsdiff patch between |this| and the input source chunks.
+   * Store the result in the patch_data.
+   * |bsdiff_cache| can be used to cache the suffix array if the same |src| chunk is used
+   * repeatedly, pass nullptr if not needed.
+   */
+  bool MakePatch(const ImageChunk& src, std::vector<uint8_t>* patch_data, saidx_t** bsdiff_cache);
 
  private:
   int type_;                                    // CHUNK_NORMAL, CHUNK_DEFLATE, CHUNK_RAW
@@ -322,7 +331,7 @@ bool ImageChunk::ChangeChunkToRaw(size_t patch_size) {
 void ImageChunk::ChangeDeflateChunkToNormal() {
   if (type_ != CHUNK_DEFLATE) return;
   type_ = CHUNK_NORMAL;
-  entry_name_.clear();
+  // No need to clear the entry name.
   uncompressed_data_.clear();
 }
 
@@ -345,7 +354,7 @@ size_t ImageChunk::GetHeaderSize(size_t patch_size) const {
   }
 }
 
-size_t ImageChunk::WriteHeaderToFd(int fd, const std::vector<uint8_t>& patch, size_t offset) {
+size_t ImageChunk::WriteHeaderToFd(int fd, const std::vector<uint8_t>& patch, size_t offset) const {
   Write4(fd, type_);
   switch (type_) {
     case CHUNK_NORMAL:
@@ -391,6 +400,68 @@ bool ImageChunk::IsAdjacentNormal(const ImageChunk& other) const {
 void ImageChunk::MergeAdjacentNormal(const ImageChunk& other) {
   CHECK(IsAdjacentNormal(other));
   raw_data_len_ = raw_data_len_ + other.raw_data_len_;
+}
+
+bool ImageChunk::MakePatch(const ImageChunk& src, std::vector<uint8_t>* patch_data,
+                           saidx_t** bsdiff_cache) {
+  if (ChangeChunkToRaw(0)) {
+    size_t patch_size = DataLengthForPatch();
+    patch_data->resize(patch_size);
+    std::copy(DataForPatch(), DataForPatch() + patch_size, patch_data->begin());
+    return true;
+  }
+
+#if defined(__ANDROID__)
+  char ptemp[] = "/data/local/tmp/imgdiff-patch-XXXXXX";
+#else
+  char ptemp[] = "/tmp/imgdiff-patch-XXXXXX";
+#endif
+
+  int fd = mkstemp(ptemp);
+  if (fd == -1) {
+    printf("MakePatch failed to create a temporary file: %s\n", strerror(errno));
+    return false;
+  }
+  close(fd);
+
+  int r = bsdiff::bsdiff(src.DataForPatch(), src.DataLengthForPatch(), DataForPatch(),
+                         DataLengthForPatch(), ptemp, bsdiff_cache);
+  if (r != 0) {
+    printf("bsdiff() failed: %d\n", r);
+    return false;
+  }
+
+  android::base::unique_fd patch_fd(open(ptemp, O_RDONLY));
+  if (patch_fd == -1) {
+    printf("failed to open %s: %s\n", ptemp, strerror(errno));
+    return false;
+  }
+  struct stat st;
+  if (fstat(patch_fd, &st) != 0) {
+    printf("failed to stat patch file %s: %s\n", ptemp, strerror(errno));
+    return false;
+  }
+
+  size_t sz = static_cast<size_t>(st.st_size);
+  // Change the chunk type to raw if the patch takes less space that way.
+  if (ChangeChunkToRaw(sz)) {
+    unlink(ptemp);
+    size_t patch_size = DataLengthForPatch();
+    patch_data->resize(patch_size);
+    std::copy(DataForPatch(), DataForPatch() + patch_size, patch_data->begin());
+    return true;
+  }
+  patch_data->resize(sz);
+  if (!android::base::ReadFully(patch_fd, patch_data->data(), sz)) {
+    printf("failed to read \"%s\" %s\n", ptemp, strerror(errno));
+    unlink(ptemp);
+    return false;
+  }
+
+  unlink(ptemp);
+  SetSourceInfo(src);
+
+  return true;
 }
 
 bool ImageChunk::ReconstructDeflateChunk() {
@@ -458,29 +529,347 @@ bool ImageChunk::TryReconstruction(int level) {
   return true;
 }
 
+// Interface for zip_mode and image_mode images. We initialize the image from an input file and
+// split the file content into a list of image chunks.
+class Image {
+ public:
+  explicit Image(bool is_source) : is_source_(is_source) {}
+
+  virtual ~Image() {}
+
+  // Create a list of image chunks from input file.
+  virtual bool Initialize(const std::string& filename) = 0;
+
+  // Look for runs of adjacent normal chunks and compress them down into a single chunk.  (Such
+  // runs can be produced when deflate chunks are changed to normal chunks.)
+  void MergeAdjacentNormalChunks();
+
+  // In zip mode, find the matching deflate source chunk by entry name. Search for normal chunks
+  // also if |find_normal| is true.
+  ImageChunk* FindChunkByName(const std::string& name, bool find_normal = false);
+
+  // Write the contents of |patch_data| to |patch_fd|.
+  bool WritePatchDataToFd(const std::vector<std::vector<uint8_t>>& patch_data, int patch_fd) const;
+
+  void DumpChunks() const;
+
+  // Non const iterators to access the stored ImageChunks.
+  std::vector<ImageChunk>::iterator begin() {
+    return chunks_.begin();
+  }
+
+  std::vector<ImageChunk>::iterator end() {
+    return chunks_.end();
+  }
+  // Return a pointer to the ith ImageChunk.
+  ImageChunk* Get(size_t i) {
+    CHECK_LT(i, chunks_.size());
+    return &chunks_[i];
+  }
+
+  size_t NumOfChunks() const {
+    return chunks_.size();
+  }
+
+ protected:
+  bool ReadFile(const std::string& filename, std::vector<uint8_t>* file_content);
+
+  bool is_source_;                     // True if it's for source chunks.
+  std::vector<ImageChunk> chunks_;     // Internal storage of ImageChunk.
+  std::vector<uint8_t> file_content_;  // Store the whole input file in memory.
+};
+
+void Image::MergeAdjacentNormalChunks() {
+  size_t merged_last = 0, cur = 0;
+  while (cur < chunks_.size()) {
+    // Look for normal chunks adjacent to the current one. If such chunk exists, extend the
+    // length of the current normal chunk.
+    size_t to_check = cur + 1;
+    while (to_check < chunks_.size() && chunks_[cur].IsAdjacentNormal(chunks_[to_check])) {
+      chunks_[cur].MergeAdjacentNormal(chunks_[to_check]);
+      to_check++;
+    }
+
+    if (merged_last != cur) {
+      chunks_[merged_last] = std::move(chunks_[cur]);
+    }
+    merged_last++;
+    cur = to_check;
+  }
+  if (merged_last < chunks_.size()) {
+    chunks_.erase(chunks_.begin() + merged_last, chunks_.end());
+  }
+}
+
+ImageChunk* Image::FindChunkByName(const std::string& name, bool find_normal) {
+  if (name.empty()) {
+    return nullptr;
+  }
+  for (auto& chunk : chunks_) {
+    if ((chunk.GetType() == CHUNK_DEFLATE || find_normal) && chunk.GetEntryName() == name) {
+      return &chunk;
+    }
+  }
+  return nullptr;
+}
+
+bool Image::WritePatchDataToFd(const std::vector<std::vector<uint8_t>>& patch_data,
+                               int patch_fd) const {
+  // Figure out how big the imgdiff file header is going to be, so that we can correctly compute
+  // the offset of each bsdiff patch within the file.
+  CHECK_EQ(chunks_.size(), patch_data.size());
+  size_t total_header_size = 12;
+  for (size_t i = 0; i < chunks_.size(); ++i) {
+    total_header_size += chunks_[i].GetHeaderSize(patch_data[i].size());
+  }
+
+  size_t offset = total_header_size;
+
+  // Write out the headers.
+  if (!android::base::WriteStringToFd("IMGDIFF2", patch_fd)) {
+    printf("failed to write \"IMGDIFF2\": %s\n", strerror(errno));
+    return false;
+  }
+  Write4(patch_fd, static_cast<int32_t>(chunks_.size()));
+  for (size_t i = 0; i < chunks_.size(); ++i) {
+    printf("chunk %zu: ", i);
+    offset = chunks_[i].WriteHeaderToFd(patch_fd, patch_data[i], offset);
+  }
+
+  // Append each chunk's bsdiff patch, in order.
+  for (size_t i = 0; i < chunks_.size(); ++i) {
+    if (chunks_[i].GetType() != CHUNK_RAW) {
+      if (!android::base::WriteFully(patch_fd, patch_data[i].data(), patch_data[i].size())) {
+        printf("failed to write %zu bytes patch for chunk %zu\n", patch_data[i].size(), i);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+void Image::DumpChunks() const {
+  std::string type = is_source_ ? "source" : "target";
+  printf("Dumping chunks for %s\n", type.c_str());
+  for (size_t i = 0; i < chunks_.size(); ++i) {
+    printf("chunk %zu: ", i);
+    chunks_[i].Dump();
+  }
+}
+
+bool Image::ReadFile(const std::string& filename, std::vector<uint8_t>* file_content) {
+  CHECK(file_content != nullptr);
+
+  android::base::unique_fd fd(open(filename.c_str(), O_RDONLY));
+  if (fd == -1) {
+    printf("failed to open \"%s\" %s\n", filename.c_str(), strerror(errno));
+    return false;
+  }
+  struct stat st;
+  if (fstat(fd, &st) != 0) {
+    printf("failed to stat \"%s\": %s\n", filename.c_str(), strerror(errno));
+    return false;
+  }
+
+  size_t sz = static_cast<size_t>(st.st_size);
+  file_content->resize(sz);
+  if (!android::base::ReadFully(fd, file_content->data(), sz)) {
+    printf("failed to read \"%s\" %s\n", filename.c_str(), strerror(errno));
+    return false;
+  }
+  fd.reset();
+
+  return true;
+}
+
+class ZipModeImage : public Image {
+ public:
+  explicit ZipModeImage(bool is_source) : Image(is_source) {}
+
+  bool Initialize(const std::string& filename) override;
+
+  const ImageChunk& PseudoSource() const {
+    CHECK(is_source_);
+    CHECK(pseudo_source_ != nullptr);
+    return *pseudo_source_;
+  }
+
+  // Verify that we can reconstruct the deflate chunks; also change the type to CHUNK_NORMAL if
+  // src and tgt are identical.
+  static bool CheckAndProcessChunks(ZipModeImage* tgt_image, ZipModeImage* src_image);
+
+  // Compute the patches against the input image, and write the data into |patch_name|.
+  static bool GeneratePatches(ZipModeImage* tgt_image, ZipModeImage* src_image,
+                              const std::string& patch_name);
+
+ private:
+  // Initialize image chunks based on the zip entries.
+  bool InitializeChunks(const std::string& filename, ZipArchiveHandle handle);
+  // Add the a zip entry to the list.
+  bool AddZipEntryToChunks(ZipArchiveHandle handle, const std::string& entry_name, ZipEntry* entry);
+  // Return the real size of the zip file. (omit the trailing zeros that used for alignment)
+  bool GetZipFileSize(size_t* input_file_size);
+
+  // The pesudo source chunk for bsdiff if there's no match for the given target chunk. It's in
+  // fact the whole source file.
+  std::unique_ptr<ImageChunk> pseudo_source_;
+};
+
+bool ZipModeImage::Initialize(const std::string& filename) {
+  if (!ReadFile(filename, &file_content_)) {
+    return false;
+  }
+
+  // Omit the trailing zeros before we pass the file to ziparchive handler.
+  size_t zipfile_size;
+  if (!GetZipFileSize(&zipfile_size)) {
+    printf("failed to parse the actual size of %s\n", filename.c_str());
+    return false;
+  }
+  ZipArchiveHandle handle;
+  int err = OpenArchiveFromMemory(const_cast<uint8_t*>(file_content_.data()), zipfile_size,
+                                  filename.c_str(), &handle);
+  if (err != 0) {
+    printf("failed to open zip file %s: %s\n", filename.c_str(), ErrorCodeString(err));
+    CloseArchive(handle);
+    return false;
+  }
+
+  if (is_source_) {
+    pseudo_source_ = std::make_unique<ImageChunk>(CHUNK_NORMAL, 0, &file_content_, zipfile_size);
+  }
+  if (!InitializeChunks(filename, handle)) {
+    CloseArchive(handle);
+    return false;
+  }
+
+  CloseArchive(handle);
+  return true;
+}
+
+// Iterate the zip entries and compose the image chunks accordingly.
+bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandle handle) {
+  void* cookie;
+  int ret = StartIteration(handle, &cookie, nullptr, nullptr);
+  if (ret != 0) {
+    printf("failed to iterate over entries in %s: %s\n", filename.c_str(), ErrorCodeString(ret));
+    return false;
+  }
+
+  // Create a list of deflated zip entries, sorted by offset.
+  std::vector<std::pair<std::string, ZipEntry>> temp_entries;
+  ZipString name;
+  ZipEntry entry;
+  while ((ret = Next(cookie, &entry, &name)) == 0) {
+    if (entry.method == kCompressDeflated) {
+      std::string entry_name(name.name, name.name + name.name_length);
+      temp_entries.emplace_back(entry_name, entry);
+    }
+  }
+
+  if (ret != -1) {
+    printf("Error while iterating over zip entries: %s\n", ErrorCodeString(ret));
+    return false;
+  }
+  std::sort(temp_entries.begin(), temp_entries.end(),
+            [](auto& entry1, auto& entry2) { return entry1.second.offset < entry2.second.offset; });
+
+  EndIteration(cookie);
+
+  // For source chunks, we don't need to compose chunks for the metadata.
+  if (is_source_) {
+    for (auto& entry : temp_entries) {
+      if (!AddZipEntryToChunks(handle, entry.first, &entry.second)) {
+        printf("Failed to add %s to source chunks\n", entry.first.c_str());
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // For target chunks, add the deflate entries as CHUNK_DEFLATE and the contents between two
+  // deflate entries as CHUNK_NORMAL.
+  size_t pos = 0;
+  size_t nextentry = 0;
+  while (pos < file_content_.size()) {
+    if (nextentry < temp_entries.size() &&
+        static_cast<off64_t>(pos) == temp_entries[nextentry].second.offset) {
+      // Add the next zip entry.
+      std::string entry_name = temp_entries[nextentry].first;
+      if (!AddZipEntryToChunks(handle, entry_name, &temp_entries[nextentry].second)) {
+        printf("Failed to add %s to target chunks\n", entry_name.c_str());
+        return false;
+      }
+
+      pos += temp_entries[nextentry].second.compressed_length;
+      ++nextentry;
+      continue;
+    }
+
+    // Use a normal chunk to take all the data up to the start of the next entry.
+    size_t raw_data_len;
+    if (nextentry < temp_entries.size()) {
+      raw_data_len = temp_entries[nextentry].second.offset - pos;
+    } else {
+      raw_data_len = file_content_.size() - pos;
+    }
+    chunks_.emplace_back(CHUNK_NORMAL, pos, &file_content_, raw_data_len);
+
+    pos += raw_data_len;
+  }
+
+  return true;
+}
+
+bool ZipModeImage::AddZipEntryToChunks(ZipArchiveHandle handle, const std::string& entry_name,
+                                       ZipEntry* entry) {
+  size_t compressed_len = entry->compressed_length;
+  if (entry->method == kCompressDeflated) {
+    size_t uncompressed_len = entry->uncompressed_length;
+    std::vector<uint8_t> uncompressed_data(uncompressed_len);
+    int ret = ExtractToMemory(handle, entry, uncompressed_data.data(), uncompressed_len);
+    if (ret != 0) {
+      printf("failed to extract %s with size %zu: %s\n", entry_name.c_str(), uncompressed_len,
+             ErrorCodeString(ret));
+      return false;
+    }
+    ImageChunk curr(CHUNK_DEFLATE, entry->offset, &file_content_, compressed_len);
+    curr.SetEntryName(entry_name);
+    curr.SetUncompressedData(std::move(uncompressed_data));
+    chunks_.push_back(curr);
+  } else {
+    ImageChunk curr(CHUNK_NORMAL, entry->offset, &file_content_, compressed_len);
+    curr.SetEntryName(entry_name);
+    chunks_.push_back(curr);
+  }
+
+  return true;
+}
+
 // EOCD record
 // offset 0: signature 0x06054b50, 4 bytes
 // offset 4: number of this disk, 2 bytes
 // ...
 // offset 20: comment length, 2 bytes
 // offset 22: comment, n bytes
-static bool GetZipFileSize(const std::vector<uint8_t>& zip_file, size_t* input_file_size) {
-  if (zip_file.size() < 22) {
+bool ZipModeImage::GetZipFileSize(size_t* input_file_size) {
+  if (file_content_.size() < 22) {
     printf("file is too small to be a zip file\n");
     return false;
   }
 
   // Look for End of central directory record of the zip file, and calculate the actual
   // zip_file size.
-  for (int i = zip_file.size() - 22; i >= 0; i--) {
-    if (zip_file[i] == 0x50) {
-      if (get_unaligned<uint32_t>(&zip_file[i]) == 0x06054b50) {
+  for (int i = file_content_.size() - 22; i >= 0; i--) {
+    if (file_content_[i] == 0x50) {
+      if (get_unaligned<uint32_t>(&file_content_[i]) == 0x06054b50) {
         // double-check: this archive consists of a single "disk".
-        CHECK_EQ(get_unaligned<uint16_t>(&zip_file[i + 4]), 0);
+        CHECK_EQ(get_unaligned<uint16_t>(&file_content_[i + 4]), 0);
 
-        uint16_t comment_length = get_unaligned<uint16_t>(&zip_file[i + 20]);
+        uint16_t comment_length = get_unaligned<uint16_t>(&file_content_[i + 20]);
         size_t file_size = i + 22 + comment_length;
-        CHECK_LE(file_size, zip_file.size());
+        CHECK_LE(file_size, file_content_.size());
         *input_file_size = file_size;
         return true;
       }
@@ -491,162 +880,116 @@ static bool GetZipFileSize(const std::vector<uint8_t>& zip_file, size_t* input_f
   return false;
 }
 
-static bool ReadZip(const char* filename, std::vector<ImageChunk>* chunks,
-                    std::vector<uint8_t>* zip_file, bool include_pseudo_chunk) {
-  CHECK(chunks != nullptr && zip_file != nullptr);
-
-  android::base::unique_fd fd(open(filename, O_RDONLY));
-  if (fd == -1) {
-    printf("failed to open \"%s\" %s\n", filename, strerror(errno));
-    return false;
-  }
-  struct stat st;
-  if (fstat(fd, &st) != 0) {
-    printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
-    return false;
-  }
-
-  size_t sz = static_cast<size_t>(st.st_size);
-  zip_file->resize(sz);
-  if (!android::base::ReadFully(fd, zip_file->data(), sz)) {
-    printf("failed to read \"%s\" %s\n", filename, strerror(errno));
-    return false;
-  }
-  fd.reset();
-
-  // Trim the trailing zeros before we pass the file to ziparchive handler.
-  size_t zipfile_size;
-  if (!GetZipFileSize(*zip_file, &zipfile_size)) {
-    printf("failed to parse the actual size of %s\n", filename);
-    return false;
-  }
-  ZipArchiveHandle handle;
-  int err = OpenArchiveFromMemory(zip_file->data(), zipfile_size, filename, &handle);
-  if (err != 0) {
-    printf("failed to open zip file %s: %s\n", filename, ErrorCodeString(err));
-    CloseArchive(handle);
-    return false;
-  }
-
-  // Create a list of deflated zip entries, sorted by offset.
-  std::vector<std::pair<std::string, ZipEntry>> temp_entries;
-  void* cookie;
-  int ret = StartIteration(handle, &cookie, nullptr, nullptr);
-  if (ret != 0) {
-    printf("failed to iterate over entries in %s: %s\n", filename, ErrorCodeString(ret));
-    CloseArchive(handle);
-    return false;
-  }
-
-  ZipString name;
-  ZipEntry entry;
-  while ((ret = Next(cookie, &entry, &name)) == 0) {
-    if (entry.method == kCompressDeflated) {
-      std::string entryname(name.name, name.name + name.name_length);
-      temp_entries.push_back(std::make_pair(entryname, entry));
-    }
-  }
-
-  if (ret != -1) {
-    printf("Error while iterating over zip entries: %s\n", ErrorCodeString(ret));
-    CloseArchive(handle);
-    return false;
-  }
-  std::sort(temp_entries.begin(), temp_entries.end(),
-            [](auto& entry1, auto& entry2) {
-              return entry1.second.offset < entry2.second.offset;
-            });
-
-  EndIteration(cookie);
-
-  if (include_pseudo_chunk) {
-    chunks->emplace_back(CHUNK_NORMAL, 0, zip_file, zip_file->size());
-  }
-
-  size_t pos = 0;
-  size_t nextentry = 0;
-  while (pos < zip_file->size()) {
-    if (nextentry < temp_entries.size() &&
-        static_cast<off64_t>(pos) == temp_entries[nextentry].second.offset) {
-      // compose the next deflate chunk.
-      std::string entryname = temp_entries[nextentry].first;
-      size_t uncompressed_len = temp_entries[nextentry].second.uncompressed_length;
-      std::vector<uint8_t> uncompressed_data(uncompressed_len);
-      if ((ret = ExtractToMemory(handle, &temp_entries[nextentry].second, uncompressed_data.data(),
-                                 uncompressed_len)) != 0) {
-        printf("failed to extract %s with size %zu: %s\n", entryname.c_str(), uncompressed_len,
-               ErrorCodeString(ret));
-        CloseArchive(handle);
-        return false;
-      }
-
-      size_t compressed_len = temp_entries[nextentry].second.compressed_length;
-      ImageChunk curr(CHUNK_DEFLATE, pos, zip_file, compressed_len);
-      curr.SetEntryName(std::move(entryname));
-      curr.SetUncompressedData(std::move(uncompressed_data));
-      chunks->push_back(curr);
-
-      pos += compressed_len;
-      ++nextentry;
+bool ZipModeImage::CheckAndProcessChunks(ZipModeImage* tgt_image, ZipModeImage* src_image) {
+  for (auto& tgt_chunk : *tgt_image) {
+    if (tgt_chunk.GetType() != CHUNK_DEFLATE) {
       continue;
     }
 
-    // Use a normal chunk to take all the data up to the start of the next deflate section.
-    size_t raw_data_len;
-    if (nextentry < temp_entries.size()) {
-      raw_data_len = temp_entries[nextentry].second.offset - pos;
-    } else {
-      raw_data_len = zip_file->size() - pos;
-    }
-    chunks->emplace_back(CHUNK_NORMAL, pos, zip_file, raw_data_len);
+    ImageChunk* src_chunk = src_image->FindChunkByName(tgt_chunk.GetEntryName());
+    if (src_chunk == nullptr) {
+      tgt_chunk.ChangeDeflateChunkToNormal();
+    } else if (tgt_chunk == *src_chunk) {
+      // If two deflate chunks are identical (eg, the kernel has not changed between two builds),
+      // treat them as normal chunks. This makes applypatch much faster -- it can apply a trivial
+      // patch to the compressed data, rather than uncompressing and recompressing to apply the
+      // trivial patch to the uncompressed data.
+      tgt_chunk.ChangeDeflateChunkToNormal();
+      src_chunk->ChangeDeflateChunkToNormal();
+    } else if (!tgt_chunk.ReconstructDeflateChunk()) {
+      // We cannot recompress the data and get exactly the same bits as are in the input target
+      // image. Treat the chunk as a normal non-deflated chunk.
+      printf("failed to reconstruct target deflate chunk [%s]; treating as normal\n",
+             tgt_chunk.GetEntryName().c_str());
 
-    pos += raw_data_len;
+      tgt_chunk.ChangeDeflateChunkToNormal();
+      src_chunk->ChangeDeflateChunkToNormal();
+    }
   }
 
-  CloseArchive(handle);
   return true;
 }
 
-// Read the given file and break it up into chunks, and putting the data in to a vector.
-static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
-                      std::vector<uint8_t>* img) {
-  CHECK(chunks != nullptr && img != nullptr);
+bool ZipModeImage::GeneratePatches(ZipModeImage* tgt_image, ZipModeImage* src_image,
+                                   const std::string& patch_name) {
+  // For zips, we only need merge normal chunks for the target:  deflated chunks are matched via
+  // filename, and normal chunks are patched using the entire source file as the source.
+  tgt_image->MergeAdjacentNormalChunks();
+  tgt_image->DumpChunks();
 
-  android::base::unique_fd fd(open(filename, O_RDONLY));
-  if (fd == -1) {
-    printf("failed to open \"%s\" %s\n", filename, strerror(errno));
+  printf("Construct patches for %zu chunks...\n", tgt_image->NumOfChunks());
+  std::vector<std::vector<uint8_t>> patch_data(tgt_image->NumOfChunks());
+
+  saidx_t* bsdiff_cache = nullptr;
+  size_t i = 0;
+  for (auto& tgt_chunk : *tgt_image) {
+    ImageChunk* src_chunk = (tgt_chunk.GetType() != CHUNK_DEFLATE)
+                                ? nullptr
+                                : src_image->FindChunkByName(tgt_chunk.GetEntryName());
+
+    const auto& src_ref = (src_chunk == nullptr) ? src_image->PseudoSource() : *src_chunk;
+    saidx_t** bsdiff_cache_ptr = (src_chunk == nullptr) ? &bsdiff_cache : nullptr;
+
+    if (!tgt_chunk.MakePatch(src_ref, &patch_data[i], bsdiff_cache_ptr)) {
+      printf("Failed to generate patch, name: %s\n", tgt_chunk.GetEntryName().c_str());
+      return false;
+    }
+
+    printf("patch %3zu is %zu bytes (of %zu)\n", i, patch_data[i].size(),
+           tgt_chunk.GetRawDataLength());
+    i++;
+  }
+  free(bsdiff_cache);
+
+  android::base::unique_fd patch_fd(
+      open(patch_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
+  if (patch_fd == -1) {
+    printf("failed to open \"%s\": %s\n", patch_name.c_str(), strerror(errno));
     return false;
   }
-  struct stat st;
-  if (fstat(fd, &st) != 0) {
-    printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
+
+  return tgt_image->WritePatchDataToFd(patch_data, patch_fd);
+}
+
+class ImageModeImage : public Image {
+ public:
+  explicit ImageModeImage(bool is_source) : Image(is_source) {}
+
+  // Initialize the image chunks list by searching the magic numbers in an image file.
+  bool Initialize(const std::string& filename) override;
+
+  // In Image Mode, verify that the source and target images have the same chunk structure (ie, the
+  // same sequence of deflate and normal chunks).
+  static bool CheckAndProcessChunks(ImageModeImage* tgt_image, ImageModeImage* src_image);
+
+  // In image mode, generate patches against the given source chunks and bonus_data; write the
+  // result to |patch_name|.
+  static bool GeneratePatches(ImageModeImage* tgt_image, ImageModeImage* src_image,
+                              const std::vector<uint8_t>& bonus_data, const std::string& patch_name);
+};
+
+bool ImageModeImage::Initialize(const std::string& filename) {
+  if (!ReadFile(filename, &file_content_)) {
     return false;
   }
 
-  size_t sz = static_cast<size_t>(st.st_size);
-  img->resize(sz);
-  if (!android::base::ReadFully(fd, img->data(), sz)) {
-    printf("failed to read \"%s\" %s\n", filename, strerror(errno));
-    return false;
-  }
-
+  size_t sz = file_content_.size();
   size_t pos = 0;
-
   while (pos < sz) {
     // 0x00 no header flags, 0x08 deflate compression, 0x1f8b gzip magic number
-    if (sz - pos >= 4 && get_unaligned<uint32_t>(img->data() + pos) == 0x00088b1f) {
+    if (sz - pos >= 4 && get_unaligned<uint32_t>(file_content_.data() + pos) == 0x00088b1f) {
       // 'pos' is the offset of the start of a gzip chunk.
       size_t chunk_offset = pos;
 
       // The remaining data is too small to be a gzip chunk; treat them as a normal chunk.
       if (sz - pos < GZIP_HEADER_LEN + GZIP_FOOTER_LEN) {
-        chunks->emplace_back(CHUNK_NORMAL, pos, img, sz - pos);
+        chunks_.emplace_back(CHUNK_NORMAL, pos, &file_content_, sz - pos);
         break;
       }
 
       // We need three chunks for the deflated image in total, one normal chunk for the header,
       // one deflated chunk for the body, and another normal chunk for the footer.
-      chunks->emplace_back(CHUNK_NORMAL, pos, img, GZIP_HEADER_LEN);
+      chunks_.emplace_back(CHUNK_NORMAL, pos, &file_content_, GZIP_HEADER_LEN);
       pos += GZIP_HEADER_LEN;
 
       // We must decompress this chunk in order to discover where it ends, and so we can update
@@ -657,7 +1000,7 @@ static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
       strm.zfree = Z_NULL;
       strm.opaque = Z_NULL;
       strm.avail_in = sz - pos;
-      strm.next_in = img->data() + pos;
+      strm.next_in = file_content_.data() + pos;
 
       // -15 means we are decoding a 'raw' deflate stream; zlib will
       // not expect zlib headers.
@@ -700,22 +1043,22 @@ static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
         printf("Warning: invalid footer position; treating as a nomal chunk\n");
         continue;
       }
-      size_t footer_size = get_unaligned<uint32_t>(img->data() + footer_index);
+      size_t footer_size = get_unaligned<uint32_t>(file_content_.data() + footer_index);
       if (footer_size != uncompressed_len) {
         printf("Warning: footer size %zu != decompressed size %zu; treating as a nomal chunk\n",
                footer_size, uncompressed_len);
         continue;
       }
 
-      ImageChunk body(CHUNK_DEFLATE, pos, img, raw_data_len);
+      ImageChunk body(CHUNK_DEFLATE, pos, &file_content_, raw_data_len);
       uncompressed_data.resize(uncompressed_len);
       body.SetUncompressedData(std::move(uncompressed_data));
-      chunks->push_back(body);
+      chunks_.push_back(body);
 
       pos += raw_data_len;
 
       // create a normal chunk for the footer
-      chunks->emplace_back(CHUNK_NORMAL, pos, img, GZIP_FOOTER_LEN);
+      chunks_.emplace_back(CHUNK_NORMAL, pos, &file_content_, GZIP_FOOTER_LEN);
 
       pos += GZIP_FOOTER_LEN;
     } else {
@@ -726,12 +1069,12 @@ static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
       size_t data_len = 0;
       while (data_len + pos < sz) {
         if (data_len + pos + 4 <= sz &&
-            get_unaligned<uint32_t>(img->data() + pos + data_len) == 0x00088b1f) {
+            get_unaligned<uint32_t>(file_content_.data() + pos + data_len) == 0x00088b1f) {
           break;
         }
         data_len++;
       }
-      chunks->emplace_back(CHUNK_NORMAL, pos, img, data_len);
+      chunks_.emplace_back(CHUNK_NORMAL, pos, &file_content_, data_len);
 
       pos += data_len;
     }
@@ -740,346 +1083,178 @@ static bool ReadImage(const char* filename, std::vector<ImageChunk>* chunks,
   return true;
 }
 
-/*
- * Given source and target chunks, compute a bsdiff patch between them.
- * Store the result in the patch_data.
- * |bsdiff_cache| can be used to cache the suffix array if the same |src| chunk
- * is used repeatedly, pass nullptr if not needed.
- */
-static bool MakePatch(const ImageChunk* src, ImageChunk* tgt, std::vector<uint8_t>* patch_data,
-                      saidx_t** bsdiff_cache) {
-  if (tgt->ChangeChunkToRaw(0)) {
-    size_t patch_size = tgt->DataLengthForPatch();
-    patch_data->resize(patch_size);
-    std::copy(tgt->DataForPatch(), tgt->DataForPatch() + patch_size, patch_data->begin());
-    return true;
-  }
+// In Image Mode, verify that the source and target images have the same chunk structure (ie, the
+// same sequence of deflate and normal chunks).
+bool ImageModeImage::CheckAndProcessChunks(ImageModeImage* tgt_image, ImageModeImage* src_image) {
+  // In image mode, merge the gzip header and footer in with any adjacent normal chunks.
+  tgt_image->MergeAdjacentNormalChunks();
+  src_image->MergeAdjacentNormalChunks();
 
-#if defined(__ANDROID__)
-  char ptemp[] = "/data/local/tmp/imgdiff-patch-XXXXXX";
-#else
-  char ptemp[] = "/tmp/imgdiff-patch-XXXXXX";
-#endif
-
-  int fd = mkstemp(ptemp);
-  if (fd == -1) {
-    printf("MakePatch failed to create a temporary file: %s\n", strerror(errno));
+  if (tgt_image->NumOfChunks() != src_image->NumOfChunks()) {
+    printf("source and target don't have same number of chunks!\n");
+    tgt_image->DumpChunks();
+    src_image->DumpChunks();
     return false;
   }
-  close(fd);
-
-  int r = bsdiff::bsdiff(src->DataForPatch(), src->DataLengthForPatch(), tgt->DataForPatch(),
-                         tgt->DataLengthForPatch(), ptemp, bsdiff_cache);
-  if (r != 0) {
-    printf("bsdiff() failed: %d\n", r);
-    return false;
+  for (size_t i = 0; i < tgt_image->NumOfChunks(); ++i) {
+    if (tgt_image->Get(i)->GetType() != src_image->Get(i)->GetType()) {
+      printf("source and target don't have same chunk structure! (chunk %zu)\n", i);
+      tgt_image->DumpChunks();
+      src_image->DumpChunks();
+      return false;
+    }
   }
 
-  android::base::unique_fd patch_fd(open(ptemp, O_RDONLY));
-  if (patch_fd == -1) {
-    printf("failed to open %s: %s\n", ptemp, strerror(errno));
-    return false;
-  }
-  struct stat st;
-  if (fstat(patch_fd, &st) != 0) {
-    printf("failed to stat patch file %s: %s\n", ptemp, strerror(errno));
-    return false;
+  for (size_t i = 0; i < tgt_image->NumOfChunks(); ++i) {
+    auto& tgt_chunk = *tgt_image->Get(i);
+    auto& src_chunk = *src_image->Get(i);
+    if (tgt_chunk.GetType() != CHUNK_DEFLATE) {
+      continue;
+    }
+
+    // Confirm that we can recompress the data and get exactly the same bits as are in the
+    // input target image.
+    if (!tgt_chunk.ReconstructDeflateChunk()) {
+      printf("failed to reconstruct target deflate chunk %zu [%s]; treating as normal\n", i,
+             tgt_chunk.GetEntryName().c_str());
+      tgt_chunk.ChangeDeflateChunkToNormal();
+      src_chunk.ChangeDeflateChunkToNormal();
+      continue;
+    }
+
+    // If two deflate chunks are identical treat them as normal chunks.
+    if (tgt_chunk == src_chunk) {
+      tgt_chunk.ChangeDeflateChunkToNormal();
+      src_chunk.ChangeDeflateChunkToNormal();
+    }
   }
 
-  size_t sz = static_cast<size_t>(st.st_size);
-  // Change the chunk type to raw if the patch takes less space that way.
-  if (tgt->ChangeChunkToRaw(sz)) {
-    unlink(ptemp);
-    size_t patch_size = tgt->DataLengthForPatch();
-    patch_data->resize(patch_size);
-    std::copy(tgt->DataForPatch(), tgt->DataForPatch() + patch_size, patch_data->begin());
-    return true;
-  }
-  patch_data->resize(sz);
-  if (!android::base::ReadFully(patch_fd, patch_data->data(), sz)) {
-    printf("failed to read \"%s\" %s\n", ptemp, strerror(errno));
+  // For images, we need to maintain the parallel structure of the chunk lists, so do the merging
+  // in both the source and target lists.
+  tgt_image->MergeAdjacentNormalChunks();
+  src_image->MergeAdjacentNormalChunks();
+  if (tgt_image->NumOfChunks() != src_image->NumOfChunks()) {
+    // This shouldn't happen.
+    printf("merging normal chunks went awry\n");
     return false;
   }
-
-  unlink(ptemp);
-  tgt->SetSourceInfo(*src);
 
   return true;
 }
 
-/*
- * Look for runs of adjacent normal chunks and compress them down into
- * a single chunk.  (Such runs can be produced when deflate chunks are
- * changed to normal chunks.)
- */
-static void MergeAdjacentNormalChunks(std::vector<ImageChunk>* chunks) {
-  size_t merged_last = 0, cur = 0;
-  while (cur < chunks->size()) {
-    // Look for normal chunks adjacent to the current one. If such chunk exists, extend the
-    // length of the current normal chunk.
-    size_t to_check = cur + 1;
-    while (to_check < chunks->size() && chunks->at(cur).IsAdjacentNormal(chunks->at(to_check))) {
-      chunks->at(cur).MergeAdjacentNormal(chunks->at(to_check));
-      to_check++;
+// In image mode, generate patches against the given source chunks and bonus_data; write the
+// result to |patch_name|.
+bool ImageModeImage::GeneratePatches(ImageModeImage* tgt_image, ImageModeImage* src_image,
+                                     const std::vector<uint8_t>& bonus_data,
+                                     const std::string& patch_name) {
+  printf("Construct patches for %zu chunks...\n", tgt_image->NumOfChunks());
+  std::vector<std::vector<uint8_t>> patch_data(tgt_image->NumOfChunks());
+
+  for (size_t i = 0; i < tgt_image->NumOfChunks(); i++) {
+    auto& tgt_chunk = *tgt_image->Get(i);
+    auto& src_chunk = *src_image->Get(i);
+
+    if (i == 1 && !bonus_data.empty()) {
+      printf("  using %zu bytes of bonus data for chunk %zu\n", bonus_data.size(), i);
+      src_chunk.SetBonusData(bonus_data);
     }
 
-    if (merged_last != cur) {
-      chunks->at(merged_last) = std::move(chunks->at(cur));
+    if (!tgt_chunk.MakePatch(src_chunk, &patch_data[i], nullptr)) {
+      printf("Failed to generate patch for target chunk %zu: ", i);
+      return false;
     }
-    merged_last++;
-    cur = to_check;
+    printf("patch %3zu is %zu bytes (of %zu)\n", i, patch_data[i].size(),
+           tgt_chunk.GetRawDataLength());
   }
-  if (merged_last < chunks->size()) {
-    chunks->erase(chunks->begin() + merged_last, chunks->end());
-  }
-}
 
-static ImageChunk* FindChunkByName(const std::string& name, std::vector<ImageChunk>& chunks) {
-  for (size_t i = 0; i < chunks.size(); ++i) {
-    if (chunks[i].GetType() == CHUNK_DEFLATE && chunks[i].GetEntryName() == name) {
-      return &chunks[i];
-    }
+  android::base::unique_fd patch_fd(
+      open(patch_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
+  if (patch_fd == -1) {
+    printf("failed to open \"%s\": %s\n", patch_name.c_str(), strerror(errno));
+    return false;
   }
-  return nullptr;
-}
 
-static void DumpChunks(const std::vector<ImageChunk>& chunks) {
-  for (size_t i = 0; i < chunks.size(); ++i) {
-    printf("chunk %zu: ", i);
-    chunks[i].Dump();
-  }
+  return tgt_image->WritePatchDataToFd(patch_data, patch_fd);
 }
 
 int imgdiff(int argc, const char** argv) {
   bool zip_mode = false;
-
-  if (argc >= 2 && strcmp(argv[1], "-z") == 0) {
-    zip_mode = true;
-    --argc;
-    ++argv;
-  }
-
   std::vector<uint8_t> bonus_data;
-  if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
-    android::base::unique_fd fd(open(argv[2], O_RDONLY));
-    if (fd == -1) {
-      printf("failed to open bonus file %s: %s\n", argv[2], strerror(errno));
-      return 1;
-    }
-    struct stat st;
-    if (fstat(fd, &st) != 0) {
-      printf("failed to stat bonus file %s: %s\n", argv[2], strerror(errno));
-      return 1;
-    }
 
-    size_t bonus_size = st.st_size;
-    bonus_data.resize(bonus_size);
-    if (!android::base::ReadFully(fd, bonus_data.data(), bonus_size)) {
-      printf("failed to read bonus file %s: %s\n", argv[2], strerror(errno));
-      return 1;
-    }
+  int opt;
+  optind = 1;  // Reset the getopt state so that we can call it multiple times for test.
 
-    argc -= 2;
-    argv += 2;
+  while ((opt = getopt(argc, const_cast<char**>(argv), "zb:")) != -1) {
+    switch (opt) {
+      case 'z':
+        zip_mode = true;
+        break;
+      case 'b': {
+        android::base::unique_fd fd(open(optarg, O_RDONLY));
+        if (fd == -1) {
+          printf("failed to open bonus file %s: %s\n", optarg, strerror(errno));
+          return 1;
+        }
+        struct stat st;
+        if (fstat(fd, &st) != 0) {
+          printf("failed to stat bonus file %s: %s\n", optarg, strerror(errno));
+          return 1;
+        }
+
+        size_t bonus_size = st.st_size;
+        bonus_data.resize(bonus_size);
+        if (!android::base::ReadFully(fd, bonus_data.data(), bonus_size)) {
+          printf("failed to read bonus file %s: %s\n", optarg, strerror(errno));
+          return 1;
+        }
+        break;
+      }
+      default:
+        printf("unexpected opt: %s\n", optarg);
+        return 2;
+    }
   }
 
-  if (argc != 4) {
-    printf("usage: %s [-z] [-b <bonus-file>] <src-img> <tgt-img> <patch-file>\n",
-            argv[0]);
+  if (argc - optind != 3) {
+    printf("usage: %s [-z] [-b <bonus-file>] <src-img> <tgt-img> <patch-file>\n", argv[0]);
     return 2;
   }
 
-  std::vector<ImageChunk> src_chunks;
-  std::vector<ImageChunk> tgt_chunks;
-  std::vector<uint8_t> src_file;
-  std::vector<uint8_t> tgt_file;
-
   if (zip_mode) {
-    if (!ReadZip(argv[1], &src_chunks, &src_file, true)) {
-      printf("failed to break apart source zip file\n");
+    ZipModeImage src_image(true);
+    ZipModeImage tgt_image(false);
+
+    if (!src_image.Initialize(argv[optind])) {
       return 1;
     }
-    if (!ReadZip(argv[2], &tgt_chunks, &tgt_file, false)) {
-      printf("failed to break apart target zip file\n");
+    if (!tgt_image.Initialize(argv[optind + 1])) {
+      return 1;
+    }
+
+    if (!ZipModeImage::CheckAndProcessChunks(&tgt_image, &src_image)) {
+      return 1;
+    }
+    // Compute bsdiff patches for each chunk's data (the uncompressed data, in the case of
+    // deflate chunks).
+    if (!ZipModeImage::GeneratePatches(&tgt_image, &src_image, argv[optind + 2])) {
       return 1;
     }
   } else {
-    if (!ReadImage(argv[1], &src_chunks, &src_file)) {
-      printf("failed to break apart source image\n");
+    ImageModeImage src_image(true);
+    ImageModeImage tgt_image(false);
+
+    if (!src_image.Initialize(argv[optind])) {
       return 1;
     }
-    if (!ReadImage(argv[2], &tgt_chunks, &tgt_file)) {
-      printf("failed to break apart target image\n");
+    if (!tgt_image.Initialize(argv[optind + 1])) {
       return 1;
     }
 
-    // Verify that the source and target images have the same chunk
-    // structure (ie, the same sequence of deflate and normal chunks).
-
-    // Merge the gzip header and footer in with any adjacent normal chunks.
-    MergeAdjacentNormalChunks(&tgt_chunks);
-    MergeAdjacentNormalChunks(&src_chunks);
-
-    if (src_chunks.size() != tgt_chunks.size()) {
-      printf("source and target don't have same number of chunks!\n");
-      printf("source chunks:\n");
-      DumpChunks(src_chunks);
-      printf("target chunks:\n");
-      DumpChunks(tgt_chunks);
+    if (!ImageModeImage::CheckAndProcessChunks(&tgt_image, &src_image)) {
       return 1;
     }
-    for (size_t i = 0; i < src_chunks.size(); ++i) {
-      if (src_chunks[i].GetType() != tgt_chunks[i].GetType()) {
-        printf("source and target don't have same chunk structure! (chunk %zu)\n", i);
-        printf("source chunks:\n");
-        DumpChunks(src_chunks);
-        printf("target chunks:\n");
-        DumpChunks(tgt_chunks);
-        return 1;
-      }
-    }
-  }
-
-  for (size_t i = 0; i < tgt_chunks.size(); ++i) {
-    if (tgt_chunks[i].GetType() == CHUNK_DEFLATE) {
-      // Confirm that given the uncompressed chunk data in the target, we
-      // can recompress it and get exactly the same bits as are in the
-      // input target image.  If this fails, treat the chunk as a normal
-      // non-deflated chunk.
-      if (!tgt_chunks[i].ReconstructDeflateChunk()) {
-        printf("failed to reconstruct target deflate chunk %zu [%s]; treating as normal\n", i,
-               tgt_chunks[i].GetEntryName().c_str());
-        tgt_chunks[i].ChangeDeflateChunkToNormal();
-        if (zip_mode) {
-          ImageChunk* src = FindChunkByName(tgt_chunks[i].GetEntryName(), src_chunks);
-          if (src != nullptr) {
-            src->ChangeDeflateChunkToNormal();
-          }
-        } else {
-          src_chunks[i].ChangeDeflateChunkToNormal();
-        }
-        continue;
-      }
-
-      // If two deflate chunks are identical (eg, the kernel has not
-      // changed between two builds), treat them as normal chunks.
-      // This makes applypatch much faster -- it can apply a trivial
-      // patch to the compressed data, rather than uncompressing and
-      // recompressing to apply the trivial patch to the uncompressed
-      // data.
-      ImageChunk* src;
-      if (zip_mode) {
-        src = FindChunkByName(tgt_chunks[i].GetEntryName(), src_chunks);
-      } else {
-        src = &src_chunks[i];
-      }
-
-      if (src == nullptr) {
-        tgt_chunks[i].ChangeDeflateChunkToNormal();
-      } else if (tgt_chunks[i] == *src) {
-        tgt_chunks[i].ChangeDeflateChunkToNormal();
-        src->ChangeDeflateChunkToNormal();
-      }
-    }
-  }
-
-  // Merging neighboring normal chunks.
-  if (zip_mode) {
-    // For zips, we only need to do this to the target:  deflated
-    // chunks are matched via filename, and normal chunks are patched
-    // using the entire source file as the source.
-    MergeAdjacentNormalChunks(&tgt_chunks);
-
-  } else {
-    // For images, we need to maintain the parallel structure of the
-    // chunk lists, so do the merging in both the source and target
-    // lists.
-    MergeAdjacentNormalChunks(&tgt_chunks);
-    MergeAdjacentNormalChunks(&src_chunks);
-    if (src_chunks.size() != tgt_chunks.size()) {
-      // This shouldn't happen.
-      printf("merging normal chunks went awry\n");
+    if (!ImageModeImage::GeneratePatches(&tgt_image, &src_image, bonus_data, argv[optind + 2])) {
       return 1;
-    }
-  }
-
-  // Compute bsdiff patches for each chunk's data (the uncompressed
-  // data, in the case of deflate chunks).
-
-  DumpChunks(src_chunks);
-
-  printf("Construct patches for %zu chunks...\n", tgt_chunks.size());
-  std::vector<std::vector<uint8_t>> patch_data(tgt_chunks.size());
-  saidx_t* bsdiff_cache = nullptr;
-  for (size_t i = 0; i < tgt_chunks.size(); ++i) {
-    if (zip_mode) {
-      ImageChunk* src;
-      if (tgt_chunks[i].GetType() == CHUNK_DEFLATE &&
-          (src = FindChunkByName(tgt_chunks[i].GetEntryName(), src_chunks))) {
-        if (!MakePatch(src, &tgt_chunks[i], &patch_data[i], nullptr)) {
-          printf("Failed to generate patch for target chunk %zu: ", i);
-          return 1;
-        }
-      } else {
-        if (!MakePatch(&src_chunks[0], &tgt_chunks[i], &patch_data[i], &bsdiff_cache)) {
-          printf("Failed to generate patch for target chunk %zu: ", i);
-          return 1;
-        }
-      }
-    } else {
-      if (i == 1 && !bonus_data.empty()) {
-        printf("  using %zu bytes of bonus data for chunk %zu\n", bonus_data.size(), i);
-        src_chunks[i].SetBonusData(bonus_data);
-      }
-
-      if (!MakePatch(&src_chunks[i], &tgt_chunks[i], &patch_data[i], nullptr)) {
-        printf("Failed to generate patch for target chunk %zu: ", i);
-        return 1;
-      }
-    }
-    printf("patch %3zu is %zu bytes (of %zu)\n", i, patch_data[i].size(),
-           src_chunks[i].GetRawDataLength());
-  }
-
-  if (bsdiff_cache != nullptr) {
-    free(bsdiff_cache);
-  }
-
-  // Figure out how big the imgdiff file header is going to be, so
-  // that we can correctly compute the offset of each bsdiff patch
-  // within the file.
-
-  size_t total_header_size = 12;
-  for (size_t i = 0; i < tgt_chunks.size(); ++i) {
-    total_header_size += tgt_chunks[i].GetHeaderSize(patch_data[i].size());
-  }
-
-  size_t offset = total_header_size;
-
-  android::base::unique_fd patch_fd(open(argv[3], O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
-  if (patch_fd == -1) {
-    printf("failed to open \"%s\": %s\n", argv[3], strerror(errno));
-    return 1;
-  }
-
-  // Write out the headers.
-  if (!android::base::WriteStringToFd("IMGDIFF2", patch_fd)) {
-    printf("failed to write \"IMGDIFF2\" to \"%s\": %s\n", argv[3], strerror(errno));
-    return 1;
-  }
-  Write4(patch_fd, static_cast<int32_t>(tgt_chunks.size()));
-  for (size_t i = 0; i < tgt_chunks.size(); ++i) {
-    printf("chunk %zu: ", i);
-    offset = tgt_chunks[i].WriteHeaderToFd(patch_fd, patch_data[i], offset);
-  }
-
-  // Append each chunk's bsdiff patch, in order.
-  for (size_t i = 0; i < tgt_chunks.size(); ++i) {
-    if (tgt_chunks[i].GetType() != CHUNK_RAW) {
-      if (!android::base::WriteFully(patch_fd, patch_data[i].data(), patch_data[i].size())) {
-        CHECK(false) << "failed to write " << patch_data[i].size() << " bytes patch for chunk "
-                     << i;
-      }
     }
   }
 
