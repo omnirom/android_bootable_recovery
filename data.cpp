@@ -146,6 +146,14 @@ void DataManager::get_device_id(void) {
 #endif
 
 #ifndef TW_FORCE_CPUINFO_FOR_DEVICE_ID
+	// Check serial number system property
+	if (property_get("ro.serialno", line, "")) {
+		snprintf(device_id, DEVID_MAX, "%s", line);
+		sanitize_device_id(device_id);
+		mConst.SetValue("device_id", device_id);
+		return;
+	}
+
 	// Check the cmdline to see if the serial number was supplied
 	fp = fopen("/proc/cmdline", "rt");
 	if (fp != NULL) {
