@@ -127,7 +127,8 @@ libimgdiff_src_files := imgdiff.cpp
 # libbsdiff is compiled with -D_FILE_OFFSET_BITS=64.
 libimgdiff_cflags := \
     -Werror \
-    -D_FILE_OFFSET_BITS=64
+    -D_FILE_OFFSET_BITS=64 \
+    -DZLIB_CONST
 
 libimgdiff_static_libraries := \
     libbsdiff \

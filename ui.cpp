@@ -54,6 +54,9 @@ RecoveryUI::RecoveryUI()
       rtl_locale_(false),
       brightness_normal_(50),
       brightness_dimmed_(25),
+      touch_screen_allowed_(false),
+      kTouchLowThreshold(RECOVERY_UI_TOUCH_LOW_THRESHOLD),
+      kTouchHighThreshold(RECOVERY_UI_TOUCH_HIGH_THRESHOLD),
       key_queue_len(0),
       key_last_down(-1),
       key_long_press(false),
@@ -64,6 +67,9 @@ RecoveryUI::RecoveryUI()
       has_power_key(false),
       has_up_key(false),
       has_down_key(false),
+      has_touch_screen(false),
+      touch_slot_(0),
+      is_bootreason_recovery_ui_(false),
       screensaver_state_(ScreensaverState::DISABLED) {
   pthread_mutex_init(&key_queue_mutex, nullptr);
   pthread_cond_init(&key_queue_cond, nullptr);
@@ -77,6 +83,8 @@ void RecoveryUI::OnKeyDetected(int key_code) {
     has_down_key = true;
   } else if (key_code == KEY_UP || key_code == KEY_VOLUMEUP) {
     has_up_key = true;
+  } else if (key_code == ABS_MT_POSITION_X || key_code == ABS_MT_POSITION_Y) {
+    has_touch_screen = true;
   }
 }
 
@@ -128,9 +136,27 @@ bool RecoveryUI::Init(const std::string& locale) {
   // Set up the locale info.
   SetLocale(locale);
 
-  ev_init(std::bind(&RecoveryUI::OnInputEvent, this, std::placeholders::_1, std::placeholders::_2));
+  ev_init(std::bind(&RecoveryUI::OnInputEvent, this, std::placeholders::_1, std::placeholders::_2),
+          touch_screen_allowed_);
 
   ev_iterate_available_keys(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
+
+  if (touch_screen_allowed_) {
+    ev_iterate_touch_inputs(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
+
+    // Parse /proc/cmdline to determine if it's booting into recovery with a bootreason of
+    // "recovery_ui". This specific reason is set by some (wear) bootloaders, to allow an easier way
+    // to turn on text mode. It will only be set if the recovery boot is triggered from fastboot, or
+    // with 'adb reboot recovery'. Note that this applies to all build variants. Otherwise the text
+    // mode will be turned on automatically on debuggable builds, even without a swipe.
+    std::string cmdline;
+    if (android::base::ReadFileToString("/proc/cmdline", &cmdline)) {
+      is_bootreason_recovery_ui_ = cmdline.find("bootreason=recovery_ui") != std::string::npos;
+    } else {
+      // Non-fatal, and won't affect Init() result.
+      PLOG(WARNING) << "Failed to read /proc/cmdline";
+    }
+  }
 
   if (!InitScreensaver()) {
     LOG(INFO) << "Screensaver disabled";
@@ -140,15 +166,91 @@ bool RecoveryUI::Init(const std::string& locale) {
   return true;
 }
 
+void RecoveryUI::OnTouchDetected(int dx, int dy) {
+  enum SwipeDirection { UP, DOWN, RIGHT, LEFT } direction;
+
+  // We only consider a valid swipe if:
+  // - the delta along one axis is below kTouchLowThreshold;
+  // - and the delta along the other axis is beyond kTouchHighThreshold.
+  if (abs(dy) < kTouchLowThreshold && abs(dx) > kTouchHighThreshold) {
+    direction = dx < 0 ? SwipeDirection::LEFT : SwipeDirection::RIGHT;
+  } else if (abs(dx) < kTouchLowThreshold && abs(dy) > kTouchHighThreshold) {
+    direction = dy < 0 ? SwipeDirection::UP : SwipeDirection::DOWN;
+  } else {
+    LOG(DEBUG) << "Ignored " << dx << " " << dy << " (low: " << kTouchLowThreshold
+               << ", high: " << kTouchHighThreshold << ")";
+    return;
+  }
+
+  // Allow turning on text mode with any swipe, if bootloader has set a bootreason of recovery_ui.
+  if (is_bootreason_recovery_ui_ && !IsTextVisible()) {
+    ShowText(true);
+    return;
+  }
+
+  LOG(DEBUG) << "Swipe direction=" << direction;
+  switch (direction) {
+    case SwipeDirection::UP:
+      ProcessKey(KEY_UP, 1);  // press up key
+      ProcessKey(KEY_UP, 0);  // and release it
+      break;
+
+    case SwipeDirection::DOWN:
+      ProcessKey(KEY_DOWN, 1);  // press down key
+      ProcessKey(KEY_DOWN, 0);  // and release it
+      break;
+
+    case SwipeDirection::LEFT:
+    case SwipeDirection::RIGHT:
+      ProcessKey(KEY_POWER, 1);  // press power key
+      ProcessKey(KEY_POWER, 0);  // and release it
+      break;
+  };
+}
+
 int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
   struct input_event ev;
   if (ev_get_input(fd, epevents, &ev) == -1) {
     return -1;
   }
 
+  // Touch inputs handling.
+  //
+  // We handle the touch inputs by tracking the position changes between initial contacting and
+  // upon lifting. touch_start_X/Y record the initial positions, with touch_finger_down set. Upon
+  // detecting the lift, we unset touch_finger_down and detect a swipe based on position changes.
+  //
+  // Per the doc Multi-touch Protocol at below, there are two protocols.
+  // https://www.kernel.org/doc/Documentation/input/multi-touch-protocol.txt
+  //
+  // The main difference between the stateless type A protocol and the stateful type B slot protocol
+  // lies in the usage of identifiable contacts to reduce the amount of data sent to userspace. The
+  // slot protocol (i.e. type B) sends ABS_MT_TRACKING_ID with a unique id on initial contact, and
+  // sends ABS_MT_TRACKING_ID -1 upon lifting the contact. Protocol A doesn't send
+  // ABS_MT_TRACKING_ID -1 on lifting, but the driver may additionally report BTN_TOUCH event.
+  //
+  // For protocol A, we rely on BTN_TOUCH to recognize lifting, while for protocol B we look for
+  // ABS_MT_TRACKING_ID being -1.
+  //
+  // Touch input events will only be available if touch_screen_allowed_ is set.
+
   if (ev.type == EV_SYN) {
+    if (touch_screen_allowed_ && ev.code == SYN_REPORT) {
+      // There might be multiple SYN_REPORT events. We should only detect a swipe after lifting the
+      // contact.
+      if (touch_finger_down_ && !touch_swiping_) {
+        touch_start_X_ = touch_X_;
+        touch_start_Y_ = touch_Y_;
+        touch_swiping_ = true;
+      } else if (!touch_finger_down_ && touch_swiping_) {
+        touch_swiping_ = false;
+        OnTouchDetected(touch_X_ - touch_start_X_, touch_Y_ - touch_start_Y_);
+      }
+    }
     return 0;
-  } else if (ev.type == EV_REL) {
+  }
+
+  if (ev.type == EV_REL) {
     if (ev.code == REL_Y) {
       // accumulate the up or down motion reported by
       // the trackball.  When it exceeds a threshold
@@ -169,7 +271,48 @@ int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
     rel_sum = 0;
   }
 
+  if (touch_screen_allowed_ && ev.type == EV_ABS) {
+    if (ev.code == ABS_MT_SLOT) {
+      touch_slot_ = ev.value;
+    }
+    // Ignore other fingers.
+    if (touch_slot_ > 0) return 0;
+
+    switch (ev.code) {
+      case ABS_MT_POSITION_X:
+        touch_X_ = ev.value;
+        touch_finger_down_ = true;
+        break;
+
+      case ABS_MT_POSITION_Y:
+        touch_Y_ = ev.value;
+        touch_finger_down_ = true;
+        break;
+
+      case ABS_MT_TRACKING_ID:
+        // Protocol B: -1 marks lifting the contact.
+        if (ev.value < 0) touch_finger_down_ = false;
+        break;
+    }
+    return 0;
+  }
+
   if (ev.type == EV_KEY && ev.code <= KEY_MAX) {
+    if (touch_screen_allowed_) {
+      if (ev.code == BTN_TOUCH) {
+        // A BTN_TOUCH with value 1 indicates the start of contact (protocol A), with 0 means
+        // lifting the contact.
+        touch_finger_down_ = (ev.value == 1);
+      }
+
+      // Intentionally ignore BTN_TOUCH and BTN_TOOL_FINGER, which would otherwise trigger
+      // additional scrolling (because in ScreenRecoveryUI::ShowFile(), we consider keys other than
+      // KEY_POWER and KEY_UP as KEY_DOWN).
+      if (ev.code == BTN_TOUCH || ev.code == BTN_TOOL_FINGER) {
+        return 0;
+      }
+    }
+
     ProcessKey(ev.code, ev.value);
   }
 
@@ -365,6 +508,14 @@ bool RecoveryUI::HasThreeButtons() {
   return has_power_key && has_up_key && has_down_key;
 }
 
+bool RecoveryUI::HasPowerKey() const {
+  return has_power_key;
+}
+
+bool RecoveryUI::HasTouchScreen() const {
+  return has_touch_screen;
+}
+
 void RecoveryUI::FlushKeys() {
   pthread_mutex_lock(&key_queue_mutex);
   key_queue_len = 0;
@@ -377,8 +528,8 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
   pthread_mutex_unlock(&key_queue_mutex);
 
   // If we have power and volume up keys, that chord is the signal to toggle the text display.
-  if (HasThreeButtons()) {
-    if (key == KEY_VOLUMEUP && IsKeyPressed(KEY_POWER)) {
+  if (HasThreeButtons() || (HasPowerKey() && HasTouchScreen() && touch_screen_allowed_)) {
+    if ((key == KEY_VOLUMEUP || key == KEY_UP) && IsKeyPressed(KEY_POWER)) {
       return TOGGLE;
     }
   } else {
