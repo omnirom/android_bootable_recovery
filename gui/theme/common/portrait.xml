@@ -110,6 +110,7 @@
 		<style name="scrolllist">
 			<background color="%background_color%"/>
 			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 		</style>
 
 		<style name="partitionlist">
