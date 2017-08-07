@@ -3603,6 +3603,10 @@
 					<data variable="tw_simulate_fail"/>
 					<condition var1="tw_simulate_actions" var2="1"/>
 				</listitem>
+				<listitem name="{@sha2_chk=Use SHA2 for hashing}">
+					<condition var1="tw_no_sha2" var2="0"/>
+					<data variable="tw_use_sha2"/>
+				</listitem>
 			</listbox>
 
 			<action>
