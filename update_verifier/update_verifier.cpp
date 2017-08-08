@@ -252,23 +252,36 @@ int update_verifier(int argc, char** argv) {
     // The current slot has not booted successfully.
 
 #if defined(PRODUCT_SUPPORTS_VERITY) || defined(BOARD_AVB_ENABLE)
+    bool skip_verification = false;
     std::string verity_mode = android::base::GetProperty("ro.boot.veritymode", "");
     if (verity_mode.empty()) {
+      // With AVB it's possible to disable verification entirely and
+      // in this case ro.boot.veritymode is empty.
+#if defined(BOARD_AVB_ENABLE)
+      LOG(WARNING) << "verification has been disabled; marking without verification.";
+      skip_verification = true;
+#else
       LOG(ERROR) << "Failed to get dm-verity mode.";
       return reboot_device();
+#endif
     } else if (android::base::EqualsIgnoreCase(verity_mode, "eio")) {
       // We shouldn't see verity in EIO mode if the current slot hasn't booted successfully before.
       // Continue the verification until we fail to read some blocks.
       LOG(WARNING) << "Found dm-verity in EIO mode.";
+    } else if (android::base::EqualsIgnoreCase(verity_mode, "disabled")) {
+      LOG(WARNING) << "dm-verity in disabled mode; marking without verification.";
+      skip_verification = true;
     } else if (verity_mode != "enforcing") {
       LOG(ERROR) << "Unexpected dm-verity mode : " << verity_mode << ", expecting enforcing.";
       return reboot_device();
     }
 
-    static constexpr auto CARE_MAP_FILE = "/data/ota_package/care_map.txt";
-    if (!verify_image(CARE_MAP_FILE)) {
-      LOG(ERROR) << "Failed to verify all blocks in care map file.";
-      return reboot_device();
+    if (!skip_verification) {
+      static constexpr auto CARE_MAP_FILE = "/data/ota_package/care_map.txt";
+      if (!verify_image(CARE_MAP_FILE)) {
+        LOG(ERROR) << "Failed to verify all blocks in care map file.";
+        return reboot_device();
+      }
     }
 #else
     LOG(WARNING) << "dm-verity not enabled; marking without verification.";
