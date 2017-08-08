@@ -355,6 +355,9 @@ ifneq ($(TW_DEFAULT_LANGUAGE),)
 else
     LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=en
 endif
+ifneq ($(TW_DISABLE_APP),true)
+	LOCAL_CFLAGS += -DDISABLE_APP
+endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
     dump_image \
