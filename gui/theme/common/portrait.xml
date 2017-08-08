@@ -3091,6 +3091,7 @@
 					<data variable="tw_samsung_navbar"/>
 				</listitem>
 				<listitem name="{@reboot_install_app_prompt_install=Prompt to install TWRP app on every reboot}">
+					<condition var1="tw_app_prompt" op="!=" var2="-1"/>
 					<data variable="tw_app_prompt"/>
 				</listitem>
 				<listitem name="{@simact_chk=Simulate actions for theme testing}">
