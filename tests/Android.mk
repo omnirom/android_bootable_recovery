@@ -111,7 +111,8 @@ LOCAL_SRC_FILES := \
     component/update_verifier_test.cpp \
     component/verifier_test.cpp
 
-LOCAL_FORCE_STATIC_EXECUTABLE := true
+LOCAL_SHARED_LIBRARIES := \
+    libhidlbase
 
 tune2fs_static_libraries := \
     libext2_com_err \
