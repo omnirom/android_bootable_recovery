@@ -51,8 +51,9 @@ static double now() {
 }
 
 WearRecoveryUI::WearRecoveryUI()
-    : kProgressBarBaseline(RECOVERY_UI_PROGRESS_BAR_BASELINE), menu_unusable_rows(9) {
-  // TODO: menu_unusable_rows should be computed based on the lines in draw_screen_locked().
+    : kProgressBarBaseline(RECOVERY_UI_PROGRESS_BAR_BASELINE),
+      kMenuUnusableRows(RECOVERY_UI_MENU_UNUSABLE_ROWS) {
+  // TODO: kMenuUnusableRows should be computed based on the lines in draw_screen_locked().
 
   // TODO: The following three variables are likely not needed. The first two are detected
   // automatically in ScreenRecoveryUI::LoadAnimation(), based on the actual files seen on device.
@@ -268,7 +269,7 @@ void WearRecoveryUI::StartMenu(const char* const* headers, const char* const* it
     show_menu = true;
     menu_sel = initial_selection;
     menu_start = 0;
-    menu_end = visible_text_rows - 1 - menu_unusable_rows;
+    menu_end = visible_text_rows - 1 - kMenuUnusableRows;
     if (menu_items <= menu_end) menu_end = menu_items;
     update_screen_locked();
   }
