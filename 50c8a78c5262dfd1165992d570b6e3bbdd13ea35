@@ -16,6 +16,24 @@
       "revId": "50c8a78c5262dfd1165992d570b6e3bbdd13ea35",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b64ff0ff_a4b767df",
+        "filename": "data.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1002051
+      },
+      "writtenOn": "2017-08-15T07:40:48Z",
+      "side": 1,
+      "message": "I used the same that is used several times below (e.g. line 167, 188, 215 etc). We should keep it consistent in my opinion.",
+      "parentUuid": "b33be65a_2f380a58",
+      "revId": "50c8a78c5262dfd1165992d570b6e3bbdd13ea35",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
