@@ -328,8 +328,6 @@ public:
 	bool Remove_MTP_Storage(string Mount_Point);                              // Adds or removes an MTP Storage partition
 	bool Remove_MTP_Storage(unsigned int Storage_ID);                         // Adds or removes an MTP Storage partition
 #ifdef TARGET_RECOVERY_IS_MULTIROM
-	void Update_Storage_Sizes();
-
 	const std::vector<TWPartition*>& getPartitions() const { return Partitions; }
 	std::vector<TWPartition*>& getPartitions() { return Partitions; }
 	bool Push_Context();
