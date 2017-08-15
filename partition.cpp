@@ -1295,15 +1295,10 @@ bool TWPartition::Mount(bool Display_Error) {
 	Check_FS_Type();
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM
-	std::string mnt_opts = Get_Mount_Options_With_Defaults();
+  // Begin huge if() to skip over all other filesystems mounts
+  if (!mounted) {
 #endif
-
-
-#ifdef TARGET_RECOVERY_IS_MULTIROM
-	if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/exfat-fuse") && !mounted) {
-#else
 	if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/exfat-fuse")) {
-#endif
 		string cmd = "/sbin/exfat-fuse -o big_writes,max_read=131072,max_write=131072 " + Actual_Block_Device + " " + Mount_Point;
 		LOGINFO("cmd: %s\n", cmd.c_str());
 		string result;
@@ -1317,9 +1312,6 @@ bool TWPartition::Mount(bool Display_Error) {
 			// Some kernels let us mount vfat as exfat which doesn't work out too well
 #else
 			exfat_mounted = 1;
-#ifdef TARGET_RECOVERY_IS_MULTIROM
-			mounted = 1;
-#endif //TARGET_RECOVERY_IS_MULTIROM
 #endif
 		}
 	}
@@ -1349,11 +1341,7 @@ bool TWPartition::Mount(bool Display_Error) {
 	if (Mount_Read_Only)
 		flags |= MS_RDONLY;
 
-#ifdef TARGET_RECOVERY_IS_MULTIROM
-	if (Fstab_File_System == "yaffs2" && !mounted) {
-#else
 	if (Fstab_File_System == "yaffs2") {
-#endif
 		// mount an MTD partition as a YAFFS2 filesystem.
 		flags = MS_NOATIME | MS_NODEV | MS_NODIRATIME;
 		if (Mount_Read_Only)
@@ -1398,15 +1386,9 @@ bool TWPartition::Mount(bool Display_Error) {
 	if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sys/module/texfat"))
 		mount_fs = "texfat";
 
-#ifdef TARGET_RECOVERY_IS_MULTIROM
-	if (!mounted &&
-		mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), mount_fs.c_str(), flags, mnt_opts.c_str()) != 0 &&
-		mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), mount_fs.c_str(), flags, NULL) != 0) {
-#else
 	if (!exfat_mounted &&
 		mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), mount_fs.c_str(), flags, Mount_Options.c_str()) != 0 &&
 		mount(Actual_Block_Device.c_str(), Mount_Point.c_str(), mount_fs.c_str(), flags, NULL) != 0) {
-#endif
 #ifdef TW_NO_EXFAT_FUSE
 		if (Current_File_System == "exfat") {
 			LOGINFO("Mounting exfat failed, trying vfat...\n");
@@ -1415,11 +1397,7 @@ bool TWPartition::Mount(bool Display_Error) {
 					gui_msg(Msg(msg::kError, "fail_mount=Failed to mount '{1}' ({2})")(Mount_Point)(strerror(errno)));
 				else
 					LOGINFO("Unable to mount '%s'\n", Mount_Point.c_str());
-#ifdef TARGET_RECOVERY_IS_MULTIROM
-				LOGINFO("Actual block device: '%s', current file system: '%s', flags: 0x%8x, options: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str(), flags, mnt_opts.c_str());
-#else
 				LOGINFO("Actual block device: '%s', current file system: '%s', flags: 0x%8x, options: '%s'\n", Actual_Block_Device.c_str(), Current_File_System.c_str(), flags, Mount_Options.c_str());
-#endif
 				return false;
 			}
 		} else {
@@ -1434,6 +1412,10 @@ bool TWPartition::Mount(bool Display_Error) {
 		}
 #endif
 	}
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+  }
+  // End of huge if() to skip over all other filesystems mounts
+#endif
 
 	if (Removable)
 		Update_Size(Display_Error);
@@ -1975,18 +1957,6 @@ void TWPartition::Check_FS_Type() {
 	Current_File_System = type;
 	blkid_free_probe(pr);
 }
-
-#ifdef TARGET_RECOVERY_IS_MULTIROM
-std::string TWPartition::Get_Mount_Options_With_Defaults()
-{
-	std::string res = Mount_Options;
-	if(Current_File_System == "f2fs") {
-		if(res.find("inline_xattr") == std::string::npos)
-			res += ",inline_xattr";
-	}
-	return res;
-}
-#endif //TARGET_RECOVERY_IS_MULTIROM
 
 bool TWPartition::Wipe_EXT23(string File_System) {
 	if (!UnMount(true))

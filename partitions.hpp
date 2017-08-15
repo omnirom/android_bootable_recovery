@@ -192,11 +192,6 @@ private:
 	bool Flash_Image_FI(const string& Filename, ProgressTracking *progress);  // Flashes an image to the partition using flash_image for mtd nand
 	void ExcludeAll(const string& path);                                      // Adds an exclusion for path to both the backup and wipe exclusion lists
 
-#ifdef TARGET_RECOVERY_IS_MULTIROM
-private:
-	string Get_Mount_Options_With_Defaults();                                 // Takes Mount_Options, ensures FS-specific defaults are in it and returns it
-#endif //TARGET_RECOVERY_IS_MULTIROM
-
 private:
 	bool Can_Be_Mounted;                                                      // Indicates that the partition can be mounted
 	bool Can_Be_Wiped;                                                        // Indicates that the partition can be wiped
