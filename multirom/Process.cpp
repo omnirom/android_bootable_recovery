@@ -210,6 +210,10 @@ int Process::killProcessesWithOpenFiles(const char *path, int signal) {
             continue;
         }
 
+        // Let's not kill our own process
+        if (pid <= getpid())
+            continue;
+
         if (signal != 0) {
             LOGINFO("Sending %s to process %d", strsignal(signal), pid);
             kill(pid, signal);
