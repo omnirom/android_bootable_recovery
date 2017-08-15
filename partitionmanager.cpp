@@ -1790,6 +1790,10 @@ void TWPartitionManager::Mount_All_Storage(void) {
 void TWPartitionManager::UnMount_Main_Partitions(void) {
 	// Unmounts system and data if data is not data/media
 	// Also unmounts boot if boot is mountable
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+	if(DataManager::GetIntValue("multirom_do_backup") == 1)
+		return;
+#endif
 	LOGINFO("Unmounting main partitions...\n");
 
 	TWPartition* Boot_Partition = Find_Partition_By_Path("/boot");
