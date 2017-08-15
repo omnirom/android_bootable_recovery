@@ -900,15 +900,15 @@ bool MultiROM::changeMounts(std::string name)
 	const char *fs = realdata->Fstab_File_System.c_str();
 	if(!(M(type) & MASK_IMAGES))
 	{
-		data = TWPartition::makePartFromFstab("/data_t %s %s/data flags=bindof=/realdata\n", fs, base.c_str());
-		sys = TWPartition::makePartFromFstab("/system %s %s/system flags=bindof=/realdata\n", fs, base.c_str());
 		cache = TWPartition::makePartFromFstab("/cache %s %s/cache flags=bindof=/realdata\n", fs, base.c_str());
+		sys = TWPartition::makePartFromFstab("/system %s %s/system flags=bindof=/realdata\n", fs, base.c_str());
+		data = TWPartition::makePartFromFstab("/data_t %s %s/data flags=bindof=/realdata\n", fs, base.c_str());
 	}
 	else
 	{
-		data = TWPartition::makePartFromFstab("/data_t %s %s/data.img flags=imagemount\n", fs, base.c_str());
-		sys = TWPartition::makePartFromFstab("/system %s %s/system.img flags=imagemount\n", fs, base.c_str());
 		cache = TWPartition::makePartFromFstab("/cache %s %s/cache.img flags=imagemount\n", fs, base.c_str());
+		sys = TWPartition::makePartFromFstab("/system %s %s/system.img flags=imagemount\n", fs, base.c_str());
+		data = TWPartition::makePartFromFstab("/data_t %s %s/data.img flags=imagemount\n", fs, base.c_str());
 	}
 
 	// Workaround TWRP̈́'s datamedia code
@@ -917,9 +917,9 @@ bool MultiROM::changeMounts(std::string name)
 	data->Backup_Path = data->Mount_Point = "/data";
 	data->Can_Be_Backed_Up = true;
 
-	parts.push_back(data);
-	parts.push_back(sys);
 	parts.push_back(cache);
+	parts.push_back(sys);
+	parts.push_back(data);
 
 	if(DataManager::GetStrValue("tw_storage_path").find("/data/media") == 0)
 	{
@@ -931,12 +931,12 @@ bool MultiROM::changeMounts(std::string name)
 	PartitionManager.Update_System_Details();
 	PartitionManager.Output_Partition_Logging();
 
-	if(!data->Mount(true) || !sys->Mount(true) || !cache->Mount(true))
+	if(!cache->Mount(true) || !sys->Mount(true) || !data->Mount(true))
 	{
 		gui_print("Failed to mount fake partitions, canceling!\n");
-		data->UnMount(false);
-		sys->UnMount(false);
 		cache->UnMount(false);
+		sys->UnMount(false);
+		data->UnMount(false);
 		realdata->UnMount(false);
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
