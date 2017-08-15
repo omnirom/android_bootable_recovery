@@ -182,7 +182,7 @@ int Process::killProcessesWithOpenFiles(const char *path, int signal) {
     struct dirent* de;
 
     if (!(dir = opendir("/proc"))) {
-        LOGERR("opendir failed (%s)", strerror(errno));
+        LOGERR("opendir failed (%s)\n", strerror(errno));
         return count;
     }
 
@@ -197,15 +197,15 @@ int Process::killProcessesWithOpenFiles(const char *path, int signal) {
         char openfile[PATH_MAX];
 
         if (checkFileDescriptorSymLinks(pid, path, openfile, sizeof(openfile))) {
-            LOGERR("Process %s (%d) has open file %s", name, pid, openfile);
+            LOGERR("Process %s (%d) has open file %s\n", name, pid, openfile);
         } else if (checkFileMaps(pid, path, openfile, sizeof(openfile))) {
-            LOGERR("Process %s (%d) has open filemap for %s", name, pid, openfile);
+            LOGERR("Process %s (%d) has open filemap for %s\n", name, pid, openfile);
         } else if (checkSymLink(pid, path, "cwd")) {
-            LOGERR("Process %s (%d) has cwd within %s", name, pid, path);
+            LOGERR("Process %s (%d) has cwd within %s\n", name, pid, path);
         } else if (checkSymLink(pid, path, "root")) {
-            LOGERR("Process %s (%d) has chroot within %s", name, pid, path);
+            LOGERR("Process %s (%d) has chroot within %s\n", name, pid, path);
         } else if (checkSymLink(pid, path, "exe")) {
-            LOGERR("Process %s (%d) has executable path within %s", name, pid, path);
+            LOGERR("Process %s (%d) has executable path within %s\n", name, pid, path);
         } else {
             continue;
         }
@@ -215,7 +215,7 @@ int Process::killProcessesWithOpenFiles(const char *path, int signal) {
             continue;
 
         if (signal != 0) {
-            LOGINFO("Sending %s to process %d", strsignal(signal), pid);
+            LOGINFO("Sending %s to process %d\n", strsignal(signal), pid);
             kill(pid, signal);
             count++;
         }

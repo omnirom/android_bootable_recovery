@@ -1008,7 +1008,6 @@ void MultiROM::restoreMounts()
 	std::string list_loop_devices;
 	std::stringstream ss;
 	std::string line;
-	int rc;
 	int i;
 
 	// Disassociate and unmount 'leftover' loop mounts (su, magisk, etc.)
@@ -1033,30 +1032,29 @@ void MultiROM::restoreMounts()
 				while ((ent = getmntent(f))) {
 					if (loop_dev == ent->mnt_fsname) {
 						LOGINFO("Loop device %s (%s) is still mounted on %s!\n", loop_dev.c_str(), base_name.c_str(), ent->mnt_dir);
-						rc = KillProcessesUsingPath(ent->mnt_dir);
-						LOGINFO("KillProcessesUsingPath %s (rc=%d)\n", ent->mnt_dir, rc);
-						rc = umount(ent->mnt_dir);
-						LOGINFO("Unmounting %s (rc=%d)\n", ent->mnt_dir, rc);
+						KillProcessesUsingPath(ent->mnt_dir);
+						if (umount(ent->mnt_dir) < 0)
+							LOGINFO("Failed to unmount '%s'\n", ent->mnt_dir);
+						else
+							LOGINFO("Unmounted '%s'\n", ent->mnt_dir);
 					}
 				}
 				endmntent(f);
 			}
-			rc = TWFunc::Exec_Cmd("losetup " + loop_dev + " 2>/dev/null; if [ $? == 0 ]; then losetup -d " + loop_dev + "; fi");
-			LOGINFO("Releasing %s (%s) (rc=%d)\n", loop_dev.c_str(), base_name.c_str(), rc);
+			if (TWFunc::Exec_Cmd("losetup " + loop_dev + " 2>/dev/null; if [ $? == 0 ]; then losetup -d " + loop_dev + "; fi") != 0)
+				LOGINFO("Unable to disassociate loop device %s (%s)\n", loop_dev.c_str(), base_name.c_str());
+			else
+				LOGINFO("Released %s (%s)\n", loop_dev.c_str(), base_name.c_str());
 		}
 	}
 
 	sync();
 
 	// Is this really needed and entirely safe
-	rc = KillProcessesUsingPath("/cache");
-	LOGINFO("KillProcessesUsingPath /cache (rc=%d)\n", rc);
+	KillProcessesUsingPath("/cache");
 	KillProcessesUsingPath("/system");
-	LOGINFO("KillProcessesUsingPath /system (rc=%d)\n", rc);
 	KillProcessesUsingPath("/data");
-	LOGINFO("KillProcessesUsingPath /data (rc=%d)\n", rc);
 	KillProcessesUsingPath("/realdata");
-	LOGINFO("KillProcessesUsingPath /realdata (rc=%d)\n", rc);
 
 	sync();
 
@@ -1069,18 +1067,18 @@ void MultiROM::restoreMounts()
 
 		if (PartitionManager.Is_Mounted_By_Path("/cache")) {
 			mounted_count++;
-			rc = PartitionManager.UnMount_By_Path("/cache", false);
-			LOGINFO("Unmounting /cache (rc=%d)\n", rc);
+			if (PartitionManager.UnMount_By_Path("/cache", false))
+				LOGINFO("Unmounted fake /cache partition\n");
 		}
 		if (PartitionManager.Is_Mounted_By_Path("/system")) {
 			mounted_count++;
-			rc = PartitionManager.UnMount_By_Path("/system", false);
-			LOGINFO("Unmounting /system (rc=%d)\n", rc);
+			if (PartitionManager.UnMount_By_Path("/system", false))
+				LOGINFO("Unmounted fake /system partition\n");
 		}
 		if (PartitionManager.Is_Mounted_By_Path("/data")) {
 			mounted_count++;
-			rc = PartitionManager.UnMount_By_Path("/data", false);
-			LOGINFO("Unmounting /data (rc=%d)\n", rc);
+			if (PartitionManager.UnMount_By_Path("/data", false))
+				LOGINFO("Unmounted fake /data partition\n");
 		}
 
 		if (mounted_count == 0)
@@ -1090,8 +1088,8 @@ void MultiROM::restoreMounts()
 	if (mounted_count == 0) {
 		if (PartitionManager.Is_Mounted_By_Path("/realdata")) {
 			mounted_count++;
-			rc = PartitionManager.UnMount_By_Path("/realdata", false);
-			LOGINFO("Unmounting /realdata (rc=%d)\n", rc);
+			if (PartitionManager.UnMount_By_Path("/realdata", false))
+				LOGINFO("Unmounted /realdata partition\n");
 		}
 	} else {
 		// One of the fake partitions couldn't be unmounted so restoring
@@ -1112,8 +1110,10 @@ void MultiROM::restoreMounts()
 
 		std::string loop_dev = line.substr(0, pos);
 		std::string base_name = TWFunc::Get_Filename(line);
-		rc = TWFunc::Exec_Cmd("losetup -d " + loop_dev);
-		LOGINFO("Releasing %s (%s) rc=%d\n", loop_dev.c_str(), base_name.c_str(), rc);
+		if (TWFunc::Exec_Cmd("losetup -d " + loop_dev) != 0)
+			LOGINFO("Unable to disassociate loop device %s (%s)\n", loop_dev.c_str(), base_name.c_str());
+		else
+			LOGINFO("Released %s (%s)\n", loop_dev.c_str(), base_name.c_str());
 	}
 
 	rmdir(REALDATA);
