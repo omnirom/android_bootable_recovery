@@ -758,12 +758,13 @@ static bool wipe_data(Device* device) {
 }
 
 static bool prompt_and_wipe_data(Device* device) {
+  // Use a single string and let ScreenRecoveryUI handles the wrapping.
   const char* const headers[] = {
-    "Can't load Android system. Your data may be corrupt.",
-    "If you continue to get this message, you may need to",
-    "perform a factory data reset and erase all user data",
+    "Can't load Android system. Your data may be corrupt. "
+    "If you continue to get this message, you may need to "
+    "perform a factory data reset and erase all user data "
     "stored on this device.",
-    NULL
+    nullptr
   };
   const char* const items[] = {
     "Try again",
