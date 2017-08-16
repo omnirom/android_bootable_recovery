@@ -278,6 +278,34 @@ int ScreenRecoveryUI::DrawTextLines(int x, int y, const char* const* lines) cons
   return offset;
 }
 
+int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y, const char* const* lines) const {
+  int offset = 0;
+  for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
+    // The line will be wrapped if it exceeds text_cols_.
+    std::string line(lines[i]);
+    size_t next_start = 0;
+    while (next_start < line.size()) {
+      std::string sub = line.substr(next_start, text_cols_ + 1);
+      if (sub.size() <= text_cols_) {
+        next_start += sub.size();
+      } else {
+        // Line too long and must be wrapped to text_cols_ columns.
+        size_t last_space = sub.find_last_of(" \t\n");
+        if (last_space == std::string::npos) {
+          // No space found, just draw as much as we can
+          sub.resize(text_cols_);
+          next_start += text_cols_;
+        } else {
+          sub.resize(last_space);
+          next_start += last_space + 1;
+        }
+      }
+      offset += DrawTextLine(x, y + offset, sub.c_str(), false);
+    }
+  }
+  return offset;
+}
+
 static const char* REGULAR_HELP[] = {
   "Use volume up/down and power.",
   NULL
@@ -316,7 +344,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
     y += DrawTextLines(x, y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 
     SetColor(HEADER);
-    y += DrawTextLines(x, y, menu_headers_);
+    y += DrawWrappedTextLines(x, y, menu_headers_);
 
     SetColor(MENU);
     y += DrawHorizontalRule(y) + 4;

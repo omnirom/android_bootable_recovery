@@ -187,6 +187,9 @@ class ScreenRecoveryUI : public RecoveryUI {
   virtual int DrawTextLine(int x, int y, const char* line, bool bold) const;
   // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
   int DrawTextLines(int x, int y, const char* const* lines) const;
+  // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines.
+  // Returns the offset it should be moving along Y-axis.
+  int DrawWrappedTextLines(int x, int y, const char* const* lines) const;
 };
 
 #endif  // RECOVERY_UI_H
