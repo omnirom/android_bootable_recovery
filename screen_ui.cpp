@@ -344,7 +344,8 @@ void ScreenRecoveryUI::draw_screen_locked() {
     y += DrawTextLines(x, y, HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 
     SetColor(HEADER);
-    y += DrawWrappedTextLines(x, y, menu_headers_);
+    // Ignore kMenuIndent, which is not taken into account by text_cols_.
+    y += DrawWrappedTextLines(kMarginWidth, y, menu_headers_);
 
     SetColor(MENU);
     y += DrawHorizontalRule(y) + 4;
