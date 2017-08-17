@@ -16,8 +16,14 @@
 
 // See the comments in update_verifier.cpp.
 
+#include <android-base/logging.h>
+
 #include "update_verifier/update_verifier.h"
 
 int main(int argc, char** argv) {
+  // Set up update_verifier logging to be written to kmsg; because we may not have Logd during
+  // boot time.
+  android::base::InitLogging(argv, &android::base::KernelLogger);
+
   return update_verifier(argc, argv);
 }
