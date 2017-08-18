@@ -252,6 +252,7 @@ private:
 private:
 	string Bind_Of;                                                           // Path to partition which is this partition bound to
 	bool Is_ImageMount;                                                       // This is true if the partition is on .img file
+	string Loop_Device;                                                       // Path to loop device (/dev/block/loopNNN)
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
 friend class TWPartitionManager;

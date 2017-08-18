@@ -14,20 +14,22 @@
 
 enum
 {
-	ROM_INTERNAL_PRIMARY  = 0,
-	ROM_ANDROID_INTERNAL  = 1,
-	ROM_ANDROID_USB_DIR   = 2,
-	ROM_ANDROID_USB_IMG   = 3,
-	ROM_UBUNTU_INTERNAL   = 4,
-	ROM_UBUNTU_USB_DIR    = 5,
-	ROM_UBUNTU_USB_IMG    = 6,
-	ROM_INSTALLER_INTERNAL= 7,
-	ROM_INSTALLER_USB_DIR = 8,
-	ROM_INSTALLER_USB_IMG = 9,
-	ROM_UTOUCH_INTERNAL   = 10,
-	ROM_UTOUCH_USB_DIR    = 11,
-	ROM_UTOUCH_USB_IMG    = 12,
-	ROM_SAILFISH_INTERNAL = 13,
+	ROM_INTERNAL_PRIMARY         = 0,
+	ROM_ANDROID_INTERNAL         = 1,
+	ROM_ANDROID_USB_DIR          = 2,
+	ROM_ANDROID_USB_IMG          = 3,
+	ROM_UBUNTU_INTERNAL          = 4,
+	ROM_UBUNTU_USB_DIR           = 5,
+	ROM_UBUNTU_USB_IMG           = 6,
+	ROM_INSTALLER_INTERNAL       = 7,
+	ROM_INSTALLER_USB_DIR        = 8,
+	ROM_INSTALLER_USB_IMG        = 9,
+	ROM_UTOUCH_INTERNAL          = 10,
+	ROM_UTOUCH_USB_DIR           = 11,
+	ROM_UTOUCH_USB_IMG           = 12,
+	ROM_SAILFISH_INTERNAL        = 13,
+	ROM_ANDROID_INTERNAL_HYBRID  = 14,
+	ROM_ANDROID_USB_HYBRID       = 15,
 
 	ROM_UNKNOWN,
 };
@@ -41,9 +43,10 @@ enum
 
 #define M(x) (1 << x)
 #define MASK_UBUNTU (M(ROM_UBUNTU_INTERNAL) | M(ROM_UBUNTU_USB_IMG)| M(ROM_UBUNTU_USB_DIR))
-#define MASK_ANDROID (M(ROM_INTERNAL_PRIMARY) | M(ROM_ANDROID_USB_DIR) | M(ROM_ANDROID_USB_IMG) | M(ROM_ANDROID_INTERNAL))
+#define MASK_ANDROID (M(ROM_INTERNAL_PRIMARY) | M(ROM_ANDROID_USB_DIR) | M(ROM_ANDROID_USB_IMG) | M(ROM_ANDROID_INTERNAL) | M(ROM_ANDROID_INTERNAL_HYBRID) | M(ROM_ANDROID_USB_HYBRID))
+#define MASK_HYBRID (M(ROM_ANDROID_INTERNAL_HYBRID) | M(ROM_ANDROID_USB_HYBRID))
 #define MASK_IMAGES (M(ROM_ANDROID_USB_IMG) | M(ROM_UBUNTU_USB_IMG) | M(ROM_INSTALLER_USB_IMG) | M(ROM_UTOUCH_USB_IMG))
-#define MASK_INTERNAL (M(ROM_INTERNAL_PRIMARY) | M(ROM_ANDROID_INTERNAL) | M(ROM_UBUNTU_INTERNAL) | M(ROM_INSTALLER_INTERNAL) | M(ROM_UTOUCH_INTERNAL))
+#define MASK_INTERNAL (M(ROM_INTERNAL_PRIMARY) | M(ROM_ANDROID_INTERNAL) | M(ROM_UBUNTU_INTERNAL) | M(ROM_INSTALLER_INTERNAL) | M(ROM_UTOUCH_INTERNAL) | M(ROM_ANDROID_INTERNAL_HYBRID))
 #define MASK_INSTALLER (M(ROM_INSTALLER_INTERNAL) | M(ROM_INSTALLER_USB_DIR) | M(ROM_INSTALLER_USB_IMG))
 #define MASK_UTOUCH (M(ROM_UTOUCH_INTERNAL) | M(ROM_UTOUCH_USB_IMG) | M(ROM_UTOUCH_USB_DIR))
 #define MASK_SAILFISH (M(ROM_SAILFISH_INTERNAL))
@@ -198,6 +201,9 @@ public:
 
 	static std::string getRecoveryVersion();
 
+	static std::string Create_LoopDevice(const std::string& ImageFile);
+	static bool Release_LoopDevice(const std::string& LoopDevice, bool DeleteNode);
+
 private:
 	static void findPath();
 	static bool changeMounts(std::string base);
@@ -222,6 +228,7 @@ private:
 
 	static bool createImage(const std::string& base, const char *img, int size);
 	static bool createImagesFromBase(const std::string& base);
+	static bool createSparseImage(const std::string& base, const char *img);
 	static bool createDirsFromBase(const std::string& base);
 	static bool mountBaseImages(std::string base, std::string& dest);
 	static void umountBaseImages(const std::string& base);

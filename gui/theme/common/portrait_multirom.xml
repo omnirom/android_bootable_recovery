@@ -1722,6 +1722,16 @@ not implemented
 				</actions>
 			</button>
 
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row10_y%"/>
+				<text>ROM Installation Method:</text>
+			</text>
+
+			<checkbox>
+				<placement x="%indent%" y="%row11_y%"/>
+				<text>Enable System Partition Mode (e.g. for Magisk)</text>
+				<data variable="tw_multirom_type_SparseSystem"/>
+			</checkbox>
 			<action>
 				<touch key="back"/>
 				<action function="page">multirom_add</action>

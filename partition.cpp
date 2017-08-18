@@ -71,6 +71,9 @@ extern "C" {
 #include <sys/xattr.h>
 #include <linux/xattr.h>
 #endif
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+#include "multirom/multirom.h"
+#endif
 #include <sparse_format.h>
 #include "progresstracking.hpp"
 
@@ -1271,22 +1274,34 @@ bool TWPartition::Mount(bool Display_Error) {
 				LOGINFO("Couldn't bind %s to %s\n", Primary_Block_Device.c_str(), Mount_Point.c_str());
 			return false;
 		}
+		LOGINFO("Bind mounted %s at %s\n", Primary_Block_Device.c_str(), Mount_Point.c_str());
 		mounted = 1;
 	}
 	else if(Is_ImageMount)
 	{
 		PartitionManager.Mount_By_Path(Primary_Block_Device, false);
 
-		std::string cmd = "mount -o loop -t ";
-		cmd += Fstab_File_System + " " + Primary_Block_Device + " " + Mount_Point.c_str();
-		if(TWFunc::Exec_Cmd(cmd) != 0)
+		Loop_Device = MultiROM::Create_LoopDevice(Primary_Block_Device);
+		if (Loop_Device.empty())
 		{
+			if(Display_Error)
+				LOGERR("Failed to create loop device for %s!\n", Primary_Block_Device.c_str());
+			else
+				LOGINFO("Failed to create loop device for %s!\n", Primary_Block_Device.c_str());
+			return false;
+		}
+
+		if(mount(Loop_Device.c_str(), Mount_Point.c_str(), Fstab_File_System.c_str(), 0, "") < 0)
+		{
+			MultiROM::Release_LoopDevice(Loop_Device, true);
+			Loop_Device.clear();
 			if(Display_Error)
 				LOGERR("Failed to mount image %s!\n", Primary_Block_Device.c_str());
 			else
 				LOGINFO("Failed to mount image %s!\n", Primary_Block_Device.c_str());
 			return false;
 		}
+		LOGINFO("Loop mounted %s at %s using %s\n", Primary_Block_Device.c_str(), Mount_Point.c_str(), Loop_Device.c_str());
 		mounted = 1;
 	}
 #endif //TARGET_RECOVERY_IS_MULTIROM
@@ -1441,14 +1456,7 @@ bool TWPartition::UnMount(bool Display_Error) {
 		if (!Symlink_Mount_Point.empty())
 			umount(Symlink_Mount_Point.c_str());
 
-#ifdef TARGET_RECOVERY_IS_MULTIROM
-		if(!Is_ImageMount)
-			umount(Mount_Point.c_str());
-		else
-			TWFunc::Exec_Cmd(string("umount -d ") + Mount_Point);
-#else
 		umount(Mount_Point.c_str());
-#endif
 		if (Is_Mounted()) {
 			if (Display_Error)
 				gui_msg(Msg(msg::kError, "fail_unmount=Failed to unmount '{1}' ({2})")(Mount_Point)(strerror(errno)));
@@ -1456,6 +1464,12 @@ bool TWPartition::UnMount(bool Display_Error) {
 				LOGINFO("Unable to unmount '%s'\n", Mount_Point.c_str());
 			return false;
 		} else {
+#ifdef TARGET_RECOVERY_IS_MULTIROM
+			if(Is_ImageMount) {
+				MultiROM::Release_LoopDevice(Loop_Device, false);
+				Loop_Device.clear();
+			}
+#endif
 			return true;
 		}
 	} else {
