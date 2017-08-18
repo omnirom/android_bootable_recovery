@@ -3076,16 +3076,16 @@ int MultiROM::system_args(const char *fmt, ...)
 	ret = vsnprintf(cmd, sizeof(cmd), fmt, ap);
 	if(ret < (int)sizeof(cmd))
 	{
-		LOGINFO("Running cmd \"%s\"\n", cmd);
 		ret = system(cmd);
+		LOGINFO("Running cmd \"%s\" ended with RC=%d\n", cmd, ret);
 	}
 	else
 	{
 		char *buff = new char[ret+1];
 		vsnprintf(buff, ret+1, fmt, ap);
 
-		LOGINFO("Running cmd \"%s\"\n", buff);
 		ret = system(buff);
+		LOGINFO("Running cmd \"%s\" ended with RC=%d\n", buff, ret);
 
 		delete[] buff;
 	}
