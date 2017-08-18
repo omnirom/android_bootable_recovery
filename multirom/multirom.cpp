@@ -1245,87 +1245,19 @@ bool MultiROM::createFakeSystemImg()
 		return false;
 	}
 
-	// Note: losetup -f is not always reliable, it should give the next available free loop
-	//       device, but it actually gives the next available number, even if it doesn't exist
-	#define LOSETUP_F "LOOP_DEV=$(losetup -f); if [ $? = 0 ] && [ -e $LOOP_DEV ]; then echo $LOOP_DEV; true; else false; fi;"
-
-	// First check for existence of any free loop device
-	std::string loop_device;
-	if(TWFunc::Exec_Cmd(LOSETUP_F, loop_device) != 0)
-	{
-		system_args("rm \"%s/system.img\"", sysimg.c_str());
-		LOGERR("Failed to find free loop device\n");
-		return false;
-	}
-
-	// systemless SuperSU uses loop0 or loop1 only, perhaps other mods as well, so let's skip those
-	// we could actually set this to a/the highest number and let it use the last available loop device
-	// or alternatively create our own loop device like the boot.img commit
-	#define NUM_OF_LOOP_DEVICE_TO_SKIP   2
-
-	std::string skipped_loop_device[NUM_OF_LOOP_DEVICE_TO_SKIP];
-	int i = 0;
-
-	// Now try and skip N loop devices
-	int fd = creat("/tmp/skip_dummy", 0644);
-	if(fd < 0)
-	{
-		gui_print("Failed to create dummy file for loop device skips file (%s)!\n", strerror(errno));
-	}
-	else
-	{
-		close(fd);
-
-		do
-		{
-			if(TWFunc::Exec_Cmd(LOSETUP_F, skipped_loop_device[i]) != 0)
-			{
-				LOGINFO("No more free loop devices at %d\n", i);
-				skipped_loop_device[i].clear();
-				if(i > 0) // release previous loop device
-				{
-					system_args("losetup -d \"%s\"", skipped_loop_device[i-1].c_str());
-					skipped_loop_device[i-1].clear();
-				}
-				break;
-			}
-			else
-			{
-				TWFunc::trim(skipped_loop_device[i]);
-				LOGINFO("Skipping loop device %s\n", skipped_loop_device[i].c_str());
-				system_args("losetup \"%s\" /tmp/skip_dummy", skipped_loop_device[i].c_str());
-			}
-		} while(++i < NUM_OF_LOOP_DEVICE_TO_SKIP);
-		system_args("rm /tmp/skip_dummy");
-	}
-
-	// And back to the original code (the below will not fail because we tested above)
-	loop_device.clear();
-	if(TWFunc::Exec_Cmd(LOSETUP_F, loop_device) != 0)
-	{
-		system_args("rm \"%s/system.img\"", sysimg.c_str());
-		LOGERR("Failed to find free loop device\n");
-		i = NUM_OF_LOOP_DEVICE_TO_SKIP; while(i--) if(!skipped_loop_device[i].empty()) system_args("losetup -d \"%s\"", skipped_loop_device[i].c_str());
-		return false;
-	}
-
-	TWFunc::trim(loop_device);
-
-	if(system_args("losetup \"%s\" \"%s/system.img\"", loop_device.c_str(), sysimg.c_str()) != 0)
+	std::string loop_device = Create_LoopDevice(sysimg + "/system.img");
+	if (loop_device.empty())
 	{
 		system_args("rm \"%s/system.img\"", sysimg.c_str());
 		LOGERR("Failed to setup loop device!\n");
-		i = NUM_OF_LOOP_DEVICE_TO_SKIP; while(i--) if(!skipped_loop_device[i].empty()) system_args("losetup -d \"%s\"", skipped_loop_device[i].c_str());
 		return false;
 	}
-
-	// Finally release skipped loop devices
-	i = NUM_OF_LOOP_DEVICE_TO_SKIP; while(i--) if(!skipped_loop_device[i].empty()) system_args("losetup -d \"%s\"", skipped_loop_device[i].c_str());
 
 	if(system_args("mv \"%s\" \"%s-orig\" && ln -s \"%s\" \"%s\"",
 		sys->Actual_Block_Device.c_str(), sys->Actual_Block_Device.c_str(), loop_device.c_str(), sys->Actual_Block_Device.c_str()) != 0)
 	{
-		system_args("losetup -d \"%s\"; rm -f \"%s/system.img\"", loop_device.c_str(), sysimg.c_str());
+		Release_LoopDevice(loop_device, true);
+		system_args("rm -f \"%s/system.img\"", sysimg.c_str());
 		LOGERR("Failed to fake system device!\n");
 		return false;
 	}
@@ -3096,17 +3028,14 @@ int MultiROM::system_args(const char *fmt, ...)
 
 bool MultiROM::fakeBootPartition(const char *fakeImg)
 {
-	if(access((m_boot_dev + "-orig").c_str(), F_OK) >= 0)
-	{
+	if (access((m_boot_dev + "-orig").c_str(), F_OK) >= 0) {
 		gui_print("Failed to fake boot partition, %s-orig already exists!\n", m_boot_dev.c_str());
 		return false;
 	}
 
-	if(access(fakeImg, F_OK) < 0)
-	{
+	if (access(fakeImg, F_OK) < 0) {
 		int fd = creat(fakeImg, 0644);
-		if(fd < 0)
-		{
+		if (fd < 0) {
 			gui_print("Failed to create fake boot image file %s (%s)!\n", fakeImg, strerror(errno));
 			return false;
 		}
@@ -3116,8 +3045,7 @@ bool MultiROM::fakeBootPartition(const char *fakeImg)
 		system_args("dd if=\"%s\" of=\"%s\"", m_boot_dev.c_str(), fakeImg);
 		gui_print("Current boot sector was used as base for fake boot.img!\n");
 	}
-	else
-	{
+	else {
 		#ifdef BOARD_BOOTIMAGE_PARTITION_SIZE
 			LOGINFO("Truncating fake boot.img to %d bytes\n", BOARD_BOOTIMAGE_PARTITION_SIZE);
 			truncate(fakeImg, BOARD_BOOTIMAGE_PARTITION_SIZE);
@@ -3132,22 +3060,17 @@ bool MultiROM::fakeBootPartition(const char *fakeImg)
 
 	#else
 
-	#define BOOTIMG_LOOP_MINOR 222   // just chose 222 randomly
-	int major = 7;                   // MAJOR = grep loop /proc/devices (it's always 7)
-	int minor = BOOTIMG_LOOP_MINOR;  // MINOR = non-existent /dev/block/loopN
-
-	// create a new loop block device and setup loop
-	if(major && minor && (system_args("mknod \"%s\" b %d %d && losetup \"%s\" \"%s\"", m_boot_dev.c_str(), major, minor, m_boot_dev.c_str(), fakeImg) == 0))
-	{
+	std::string loop_device = Create_LoopDevice(fakeImg);
+	if (!loop_device.empty()) {
+		system_args("mv \"%s\" \"%s\"", loop_device.c_str(), m_boot_dev.c_str()); // rename it to the real boot partition
+		system_args("touch \"%s\"", loop_device.c_str()); // create a dummy entry so this loop device won't be used
 		gui_print("Created loop block device for boot.img!\n");
 	}
-	else
-	{
+	else {
 		gui_print("Failed to create loop block device, falling back to normal symlink!\n");
 		system_args("rm \"%s\"", m_boot_dev.c_str());
 		system_args("ln -s \"%s\" \"%s\"", fakeImg, m_boot_dev.c_str());
 	}
-
 	#endif
 
 	return true;
@@ -3155,26 +3078,29 @@ bool MultiROM::fakeBootPartition(const char *fakeImg)
 
 void MultiROM::restoreBootPartition()
 {
-#ifdef BOARD_BOOTIMAGE_PARTITION_SIZE
-	if(access(m_boot_dev.c_str(), F_OK) == 0)
-	{
-		LOGINFO("Truncating fake boot.img to %d bytes\n", BOARD_BOOTIMAGE_PARTITION_SIZE);
-		truncate(m_boot_dev.c_str(), BOARD_BOOTIMAGE_PARTITION_SIZE);
-	}
-#endif
-
-	if(access((m_boot_dev + "-orig").c_str(), F_OK) < 0)
-	{
+	if (access((m_boot_dev + "-orig").c_str(), F_OK) < 0) {
 		gui_print("Failed to restore boot partition, %s-orig does not exist!\n", m_boot_dev.c_str());
 		return;
 	}
 
 #ifdef BOARD_BOOTIMAGE_PARTITION_SIZE
-	int minor = BOOTIMG_LOOP_MINOR;  // MINOR = non-existent /dev/block/loopN
-	std::string loob_block_device = "/dev/block/loop" + TWFunc::to_string(BOOTIMG_LOOP_MINOR);
-	system_args("losetup -d \"%s\"", m_boot_dev.c_str());        // release loop device
-	system_args("losetup -d \"%s\"", loob_block_device.c_str()); // release loop device
-	system_args("rm \"%s\"", loob_block_device.c_str());         // delete /dev/block/loopN
+	struct stat info;
+	if (stat(m_boot_dev.c_str(), &info) < 0) {
+		LOGERR("Couldn't stat %s\n", m_boot_dev.c_str());
+	}
+	else if (S_ISBLK(info.st_mode)) {
+		std::string loop_device = "/dev/block/loop" + TWFunc::to_string(minor(info.st_rdev));
+		system_args("rm \"%s\"", loop_device.c_str()); // delete the dummy entry
+		system_args("mv \"%s\" \"%s\"", m_boot_dev.c_str(), loop_device.c_str()); // restore its original location
+		Release_LoopDevice(loop_device, true);
+	}
+	else {
+		LOGINFO("Truncating fake boot.img to %d bytes\n", BOARD_BOOTIMAGE_PARTITION_SIZE);
+		truncate(m_boot_dev.c_str(), BOARD_BOOTIMAGE_PARTITION_SIZE);
+	}
+#else
+	LOGINFO("Truncating fake boot.img to %d bytes\n", BOARD_BOOTIMAGE_PARTITION_SIZE);
+	truncate(m_boot_dev.c_str(), BOARD_BOOTIMAGE_PARTITION_SIZE);
 #endif
 	system_args("rm \"%s\"", m_boot_dev.c_str());
 	system_args("mv \"%s\"-orig \"%s\"", m_boot_dev.c_str(), m_boot_dev.c_str());
