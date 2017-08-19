@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bb5367b2_49024e51",
+        "filename": "gui/theme/common/languages/en.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-08-19T14:20:10Z",
+      "side": 0,
+      "message": "Where is this duplicated?",
+      "revId": "c0c5c3a1a49bb41eb1b9d7fc1f7cda0dc1007f3b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
