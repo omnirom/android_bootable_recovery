@@ -34,6 +34,29 @@
       "revId": "c0c5c3a1a49bb41eb1b9d7fc1f7cda0dc1007f3b",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "38f7861e_82c4beb4",
+        "filename": "gui/theme/common/languages/en.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 1001518
+      },
+      "writtenOn": "2017-08-19T17:12:29Z",
+      "side": 0,
+      "message": "duplicate.",
+      "range": {
+        "startLine": 220,
+        "startChar": 16,
+        "endLine": 220,
+        "endChar": 40
+      },
+      "revId": "c0c5c3a1a49bb41eb1b9d7fc1f7cda0dc1007f3b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
