@@ -151,7 +151,8 @@ LOCAL_CFLAGS := \
 LOCAL_STATIC_LIBRARIES := \
     $(libimgdiff_static_libraries)
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include
+    $(LOCAL_PATH)/include \
+    bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 include $(BUILD_STATIC_LIBRARY)
 
@@ -166,7 +167,8 @@ LOCAL_CFLAGS := \
 LOCAL_STATIC_LIBRARIES := \
     $(libimgdiff_static_libraries)
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include
+    $(LOCAL_PATH)/include \
+    bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 include $(BUILD_HOST_STATIC_LIBRARY)
 
@@ -180,4 +182,7 @@ LOCAL_STATIC_LIBRARIES := \
     libimgdiff \
     $(libimgdiff_static_libraries) \
     libbz
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/include \
+    bootable/recovery
 include $(BUILD_HOST_EXECUTABLE)
