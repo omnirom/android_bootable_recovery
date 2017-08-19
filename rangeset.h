@@ -266,13 +266,13 @@ class SortedRangeSet : public RangeSet {
         new_block_start += (old_block_start - range.first);
         return (new_block_start * kBlockSize + old_offset % kBlockSize);
       } else {
-        CHECK(false) <<"block_start " << old_block_start << " is missing between two ranges: "
-                     << this->ToString();
+        CHECK(false) << "block_start " << old_block_start
+                     << " is missing between two ranges: " << this->ToString();
         return 0;
       }
     }
-    CHECK(false) <<"block_start " << old_block_start << " exceeds the limit of current RangeSet: "
-                 << this->ToString();
+    CHECK(false) << "block_start " << old_block_start
+                 << " exceeds the limit of current RangeSet: " << this->ToString();
     return 0;
   }
 };
