@@ -53,8 +53,8 @@
 #include "error_code.h"
 #include "ota_io.h"
 #include "print_sha1.h"
+#include "rangeset.h"
 #include "updater/install.h"
-#include "updater/rangeset.h"
 #include "updater/updater.h"
 
 // Set this to 0 to interpret 'erase' transfers to mean do a

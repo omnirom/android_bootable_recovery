@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 
-#include "updater/rangeset.h"
+#include "rangeset.h"
 
 TEST(RangeSetTest, Parse_smoke) {
   RangeSet rs = RangeSet::Parse("2,1,10");
