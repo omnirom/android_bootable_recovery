@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b8dd9589_432c123b",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 1001507
+      },
+      "writtenOn": "2017-08-20T17:07:23Z",
+      "side": 1,
+      "message": "ifeq ($(TW_DISABLE_APK_INSTALL),true)",
+      "range": {
+        "startLine": 358,
+        "startChar": 0,
+        "endLine": 358,
+        "endChar": 5
+      },
+      "revId": "94ac2bba49b5879d5fb946ff2ae51dd676b0691f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "844ac040_53a508ca",
+        "filename": "Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 1001507
+      },
+      "writtenOn": "2017-08-20T17:07:23Z",
+      "side": 1,
+      "message": "LOCAL_CFLAGS +\u003d -DTW_DISABLE_APK_INSTALL",
+      "range": {
+        "startLine": 359,
+        "startChar": 17,
+        "endLine": 359,
+        "endChar": 30
+      },
+      "revId": "94ac2bba49b5879d5fb946ff2ae51dd676b0691f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b3e46b6f_0b4ba456",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 842,
+      "author": {
+        "id": 1001507
+      },
+      "writtenOn": "2017-08-20T17:07:23Z",
+      "side": 1,
+      "message": "#ifdef TW_DISABLE_APK_INSTALL",
+      "range": {
+        "startLine": 842,
+        "startChar": 2,
+        "endLine": 842,
+        "endChar": 20
+      },
+      "revId": "94ac2bba49b5879d5fb946ff2ae51dd676b0691f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c92d0ae4_00babacc",
+        "filename": "prebuilt/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 501,
+      "author": {
+        "id": 1001507
+      },
+      "writtenOn": "2017-08-20T17:07:23Z",
+      "side": 1,
+      "message": "ifneq ($(TW_DISABLE_APK_INSTALL),true)\nor\nifeq ($(TW_DISABLE_APK_INSTALL),)\n\nnot sure which method is preferred",
+      "range": {
+        "startLine": 501,
+        "startChar": 0,
+        "endLine": 501,
+        "endChar": 30
+      },
+      "revId": "94ac2bba49b5879d5fb946ff2ae51dd676b0691f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
