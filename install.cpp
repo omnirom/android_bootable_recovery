@@ -148,13 +148,23 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
     return INSTALL_ERROR;
   }
 
-  // We allow the package to not have any serialno, but if it has a non-empty
-  // value it should match.
+  // We allow the package to not have any serialno; and we also allow it to carry multiple serial
+  // numbers split by "|"; e.g. serialno=serialno1|serialno2|serialno3 ... We will fail the
+  // verification if the device's serialno doesn't match any of these carried numbers.
   value = android::base::GetProperty("ro.serialno", "");
   const std::string& pkg_serial_no = metadata["serialno"];
-  if (!pkg_serial_no.empty() && pkg_serial_no != value) {
-    LOG(ERROR) << "Package is for serial " << pkg_serial_no;
-    return INSTALL_ERROR;
+  if (!pkg_serial_no.empty()) {
+    bool match = false;
+    for (const std::string& number : android::base::Split(pkg_serial_no, "|")) {
+      if (value == android::base::Trim(number)) {
+        match = true;
+        break;
+      }
+    }
+    if (!match) {
+      LOG(ERROR) << "Package is for serial " << pkg_serial_no;
+      return INSTALL_ERROR;
+    }
   }
 
   if (metadata["ota-type"] != "AB") {
