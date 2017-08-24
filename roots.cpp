@@ -18,6 +18,7 @@
 
 #include <ctype.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -178,16 +179,22 @@ static int exec_cmd(const std::vector<std::string>& args) {
   return WEXITSTATUS(status);
 }
 
-static ssize_t get_file_size(int fd, uint64_t reserve_len) {
+static int64_t get_file_size(int fd, uint64_t reserve_len) {
   struct stat buf;
   int ret = fstat(fd, &buf);
   if (ret) return 0;
 
-  ssize_t computed_size;
+  int64_t computed_size;
   if (S_ISREG(buf.st_mode)) {
     computed_size = buf.st_size - reserve_len;
   } else if (S_ISBLK(buf.st_mode)) {
-    computed_size = get_block_device_size(fd) - reserve_len;
+    uint64_t block_device_size = get_block_device_size(fd);
+    if (block_device_size < reserve_len ||
+        block_device_size > std::numeric_limits<int64_t>::max()) {
+      computed_size = 0;
+    } else {
+      computed_size = block_device_size - reserve_len;
+    }
   } else {
     computed_size = 0;
   }
@@ -231,13 +238,13 @@ int format_volume(const char* volume, const char* directory) {
     close(fd);
   }
 
-  ssize_t length = 0;
+  int64_t length = 0;
   if (v->length != 0) {
     length = v->length;
   } else if (v->key_loc != nullptr && strcmp(v->key_loc, "footer") == 0) {
     android::base::unique_fd fd(open(v->blk_device, O_RDONLY));
     if (fd == -1) {
-      PLOG(ERROR) << "get_file_size: failed to open " << v->blk_device;
+      PLOG(ERROR) << "format_volume: failed to open " << v->blk_device;
       return -1;
     }
     length = get_file_size(fd.get(), CRYPT_FOOTER_OFFSET);
