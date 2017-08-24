@@ -331,6 +331,7 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   if (ret) {
     close(pipefd[0]);
     close(pipefd[1]);
+    log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
     return ret;
   }
 
@@ -395,6 +396,7 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
     close(pipefd[0]);
     close(pipefd[1]);
     PLOG(ERROR) << "Failed to fork update binary";
+    log_buffer->push_back(android::base::StringPrintf("error: %d", kForkUpdateBinaryFailure));
     return INSTALL_ERROR;
   }
 
@@ -583,6 +585,7 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   MemMapping map;
   if (!map.MapFile(path)) {
     LOG(ERROR) << "failed to map file";
+    log_buffer->push_back(android::base::StringPrintf("error: %d", kMapFileFailure));
     return INSTALL_CORRUPT;
   }
 
