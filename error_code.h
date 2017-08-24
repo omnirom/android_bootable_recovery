@@ -25,6 +25,9 @@ enum ErrorCode {
   kBootreasonInBlacklist,
   kPackageCompatibilityFailure,
   kScriptExecutionFailure,
+  kMapFileFailure,
+  kForkUpdateBinaryFailure,
+  kUpdateBinaryCommandFailure,
 };
 
 enum CauseCode {
