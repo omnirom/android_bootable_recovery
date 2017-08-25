@@ -69,7 +69,6 @@ LOCAL_SRC_FILES := \
     toys/android/runcon.c \
     toys/android/setenforce.c \
     toys/android/setprop.c \
-    toys/lsb/dmesg.c \
     toys/lsb/hostname.c \
     toys/lsb/killall.c \
     toys/lsb/md5sum.c \
@@ -213,7 +212,6 @@ LOCAL_SRC_FILES += \
     toys/other/xxd.c \
     toys/pending/arp.c \
     toys/pending/diff.c \
-    toys/pending/ftpget.c \
     toys/pending/lsof.c \
     toys/pending/telnet.c \
     toys/pending/test.c \
@@ -221,6 +219,17 @@ LOCAL_SRC_FILES += \
     toys/pending/xzcat.c \
     toys/posix/ps.c \
     toys/posix/ulimit.c
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
+# Android 8.0 had some tools in different paths
+LOCAL_SRC_FILES += \
+    toys/pending/dmesg.c \
+    toys/net/ftpget.c
+else
+LOCAL_SRC_FILES += \
+    toys/lsb/dmesg.c \
+    toys/pending/ftpget.c
+endif
 
 # Account for master branch changes pulld into CM14.1
 ifneq ($(CM_BUILD),)
@@ -242,11 +251,21 @@ LOCAL_SRC_FILES += \
     toys/posix/file.c
 else
 LOCAL_SRC_FILES += \
+    toys/other/switch_root.c
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
+# Android 8.0 had some tools in different paths
+LOCAL_SRC_FILES += \
+    toys/net/ifconfig.c \
+    toys/net/netcat.c \
+    toys/net/netstat.c \
+    toys/net/rfkill.c
+else
+LOCAL_SRC_FILES += \
     toys/other/ifconfig.c \
     toys/other/netcat.c \
     toys/other/rfkill.c \
-    toys/other/switch_root.c \
     toys/pending/netstat.c
+endif
 endif
 else
 LOCAL_SRC_FILES += \

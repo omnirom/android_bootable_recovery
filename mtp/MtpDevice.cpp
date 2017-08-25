@@ -50,6 +50,10 @@ static bool isMtpDevice(uint16_t vendor, uint16_t product) {
 }
 #endif
 
+#ifdef HAS_USBHOST_TIMEOUT
+static const int USB_CONTROL_TRANSFER_TIMEOUT_MS = 200;
+#endif
+
 MtpDevice* MtpDevice::open(const char* deviceName, int fd) {
 	struct usb_device *device = usb_device_new(deviceName, fd);
 	if (!device) {
@@ -70,15 +74,24 @@ MtpDevice* MtpDevice::open(const char* deviceName, int fd) {
 				interface->bInterfaceSubClass == 1 && // Still Image Capture
 				interface->bInterfaceProtocol == 1)	 // Picture Transfer Protocol (PIMA 15470)
 			{
+#ifdef HAS_USBHOST_TIMEOUT
+				char* manufacturerName = usb_device_get_manufacturer_name(device, USB_CONTROL_TRANSFER_TIMEOUT_MS);
+				char* productName = usb_device_get_product_name(device, USB_CONTROL_TRANSFER_TIMEOUT_MS);
+#else
 				char* manufacturerName = usb_device_get_manufacturer_name(device);
 				char* productName = usb_device_get_product_name(device);
+#endif
 				MTPD("Found camera: \"%s\" \"%s\"\n", manufacturerName, productName);
 				free(manufacturerName);
 				free(productName);
 			} else if (interface->bInterfaceClass == 0xFF &&
 					interface->bInterfaceSubClass == 0xFF &&
 					interface->bInterfaceProtocol == 0) {
+#ifdef HAS_USBHOST_TIMEOUT
+				char* interfaceName = usb_device_get_string(device, interface->iInterface, USB_CONTROL_TRANSFER_TIMEOUT_MS);
+#else
 				char* interfaceName = usb_device_get_string(device, interface->iInterface);
+#endif
 				if (!interfaceName) {
 					continue;
 				} else if (strcmp(interfaceName, "MTP")) {
@@ -88,8 +101,13 @@ MtpDevice* MtpDevice::open(const char* deviceName, int fd) {
 				free(interfaceName);
 
 				// Looks like an android style MTP device
+#ifdef HAS_USBHOST_TIMEOUT
+				char* manufacturerName = usb_device_get_manufacturer_name(device, USB_CONTROL_TRANSFER_TIMEOUT_MS);
+				char* productName = usb_device_get_product_name(device, USB_CONTROL_TRANSFER_TIMEOUT_MS);
+#else
 				char* manufacturerName = usb_device_get_manufacturer_name(device);
 				char* productName = usb_device_get_product_name(device);
+#endif
 				MTPI("Found MTP device: \"%s\" \"%s\"\n", manufacturerName, productName);
 				free(manufacturerName);
 				free(productName);

@@ -89,7 +89,9 @@ endif
 #
 
 include $(CLEAR_VARS)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 26; echo $$?),0)
 LOCAL_CLANG := false
+endif
 LOCAL_MODULE:= libpixelflinger_twrp
 LOCAL_SRC_FILES := $(PIXELFLINGER_SRC_FILES)
 LOCAL_SRC_FILES_arm := $(PIXELFLINGER_SRC_FILES_arm)

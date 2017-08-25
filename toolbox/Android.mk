@@ -47,14 +47,14 @@ ifeq ($(TW_USE_TOOLBOX), true)
             $(if $(filter $(PLATFORM_SDK_VERSION), 23 24), du)
 
         OUR_TOOLS := \
-            iftop \
-            ioctl \
-            nandread \
+            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; iftop),) \
+            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; ioctl),) \
+            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; nandread),) \
             newfs_msdos \
-            prlimit \
-            sendevent \
-            start \
-            stop \
+            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; prlimit),) \
+            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; sendevent),) \
+            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; start),) \
+            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; stop),) \
 
         ifneq (,$(filter $(PLATFORM_SDK_VERSION), 23))
             BSD_TOOLS += \
