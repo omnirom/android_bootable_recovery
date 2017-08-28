@@ -50,8 +50,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
   int GetProgressBaseline() const override;
 
-  bool InitTextParams() override;
-
   void update_progress_locked() override;
 
   void PrintV(const char*, bool, va_list) override;
@@ -59,13 +57,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
  private:
   GRSurface* backgroundIcon[5];
 
-  static const int kMaxCols = 96;
-  static const int kMaxRows = 96;
-
-  // Number of text rows seen on screen
-  int visible_text_rows;
-
-  const char* const* menu_headers_;
   int menu_start, menu_end;
 
   void draw_background_locked() override;
