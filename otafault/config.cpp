@@ -69,7 +69,9 @@ std::string fault_fname(const char* io_type) {
     fname.resize(OTAIO_MAX_FNAME_SIZE);
     ZipString zip_type_path(type_path.c_str());
     ZipEntry entry;
-    int status = FindEntry(archive, zip_type_path, &entry);
+    if (FindEntry(archive, zip_type_path, &entry) != 0) {
+        return {};
+    }
     ExtractToMemory(archive, &entry, reinterpret_cast<uint8_t*>(&fname[0]), OTAIO_MAX_FNAME_SIZE);
     return fname;
 }

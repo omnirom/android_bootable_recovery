@@ -37,6 +37,7 @@ LOCAL_STATIC_LIBRARIES := \
     libz
 LOCAL_CFLAGS := \
     -DZLIB_CONST \
+    -Wall \
     -Werror
 include $(BUILD_STATIC_LIBRARY)
 
@@ -59,6 +60,7 @@ LOCAL_STATIC_LIBRARIES := \
     libz
 LOCAL_CFLAGS := \
     -DZLIB_CONST \
+    -Wall \
     -Werror
 include $(BUILD_STATIC_LIBRARY)
 
@@ -82,6 +84,7 @@ LOCAL_STATIC_LIBRARIES := \
     libz
 LOCAL_CFLAGS := \
     -DZLIB_CONST \
+    -Wall \
     -Werror
 include $(BUILD_HOST_STATIC_LIBRARY)
 
@@ -97,7 +100,7 @@ LOCAL_STATIC_LIBRARIES := \
     libbase \
     libedify \
     libcrypto
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 include $(BUILD_STATIC_LIBRARY)
 
 # applypatch (target executable)
@@ -119,13 +122,14 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     libz \
     libcutils
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 include $(BUILD_EXECUTABLE)
 
 libimgdiff_src_files := imgdiff.cpp
 
 # libbsdiff is compiled with -D_FILE_OFFSET_BITS=64.
 libimgdiff_cflags := \
+    -Wall \
     -Werror \
     -D_FILE_OFFSET_BITS=64 \
     -DZLIB_CONST
@@ -177,7 +181,7 @@ include $(BUILD_HOST_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := imgdiff_main.cpp
 LOCAL_MODULE := imgdiff
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_STATIC_LIBRARIES := \
     libimgdiff \
     $(libimgdiff_static_libraries) \
