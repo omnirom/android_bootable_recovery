@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,11 +38,6 @@
 
 #include "common.h"
 #include "device.h"
-
-// There's only (at most) one of these objects, and global callbacks
-// (for pthread_create, and the input event system) need to find it,
-// so use a global variable.
-static WearRecoveryUI* self = NULL;
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
@@ -63,8 +59,6 @@ WearRecoveryUI::WearRecoveryUI()
   touch_screen_allowed_ = true;
 
   for (size_t i = 0; i < 5; i++) backgroundIcon[i] = NULL;
-
-  self = this;
 }
 
 int WearRecoveryUI::GetProgressBaseline() const {
