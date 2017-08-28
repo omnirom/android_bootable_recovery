@@ -68,8 +68,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
   const char* const* menu_headers_;
   int menu_start, menu_end;
 
-  pthread_t progress_t;
-
   void draw_background_locked() override;
   void draw_screen_locked() override;
 
