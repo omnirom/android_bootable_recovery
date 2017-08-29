@@ -66,6 +66,7 @@ LOCAL_C_INCLUDES := \
     external/e2fsprogs/misc
 
 LOCAL_CFLAGS := \
+    -Wall \
     -Wno-unused-parameter \
     -Werror
 
@@ -91,6 +92,7 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/include
 
 LOCAL_CFLAGS := \
+    -Wall \
     -Wno-unused-parameter \
     -Werror
 

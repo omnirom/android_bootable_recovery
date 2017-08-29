@@ -39,13 +39,6 @@
 #include "common.h"
 #include "device.h"
 
-// Return the current time as a double (including fractions of a second).
-static double now() {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return tv.tv_sec + tv.tv_usec / 1000000.0;
-}
-
 WearRecoveryUI::WearRecoveryUI()
     : kProgressBarBaseline(RECOVERY_UI_PROGRESS_BAR_BASELINE),
       kMenuUnusableRows(RECOVERY_UI_MENU_UNUSABLE_ROWS) {
@@ -167,7 +160,6 @@ void WearRecoveryUI::draw_screen_locked() {
     // display from the bottom up, until we hit the top of the
     // screen, the bottom of the menu, or we've displayed the
     // entire text buffer.
-    int ty;
     int row = (text_top_ + text_rows_ - 1) % text_rows_;
     size_t count = 0;
     for (int ty = gr_fb_height() - char_height_ - kMarginHeight; ty > y + 2 && count < text_rows_;

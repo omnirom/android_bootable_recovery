@@ -61,14 +61,6 @@ static void mangle_file(const std::string& fname) {
   ASSERT_TRUE(android::base::WriteStringToFile(content, fname));
 }
 
-static bool file_cmp(const std::string& f1, const std::string& f2) {
-  std::string c1;
-  android::base::ReadFileToString(f1, &c1);
-  std::string c2;
-  android::base::ReadFileToString(f2, &c2);
-  return c1 == c2;
-}
-
 class ApplyPatchTest : public ::testing::Test {
  public:
   static void SetUpTestCase() {

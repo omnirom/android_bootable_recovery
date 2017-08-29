@@ -25,7 +25,7 @@ LOCAL_STATIC_LIBRARIES := \
     liblog \
     libfs_mgr \
     libcutils
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_INIT_RC := uncrypt.rc
 
 include $(BUILD_EXECUTABLE)
