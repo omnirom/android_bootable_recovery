@@ -159,6 +159,7 @@ LOCAL_STATIC_LIBRARIES := \
     libmounts \
     libz \
     libminadbd \
+    libasyncio \
     libfusesideload \
     libminui \
     libpng \
