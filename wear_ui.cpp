@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,11 +38,6 @@
 
 #include "common.h"
 #include "device.h"
-
-// There's only (at most) one of these objects, and global callbacks
-// (for pthread_create, and the input event system) need to find it,
-// so use a global variable.
-static WearRecoveryUI* self = NULL;
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
@@ -63,8 +59,6 @@ WearRecoveryUI::WearRecoveryUI()
   touch_screen_allowed_ = true;
 
   for (size_t i = 0; i < 5; i++) backgroundIcon[i] = NULL;
-
-  self = this;
 }
 
 int WearRecoveryUI::GetProgressBaseline() const {
@@ -191,20 +185,6 @@ void WearRecoveryUI::update_progress_locked() {
   gr_flip();
 }
 
-bool WearRecoveryUI::InitTextParams() {
-  if (!ScreenRecoveryUI::InitTextParams()) {
-    return false;
-  }
-
-  text_cols_ = (gr_fb_width() - (kMarginWidth * 2)) / char_width_;
-
-  if (text_rows_ > kMaxRows) text_rows_ = kMaxRows;
-  if (text_cols_ > kMaxCols) text_cols_ = kMaxCols;
-
-  visible_text_rows = (gr_fb_height() - (kMarginHeight * 2)) / char_height_;
-  return true;
-}
-
 bool WearRecoveryUI::Init(const std::string& locale) {
   if (!ScreenRecoveryUI::Init(locale)) {
     return false;
@@ -269,7 +249,7 @@ void WearRecoveryUI::StartMenu(const char* const* headers, const char* const* it
     show_menu = true;
     menu_sel = initial_selection;
     menu_start = 0;
-    menu_end = visible_text_rows - 1 - kMenuUnusableRows;
+    menu_end = text_rows_ - 1 - kMenuUnusableRows;
     if (menu_items <= menu_end) menu_end = menu_items;
     update_screen_locked();
   }
