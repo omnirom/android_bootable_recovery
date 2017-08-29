@@ -27,6 +27,7 @@
 #include "graphics_adf.h"
 #include "graphics_drm.h"
 #include "graphics_fbdev.h"
+#include "graphics_overlay.h"
 #include "minui/minui.h"
 
 static GRFont* gr_font = NULL;
@@ -357,6 +358,14 @@ int gr_init() {
     backend = std::make_unique<MinuiBackendDrm>();
     gr_draw = backend->Init();
   }
+
+#ifdef OVERLAY_ENABLE
+  if (!gr_draw) {
+    backend = std::make_unique<MinuiBackendOverlay>();
+    if (backend != NULL)
+        gr_draw = backend->Init();
+  }
+#endif
 
   if (!gr_draw) {
     backend = std::make_unique<MinuiBackendFbdev>();

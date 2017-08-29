@@ -21,6 +21,7 @@ LOCAL_SRC_FILES := \
     graphics_adf.cpp \
     graphics_drm.cpp \
     graphics_fbdev.cpp \
+    graphics_overlay.cpp \
     resources.cpp \
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
@@ -62,6 +63,14 @@ ifneq ($(TARGET_RECOVERY_DEFAULT_ROTATION),)
   LOCAL_CFLAGS += -DDEFAULT_ROTATION=$(TARGET_RECOVERY_DEFAULT_ROTATION)
 else
   LOCAL_CFLAGS += -DDEFAULT_ROTATION=ROTATION_NONE
+endif
+
+ifeq ($(strip $(TARGET_RECOVERY_OVERLAY_ENABLE)),true)
+	LOCAL_CFLAGS += -DOVERLAY_ENABLE
+endif
+
+ifeq ($(strip $(TARGET_RECOVERY_OVERLAY_ENABLE_DOUBLE_BUFFERING)),true)
+	LOCAL_CFLAGS += -DOVERLAY_ENABLE_DOUBLE_BUFFERING
 endif
 
 include $(BUILD_STATIC_LIBRARY)
