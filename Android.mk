@@ -93,7 +93,7 @@ endif
 endif
 
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
-LOCAL_CFLAGS += -Wno-unused-parameter -Werror
+LOCAL_CFLAGS += -Wall -Wno-unused-parameter -Werror
 
 ifneq ($(TARGET_RECOVERY_UI_MARGIN_HEIGHT),)
 LOCAL_CFLAGS += -DRECOVERY_UI_MARGIN_HEIGHT=$(TARGET_RECOVERY_UI_MARGIN_HEIGHT)
@@ -204,7 +204,7 @@ LOCAL_SRC_FILES := \
     rotate_logs.cpp
 LOCAL_MODULE := recovery-persist
 LOCAL_SHARED_LIBRARIES := liblog libbase
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_INIT_RC := recovery-persist.rc
 include $(BUILD_EXECUTABLE)
 
@@ -216,7 +216,7 @@ LOCAL_SRC_FILES := \
     rotate_logs.cpp
 LOCAL_MODULE := recovery-refresh
 LOCAL_SHARED_LIBRARIES := liblog libbase
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_INIT_RC := recovery-refresh.rc
 include $(BUILD_EXECUTABLE)
 
@@ -231,13 +231,14 @@ LOCAL_STATIC_LIBRARIES := \
     libcrypto_utils \
     libcrypto \
     libbase
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 include $(BUILD_STATIC_LIBRARY)
 
 # Wear default device
 # ===============================
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := wear_device.cpp
+LOCAL_CFLAGS := -Wall -Werror
 
 # Should match TARGET_RECOVERY_UI_LIB in BoardConfig.mk.
 LOCAL_MODULE := librecovery_ui_wear
@@ -249,6 +250,7 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := vr_device.cpp
+LOCAL_CFLAGS := -Wall -Werror
 
 # should match TARGET_RECOVERY_UI_LIB set in BoardConfig.mk
 LOCAL_MODULE := librecovery_ui_vr
