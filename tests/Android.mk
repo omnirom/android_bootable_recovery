@@ -18,7 +18,7 @@ LOCAL_PATH := $(call my-dir)
 
 # Unit tests
 include $(CLEAR_VARS)
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_MODULE := recovery_unit_test
 LOCAL_COMPATIBILITY_SUITE := device-tests
 LOCAL_STATIC_LIBRARIES := \
@@ -46,7 +46,7 @@ include $(BUILD_NATIVE_TEST)
 
 # Manual tests
 include $(CLEAR_VARS)
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_MODULE := recovery_manual_test
 LOCAL_STATIC_LIBRARIES := \
     libminui \
@@ -81,6 +81,7 @@ include $(BUILD_NATIVE_TEST)
 # Component tests
 include $(CLEAR_VARS)
 LOCAL_CFLAGS := \
+    -Wall \
     -Werror \
     -D_FILE_OFFSET_BITS=64
 
@@ -191,7 +192,7 @@ include $(BUILD_NATIVE_TEST)
 
 # Host tests
 include $(CLEAR_VARS)
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_MODULE := recovery_host_test
 LOCAL_MODULE_HOST_OS := linux
 LOCAL_C_INCLUDES := bootable/recovery
