@@ -35,6 +35,8 @@ std::string string_buffer;
 
 %x STR
 
+%option noinput
+%option nounput
 %option noyywrap
 
 %%
