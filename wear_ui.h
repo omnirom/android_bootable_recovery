@@ -25,8 +25,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
  public:
   WearRecoveryUI();
 
-  bool Init(const std::string& locale) override;
-
   void SetStage(int current, int max) override;
 
   // printing messages
@@ -55,14 +53,12 @@ class WearRecoveryUI : public ScreenRecoveryUI {
   void PrintV(const char*, bool, va_list) override;
 
  private:
-  GRSurface* backgroundIcon[5];
-
-  int menu_start, menu_end;
-
   void draw_background_locked() override;
   void draw_screen_locked() override;
 
   void PutChar(char);
+
+  int menu_start, menu_end;
 };
 
 #endif  // RECOVERY_WEAR_UI_H

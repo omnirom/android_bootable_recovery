@@ -50,8 +50,6 @@ WearRecoveryUI::WearRecoveryUI()
   loop_frames = 60;
 
   touch_screen_allowed_ = true;
-
-  for (size_t i = 0; i < 5; i++) backgroundIcon[i] = NULL;
 }
 
 int WearRecoveryUI::GetProgressBaseline() const {
@@ -67,24 +65,12 @@ void WearRecoveryUI::draw_background_locked() {
   gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
   if (currentIcon != NONE) {
-    GRSurface* surface;
-    if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
-      if (!intro_done) {
-        surface = introFrames[current_frame];
-      } else {
-        surface = loopFrames[current_frame];
-      }
-    } else {
-      surface = backgroundIcon[currentIcon];
-    }
-
-    int width = gr_get_width(surface);
-    int height = gr_get_height(surface);
-
-    int x = (gr_fb_width() - width) / 2;
-    int y = (gr_fb_height() - height) / 2;
-
-    gr_blit(surface, 0, 0, width, height, x, y);
+    GRSurface* frame = GetCurrentFrame();
+    int frame_width = gr_get_width(frame);
+    int frame_height = gr_get_height(frame);
+    int frame_x = (gr_fb_width() - frame_width) / 2;
+    int frame_y = (gr_fb_height() - frame_height) / 2;
+    gr_blit(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
   }
 }
 
@@ -175,20 +161,6 @@ void WearRecoveryUI::draw_screen_locked() {
 void WearRecoveryUI::update_progress_locked() {
   draw_screen_locked();
   gr_flip();
-}
-
-bool WearRecoveryUI::Init(const std::string& locale) {
-  if (!ScreenRecoveryUI::Init(locale)) {
-    return false;
-  }
-
-  LoadBitmap("icon_error", &backgroundIcon[ERROR]);
-  backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
-
-  // This leaves backgroundIcon[INSTALLING_UPDATE] and backgroundIcon[ERASING]
-  // as NULL which is fine since draw_background_locked() doesn't use them.
-
-  return true;
 }
 
 void WearRecoveryUI::SetStage(int current, int max) {
