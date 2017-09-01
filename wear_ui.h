@@ -29,7 +29,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
   // printing messages
   void Print(const char* fmt, ...) override;
-  void PrintOnScreenOnly(const char* fmt, ...) override __printflike(2, 3);
   void ShowFile(const char* filename) override;
   void ShowFile(FILE* fp) override;
 
@@ -49,8 +48,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
   int GetProgressBaseline() const override;
 
   void update_progress_locked() override;
-
-  void PrintV(const char*, bool, va_list) override;
 
  private:
   void draw_background_locked() override;
