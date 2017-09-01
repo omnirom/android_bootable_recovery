@@ -32,8 +32,8 @@
 #include <vector>
 
 #include <android-base/properties.h>
-#include <android-base/strings.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 #include <minui/minui.h>
 
 #include "common.h"
@@ -311,36 +311,4 @@ void WearRecoveryUI::ShowFile(const char* filename) {
   }
   ShowFile(fp);
   fclose(fp);
-}
-
-void WearRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  PrintV(fmt, false, ap);
-  va_end(ap);
-}
-
-void WearRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) {
-  std::string str;
-  android::base::StringAppendV(&str, fmt, ap);
-
-  if (copy_to_stdout) {
-    fputs(str.c_str(), stdout);
-  }
-
-  pthread_mutex_lock(&updateMutex);
-  if (text_rows_ > 0 && text_cols_ > 0) {
-    for (const char* ptr = str.c_str(); *ptr != '\0'; ++ptr) {
-      if (*ptr == '\n' || text_col_ >= text_cols_) {
-        text_[text_row_][text_col_] = '\0';
-        text_col_ = 0;
-        text_row_ = (text_row_ + 1) % text_rows_;
-        if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
-      }
-      if (*ptr != '\n') text_[text_row_][text_col_++] = *ptr;
-    }
-    text_[text_row_][text_col_] = '\0';
-    update_screen_locked();
-  }
-  pthread_mutex_unlock(&updateMutex);
 }
