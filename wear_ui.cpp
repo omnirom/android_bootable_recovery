@@ -32,8 +32,8 @@
 #include <vector>
 
 #include <android-base/properties.h>
-#include <android-base/strings.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 #include <minui/minui.h>
 
 #include "common.h"
@@ -50,8 +50,6 @@ WearRecoveryUI::WearRecoveryUI()
   loop_frames = 60;
 
   touch_screen_allowed_ = true;
-
-  for (size_t i = 0; i < 5; i++) backgroundIcon[i] = NULL;
 }
 
 int WearRecoveryUI::GetProgressBaseline() const {
@@ -67,24 +65,12 @@ void WearRecoveryUI::draw_background_locked() {
   gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
   if (currentIcon != NONE) {
-    GRSurface* surface;
-    if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
-      if (!intro_done) {
-        surface = introFrames[current_frame];
-      } else {
-        surface = loopFrames[current_frame];
-      }
-    } else {
-      surface = backgroundIcon[currentIcon];
-    }
-
-    int width = gr_get_width(surface);
-    int height = gr_get_height(surface);
-
-    int x = (gr_fb_width() - width) / 2;
-    int y = (gr_fb_height() - height) / 2;
-
-    gr_blit(surface, 0, 0, width, height, x, y);
+    GRSurface* frame = GetCurrentFrame();
+    int frame_width = gr_get_width(frame);
+    int frame_height = gr_get_height(frame);
+    int frame_x = (gr_fb_width() - frame_width) / 2;
+    int frame_y = (gr_fb_height() - frame_height) / 2;
+    gr_blit(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
   }
 }
 
@@ -175,20 +161,6 @@ void WearRecoveryUI::draw_screen_locked() {
 void WearRecoveryUI::update_progress_locked() {
   draw_screen_locked();
   gr_flip();
-}
-
-bool WearRecoveryUI::Init(const std::string& locale) {
-  if (!ScreenRecoveryUI::Init(locale)) {
-    return false;
-  }
-
-  LoadBitmap("icon_error", &backgroundIcon[ERROR]);
-  backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
-
-  // This leaves backgroundIcon[INSTALLING_UPDATE] and backgroundIcon[ERASING]
-  // as NULL which is fine since draw_background_locked() doesn't use them.
-
-  return true;
 }
 
 void WearRecoveryUI::SetStage(int current, int max) {
@@ -339,36 +311,4 @@ void WearRecoveryUI::ShowFile(const char* filename) {
   }
   ShowFile(fp);
   fclose(fp);
-}
-
-void WearRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  PrintV(fmt, false, ap);
-  va_end(ap);
-}
-
-void WearRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) {
-  std::string str;
-  android::base::StringAppendV(&str, fmt, ap);
-
-  if (copy_to_stdout) {
-    fputs(str.c_str(), stdout);
-  }
-
-  pthread_mutex_lock(&updateMutex);
-  if (text_rows_ > 0 && text_cols_ > 0) {
-    for (const char* ptr = str.c_str(); *ptr != '\0'; ++ptr) {
-      if (*ptr == '\n' || text_col_ >= text_cols_) {
-        text_[text_row_][text_col_] = '\0';
-        text_col_ = 0;
-        text_row_ = (text_row_ + 1) % text_rows_;
-        if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
-      }
-      if (*ptr != '\n') text_[text_row_][text_col_++] = *ptr;
-    }
-    text_[text_row_][text_col_] = '\0';
-    update_screen_locked();
-  }
-  pthread_mutex_unlock(&updateMutex);
 }
