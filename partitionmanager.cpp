@@ -999,6 +999,7 @@ int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 		}
 	}
 	TWFunc::GUI_Operation_Text(TW_UPDATE_SYSTEM_DETAILS_TEXT, gui_parse_text("{@updating_system_details}"));
+	UnMount_By_Path("/system", false);
 	Update_System_Details();
 	UnMount_Main_Partitions();
 	time(&rStop);
