@@ -823,6 +823,53 @@ void MultiROM::saveConfig(const MultiROM::config& cfg)
 	fclose(f);
 }
 
+static bool MakeMultiROMRecoveryFstab(void)
+{
+	FILE *fstabIN;
+	FILE *fstabOUT;
+	char fstab_line[MAX_FSTAB_LINE_LENGTH];
+
+	if (rename("/etc/recovery.fstab", "/etc/recovery.fstab.bak") < 0) {
+		LOGERR("Could not rename /etc/recovery.fstab to /etc.recovery.fstab.bak!\n");
+		return false;
+	}
+
+	fstabIN = fopen("/etc/recovery.fstab.bak", "rt");
+	if (!fstabIN) {
+		LOGERR("Could not open /etc/recovery.fstab.bak for reading!\n");
+		return false;
+	}
+
+	fstabOUT = fopen("/etc/recovery.fstab", "w");
+	if (!fstabOUT) {
+		LOGERR("Could not open /etc/recovery.fstab for writing!\n");
+		fclose(fstabIN);
+		return false;
+	}
+
+	while (fgets(fstab_line, sizeof(fstab_line), fstabIN) != NULL) {
+		if (fstab_line[strlen(fstab_line) - 1] != '\n')
+			fstab_line[strlen(fstab_line)] = '\n';
+
+		if (strncmp(fstab_line, "/cache", 6) == 0 && strchr(" \t\n", fstab_line[6]))
+			continue;
+
+		if (strncmp(fstab_line, "/system", 7) == 0 && strchr(" \t\n", fstab_line[7]))
+			continue;
+
+		if (strncmp(fstab_line, "/data", 5) == 0 && strchr(" \t\n", fstab_line[5]))
+			continue;
+
+		fputs(fstab_line, fstabOUT);
+
+		memset(fstab_line, 0, sizeof(fstab_line));
+	}
+	fclose(fstabIN);
+	fclose(fstabOUT);
+
+	return true;
+}
+
 bool MultiROM::changeMounts(std::string name)
 {
 	gui_print("Changing mounts to ROM %s...\n", name.c_str());
@@ -970,7 +1017,7 @@ bool MultiROM::changeMounts(std::string name)
 
 	// SuperSU tries *very* hard to mount /data and /system, even looks through
 	// recovery.fstab and manages to mount the real /system
-	system("mv /etc/recovery.fstab /etc/recovery.fstab.bak");
+	MakeMultiROMRecoveryFstab();
 
 	// This shim prevents everything from mounting anything as read-only
 	// and also disallow mounting/unmounting of /system /data /cache
