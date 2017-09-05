@@ -16,28 +16,15 @@
 
 #include "wear_ui.h"
 
-#include <errno.h>
-#include <fcntl.h>
 #include <pthread.h>
-#include <stdarg.h>
-#include <stdlib.h>
+#include <stdio.h>  // TODO: Remove after killing the call to sprintf().
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
 
 #include <string>
-#include <vector>
 
 #include <android-base/properties.h>
-#include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <minui/minui.h>
-
-#include "common.h"
-#include "device.h"
 
 WearRecoveryUI::WearRecoveryUI()
     : kProgressBarBaseline(RECOVERY_UI_PROGRESS_BAR_BASELINE),
@@ -166,34 +153,6 @@ void WearRecoveryUI::update_progress_locked() {
 void WearRecoveryUI::SetStage(int current, int max) {
 }
 
-void WearRecoveryUI::Print(const char* fmt, ...) {
-  char buf[256];
-  va_list ap;
-  va_start(ap, fmt);
-  vsnprintf(buf, 256, fmt, ap);
-  va_end(ap);
-
-  fputs(buf, stdout);
-
-  // This can get called before ui_init(), so be careful.
-  pthread_mutex_lock(&updateMutex);
-  if (text_rows_ > 0 && text_cols_ > 0) {
-    char* ptr;
-    for (ptr = buf; *ptr != '\0'; ++ptr) {
-      if (*ptr == '\n' || text_col_ >= text_cols_) {
-        text_[text_row_][text_col_] = '\0';
-        text_col_ = 0;
-        text_row_ = (text_row_ + 1) % text_rows_;
-        if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
-      }
-      if (*ptr != '\n') text_[text_row_][text_col_++] = *ptr;
-    }
-    text_[text_row_][text_col_] = '\0';
-    update_screen_locked();
-  }
-  pthread_mutex_unlock(&updateMutex);
-}
-
 void WearRecoveryUI::StartMenu(const char* const* headers, const char* const* items,
                                int initial_selection) {
   pthread_mutex_lock(&updateMutex);
@@ -240,75 +199,4 @@ int WearRecoveryUI::SelectMenu(int sel) {
   }
   pthread_mutex_unlock(&updateMutex);
   return sel;
-}
-
-void WearRecoveryUI::ShowFile(FILE* fp) {
-  std::vector<off_t> offsets;
-  offsets.push_back(ftello(fp));
-  ClearText();
-
-  struct stat sb;
-  fstat(fileno(fp), &sb);
-
-  bool show_prompt = false;
-  while (true) {
-    if (show_prompt) {
-      Print("--(%d%% of %d bytes)--",
-            static_cast<int>(100 * (double(ftello(fp)) / double(sb.st_size))),
-            static_cast<int>(sb.st_size));
-      Redraw();
-      while (show_prompt) {
-        show_prompt = false;
-        int key = WaitKey();
-        if (key == KEY_POWER || key == KEY_ENTER) {
-          return;
-        } else if (key == KEY_UP || key == KEY_VOLUMEUP) {
-          if (offsets.size() <= 1) {
-            show_prompt = true;
-          } else {
-            offsets.pop_back();
-            fseek(fp, offsets.back(), SEEK_SET);
-          }
-        } else {
-          if (feof(fp)) {
-            return;
-          }
-          offsets.push_back(ftello(fp));
-        }
-      }
-      ClearText();
-    }
-
-    int ch = getc(fp);
-    if (ch == EOF) {
-      text_row_ = text_top_ = text_rows_ - 2;
-      show_prompt = true;
-    } else {
-      PutChar(ch);
-      if (text_col_ == 0 && text_row_ >= text_rows_ - 2) {
-        text_top_ = text_row_;
-        show_prompt = true;
-      }
-    }
-  }
-}
-
-void WearRecoveryUI::PutChar(char ch) {
-  pthread_mutex_lock(&updateMutex);
-  if (ch != '\n') text_[text_row_][text_col_++] = ch;
-  if (ch == '\n' || text_col_ >= text_cols_) {
-    text_col_ = 0;
-    ++text_row_;
-  }
-  pthread_mutex_unlock(&updateMutex);
-}
-
-void WearRecoveryUI::ShowFile(const char* filename) {
-  FILE* fp = fopen_path(filename, "re");
-  if (fp == nullptr) {
-    Print("  Unable to open %s: %s\n", filename, strerror(errno));
-    return;
-  }
-  ShowFile(fp);
-  fclose(fp);
 }
