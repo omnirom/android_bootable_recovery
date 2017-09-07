@@ -69,7 +69,7 @@ ScreenRecoveryUI::ScreenRecoveryUI()
       text_top_(0),
       show_text(false),
       show_text_ever(false),
-      menu_(nullptr),
+      menu_headers_(nullptr),
       show_menu(false),
       menu_items(0),
       menu_sel(0),
@@ -356,10 +356,10 @@ void ScreenRecoveryUI::draw_screen_locked() {
         DrawHighlightBar(0, y - 2, gr_fb_width(), char_height_ + 4);
         // Bold white text for the selected item.
         SetColor(MENU_SEL_FG);
-        y += DrawTextLine(x, y, menu_[i], true);
+        y += DrawTextLine(x, y, menu_[i].c_str(), true);
         SetColor(MENU);
       } else {
-        y += DrawTextLine(x, y, menu_[i], false);
+        y += DrawTextLine(x, y, menu_[i].c_str(), false);
       }
     }
     y += DrawHorizontalRule(y);
@@ -508,7 +508,6 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
 
   text_ = Alloc2d(text_rows_, text_cols_ + 1);
   file_viewer_text_ = Alloc2d(text_rows_, text_cols_ + 1);
-  menu_ = Alloc2d(text_rows_, text_cols_ + 1);
 
   text_col_ = text_row_ = 0;
   text_top_ = 1;
@@ -771,12 +770,11 @@ void ScreenRecoveryUI::StartMenu(const char* const* headers, const char* const* 
   pthread_mutex_lock(&updateMutex);
   if (text_rows_ > 0 && text_cols_ > 0) {
     menu_headers_ = headers;
-    size_t i = 0;
-    for (; i < text_rows_ && items[i] != nullptr; ++i) {
-      strncpy(menu_[i], items[i], text_cols_ - 1);
-      menu_[i][text_cols_ - 1] = '\0';
+    menu_.clear();
+    for (size_t i = 0; i < text_rows_ && items[i] != nullptr; ++i) {
+      menu_.emplace_back(std::string(items[i], strnlen(items[i], text_cols_ - 1)));
     }
-    menu_items = i;
+    menu_items = static_cast<int>(menu_.size());
     show_menu = true;
     menu_sel = initial_selection;
     update_screen_locked();

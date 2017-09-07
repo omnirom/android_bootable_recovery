@@ -154,11 +154,11 @@ void WearRecoveryUI::draw_screen_locked() {
           // white text of selected item
           SetColor(MENU_SEL_FG);
           if (menu_[i][0]) {
-            gr_text(gr_sys_font(), x + 4, y, menu_[i], 1);
+            gr_text(gr_sys_font(), x + 4, y, menu_[i].c_str(), 1);
           }
           SetColor(MENU);
         } else if (menu_[i][0]) {
-          gr_text(gr_sys_font(), x + 4, y, menu_[i], 0);
+          gr_text(gr_sys_font(), x + 4, y, menu_[i].c_str(), 0);
         }
         y += char_height_ + 4;
       }
@@ -255,17 +255,16 @@ void WearRecoveryUI::StartMenu(const char* const* headers, const char* const* it
   pthread_mutex_lock(&updateMutex);
   if (text_rows_ > 0 && text_cols_ > 0) {
     menu_headers_ = headers;
-    size_t i = 0;
+    menu_.clear();
     // "i < text_rows_" is removed from the loop termination condition,
     // which is different from the one in ScreenRecoveryUI::StartMenu().
     // Because WearRecoveryUI supports scrollable menu, it's fine to have
     // more entries than text_rows_. The menu may be truncated otherwise.
     // Bug: 23752519
-    for (; items[i] != nullptr; i++) {
-      strncpy(menu_[i], items[i], text_cols_ - 1);
-      menu_[i][text_cols_ - 1] = '\0';
+    for (size_t i = 0; items[i] != nullptr; i++) {
+      menu_.emplace_back(std::string(items[i], strnlen(items[i], text_cols_ - 1)));
     }
-    menu_items = i;
+    menu_items = static_cast<int>(menu_.size());
     show_menu = true;
     menu_sel = initial_selection;
     menu_start = 0;
