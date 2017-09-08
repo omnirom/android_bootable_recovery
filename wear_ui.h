@@ -19,18 +19,11 @@
 
 #include "screen_ui.h"
 
-#include <string>
-
 class WearRecoveryUI : public ScreenRecoveryUI {
  public:
   WearRecoveryUI();
 
   void SetStage(int current, int max) override;
-
-  // printing messages
-  void Print(const char* fmt, ...) override;
-  void ShowFile(const char* filename) override;
-  void ShowFile(FILE* fp) override;
 
   // menu display
   void StartMenu(const char* const* headers, const char* const* items,
@@ -52,8 +45,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
  private:
   void draw_background_locked() override;
   void draw_screen_locked() override;
-
-  void PutChar(char);
 
   int menu_start, menu_end;
 };
