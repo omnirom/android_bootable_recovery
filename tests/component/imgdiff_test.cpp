@@ -16,13 +16,17 @@
 
 #include <stdio.h>
 
+#include <algorithm>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/memory.h>
+#include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
 #include <applypatch/imgdiff.h>
+#include <applypatch/imgdiff_image.h>
 #include <applypatch/imgpatch.h>
 #include <gtest/gtest.h>
 #include <ziparchive/zip_writer.h>
@@ -75,15 +79,20 @@ static void verify_patch_header(const std::string& patch, size_t* num_normal, si
   if (num_deflate != nullptr) *num_deflate = deflate;
 }
 
+static void GenerateTarget(const std::string& src, const std::string& patch, std::string* patched) {
+  patched->clear();
+  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
+                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
+                               [&](const unsigned char* data, size_t len) {
+                                 patched->append(reinterpret_cast<const char*>(data), len);
+                                 return len;
+                               }));
+}
+
 static void verify_patched_image(const std::string& src, const std::string& patch,
                                  const std::string& tgt) {
   std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               [&patched](const unsigned char* data, size_t len) {
-                                 patched.append(reinterpret_cast<const char*>(data), len);
-                                 return len;
-                               }));
+  GenerateTarget(src, patch, &patched);
   ASSERT_EQ(tgt, patched);
 }
 
@@ -622,4 +631,324 @@ TEST(ImgpatchTest, image_mode_patch_corruption) {
   ASSERT_EQ(-1, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
                                 reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
                                 [](const unsigned char* /*data*/, size_t len) { return len; }));
+}
+
+static void construct_store_entry(const std::vector<std::tuple<std::string, size_t, char>>& info,
+                                  ZipWriter* writer) {
+  for (auto& t : info) {
+    // Create t(1) blocks of t(2), and write the data to t(0)
+    ASSERT_EQ(0, writer->StartEntry(std::get<0>(t).c_str(), 0));
+    const std::string content(std::get<1>(t) * 4096, std::get<2>(t));
+    ASSERT_EQ(0, writer->WriteBytes(content.data(), content.size()));
+    ASSERT_EQ(0, writer->FinishEntry());
+  }
+}
+
+static void construct_deflate_entry(const std::vector<std::tuple<std::string, size_t, size_t>>& info,
+                                    ZipWriter* writer, const std::string& data) {
+  for (auto& t : info) {
+    // t(0): entry_name; t(1): block offset; t(2) length in blocks.
+    ASSERT_EQ(0, writer->StartEntry(std::get<0>(t).c_str(), ZipWriter::kCompress));
+    ASSERT_EQ(0, writer->WriteBytes(data.data() + std::get<1>(t) * 4096, std::get<2>(t) * 4096));
+    ASSERT_EQ(0, writer->FinishEntry());
+  }
+}
+
+// Look for the generated source and patch pieces in the debug_dir and generate the target on
+// each pair. Concatenate the split target and match against the orignal one.
+static void GenerateAndCheckSplitTarget(const std::string& debug_dir, size_t count,
+                                        const std::string& tgt) {
+  std::string patched;
+  for (size_t i = 0; i < count; i++) {
+    std::string split_src_path = android::base::StringPrintf("%s/src-%zu", debug_dir.c_str(), i);
+    std::string split_patch_path = android::base::StringPrintf("%s/patch-%zu", debug_dir.c_str(), i);
+
+    std::string split_src;
+    std::string split_patch;
+    ASSERT_TRUE(android::base::ReadFileToString(split_src_path, &split_src));
+    ASSERT_TRUE(android::base::ReadFileToString(split_patch_path, &split_patch));
+
+    std::string split_tgt;
+    GenerateTarget(split_src, split_patch, &split_tgt);
+    patched += split_tgt;
+  }
+
+  // Verify we can get back the original target image.
+  ASSERT_EQ(tgt, patched);
+}
+
+std::vector<ImageChunk> ConstructImageChunks(
+    const std::vector<uint8_t>& content, const std::vector<std::tuple<std::string, size_t>>& info) {
+  std::vector<ImageChunk> chunks;
+  size_t start = 0;
+  for (const auto& t : info) {
+    size_t length = std::get<1>(t);
+    chunks.emplace_back(CHUNK_NORMAL, start, &content, length, std::get<0>(t));
+    start += length;
+  }
+
+  return chunks;
+}
+
+TEST(ImgdiffTest, zip_mode_split_image_smoke) {
+  std::vector<uint8_t> content;
+  content.reserve(4096 * 50);
+  uint8_t n = 0;
+  generate_n(back_inserter(content), 4096 * 50, [&n]() { return n++ / 4096; });
+
+  ZipModeImage tgt_image(false, 4096 * 10);
+  std::vector<ImageChunk> tgt_chunks = ConstructImageChunks(content, { { "a", 100 },
+                                                                       { "b", 4096 * 2 },
+                                                                       { "c", 4096 * 3 },
+                                                                       { "d", 300 },
+                                                                       { "e-0", 4096 * 10 },
+                                                                       { "e-1", 4096 * 5 },
+                                                                       { "CD", 200 } });
+  tgt_image.Initialize(std::move(tgt_chunks),
+                       std::vector<uint8_t>(content.begin(), content.begin() + 82520));
+
+  tgt_image.DumpChunks();
+
+  ZipModeImage src_image(true, 4096 * 10);
+  std::vector<ImageChunk> src_chunks = ConstructImageChunks(content, { { "b", 4096 * 3 },
+                                                                       { "c-0", 4096 * 10 },
+                                                                       { "c-1", 4096 * 2 },
+                                                                       { "a", 4096 * 5 },
+                                                                       { "e-0", 4096 * 10 },
+                                                                       { "e-1", 10000 },
+                                                                       { "CD", 5000 } });
+  src_image.Initialize(std::move(src_chunks),
+                       std::vector<uint8_t>(content.begin(), content.begin() + 137880));
+
+  std::vector<ZipModeImage> split_tgt_images;
+  std::vector<ZipModeImage> split_src_images;
+  std::vector<SortedRangeSet> split_src_ranges;
+
+  ZipModeImage::SplitZipModeImageWithLimit(tgt_image, src_image, &split_tgt_images,
+                                           &split_src_images, &split_src_ranges);
+
+  // src_piece 1: a 5 blocks, b 3 blocks
+  // src_piece 2: c-0 10 blocks
+  // src_piece 3: d 0 block, e-0 10 blocks
+  // src_piece 4: e-1 2 blocks; CD 2 blocks
+  ASSERT_EQ(split_tgt_images.size(), split_src_images.size());
+  ASSERT_EQ(static_cast<size_t>(4), split_tgt_images.size());
+
+  ASSERT_EQ(static_cast<size_t>(1), split_tgt_images[0].NumOfChunks());
+  ASSERT_EQ(static_cast<size_t>(12288), split_tgt_images[0][0].DataLengthForPatch());
+  ASSERT_EQ("4,0,3,15,20", split_src_ranges[0].ToString());
+
+  ASSERT_EQ(static_cast<size_t>(1), split_tgt_images[1].NumOfChunks());
+  ASSERT_EQ(static_cast<size_t>(12288), split_tgt_images[1][0].DataLengthForPatch());
+  ASSERT_EQ("2,3,13", split_src_ranges[1].ToString());
+
+  ASSERT_EQ(static_cast<size_t>(1), split_tgt_images[2].NumOfChunks());
+  ASSERT_EQ(static_cast<size_t>(40960), split_tgt_images[2][0].DataLengthForPatch());
+  ASSERT_EQ("2,20,30", split_src_ranges[2].ToString());
+
+  ASSERT_EQ(static_cast<size_t>(1), split_tgt_images[3].NumOfChunks());
+  ASSERT_EQ(static_cast<size_t>(16984), split_tgt_images[3][0].DataLengthForPatch());
+  ASSERT_EQ("2,30,34", split_src_ranges[3].ToString());
+}
+
+TEST(ImgdiffTest, zip_mode_store_large_apk) {
+  // Construct src and tgt zip files with limit = 10 blocks.
+  //     src              tgt
+  //  12 blocks 'd'    3 blocks  'a'
+  //  8 blocks  'c'    3 blocks  'b'
+  //  3 blocks  'b'    8 blocks  'c' (exceeds limit)
+  //  3 blocks  'a'    12 blocks 'd' (exceeds limit)
+  //                   3 blocks  'e'
+  TemporaryFile tgt_file;
+  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  ZipWriter tgt_writer(tgt_file_ptr);
+  construct_store_entry(
+      { { "a", 3, 'a' }, { "b", 3, 'b' }, { "c", 8, 'c' }, { "d", 12, 'd' }, { "e", 3, 'e' } },
+      &tgt_writer);
+  ASSERT_EQ(0, tgt_writer.Finish());
+  ASSERT_EQ(0, fclose(tgt_file_ptr));
+
+  TemporaryFile src_file;
+  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  ZipWriter src_writer(src_file_ptr);
+  construct_store_entry({ { "d", 12, 'd' }, { "c", 8, 'c' }, { "b", 3, 'b' }, { "a", 3, 'a' } },
+                        &src_writer);
+  ASSERT_EQ(0, src_writer.Finish());
+  ASSERT_EQ(0, fclose(src_file_ptr));
+
+  // Compute patch.
+  TemporaryFile patch_file;
+  TemporaryDir debug_dir;
+  std::vector<const char*> args = {
+    "imgdiff", "-z", "--block-limit=10", android::base::StringPrintf(
+          "--debug-dir=%s", debug_dir.path).c_str(), src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  std::string tgt;
+  ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
+
+  // Expect 4 pieces of patch.(Rougly 3'a',3'b'; 8'c'; 10'd'; 2'd'3'e')
+  GenerateAndCheckSplitTarget(debug_dir.path, 4, tgt);
+}
+
+TEST(ImgdiffTest, zip_mode_deflate_large_apk) {
+  // Generate 50 blocks of random data.
+  std::string random_data;
+  random_data.reserve(4096 * 50);
+  generate_n(back_inserter(random_data), 4096 * 50, []() { return rand() % 256; });
+
+  // Construct src and tgt zip files with limit = 10 blocks.
+  //     src               tgt
+  //  22 blocks, "d"    4  blocks,  "a"
+  //  5 blocks,  "b"    4  blocks,  "b"
+  //  3 blocks,  "a"    7  blocks,  "c" (exceeds limit)
+  //  8 blocks,  "c"    20 blocks,  "d" (exceeds limit)
+  //  1 block,   "f"    2  blocks,  "e"
+  TemporaryFile tgt_file;
+  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  ZipWriter tgt_writer(tgt_file_ptr);
+
+  construct_deflate_entry(
+      { { "a", 0, 4 }, { "b", 5, 4 }, { "c", 12, 8 }, { "d", 21, 20 }, { "e", 45, 2 },
+        { "f", 48, 1 } }, &tgt_writer, random_data);
+
+  ASSERT_EQ(0, tgt_writer.Finish());
+  ASSERT_EQ(0, fclose(tgt_file_ptr));
+
+  TemporaryFile src_file;
+  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  ZipWriter src_writer(src_file_ptr);
+
+  construct_deflate_entry(
+      { { "d", 21, 22 }, { "b", 5, 5 }, { "a", 0, 3 }, { "g", 9, 1 }, { "c", 11, 8 },
+        { "f", 45, 1 } }, &src_writer, random_data);
+
+  ASSERT_EQ(0, src_writer.Finish());
+  ASSERT_EQ(0, fclose(src_file_ptr));
+
+  ZipModeImage src_image(true, 10 * 4096);
+  ZipModeImage tgt_image(false, 10 * 4096);
+  ASSERT_TRUE(src_image.Initialize(src_file.path));
+  ASSERT_TRUE(tgt_image.Initialize(tgt_file.path));
+  ASSERT_TRUE(ZipModeImage::CheckAndProcessChunks(&tgt_image, &src_image));
+
+  src_image.DumpChunks();
+  tgt_image.DumpChunks();
+
+  std::vector<ZipModeImage> split_tgt_images;
+  std::vector<ZipModeImage> split_src_images;
+  std::vector<SortedRangeSet> split_src_ranges;
+  ZipModeImage::SplitZipModeImageWithLimit(tgt_image, src_image, &split_tgt_images,
+                                           &split_src_images, &split_src_ranges);
+
+  // src_piece 1: a 3 blocks, b 5 blocks
+  // src_piece 2: c 8 blocks
+  // src_piece 3: d-0 10 block
+  // src_piece 4: d-1 10 blocks
+  // src_piece 5: e 1 block, CD
+  ASSERT_EQ(split_tgt_images.size(), split_src_images.size());
+  ASSERT_EQ(static_cast<size_t>(5), split_tgt_images.size());
+
+  ASSERT_EQ(static_cast<size_t>(2), split_src_images[0].NumOfChunks());
+  ASSERT_EQ("a", split_src_images[0][0].GetEntryName());
+  ASSERT_EQ("b", split_src_images[0][1].GetEntryName());
+
+  ASSERT_EQ(static_cast<size_t>(1), split_src_images[1].NumOfChunks());
+  ASSERT_EQ("c", split_src_images[1][0].GetEntryName());
+
+  ASSERT_EQ(static_cast<size_t>(0), split_src_images[2].NumOfChunks());
+  ASSERT_EQ(static_cast<size_t>(0), split_src_images[3].NumOfChunks());
+  ASSERT_EQ(static_cast<size_t>(0), split_src_images[4].NumOfChunks());
+
+  // Compute patch.
+  TemporaryFile patch_file;
+  TemporaryDir debug_dir;
+  ASSERT_TRUE(ZipModeImage::GeneratePatches(split_tgt_images, split_src_images, split_src_ranges,
+                                            patch_file.path, debug_dir.path));
+
+  std::string tgt;
+  ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
+
+  // Expect 5 pieces of patch. ["a","b"; "c"; "d-0"; "d-1"; "e"]
+  GenerateAndCheckSplitTarget(debug_dir.path, 5, tgt);
+}
+
+TEST(ImgdiffTest, zip_mode_no_match_source) {
+  // Generate 20 blocks of random data.
+  std::string random_data;
+  random_data.reserve(4096 * 20);
+  generate_n(back_inserter(random_data), 4096 * 20, []() { return rand() % 256; });
+
+  TemporaryFile tgt_file;
+  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  ZipWriter tgt_writer(tgt_file_ptr);
+
+  construct_deflate_entry({ { "a", 0, 4 }, { "b", 5, 5 }, { "c", 11, 5 } }, &tgt_writer,
+                          random_data);
+
+  ASSERT_EQ(0, tgt_writer.Finish());
+  ASSERT_EQ(0, fclose(tgt_file_ptr));
+
+  // We don't have a matching source entry.
+  TemporaryFile src_file;
+  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  ZipWriter src_writer(src_file_ptr);
+  construct_store_entry({ { "d", 1, 'd' } }, &src_writer);
+  ASSERT_EQ(0, src_writer.Finish());
+  ASSERT_EQ(0, fclose(src_file_ptr));
+
+  // Compute patch.
+  TemporaryFile patch_file;
+  TemporaryDir debug_dir;
+  std::vector<const char*> args = {
+    "imgdiff", "-z", "--block-limit=10", android::base::StringPrintf(
+          "--debug-dir=%s", debug_dir.path).c_str(), src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  std::string tgt;
+  ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
+
+  // Expect 1 pieces of patch due to no matching source entry.
+  GenerateAndCheckSplitTarget(debug_dir.path, 1, tgt);
+}
+
+TEST(ImgdiffTest, zip_mode_large_enough_limit) {
+  // Generate 20 blocks of random data.
+  std::string random_data;
+  random_data.reserve(4096 * 20);
+  generate_n(back_inserter(random_data), 4096 * 20, []() { return rand() % 256; });
+
+  TemporaryFile tgt_file;
+  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  ZipWriter tgt_writer(tgt_file_ptr);
+
+  construct_deflate_entry({ { "a", 0, 10 }, { "b", 10, 5 } }, &tgt_writer, random_data);
+
+  ASSERT_EQ(0, tgt_writer.Finish());
+  ASSERT_EQ(0, fclose(tgt_file_ptr));
+
+  // Construct 10 blocks of source.
+  TemporaryFile src_file;
+  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  ZipWriter src_writer(src_file_ptr);
+  construct_deflate_entry({ { "a", 1, 10 } }, &src_writer, random_data);
+  ASSERT_EQ(0, src_writer.Finish());
+  ASSERT_EQ(0, fclose(src_file_ptr));
+
+  // Compute patch with a limit of 20 blocks.
+  TemporaryFile patch_file;
+  TemporaryDir debug_dir;
+  std::vector<const char*> args = {
+    "imgdiff", "-z", "--block-limit=20", android::base::StringPrintf(
+          "--debug-dir=%s", debug_dir.path).c_str(), src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  std::string tgt;
+  ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
+
+  // Expect 1 pieces of patch since limit is larger than the zip file size.
+  GenerateAndCheckSplitTarget(debug_dir.path, 1, tgt);
 }
