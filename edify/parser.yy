@@ -19,6 +19,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "expr.h"
 #include "yydefs.h"
 #include "parser.h"
@@ -26,12 +30,25 @@
 extern int gLine;
 extern int gColumn;
 
-void yyerror(Expr** root, int* error_count, const char* s);
-int yyparse(Expr** root, int* error_count);
+void yyerror(std::unique_ptr<Expr>* root, int* error_count, const char* s);
+int yyparse(std::unique_ptr<Expr>* root, int* error_count);
 
 struct yy_buffer_state;
 void yy_switch_to_buffer(struct yy_buffer_state* new_buffer);
 struct yy_buffer_state* yy_scan_string(const char* yystr);
+
+// Convenience function for building expressions with a fixed number
+// of arguments.
+static Expr* Build(Function fn, YYLTYPE loc, size_t count, ...) {
+    va_list v;
+    va_start(v, count);
+    Expr* e = new Expr(fn, "(operator)", loc.start, loc.end);
+    for (size_t i = 0; i < count; ++i) {
+        e->argv.emplace_back(va_arg(v, Expr*));
+    }
+    va_end(v);
+    return e;
+}
 
 %}
 
@@ -40,10 +57,7 @@ struct yy_buffer_state* yy_scan_string(const char* yystr);
 %union {
     char* str;
     Expr* expr;
-    struct {
-        int argc;
-        Expr** argv;
-    } args;
+    std::vector<std::unique_ptr<Expr>>* args;
 }
 
 %token AND OR SUBSTR SUPERSTR EQ NE IF THEN ELSE ENDIF
@@ -51,7 +65,10 @@ struct yy_buffer_state* yy_scan_string(const char* yystr);
 %type <expr> expr
 %type <args> arglist
 
-%parse-param {Expr** root}
+%destructor { delete $$; } expr
+%destructor { delete $$; } arglist
+
+%parse-param {std::unique_ptr<Expr>* root}
 %parse-param {int* error_count}
 %error-verbose
 
@@ -66,17 +83,11 @@ struct yy_buffer_state* yy_scan_string(const char* yystr);
 
 %%
 
-input:  expr           { *root = $1; }
+input:  expr           { root->reset($1); }
 ;
 
 expr:  STRING {
-    $$ = reinterpret_cast<Expr*>(malloc(sizeof(Expr)));
-    $$->fn = Literal;
-    $$->name = $1;
-    $$->argc = 0;
-    $$->argv = NULL;
-    $$->start = @$.start;
-    $$->end = @$.end;
+    $$ = new Expr(Literal, $1, @$.start, @$.end);
 }
 |  '(' expr ')'                      { $$ = $2; $$->start=@$.start; $$->end=@$.end; }
 |  expr ';'                          { $$ = $1; $$->start=@1.start; $$->end=@1.end; }
@@ -91,41 +102,32 @@ expr:  STRING {
 |  IF expr THEN expr ENDIF           { $$ = Build(IfElseFn, @$, 2, $2, $4); }
 |  IF expr THEN expr ELSE expr ENDIF { $$ = Build(IfElseFn, @$, 3, $2, $4, $6); }
 | STRING '(' arglist ')' {
-    $$ = reinterpret_cast<Expr*>(malloc(sizeof(Expr)));
-    $$->fn = FindFunction($1);
-    if ($$->fn == NULL) {
-        char buffer[256];
-        snprintf(buffer, sizeof(buffer), "unknown function \"%s\"", $1);
-        yyerror(root, error_count, buffer);
+    Function fn = FindFunction($1);
+    if (fn == nullptr) {
+        std::string msg = "unknown function \"" + std::string($1) + "\"";
+        yyerror(root, error_count, msg.c_str());
         YYERROR;
     }
-    $$->name = $1;
-    $$->argc = $3.argc;
-    $$->argv = $3.argv;
-    $$->start = @$.start;
-    $$->end = @$.end;
+    $$ = new Expr(fn, $1, @$.start, @$.end);
+    $$->argv = std::move(*$3);
 }
 ;
 
 arglist:    /* empty */ {
-    $$.argc = 0;
-    $$.argv = NULL;
+    $$ = new std::vector<std::unique_ptr<Expr>>;
 }
 | expr {
-    $$.argc = 1;
-    $$.argv = reinterpret_cast<Expr**>(malloc(sizeof(Expr*)));
-    $$.argv[0] = $1;
+    $$ = new std::vector<std::unique_ptr<Expr>>;
+    $$->emplace_back($1);
 }
 | arglist ',' expr {
-    $$.argc = $1.argc + 1;
-    $$.argv = reinterpret_cast<Expr**>(realloc($$.argv, $$.argc * sizeof(Expr*)));
-    $$.argv[$$.argc-1] = $3;
+    $$->push_back(std::unique_ptr<Expr>($3));
 }
 ;
 
 %%
 
-void yyerror(Expr** root, int* error_count, const char* s) {
+void yyerror(std::unique_ptr<Expr>* root, int* error_count, const char* s) {
   if (strlen(s) == 0) {
     s = "syntax error";
   }
@@ -133,7 +135,7 @@ void yyerror(Expr** root, int* error_count, const char* s) {
   ++*error_count;
 }
 
-int parse_string(const char* str, Expr** root, int* error_count) {
+int parse_string(const char* str, std::unique_ptr<Expr>* root, int* error_count) {
     yy_switch_to_buffer(yy_scan_string(str));
     return yyparse(root, error_count);
 }

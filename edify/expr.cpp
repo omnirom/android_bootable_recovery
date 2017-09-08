@@ -14,201 +14,172 @@
  * limitations under the License.
  */
 
-#include <string.h>
-#include <stdbool.h>
+#include "expr.h"
+
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
+#include <string.h>
 #include <unistd.h>
 
+#include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
+#include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-
-#include "expr.h"
 
 // Functions should:
 //
 //    - return a malloc()'d string
-//    - if Evaluate() on any argument returns NULL, return NULL.
+//    - if Evaluate() on any argument returns nullptr, return nullptr.
 
-int BooleanString(const char* s) {
-    return s[0] != '\0';
+static bool BooleanString(const std::string& s) {
+    return !s.empty();
 }
 
-char* Evaluate(State* state, Expr* expr) {
-    Value* v = expr->fn(expr->name, state, expr->argc, expr->argv);
-    if (v == NULL) return NULL;
+bool Evaluate(State* state, const std::unique_ptr<Expr>& expr, std::string* result) {
+    if (result == nullptr) {
+        return false;
+    }
+
+    std::unique_ptr<Value> v(expr->fn(expr->name.c_str(), state, expr->argv));
+    if (!v) {
+        return false;
+    }
     if (v->type != VAL_STRING) {
         ErrorAbort(state, kArgsParsingFailure, "expecting string, got value type %d", v->type);
-        FreeValue(v);
-        return NULL;
+        return false;
     }
-    char* result = v->data;
-    free(v);
-    return result;
+
+    *result = v->data;
+    return true;
 }
 
-Value* EvaluateValue(State* state, Expr* expr) {
-    return expr->fn(expr->name, state, expr->argc, expr->argv);
+Value* EvaluateValue(State* state, const std::unique_ptr<Expr>& expr) {
+    return expr->fn(expr->name.c_str(), state, expr->argv);
 }
 
-Value* StringValue(char* str) {
-    if (str == NULL) return NULL;
-    Value* v = reinterpret_cast<Value*>(malloc(sizeof(Value)));
-    v->type = VAL_STRING;
-    v->size = strlen(str);
-    v->data = str;
-    return v;
-}
-
-void FreeValue(Value* v) {
-    if (v == NULL) return;
-    free(v->data);
-    free(v);
-}
-
-Value* ConcatFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc == 0) {
-        return StringValue(strdup(""));
+Value* StringValue(const char* str) {
+    if (str == nullptr) {
+        return nullptr;
     }
-    char** strings = reinterpret_cast<char**>(malloc(argc * sizeof(char*)));
-    int i;
-    for (i = 0; i < argc; ++i) {
-        strings[i] = NULL;
+    return new Value(VAL_STRING, str);
+}
+
+Value* StringValue(const std::string& str) {
+    return StringValue(str.c_str());
+}
+
+Value* ConcatFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    if (argv.empty()) {
+        return StringValue("");
     }
-    char* result = NULL;
-    int length = 0;
-    for (i = 0; i < argc; ++i) {
-        strings[i] = Evaluate(state, argv[i]);
-        if (strings[i] == NULL) {
-            goto done;
+    std::string result;
+    for (size_t i = 0; i < argv.size(); ++i) {
+        std::string str;
+        if (!Evaluate(state, argv[i], &str)) {
+            return nullptr;
         }
-        length += strlen(strings[i]);
+        result += str;
     }
 
-    result = reinterpret_cast<char*>(malloc(length+1));
-    int p;
-    p = 0;
-    for (i = 0; i < argc; ++i) {
-        strcpy(result+p, strings[i]);
-        p += strlen(strings[i]);
-    }
-    result[p] = '\0';
-
-  done:
-    for (i = 0; i < argc; ++i) {
-        free(strings[i]);
-    }
-    free(strings);
     return StringValue(result);
 }
 
-Value* IfElseFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc != 2 && argc != 3) {
-        free(state->errmsg);
-        state->errmsg = strdup("ifelse expects 2 or 3 arguments");
-        return NULL;
-    }
-    char* cond = Evaluate(state, argv[0]);
-    if (cond == NULL) {
-        return NULL;
+Value* IfElseFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    if (argv.size() != 2 && argv.size() != 3) {
+        state->errmsg = "ifelse expects 2 or 3 arguments";
+        return nullptr;
     }
 
-    if (BooleanString(cond) == true) {
-        free(cond);
-        return EvaluateValue(state, argv[1]);
-    } else {
-        if (argc == 3) {
-            free(cond);
-            return EvaluateValue(state, argv[2]);
-        } else {
-            return StringValue(cond);
-        }
+    std::string cond;
+    if (!Evaluate(state, argv[0], &cond)) {
+        return nullptr;
     }
+
+    if (!cond.empty()) {
+        return EvaluateValue(state, argv[1]);
+    } else if (argv.size() == 3) {
+        return EvaluateValue(state, argv[2]);
+    }
+
+    return StringValue("");
 }
 
-Value* AbortFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* msg = NULL;
-    if (argc > 0) {
-        msg = Evaluate(state, argv[0]);
-    }
-    free(state->errmsg);
-    if (msg) {
+Value* AbortFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    std::string msg;
+    if (!argv.empty() && Evaluate(state, argv[0], &msg)) {
         state->errmsg = msg;
     } else {
-        state->errmsg = strdup("called abort()");
+        state->errmsg = "called abort()";
     }
-    return NULL;
+    return nullptr;
 }
 
-Value* AssertFn(const char* name, State* state, int argc, Expr* argv[]) {
-    int i;
-    for (i = 0; i < argc; ++i) {
-        char* v = Evaluate(state, argv[i]);
-        if (v == NULL) {
-            return NULL;
+Value* AssertFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    for (size_t i = 0; i < argv.size(); ++i) {
+        std::string result;
+        if (!Evaluate(state, argv[i], &result)) {
+            return nullptr;
         }
-        int b = BooleanString(v);
-        free(v);
-        if (!b) {
-            int prefix_len;
+        if (result.empty()) {
             int len = argv[i]->end - argv[i]->start;
-            char* err_src = reinterpret_cast<char*>(malloc(len + 20));
-            strcpy(err_src, "assert failed: ");
-            prefix_len = strlen(err_src);
-            memcpy(err_src + prefix_len, state->script + argv[i]->start, len);
-            err_src[prefix_len + len] = '\0';
-            free(state->errmsg);
-            state->errmsg = err_src;
-            return NULL;
+            state->errmsg = "assert failed: " + state->script.substr(argv[i]->start, len);
+            return nullptr;
         }
     }
-    return StringValue(strdup(""));
+    return StringValue("");
 }
 
-Value* SleepFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* val = Evaluate(state, argv[0]);
-    if (val == NULL) {
-        return NULL;
+Value* SleepFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    std::string val;
+    if (!Evaluate(state, argv[0], &val)) {
+        return nullptr;
     }
-    int v = strtol(val, NULL, 10);
+
+    int v;
+    if (!android::base::ParseInt(val.c_str(), &v, 0)) {
+        return nullptr;
+    }
     sleep(v);
+
     return StringValue(val);
 }
 
-Value* StdoutFn(const char* name, State* state, int argc, Expr* argv[]) {
-    int i;
-    for (i = 0; i < argc; ++i) {
-        char* v = Evaluate(state, argv[i]);
-        if (v == NULL) {
-            return NULL;
+Value* StdoutFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    for (size_t i = 0; i < argv.size(); ++i) {
+        std::string v;
+        if (!Evaluate(state, argv[i], &v)) {
+            return nullptr;
         }
-        fputs(v, stdout);
-        free(v);
+        fputs(v.c_str(), stdout);
     }
-    return StringValue(strdup(""));
+    return StringValue("");
 }
 
 Value* LogicalAndFn(const char* name, State* state,
-                   int argc, Expr* argv[]) {
-    char* left = Evaluate(state, argv[0]);
-    if (left == NULL) return NULL;
-    if (BooleanString(left) == true) {
-        free(left);
+                    const std::vector<std::unique_ptr<Expr>>& argv) {
+    std::string left;
+    if (!Evaluate(state, argv[0], &left)) {
+        return nullptr;
+    }
+    if (BooleanString(left)) {
         return EvaluateValue(state, argv[1]);
     } else {
-        return StringValue(left);
+        return StringValue("");
     }
 }
 
 Value* LogicalOrFn(const char* name, State* state,
-                   int argc, Expr* argv[]) {
-    char* left = Evaluate(state, argv[0]);
-    if (left == NULL) return NULL;
-    if (BooleanString(left) == false) {
-        free(left);
+                   const std::vector<std::unique_ptr<Expr>>& argv) {
+    std::string left;
+    if (!Evaluate(state, argv[0], &left)) {
+        return nullptr;
+    }
+    if (!BooleanString(left)) {
         return EvaluateValue(state, argv[1]);
     } else {
         return StringValue(left);
@@ -216,174 +187,144 @@ Value* LogicalOrFn(const char* name, State* state,
 }
 
 Value* LogicalNotFn(const char* name, State* state,
-                    int argc, Expr* argv[]) {
-    char* val = Evaluate(state, argv[0]);
-    if (val == NULL) return NULL;
-    bool bv = BooleanString(val);
-    free(val);
-    return StringValue(strdup(bv ? "" : "t"));
+                    const std::vector<std::unique_ptr<Expr>>& argv) {
+    std::string val;
+    if (!Evaluate(state, argv[0], &val)) {
+        return nullptr;
+    }
+
+    return StringValue(BooleanString(val) ? "" : "t");
 }
 
 Value* SubstringFn(const char* name, State* state,
-                   int argc, Expr* argv[]) {
-    char* needle = Evaluate(state, argv[0]);
-    if (needle == NULL) return NULL;
-    char* haystack = Evaluate(state, argv[1]);
-    if (haystack == NULL) {
-        free(needle);
-        return NULL;
+                   const std::vector<std::unique_ptr<Expr>>& argv) {
+    std::string needle;
+    if (!Evaluate(state, argv[0], &needle)) {
+        return nullptr;
     }
 
-    char* result = strdup(strstr(haystack, needle) ? "t" : "");
-    free(needle);
-    free(haystack);
+    std::string haystack;
+    if (!Evaluate(state, argv[1], &haystack)) {
+        return nullptr;
+    }
+
+    std::string result = (haystack.find(needle) != std::string::npos) ? "t" : "";
     return StringValue(result);
 }
 
-Value* EqualityFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* left = Evaluate(state, argv[0]);
-    if (left == NULL) return NULL;
-    char* right = Evaluate(state, argv[1]);
-    if (right == NULL) {
-        free(left);
-        return NULL;
+Value* EqualityFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    std::string left;
+    if (!Evaluate(state, argv[0], &left)) {
+        return nullptr;
+    }
+    std::string right;
+    if (!Evaluate(state, argv[1], &right)) {
+        return nullptr;
     }
 
-    char* result = strdup(strcmp(left, right) == 0 ? "t" : "");
-    free(left);
-    free(right);
+    const char* result = (left == right) ? "t" : "";
     return StringValue(result);
 }
 
-Value* InequalityFn(const char* name, State* state, int argc, Expr* argv[]) {
-    char* left = Evaluate(state, argv[0]);
-    if (left == NULL) return NULL;
-    char* right = Evaluate(state, argv[1]);
-    if (right == NULL) {
-        free(left);
-        return NULL;
+Value* InequalityFn(const char* name, State* state,
+                    const std::vector<std::unique_ptr<Expr>>& argv) {
+    std::string left;
+    if (!Evaluate(state, argv[0], &left)) {
+        return nullptr;
+    }
+    std::string right;
+    if (!Evaluate(state, argv[1], &right)) {
+        return nullptr;
     }
 
-    char* result = strdup(strcmp(left, right) != 0 ? "t" : "");
-    free(left);
-    free(right);
+    const char* result = (left != right) ? "t" : "";
     return StringValue(result);
 }
 
-Value* SequenceFn(const char* name, State* state, int argc, Expr* argv[]) {
-    Value* left = EvaluateValue(state, argv[0]);
-    if (left == NULL) return NULL;
-    FreeValue(left);
+Value* SequenceFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    std::unique_ptr<Value> left(EvaluateValue(state, argv[0]));
+    if (!left) {
+        return nullptr;
+    }
     return EvaluateValue(state, argv[1]);
 }
 
-Value* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
-    if (argc != 2) {
-        free(state->errmsg);
-        state->errmsg = strdup("less_than_int expects 2 arguments");
-        return NULL;
+Value* LessThanIntFn(const char* name, State* state,
+                     const std::vector<std::unique_ptr<Expr>>& argv) {
+    if (argv.size() != 2) {
+        state->errmsg = "less_than_int expects 2 arguments";
+        return nullptr;
     }
 
-    char* left;
-    char* right;
-    if (ReadArgs(state, argv, 2, &left, &right) < 0) return NULL;
-
-    bool result = false;
-    char* end;
-
-    long l_int = strtol(left, &end, 10);
-    if (left[0] == '\0' || *end != '\0') {
-        goto done;
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argv, &args)) {
+        return nullptr;
     }
 
-    long r_int;
-    r_int = strtol(right, &end, 10);
-    if (right[0] == '\0' || *end != '\0') {
-        goto done;
+    // Parse up to at least long long or 64-bit integers.
+    int64_t l_int;
+    if (!android::base::ParseInt(args[0].c_str(), &l_int)) {
+        state->errmsg = "failed to parse int in " + args[0];
+        return nullptr;
     }
 
-    result = l_int < r_int;
+    int64_t r_int;
+    if (!android::base::ParseInt(args[1].c_str(), &r_int)) {
+        state->errmsg = "failed to parse int in " + args[1];
+        return nullptr;
+    }
 
-  done:
-    free(left);
-    free(right);
-    return StringValue(strdup(result ? "t" : ""));
+    return StringValue(l_int < r_int ? "t" : "");
 }
 
 Value* GreaterThanIntFn(const char* name, State* state,
-                        int argc, Expr* argv[]) {
-    if (argc != 2) {
-        free(state->errmsg);
-        state->errmsg = strdup("greater_than_int expects 2 arguments");
-        return NULL;
+                        const std::vector<std::unique_ptr<Expr>>& argv) {
+    if (argv.size() != 2) {
+        state->errmsg = "greater_than_int expects 2 arguments";
+        return nullptr;
     }
 
-    Expr* temp[2];
-    temp[0] = argv[1];
-    temp[1] = argv[0];
-
-    return LessThanIntFn(name, state, 2, temp);
-}
-
-Value* Literal(const char* name, State* state, int argc, Expr* argv[]) {
-    return StringValue(strdup(name));
-}
-
-Expr* Build(Function fn, YYLTYPE loc, int count, ...) {
-    va_list v;
-    va_start(v, count);
-    Expr* e = reinterpret_cast<Expr*>(malloc(sizeof(Expr)));
-    e->fn = fn;
-    e->name = "(operator)";
-    e->argc = count;
-    e->argv = reinterpret_cast<Expr**>(malloc(count * sizeof(Expr*)));
-    int i;
-    for (i = 0; i < count; ++i) {
-        e->argv[i] = va_arg(v, Expr*);
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argv, &args)) {
+        return nullptr;
     }
-    va_end(v);
-    e->start = loc.start;
-    e->end = loc.end;
-    return e;
+
+    // Parse up to at least long long or 64-bit integers.
+    int64_t l_int;
+    if (!android::base::ParseInt(args[0].c_str(), &l_int)) {
+        state->errmsg = "failed to parse int in " + args[0];
+        return nullptr;
+    }
+
+    int64_t r_int;
+    if (!android::base::ParseInt(args[1].c_str(), &r_int)) {
+        state->errmsg = "failed to parse int in " + args[1];
+        return nullptr;
+    }
+
+    return StringValue(l_int > r_int ? "t" : "");
+}
+
+Value* Literal(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+    return StringValue(name);
 }
 
 // -----------------------------------------------------------------
 //   the function table
 // -----------------------------------------------------------------
 
-static int fn_entries = 0;
-static int fn_size = 0;
-NamedFunction* fn_table = NULL;
+static std::unordered_map<std::string, Function> fn_table;
 
-void RegisterFunction(const char* name, Function fn) {
-    if (fn_entries >= fn_size) {
-        fn_size = fn_size*2 + 1;
-        fn_table = reinterpret_cast<NamedFunction*>(realloc(fn_table, fn_size * sizeof(NamedFunction)));
+void RegisterFunction(const std::string& name, Function fn) {
+    fn_table[name] = fn;
+}
+
+Function FindFunction(const std::string& name) {
+    if (fn_table.find(name) == fn_table.end()) {
+        return nullptr;
+    } else {
+        return fn_table[name];
     }
-    fn_table[fn_entries].name = name;
-    fn_table[fn_entries].fn = fn;
-    ++fn_entries;
-}
-
-static int fn_entry_compare(const void* a, const void* b) {
-    const char* na = ((const NamedFunction*)a)->name;
-    const char* nb = ((const NamedFunction*)b)->name;
-    return strcmp(na, nb);
-}
-
-void FinishRegistration() {
-    qsort(fn_table, fn_entries, sizeof(NamedFunction), fn_entry_compare);
-}
-
-Function FindFunction(const char* name) {
-    NamedFunction key;
-    key.name = name;
-    NamedFunction* nf = reinterpret_cast<NamedFunction*>(bsearch(&key, fn_table, fn_entries,
-            sizeof(NamedFunction), fn_entry_compare));
-    if (nf == NULL) {
-        return NULL;
-    }
-    return nf->fn;
 }
 
 void RegisterBuiltins() {
@@ -404,106 +345,56 @@ void RegisterBuiltins() {
 //   convenience methods for functions
 // -----------------------------------------------------------------
 
-// Evaluate the expressions in argv, giving 'count' char* (the ... is
-// zero or more char** to put them in).  If any expression evaluates
-// to NULL, free the rest and return -1.  Return 0 on success.
-int ReadArgs(State* state, Expr* argv[], int count, ...) {
-    char** args = reinterpret_cast<char**>(malloc(count * sizeof(char*)));
-    va_list v;
-    va_start(v, count);
-    int i;
-    for (i = 0; i < count; ++i) {
-        args[i] = Evaluate(state, argv[i]);
-        if (args[i] == NULL) {
-            va_end(v);
-            int j;
-            for (j = 0; j < i; ++j) {
-                free(args[j]);
-            }
-            free(args);
-            return -1;
-        }
-        *(va_arg(v, char**)) = args[i];
-    }
-    va_end(v);
-    free(args);
-    return 0;
+// Evaluate the expressions in argv, and put the results of strings in args. If any expression
+// evaluates to nullptr, return false. Return true on success.
+bool ReadArgs(State* state, const std::vector<std::unique_ptr<Expr>>& argv,
+              std::vector<std::string>* args) {
+    return ReadArgs(state, argv, args, 0, argv.size());
 }
 
-// Evaluate the expressions in argv, giving 'count' Value* (the ... is
-// zero or more Value** to put them in).  If any expression evaluates
-// to NULL, free the rest and return -1.  Return 0 on success.
-int ReadValueArgs(State* state, Expr* argv[], int count, ...) {
-    Value** args = reinterpret_cast<Value**>(malloc(count * sizeof(Value*)));
-    va_list v;
-    va_start(v, count);
-    int i;
-    for (i = 0; i < count; ++i) {
-        args[i] = EvaluateValue(state, argv[i]);
-        if (args[i] == NULL) {
-            va_end(v);
-            int j;
-            for (j = 0; j < i; ++j) {
-                FreeValue(args[j]);
-            }
-            free(args);
-            return -1;
-        }
-        *(va_arg(v, Value**)) = args[i];
+bool ReadArgs(State* state, const std::vector<std::unique_ptr<Expr>>& argv,
+              std::vector<std::string>* args, size_t start, size_t len) {
+    if (args == nullptr) {
+        return false;
     }
-    va_end(v);
-    free(args);
-    return 0;
+    if (start + len > argv.size()) {
+        return false;
+    }
+    for (size_t i = start; i < start + len; ++i) {
+        std::string var;
+        if (!Evaluate(state, argv[i], &var)) {
+            args->clear();
+            return false;
+        }
+        args->push_back(var);
+    }
+    return true;
 }
 
-// Evaluate the expressions in argv, returning an array of char*
-// results.  If any evaluate to NULL, free the rest and return NULL.
-// The caller is responsible for freeing the returned array and the
-// strings it contains.
-char** ReadVarArgs(State* state, int argc, Expr* argv[]) {
-    char** args = (char**)malloc(argc * sizeof(char*));
-    int i = 0;
-    for (i = 0; i < argc; ++i) {
-        args[i] = Evaluate(state, argv[i]);
-        if (args[i] == NULL) {
-            int j;
-            for (j = 0; j < i; ++j) {
-                free(args[j]);
-            }
-            free(args);
-            return NULL;
-        }
-    }
-    return args;
+// Evaluate the expressions in argv, and put the results of Value* in args. If any expression
+// evaluate to nullptr, return false. Return true on success.
+bool ReadValueArgs(State* state, const std::vector<std::unique_ptr<Expr>>& argv,
+                   std::vector<std::unique_ptr<Value>>* args) {
+    return ReadValueArgs(state, argv, args, 0, argv.size());
 }
 
-// Evaluate the expressions in argv, returning an array of Value*
-// results.  If any evaluate to NULL, free the rest and return NULL.
-// The caller is responsible for freeing the returned array and the
-// Values it contains.
-Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]) {
-    Value** args = (Value**)malloc(argc * sizeof(Value*));
-    int i = 0;
-    for (i = 0; i < argc; ++i) {
-        args[i] = EvaluateValue(state, argv[i]);
-        if (args[i] == NULL) {
-            int j;
-            for (j = 0; j < i; ++j) {
-                FreeValue(args[j]);
-            }
-            free(args);
-            return NULL;
-        }
+bool ReadValueArgs(State* state, const std::vector<std::unique_ptr<Expr>>& argv,
+                   std::vector<std::unique_ptr<Value>>* args, size_t start, size_t len) {
+    if (args == nullptr) {
+        return false;
     }
-    return args;
-}
-
-static void ErrorAbortV(State* state, const char* format, va_list ap) {
-    std::string buffer;
-    android::base::StringAppendV(&buffer, format, ap);
-    free(state->errmsg);
-    state->errmsg = strdup(buffer.c_str());
-    return;
+    if (len == 0 || start + len > argv.size()) {
+        return false;
+    }
+    for (size_t i = start; i < start + len; ++i) {
+        std::unique_ptr<Value> v(EvaluateValue(state, argv[i]));
+        if (!v) {
+            args->clear();
+            return false;
+        }
+        args->push_back(std::move(v));
+    }
+    return true;
 }
 
 // Use printf-style arguments to compose an error message to put into
@@ -511,7 +402,7 @@ static void ErrorAbortV(State* state, const char* format, va_list ap) {
 Value* ErrorAbort(State* state, const char* format, ...) {
     va_list ap;
     va_start(ap, format);
-    ErrorAbortV(state, format, ap);
+    android::base::StringAppendV(&state->errmsg, format, ap);
     va_end(ap);
     return nullptr;
 }
@@ -519,8 +410,14 @@ Value* ErrorAbort(State* state, const char* format, ...) {
 Value* ErrorAbort(State* state, CauseCode cause_code, const char* format, ...) {
     va_list ap;
     va_start(ap, format);
-    ErrorAbortV(state, format, ap);
+    android::base::StringAppendV(&state->errmsg, format, ap);
     va_end(ap);
     state->cause_code = cause_code;
     return nullptr;
 }
+
+State::State(const std::string& script, void* cookie) :
+    script(script),
+    cookie(cookie) {
+}
+

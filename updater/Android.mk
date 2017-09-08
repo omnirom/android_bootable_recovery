@@ -14,63 +14,95 @@
 
 LOCAL_PATH := $(call my-dir)
 
-updater_src_files := \
-	install.cpp \
-	blockimg.cpp \
-	updater.cpp
+ifneq ($(wildcard external/e2fsprogs/misc/tune2fs.h),)
+    tune2fs_static_libraries := \
+        libext2_com_err \
+        libext2_blkid \
+        libext2_quota \
+        libext2_uuid \
+        libext2_e2p \
+        libext2fs
+    LOCAL_CFLAGS += -DHAVE_LIBTUNE2FS
+else
+    tune2fs_static_libraries :=
+endif
 
-#
-# Build a statically-linked binary to include in OTA packages
-#
+updater_common_static_libraries := \
+    libapplypatch \
+    libbspatch \
+    libedify \
+    libziparchive \
+    libotautil \
+    libbootloader_message \
+    libutils \
+    libmounts \
+    libotafault \
+    libext4_utils \
+    libfec \
+    libfec_rs \
+    libfs_mgr \
+    liblog \
+    libselinux \
+    libsparse \
+    libsquashfs_utils \
+    libbz \
+    libz \
+    libbase \
+    libcrypto \
+    libcrypto_utils \
+    libcutils \
+    libtune2fs \
+    $(tune2fs_static_libraries)
+
+# libupdater (static library)
+# ===============================
 include $(CLEAR_VARS)
 
-# Build only in eng, so we don't end up with a copy of this in /system
-# on user builds.  (TODO: find a better way to build device binaries
-# needed only for OTA packages.)
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE := libupdater
 
-LOCAL_CLANG := true
+LOCAL_SRC_FILES := \
+    install.cpp \
+    blockimg.cpp
 
-LOCAL_SRC_FILES := $(updater_src_files)
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/.. \
+    $(LOCAL_PATH)/include \
+    external/e2fsprogs/misc
 
-LOCAL_STATIC_LIBRARIES += libfec libfec_rs libsquashfs_utils libcrypto_static
+LOCAL_CFLAGS := \
+    -Wno-unused-parameter \
+    -Werror
 
-ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
-LOCAL_CFLAGS += -DUSE_EXT4
-LOCAL_CFLAGS += -Wno-unused-parameter
-LOCAL_C_INCLUDES += system/extras/ext4_utils
-LOCAL_STATIC_LIBRARIES += libext4_utils_static libsparse_static
-ifneq ($(wildcard external/lz4/Android.mk),)
-    LOCAL_STATIC_LIBRARIES += liblz4
-endif
-endif
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/include
 
-ifeq ($(WITH_CRYPTO_UTILS), true)
-    LOCAL_STATIC_LIBRARIES += libcrypto_utils_static
-endif
+LOCAL_STATIC_LIBRARIES := \
+    $(updater_common_static_libraries)
 
-LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UPDATER_LIBS) $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS)
-LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libedify libmtdutils libminzip libz
-LOCAL_STATIC_LIBRARIES += libflashutils libmmcutils libbmlutils
-LOCAL_STATIC_LIBRARIES += libbz
-LOCAL_STATIC_LIBRARIES += libcutils liblog libc
-LOCAL_STATIC_LIBRARIES += libselinux
+include $(BUILD_STATIC_LIBRARY)
 
-LOCAL_STATIC_LIBRARIES += libselinux
-tune2fs_static_libraries := \
- libext2_com_err \
- libext2_blkid \
- libext2_quota \
- libext2_uuid_static \
- libext2_e2p \
- libext2fs
-ifneq ($(wildcard external/e2fsprogs/misc/tune2fs.h),)
-    LOCAL_STATIC_LIBRARIES += libtune2fs $(tune2fs_static_libraries)
-    LOCAL_CFLAGS += -DHAVE_LIBTUNE2FS
-endif
+# updater (static executable)
+# ===============================
+include $(CLEAR_VARS)
 
-LOCAL_C_INCLUDES += external/e2fsprogs/misc
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
+LOCAL_MODULE := updater
+
+LOCAL_SRC_FILES := \
+    updater.cpp
+
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/.. \
+    $(LOCAL_PATH)/include
+
+LOCAL_CFLAGS := \
+    -Wno-unused-parameter \
+    -Werror
+
+LOCAL_STATIC_LIBRARIES := \
+    libupdater \
+    $(TARGET_RECOVERY_UPDATER_LIBS) \
+    $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS) \
+    $(updater_common_static_libraries)
 
 # Each library in TARGET_RECOVERY_UPDATER_LIBS should have a function
 # named "Register_<libname>()".  Here we emit a little C function that
@@ -83,21 +115,11 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
 # any subsidiary static libraries required for your registered
 # extension libs.
 
-inc := $(call intermediates-dir-for,PACKAGING,updater_extensions)/register.inc
-
-# Encode the value of TARGET_RECOVERY_UPDATER_LIBS into the filename of the dependency.
-# So if TARGET_RECOVERY_UPDATER_LIBS is changed, a new dependency file will be generated.
-# Note that we have to remove any existing depency files before creating new one,
-# so no obsolete dependecy file gets used if you switch back to an old value.
-inc_dep_file := $(inc).dep.$(subst $(space),-,$(sort $(TARGET_RECOVERY_UPDATER_LIBS)))
-$(inc_dep_file): stem := $(inc).dep
-$(inc_dep_file) :
-	$(hide) mkdir -p $(dir $@)
-	$(hide) rm -f $(stem).*
-	$(hide) touch $@
+LOCAL_MODULE_CLASS := EXECUTABLES
+inc := $(call local-generated-sources-dir)/register.inc
 
 $(inc) : libs := $(TARGET_RECOVERY_UPDATER_LIBS)
-$(inc) : $(inc_dep_file)
+$(inc) :
 	$(hide) mkdir -p $(dir $@)
 	$(hide) echo "" > $@
 	$(hide) $(foreach lib,$(libs),echo "extern void Register_$(lib)(void);" >> $@;)
@@ -105,13 +127,9 @@ $(inc) : $(inc_dep_file)
 	$(hide) $(foreach lib,$(libs),echo "  Register_$(lib)();" >> $@;)
 	$(hide) echo "}" >> $@
 
-$(call intermediates-dir-for,EXECUTABLES,updater,,,$(TARGET_PREFER_32_BIT))/updater.o : $(inc)
-LOCAL_C_INCLUDES += $(dir $(inc))
+LOCAL_GENERATED_SOURCES := $(inc)
 
 inc :=
-inc_dep_file :=
-
-LOCAL_MODULE := updater
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 

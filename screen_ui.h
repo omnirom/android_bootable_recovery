@@ -20,8 +20,12 @@
 #include <pthread.h>
 #include <stdio.h>
 
+#include <string>
+
 #include "ui.h"
-#include "minui/minui.h"
+
+// From minui/minui.h.
+struct GRSurface;
 
 // Implementation of RecoveryUI appropriate for devices with a screen
 // (shows an icon + a progress bar, text logging, menu, etc.)
@@ -29,8 +33,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   public:
     ScreenRecoveryUI();
 
-    void Init();
-    void SetLocale(const char* locale);
+    bool Init(const std::string& locale) override;
 
     // overall recovery state ("background image")
     void SetBackground(Icon icon);
@@ -70,8 +73,6 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   protected:
     Icon currentIcon;
-
-    const char* locale;
 
     // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
     float density_;
@@ -135,9 +136,8 @@ class ScreenRecoveryUI : public RecoveryUI {
     int char_width_;
     int char_height_;
     pthread_mutex_t updateMutex;
-    bool rtl_locale;
 
-    virtual void InitTextParams();
+    virtual bool InitTextParams();
 
     virtual void draw_background_locked();
     virtual void draw_foreground_locked();
@@ -160,14 +160,14 @@ class ScreenRecoveryUI : public RecoveryUI {
     void LoadBitmap(const char* filename, GRSurface** surface);
     void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
 
-    int PixelsFromDp(int dp);
+    int PixelsFromDp(int dp) const;
     virtual int GetAnimationBaseline();
     virtual int GetProgressBaseline();
     virtual int GetTextBaseline();
 
     void DrawHorizontalRule(int* y);
-    void DrawTextLine(int x, int* y, const char* line, bool bold);
-    void DrawTextLines(int x, int* y, const char* const* lines);
+    void DrawTextLine(int x, int* y, const char* line, bool bold) const;
+    void DrawTextLines(int x, int* y, const char* const* lines) const;
 };
 
 #endif  // RECOVERY_UI_H

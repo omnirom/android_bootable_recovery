@@ -14,23 +14,42 @@
  * limitations under the License.
  */
 
-
 #ifndef ASN1_DECODER_H_
 #define ASN1_DECODER_H_
 
 #include <stdint.h>
 
-typedef struct asn1_context asn1_context_t;
+class asn1_context {
+ public:
+  asn1_context(const uint8_t* buffer, size_t length) : p_(buffer), length_(length), app_type_(0) {}
+  int asn1_constructed_type() const;
+  asn1_context* asn1_constructed_get();
+  bool asn1_constructed_skip_all();
+  asn1_context* asn1_sequence_get();
+  asn1_context* asn1_set_get();
+  bool asn1_sequence_next();
+  bool asn1_oid_get(const uint8_t** oid, size_t* length);
+  bool asn1_octet_string_get(const uint8_t** octet_string, size_t* length);
 
-asn1_context_t* asn1_context_new(uint8_t* buffer, size_t length);
-void asn1_context_free(asn1_context_t* ctx);
-asn1_context_t* asn1_constructed_get(asn1_context_t* ctx);
-bool asn1_constructed_skip_all(asn1_context_t* ctx);
-int asn1_constructed_type(asn1_context_t* ctx);
-asn1_context_t* asn1_sequence_get(asn1_context_t* ctx);
-asn1_context_t* asn1_set_get(asn1_context_t* ctx);
-bool asn1_sequence_next(asn1_context_t* seq);
-bool asn1_oid_get(asn1_context_t* ctx, uint8_t** oid, size_t* length);
-bool asn1_octet_string_get(asn1_context_t* ctx, uint8_t** octet_string, size_t* length);
+ private:
+  static constexpr int kMaskConstructed = 0xE0;
+  static constexpr int kMaskTag = 0x7F;
+  static constexpr int kMaskAppType = 0x1F;
+
+  static constexpr int kTagOctetString = 0x04;
+  static constexpr int kTagOid = 0x06;
+  static constexpr int kTagSequence = 0x30;
+  static constexpr int kTagSet = 0x31;
+  static constexpr int kTagConstructed = 0xA0;
+
+  int peek_byte() const;
+  int get_byte();
+  bool skip_bytes(size_t num_skip);
+  bool decode_length(size_t* out_len);
+
+  const uint8_t* p_;
+  size_t length_;
+  int app_type_;
+};
 
 #endif /* ASN1_DECODER_H_ */

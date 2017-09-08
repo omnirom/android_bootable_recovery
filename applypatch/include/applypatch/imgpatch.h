@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef _IMGPATCH_H
-#define _IMGPATCH_H
+#ifndef _APPLYPATCH_IMGPATCH_H
+#define _APPLYPATCH_IMGPATCH_H
 
-typedef ssize_t (*SinkFn)(const unsigned char*, ssize_t, void*);
+#include <sys/types.h>
+
+using SinkFn = ssize_t (*)(const unsigned char*, ssize_t, void*);
 
 int ApplyImagePatch(const unsigned char* old_data, ssize_t old_size,
                     const unsigned char* patch_data, ssize_t patch_size,
                     SinkFn sink, void* token);
 
-#endif  //_IMGPATCH_H
+#endif  // _APPLYPATCH_IMGPATCH_H

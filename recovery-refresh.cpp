@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "recovery-refresh"
-
 //
 // Strictly to deal with reboot into system after OTA, then
 // reboot while in system before boot complete landing us back
@@ -40,65 +38,11 @@
 //
 
 #include <string.h>
-
 #include <string>
 
-#include <android/log.h> /* Android Log Priority Tags */
-#include <log/logger.h> /* Android Log packet format */
 #include <private/android_logger.h> /* private pmsg functions */
 
-static const char LAST_KMSG_FILE[] = "recovery/last_kmsg";
-static const char LAST_LOG_FILE[] = "recovery/last_log";
-
-static ssize_t logbasename(
-        log_id_t /* logId */,
-        char /* prio */,
-        const char *filename,
-        const char * /* buf */, size_t len,
-        void *arg) {
-    if (strstr(LAST_KMSG_FILE, filename) ||
-            strstr(LAST_LOG_FILE, filename)) {
-        bool *doRotate = reinterpret_cast<bool *>(arg);
-        *doRotate = true;
-    }
-    return len;
-}
-
-static ssize_t logrotate(
-        log_id_t logId,
-        char prio,
-        const char *filename,
-        const char *buf, size_t len,
-        void *arg) {
-    bool *doRotate = reinterpret_cast<bool *>(arg);
-    if (!*doRotate) {
-        return __android_log_pmsg_file_write(logId, prio, filename, buf, len);
-    }
-
-    std::string name(filename);
-    size_t dot = name.find_last_of(".");
-    std::string sub = name.substr(0, dot);
-
-    if (!strstr(LAST_KMSG_FILE, sub.c_str()) &&
-                !strstr(LAST_LOG_FILE, sub.c_str())) {
-        return __android_log_pmsg_file_write(logId, prio, filename, buf, len);
-    }
-
-    // filename rotation
-    if (dot == std::string::npos) {
-        name += ".1";
-    } else {
-        std::string number = name.substr(dot + 1);
-        if (!isdigit(number.data()[0])) {
-            name += ".1";
-        } else {
-            unsigned long long i = std::stoull(number);
-            name = sub + "." + std::to_string(i + 1);
-        }
-    }
-
-    return __android_log_pmsg_file_write(logId, prio, name.c_str(), buf, len);
-}
+#include "rotate_logs.h"
 
 int main(int argc, char **argv) {
     static const char filter[] = "recovery/";
@@ -106,7 +50,6 @@ int main(int argc, char **argv) {
     static const char rotate_flag[] = "--rotate";
     ssize_t ret;
     bool doRotate = false;
-
     // Take last pmsg contents and rewrite it to the current pmsg session.
     if ((argc <= 1) || !argv[1] ||
             (((doRotate = strcmp(argv[1], rotate_flag))) &&

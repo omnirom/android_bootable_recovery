@@ -12,10 +12,10 @@ minadbd_cflags := \
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-    adb_main.cpp \
     fuse_adb_provider.cpp \
-    services.cpp \
-    ../fuse_sideload.cpp
+    ../fuse_sideload.cpp \
+    minadbd.cpp \
+    minadbd_services.cpp \
 
 LOCAL_CLANG := true
 LOCAL_MODULE := libminadbd

@@ -21,15 +21,17 @@
 
 #include <string>
 
-#include "minzip/Zip.h"
+#include "zipwrap.hpp"
 
-bool read_metadata_from_package(ZipArchive* zip, std::string* meta_data);
+bool read_metadata_from_package(ZipWrap* zip, std::string* meta_data);
 
 int
-abupdate_binary_command(const char* path, ZipArchive* zip, int retry_count,
+abupdate_binary_command(const char* path, ZipWrap* zip, int retry_count,
                       int status_fd, std::vector<std::string>* cmd);
 int
-update_binary_command(const char* path, ZipArchive* zip, int retry_count,
+update_binary_command(const char* path, int retry_count,
                       int status_fd, std::vector<std::string>* cmd);
+
+bool verify_package_compatibility(ZipWrap *package_zip);
 
 #endif  // RECOVERY_INSTALL_COMMAND_H_

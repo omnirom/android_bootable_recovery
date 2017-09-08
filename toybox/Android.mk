@@ -238,6 +238,7 @@ LOCAL_SRC_FILES += \
     toys/android/sendevent.c \
     toys/android/start.c \
     toys/net/ifconfig.c \
+    toys/net/microcom.c \
     toys/net/netcat.c \
     toys/net/netstat.c \
     toys/net/rfkill.c \
@@ -255,10 +256,23 @@ LOCAL_SRC_FILES += \
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
 # Android 8.0 had some tools in different paths
 LOCAL_SRC_FILES += \
+    toys/android/log.c \
+    toys/android/sendevent.c \
+    toys/android/start.c \
     toys/net/ifconfig.c \
+    toys/net/microcom.c \
     toys/net/netcat.c \
     toys/net/netstat.c \
-    toys/net/rfkill.c
+    toys/net/rfkill.c \
+    toys/net/tunctl.c \
+    toys/pending/chrt.c \
+    toys/pending/getfattr.c \
+    toys/pending/modprobe.c \
+    toys/pending/setfattr.c \
+    toys/posix/file.c \
+    toys/posix/uudecode.c \
+    toys/posix/uuencode.c
+LOCAL_SHARED_LIBRARIES += liblog
 else
 LOCAL_SRC_FILES += \
     toys/other/ifconfig.c \
@@ -296,7 +310,7 @@ LOCAL_CFLAGS += -DTOYBOX_VERSION='"$(toybox_version)"'
 
 LOCAL_CLANG := true
 
-LOCAL_SHARED_LIBRARIES := libcutils libselinux
+LOCAL_SHARED_LIBRARIES += libcutils libselinux
 
 LOCAL_MODULE := toybox_recovery
 LOCAL_MODULE_STEM := toybox

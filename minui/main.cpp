@@ -15,7 +15,7 @@
 
 #include <time.h>
 
-#include "minui.h"
+#include <minui/minui.h>
 #include "graphics.h"
 
 int main() {

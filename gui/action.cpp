@@ -43,11 +43,11 @@
 #include "../adb_install.h"
 #include "../fuse_sideload.h"
 #include "blanktimer.hpp"
+#include "../twinstall.h"
 
 extern "C" {
 #include "../twcommon.h"
 #include "../variables.h"
-#include "../twinstall.h"
 #include "cutils/properties.h"
 #include "../adb_install.h"
 };

@@ -39,12 +39,17 @@
 #include <string>
 #include <algorithm>
 
+#ifdef USE_MINZIP
+#include "../minzip/SysUtil.h"
+#else
+#include "../otautil/SysUtil.h"
+#endif
+
 extern "C" {
 #include "../twcommon.h"
-#include "../minzip/SysUtil.h"
-#include "../minzip/Zip.h"
 #include "gui.h"
 }
+#include "../zipwrap.hpp"
 #include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"
@@ -664,7 +669,7 @@ int Page::NotifyVarChange(std::string varName, std::string value)
 // transient data for loading themes
 struct LoadingContext
 {
-	ZipArchive* zip; // zip to load theme from, or NULL for the stock theme
+	ZipWrap* zip; // zip to load theme from, or NULL for the stock theme
 	std::set<std::string> filenames; // to detect cyclic includes
 	std::string basepath; // if zip is NULL, base path to load includes from with trailing slash, otherwise empty
 	std::vector<xml_document<>*> xmldocs; // all loaded xml docs
@@ -806,7 +811,7 @@ void PageSet::MakeEmergencyConsoleIfNeeded()
 	}
 }
 
-int PageSet::LoadLanguage(char* languageFile, ZipArchive* package)
+int PageSet::LoadLanguage(char* languageFile, ZipWrap* package)
 {
 	xml_document<> lang;
 	xml_node<>* parent;
@@ -1182,7 +1187,7 @@ void PageSet::AddStringResource(std::string resource_source, std::string resourc
 	mResources->AddStringResource(resource_source, resource_name, value);
 }
 
-char* PageManager::LoadFileToBuffer(std::string filename, ZipArchive* package) {
+char* PageManager::LoadFileToBuffer(std::string filename, ZipWrap* package) {
 	size_t len;
 	char* buffer = NULL;
 
@@ -1219,19 +1224,18 @@ char* PageManager::LoadFileToBuffer(std::string filename, ZipArchive* package) {
 		close(fd);
 	} else {
 		LOGINFO("PageManager::LoadFileToBuffer loading filename: '%s' from zip\n", filename.c_str());
-		const ZipEntry* zipentry = mzFindZipEntry(package, filename.c_str());
-		if (zipentry == NULL) {
+		if (!package->EntryExists(filename)) {
 			LOGERR("Unable to locate '%s' in zip file\n", filename.c_str());
 			return NULL;
 		}
 
 		// Allocate the buffer for the file
-		len = mzGetZipEntryUncompLen(zipentry);
+		len = package->GetUncompressedSize(filename);
 		buffer = (char*) malloc(len + 1);
 		if (!buffer)
 			return NULL;
 
-		if (!mzExtractZipEntryToBuffer(package, zipentry, (unsigned char*) buffer)) {
+		if (!package->ExtractToBuffer(filename, (unsigned char*) buffer)) {
 			LOGERR("Unable to extract '%s'\n", filename.c_str());
 			free(buffer);
 			return NULL;
@@ -1295,14 +1299,13 @@ void PageManager::LoadLanguageListDir(string dir) {
 	closedir(d);
 }
 
-void PageManager::LoadLanguageList(ZipArchive* package) {
+void PageManager::LoadLanguageList(ZipWrap* package) {
 	Language_List.clear();
 	if (TWFunc::Path_Exists(TWRES "customlanguages"))
 		TWFunc::removeDir(TWRES "customlanguages", true);
 	if (package) {
 		TWFunc::Recursive_Mkdir(TWRES "customlanguages");
-		struct utimbuf timestamp = { 1217592000, 1217592000 };  // 8/1/2008 default
-		mzExtractRecursive(package, "languages", TWRES "customlanguages/", &timestamp, NULL, NULL, NULL);
+		package->ExtractRecursive("languages", TWRES "customlanguages/");
 		LoadLanguageListDir(TWRES "customlanguages/");
 	} else {
 		LoadLanguageListDir(TWRES "languages/");
@@ -1330,7 +1333,7 @@ void PageManager::LoadLanguage(string filename) {
 int PageManager::LoadPackage(std::string name, std::string package, std::string startpage)
 {
 	std::string mainxmlfilename = package;
-	ZipArchive zip;
+	ZipWrap zip;
 	char* languageFile = NULL;
 	char* baseLanguageFile = NULL;
 	PageSet* pageSet = NULL;
@@ -1371,7 +1374,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 			LOGERR("Failed to map '%s'\n", package.c_str());
 			goto error;
 		}
-		if (mzOpenZipArchive(map.addr, map.length, &zip)) {
+		if (!zip.Open(package.c_str(), &map)) {
 			LOGERR("Unable to open zip archive '%s'\n", package.c_str());
 			sysReleaseMap(&map);
 			goto error;
@@ -1414,7 +1417,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	mCurrentSet = pageSet;
 
 	if (ctx.zip) {
-		mzCloseZipArchive(ctx.zip);
+		ctx.zip->Close();
 		sysReleaseMap(&map);
 	}
 	return ret;
@@ -1422,7 +1425,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 error:
 	// Sometimes we get here without a real error
 	if (ctx.zip) {
-		mzCloseZipArchive(ctx.zip);
+		ctx.zip->Close();
 		sysReleaseMap(&map);
 	}
 	return -1;

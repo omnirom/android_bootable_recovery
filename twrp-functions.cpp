@@ -43,7 +43,7 @@
 #include "data.hpp"
 #include "partitions.hpp"
 #include "variables.h"
-#include "bootloader.h"
+#include "bootloader_message_twrp/include/bootloader_message_twrp/bootloader_message.h"
 #include "cutils/properties.h"
 #include "cutils/android_reboot.h"
 #include <sys/reboot.h>
@@ -545,8 +545,8 @@ void TWFunc::Update_Log_File(void) {
 	// Reset bootloader message
 	TWPartition* Part = PartitionManager.Find_Partition_By_Path("/misc");
 	if (Part != NULL) {
-		string err;
-		if (!clear_bootloader_message(&err)) {
+		std::string err;
+		if (!clear_bootloader_message((void*)&err)) {
 			if (err == "no misc device set") {
 				LOGINFO("%s\n", err.c_str());
 			} else {

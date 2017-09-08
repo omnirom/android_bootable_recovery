@@ -19,27 +19,26 @@
 
 #include <unistd.h>
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "error_code.h"
-#include "yydefs.h"
 
-#define MAX_STRING_LEN 1024
+struct State {
+    State(const std::string& script, void* cookie);
 
-typedef struct Expr Expr;
+    // The source of the original script.
+    const std::string& script;
 
-typedef struct {
     // Optional pointer to app-specific data; the core of edify never
     // uses this value.
     void* cookie;
 
-    // The source of the original script.  Must be NULL-terminated,
-    // and in writable memory (Evaluate may make temporary changes to
-    // it but will restore it when done).
-    char* script;
-
     // The error message (if any) returned if the evaluation aborts.
-    // Should be NULL initially, will be either NULL or a malloc'd
-    // pointer after Evaluate() returns.
-    char* errmsg;
+    // Should be empty initially, will be either empty or a string that
+    // Evaluate() returns.
+    std::string errmsg;
 
     // error code indicates the type of failure (e.g. failure to update system image)
     // during the OTA process.
@@ -50,117 +49,95 @@ typedef struct {
     CauseCode cause_code = kNoCause;
 
     bool is_retry = false;
-
-} State;
-
-#define VAL_STRING  1  // data will be NULL-terminated; size doesn't count null
-#define VAL_BLOB    2
-
-typedef struct {
-    int type;
-    ssize_t size;
-    char* data;
-} Value;
-
-typedef Value* (*Function)(const char* name, State* state,
-                           int argc, Expr* argv[]);
-
-struct Expr {
-    Function fn;
-    const char* name;
-    int argc;
-    Expr** argv;
-    int start, end;
 };
 
-// Take one of the Expr*s passed to the function as an argument,
-// evaluate it, return the resulting Value.  The caller takes
-// ownership of the returned Value.
-Value* EvaluateValue(State* state, Expr* expr);
+enum ValueType {
+    VAL_INVALID = -1,
+    VAL_STRING = 1,
+    VAL_BLOB = 2,
+};
 
-// Take one of the Expr*s passed to the function as an argument,
-// evaluate it, assert that it is a string, and return the resulting
-// char*.  The caller takes ownership of the returned char*.  This is
-// a convenience function for older functions that want to deal only
-// with strings.
-char* Evaluate(State* state, Expr* expr);
+struct Value {
+    ValueType type;
+    std::string data;
+
+    Value(ValueType type, const std::string& str) :
+        type(type),
+        data(str) {}
+};
+
+struct Expr;
+
+using Function = Value* (*)(const char* name, State* state,
+                            const std::vector<std::unique_ptr<Expr>>& argv);
+
+struct Expr {
+  Function fn;
+  std::string name;
+  std::vector<std::unique_ptr<Expr>> argv;
+  int start, end;
+
+  Expr(Function fn, const std::string& name, int start, int end) :
+    fn(fn),
+    name(name),
+    start(start),
+    end(end) {}
+};
+
+// Evaluate the input expr, return the resulting Value.
+Value* EvaluateValue(State* state, const std::unique_ptr<Expr>& expr);
+
+// Evaluate the input expr, assert that it is a string, and update the result parameter. This
+// function returns true if the evaluation succeeds. This is a convenience function for older
+// functions that want to deal only with strings.
+bool Evaluate(State* state, const std::unique_ptr<Expr>& expr, std::string* result);
 
 // Glue to make an Expr out of a literal.
-Value* Literal(const char* name, State* state, int argc, Expr* argv[]);
+Value* Literal(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
 
 // Functions corresponding to various syntactic sugar operators.
 // ("concat" is also available as a builtin function, to concatenate
 // more than two strings.)
-Value* ConcatFn(const char* name, State* state, int argc, Expr* argv[]);
-Value* LogicalAndFn(const char* name, State* state, int argc, Expr* argv[]);
-Value* LogicalOrFn(const char* name, State* state, int argc, Expr* argv[]);
-Value* LogicalNotFn(const char* name, State* state, int argc, Expr* argv[]);
-Value* SubstringFn(const char* name, State* state, int argc, Expr* argv[]);
-Value* EqualityFn(const char* name, State* state, int argc, Expr* argv[]);
-Value* InequalityFn(const char* name, State* state, int argc, Expr* argv[]);
-Value* SequenceFn(const char* name, State* state, int argc, Expr* argv[]);
-
-// Convenience function for building expressions with a fixed number
-// of arguments.
-Expr* Build(Function fn, YYLTYPE loc, int count, ...);
+Value* ConcatFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
+Value* LogicalAndFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
+Value* LogicalOrFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
+Value* LogicalNotFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
+Value* SubstringFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
+Value* EqualityFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
+Value* InequalityFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
+Value* SequenceFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
 
 // Global builtins, registered by RegisterBuiltins().
-Value* IfElseFn(const char* name, State* state, int argc, Expr* argv[]);
-Value* AssertFn(const char* name, State* state, int argc, Expr* argv[]);
-Value* AbortFn(const char* name, State* state, int argc, Expr* argv[]);
-
-
-// For setting and getting the global error string (when returning
-// NULL from a function).
-void SetError(const char* message);  // makes a copy
-const char* GetError();              // retains ownership
-void ClearError();
-
-
-typedef struct {
-  const char* name;
-  Function fn;
-} NamedFunction;
+Value* IfElseFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
+Value* AssertFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
+Value* AbortFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv);
 
 // Register a new function.  The same Function may be registered under
 // multiple names, but a given name should only be used once.
-void RegisterFunction(const char* name, Function fn);
+void RegisterFunction(const std::string& name, Function fn);
 
 // Register all the builtins.
 void RegisterBuiltins();
 
-// Call this after all calls to RegisterFunction() but before parsing
-// any scripts to finish building the function table.
-void FinishRegistration();
-
 // Find the Function for a given name; return NULL if no such function
 // exists.
-Function FindFunction(const char* name);
-
+Function FindFunction(const std::string& name);
 
 // --- convenience functions for use in functions ---
 
-// Evaluate the expressions in argv, giving 'count' char* (the ... is
-// zero or more char** to put them in).  If any expression evaluates
-// to NULL, free the rest and return -1.  Return 0 on success.
-int ReadArgs(State* state, Expr* argv[], int count, ...);
+// Evaluate the expressions in argv, and put the results of strings in args. If any expression
+// evaluates to nullptr, return false. Return true on success.
+bool ReadArgs(State* state, const std::vector<std::unique_ptr<Expr>>& argv,
+              std::vector<std::string>* args);
+bool ReadArgs(State* state, const std::vector<std::unique_ptr<Expr>>& argv,
+              std::vector<std::string>* args, size_t start, size_t len);
 
-// Evaluate the expressions in argv, giving 'count' Value* (the ... is
-// zero or more Value** to put them in).  If any expression evaluates
-// to NULL, free the rest and return -1.  Return 0 on success.
-int ReadValueArgs(State* state, Expr* argv[], int count, ...);
-
-// Evaluate the expressions in argv, returning an array of char*
-// results.  If any evaluate to NULL, free the rest and return NULL.
-// The caller is responsible for freeing the returned array and the
-// strings it contains.
-char** ReadVarArgs(State* state, int argc, Expr* argv[]);
-
-// Evaluate the expressions in argv, returning an array of Value*
-// results.  If any evaluate to NULL, free the rest and return NULL.
-// The caller is responsible for freeing the returned array and the
-// Values it contains.
-Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]);
+// Evaluate the expressions in argv, and put the results of Value* in args. If any
+// expression evaluate to nullptr, return false. Return true on success.
+bool ReadValueArgs(State* state, const std::vector<std::unique_ptr<Expr>>& argv,
+                   std::vector<std::unique_ptr<Value>>* args);
+bool ReadValueArgs(State* state, const std::vector<std::unique_ptr<Expr>>& argv,
+                   std::vector<std::unique_ptr<Value>>* args, size_t start, size_t len);
 
 // Use printf-style arguments to compose an error message to put into
 // *state.  Returns NULL.
@@ -172,12 +149,11 @@ Value* ErrorAbort(State* state, const char* format, ...)
 Value* ErrorAbort(State* state, CauseCode cause_code, const char* format, ...)
     __attribute__((format(printf, 3, 4)));
 
-// Wrap a string into a Value, taking ownership of the string.
-Value* StringValue(char* str);
+// Copying the string into a Value.
+Value* StringValue(const char* str);
 
-// Free a Value object.
-void FreeValue(Value* v);
+Value* StringValue(const std::string& str);
 
-int parse_string(const char* str, Expr** root, int* error_count);
+int parse_string(const char* str, std::unique_ptr<Expr>* root, int* error_count);
 
 #endif  // _EXPRESSION_H

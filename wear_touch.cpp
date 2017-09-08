@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include "common.h"
-#include "wear_touch.h"
-
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -25,7 +22,10 @@
 #include <errno.h>
 #include <string.h>
 
+#include <android-base/logging.h>
 #include <linux/input.h>
+
+#include "wear_touch.h"
 
 #define DEVICE_PATH "/dev/input"
 
@@ -49,11 +49,11 @@ void WearSwipeDetector::detect(int dx, int dy) {
     } else if (abs(dx) < mLowThreshold && abs(dy) > mHighThreshold) {
         direction = dy < 0 ? UP : DOWN;
     } else {
-        LOGD("Ignore %d %d\n", dx, dy);
+        LOG(DEBUG) << "Ignore " << dx << " " << dy;
         return;
     }
 
-    LOGD("Swipe direction=%d\n", direction);
+    LOG(DEBUG) << "Swipe direction=" << direction;
     mCallback(mCookie, direction);
 }
 
@@ -105,7 +105,7 @@ void WearSwipeDetector::process(struct input_event *event) {
 void WearSwipeDetector::run() {
     int fd = findDevice(DEVICE_PATH);
     if (fd < 0) {
-        LOGE("no input devices found\n");
+        LOG(ERROR) << "no input devices found";
         return;
     }
 
@@ -118,23 +118,23 @@ void WearSwipeDetector::run() {
 }
 
 void* WearSwipeDetector::touch_thread(void* cookie) {
-    ((WearSwipeDetector*)cookie)->run();
+    (static_cast<WearSwipeDetector*>(cookie))->run();
     return NULL;
 }
 
-#define test_bit(bit, array)    (array[bit/8] & (1<<(bit%8)))
+#define test_bit(bit, array)    ((array)[(bit)/8] & (1<<((bit)%8)))
 
 int WearSwipeDetector::openDevice(const char *device) {
     int fd = open(device, O_RDONLY);
     if (fd < 0) {
-        LOGE("could not open %s, %s\n", device, strerror(errno));
+        PLOG(ERROR) << "could not open " << device;
         return false;
     }
 
     char name[80];
     name[sizeof(name) - 1] = '\0';
     if (ioctl(fd, EVIOCGNAME(sizeof(name) - 1), &name) < 1) {
-        LOGE("could not get device name for %s, %s\n", device, strerror(errno));
+        PLOG(ERROR) << "could not get device name for " << device;
         name[0] = '\0';
     }
 
@@ -143,7 +143,7 @@ int WearSwipeDetector::openDevice(const char *device) {
     int ret = ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(bits)), bits);
     if (ret > 0) {
         if (test_bit(ABS_MT_POSITION_X, bits) && test_bit(ABS_MT_POSITION_Y, bits)) {
-            LOGD("Found %s %s\n", device, name);
+            LOG(DEBUG) << "Found " << device << " " << name;
             return fd;
         }
     }
@@ -155,7 +155,7 @@ int WearSwipeDetector::openDevice(const char *device) {
 int WearSwipeDetector::findDevice(const char* path) {
     DIR* dir = opendir(path);
     if (dir == NULL) {
-        LOGE("Could not open directory %s", path);
+        PLOG(ERROR) << "Could not open directory " << path;
         return false;
     }
 

@@ -19,11 +19,13 @@
 
 #include "screen_ui.h"
 
+#include <string>
+
 class WearRecoveryUI : public ScreenRecoveryUI {
   public:
     WearRecoveryUI();
 
-    void Init() override;
+    bool Init(const std::string& locale) override;
 
     void SetStage(int current, int max) override;
 
@@ -52,7 +54,7 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
     int GetProgressBaseline() override;
 
-    void InitTextParams() override;
+    bool InitTextParams() override;
 
     void update_progress_locked() override;
 

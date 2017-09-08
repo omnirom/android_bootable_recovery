@@ -30,7 +30,7 @@
 #include <iomanip>
 #include <fcntl.h>
 
-#include "../minzip/Zip.h"
+#include "../zipwrap.hpp"
 extern "C" {
 #include "../twcommon.h"
 #include "gui.h"
@@ -42,38 +42,24 @@ extern "C" {
 
 #define TMP_RESOURCE_NAME   "/tmp/extract.bin"
 
-Resource::Resource(xml_node<>* node, ZipArchive* pZip __unused)
+Resource::Resource(xml_node<>* node, ZipWrap* pZip __unused)
 {
 	if (node && node->first_attribute("name"))
 		mName = node->first_attribute("name")->value();
 }
 
-int Resource::ExtractResource(ZipArchive* pZip, std::string folderName, std::string fileName, std::string fileExtn, std::string destFile)
+int Resource::ExtractResource(ZipWrap* pZip, std::string folderName, std::string fileName, std::string fileExtn, std::string destFile)
 {
 	if (!pZip)
 		return -1;
 
 	std::string src = folderName + "/" + fileName + fileExtn;
-
-	const ZipEntry* binary = mzFindZipEntry(pZip, src.c_str());
-	if (binary == NULL) {
+	if (!pZip->ExtractEntry(src, destFile, 0666))
 		return -1;
-	}
-
-	unlink(destFile.c_str());
-	int fd = creat(destFile.c_str(), 0666);
-	if (fd < 0)
-		return -1;
-
-	int ret = 0;
-	if (!mzExtractZipEntryToFile(pZip, binary, fd))
-		ret = -1;
-
-	close(fd);
-	return ret;
+	return 0;
 }
 
-void Resource::LoadImage(ZipArchive* pZip, std::string file, gr_surface* surface)
+void Resource::LoadImage(ZipWrap* pZip, std::string file, gr_surface* surface)
 {
 	int rc = 0;
 	if (ExtractResource(pZip, "images", file, ".png", TMP_RESOURCE_NAME) == 0)
@@ -119,7 +105,7 @@ void Resource::CheckAndScaleImage(gr_surface source, gr_surface* destination, in
 	}
 }
 
-FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
+FontResource::FontResource(xml_node<>* node, ZipWrap* pZip)
  : Resource(node, pZip)
 {
 	origFontSize = 0;
@@ -127,7 +113,7 @@ FontResource::FontResource(xml_node<>* node, ZipArchive* pZip)
 	LoadFont(node, pZip);
 }
 
-void FontResource::LoadFont(xml_node<>* node, ZipArchive* pZip)
+void FontResource::LoadFont(xml_node<>* node, ZipWrap* pZip)
 {
 	std::string file;
 	xml_attribute<>* attr;
@@ -192,7 +178,7 @@ void FontResource::DeleteFont() {
 	origFont = NULL;
 }
 
-void FontResource::Override(xml_node<>* node, ZipArchive* pZip) {
+void FontResource::Override(xml_node<>* node, ZipWrap* pZip) {
 	if (!origFont) {
 		origFont = mFont;
 	} else if (mFont) {
@@ -207,7 +193,7 @@ FontResource::~FontResource()
 	DeleteFont();
 }
 
-ImageResource::ImageResource(xml_node<>* node, ZipArchive* pZip)
+ImageResource::ImageResource(xml_node<>* node, ZipWrap* pZip)
  : Resource(node, pZip)
 {
 	std::string file;
@@ -238,7 +224,7 @@ ImageResource::~ImageResource()
 		res_free_surface(mSurface);
 }
 
-AnimationResource::AnimationResource(xml_node<>* node, ZipArchive* pZip)
+AnimationResource::AnimationResource(xml_node<>* node, ZipWrap* pZip)
  : Resource(node, pZip)
 {
 	std::string file;
@@ -359,7 +345,7 @@ void ResourceManager::AddStringResource(std::string resource_source, std::string
 	mStrings[resource_name] = res;
 }
 
-void ResourceManager::LoadResources(xml_node<>* resList, ZipArchive* pZip, std::string resource_source)
+void ResourceManager::LoadResources(xml_node<>* resList, ZipWrap* pZip, std::string resource_source)
 {
 	if (!resList)
 		return;

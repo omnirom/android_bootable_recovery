@@ -19,11 +19,15 @@
 #include "minui/minui.h"
 
 TEST(LocaleTest, Misc) {
-    EXPECT_TRUE(matches_locale("zh_CN", "zh_CN_#Hans"));
-    EXPECT_TRUE(matches_locale("zh", "zh_CN_#Hans"));
-    EXPECT_FALSE(matches_locale("zh_HK", "zh_CN_#Hans"));
-    EXPECT_TRUE(matches_locale("en_GB", "en_GB"));
-    EXPECT_TRUE(matches_locale("en", "en_GB"));
-    EXPECT_FALSE(matches_locale("en_GB", "en"));
-    EXPECT_FALSE(matches_locale("en_GB", "en_US"));
+  EXPECT_TRUE(matches_locale("zh-CN", "zh-Hans-CN"));
+  EXPECT_TRUE(matches_locale("zh", "zh-Hans-CN"));
+  EXPECT_FALSE(matches_locale("zh-HK", "zh-Hans-CN"));
+  EXPECT_TRUE(matches_locale("en-GB", "en-GB"));
+  EXPECT_TRUE(matches_locale("en", "en-GB"));
+  EXPECT_FALSE(matches_locale("en-GB", "en"));
+  EXPECT_FALSE(matches_locale("en-GB", "en-US"));
+  EXPECT_FALSE(matches_locale("en-US", ""));
+  // Empty locale prefix in the PNG file will match the input locale.
+  EXPECT_TRUE(matches_locale("", "en-US"));
+  EXPECT_TRUE(matches_locale("sr-Latn", "sr-Latn-BA"));
 }

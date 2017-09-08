@@ -52,11 +52,10 @@
 #include "gui/pages.hpp"
 #include "orscmd/orscmd.h"
 #include "adbbu/libtwadbbu.hpp"
+#include "twinstall.h"
 extern "C" {
-	#include "twinstall.h"
 	#include "gui/gui.h"
 	#include "cutils/properties.h"
-	int TWinstall_zip(const char* path, int* wipe_cache);
 }
 
 OpenRecoveryScript::VoidFunction OpenRecoveryScript::call_after_cli_command;

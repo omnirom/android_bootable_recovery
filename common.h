@@ -17,9 +17,9 @@
 #ifndef RECOVERY_COMMON_H
 #define RECOVERY_COMMON_H
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string>
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,18 +40,29 @@ extern "C" {
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)
 
+class RecoveryUI;
+
+extern RecoveryUI* ui;
 extern bool modified_flash;
 //typedef struct fstab_rec Volume;
+
+// The current stage, e.g. "1/2".
+extern std::string stage;
+
+// The reason argument provided in "--reason=".
+extern const char* reason;
 
 // fopen a file, mounting volumes and making parent dirs as necessary.
 FILE* fopen_path(const char *path, const char *mode);
 
 void ui_print(const char* format, ...);
 
-bool is_ro_debuggable();
+static bool is_ro_debuggable();
 
 #ifdef __cplusplus
 }
 #endif
+
+bool reboot(const std::string& command);
 
 #endif  // RECOVERY_COMMON_H

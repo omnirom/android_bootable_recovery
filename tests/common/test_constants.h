@@ -13,13 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef _OTA_TEST_CONSTANTS_H
 #define _OTA_TEST_CONSTANTS_H
 
-#if defined(__LP64__)
-#define NATIVE_TEST_PATH "/nativetest64"
-#else
-#define NATIVE_TEST_PATH "/nativetest"
-#endif
+#include <stdlib.h>
 
-#endif
+// Zip entries in ziptest_valid.zip.
+static const std::string kATxtContents("abcdefghabcdefgh\n");
+static const std::string kBTxtContents("abcdefgh\n");
+static const std::string kCTxtContents("abcdefghabcdefgh\n");
+static const std::string kDTxtContents("abcdefgh\n");
+
+// echo -n -e "abcdefghabcdefgh\n" | sha1sum
+static const std::string kATxtSha1Sum("32c96a03dc8cd20097940f351bca6261ee5a1643");
+// echo -n -e "abcdefgh\n" | sha1sum
+static const std::string kBTxtSha1Sum("e414af7161c9554089f4106d6f1797ef14a73666");
+
+static const char* data_root = getenv("ANDROID_DATA");
+
+static std::string from_testdata_base(const std::string& fname) {
+  return std::string(data_root) + "/nativetest/recovery/testdata/" + fname;
+}
+
+#endif  // _OTA_TEST_CONSTANTS_H

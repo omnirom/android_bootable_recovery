@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "ui.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/input.h>
@@ -28,32 +30,44 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <cutils/properties.h>
+#include <functional>
+#include <string>
+
+#include <android-base/file.h>
+#include <android-base/logging.h>
+#include <android-base/parseint.h>
+#include <android-base/properties.h>
+#include <android-base/strings.h>
 #include <cutils/android_reboot.h>
+#include <minui/minui.h>
 
 #include "common.h"
 #include "roots.h"
 #include "device.h"
-#include "minui/minui.h"
-#include "screen_ui.h"
-#include "ui.h"
 
-#define UI_WAIT_KEY_TIMEOUT_SEC    120
+static constexpr int UI_WAIT_KEY_TIMEOUT_SEC = 120;
+static constexpr const char* BRIGHTNESS_FILE = "/sys/class/leds/lcd-backlight/brightness";
+static constexpr const char* MAX_BRIGHTNESS_FILE = "/sys/class/leds/lcd-backlight/max_brightness";
 
 RecoveryUI::RecoveryUI()
-        : key_queue_len(0),
-          key_last_down(-1),
-          key_long_press(false),
-          key_down_count(0),
-          enable_reboot(true),
-          consecutive_power_keys(0),
-          last_key(-1),
-          has_power_key(false),
-          has_up_key(false),
-          has_down_key(false) {
-    pthread_mutex_init(&key_queue_mutex, nullptr);
-    pthread_cond_init(&key_queue_cond, nullptr);
-    memset(key_pressed, 0, sizeof(key_pressed));
+    : locale_(""),
+      rtl_locale_(false),
+      brightness_normal_(50),
+      brightness_dimmed_(25),
+      key_queue_len(0),
+      key_last_down(-1),
+      key_long_press(false),
+      key_down_count(0),
+      enable_reboot(true),
+      consecutive_power_keys(0),
+      last_key(-1),
+      has_power_key(false),
+      has_up_key(false),
+      has_down_key(false),
+      screensaver_state_(ScreensaverState::DISABLED) {
+  pthread_mutex_init(&key_queue_mutex, nullptr);
+  pthread_cond_init(&key_queue_cond, nullptr);
+  memset(key_pressed, 0, sizeof(key_pressed));
 }
 
 void RecoveryUI::OnKeyDetected(int key_code) {
@@ -66,10 +80,6 @@ void RecoveryUI::OnKeyDetected(int key_code) {
     }
 }
 
-int RecoveryUI::InputCallback(int fd, uint32_t epevents, void* data) {
-    return reinterpret_cast<RecoveryUI*>(data)->OnInputEvent(fd, epevents);
-}
-
 // Reads input events, handles special hot keys, and adds to the key queue.
 static void* InputThreadLoop(void*) {
     while (true) {
@@ -80,12 +90,54 @@ static void* InputThreadLoop(void*) {
     return nullptr;
 }
 
-void RecoveryUI::Init() {
-    ev_init(InputCallback, this);
+bool RecoveryUI::InitScreensaver() {
+  // Disabled.
+  if (brightness_normal_ == 0 || brightness_dimmed_ > brightness_normal_) {
+    return false;
+  }
 
-    ev_iterate_available_keys(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
+  // Set the initial brightness level based on the max brightness. Note that reading the initial
+  // value from BRIGHTNESS_FILE doesn't give the actual brightness value (bullhead, sailfish), so
+  // we don't have a good way to query the default value.
+  std::string content;
+  if (!android::base::ReadFileToString(MAX_BRIGHTNESS_FILE, &content)) {
+    PLOG(WARNING) << "Failed to read max brightness";
+    return false;
+  }
 
-    pthread_create(&input_thread_, nullptr, InputThreadLoop, nullptr);
+  unsigned int max_value;
+  if (!android::base::ParseUint(android::base::Trim(content), &max_value)) {
+    LOG(WARNING) << "Failed to parse max brightness: " << content;
+    return false;
+  }
+
+  brightness_normal_value_ = max_value * brightness_normal_ / 100.0;
+  brightness_dimmed_value_ = max_value * brightness_dimmed_ / 100.0;
+  if (!android::base::WriteStringToFile(std::to_string(brightness_normal_value_),
+                                        BRIGHTNESS_FILE)) {
+    PLOG(WARNING) << "Failed to set brightness";
+    return false;
+  }
+
+  LOG(INFO) << "Brightness: " << brightness_normal_value_ << " (" << brightness_normal_ << "%)";
+  screensaver_state_ = ScreensaverState::NORMAL;
+  return true;
+}
+
+bool RecoveryUI::Init(const std::string& locale) {
+  // Set up the locale info.
+  SetLocale(locale);
+
+  ev_init(std::bind(&RecoveryUI::OnInputEvent, this, std::placeholders::_1, std::placeholders::_2));
+
+  ev_iterate_available_keys(std::bind(&RecoveryUI::OnKeyDetected, this, std::placeholders::_1));
+
+  if (!InitScreensaver()) {
+    LOG(INFO) << "Screensaver disabled";
+  }
+
+  pthread_create(&input_thread_, nullptr, InputThreadLoop, nullptr);
+  return true;
 }
 
 int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
@@ -175,7 +227,7 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
 
           case RecoveryUI::REBOOT:
             if (reboot_enabled) {
-                property_set(ANDROID_RB_PROPERTY, "reboot,");
+                reboot("reboot,");
                 while (true) { pause(); }
             }
             break;
@@ -188,7 +240,7 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
 }
 
 void* RecoveryUI::time_key_helper(void* cookie) {
-    key_timer_t* info = (key_timer_t*) cookie;
+    key_timer_t* info = static_cast<key_timer_t*>(cookie);
     info->ui->time_key(info->key_code, info->count);
     delete info;
     return nullptr;
@@ -216,31 +268,65 @@ void RecoveryUI::EnqueueKey(int key_code) {
 }
 
 int RecoveryUI::WaitKey() {
-    pthread_mutex_lock(&key_queue_mutex);
+  pthread_mutex_lock(&key_queue_mutex);
 
-    // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is
-    // plugged in.
-    do {
-        struct timeval now;
-        struct timespec timeout;
-        gettimeofday(&now, nullptr);
-        timeout.tv_sec = now.tv_sec;
-        timeout.tv_nsec = now.tv_usec * 1000;
-        timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
+  // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is
+  // plugged in.
+  do {
+    struct timeval now;
+    struct timespec timeout;
+    gettimeofday(&now, nullptr);
+    timeout.tv_sec = now.tv_sec;
+    timeout.tv_nsec = now.tv_usec * 1000;
+    timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
 
-        int rc = 0;
-        while (key_queue_len == 0 && rc != ETIMEDOUT) {
-            rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex, &timeout);
-        }
-    } while (IsUsbConnected() && key_queue_len == 0);
-
-    int key = -1;
-    if (key_queue_len > 0) {
-        key = key_queue[0];
-        memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
+    int rc = 0;
+    while (key_queue_len == 0 && rc != ETIMEDOUT) {
+      rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex, &timeout);
     }
-    pthread_mutex_unlock(&key_queue_mutex);
-    return key;
+
+    if (screensaver_state_ != ScreensaverState::DISABLED) {
+      if (rc == ETIMEDOUT) {
+        // Lower the brightness level: NORMAL -> DIMMED; DIMMED -> OFF.
+        if (screensaver_state_ == ScreensaverState::NORMAL) {
+          if (android::base::WriteStringToFile(std::to_string(brightness_dimmed_value_),
+                                               BRIGHTNESS_FILE)) {
+            LOG(INFO) << "Brightness: " << brightness_dimmed_value_ << " (" << brightness_dimmed_
+                      << "%)";
+            screensaver_state_ = ScreensaverState::DIMMED;
+          }
+        } else if (screensaver_state_ == ScreensaverState::DIMMED) {
+          if (android::base::WriteStringToFile("0", BRIGHTNESS_FILE)) {
+            LOG(INFO) << "Brightness: 0 (off)";
+            screensaver_state_ = ScreensaverState::OFF;
+          }
+        }
+      } else if (screensaver_state_ != ScreensaverState::NORMAL) {
+        // Drop the first key if it's changing from OFF to NORMAL.
+        if (screensaver_state_ == ScreensaverState::OFF) {
+          if (key_queue_len > 0) {
+            memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
+          }
+        }
+
+        // Reset the brightness to normal.
+        if (android::base::WriteStringToFile(std::to_string(brightness_normal_value_),
+                                             BRIGHTNESS_FILE)) {
+          screensaver_state_ = ScreensaverState::NORMAL;
+          LOG(INFO) << "Brightness: " << brightness_normal_value_ << " (" << brightness_normal_
+                    << "%)";
+        }
+      }
+    }
+  } while (IsUsbConnected() && key_queue_len == 0);
+
+  int key = -1;
+  if (key_queue_len > 0) {
+    key = key_queue[0];
+    memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
+  }
+  pthread_mutex_unlock(&key_queue_mutex);
+  return key;
 }
 
 bool RecoveryUI::IsUsbConnected() {
@@ -326,7 +412,7 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
     }
 
     last_key = key;
-    return IsTextVisible() ? ENQUEUE : IGNORE;
+    return (IsTextVisible() || screensaver_state_ == ScreensaverState::OFF) ? ENQUEUE : IGNORE;
 }
 
 void RecoveryUI::KeyLongPress(int) {
@@ -336,4 +422,24 @@ void RecoveryUI::SetEnableReboot(bool enabled) {
     pthread_mutex_lock(&key_queue_mutex);
     enable_reboot = enabled;
     pthread_mutex_unlock(&key_queue_mutex);
+}
+
+void RecoveryUI::SetLocale(const std::string& new_locale) {
+  this->locale_ = new_locale;
+  this->rtl_locale_ = false;
+
+  if (!new_locale.empty()) {
+    size_t underscore = new_locale.find('_');
+    // lang has the language prefix prior to '_', or full string if '_' doesn't exist.
+    std::string lang = new_locale.substr(0, underscore);
+
+    // A bit cheesy: keep an explicit list of supported RTL languages.
+    if (lang == "ar" ||  // Arabic
+        lang == "fa" ||  // Persian (Farsi)
+        lang == "he" ||  // Hebrew (new language code)
+        lang == "iw" ||  // Hebrew (old language code)
+        lang == "ur") {  // Urdu
+      rtl_locale_ = true;
+    }
+  }
 }

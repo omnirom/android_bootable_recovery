@@ -51,7 +51,8 @@ extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
 #ifdef USE_EXT4
-	#include "make_ext4fs.h"
+	// #include "make_ext4fs.h" TODO need ifdef for android8
+	#include <ext4_utils/make_ext4fs.h>
 #endif
 
 #ifdef TW_INCLUDE_CRYPTO

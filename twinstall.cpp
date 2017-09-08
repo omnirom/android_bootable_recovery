@@ -30,8 +30,14 @@
 #include "twcommon.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
+
+#ifdef USE_MINZIP
 #include "minzip/SysUtil.h"
-#include "minzip/Zip.h"
+#else
+#include "otautil/SysUtil.h"
+#include <ziparchive/zip_archive.h>
+#endif
+#include "zipwrap.hpp"
 #ifdef USE_OLD_VERIFIER
 #include "verifier24/verifier.h"
 #else
@@ -54,6 +60,7 @@ extern "C" {
 }
 
 #define AB_OTA "payload_properties.txt"
+//#define TW_NO_LEGACY_PROPS 1
 
 static const char* properties_path = "/dev/__properties__";
 static const char* properties_path_renamed = "/dev/__properties_kk__";
@@ -109,17 +116,15 @@ static int switch_to_new_properties()
 	return 0;
 }
 
-static int Install_Theme(const char* path, ZipArchive *Zip) {
+static int Install_Theme(const char* path, ZipWrap *Zip) {
 #ifdef TW_OEM_BUILD // We don't do custom themes in OEM builds
-	mzCloseZipArchive(Zip);
+	Zip->Close();
 	return INSTALL_CORRUPT;
 #else
-	const ZipEntry* xml_location = mzFindZipEntry(Zip, "ui.xml");
-
-	mzCloseZipArchive(Zip);
-	if (xml_location == NULL) {
+	if (!Zip->EntryExists("ui.xml")) {
 		return INSTALL_CORRUPT;
 	}
+	Zip->Close();
 	if (!PartitionManager.Mount_Settings_Storage(true))
 		return INSTALL_ERROR;
 	string theme_path = DataManager::GetSettingsStoragePath();
@@ -139,69 +144,31 @@ static int Install_Theme(const char* path, ZipArchive *Zip) {
 #endif
 }
 
-static int Prepare_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache) {
-	const ZipEntry* binary_location = mzFindZipEntry(Zip, ASSUMED_UPDATE_BINARY_NAME);
-	int binary_fd, ret_val;
-
-	if (binary_location == NULL) {
-		return INSTALL_CORRUPT;
-	}
-
-	// Delete any existing updater
-	if (TWFunc::Path_Exists(TMP_UPDATER_BINARY_PATH) && unlink(TMP_UPDATER_BINARY_PATH) != 0) {
-		LOGINFO("Unable to unlink '%s': %s\n", TMP_UPDATER_BINARY_PATH, strerror(errno));
-	}
-
-	binary_fd = creat(TMP_UPDATER_BINARY_PATH, 0755);
-	if (binary_fd < 0) {
-		LOGERR("Could not create file for updater extract in '%s': %s\n", TMP_UPDATER_BINARY_PATH, strerror(errno));
-		mzCloseZipArchive(Zip);
-		return INSTALL_ERROR;
-	}
-
-	ret_val = mzExtractZipEntryToFile(Zip, binary_location, binary_fd);
-	close(binary_fd);
-
-	if (!ret_val) {
-		mzCloseZipArchive(Zip);
+static int Prepare_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache) {
+	if (!Zip->ExtractEntry(ASSUMED_UPDATE_BINARY_NAME, TMP_UPDATER_BINARY_PATH, 0755)) {
+		Zip->Close();
 		LOGERR("Could not extract '%s'\n", ASSUMED_UPDATE_BINARY_NAME);
 		return INSTALL_ERROR;
 	}
 
 	// If exists, extract file_contexts from the zip file
-	const ZipEntry* selinx_contexts = mzFindZipEntry(Zip, "file_contexts");
-	if (selinx_contexts == NULL) {
-		mzCloseZipArchive(Zip);
+	if (!Zip->EntryExists("file_contexts")) {
+		Zip->Close();
 		LOGINFO("Zip does not contain SELinux file_contexts file in its root.\n");
 	} else {
-		string output_filename = "/file_contexts";
+		const string output_filename = "/file_contexts";
 		LOGINFO("Zip contains SELinux file_contexts file in its root. Extracting to %s\n", output_filename.c_str());
-		// Delete any file_contexts
-		if (TWFunc::Path_Exists(output_filename) && unlink(output_filename.c_str()) != 0) {
-			LOGINFO("Unable to unlink '%s': %s\n", output_filename.c_str(), strerror(errno));
-		}
-
-		int file_contexts_fd = creat(output_filename.c_str(), 0644);
-		if (file_contexts_fd < 0) {
-			LOGERR("Could not extract to '%s': %s\n", output_filename.c_str(), strerror(errno));
-			mzCloseZipArchive(Zip);
-			return INSTALL_ERROR;
-		}
-
-		ret_val = mzExtractZipEntryToFile(Zip, selinx_contexts, file_contexts_fd);
-		close(file_contexts_fd);
-
-		if (!ret_val) {
-			mzCloseZipArchive(Zip);
+		if (!Zip->ExtractEntry("file_contexts", output_filename, 0644)) {
+			Zip->Close();
 			LOGERR("Could not extract '%s'\n", output_filename.c_str());
 			return INSTALL_ERROR;
 		}
 	}
-	mzCloseZipArchive(Zip);
+	Zip->Close();
 	return INSTALL_SUCCESS;
 }
 
-static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache, zip_type ztype) {
+static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zip_type ztype) {
 	int ret_val, pipe_fd[2], status, zip_verify;
 	char buffer[1024];
 	FILE* child_data;
@@ -219,7 +186,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache,
 
 	std::vector<std::string> args;
     if (ztype == UPDATE_BINARY_ZIP_TYPE) {
-		ret_val = update_binary_command(path, Zip, 0, pipe_fd[1], &args);
+		ret_val = update_binary_command(path, 0, pipe_fd[1], &args);
     } else if (ztype == AB_OTA_ZIP_TYPE) {
 		ret_val = abupdate_binary_command(path, Zip, 0, pipe_fd[1], &args);
 	} else {
@@ -263,7 +230,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache,
 			int seconds_float = strtol(seconds_char, NULL, 10);
 
 			if (zip_verify)
-				DataManager::ShowProgress(fraction_float * (1 - VERIFICATION_PROGRESS_FRACTION), seconds_float);
+				DataManager::ShowProgress(fraction_float * (1 - VERIFICATION_PROGRESS_FRAC), seconds_float);
 			else
 				DataManager::ShowProgress(fraction_float, seconds_float);
 		} else if (strcmp(command, "set_progress") == 0) {
@@ -308,9 +275,8 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache,
 	return INSTALL_SUCCESS;
 }
 
-extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
+int TWinstall_zip(const char* path, int* wipe_cache) {
 	int ret_val, zip_verify = 1;
-	ZipArchive Zip;
 
 	if (strcmp(path, "error") == 0) {
 		LOGERR("Failed to get adb sideload file: '%s'\n", path);
@@ -365,7 +331,17 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 
 	if (zip_verify) {
 		gui_msg("verify_zip_sig=Verifying zip signature...");
+#ifdef USE_OLD_VERIFIER
 		ret_val = verify_file(map.addr, map.length);
+#else
+		std::vector<Certificate> loadedKeys;
+		if (!load_keys("/res/keys", loadedKeys)) {
+			LOGINFO("Failed to load keys");
+			gui_err("verify_zip_fail=Zip signature verification failed!");
+			return -1;
+		}
+		ret_val = verify_file(map.addr, map.length, loadedKeys, std::bind(&DataManager::SetProgress, std::placeholders::_1));
+#endif
 		if (ret_val != VERIFY_SUCCESS) {
 			LOGINFO("Zip signature verification failed: %i\n", ret_val);
 			gui_err("verify_zip_fail=Zip signature verification failed!");
@@ -375,8 +351,8 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 			gui_msg("verify_zip_done=Zip signature verified successfully.");
 		}
 	}
-	ret_val = mzOpenZipArchive(map.addr, map.length, &Zip);
-	if (ret_val != 0) {
+	ZipWrap Zip;
+	if (!Zip.Open(path, &map)) {
 		gui_err("zip_corrupt=Zip file is corrupt!");
 		sysReleaseMap(&map);
 		return INSTALL_CORRUPT;
@@ -384,24 +360,29 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 
 	time_t start, stop;
 	time(&start);
-	const ZipEntry* file_location = mzFindZipEntry(&Zip, ASSUMED_UPDATE_BINARY_NAME);
-	if (file_location != NULL) {
+	if (Zip.EntryExists(ASSUMED_UPDATE_BINARY_NAME)) {
 		LOGINFO("Update binary zip\n");
-		ret_val = Prepare_Update_Binary(path, &Zip, wipe_cache);
-		if (ret_val == INSTALL_SUCCESS)
-			ret_val = Run_Update_Binary(path, &Zip, wipe_cache, UPDATE_BINARY_ZIP_TYPE);
+		// Additionally verify the compatibility of the package.
+		if (!verify_package_compatibility(&Zip)) {
+			gui_err("zip_compatible_err=Zip Treble compatibility error!");
+			sysReleaseMap(&map);
+			Zip.Close();
+			ret_val = INSTALL_CORRUPT;
+		} else {
+			ret_val = Prepare_Update_Binary(path, &Zip, wipe_cache);
+			if (ret_val == INSTALL_SUCCESS)
+				ret_val = Run_Update_Binary(path, &Zip, wipe_cache, UPDATE_BINARY_ZIP_TYPE);
+		}
 	} else {
-		file_location = mzFindZipEntry(&Zip, AB_OTA);
-		if (file_location != NULL) {
+		if (Zip.EntryExists(AB_OTA)) {
 			LOGINFO("AB zip\n");
 			ret_val = Run_Update_Binary(path, &Zip, wipe_cache, AB_OTA_ZIP_TYPE);
 		} else {
-			file_location = mzFindZipEntry(&Zip, "ui.xml");
-			if (file_location != NULL) {
+			if (Zip.EntryExists("ui.xml")) {
 				LOGINFO("TWRP theme zip\n");
 				ret_val = Install_Theme(path, &Zip);
 			} else {
-				mzCloseZipArchive(&Zip);
+				Zip.Close();
 				ret_val = INSTALL_CORRUPT;
 			}
 		}

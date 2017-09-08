@@ -180,6 +180,9 @@ ifneq ($(TW_INCLUDE_JPEG),)
     LOCAL_SHARED_LIBRARIES += libjpeg
 endif
 LOCAL_STATIC_LIBRARIES += libpixelflinger_twrp
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
+LOCAL_SHARED_LIBRARIES += libcutils liblog libutils
+endif
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminuitwrp
 

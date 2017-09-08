@@ -14,29 +14,31 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
+#include <linux/fb.h>
+#include <linux/kd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-
-#include <fcntl.h>
-#include <stdio.h>
-
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
+#include <unistd.h>
 
-#include <linux/fb.h>
-#include <linux/kd.h>
+#include <regex>
+#include <string>
+#include <vector>
 
+//#include <android-base/strings.h> // does not exist in 6.0
 #include <png.h>
 
-#include "minui.h"
+#include "minui/minui.h"
 
 #define SURFACE_DATA_ALIGNMENT 8
 
 static GRSurface* malloc_surface(size_t data_size) {
     size_t size = sizeof(GRSurface) + data_size + SURFACE_DATA_ALIGNMENT;
-    unsigned char* temp = reinterpret_cast<unsigned char*>(malloc(size));
+    unsigned char* temp = static_cast<unsigned char*>(malloc(size));
     if (temp == NULL) return NULL;
     GRSurface* surface = reinterpret_cast<GRSurface*>(temp);
     surface->data = temp + sizeof(GRSurface) +
@@ -220,7 +222,7 @@ int res_create_display_surface(const char* name, GRSurface** pSurface) {
     png_set_bgr(png_ptr);
 #endif
 
-    p_row = reinterpret_cast<unsigned char*>(malloc(width * 4));
+    p_row = static_cast<unsigned char*>(malloc(width * 4));
     for (y = 0; y < height; ++y) {
         png_read_row(png_ptr, p_row, NULL);
         transform_rgb_to_draw(p_row, surface->data + y * surface->row_bytes, channels, width);
@@ -280,7 +282,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
         goto exit;
     }
 
-    surface = reinterpret_cast<GRSurface**>(malloc(*frames * sizeof(GRSurface*)));
+    surface = static_cast<GRSurface**>(calloc(*frames, sizeof(GRSurface*)));
     if (surface == NULL) {
         result = -8;
         goto exit;
@@ -297,7 +299,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
     png_set_bgr(png_ptr);
 #endif
 
-    p_row = reinterpret_cast<unsigned char*>(malloc(width * 4));
+    p_row = static_cast<unsigned char*>(malloc(width * 4));
     for (y = 0; y < height; ++y) {
         png_read_row(png_ptr, p_row, NULL);
         int frame = y % *frames;
@@ -307,7 +309,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
     }
     free(p_row);
 
-    *pSurface = reinterpret_cast<GRSurface**>(surface);
+    *pSurface = surface;
 
 exit:
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
@@ -315,7 +317,7 @@ exit:
     if (result < 0) {
         if (surface) {
             for (int i = 0; i < *frames; ++i) {
-                if (surface[i]) free(surface[i]);
+                free(surface[i]);
             }
             free(surface);
         }
@@ -378,14 +380,27 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
 
 // This function tests if a locale string stored in PNG (prefix) matches
 // the locale string provided by the system (locale).
-bool matches_locale(const char* prefix, const char* locale) {
-    if (locale == NULL) return false;
+bool matches_locale(const std::string& prefix, const std::string& locale) {
+  // According to the BCP 47 format, A locale string may consists of:
+  // language-{extlang}-{script}-{region}-{variant}
+  // The locale headers in PNG mostly consist of language-{region} except for sr-Latn, and some
+  // android's system locale can have the format language-{script}-{region}.
 
-    // Return true if the whole string of prefix matches the top part of
-    // locale. For instance, prefix == "en" matches locale == "en_US";
-    // and prefix == "zh_CN" matches locale == "zh_CN_#Hans".
+  // Return true if the whole string of prefix matches the top part of locale. Otherwise try to
+  // match the locale string without the {script} section.
+  // For instance, prefix == "en" matches locale == "en-US", prefix == "sr-Latn" matches locale
+  // == "sr-Latn-BA", and prefix == "zh-CN" matches locale == "zh-Hans-CN".
+  //if (android::base::StartsWith(locale, prefix.c_str())) { // does not exist in 6.0
+  if (strncmp(prefix.c_str(), locale.c_str(), prefix.length()) == 0) {
+    return true;
+  }
 
-    return (strncmp(prefix, locale, strlen(prefix)) == 0);
+  size_t separator = prefix.find('-');
+  if (separator == std::string::npos) {
+    return false;
+  }
+  std::regex loc_regex(prefix.substr(0, separator) + "-[A-Za-z]*" + prefix.substr(separator));
+  return std::regex_match(locale, loc_regex);
 }
 
 int res_create_localized_alpha_surface(const char* name,
@@ -397,18 +412,13 @@ int res_create_localized_alpha_surface(const char* name,
     png_infop info_ptr = NULL;
     png_uint_32 width, height;
     png_byte channels;
-    unsigned char* row;
     png_uint_32 y;
+    std::vector<unsigned char> row;
 
     *pSurface = NULL;
 
     if (locale == NULL) {
-        surface = malloc_surface(0);
-        surface->width = 0;
-        surface->height = 0;
-        surface->row_bytes = 0;
-        surface->pixel_bytes = 1;
-        goto exit;
+        return result;
     }
 
     result = open_png(name, &png_ptr, &info_ptr, &width, &height, &channels);
@@ -419,13 +429,13 @@ int res_create_localized_alpha_surface(const char* name,
         goto exit;
     }
 
-    row = reinterpret_cast<unsigned char*>(malloc(width));
+    row.resize(width);
     for (y = 0; y < height; ++y) {
-        png_read_row(png_ptr, row, NULL);
+        png_read_row(png_ptr, row.data(), NULL);
         int w = (row[1] << 8) | row[0];
         int h = (row[3] << 8) | row[2];
-        int len = row[4];
-        char* loc = (char*)row+5;
+        __unused int len = row[4];
+        char* loc = reinterpret_cast<char*>(&row[5]);
 
         if (y+1+h >= height || matches_locale(loc, locale)) {
             printf("  %20s: %s (%d x %d @ %d)\n", name, loc, w, h, y);
@@ -442,16 +452,16 @@ int res_create_localized_alpha_surface(const char* name,
 
             int i;
             for (i = 0; i < h; ++i, ++y) {
-                png_read_row(png_ptr, row, NULL);
-                memcpy(surface->data + i*w, row, w);
+                png_read_row(png_ptr, row.data(), NULL);
+                memcpy(surface->data + i*w, row.data(), w);
             }
 
-            *pSurface = reinterpret_cast<GRSurface*>(surface);
+            *pSurface = surface;
             break;
         } else {
             int i;
             for (i = 0; i < h; ++i, ++y) {
-                png_read_row(png_ptr, row, NULL);
+                png_read_row(png_ptr, row.data(), NULL);
             }
         }
     }

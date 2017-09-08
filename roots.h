@@ -17,7 +17,7 @@
 #ifndef RECOVERY_ROOTS_H_
 #define RECOVERY_ROOTS_H_
 
-#include "common.h"
+typedef struct fstab_rec Volume;
 
 typedef struct fstab_rec Volume;
 

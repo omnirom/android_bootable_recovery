@@ -41,7 +41,7 @@
 
 #include <stdbool.h>
 
-#include "minzip/Zip.h"
+#include <ziparchive/zip_archive.h>
 
 #define OTAIO_BASE_DIR ".libotafault"
 #define OTAIO_READ "READ"
@@ -52,7 +52,7 @@
 /*
  * Initialize libotafault by providing a reference to the OTA package.
  */
-void ota_io_init(ZipArchive* za);
+void ota_io_init(ZipArchiveHandle zip, bool retry);
 
 /*
  * Return true if a config file is present for the given IO type.

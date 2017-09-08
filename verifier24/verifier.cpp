@@ -15,8 +15,8 @@
  */
 
 #include "asn1_decoder.h"
-#include "common.h"
-#include "ui.h"
+#include "../common.h"
+//#include "ui.h"
 #include "verifier.h"
 
 #include "mincrypt/dsa_sig.h"

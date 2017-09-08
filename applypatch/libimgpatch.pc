@@ -1,0 +1,6 @@
+# This file is for libimgpatch in Chrome OS.
+
+Name: libimgpatch
+Description: Apply imgdiff patch
+Version: 0.0.1
+Libs: -limgpatch -lbz2 -lz

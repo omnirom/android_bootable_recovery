@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "recovery-persist"
-
 //
 // Strictly to deal with reboot into system after OTA after /data
 // mounts to pull the last pmsg file data and place it
@@ -32,7 +30,6 @@
 //    --force-persist  ignore /cache mount, always rotate in the contents.
 //
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,11 +37,11 @@
 
 #include <string>
 
-#include <android/log.h> /* Android Log Priority Tags */
 #include <android-base/file.h>
-#include <log/log.h>
-#include <log/logger.h> /* Android Log packet format */
+#include <android-base/logging.h>
 #include <private/android_logger.h> /* private pmsg functions */
+
+#include "rotate_logs.h"
 
 static const char *LAST_LOG_FILE = "/data/misc/recovery/last_log";
 static const char *LAST_PMSG_FILE = "/sys/fs/pstore/pmsg-ramoops-0";
@@ -52,19 +49,19 @@ static const char *LAST_KMSG_FILE = "/data/misc/recovery/last_kmsg";
 static const char *LAST_CONSOLE_FILE = "/sys/fs/pstore/console-ramoops-0";
 static const char *ALT_LAST_CONSOLE_FILE = "/sys/fs/pstore/console-ramoops";
 
-static const int KEEP_LOG_COUNT = 10;
-
 // close a file, log an error if the error indicator is set
 static void check_and_fclose(FILE *fp, const char *name) {
     fflush(fp);
-    if (ferror(fp)) SLOGE("%s %s", name, strerror(errno));
+    if (ferror(fp)) {
+        PLOG(ERROR) << "Error in " << name;
+    }
     fclose(fp);
 }
 
 static void copy_file(const char* source, const char* destination) {
     FILE* dest_fp = fopen(destination, "w");
     if (dest_fp == nullptr) {
-        SLOGE("%s %s", destination, strerror(errno));
+        PLOG(ERROR) << "Can't open " << destination;
     } else {
         FILE* source_fp = fopen(source, "r");
         if (source_fp != nullptr) {
@@ -80,39 +77,6 @@ static void copy_file(const char* source, const char* destination) {
 }
 
 static bool rotated = false;
-
-// Rename last_log -> last_log.1 -> last_log.2 -> ... -> last_log.$max.
-// Similarly rename last_kmsg -> last_kmsg.1 -> ... -> last_kmsg.$max.
-// Overwrite any existing last_log.$max and last_kmsg.$max.
-static void rotate_logs(int max) {
-    // Logs should only be rotated once.
-
-    if (rotated) {
-        return;
-    }
-    rotated = true;
-
-    for (int i = max-1; i >= 0; --i) {
-        std::string old_log(LAST_LOG_FILE);
-        if (i > 0) {
-          old_log += "." + std::to_string(i);
-        }
-        std::string new_log(LAST_LOG_FILE);
-        new_log += "." + std::to_string(i+1);
-
-        // Ignore errors if old_log doesn't exist.
-        rename(old_log.c_str(), new_log.c_str());
-
-        std::string old_kmsg(LAST_KMSG_FILE);
-        if (i > 0) {
-          old_kmsg += "." + std::to_string(i);
-        }
-        std::string new_kmsg(LAST_KMSG_FILE);
-        new_kmsg += "." + std::to_string(i+1);
-
-        rename(old_kmsg.c_str(), new_kmsg.c_str());
-    }
-}
 
 ssize_t logsave(
         log_id_t /* logId */,
@@ -139,7 +103,8 @@ ssize_t logsave(
     // already-rotated files? Algorithm thus far is KISS: one file,
     // one rotation allowed.
 
-    rotate_logs(KEEP_LOG_COUNT);
+    rotate_logs(LAST_LOG_FILE, LAST_KMSG_FILE);
+    rotated = true;
 
     return android::base::WriteStringToFile(buffer, destination.c_str());
 }
@@ -157,7 +122,7 @@ int main(int argc, char **argv) {
     static const char mounts_file[] = "/proc/mounts";
     FILE *fp = fopen(mounts_file, "r");
     if (!fp) {
-        SLOGV("%s %s", mounts_file, strerror(errno));
+        PLOG(ERROR) << "failed to open " << mounts_file;
     } else {
         char *line = NULL;
         size_t len = 0;

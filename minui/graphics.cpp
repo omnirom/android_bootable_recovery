@@ -14,22 +14,13 @@
  * limitations under the License.
  */
 
-#include <stdbool.h>
+#include "graphics.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-#include <fcntl.h>
-#include <stdio.h>
-
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-
-#include <linux/fb.h>
-#include <linux/kd.h>
-
-#include <time.h>
+#include <memory>
 
 #ifdef BOARD_USE_CUSTOM_RECOVERY_FONT
 #include BOARD_USE_CUSTOM_RECOVERY_FONT
@@ -37,11 +28,14 @@
 #include "font_10x18.h"
 #endif
 
-#include "minui.h"
-#include "graphics.h"
+#include "graphics_adf.h"
+#include "graphics_drm.h"
+#include "graphics_fbdev.h"
+#include "graphics_overlay.h"
+#include "minui/minui.h"
 
 static GRFont* gr_font = NULL;
-static minui_backend* gr_backend = NULL;
+static MinuiBackend* gr_backend = nullptr;
 
 static int overscan_percent = OVERSCAN_PERCENT;
 static int overscan_offset_x = 0;
@@ -470,7 +464,7 @@ void gr_set_font(__attribute__ ((unused))const char* name) {
 }
 #else // TW_NO_MINUI_CUSTOM_FONTS
 int gr_init_font(const char* name, GRFont** dest) {
-    GRFont* font = reinterpret_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
+    GRFont* font = static_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
     if (font == nullptr) {
         return -1;
     }
@@ -503,15 +497,15 @@ static void gr_init_font(void)
 
 
     // fall back to the compiled-in font.
-    gr_font = reinterpret_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
-    gr_font->texture = reinterpret_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
+    gr_font = static_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
+    gr_font->texture = static_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
     gr_font->texture->width = font.width;
     gr_font->texture->height = font.height;
     gr_font->texture->row_bytes = font.width;
     gr_font->texture->pixel_bytes = 1;
 
-    unsigned char* bits = reinterpret_cast<unsigned char*>(malloc(font.width * font.height));
-    gr_font->texture->data = reinterpret_cast<unsigned char*>(bits);
+    unsigned char* bits = static_cast<unsigned char*>(malloc(font.width * font.height));
+    gr_font->texture->data = bits;
 
     unsigned char data;
     unsigned char* in = font.rundata;
@@ -525,131 +519,75 @@ static void gr_init_font(void)
 }
 #endif // TW_NO_MINUI_CUSTOM_FONTS
 
-#if 0
-// Exercises many of the gr_*() functions; useful for testing.
-static void gr_test() {
-    GRSurface** images;
-    int frames;
-    int result = res_create_multi_surface("icon_installing", &frames, &images);
-    if (result < 0) {
-        printf("create surface %d\n", result);
-        gr_exit();
-        return;
-    }
-
-    time_t start = time(NULL);
-    int x;
-    for (x = 0; x <= 1200; ++x) {
-        if (x < 400) {
-            gr_color(0, 0, 0, 255);
-        } else {
-            gr_color(0, (x-400)%128, 0, 255);
-        }
-        gr_clear();
-
-        gr_color(255, 0, 0, 255);
-        GRSurface* frame = images[x%frames];
-        gr_blit(frame, 0, 0, frame->width, frame->height, x, 0);
-
-        gr_color(255, 0, 0, 128);
-        gr_fill(400, 150, 600, 350);
-
-        gr_color(255, 255, 255, 255);
-        gr_text(500, 225, "hello, world!", 0);
-        gr_color(255, 255, 0, 128);
-        gr_text(300+x, 275, "pack my box with five dozen liquor jugs", 1);
-
-        gr_color(0, 0, 255, 128);
-        gr_fill(gr_draw->width - 200 - x, 300, gr_draw->width - x, 500);
-
-        gr_draw = gr_backend->flip(gr_backend);
-    }
-    printf("getting end time\n");
-    time_t end = time(NULL);
-    printf("got end time\n");
-    printf("start %ld end %ld\n", (long)start, (long)end);
-    if (end > start) {
-        printf("%.2f fps\n", ((double)x) / (end-start));
-    }
-}
-#endif
-
 void gr_flip() {
-    gr_draw = gr_backend->flip(gr_backend);
+  gr_draw = gr_backend->Flip();
 }
 
 int gr_init(void)
 {
-    gr_init_font();
-    gr_draw = NULL;
+  gr_init_font();
+
+  auto backend = std::unique_ptr<MinuiBackend>{ std::make_unique<MinuiBackendOverlay>() };
+  gr_draw = backend->Init();
 
 #ifdef MSM_BSP
-    gr_backend = open_overlay();
-    if (gr_backend) {
-        gr_draw = gr_backend->init(gr_backend);
-        if (!gr_draw) {
-            gr_backend->exit(gr_backend);
-        } else
-            printf("Using overlay graphics.\n");
+    if (gr_draw) {
+        printf("Using overlay graphics.\n");
     }
 #endif
 
 #ifndef MSM_BSP
-    if (!gr_backend || !gr_draw) {
-        gr_backend = open_adf();
-        if (gr_backend) {
-            gr_draw = gr_backend->init(gr_backend);
-            if (!gr_draw) {
-                gr_backend->exit(gr_backend);
-            } else
-                printf("Using adf graphics.\n");
-        }
+    if (!gr_draw) {
+		backend = std::make_unique<MinuiBackendAdf>();
+        gr_draw = backend->Init();
+        if (gr_draw)
+             printf("Using adf graphics.\n");
     }
 #else
 	printf("Skipping adf graphics because TW_TARGET_USES_QCOM_BSP := true\n");
 #endif
 
-    if (!gr_backend || !gr_draw) {
-        gr_backend = open_drm();
-        gr_draw = gr_backend->init(gr_backend);
+    if (!gr_draw) {
+        backend = std::make_unique<MinuiBackendDrm>();
+        gr_draw = backend->Init();
         if (gr_draw)
             printf("Using drm graphics.\n");
     }
 
-    if (!gr_backend || !gr_draw) {
-        gr_backend = open_fbdev();
-        gr_draw = gr_backend->init(gr_backend);
-        if (gr_draw == NULL) {
-            return -1;
-        } else
+    if (!gr_draw) {
+        backend = std::make_unique<MinuiBackendFbdev>();
+        gr_draw = backend->Init();
+        if (gr_draw)
             printf("Using fbdev graphics.\n");
     }
 
-    overscan_offset_x = gr_draw->width * overscan_percent / 100;
-    overscan_offset_y = gr_draw->height * overscan_percent / 100;
+  if (!gr_draw) {
+    return -1;
+  }
 
-    gr_flip();
-    gr_flip();
+  gr_backend = backend.release();
 
-    return 0;
+  overscan_offset_x = gr_draw->width * overscan_percent / 100;
+  overscan_offset_y = gr_draw->height * overscan_percent / 100;
+
+  gr_flip();
+  gr_flip();
+
+  return 0;
 }
 
-void gr_exit(void)
-{
-    gr_backend->exit(gr_backend);
+void gr_exit() {
+  delete gr_backend;
 }
 
-int gr_fb_width(void)
-{
-    return gr_draw->width - 2*overscan_offset_x;
+int gr_fb_width() {
+  return gr_draw->width - 2 * overscan_offset_x;
 }
 
-int gr_fb_height(void)
-{
-    return gr_draw->height - 2*overscan_offset_y;
+int gr_fb_height() {
+  return gr_draw->height - 2 * overscan_offset_y;
 }
 
-void gr_fb_blank(bool blank)
-{
-    gr_backend->blank(gr_backend, blank);
+void gr_fb_blank(bool blank) {
+  gr_backend->Blank(blank);
 }

@@ -28,6 +28,8 @@
 
 #include "ui.h"
 #include "cutils/properties.h"
+#include "install.h"
+#include "common.h"
 #include "adb_install.h"
 #include "minadbd/fuse_adb_provider.h"
 #include "fuse_sideload.h"
@@ -37,10 +39,7 @@
 #include "verifier.h"
 #endif
 
-static RecoveryUI* ui = NULL;
-
-void
-set_usb_driver(bool enabled) {
+static void set_usb_driver(bool enabled) {
     int fd = open("/sys/class/android_usb/android0/enable", O_WRONLY);
     if (fd < 0) {
 /* These error messages show when built in older Android branches (e.g. Gingerbread)
@@ -65,20 +64,18 @@ set_usb_driver(bool enabled) {
     }
 }
 
-static void
-stop_adbd() {
+static void stop_adbd() {
+    printf("Stopping adbd...\n");
     property_set("ctl.stop", "adbd");
     set_usb_driver(false);
 }
 
-bool is_ro_debuggable() {
+static bool is_ro_debuggable() {
     char value[PROPERTY_VALUE_MAX+1];
     return (property_get("ro.debuggable", value, NULL) == 1 && value[0] == '1');
 }
 
-void
-maybe_restart_adbd() {
-    char value[PROPERTY_VALUE_MAX+1];
+static void maybe_restart_adbd() {
     if (is_ro_debuggable()) {
         printf("Restarting adbd...\n");
         set_usb_driver(true);
@@ -96,6 +93,12 @@ apply_from_adb(const char* install_file, pid_t* child_pid) {
     stop_adbd();
     set_usb_driver(true);
 /*
+int apply_from_adb(RecoveryUI* ui, bool* wipe_cache, const char* install_file) {
+    modified_flash = true;
+
+    stop_adbd(ui);
+    set_usb_driver(ui, true);
+
     ui->Print("\n\nNow send the package you want to apply\n"
               "to the device with \"adb sideload <filename>\"...\n");
 */

@@ -28,8 +28,11 @@
 
 #include "common.h"
 #include "installcommand.h"
-#include "minzip/SysUtil.h"
-#include "minzip/Zip.h"
+#include "zipwrap.hpp"
+#ifndef USE_MINZIP
+#include <ziparchive/zip_archive.h>
+#include <vintf/VintfObjectRecovery.h>
+#endif
 #ifdef USE_OLD_VERIFIER
 #include "verifier24/verifier.h"
 #else
@@ -57,15 +60,13 @@ static int parse_build_number(std::string str) {
     return -1;
 }
 
-bool read_metadata_from_package(ZipArchive* zip, std::string* meta_data) {
-    const ZipEntry* meta_entry = mzFindZipEntry(zip, METADATA_PATH);
-    if (meta_entry == nullptr) {
-        printf("Failed to find %s in update package.\n", METADATA_PATH);
-        return false;
-    }
+bool read_metadata_from_package(ZipWrap* zip, std::string* meta_data) {
+    long size = zip->GetUncompressedSize(METADATA_PATH);
+    if (size <= 0)
+		return false;
 
-    meta_data->resize(meta_entry->uncompLen, '\0');
-    if (!mzReadZipEntry(zip, meta_entry, &(*meta_data)[0], meta_entry->uncompLen)) {
+    meta_data->resize(size, '\0');
+    if (!zip->ExtractToBuffer(METADATA_PATH, reinterpret_cast<uint8_t*>(&(*meta_data)[0]))) {
         printf("Failed to read metadata in update package.\n");
         return false;
     }
@@ -73,7 +74,7 @@ bool read_metadata_from_package(ZipArchive* zip, std::string* meta_data) {
 }
 
 // Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
-static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& log_buffer) {
+static void read_source_target_build(ZipWrap* zip, std::vector<std::string>& log_buffer) {
     std::string meta_data;
     if (!read_metadata_from_package(zip, &meta_data)) {
         return;
@@ -103,7 +104,7 @@ static void read_source_target_build(ZipArchive* zip, std::vector<std::string>& 
 // Parses the metadata of the OTA package in |zip| and checks whether we are
 // allowed to accept this A/B package. Downgrading is not allowed unless
 // explicitly enabled in the package and only for incremental packages.
-static int check_newer_ab_build(ZipArchive* zip)
+static int check_newer_ab_build(ZipWrap* zip)
 {
     std::string metadata_str;
     if (!read_metadata_from_package(zip, &metadata_str)) {
@@ -185,7 +186,7 @@ static int check_newer_ab_build(ZipArchive* zip)
 }
 
 int
-abupdate_binary_command(const char* path, ZipArchive* zip, int retry_count,
+abupdate_binary_command(const char* path, ZipWrap* zip, int retry_count,
                       int status_fd, std::vector<std::string>* cmd)
 {
     int ret = check_newer_ab_build(zip);
@@ -195,26 +196,22 @@ abupdate_binary_command(const char* path, ZipArchive* zip, int retry_count,
 
     // For A/B updates we extract the payload properties to a buffer and obtain
     // the RAW payload offset in the zip file.
-    const ZipEntry* properties_entry =
-            mzFindZipEntry(zip, AB_OTA_PAYLOAD_PROPERTIES);
-    if (!properties_entry) {
+    if (!zip->EntryExists(AB_OTA_PAYLOAD_PROPERTIES)) {
         printf("Can't find %s\n", AB_OTA_PAYLOAD_PROPERTIES);
         return INSTALL_CORRUPT;
     }
     std::vector<unsigned char> payload_properties(
-            mzGetZipEntryUncompLen(properties_entry));
-    if (!mzExtractZipEntryToBuffer(zip, properties_entry,
-                                   payload_properties.data())) {
+            zip->GetUncompressedSize(AB_OTA_PAYLOAD_PROPERTIES));
+    if (!zip->ExtractToBuffer(AB_OTA_PAYLOAD_PROPERTIES, payload_properties.data())) {
         printf("Can't extract %s\n", AB_OTA_PAYLOAD_PROPERTIES);
         return INSTALL_CORRUPT;
     }
 
-    const ZipEntry* payload_entry = mzFindZipEntry(zip, AB_OTA_PAYLOAD);
-    if (!payload_entry) {
+    if (!zip->EntryExists(AB_OTA_PAYLOAD)) {
         printf("Can't find %s\n", AB_OTA_PAYLOAD);
         return INSTALL_CORRUPT;
     }
-    long payload_offset = mzGetZipEntryOffset(payload_entry);
+    long payload_offset = zip->GetEntryOffset(AB_OTA_PAYLOAD);
     *cmd = {
         "/sbin/update_engine_sideload",
         android::base::StringPrintf("--payload=file://%s", path),
@@ -229,8 +226,8 @@ abupdate_binary_command(const char* path, ZipArchive* zip, int retry_count,
 #else
 
 int
-abupdate_binary_command(const char* path, ZipArchive* zip, int retry_count,
-                      int status_fd, std::vector<std::string>* cmd)
+abupdate_binary_command(__unused const char* path, __unused ZipWrap* zip, __unused int retry_count,
+                      __unused int status_fd, __unused std::vector<std::string>* cmd)
 {
     printf("No support for AB OTA zips included\n");
     return INSTALL_CORRUPT;
@@ -239,7 +236,7 @@ abupdate_binary_command(const char* path, ZipArchive* zip, int retry_count,
 #endif
 
 int
-update_binary_command(const char* path, ZipArchive* zip, int retry_count,
+update_binary_command(const char* path, int retry_count,
                       int status_fd, std::vector<std::string>* cmd)
 {
     char charfd[16];
@@ -258,3 +255,80 @@ update_binary_command(const char* path, ZipArchive* zip, int retry_count,
         cmd->push_back("retry");
     return 0;
 }
+
+#ifdef USE_MINZIP
+bool verify_package_compatibility(ZipWrap *package_zip) {
+  if (package_zip->EntryExists("compatibility.zip"))
+    printf("Cannot verify treble package compatibility, must build TWRP in Oreo tree or higher.\n");
+  return true;
+}
+#else
+// Verifes the compatibility info in a Treble-compatible package. Returns true directly if the
+// entry doesn't exist. Note that the compatibility info is packed in a zip file inside the OTA
+// package.
+bool verify_package_compatibility(ZipWrap *zw) {
+  ZipArchiveHandle package_zip = zw->GetZipArchiveHandle();
+  printf("Verifying package compatibility...\n");
+
+  static constexpr const char* COMPATIBILITY_ZIP_ENTRY = "compatibility.zip";
+  ZipString compatibility_entry_name(COMPATIBILITY_ZIP_ENTRY);
+  ZipEntry compatibility_entry;
+  if (FindEntry(package_zip, compatibility_entry_name, &compatibility_entry) != 0) {
+    printf("Package doesn't contain %s entry\n", COMPATIBILITY_ZIP_ENTRY);
+    return true;
+  }
+
+  std::string zip_content(compatibility_entry.uncompressed_length, '\0');
+  int32_t ret;
+  if ((ret = ExtractToMemory(package_zip, &compatibility_entry,
+                             reinterpret_cast<uint8_t*>(&zip_content[0]),
+                             compatibility_entry.uncompressed_length)) != 0) {
+    printf("Failed to read %s: %s\n", COMPATIBILITY_ZIP_ENTRY, ErrorCodeString(ret));
+    return false;
+  }
+
+  ZipArchiveHandle zip_handle;
+  ret = OpenArchiveFromMemory(static_cast<void*>(const_cast<char*>(zip_content.data())),
+                              zip_content.size(), COMPATIBILITY_ZIP_ENTRY, &zip_handle);
+  if (ret != 0) {
+    printf("Failed to OpenArchiveFromMemory: %s\n", ErrorCodeString(ret));
+    return false;
+  }
+
+  // Iterate all the entries inside COMPATIBILITY_ZIP_ENTRY and read the contents.
+  void* cookie;
+  ret = StartIteration(zip_handle, &cookie, nullptr, nullptr);
+  if (ret != 0) {
+    printf("Failed to start iterating zip entries: %s\n", ErrorCodeString(ret));
+    CloseArchive(zip_handle);
+    return false;
+  }
+  std::unique_ptr<void, decltype(&EndIteration)> guard(cookie, EndIteration);
+
+  std::vector<std::string> compatibility_info;
+  ZipEntry info_entry;
+  ZipString info_name;
+  while (Next(cookie, &info_entry, &info_name) == 0) {
+    std::string content(info_entry.uncompressed_length, '\0');
+    int32_t ret = ExtractToMemory(zip_handle, &info_entry, reinterpret_cast<uint8_t*>(&content[0]),
+                                  info_entry.uncompressed_length);
+    if (ret != 0) {
+      printf("Failed to read %s: %s\n", info_name.name, ErrorCodeString(ret));
+      CloseArchive(zip_handle);
+      return false;
+    }
+    compatibility_info.emplace_back(std::move(content));
+  }
+  CloseArchive(zip_handle);
+
+  // VintfObjectRecovery::CheckCompatibility returns zero on success.
+  std::string err;
+  int result = android::vintf::VintfObjectRecovery::CheckCompatibility(compatibility_info, &err);
+  if (result == 0) {
+    return true;
+  }
+
+  printf("Failed to verify package compatibility (result %i): %s\n", result, err.c_str());
+  return false;
+}
+#endif

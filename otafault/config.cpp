@@ -21,38 +21,42 @@
 #include <unistd.h>
 
 #include <android-base/stringprintf.h>
+#include <ziparchive/zip_archive.h>
 
-#include "minzip/Zip.h"
 #include "config.h"
 #include "ota_io.h"
 
 #define OTAIO_MAX_FNAME_SIZE 128
 
-static ZipArchive* archive;
+static ZipArchiveHandle archive;
+static bool is_retry = false;
 static std::map<std::string, bool> should_inject_cache;
 
 static std::string get_type_path(const char* io_type) {
     return android::base::StringPrintf("%s/%s", OTAIO_BASE_DIR, io_type);
 }
 
-void ota_io_init(ZipArchive* za) {
+void ota_io_init(ZipArchiveHandle za, bool retry) {
     archive = za;
+    is_retry = retry;
     ota_set_fault_files();
 }
 
 bool should_fault_inject(const char* io_type) {
     // archive will be NULL if we used an entry point other
     // than updater/updater.cpp:main
-    if (archive == NULL) {
+    if (archive == nullptr || is_retry) {
         return false;
     }
     const std::string type_path = get_type_path(io_type);
     if (should_inject_cache.find(type_path) != should_inject_cache.end()) {
         return should_inject_cache[type_path];
     }
-    const ZipEntry* entry = mzFindZipEntry(archive, type_path.c_str());
-    should_inject_cache[type_path] = entry != nullptr;
-    return entry != NULL;
+    ZipString zip_type_path(type_path.c_str());
+    ZipEntry entry;
+    int status = FindEntry(archive, zip_type_path, &entry);
+    should_inject_cache[type_path] = (status == 0);
+    return (status == 0);
 }
 
 bool should_hit_cache() {
@@ -63,7 +67,9 @@ std::string fault_fname(const char* io_type) {
     std::string type_path = get_type_path(io_type);
     std::string fname;
     fname.resize(OTAIO_MAX_FNAME_SIZE);
-    const ZipEntry* entry = mzFindZipEntry(archive, type_path.c_str());
-    mzReadZipEntry(archive, entry, &fname[0], OTAIO_MAX_FNAME_SIZE);
+    ZipString zip_type_path(type_path.c_str());
+    ZipEntry entry;
+    int status = FindEntry(archive, zip_type_path, &entry);
+    ExtractToMemory(archive, &entry, reinterpret_cast<uint8_t*>(&fname[0]), OTAIO_MAX_FNAME_SIZE);
     return fname;
 }

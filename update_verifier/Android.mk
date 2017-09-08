@@ -20,8 +20,22 @@ LOCAL_CLANG := true
 LOCAL_SRC_FILES := update_verifier.cpp
 
 LOCAL_MODULE := update_verifier
-LOCAL_SHARED_LIBRARIES := libbase libcutils libhardware liblog
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    libcutils \
+    libhardware \
+    liblog \
+    libutils \
+    libhidlbase \
+    android.hardware.boot@1.0
 
+LOCAL_CFLAGS := -Werror
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
+
+LOCAL_INIT_RC := update_verifier.rc
+
+ifeq ($(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_VERITY),true)
+    LOCAL_CFLAGS += -DPRODUCT_SUPPORTS_VERITY=1
+endif
 
 include $(BUILD_EXECUTABLE)

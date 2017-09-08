@@ -32,7 +32,7 @@
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 
-#include "applypatch.h"
+#include "applypatch/applypatch.h"
 
 static int EliminateOpenFiles(std::set<std::string>* files) {
   std::unique_ptr<DIR, decltype(&closedir)> d(opendir("/proc"), closedir);

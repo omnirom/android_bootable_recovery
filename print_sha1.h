@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "openssl/sha.h"
+#include <openssl/sha.h>
 
 static std::string print_sha1(const uint8_t* sha1, size_t len) {
     const char* hex = "0123456789abcdef";
@@ -41,7 +41,7 @@ static std::string short_sha1(const uint8_t sha1[SHA_DIGEST_LENGTH]) {
 }
 
 static std::string print_hex(const uint8_t* bytes, size_t len) {
-  return print_sha1(bytes, len);
+    return print_sha1(bytes, len);
 }
 
 #endif  // RECOVERY_PRINT_SHA1_H
