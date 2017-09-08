@@ -129,6 +129,9 @@ class PatchChunk {
   // Return true if raw data size is smaller than the patch size.
   static bool RawDataIsSmaller(const ImageChunk& tgt, size_t patch_size);
 
+  // Update the source start with the new offset within the source range.
+  void UpdateSourceOffset(const SortedRangeSet& src_range);
+
   static bool WritePatchDataToFd(const std::vector<PatchChunk>& patch_chunks, int patch_fd);
 
  private:
@@ -177,6 +180,14 @@ class Image {
     return chunks_.end();
   }
 
+  std::vector<ImageChunk>::const_iterator cbegin() const {
+    return chunks_.cbegin();
+  }
+
+  std::vector<ImageChunk>::const_iterator cend() const {
+    return chunks_.cend();
+  }
+
   ImageChunk& operator[](size_t i);
   const ImageChunk& operator[](size_t i) const;
 
@@ -194,9 +205,17 @@ class Image {
 
 class ZipModeImage : public Image {
  public:
-  explicit ZipModeImage(bool is_source) : Image(is_source) {}
+  explicit ZipModeImage(bool is_source, size_t limit = 0) : Image(is_source), limit_(limit) {}
 
   bool Initialize(const std::string& filename) override;
+
+  // Initialize a dummy ZipModeImage from an existing ImageChunk vector. For src img pieces, we
+  // reconstruct a new file_content based on the source ranges; but it's not needed for the tgt img
+  // pieces; because for each chunk both the data and their offset within the file are unchanged.
+  void Initialize(const std::vector<ImageChunk>& chunks, const std::vector<uint8_t>& file_content) {
+    chunks_ = chunks;
+    file_content_ = file_content;
+  }
 
   // The pesudo source chunk for bsdiff if there's no match for the given target chunk. It's in
   // fact the whole source file.
@@ -216,6 +235,21 @@ class ZipModeImage : public Image {
   static bool GeneratePatches(const ZipModeImage& tgt_image, const ZipModeImage& src_image,
                               const std::string& patch_name);
 
+  // Compute the patch based on the lists of split src and tgt images. Generate patches for each
+  // pair of split pieces and write the data to |patch_name|. If |debug_dir| is specified, write
+  // each split src data and patch data into that directory.
+  static bool GeneratePatches(const std::vector<ZipModeImage>& split_tgt_images,
+                              const std::vector<ZipModeImage>& split_src_images,
+                              const std::vector<SortedRangeSet>& split_src_ranges,
+                              const std::string& patch_name, const std::string& debug_dir);
+
+  // Split the tgt chunks and src chunks based on the size limit.
+  static bool SplitZipModeImageWithLimit(const ZipModeImage& tgt_image,
+                                         const ZipModeImage& src_image,
+                                         std::vector<ZipModeImage>* split_tgt_images,
+                                         std::vector<ZipModeImage>* split_src_images,
+                                         std::vector<SortedRangeSet>* split_src_ranges);
+
  private:
   // Initialize image chunks based on the zip entries.
   bool InitializeChunks(const std::string& filename, ZipArchiveHandle handle);
@@ -223,6 +257,28 @@ class ZipModeImage : public Image {
   bool AddZipEntryToChunks(ZipArchiveHandle handle, const std::string& entry_name, ZipEntry* entry);
   // Return the real size of the zip file. (omit the trailing zeros that used for alignment)
   bool GetZipFileSize(size_t* input_file_size);
+
+  static void ValidateSplitImages(const std::vector<ZipModeImage>& split_tgt_images,
+                                  const std::vector<ZipModeImage>& split_src_images,
+                                  std::vector<SortedRangeSet>& split_src_ranges,
+                                  size_t total_tgt_size);
+  // Construct the dummy split images based on the chunks info and source ranges; and move them into
+  // the given vectors.
+  static void AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
+                                         const ZipModeImage& src_image,
+                                         const SortedRangeSet& split_src_ranges,
+                                         const std::vector<ImageChunk>& split_tgt_chunks,
+                                         const std::vector<ImageChunk>& split_src_chunks,
+                                         std::vector<ZipModeImage>* split_tgt_images,
+                                         std::vector<ZipModeImage>* split_src_images);
+
+  // Function that actually iterates the tgt_chunks and makes patches.
+  static bool GeneratePatchesInternal(const ZipModeImage& tgt_image, const ZipModeImage& src_image,
+                                      std::vector<PatchChunk>* patch_chunks);
+
+  // size limit in bytes of each chunk. Also, if the length of one zip_entry exceeds the limit,
+  // we'll split that entry into several smaller chunks in advance.
+  size_t limit_;
 };
 
 class ImageModeImage : public Image {
