@@ -555,6 +555,12 @@
 				<data variable="tw_install_reboot"/>
 			</checkbox>
 
+			<checkbox>
+				<placement x="%indent%" y="%row5a_y%"/>
+				<text>{@enable_legacy_props_chk=Enable legacy properties for old zips}</text>
+				<data variable="tw_enable_legacy_props"/>
+			</checkbox>
+
 			<button>
 				<placement x="%col1_x_left%" y="%row11_y%"/>
 				<highlight color="%highlight_color%"/>
