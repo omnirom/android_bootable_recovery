@@ -125,6 +125,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -139,16 +140,19 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/memory.h>
+#include <android-base/parseint.h>
 #include <android-base/unique_fd.h>
 #include <bsdiff.h>
 #include <ziparchive/zip_archive.h>
 #include <zlib.h>
 
 #include "applypatch/imgdiff_image.h"
+#include "rangeset.h"
 
 using android::base::get_unaligned;
 
-static constexpr auto BUFFER_SIZE = 0x8000;
+static constexpr size_t BLOCK_SIZE = 4096;
+static constexpr size_t BUFFER_SIZE = 0x8000;
 
 // If we use this function to write the offset and length (type size_t), their values should not
 // exceed 2^63; because the signed bit will be casted away.
@@ -161,6 +165,67 @@ static inline bool Write8(int fd, int64_t value) {
 static inline bool Write4(int fd, int32_t value) {
   return android::base::WriteFully(fd, &value, sizeof(int32_t));
 }
+
+// Trim the head or tail to align with the block size. Return false if the chunk has nothing left
+// after alignment.
+static bool AlignHead(size_t* start, size_t* length) {
+  size_t residual = (*start % BLOCK_SIZE == 0) ? 0 : BLOCK_SIZE - *start % BLOCK_SIZE;
+
+  if (*length <= residual) {
+    *length = 0;
+    return false;
+  }
+
+  // Trim the data in the beginning.
+  *start += residual;
+  *length -= residual;
+  return true;
+}
+
+static bool AlignTail(size_t* start, size_t* length) {
+  size_t residual = (*start + *length) % BLOCK_SIZE;
+  if (*length <= residual) {
+    *length = 0;
+    return false;
+  }
+
+  // Trim the data in the end.
+  *length -= residual;
+  return true;
+}
+
+// Remove the used blocks from the source chunk to make sure the source ranges are mutually
+// exclusive after split. Return false if we fail to get the non-overlapped ranges. In such
+// a case, we'll skip the entire source chunk.
+static bool RemoveUsedBlocks(size_t* start, size_t* length, const SortedRangeSet& used_ranges) {
+  if (!used_ranges.Overlaps(*start, *length)) {
+    return true;
+  }
+
+  // TODO find the largest non-overlap chunk.
+  printf("Removing block %s from %zu - %zu\n", used_ranges.ToString().c_str(), *start,
+         *start + *length - 1);
+
+  // If there's no duplicate entry name, we should only overlap in the head or tail block. Try to
+  // trim both blocks. Skip this source chunk in case it still overlaps with the used ranges.
+  if (AlignHead(start, length) && !used_ranges.Overlaps(*start, *length)) {
+    return true;
+  }
+  if (AlignTail(start, length) && !used_ranges.Overlaps(*start, *length)) {
+    return true;
+  }
+
+  printf("Failed to remove the overlapped block ranges; skip the source\n");
+  return false;
+}
+
+static const struct option OPTIONS[] = {
+  { "zip-mode", no_argument, nullptr, 'z' },
+  { "bonus-file", required_argument, nullptr, 'b' },
+  { "block-limit", required_argument, nullptr, 0 },
+  { "debug-dir", required_argument, nullptr, 0 },
+  { nullptr, 0, nullptr, 0 },
+};
 
 ImageChunk::ImageChunk(int type, size_t start, const std::vector<uint8_t>* file_content,
                        size_t raw_data_len, std::string entry_name)
@@ -371,6 +436,12 @@ bool PatchChunk::RawDataIsSmaller(const ImageChunk& tgt, size_t patch_size) {
   return (tgt.GetType() == CHUNK_NORMAL && (target_len <= 160 || target_len < patch_size));
 }
 
+void PatchChunk::UpdateSourceOffset(const SortedRangeSet& src_range) {
+  if (type_ == CHUNK_DEFLATE) {
+    source_start_ = src_range.GetOffsetInRangeSet(source_start_);
+  }
+}
+
 // Header size:
 // header_type    4 bytes
 // CHUNK_NORMAL   8*3 = 24 bytes
@@ -572,7 +643,7 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
   ZipString name;
   ZipEntry entry;
   while ((ret = Next(cookie, &entry, &name)) == 0) {
-    if (entry.method == kCompressDeflated) {
+    if (entry.method == kCompressDeflated || limit_ > 0) {
       std::string entry_name(name.name, name.name + name.name_length);
       temp_entries.emplace_back(entry_name, entry);
     }
@@ -595,6 +666,17 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
         return false;
       }
     }
+
+    // Add the end of zip file (mainly central directory) as a normal chunk.
+    size_t entries_end = 0;
+    if (!temp_entries.empty()) {
+      entries_end = static_cast<size_t>(temp_entries.back().second.offset +
+                                        temp_entries.back().second.compressed_length);
+    }
+    CHECK_LT(entries_end, file_content_.size());
+    chunks_.emplace_back(CHUNK_NORMAL, entries_end, &file_content_,
+                         file_content_.size() - entries_end);
+
     return true;
   }
 
@@ -635,7 +717,21 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
 bool ZipModeImage::AddZipEntryToChunks(ZipArchiveHandle handle, const std::string& entry_name,
                                        ZipEntry* entry) {
   size_t compressed_len = entry->compressed_length;
-  if (entry->method == kCompressDeflated) {
+  if (compressed_len == 0) return true;
+
+  // Split the entry into several normal chunks if it's too large.
+  if (limit_ > 0 && compressed_len > limit_) {
+    int count = 0;
+    while (compressed_len > 0) {
+      size_t length = std::min(limit_, compressed_len);
+      std::string name = entry_name + "-" + std::to_string(count);
+      chunks_.emplace_back(CHUNK_NORMAL, entry->offset + limit_ * count, &file_content_, length,
+                           name);
+
+      count++;
+      compressed_len -= length;
+    }
+  } else if (entry->method == kCompressDeflated) {
     size_t uncompressed_len = entry->uncompressed_length;
     std::vector<uint8_t> uncompressed_data(uncompressed_len);
     int ret = ExtractToMemory(handle, entry, uncompressed_data.data(), uncompressed_len);
@@ -697,10 +793,23 @@ const ImageChunk* ZipModeImage::FindChunkByName(const std::string& name, bool fi
     return nullptr;
   }
   for (auto& chunk : chunks_) {
-    if ((chunk.GetType() == CHUNK_DEFLATE || find_normal) && chunk.GetEntryName() == name) {
+    if (chunk.GetType() != CHUNK_DEFLATE && !find_normal) {
+      continue;
+    }
+
+    if (chunk.GetEntryName() == name) {
       return &chunk;
     }
+
+    // Edge case when target chunk is split due to size limit but source chunk isn't.
+    if (name == (chunk.GetEntryName() + "-0") || chunk.GetEntryName() == (name + "-0")) {
+      return &chunk;
+    }
+
+    // TODO handle the .so files with incremental version number.
+    // (e.g. lib/arm64-v8a/libcronet.59.0.3050.4.so)
   }
+
   return nullptr;
 }
 
@@ -738,24 +847,214 @@ bool ZipModeImage::CheckAndProcessChunks(ZipModeImage* tgt_image, ZipModeImage* 
 
   // For zips, we only need merge normal chunks for the target:  deflated chunks are matched via
   // filename, and normal chunks are patched using the entire source file as the source.
-  tgt_image->MergeAdjacentNormalChunks();
-  tgt_image->DumpChunks();
+  if (tgt_image->limit_ == 0) {
+    tgt_image->MergeAdjacentNormalChunks();
+    tgt_image->DumpChunks();
+  }
 
   return true;
 }
 
-bool ZipModeImage::GeneratePatches(const ZipModeImage& tgt_image, const ZipModeImage& src_image,
-                                   const std::string& patch_name) {
+// For each target chunk, look for the corresponding source chunk by the zip_entry name. If
+// found, add the range of this chunk in the original source file to the block aligned source
+// ranges. Construct the split src & tgt image once the size of source range reaches limit.
+bool ZipModeImage::SplitZipModeImageWithLimit(const ZipModeImage& tgt_image,
+                                              const ZipModeImage& src_image,
+                                              std::vector<ZipModeImage>* split_tgt_images,
+                                              std::vector<ZipModeImage>* split_src_images,
+                                              std::vector<SortedRangeSet>* split_src_ranges) {
+  CHECK_EQ(tgt_image.limit_, src_image.limit_);
+  size_t limit = tgt_image.limit_;
+
+  src_image.DumpChunks();
+  printf("Splitting %zu tgt chunks...\n", tgt_image.NumOfChunks());
+
+  SortedRangeSet used_src_ranges;  // ranges used for previous split source images.
+
+  // Reserve the central directory in advance for the last split image.
+  const auto& central_directory = src_image.cend() - 1;
+  CHECK_EQ(CHUNK_NORMAL, central_directory->GetType());
+  used_src_ranges.Insert(central_directory->GetStartOffset(),
+                         central_directory->DataLengthForPatch());
+
+  SortedRangeSet src_ranges;
+  std::vector<ImageChunk> split_src_chunks;
+  std::vector<ImageChunk> split_tgt_chunks;
+  for (auto tgt = tgt_image.cbegin(); tgt != tgt_image.cend(); tgt++) {
+    const ImageChunk* src = src_image.FindChunkByName(tgt->GetEntryName(), true);
+    if (src == nullptr) {
+      split_tgt_chunks.emplace_back(CHUNK_NORMAL, tgt->GetStartOffset(), &tgt_image.file_content_,
+                                    tgt->GetRawDataLength());
+      continue;
+    }
+
+    size_t src_offset = src->GetStartOffset();
+    size_t src_length = src->GetRawDataLength();
+
+    CHECK(src_length > 0);
+    CHECK_LE(src_length, limit);
+
+    // Make sure this source range hasn't been used before so that the src_range pieces don't
+    // overlap with each other.
+    if (!RemoveUsedBlocks(&src_offset, &src_length, used_src_ranges)) {
+      split_tgt_chunks.emplace_back(CHUNK_NORMAL, tgt->GetStartOffset(), &tgt_image.file_content_,
+                                    tgt->GetRawDataLength());
+    } else if (src_ranges.blocks() * BLOCK_SIZE + src_length <= limit) {
+      src_ranges.Insert(src_offset, src_length);
+
+      // Add the deflate source chunk if it hasn't been aligned.
+      if (src->GetType() == CHUNK_DEFLATE && src_length == src->GetRawDataLength()) {
+        split_src_chunks.push_back(*src);
+        split_tgt_chunks.push_back(*tgt);
+      } else {
+        // TODO split smarter to avoid alignment of large deflate chunks
+        split_tgt_chunks.emplace_back(CHUNK_NORMAL, tgt->GetStartOffset(), &tgt_image.file_content_,
+                                      tgt->GetRawDataLength());
+      }
+    } else {
+      ZipModeImage::AddSplitImageFromChunkList(tgt_image, src_image, src_ranges, split_tgt_chunks,
+                                               split_src_chunks, split_tgt_images,
+                                               split_src_images);
+
+      split_tgt_chunks.clear();
+      split_src_chunks.clear();
+      used_src_ranges.Insert(src_ranges);
+      split_src_ranges->push_back(std::move(src_ranges));
+      src_ranges.Clear();
+
+      // We don't have enough space for the current chunk; start a new split image and handle
+      // this chunk there.
+      tgt--;
+    }
+  }
+
+  // TODO Trim it in case the CD exceeds limit too much.
+  src_ranges.Insert(central_directory->GetStartOffset(), central_directory->DataLengthForPatch());
+  ZipModeImage::AddSplitImageFromChunkList(tgt_image, src_image, src_ranges, split_tgt_chunks,
+                                           split_src_chunks, split_tgt_images, split_src_images);
+  split_src_ranges->push_back(std::move(src_ranges));
+
+  ValidateSplitImages(*split_tgt_images, *split_src_images, *split_src_ranges,
+                      tgt_image.file_content_.size());
+
+  return true;
+}
+
+void ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
+                                              const ZipModeImage& src_image,
+                                              const SortedRangeSet& split_src_ranges,
+                                              const std::vector<ImageChunk>& split_tgt_chunks,
+                                              const std::vector<ImageChunk>& split_src_chunks,
+                                              std::vector<ZipModeImage>* split_tgt_images,
+                                              std::vector<ZipModeImage>* split_src_images) {
+  CHECK(!split_tgt_chunks.empty());
+  // Target chunks should occupy at least one block.
+  // TODO put a warning and change the type to raw if it happens in extremely rare cases.
+  size_t tgt_size = split_tgt_chunks.back().GetStartOffset() +
+                    split_tgt_chunks.back().DataLengthForPatch() -
+                    split_tgt_chunks.front().GetStartOffset();
+  CHECK_GE(tgt_size, BLOCK_SIZE);
+
+  std::vector<ImageChunk> aligned_tgt_chunks;
+
+  // Align the target chunks in the beginning with BLOCK_SIZE.
+  size_t i = 0;
+  while (i < split_tgt_chunks.size()) {
+    size_t tgt_start = split_tgt_chunks[i].GetStartOffset();
+    size_t tgt_length = split_tgt_chunks[i].GetRawDataLength();
+
+    // Current ImageChunk is long enough to align.
+    if (AlignHead(&tgt_start, &tgt_length)) {
+      aligned_tgt_chunks.emplace_back(CHUNK_NORMAL, tgt_start, &tgt_image.file_content_,
+                                      tgt_length);
+      break;
+    }
+
+    i++;
+  }
+  CHECK_LT(i, split_tgt_chunks.size());
+  aligned_tgt_chunks.insert(aligned_tgt_chunks.end(), split_tgt_chunks.begin() + i + 1,
+                            split_tgt_chunks.end());
+  CHECK(!aligned_tgt_chunks.empty());
+
+  // Add a normal chunk to align the contents in the end.
+  size_t end_offset =
+      aligned_tgt_chunks.back().GetStartOffset() + aligned_tgt_chunks.back().GetRawDataLength();
+  if (end_offset % BLOCK_SIZE != 0 && end_offset < tgt_image.file_content_.size()) {
+    aligned_tgt_chunks.emplace_back(CHUNK_NORMAL, end_offset, &tgt_image.file_content_,
+                                    BLOCK_SIZE - (end_offset % BLOCK_SIZE));
+  }
+
+  ZipModeImage split_tgt_image(false);
+  split_tgt_image.Initialize(std::move(aligned_tgt_chunks), {});
+  split_tgt_image.MergeAdjacentNormalChunks();
+
+  // Construct the dummy source file based on the src_ranges.
+  std::vector<uint8_t> src_content;
+  for (const auto& r : split_src_ranges) {
+    size_t end = std::min(src_image.file_content_.size(), r.second * BLOCK_SIZE);
+    src_content.insert(src_content.end(), src_image.file_content_.begin() + r.first * BLOCK_SIZE,
+                       src_image.file_content_.begin() + end);
+  }
+
+  // We should not have an empty src in our design; otherwise we will encounter an error in
+  // bsdiff since src_content.data() == nullptr.
+  CHECK(!src_content.empty());
+
+  ZipModeImage split_src_image(true);
+  split_src_image.Initialize(split_src_chunks, std::move(src_content));
+
+  split_tgt_images->push_back(std::move(split_tgt_image));
+  split_src_images->push_back(std::move(split_src_image));
+}
+
+void ZipModeImage::ValidateSplitImages(const std::vector<ZipModeImage>& split_tgt_images,
+                                       const std::vector<ZipModeImage>& split_src_images,
+                                       std::vector<SortedRangeSet>& split_src_ranges,
+                                       size_t total_tgt_size) {
+  CHECK_EQ(split_tgt_images.size(), split_src_images.size());
+
+  printf("Validating %zu images\n", split_tgt_images.size());
+
+  // Verify that the target image pieces is continuous and can add up to the total size.
+  size_t last_offset = 0;
+  for (const auto& tgt_image : split_tgt_images) {
+    CHECK(!tgt_image.chunks_.empty());
+
+    CHECK_EQ(last_offset, tgt_image.chunks_.front().GetStartOffset());
+    CHECK(last_offset % BLOCK_SIZE == 0);
+
+    // Check the target chunks within the split image are continuous.
+    for (const auto& chunk : tgt_image.chunks_) {
+      CHECK_EQ(last_offset, chunk.GetStartOffset());
+      last_offset += chunk.GetRawDataLength();
+    }
+  }
+  CHECK_EQ(total_tgt_size, last_offset);
+
+  // Verify that the source ranges are mutually exclusive.
+  CHECK_EQ(split_src_images.size(), split_src_ranges.size());
+  SortedRangeSet used_src_ranges;
+  for (size_t i = 0; i < split_src_ranges.size(); i++) {
+    CHECK(!used_src_ranges.Overlaps(split_src_ranges[i]))
+        << "src range " << split_src_ranges[i].ToString() << " overlaps "
+        << used_src_ranges.ToString();
+    used_src_ranges.Insert(split_src_ranges[i]);
+  }
+}
+
+bool ZipModeImage::GeneratePatchesInternal(const ZipModeImage& tgt_image,
+                                           const ZipModeImage& src_image,
+                                           std::vector<PatchChunk>* patch_chunks) {
   printf("Construct patches for %zu chunks...\n", tgt_image.NumOfChunks());
-  std::vector<PatchChunk> patch_chunks;
-  patch_chunks.reserve(tgt_image.NumOfChunks());
+  patch_chunks->clear();
 
   saidx_t* bsdiff_cache = nullptr;
   for (size_t i = 0; i < tgt_image.NumOfChunks(); i++) {
     const auto& tgt_chunk = tgt_image[i];
 
     if (PatchChunk::RawDataIsSmaller(tgt_chunk, 0)) {
-      patch_chunks.emplace_back(tgt_chunk);
+      patch_chunks->emplace_back(tgt_chunk);
       continue;
     }
 
@@ -776,12 +1075,22 @@ bool ZipModeImage::GeneratePatches(const ZipModeImage& tgt_image, const ZipModeI
            tgt_chunk.GetRawDataLength());
 
     if (PatchChunk::RawDataIsSmaller(tgt_chunk, patch_data.size())) {
-      patch_chunks.emplace_back(tgt_chunk);
+      patch_chunks->emplace_back(tgt_chunk);
     } else {
-      patch_chunks.emplace_back(tgt_chunk, src_ref, std::move(patch_data));
+      patch_chunks->emplace_back(tgt_chunk, src_ref, std::move(patch_data));
     }
   }
   free(bsdiff_cache);
+
+  CHECK_EQ(patch_chunks->size(), tgt_image.NumOfChunks());
+  return true;
+}
+
+bool ZipModeImage::GeneratePatches(const ZipModeImage& tgt_image, const ZipModeImage& src_image,
+                                   const std::string& patch_name) {
+  std::vector<PatchChunk> patch_chunks;
+
+  ZipModeImage::GeneratePatchesInternal(tgt_image, src_image, &patch_chunks);
 
   CHECK_EQ(tgt_image.NumOfChunks(), patch_chunks.size());
 
@@ -793,6 +1102,66 @@ bool ZipModeImage::GeneratePatches(const ZipModeImage& tgt_image, const ZipModeI
   }
 
   return PatchChunk::WritePatchDataToFd(patch_chunks, patch_fd);
+}
+
+bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_images,
+                                   const std::vector<ZipModeImage>& split_src_images,
+                                   const std::vector<SortedRangeSet>& split_src_ranges,
+                                   const std::string& patch_name, const std::string& debug_dir) {
+  printf("Construct patches for %zu split images...\n", split_tgt_images.size());
+
+  android::base::unique_fd patch_fd(
+      open(patch_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
+  if (patch_fd == -1) {
+    printf("failed to open \"%s\": %s\n", patch_name.c_str(), strerror(errno));
+    return false;
+  }
+
+  for (size_t i = 0; i < split_tgt_images.size(); i++) {
+    std::vector<PatchChunk> patch_chunks;
+    if (!ZipModeImage::GeneratePatchesInternal(split_tgt_images[i], split_src_images[i],
+                                               &patch_chunks)) {
+      printf("failed to generate split patch\n");
+      return false;
+    }
+
+    for (auto& p : patch_chunks) {
+      p.UpdateSourceOffset(split_src_ranges[i]);
+    }
+
+    if (!PatchChunk::WritePatchDataToFd(patch_chunks, patch_fd)) {
+      return false;
+    }
+
+    // Write the split source & patch into the debug directory.
+    if (!debug_dir.empty()) {
+      std::string src_name = android::base::StringPrintf("%s/src-%zu", debug_dir.c_str(), i);
+      android::base::unique_fd fd(
+          open(src_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
+
+      if (fd == -1) {
+        printf("Failed to open %s\n", src_name.c_str());
+        return false;
+      }
+      if (!android::base::WriteFully(fd, split_src_images[i].PseudoSource().DataForPatch(),
+                                     split_src_images[i].PseudoSource().DataLengthForPatch())) {
+        printf("Failed to write split source data into %s\n", src_name.c_str());
+        return false;
+      }
+
+      std::string patch_name = android::base::StringPrintf("%s/patch-%zu", debug_dir.c_str(), i);
+      fd.reset(open(patch_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
+
+      if (fd == -1) {
+        printf("Failed to open %s\n", patch_name.c_str());
+        return false;
+      }
+      if (!PatchChunk::WritePatchDataToFd(patch_chunks, fd)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 bool ImageModeImage::Initialize(const std::string& filename) {
@@ -1026,11 +1395,14 @@ bool ImageModeImage::GeneratePatches(const ImageModeImage& tgt_image,
 int imgdiff(int argc, const char** argv) {
   bool zip_mode = false;
   std::vector<uint8_t> bonus_data;
+  size_t blocks_limit = 0;
+  std::string debug_dir;
 
   int opt;
+  int option_index;
   optind = 1;  // Reset the getopt state so that we can call it multiple times for test.
 
-  while ((opt = getopt(argc, const_cast<char**>(argv), "zb:")) != -1) {
+  while ((opt = getopt_long(argc, const_cast<char**>(argv), "zb:", OPTIONS, &option_index)) != -1) {
     switch (opt) {
       case 'z':
         zip_mode = true;
@@ -1055,6 +1427,16 @@ int imgdiff(int argc, const char** argv) {
         }
         break;
       }
+      case 0: {
+        std::string name = OPTIONS[option_index].name;
+        if (name == "block-limit" && !android::base::ParseUint(optarg, &blocks_limit)) {
+          printf("failed to parse size blocks_limit: %s\n", optarg);
+          return 1;
+        } else if (name == "debug-dir") {
+          debug_dir = optarg;
+        }
+        break;
+      }
       default:
         printf("unexpected opt: %s\n", optarg);
         return 2;
@@ -1062,13 +1444,20 @@ int imgdiff(int argc, const char** argv) {
   }
 
   if (argc - optind != 3) {
-    printf("usage: %s [-z] [-b <bonus-file>] <src-img> <tgt-img> <patch-file>\n", argv[0]);
+    printf("usage: %s [options] <src-img> <tgt-img> <patch-file>\n", argv[0]);
+    printf(
+        "  -z <zip-mode>,    Generate patches in zip mode, src and tgt should be zip files.\n"
+        "  -b <bonus-file>,  Bonus file in addition to src, image mode only.\n"
+        "  --block-limit,    For large zips, split the src and tgt based on the block limit;\n"
+        "                    and generate patches between each pair of pieces. Concatenate these\n"
+        "                    patches together and output them into <patch-file>.\n"
+        "  --debug_dir,      Debug directory to put the split srcs and patches, zip mode only.\n");
     return 2;
   }
 
   if (zip_mode) {
-    ZipModeImage src_image(true);
-    ZipModeImage tgt_image(false);
+    ZipModeImage src_image(true, blocks_limit * BLOCK_SIZE);
+    ZipModeImage tgt_image(false, blocks_limit * BLOCK_SIZE);
 
     if (!src_image.Initialize(argv[optind])) {
       return 1;
@@ -1080,9 +1469,25 @@ int imgdiff(int argc, const char** argv) {
     if (!ZipModeImage::CheckAndProcessChunks(&tgt_image, &src_image)) {
       return 1;
     }
+
+    // TODO save and output the split information so that caller can create split transfer lists
+    // accordingly.
+
     // Compute bsdiff patches for each chunk's data (the uncompressed data, in the case of
     // deflate chunks).
-    if (!ZipModeImage::GeneratePatches(tgt_image, src_image, argv[optind + 2])) {
+    if (blocks_limit > 0) {
+      std::vector<ZipModeImage> split_tgt_images;
+      std::vector<ZipModeImage> split_src_images;
+      std::vector<SortedRangeSet> split_src_ranges;
+      ZipModeImage::SplitZipModeImageWithLimit(tgt_image, src_image, &split_tgt_images,
+                                               &split_src_images, &split_src_ranges);
+
+      if (!ZipModeImage::GeneratePatches(split_tgt_images, split_src_images, split_src_ranges,
+                                         argv[optind + 2], debug_dir)) {
+        return 1;
+      }
+
+    } else if (!ZipModeImage::GeneratePatches(tgt_image, src_image, argv[optind + 2])) {
       return 1;
     }
   } else {
