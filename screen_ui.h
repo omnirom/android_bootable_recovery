@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #include <string>
+#include <vector>
 
 #include "ui.h"
 
@@ -127,7 +128,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   bool show_text;
   bool show_text_ever;  // has show_text ever been true?
 
-  char** menu_;
+  std::vector<std::string> menu_;
   const char* const* menu_headers_;
   bool show_menu;
   int menu_items, menu_sel;
