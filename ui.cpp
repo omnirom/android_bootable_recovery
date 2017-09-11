@@ -50,9 +50,7 @@ static constexpr const char* BRIGHTNESS_FILE = "/sys/class/leds/lcd-backlight/br
 static constexpr const char* MAX_BRIGHTNESS_FILE = "/sys/class/leds/lcd-backlight/max_brightness";
 
 RecoveryUI::RecoveryUI()
-    : locale_(""),
-      rtl_locale_(false),
-      brightness_normal_(50),
+    : brightness_normal_(50),
       brightness_dimmed_(25),
       touch_screen_allowed_(false),
       kTouchLowThreshold(RECOVERY_UI_TOUCH_LOW_THRESHOLD),
@@ -132,10 +130,7 @@ bool RecoveryUI::InitScreensaver() {
   return true;
 }
 
-bool RecoveryUI::Init(const std::string& locale) {
-  // Set up the locale info.
-  SetLocale(locale);
-
+bool RecoveryUI::Init(const std::string& /* locale */) {
   ev_init(std::bind(&RecoveryUI::OnInputEvent, this, std::placeholders::_1, std::placeholders::_2),
           touch_screen_allowed_);
 
@@ -573,24 +568,4 @@ void RecoveryUI::SetEnableReboot(bool enabled) {
   pthread_mutex_lock(&key_queue_mutex);
   enable_reboot = enabled;
   pthread_mutex_unlock(&key_queue_mutex);
-}
-
-void RecoveryUI::SetLocale(const std::string& new_locale) {
-  this->locale_ = new_locale;
-  this->rtl_locale_ = false;
-
-  if (!new_locale.empty()) {
-    size_t underscore = new_locale.find('_');
-    // lang has the language prefix prior to '_', or full string if '_' doesn't exist.
-    std::string lang = new_locale.substr(0, underscore);
-
-    // A bit cheesy: keep an explicit list of supported RTL languages.
-    if (lang == "ar" ||  // Arabic
-        lang == "fa" ||  // Persian (Farsi)
-        lang == "he" ||  // Hebrew (new language code)
-        lang == "iw" ||  // Hebrew (old language code)
-        lang == "ur") {  // Urdu
-      rtl_locale_ = true;
-    }
-  }
 }

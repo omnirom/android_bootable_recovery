@@ -191,7 +191,14 @@ class ScreenRecoveryUI : public RecoveryUI {
   int char_width_;
   int char_height_;
 
+  // The locale that's used to show the rendered texts.
+  std::string locale_;
+  bool rtl_locale_;
+
   pthread_mutex_t updateMutex;
+
+ private:
+  void SetLocale(const std::string&);
 };
 
 #endif  // RECOVERY_UI_H
