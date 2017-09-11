@@ -143,10 +143,6 @@ class RecoveryUI {
  protected:
   void EnqueueKey(int key_code);
 
-  // The locale that's used to show the rendered texts.
-  std::string locale_;
-  bool rtl_locale_;
-
   // The normal and dimmed brightness percentages (default: 50 and 25, which means 50% and 25% of
   // the max_brightness). Because the absolute values may vary across devices. These two values can
   // be configured via subclassing. Setting brightness_normal_ to 0 to disable screensaver.
@@ -183,8 +179,6 @@ class RecoveryUI {
 
   static void* time_key_helper(void* cookie);
   void time_key(int key_code, int count);
-
-  void SetLocale(const std::string&);
 
   bool InitScreensaver();
 
