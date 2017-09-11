@@ -54,7 +54,7 @@ ScreenRecoveryUI::ScreenRecoveryUI()
     : kMarginWidth(RECOVERY_UI_MARGIN_WIDTH),
       kMarginHeight(RECOVERY_UI_MARGIN_HEIGHT),
       kAnimationFps(RECOVERY_UI_ANIMATION_FPS),
-      density_(static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f),
+      kDensity(static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f),
       currentIcon(NONE),
       progressBarType(EMPTY),
       progressScopeStart(0),
@@ -105,7 +105,7 @@ GRSurface* ScreenRecoveryUI::GetCurrentText() const {
 }
 
 int ScreenRecoveryUI::PixelsFromDp(int dp) const {
-  return dp * density_;
+  return dp * kDensity;
 }
 
 // Here's the intended layout:
