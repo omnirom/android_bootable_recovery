@@ -32,6 +32,17 @@ struct GRSurface;
 // (shows an icon + a progress bar, text logging, menu, etc.)
 class ScreenRecoveryUI : public RecoveryUI {
  public:
+  enum UIElement {
+    HEADER,
+    MENU,
+    MENU_SEL_BG,
+    MENU_SEL_BG_ACTIVE,
+    MENU_SEL_FG,
+    LOG,
+    TEXT_FILL,
+    INFO
+  };
+
   ScreenRecoveryUI();
 
   bool Init(const std::string& locale) override;
@@ -67,16 +78,6 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   void Redraw();
 
-  enum UIElement {
-    HEADER,
-    MENU,
-    MENU_SEL_BG,
-    MENU_SEL_BG_ACTIVE,
-    MENU_SEL_FG,
-    LOG,
-    TEXT_FILL,
-    INFO
-  };
   void SetColor(UIElement e) const;
 
  protected:
@@ -89,7 +90,47 @@ class ScreenRecoveryUI : public RecoveryUI {
   const int kAnimationFps;
 
   // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
-  const float density_;
+  const float kDensity;
+
+  virtual bool InitTextParams();
+
+  virtual void draw_background_locked();
+  virtual void draw_foreground_locked();
+  virtual void draw_screen_locked();
+  virtual void update_screen_locked();
+  virtual void update_progress_locked();
+
+  GRSurface* GetCurrentFrame() const;
+  GRSurface* GetCurrentText() const;
+
+  static void* ProgressThreadStartRoutine(void* data);
+  void ProgressThreadLoop();
+
+  virtual void ShowFile(FILE*);
+  virtual void PrintV(const char*, bool, va_list);
+  void PutChar(char);
+  void ClearText();
+
+  void LoadAnimation();
+  void LoadBitmap(const char* filename, GRSurface** surface);
+  void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
+
+  int PixelsFromDp(int dp) const;
+  virtual int GetAnimationBaseline() const;
+  virtual int GetProgressBaseline() const;
+  virtual int GetTextBaseline() const;
+
+  // Draws a highlight bar at (x, y) - (x + width, y + height).
+  virtual void DrawHighlightBar(int x, int y, int width, int height) const;
+  // Draws a horizontal rule at Y. Returns the offset it should be moving along Y-axis.
+  virtual int DrawHorizontalRule(int y) const;
+  // Draws a line of text. Returns the offset it should be moving along Y-axis.
+  virtual int DrawTextLine(int x, int y, const char* line, bool bold) const;
+  // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
+  int DrawTextLines(int x, int y, const char* const* lines) const;
+  // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines.
+  // Returns the offset it should be moving along Y-axis.
+  int DrawWrappedTextLines(int x, int y, const char* const* lines) const;
 
   Icon currentIcon;
 
@@ -151,46 +192,6 @@ class ScreenRecoveryUI : public RecoveryUI {
   int char_height_;
 
   pthread_mutex_t updateMutex;
-
-  virtual bool InitTextParams();
-
-  virtual void draw_background_locked();
-  virtual void draw_foreground_locked();
-  virtual void draw_screen_locked();
-  virtual void update_screen_locked();
-  virtual void update_progress_locked();
-
-  GRSurface* GetCurrentFrame() const;
-  GRSurface* GetCurrentText() const;
-
-  static void* ProgressThreadStartRoutine(void* data);
-  void ProgressThreadLoop();
-
-  virtual void ShowFile(FILE*);
-  virtual void PrintV(const char*, bool, va_list);
-  void PutChar(char);
-  void ClearText();
-
-  void LoadAnimation();
-  void LoadBitmap(const char* filename, GRSurface** surface);
-  void LoadLocalizedBitmap(const char* filename, GRSurface** surface);
-
-  int PixelsFromDp(int dp) const;
-  virtual int GetAnimationBaseline() const;
-  virtual int GetProgressBaseline() const;
-  virtual int GetTextBaseline() const;
-
-  // Draws a highlight bar at (x, y) - (x + width, y + height).
-  virtual void DrawHighlightBar(int x, int y, int width, int height) const;
-  // Draws a horizontal rule at Y. Returns the offset it should be moving along Y-axis.
-  virtual int DrawHorizontalRule(int y) const;
-  // Draws a line of text. Returns the offset it should be moving along Y-axis.
-  virtual int DrawTextLine(int x, int y, const char* line, bool bold) const;
-  // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
-  int DrawTextLines(int x, int y, const char* const* lines) const;
-  // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines.
-  // Returns the offset it should be moving along Y-axis.
-  int DrawWrappedTextLines(int x, int y, const char* const* lines) const;
 };
 
 #endif  // RECOVERY_UI_H
