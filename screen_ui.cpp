@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "screen_ui.h"
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -36,11 +38,10 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <minui/minui.h>
 
 #include "common.h"
 #include "device.h"
-#include "minui/minui.h"
-#include "screen_ui.h"
 #include "ui.h"
 
 // Return the current time as a double (including fractions of a second).
@@ -79,6 +80,8 @@ ScreenRecoveryUI::ScreenRecoveryUI()
       intro_done(false),
       stage(-1),
       max_stage(-1),
+      locale_(""),
+      rtl_locale_(false),
       updateMutex(PTHREAD_MUTEX_INITIALIZER) {}
 
 GRSurface* ScreenRecoveryUI::GetCurrentFrame() const {
@@ -496,6 +499,7 @@ bool ScreenRecoveryUI::InitTextParams() {
 
 bool ScreenRecoveryUI::Init(const std::string& locale) {
   RecoveryUI::Init(locale);
+
   if (!InitTextParams()) {
     return false;
   }
@@ -509,6 +513,9 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
   file_viewer_text_ = Alloc2d(text_rows_, text_cols_ + 1);
 
   text_col_ = text_row_ = 0;
+
+  // Set up the locale info.
+  SetLocale(locale);
 
   LoadBitmap("icon_error", &error_icon);
 
@@ -832,4 +839,24 @@ void ScreenRecoveryUI::KeyLongPress(int) {
   // Redraw so that if we're in the menu, the highlight
   // will change color to indicate a successful long press.
   Redraw();
+}
+
+void ScreenRecoveryUI::SetLocale(const std::string& new_locale) {
+  locale_ = new_locale;
+  rtl_locale_ = false;
+
+  if (!new_locale.empty()) {
+    size_t underscore = new_locale.find('_');
+    // lang has the language prefix prior to '_', or full string if '_' doesn't exist.
+    std::string lang = new_locale.substr(0, underscore);
+
+    // A bit cheesy: keep an explicit list of supported RTL languages.
+    if (lang == "ar" ||  // Arabic
+        lang == "fa" ||  // Persian (Farsi)
+        lang == "he" ||  // Hebrew (new language code)
+        lang == "iw" ||  // Hebrew (old language code)
+        lang == "ur") {  // Urdu
+      rtl_locale_ = true;
+    }
+  }
 }
