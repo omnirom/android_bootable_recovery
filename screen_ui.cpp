@@ -34,8 +34,8 @@
 
 #include <android-base/logging.h>
 #include <android-base/properties.h>
-#include <android-base/strings.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 
 #include "common.h"
 #include "device.h"
@@ -66,7 +66,6 @@ ScreenRecoveryUI::ScreenRecoveryUI()
       text_(nullptr),
       text_col_(0),
       text_row_(0),
-      text_top_(0),
       show_text(false),
       show_text_ever(false),
       menu_headers_(nullptr),
@@ -368,7 +367,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
   // Display from the bottom up, until we hit the top of the screen, the bottom of the menu, or
   // we've displayed the entire text buffer.
   SetColor(LOG);
-  int row = (text_top_ + text_rows_ - 1) % text_rows_;
+  int row = text_row_;
   size_t count = 0;
   for (int ty = gr_fb_height() - kMarginHeight - char_height_; ty >= y && count < text_rows_;
        ty -= char_height_, ++count) {
@@ -510,7 +509,6 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
   file_viewer_text_ = Alloc2d(text_rows_, text_cols_ + 1);
 
   text_col_ = text_row_ = 0;
-  text_top_ = 1;
 
   LoadBitmap("icon_error", &error_icon);
 
@@ -643,7 +641,6 @@ void ScreenRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) 
         text_[text_row_][text_col_] = '\0';
         text_col_ = 0;
         text_row_ = (text_row_ + 1) % text_rows_;
-        if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
       }
       if (*ptr != '\n') text_[text_row_][text_col_++] = *ptr;
     }
@@ -673,8 +670,6 @@ void ScreenRecoveryUI::PutChar(char ch) {
   if (ch == '\n' || text_col_ >= text_cols_) {
     text_col_ = 0;
     ++text_row_;
-
-    if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
   }
   pthread_mutex_unlock(&updateMutex);
 }
@@ -683,7 +678,6 @@ void ScreenRecoveryUI::ClearText() {
   pthread_mutex_lock(&updateMutex);
   text_col_ = 0;
   text_row_ = 0;
-  text_top_ = 1;
   for (size_t i = 0; i < text_rows_; ++i) {
     memset(text_[i], 0, text_cols_ + 1);
   }
@@ -750,7 +744,6 @@ void ScreenRecoveryUI::ShowFile(const char* filename) {
   char** old_text = text_;
   size_t old_text_col = text_col_;
   size_t old_text_row = text_row_;
-  size_t old_text_top = text_top_;
 
   // Swap in the alternate screen and clear it.
   text_ = file_viewer_text_;
@@ -762,7 +755,6 @@ void ScreenRecoveryUI::ShowFile(const char* filename) {
   text_ = old_text;
   text_col_ = old_text_col;
   text_row_ = old_text_row;
-  text_top_ = old_text_top;
 }
 
 void ScreenRecoveryUI::StartMenu(const char* const* headers, const char* const* items,
