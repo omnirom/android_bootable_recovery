@@ -133,7 +133,7 @@ void WearRecoveryUI::draw_screen_locked() {
     // display from the bottom up, until we hit the top of the
     // screen, the bottom of the menu, or we've displayed the
     // entire text buffer.
-    int row = (text_top_ + text_rows_ - 1) % text_rows_;
+    int row = text_row_;
     size_t count = 0;
     for (int ty = gr_fb_height() - char_height_ - kMarginHeight; ty > y + 2 && count < text_rows_;
          ty -= char_height_, ++count) {
