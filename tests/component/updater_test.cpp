@@ -383,7 +383,7 @@ TEST_F(UpdaterTest, set_progress) {
 
   TemporaryFile tf;
   UpdaterInfo updater_info;
-  updater_info.cmd_pipe = fdopen(tf.fd, "w");
+  updater_info.cmd_pipe = fdopen(tf.release(), "w");
   expect(".52", "set_progress(\".52\")", kNoCause, &updater_info);
   fflush(updater_info.cmd_pipe);
 
@@ -392,6 +392,7 @@ TEST_F(UpdaterTest, set_progress) {
   ASSERT_EQ(android::base::StringPrintf("set_progress %f\n", .52), cmd);
   // recovery-updater protocol expects 2 tokens ("set_progress <frac>").
   ASSERT_EQ(2U, android::base::Split(cmd, " ").size());
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
 }
 
 TEST_F(UpdaterTest, show_progress) {
@@ -407,7 +408,7 @@ TEST_F(UpdaterTest, show_progress) {
 
   TemporaryFile tf;
   UpdaterInfo updater_info;
-  updater_info.cmd_pipe = fdopen(tf.fd, "w");
+  updater_info.cmd_pipe = fdopen(tf.release(), "w");
   expect(".52", "show_progress(\".52\", \"10\")", kNoCause, &updater_info);
   fflush(updater_info.cmd_pipe);
 
@@ -416,12 +417,13 @@ TEST_F(UpdaterTest, show_progress) {
   ASSERT_EQ(android::base::StringPrintf("progress %f %d\n", .52, 10), cmd);
   // recovery-updater protocol expects 3 tokens ("progress <frac> <secs>").
   ASSERT_EQ(3U, android::base::Split(cmd, " ").size());
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
 }
 
 TEST_F(UpdaterTest, block_image_update) {
   // Create a zip file with new_data and patch_data.
   TemporaryFile zip_file;
-  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
+  FILE* zip_file_ptr = fdopen(zip_file.release(), "wb");
   ZipWriter zip_writer(zip_file_ptr);
 
   // Add a dummy new data.
@@ -485,7 +487,7 @@ TEST_F(UpdaterTest, block_image_update) {
   UpdaterInfo updater_info;
   updater_info.package_zip = handle;
   TemporaryFile temp_pipe;
-  updater_info.cmd_pipe = fopen(temp_pipe.path, "wbe");
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
   updater_info.package_zip_addr = map.addr;
   updater_info.package_zip_len = map.length;
 
@@ -518,7 +520,7 @@ TEST_F(UpdaterTest, block_image_update) {
 TEST_F(UpdaterTest, new_data_short_write) {
   // Create a zip file with new_data.
   TemporaryFile zip_file;
-  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
+  FILE* zip_file_ptr = fdopen(zip_file.release(), "wb");
   ZipWriter zip_writer(zip_file_ptr);
 
   // Add the empty new data.
@@ -561,7 +563,7 @@ TEST_F(UpdaterTest, new_data_short_write) {
   UpdaterInfo updater_info;
   updater_info.package_zip = handle;
   TemporaryFile temp_pipe;
-  updater_info.cmd_pipe = fopen(temp_pipe.path, "wbe");
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
   updater_info.package_zip_addr = map.addr;
   updater_info.package_zip_len = map.length;
 
@@ -579,13 +581,15 @@ TEST_F(UpdaterTest, new_data_short_write) {
   std::string script_exact_data = "block_image_update(\"" + std::string(update_file.path) +
       R"(", package_extract_file("transfer_list"), "exact_new_data", "patch_data"))";
   expect("t", script_exact_data.c_str(), kNoCause, &updater_info);
+
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
   CloseArchive(handle);
 }
 
 TEST_F(UpdaterTest, brotli_new_data) {
   // Create a zip file with new_data.
   TemporaryFile zip_file;
-  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
+  FILE* zip_file_ptr = fdopen(zip_file.release(), "wb");
   ZipWriter zip_writer(zip_file_ptr);
 
   // Add a brotli compressed new data entry.
@@ -639,7 +643,7 @@ TEST_F(UpdaterTest, brotli_new_data) {
   UpdaterInfo updater_info;
   updater_info.package_zip = handle;
   TemporaryFile temp_pipe;
-  updater_info.cmd_pipe = fopen(temp_pipe.path, "wb");
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wb");
   updater_info.package_zip_addr = map.addr;
   updater_info.package_zip_len = map.length;
 
@@ -653,5 +657,7 @@ TEST_F(UpdaterTest, brotli_new_data) {
   std::string updated_content;
   ASSERT_TRUE(android::base::ReadFileToString(update_file.path, &updated_content));
   ASSERT_EQ(brotli_new_data, updated_content);
+
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
   CloseArchive(handle);
 }
