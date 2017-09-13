@@ -890,18 +890,21 @@ bool MultiROM::changeMounts(std::string name)
 
 	TWPartition *realdata, *data, *sys, *cache;
 	std::vector<TWPartition*>& parts = PartitionManager.getPartitions();
-	for(std::vector<TWPartition*>::iterator itr = parts.begin(); itr != parts.end();)
-	{
-		if((*itr)->Mount_Point == "/system" || (*itr)->Mount_Point == "/cache")
-		{
+	for(std::vector<TWPartition*>::iterator itr = parts.begin(); itr != parts.end();) {
+		if ((*itr)->Mount_Point == "/system") {
 			(*itr)->UnMount(true);
 			delete *itr;
 			itr = parts.erase(itr);
 		}
-		else
-		{
-			if((*itr)->Mount_Point == "/data")
+		else if ((*itr)->Mount_Point == "/cache") {
+			(*itr)->UnMount(true);
+			delete *itr;
+			itr = parts.erase(itr);
+		}
+		else {
+			if((*itr)->Mount_Point == "/data") {
 				data = *itr;
+			}
 			++itr;
 		}
 	}
