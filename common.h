@@ -22,8 +22,9 @@
 
 #include <string>
 
-#define STRINGIFY(x) #x
-#define EXPAND(x) STRINGIFY(x)
+// Not using the command-line defined macro here because this header could be included by
+// device-specific recovery libraries. We static assert the value consistency in recovery.cpp.
+static constexpr int kRecoveryApiVersion = 3;
 
 class RecoveryUI;
 
