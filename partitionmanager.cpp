@@ -377,6 +377,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 	if (!Part->Bind_Of.empty())
 		printf("   Bind_Of: %s\n", Part->Bind_Of.c_str());
+	if (!Part->Loop_Device.empty())
+		printf("   Loop_Device: %s\n", Part->Loop_Device.c_str());
 #endif //TARGET_RECOVERY_IS_MULTIROM
 	printf("   Backup_Method: %s\n", Part->Backup_Method_By_Name().c_str());
 	if (Part->Mount_Flags || !Part->Mount_Options.empty())
