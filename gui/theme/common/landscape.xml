@@ -139,6 +139,7 @@
 		<style name="scrolllist">
 			<background color="%background_color%"/>
 			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 		</style>
 
 		<style name="partitionlist">
@@ -2884,6 +2885,10 @@
 				<listitem name="{@simfail_chk=Simulate failure for actions}">
 					<condition var1="tw_simulate_actions" var2="1"/>
 					<data variable="tw_simulate_fail"/>
+				</listitem>
+				<listitem name="{@sha2_chk=Use SHA2 for hashing}">
+					<condition var1="tw_no_sha2" var2="0"/>
+					<data variable="tw_use_sha2"/>
 				</listitem>
 			</listbox>
 
