@@ -30,6 +30,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <iostream>
 #include <algorithm>
 #include <utils/threads.h>
 #include <pthread.h>
@@ -453,11 +454,13 @@ bool twrpback::restore(void) {
 	uint64_t md5fnsize = 0;
 	bool writedata, read_from_adb;
 	bool breakloop, eofsent, md5trsent;
-	bool compressed;
+	bool compressed, tryToFixCompressedHeader, firstDataBlock;
 	bool md5TrailerReceived = false;
-
+	
 	breakloop = false;
 	read_from_adb = true;
+	firstDataBlock = true;
+	tryToFixCompressedHeader = false;
 
 	signal(SIGPIPE, SIG_IGN);
 
@@ -687,6 +690,8 @@ bool twrpback::restore(void) {
 
 					adblogwrite("opening TW_ADB_RESTORE\n");
 					adb_write_fd = open(TW_ADB_RESTORE, O_WRONLY);
+					if (twfilehdr.compressed)
+						tryToFixCompressedHeader = true;
 				}
 				else if (cmdtype == MD5TRAILER) {
 					read_from_adb = false; //don't read from adb until TWRP sends TWEOF
@@ -726,7 +731,21 @@ bool twrpback::restore(void) {
 							break;
 						}
 
-
+						if (firstDataBlock && tryToFixCompressedHeader) {
+							const unsigned gzipHeader = 0x1f8b;
+							if (memcmp(readAdbStream, &gzipHeader, 2) != 0) {
+								adblogwrite("bad gzip header encountered. writing header...\n");
+							}
+							if (write(adb_write_fd, &gzipHeader, 2) < 0) {
+								std::stringstream str;
+								str << strerror(errno);
+								adblogwrite("Cannot write to adb_control_twrp_fd: " + str.str() + "\n");
+								close_restore_fds();
+								return -1;
+							}
+							firstDataBlock = false;
+							tryToFixCompressedHeader = false;
+					}
 						if (write(adb_write_fd, readAdbStream, sizeof(readAdbStream)) < 0) {
 							adblogwrite("end of stream reached.\n");
 							break;
