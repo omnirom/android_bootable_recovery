@@ -30,6 +30,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <iostream>
 #include <algorithm>
 #include <utils/threads.h>
 #include <pthread.h>
@@ -424,11 +425,13 @@ int twrpback::restore(void) {
 	int adb_control_twrp_fd, errctr = 0;
 	uint64_t totalbytes = 0, dataChunkBytes = 0;
 	uint64_t md5fnsize = 0;
-	bool writedata, read_from_adb;
-	bool breakloop, eofsent, md5trsent;
+	bool writedata, read_from_adb, tryToFixCompressedHeader;
+	bool breakloop, eofsent, md5trsent, firstDataBlock;
 
 	breakloop = false;
 	read_from_adb = true;
+	firstDataBlock = true;
+	tryToFixCompressedHeader = false;
 
 	signal(SIGPIPE, SIG_IGN);
 
@@ -663,6 +666,8 @@ int twrpback::restore(void) {
 
 					adblogwrite("opening TW_ADB_RESTORE\n");
 					adb_write_fd = open(TW_ADB_RESTORE, O_WRONLY);
+					if (twfilehdr.compressed)
+						tryToFixCompressedHeader = true;
 				}
 				//Send the tar or partition image md5 to TWRP
 				else if (cmdtype == TWDATA) {
@@ -670,8 +675,10 @@ int twrpback::restore(void) {
 					while (1) {
 						if ((readbytes = fread(result, 1, sizeof(result), adbd_fp)) != sizeof(result)) {
 							close_restore_fds();
+							adblogwrite("Failure reading from adb stream.\n");
 							return -1;
 						}
+						
 						totalbytes += readbytes;
 						memcpy(&structcmd, result, sizeof(result));
 						std::string cmdtype = structcmd.get_type();
@@ -736,6 +743,21 @@ int twrpback::restore(void) {
 						}
 						digest.update((unsigned char*)result, sizeof(result));
 						dataChunkBytes += readbytes;
+						/*
+						if (firstDataBlock && tryToFixCompressedHeader) {
+							const unsigned char gzipHeader[] = {0x1f, 0x8b};
+							if (memcmp(result, gzipHeader, sizeof gzipHeader) != 0) {
+								adblogwrite("bad gzip header encountered. writing header...\n");
+							}
+							if (write(adb_write_fd, gzipHeader, sizeof(gzipHeader) < 0)) {
+								std::stringstream str;
+								str << strerror(errno);
+								adblogwrite("Cannot write to adb_control_twrp_fd: " + str.str() + "\n");
+								close_restore_fds();
+								return -1;
+							}
+						}
+						*/
 
 						if (write(adb_write_fd, result, sizeof(result)) < 0) {
 							std::stringstream str;
@@ -751,6 +773,7 @@ int twrpback::restore(void) {
 								break;
 							}
 							memset(&result, 0, sizeof(result));
+							firstDataBlock = false;
 						}
 					}
 				}
