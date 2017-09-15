@@ -74,7 +74,7 @@ ssize_t logrotate(
             name += ".1";
         } else {
             size_t i;
-            if (!android::base::ParseUint(number, &i)) {
+            if (!android::base::ParseUint(number.c_str(), &i)) {
                 LOG(ERROR) << "failed to parse uint in " << number;
                 return -1;
             }

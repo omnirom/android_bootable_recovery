@@ -19,6 +19,7 @@
 #include <vector>
 
 #ifdef AB_OTA_UPDATER
+#include <inttypes.h>
 #include <map>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>

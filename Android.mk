@@ -558,7 +558,9 @@ endif # !TW_USE_TOOLBOX
 # ===============================
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
     include $(CLEAR_VARS)
-    LOCAL_SRC_FILES := recovery-persist.cpp
+    LOCAL_SRC_FILES := \
+        recovery-persist.cpp \
+        rotate_logs.cpp
     LOCAL_MODULE := recovery-persist
     LOCAL_SHARED_LIBRARIES := liblog libbase
     LOCAL_CFLAGS := -Werror
@@ -570,9 +572,11 @@ endif
 # ===============================
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
     include $(CLEAR_VARS)
-    LOCAL_SRC_FILES := recovery-refresh.cpp
+    LOCAL_SRC_FILES := \
+        recovery-refresh.cpp \
+        rotate_logs.cpp
     LOCAL_MODULE := recovery-refresh
-    LOCAL_SHARED_LIBRARIES := liblog
+    LOCAL_SHARED_LIBRARIES := liblog libbase
     LOCAL_CFLAGS := -Werror
     LOCAL_INIT_RC := recovery-refresh.rc
     include $(BUILD_EXECUTABLE)
