@@ -779,9 +779,10 @@ TEST(ImgdiffTest, zip_mode_store_large_apk) {
   // Compute patch.
   TemporaryFile patch_file;
   TemporaryDir debug_dir;
+  std::string debug_dir_arg = android::base::StringPrintf("--debug-dir=%s", debug_dir.path);
   std::vector<const char*> args = {
-    "imgdiff", "-z", "--block-limit=10", android::base::StringPrintf(
-          "--debug-dir=%s", debug_dir.path).c_str(), src_file.path, tgt_file.path, patch_file.path,
+    "imgdiff", "-z", "--block-limit=10", debug_dir_arg.c_str(), src_file.path, tgt_file.path,
+    patch_file.path,
   };
   ASSERT_EQ(0, imgdiff(args.size(), args.data()));
 
@@ -901,9 +902,10 @@ TEST(ImgdiffTest, zip_mode_no_match_source) {
   // Compute patch.
   TemporaryFile patch_file;
   TemporaryDir debug_dir;
+  std::string debug_dir_arg = android::base::StringPrintf("--debug-dir=%s", debug_dir.path);
   std::vector<const char*> args = {
-    "imgdiff", "-z", "--block-limit=10", android::base::StringPrintf(
-          "--debug-dir=%s", debug_dir.path).c_str(), src_file.path, tgt_file.path, patch_file.path,
+    "imgdiff", "-z", "--block-limit=10", debug_dir_arg.c_str(), src_file.path, tgt_file.path,
+    patch_file.path,
   };
   ASSERT_EQ(0, imgdiff(args.size(), args.data()));
 
@@ -940,9 +942,10 @@ TEST(ImgdiffTest, zip_mode_large_enough_limit) {
   // Compute patch with a limit of 20 blocks.
   TemporaryFile patch_file;
   TemporaryDir debug_dir;
+  std::string debug_dir_arg = android::base::StringPrintf("--debug-dir=%s", debug_dir.path);
   std::vector<const char*> args = {
-    "imgdiff", "-z", "--block-limit=20", android::base::StringPrintf(
-          "--debug-dir=%s", debug_dir.path).c_str(), src_file.path, tgt_file.path, patch_file.path,
+    "imgdiff", "-z", "--block-limit=20", debug_dir_arg.c_str(), src_file.path, tgt_file.path,
+    patch_file.path,
   };
   ASSERT_EQ(0, imgdiff(args.size(), args.data()));
 
