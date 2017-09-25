@@ -1276,7 +1276,7 @@ int twrpTar::openTar() {
 	} else if (current_archive_type == COMPRESSED) {
 		int pigzfd[2];
 
-		LOGINFO("Opening as a gzip...\n");
+		LOGINFO("Opening gzip compressed tar...\n");
 		if (part_settings->adbbackup)  {
 			LOGINFO("opening TW_ADB_RESTORE compressed stream\n");
 			input_fd = open(TW_ADB_RESTORE, O_RDONLY | O_LARGEFILE);

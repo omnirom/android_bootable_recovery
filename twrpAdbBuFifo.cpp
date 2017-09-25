@@ -41,6 +41,7 @@ twrpAdbBuFifo::twrpAdbBuFifo(void) {
 
 bool twrpAdbBuFifo::Check_Adb_Fifo_For_Events(void) {
 	char cmd[512];
+	int ret;
 
 	memset(&cmd, 0, sizeof(cmd));
 
@@ -51,9 +52,9 @@ bool twrpAdbBuFifo::Check_Adb_Fifo_For_Events(void) {
 		std::string Options(cmd);
 		Options = Options.substr(strlen(ADB_BACKUP_OP) + 1, strlen(cmd));
 		if (cmdcheck == ADB_BACKUP_OP)
-			return Backup_ADB_Command(Options);
+			Backup_ADB_Command(Options);
 		else {
-			return Restore_ADB_Backup();
+			Restore_ADB_Backup();
 		}
 	}
 
@@ -273,11 +274,10 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					part_settings.progress = &progress;
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
-						return false;
+						ret = false;
 					}
 				}
 				else if (cmdtype == TWFN) {
-					//LOGINFO("blah\n");
 					LOGINFO("ADB Type: %s\n", twimghdr.type);
 					LOGINFO("ADB Restore_Name: %s\n", Restore_Name.c_str());
 					LOGINFO("ADB Restore_size: %" PRIi64 "\n", part_settings.total_restore_size);
@@ -324,13 +324,17 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					part_settings.progress = &progress;
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
-						return false;
+						ret = false;
 					}
 				}
 			}
 		}
 	}
-	gui_msg("restore_complete=Restore Complete");
+
+	if (ret != false) 
+		gui_msg("restore_complete=Restore Complete");
+	else
+		gui_err("restore_error=Error during restore process.");
 
 	if (!twadbbu::Write_TWENDADB())
 		ret = false;

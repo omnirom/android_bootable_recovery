@@ -2221,6 +2221,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 	unsigned long long backedup_size = 0;
 	string srcfn, destfn;
 
+
 	if (part_settings->PM_Method == PM_BACKUP) {
 		srcfn = Actual_Block_Device;
 		if (part_settings->adbbackup)
