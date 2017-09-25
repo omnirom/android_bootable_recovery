@@ -33,6 +33,7 @@
 
 #include "twadbstream.h"
 #include "libtwadbbu.hpp"
+#include "twrpback.hpp"
 
 bool twadbbu::Check_ADB_Backup_File(std::string fname) {
 	struct AdbBackupStreamHeader adbbuhdr;
@@ -288,5 +289,18 @@ bool twadbbu::Write_TWENDADB() {
 	}
 
 	close(adb_control_bu_fd);
+	return true;
+}
+
+bool twadbbu::Write_TWDATA(FILE* adbd_fp) {
+	struct AdbBackupControlType data_block;
+	memset(&data_block, 0, sizeof(data_block));
+	strncpy(data_block.start_of_header, TWRP, sizeof(data_block.start_of_header));
+	strncpy(data_block.type, TWDATA, sizeof(data_block.type));
+	data_block.crc = crc32(0L, Z_NULL, 0);
+	data_block.crc = crc32(data_block.crc, (const unsigned char*) &data_block, sizeof(data_block));
+	if (fwrite(&data_block, 1, sizeof(data_block), adbd_fp) != sizeof(data_block))  {
+		return false;
+	}
 	return true;
 }
