@@ -52,6 +52,7 @@ private:
 	void adbloginit(void);                                                   // setup adb log stream file
 	void close_backup_fds();                                                 // close backup resources
 	void close_restore_fds();                                                // close restore resources
+	char* removeZerosFromEndArray(char* result);                             // remove 0s from end of 2nd compressed TWDATA
 };
 
 #endif // _TWRPBACK_HPP
