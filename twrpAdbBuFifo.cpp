@@ -39,8 +39,9 @@ twrpAdbBuFifo::twrpAdbBuFifo(void) {
 	unlink(TW_ADB_FIFO);
 }
 
-bool twrpAdbBuFifo::Check_Adb_Fifo_For_Events(void) {
+void twrpAdbBuFifo::Check_Adb_Fifo_For_Events(void) {
 	char cmd[512];
+	int ret;
 
 	memset(&cmd, 0, sizeof(cmd));
 
@@ -51,13 +52,11 @@ bool twrpAdbBuFifo::Check_Adb_Fifo_For_Events(void) {
 		std::string Options(cmd);
 		Options = Options.substr(strlen(ADB_BACKUP_OP) + 1, strlen(cmd));
 		if (cmdcheck == ADB_BACKUP_OP)
-			return Backup_ADB_Command(Options);
+			Backup_ADB_Command(Options);
 		else {
-			return Restore_ADB_Backup();
+			Restore_ADB_Backup();
 		}
 	}
-
-	return true;
 }
 
 bool twrpAdbBuFifo::start(void) {
@@ -195,8 +194,7 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 
 			memset(&cmdstruct, 0, sizeof(cmdstruct));
 			memcpy(&cmdstruct, cmd, sizeof(cmdstruct));
-			std::string cmdstr(cmdstruct.type);
-			std::string cmdtype = cmdstr.substr(0, sizeof(cmdstruct.type) - 1);
+			std::string cmdtype = cmdstruct.get_type();
 			if (cmdtype == TWSTREAMHDR) {
 				struct AdbBackupStreamHeader twhdr;
 				memcpy(&twhdr, cmd, sizeof(cmd));
@@ -229,6 +227,8 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					LOGINFO("adbrestore md5 matches\n");
 					LOGINFO("adbmd5.md5: %s\n", adbmd5.md5);
 					LOGINFO("md5check.md5: %s\n", md5check.md5);
+					ret = true;
+					break;
 				}
 			}
 			else if (cmdtype == TWENDADB) {
@@ -269,7 +269,7 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					part_settings.progress = &progress;
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
-						return false;
+						ret = false;
 					}
 				}
 				else if (cmdtype == TWFN) {
@@ -319,18 +319,24 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					part_settings.progress = &progress;
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
-						return false;
+						ret = false;
 					}
 				}
 			}
 		}
 	}
-	gui_msg("restore_complete=Restore Complete");
+
+	if (ret != false)
+		gui_msg("restore_complete=Restore Complete");
+	else
+		gui_err("restore_error=Error during restore process.");
 
 	if (!twadbbu::Write_TWENDADB())
 		ret = false;
 	sleep(2); //give time for user to see messages on console
 	DataManager::SetValue("ui_progress", 100);
 	gui_changePage("main");
+	close(adb_control_bu_fd);
+	close(adb_control_twrp_fd);
 	return ret;
 }

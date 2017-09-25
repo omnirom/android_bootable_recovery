@@ -18,14 +18,15 @@
 #define _TWRPBACK_HPP
 
 #include <fstream>
+#include "../twrpDigest/twrpMD5.hpp"
 
 class twrpback {
 public:
 	int adbd_fd;                                                             // adbd data stream
 	twrpback(void);
 	virtual ~twrpback(void);
-	int backup(std::string command);                                         // adb backup stream
-	int restore(void);                                                       // adb restore stream
+	bool backup(std::string command);                                        // adb backup stream
+	bool restore(void);                                                      // adb restore stream
 	void adblogwrite(std::string writemsg);                                  // adb debugging log function
 	void createFifos(void);                                                  // create fifos needed for adb backup
 	void closeFifos(void);                                                   // close created fifos
@@ -52,6 +53,7 @@ private:
 	void adbloginit(void);                                                   // setup adb log stream file
 	void close_backup_fds();                                                 // close backup resources
 	void close_restore_fds();                                                // close restore resources
+	bool checkMD5Trailer(char adbReadStream[], uint64_t md5fnsize, twrpMD5* digest); // Check MD5 Trailer
 };
 
 #endif // _TWRPBACK_HPP
