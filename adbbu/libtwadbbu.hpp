@@ -33,7 +33,6 @@
 #include <sstream>
 
 #include "twadbstream.h"
-#include "twrpback.hpp"
 
 class twadbbu {
 public:
@@ -46,6 +45,7 @@ public:
 	static bool Write_TWEOF();                                                                     //Write ADB End-Of-File marker to stream
 	static bool Write_TWERROR();                                                                   //Write error message occurred to stream
 	static bool Write_TWENDADB();                                                                  //Write ADB End-Of-Stream command to stream
+	static bool Write_TWDATA(FILE* adbd_fp);                                                       //Write TWDATA separator
 };
 
 #endif //__LIBTWADBBU_HPP
