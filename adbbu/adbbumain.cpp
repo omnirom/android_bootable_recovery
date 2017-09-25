@@ -31,7 +31,8 @@
 
 int main(int argc, char **argv) {
 	int index;
-	int ret = 0, pos = 0;
+	int pos = 0;
+	bool ret = false;
 	int maxpos = sizeof(TWRPARG + 2);
 	std::string command;
 	twrpback tw;
@@ -74,7 +75,7 @@ int main(int argc, char **argv) {
 		tw.setStreamFileName(argv[3]);
 		tw.threadStream();
 	}
-	if (ret == 0)
+	if (ret)
 		tw.adblogwrite("Adb backup/restore completed\n");
 	else
 		tw.adblogwrite("Adb backup/restore failed\n");
@@ -85,5 +86,8 @@ int main(int argc, char **argv) {
 		tw.adblogwrite("Unable to remove TW_ADB_BU_CONTROL: " + str.str());
 	}
 	unlink(TW_ADB_TWRP_CONTROL);
-	return ret;
+	if (ret)
+		return 0;
+	else
+		return -1;
 }

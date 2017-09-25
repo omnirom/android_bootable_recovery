@@ -31,7 +31,7 @@ class twrpAdbBuFifo {
 	private:
 		bool start(void);
 		bool Backup_ADB_Command(std::string Options);
-		bool Check_Adb_Fifo_For_Events(void);
+		void Check_Adb_Fifo_For_Events(void);
 		bool Restore_ADB_Backup(void);
 		typedef bool (twrpAdbBuFifo::*ThreadPtr)(void);
 		typedef void* (*PThreadPtr)(void *);
