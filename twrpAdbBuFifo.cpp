@@ -277,7 +277,6 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					}
 				}
 				else if (cmdtype == TWFN) {
-					//LOGINFO("blah\n");
 					LOGINFO("ADB Type: %s\n", twimghdr.type);
 					LOGINFO("ADB Restore_Name: %s\n", Restore_Name.c_str());
 					LOGINFO("ADB Restore_size: %" PRIi64 "\n", part_settings.total_restore_size);
