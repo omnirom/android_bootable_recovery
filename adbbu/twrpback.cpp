@@ -36,6 +36,7 @@
 
 #include "twadbstream.h"
 #include "twrpback.hpp"
+#include "libtwadbbu.hpp"
 #include "../twrpDigest/twrpDigest.hpp"
 #include "../twrpDigest/twrpMD5.hpp"
 #include "../twrpAdbBuFifo.hpp"
@@ -55,7 +56,7 @@ twrpback::twrpback(void) {
 }
 
 twrpback::~twrpback(void) {
-	adblogfile.close();
+	twrpback::adblogfile.close();
 	closeFifos();
 }
 
@@ -87,11 +88,11 @@ void twrpback::closeFifos(void) {
 }
 
 void twrpback::adbloginit(void) {
-	adblogfile.open("/tmp/adb.log", std::fstream::app);
+	twrpback::adblogfile.open("/tmp/adb.log", std::fstream::app);
 }
 
 void twrpback::adblogwrite(std::string writemsg) {
-	adblogfile << writemsg << std::flush;
+	twrpback::adblogfile << writemsg << std::flush;
 }
 
 void twrpback::close_backup_fds() {
@@ -128,11 +129,15 @@ int twrpback::backup(std::string command) {
 	twrpMD5 digest;
 	bool breakloop = false;
 	int bytes = 0, errctr = 0;
-	char result[MAX_ADB_READ];
+	char adbReadStream[MAX_ADB_READ];
 	uint64_t totalbytes = 0, dataChunkBytes = 0;
 	int64_t count = -1;			// Count of how many blocks set
 	uint64_t md5fnsize = 0;
 	struct AdbBackupControlType endadb;
+	//bool gzipDataHeader = false;
+	FILE* fptest;
+
+	fptest = fopen("/tmp/test.tgz", "w+");
 
 	ADBSTRUCT_STATIC_ASSERT(sizeof(endadb) == MAX_ADB_READ);
 
@@ -176,7 +181,7 @@ int twrpback::backup(std::string command) {
 		return -1;
 	}
 
-	memset(&result, 0, sizeof(result));
+	memset(&adbReadStream, 0, sizeof(adbReadStream));
 	memset(&cmd, 0, sizeof(cmd));
 
 	adblogwrite("opening TW_ADB_BU_CONTROL\n");
@@ -265,6 +270,10 @@ int twrpback::backup(std::string command) {
 				md5fnsize = twfilehdr.size;
 
 				compressed = twfilehdr.compressed == 1 ? true: false;
+				//if (compressed) {
+					//gzipDataHeader = true;
+					//dataChunkBytes = 2;
+				//}
 
 				if (fwrite(cmd, 1, sizeof(cmd), adbd_fp) != sizeof(cmd)) {
 					adblogwrite("Error writing TWFN to adbd\n");
@@ -287,19 +296,20 @@ int twrpback::backup(std::string command) {
 				count = totalbytes / MAX_ADB_READ + 1;
 				count = count * MAX_ADB_READ;
 
-				while ((bytes = read(adb_read_fd, &result, sizeof(result))) > 0) {
+				while ((bytes = read(adb_read_fd, &adbReadStream, sizeof(adbReadStream))) > 0) {
 					totalbytes += bytes;
-					char *writeresult = new char [bytes];
-					memcpy(writeresult, result, bytes);
-					digest.update((unsigned char *) writeresult, bytes);
-					if (fwrite(writeresult, 1, bytes, adbd_fp) != bytes) {
+					char *writeadbReadStream = new char [bytes];
+					memcpy(writeadbReadStream, adbReadStream, bytes);
+					digest.update((unsigned char *) writeadbReadStream, bytes);
+					fwrite(writeadbReadStream, 1, sizeof(writeadbReadStream), fptest);
+					if (fwrite(writeadbReadStream, 1, bytes, adbd_fp) != bytes) {
 						adblogwrite("Error writing backup data to adbd\n");
 						close_backup_fds();
 						return -1;
 					}
 					fflush(adbd_fp);
-					delete [] writeresult;
-					memset(&result, 0, sizeof(result));
+					delete [] writeadbReadStream;
+					memset(&adbReadStream, 0, sizeof(adbReadStream));
 				}
 
 				if ((totalbytes % MAX_ADB_READ) != 0) {
@@ -313,7 +323,6 @@ int twrpback::backup(std::string command) {
 					}
 					digest.update((unsigned char *) padding, sizeof(padding));
 					fflush(adbd_fp);
-					totalbytes = 0;
 				}
 
 				AdbBackupFileTrailer md5trailer;
@@ -349,59 +358,82 @@ int twrpback::backup(std::string command) {
 		//to the adb stream.
 		//If the stream is compressed, we need to always write the data.
 		if (writedata || compressed) {
-			while ((bytes = read(adb_read_fd, &result, sizeof(result))) > 0) {
+			while ((bytes = read(adb_read_fd, &adbReadStream, sizeof(adbReadStream))) > 0) {
 				if (firstDataPacket) {
-					struct AdbBackupControlType data_block;
-
-					memset(&data_block, 0, sizeof(data_block));
-					strncpy(data_block.start_of_header, TWRP, sizeof(data_block.start_of_header));
-					strncpy(data_block.type, TWDATA, sizeof(data_block.type));
-					data_block.crc = crc32(0L, Z_NULL, 0);
-					data_block.crc = crc32(data_block.crc, (const unsigned char*) &data_block, sizeof(data_block));
-					if (fwrite(&data_block, 1, sizeof(data_block), adbd_fp) != sizeof(data_block))  {
-						adblogwrite("Error writing data_block to adbd\n");
+					adblogwrite("write twdata\n");
+					if (!twadbbu::Write_TWDATA(adbd_fp)) {
 						close_backup_fds();
 						return -1;
 					}
 					fflush(adbd_fp);
 					firstDataPacket = false;
 				}
-				char *writeresult = new char [bytes];
-				memcpy(writeresult, result, bytes);
+				char *writeadbReadStream = new char [bytes];
+				memcpy(writeadbReadStream, adbReadStream, bytes);
 
-				digest.update((unsigned char *) writeresult, bytes);
+				digest.update((unsigned char *) writeadbReadStream, bytes);
 
 				totalbytes += bytes;
 				dataChunkBytes += bytes;
 
-				if (fwrite(writeresult, 1, bytes, adbd_fp) != bytes) {
+				fwrite(writeadbReadStream, 1, sizeof(writeadbReadStream), fptest);
+				adblogwrite("write data\n");
+				if (fwrite(writeadbReadStream, 1, bytes, adbd_fp) != bytes) {
 					adblogwrite("Error writing backup data to adbd\n");
 					close_backup_fds();
 					return -1;
 				}
 				fflush(adbd_fp);
 
-				delete [] writeresult;
-				memset(&result, 0, sizeof(result));
-				if (dataChunkBytes == DATA_MAX_CHUNK_SIZE - sizeof(result)) {
-					struct AdbBackupControlType data_block;
+				delete [] writeadbReadStream;
+				memset(&adbReadStream, 0, sizeof(adbReadStream));
 
-					memset(&data_block, 0, sizeof(data_block));
-					strncpy(data_block.start_of_header, TWRP, sizeof(data_block.start_of_header));
-					strncpy(data_block.type, TWDATA, sizeof(data_block.type));
-					data_block.crc = crc32(0L, Z_NULL, 0);
-					data_block.crc = crc32(data_block.crc, (const unsigned char*) &data_block, sizeof(data_block));
-					if (fwrite(&data_block, 1, sizeof(data_block), adbd_fp) != sizeof(data_block))  {
-						adblogwrite("Error writing data_block to adbd\n");
-						close_backup_fds();
+				if (dataChunkBytes == (DATA_MAX_CHUNK_SIZE - sizeof(adbReadStream))) {
+					adblogwrite("stopped at DATA_MAX_CHUNK_SIZE\n");
+					dataChunkBytes = 0;
+					firstDataPacket = true;
+				}
+				else if (dataChunkBytes > (DATA_MAX_CHUNK_SIZE - sizeof(adbReadStream))) {
+					//1048576
+					int bytesLeft = DATA_MAX_CHUNK_SIZE - dataChunkBytes;
+					//if (gzipDataHeader) {
+					//	bytesLeft = bytesLeft + 2;
+					//}
+
+					char extraData[bytesLeft];
+					memset(&extraData, 0, sizeof(extraData));
+					std::stringstream str;
+					str << sizeof(extraData);
+					adblogwrite("extraData: " + str.str() + "\n");
+					if ((bytes = read(adb_read_fd, &extraData, sizeof(extraData))) > 0) {
+						std::stringstream str1;
+						std::stringstream str2;
+						str1 << bytes;
+						adblogwrite("bytes: " + str1.str() + "\n");
+						str2 << bytesLeft;
+						adblogwrite("byteLefts: " + str2.str() + "\n");
+						totalbytes += bytes;
+						dataChunkBytes += bytes;
+					}
+
+					digest.update((unsigned char *) extraData, bytesLeft);
+	
+					fwrite(extraData, 1, sizeof(extraData), fptest);
+					adblogwrite("write pad data\n");
+					if (fwrite(extraData, 1, sizeof(extraData), adbd_fp) < 0) {
+						std::stringstream str;
+						str << strerror(errno);
+						adblogwrite("Cannot write to adbd stream: " + str.str() + "\n");
+						close_restore_fds();
 						return -1;
 					}
 					fflush(adbd_fp);
 					dataChunkBytes = 0;
+					//gzipDataHeader = false;
+					firstDataPacket = true;
 				}
-
 			}
-			compressed = false;
+			//compressed = false;
 		}
 	}
 
@@ -412,6 +444,7 @@ int twrpback::backup(std::string command) {
 		return -1;
 	}
 	fflush(adbd_fp);
+	fclose(fptest);
 	close_backup_fds();
 	return 0;
 }
@@ -426,6 +459,9 @@ int twrpback::restore(void) {
 	uint64_t md5fnsize = 0;
 	bool writedata, read_from_adb;
 	bool breakloop, eofsent, md5trsent;
+	FILE* fptest;
+
+	fptest = fopen("/tmp/test.tgz", "w+");
 
 	breakloop = false;
 	read_from_adb = true;
@@ -666,13 +702,19 @@ int twrpback::restore(void) {
 				}
 				//Send the tar or partition image md5 to TWRP
 				else if (cmdtype == TWDATA) {
+					adblogwrite("found data\n");
 					totalbytes -= sizeof(result);
 					while (1) {
 						if ((readbytes = fread(result, 1, sizeof(result), adbd_fp)) != sizeof(result)) {
 							close_restore_fds();
 							return -1;
 						}
+
 						totalbytes += readbytes;
+						std::stringstream str;
+						str << readbytes;
+						//adblogwrite("readbytes: " + str.str() + "\n");
+	
 						memcpy(&structcmd, result, sizeof(result));
 						std::string cmdtype = structcmd.get_type();
 
@@ -734,29 +776,38 @@ int twrpback::restore(void) {
 								break;
 							}
 						}
+	
 						digest.update((unsigned char*)result, sizeof(result));
 						dataChunkBytes += readbytes;
+						std::stringstream str2;
+						str2 << dataChunkBytes;
+						//adblogwrite("dataChunkBytes: " + str2.str() + "\n");
 
+						fwrite(result, 1, sizeof(result), fptest);
+						adblogwrite("beforewrite\n");
 						if (write(adb_write_fd, result, sizeof(result)) < 0) {
 							std::stringstream str;
 							str << strerror(errno);
-							adblogwrite("Cannot write to adb_write_fd\n" + str.str() + ". Retrying.\n");
-							while(write(adb_write_fd, result, sizeof(result)) < 0) {
-									adblogwrite("Cannot write to adb_write_fd\n" + str.str() + ". Retrying.\n");
-									continue;
-								}
-							}
-							if (dataChunkBytes == ((DATA_MAX_CHUNK_SIZE) - sizeof(result))) {
-								dataChunkBytes = 0;
-								break;
-							}
-							memset(&result, 0, sizeof(result));
+							adblogwrite("Cannot write to adb_control_twrp_fd: " + str.str() + "\n");
+							close_restore_fds();
+							return -1;
 						}
+						adblogwrite("afterwrite\n");
+						if (dataChunkBytes == (DATA_MAX_CHUNK_SIZE - sizeof(result))) {
+							std::stringstream str;
+							str << dataChunkBytes;
+							adblogwrite("data chunk max: " + str.str() + "\n");
+							dataChunkBytes = 0;
+							break;
+						}
+						memset(&result, 0, sizeof(result));
 					}
 				}
 			}
 		}
+	}
 
+	fclose(fptest);
 	std::stringstream str;
 	str << totalbytes;
 	adblogwrite(str.str() + " bytes restored from adbbackup\n");
