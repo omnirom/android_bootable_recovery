@@ -216,7 +216,7 @@
 		<string name="enc_enabled">已启用</string>
 		<string name="enable_backup_comp_chk">启用压缩</string>
 		<string name="skip_digest_backup_chk" version="2">当备份时跳过生成 Digest</string>
-		<string name="disable_backup_space_chk">禁用剩余空间检查</string>
+		<string name="disable_backup_space_chk" version="2">在备份之前禁用剩余空间检查</string>
 		<string name="current_boot_slot">当前分区：%tw_active_slot%</string>
 		<string name="boot_slot_a">分区 A</string>
 		<string name="boot_slot_b">分区 B</string>
@@ -454,6 +454,7 @@
 		<string name="decrypt_data_failed_pattern">图案错误，请重试！</string>
 		<string name="decrypt_data_enter_pattern">绘制解锁图案</string>
 		<string name="decrypt_data_trying">正在尝试解密</string>
+		<string name="decrypt_data_vold_os_missing">缺少解密 vold 所需的文件：{1}</string>
 		<string name="term_hdr">终端命令</string>
 		<string name="term_s_hdr">终端</string>
 		<string name="term_kill_btn">终止</string>
@@ -636,8 +637,8 @@
 		<string name="recovery_commands_complete">Recovery 命令执行完成</string>
 		<string name="running_ors">运行 OpenRecoveryScript 脚本</string>
 		<string name="ors_complete">运行 OpenRecoveryScript 脚本完成</string>
-		<string name="invalid_zip_format">Zip 文件格式无效！</string>
 		<string name="check_for_digest" version="2">正在检测 Digest…</string>
+		<string name="invalid_zip_format">Zip 文件格式无效！</string>
 		<string name="fail_sysmap">映射文件 '{1}' 失败</string>
 		<string name="verify_zip_sig">正在校验 Zip 刷机包签名…</string>
 		<string name="verify_zip_fail">刷机包签名校验失败！</string>
@@ -671,7 +672,7 @@
 		<string name="min_queue">已达到最大刷机包刷入队列！</string>
 		<string name="screenshot_saved">截图已保存到：{1}</string>
 		<string name="screenshot_err">截图失败！</string>
-		<string name="zip_wipe_cache">一个或多个刷机包请求清除 cache -- 正在清除 cache。</string>
+		<string name="zip_wipe_cache">一个或多个刷机包请求清除 Cache -- 正在清除 Cache。</string>
 		<string name="and_sec_wipe_err">无法清除 android secure</string>
 		<string name="dalvik_wipe_err">清除 Dalvik 失败</string>
 		<string name="auto_gen">(Auto Generate)</string>
@@ -690,6 +691,7 @@
 		<string name="partition_not_found">分区列表中未发现路径：{1}</string>
 		<string name="copy_kernel_log">已导出内核日志至 {1}</string>
 		<string name="include_kernel_log">包含内核日志</string>
+		<string name="sha2_chk">使用 SHA2 进行散列校验</string>
 		<string name="unable_set_boot_slot">更改 bootloader 启动分区至 {1} 错误</string>
 	</resources>
 </language>
