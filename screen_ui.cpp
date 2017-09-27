@@ -31,7 +31,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -256,6 +258,81 @@ void ScreenRecoveryUI::SetColor(UIElement e) const {
       gr_color(255, 255, 255, 255);
       break;
   }
+}
+
+void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string>& locales_entries,
+                                                   size_t sel) {
+  SetLocale(locales_entries[sel]);
+  std::vector<std::string> text_name = { "erasing_text", "error_text", "installing_text",
+                                         "installing_security_text", "no_command_text" };
+  std::unordered_map<std::string, std::unique_ptr<GRSurface, decltype(&free)>> surfaces;
+  for (const auto& name : text_name) {
+    GRSurface* text_image = nullptr;
+    LoadLocalizedBitmap(name.c_str(), &text_image);
+    if (!text_image) {
+      Print("Failed to load %s\n", name.c_str());
+      return;
+    }
+    surfaces.emplace(name, std::unique_ptr<GRSurface, decltype(&free)>(text_image, &free));
+  }
+
+  pthread_mutex_lock(&updateMutex);
+  gr_color(0, 0, 0, 255);
+  gr_clear();
+
+  int text_y = kMarginHeight;
+  int text_x = kMarginWidth;
+  int line_spacing = gr_sys_font()->char_height;  // Put some extra space between images.
+  // Write the header and descriptive texts.
+  SetColor(INFO);
+  std::string header = "Show background text image";
+  text_y += DrawTextLine(text_x, text_y, header.c_str(), true);
+  std::string locale_selection = android::base::StringPrintf(
+      "Current locale: %s, %zu/%zu", locales_entries[sel].c_str(), sel, locales_entries.size());
+  const char* instruction[] = { locale_selection.c_str(),
+                                "Use volume up/down to switch locales and power to exit.",
+                                nullptr };
+  text_y += DrawWrappedTextLines(text_x, text_y, instruction);
+
+  // Iterate through the text images and display them in order for the current locale.
+  for (const auto& p : surfaces) {
+    text_y += line_spacing;
+    SetColor(LOG);
+    text_y += DrawTextLine(text_x, text_y, p.first.c_str(), false);
+    gr_color(255, 255, 255, 255);
+    gr_texticon(text_x, text_y, p.second.get());
+    text_y += gr_get_height(p.second.get());
+  }
+  // Update the whole screen.
+  gr_flip();
+  pthread_mutex_unlock(&updateMutex);
+}
+
+void ScreenRecoveryUI::CheckBackgroundTextImages(const std::string& saved_locale) {
+  // Load a list of locales embedded in one of the resource files.
+  std::vector<std::string> locales_entries = get_locales_in_png("installing_text");
+  if (locales_entries.empty()) {
+    Print("Failed to load locales from the resource files\n");
+    return;
+  }
+  size_t selected = 0;
+  SelectAndShowBackgroundText(locales_entries, selected);
+
+  FlushKeys();
+  while (true) {
+    int key = WaitKey();
+    if (key == KEY_POWER || key == KEY_ENTER) {
+      break;
+    } else if (key == KEY_UP || key == KEY_VOLUMEUP) {
+      selected = (selected == 0) ? locales_entries.size() - 1 : selected - 1;
+      SelectAndShowBackgroundText(locales_entries, selected);
+    } else if (key == KEY_DOWN || key == KEY_VOLUMEDOWN) {
+      selected = (selected == locales_entries.size() - 1) ? 0 : selected + 1;
+      SelectAndShowBackgroundText(locales_entries, selected);
+    }
+  }
+
+  SetLocale(saved_locale);
 }
 
 int ScreenRecoveryUI::DrawHorizontalRule(int y) const {
