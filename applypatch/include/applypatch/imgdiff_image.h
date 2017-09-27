@@ -132,6 +132,9 @@ class PatchChunk {
   // Update the source start with the new offset within the source range.
   void UpdateSourceOffset(const SortedRangeSet& src_range);
 
+  // Return the total size (header + data) of the patch.
+  size_t PatchSize() const;
+
   static bool WritePatchDataToFd(const std::vector<PatchChunk>& patch_chunks, int patch_fd);
 
  private:
@@ -241,7 +244,8 @@ class ZipModeImage : public Image {
   static bool GeneratePatches(const std::vector<ZipModeImage>& split_tgt_images,
                               const std::vector<ZipModeImage>& split_src_images,
                               const std::vector<SortedRangeSet>& split_src_ranges,
-                              const std::string& patch_name, const std::string& debug_dir);
+                              const std::string& patch_name, const std::string& split_info_file,
+                              const std::string& debug_dir);
 
   // Split the tgt chunks and src chunks based on the size limit.
   static bool SplitZipModeImageWithLimit(const ZipModeImage& tgt_image,
