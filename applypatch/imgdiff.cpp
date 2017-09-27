@@ -15,53 +15,44 @@
  */
 
 /*
- * This program constructs binary patches for images -- such as boot.img
- * and recovery.img -- that consist primarily of large chunks of gzipped
- * data interspersed with uncompressed data.  Doing a naive bsdiff of
- * these files is not useful because small changes in the data lead to
- * large changes in the compressed bitstream; bsdiff patches of gzipped
- * data are typically as large as the data itself.
+ * This program constructs binary patches for images -- such as boot.img and recovery.img -- that
+ * consist primarily of large chunks of gzipped data interspersed with uncompressed data.  Doing a
+ * naive bsdiff of these files is not useful because small changes in the data lead to large
+ * changes in the compressed bitstream; bsdiff patches of gzipped data are typically as large as
+ * the data itself.
  *
- * To patch these usefully, we break the source and target images up into
- * chunks of two types: "normal" and "gzip".  Normal chunks are simply
- * patched using a plain bsdiff.  Gzip chunks are first expanded, then a
- * bsdiff is applied to the uncompressed data, then the patched data is
- * gzipped using the same encoder parameters.  Patched chunks are
- * concatenated together to create the output file; the output image
- * should be *exactly* the same series of bytes as the target image used
- * originally to generate the patch.
+ * To patch these usefully, we break the source and target images up into chunks of two types:
+ * "normal" and "gzip".  Normal chunks are simply patched using a plain bsdiff.  Gzip chunks are
+ * first expanded, then a bsdiff is applied to the uncompressed data, then the patched data is
+ * gzipped using the same encoder parameters.  Patched chunks are concatenated together to create
+ * the output file; the output image should be *exactly* the same series of bytes as the target
+ * image used originally to generate the patch.
  *
- * To work well with this tool, the gzipped sections of the target
- * image must have been generated using the same deflate encoder that
- * is available in applypatch, namely, the one in the zlib library.
- * In practice this means that images should be compressed using the
- * "minigzip" tool included in the zlib distribution, not the GNU gzip
- * program.
+ * To work well with this tool, the gzipped sections of the target image must have been generated
+ * using the same deflate encoder that is available in applypatch, namely, the one in the zlib
+ * library.  In practice this means that images should be compressed using the "minigzip" tool
+ * included in the zlib distribution, not the GNU gzip program.
  *
- * An "imgdiff" patch consists of a header describing the chunk structure
- * of the file and any encoding parameters needed for the gzipped
- * chunks, followed by N bsdiff patches, one per chunk.
+ * An "imgdiff" patch consists of a header describing the chunk structure of the file and any
+ * encoding parameters needed for the gzipped chunks, followed by N bsdiff patches, one per chunk.
  *
- * For a diff to be generated, the source and target images must have the
- * same "chunk" structure: that is, the same number of gzipped and normal
- * chunks in the same order.  Android boot and recovery images currently
- * consist of five chunks:  a small normal header, a gzipped kernel, a
- * small normal section, a gzipped ramdisk, and finally a small normal
- * footer.
+ * For a diff to be generated, the source and target must be in well-formed zip archive format;
+ * or they are image files with the same "chunk" structure: that is, the same number of gzipped and
+ * normal chunks in the same order.  Android boot and recovery images currently consist of five
+ * chunks: a small normal header, a gzipped kernel, a small normal section, a gzipped ramdisk, and
+ * finally a small normal footer.
  *
- * Caveats:  we locate gzipped sections within the source and target
- * images by searching for the byte sequence 1f8b0800:  1f8b is the gzip
- * magic number; 08 specifies the "deflate" encoding [the only encoding
- * supported by the gzip standard]; and 00 is the flags byte.  We do not
- * currently support any extra header fields (which would be indicated by
- * a nonzero flags byte).  We also don't handle the case when that byte
- * sequence appears spuriously in the file.  (Note that it would have to
- * occur spuriously within a normal chunk to be a problem.)
+ * Caveats:  we locate gzipped sections within the source and target images by searching for the
+ * byte sequence 1f8b0800:  1f8b is the gzip magic number; 08 specifies the "deflate" encoding
+ * [the only encoding supported by the gzip standard]; and 00 is the flags byte.  We do not
+ * currently support any extra header fields (which would be indicated by a nonzero flags byte).
+ * We also don't handle the case when that byte sequence appears spuriously in the file.  (Note
+ * that it would have to occur spuriously within a normal chunk to be a problem.)
  *
  *
  * The imgdiff patch header looks like this:
  *
- *    "IMGDIFF1"                  (8)   [magic number and version]
+ *    "IMGDIFF2"                  (8)   [magic number and version]
  *    chunk count                 (4)
  *    for each chunk:
  *        chunk type              (4)   [CHUNK_{NORMAL, GZIP, DEFLATE, RAW}]
@@ -98,27 +89,55 @@
  *           target len           (4)
  *           data                 (target len)
  *
- * All integers are little-endian.  "source start" and "source len"
- * specify the section of the input image that comprises this chunk,
- * including the gzip header and footer for gzip chunks.  "source
- * expanded len" is the size of the uncompressed source data.  "target
- * expected len" is the size of the uncompressed data after applying
- * the bsdiff patch.  The next five parameters specify the zlib
- * parameters to be used when compressing the patched data, and the
- * next three specify the header and footer to be wrapped around the
- * compressed data to create the output chunk (so that header contents
- * like the timestamp are recreated exactly).
+ * All integers are little-endian.  "source start" and "source len" specify the section of the
+ * input image that comprises this chunk, including the gzip header and footer for gzip chunks.
+ * "source expanded len" is the size of the uncompressed source data.  "target expected len" is the
+ * size of the uncompressed data after applying the bsdiff patch.  The next five parameters
+ * specify the zlib parameters to be used when compressing the patched data, and the next three
+ * specify the header and footer to be wrapped around the compressed data to create the output
+ * chunk (so that header contents like the timestamp are recreated exactly).
  *
- * After the header there are 'chunk count' bsdiff patches; the offset
- * of each from the beginning of the file is specified in the header.
+ * After the header there are 'chunk count' bsdiff patches; the offset of each from the beginning
+ * of the file is specified in the header.
  *
- * This tool can take an optional file of "bonus data".  This is an
- * extra file of data that is appended to chunk #1 after it is
- * compressed (it must be a CHUNK_DEFLATE chunk).  The same file must
- * be available (and passed to applypatch with -b) when applying the
- * patch.  This is used to reduce the size of recovery-from-boot
- * patches by combining the boot image with recovery ramdisk
+ * This tool can take an optional file of "bonus data".  This is an extra file of data that is
+ * appended to chunk #1 after it is compressed (it must be a CHUNK_DEFLATE chunk).  The same file
+ * must be available (and passed to applypatch with -b) when applying the patch.  This is used to
+ * reduce the size of recovery-from-boot patches by combining the boot image with recovery ramdisk
  * information that is stored on the system partition.
+ *
+ * When generating the patch between two zip files, this tool has an option "--block-limit" to
+ * split the large source/target files into several pair of pieces, with each piece has at most
+ * *limit* blocks.  When this option is used, we also need to output the split info into the file
+ * path specified by "--split-info".
+ *
+ * Format of split info file:
+ *   2                                      [version of imgdiff]
+ *   n                                      [count of split pieces]
+ *   <patch_size>, <tgt_size>, <src_range>  [size and ranges for split piece#1]
+ *   ...
+ *   <patch_size>, <tgt_size>, <src_range>  [size and ranges for split piece#n]
+ *
+ * To split a pair of large zip files, we walk through the chunks in target zip and search by its
+ * entry_name in the source zip.  If the entry_name is non-empty and a matching entry in source
+ * is found, we'll add the source entry to the current split source image; otherwise we'll skip
+ * this chunk and later do bsdiff between all the skipped trunks and the whole split source image.
+ * We move on to the next pair of pieces if the size of the split source image reaches the block
+ * limit.
+ *
+ * After the split, the target pieces are continuous and block aligned, while the source pieces
+ * are mutually exclusive.  Some of the source blocks may not be used if there's no matching
+ * entry_name in the target; as a result, they won't be included in any of these split source
+ * images.  Then we will generate patches accordingly between each split image pairs; in particular,
+ * the unmatched trunks in the split target will diff against the entire split source image.
+ *
+ * For example:
+ * Input: [src_image, tgt_image]
+ * Split: [src-0, tgt-0; src-1, tgt-1, src-2, tgt-2]
+ * Diff:  [  patch-0;      patch-1;      patch-2]
+ *
+ * Patch: [(src-0, patch-0) = tgt-0; (src-1, patch-1) = tgt-1; (src-2, patch-2) = tgt-2]
+ * Concatenate: [tgt-0 + tgt-1 + tgt-2 = tgt_image]
  */
 
 #include "applypatch/imgdiff.h"
@@ -150,6 +169,11 @@
 #include "rangeset.h"
 
 using android::base::get_unaligned;
+
+static constexpr size_t VERSION = 2;
+
+// We assume the header "IMGDIFF#" is 8 bytes.
+static_assert(VERSION <= 9, "VERSION occupies more than one byte.");
 
 static constexpr size_t BLOCK_SIZE = 4096;
 static constexpr size_t BUFFER_SIZE = 0x8000;
@@ -224,6 +248,7 @@ static const struct option OPTIONS[] = {
   { "bonus-file", required_argument, nullptr, 'b' },
   { "block-limit", required_argument, nullptr, 0 },
   { "debug-dir", required_argument, nullptr, 0 },
+  { "split-info", required_argument, nullptr, 0 },
   { nullptr, 0, nullptr, 0 },
 };
 
@@ -497,6 +522,13 @@ size_t PatchChunk::WriteHeaderToFd(int fd, size_t offset) const {
   }
 }
 
+size_t PatchChunk::PatchSize() const {
+  if (type_ == CHUNK_RAW) {
+    return GetHeaderSize();
+  }
+  return GetHeaderSize() + data_.size();
+}
+
 // Write the contents of |patch_chunks| to |patch_fd|.
 bool PatchChunk::WritePatchDataToFd(const std::vector<PatchChunk>& patch_chunks, int patch_fd) {
   // Figure out how big the imgdiff file header is going to be, so that we can correctly compute
@@ -509,8 +541,8 @@ bool PatchChunk::WritePatchDataToFd(const std::vector<PatchChunk>& patch_chunks,
   size_t offset = total_header_size;
 
   // Write out the headers.
-  if (!android::base::WriteStringToFd("IMGDIFF2", patch_fd)) {
-    printf("failed to write \"IMGDIFF2\": %s\n", strerror(errno));
+  if (!android::base::WriteStringToFd("IMGDIFF" + std::to_string(VERSION), patch_fd)) {
+    printf("failed to write \"IMGDIFF%zu\": %s\n", VERSION, strerror(errno));
     return false;
   }
 
@@ -1107,7 +1139,9 @@ bool ZipModeImage::GeneratePatches(const ZipModeImage& tgt_image, const ZipModeI
 bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_images,
                                    const std::vector<ZipModeImage>& split_src_images,
                                    const std::vector<SortedRangeSet>& split_src_ranges,
-                                   const std::string& patch_name, const std::string& debug_dir) {
+                                   const std::string& patch_name,
+                                   const std::string& split_info_file,
+                                   const std::string& debug_dir) {
   printf("Construct patches for %zu split images...\n", split_tgt_images.size());
 
   android::base::unique_fd patch_fd(
@@ -1117,6 +1151,7 @@ bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_im
     return false;
   }
 
+  std::vector<std::string> split_info_list;
   for (size_t i = 0; i < split_tgt_images.size(); i++) {
     std::vector<PatchChunk> patch_chunks;
     if (!ZipModeImage::GeneratePatchesInternal(split_tgt_images[i], split_src_images[i],
@@ -1125,13 +1160,22 @@ bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_im
       return false;
     }
 
+    size_t total_patch_size = 12;
     for (auto& p : patch_chunks) {
       p.UpdateSourceOffset(split_src_ranges[i]);
+      total_patch_size += p.PatchSize();
     }
 
     if (!PatchChunk::WritePatchDataToFd(patch_chunks, patch_fd)) {
       return false;
     }
+
+    size_t split_tgt_size = split_tgt_images[i].chunks_.back().GetStartOffset() +
+                            split_tgt_images[i].chunks_.back().GetRawDataLength() -
+                            split_tgt_images[i].chunks_.front().GetStartOffset();
+    std::string split_info = android::base::StringPrintf(
+        "%zu %zu %s", total_patch_size, split_tgt_size, split_src_ranges[i].ToString().c_str());
+    split_info_list.push_back(split_info);
 
     // Write the split source & patch into the debug directory.
     if (!debug_dir.empty()) {
@@ -1161,6 +1205,21 @@ bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_im
       }
     }
   }
+
+  // Store the split in the following format:
+  // Line 0:   imgdiff version#
+  // Line 1:   number of pieces
+  // Line 2:   patch_size_1 tgt_size_1 src_range_1
+  // ...
+  // Line n+1: patch_size_n tgt_size_n src_range_n
+  std::string split_info_string = android::base::StringPrintf(
+      "%zu\n%zu\n", VERSION, split_info_list.size()) + android::base::Join(split_info_list, '\n');
+  if (!android::base::WriteStringToFile(split_info_string, split_info_file)) {
+    printf("failed to write split info to \"%s\": %s\n", split_info_file.c_str(),
+           strerror(errno));
+    return false;
+  }
+
   return true;
 }
 
@@ -1396,6 +1455,7 @@ int imgdiff(int argc, const char** argv) {
   bool zip_mode = false;
   std::vector<uint8_t> bonus_data;
   size_t blocks_limit = 0;
+  std::string split_info_file;
   std::string debug_dir;
 
   int opt;
@@ -1432,6 +1492,8 @@ int imgdiff(int argc, const char** argv) {
         if (name == "block-limit" && !android::base::ParseUint(optarg, &blocks_limit)) {
           printf("failed to parse size blocks_limit: %s\n", optarg);
           return 1;
+        } else if (name == "split-info") {
+          split_info_file = optarg;
         } else if (name == "debug-dir") {
           debug_dir = optarg;
         }
@@ -1451,6 +1513,8 @@ int imgdiff(int argc, const char** argv) {
         "  --block-limit,    For large zips, split the src and tgt based on the block limit;\n"
         "                    and generate patches between each pair of pieces. Concatenate these\n"
         "                    patches together and output them into <patch-file>.\n"
+        "  --split-info,     Output the split information (patch_size, tgt_size, src_ranges);\n"
+        "                    zip mode with block-limit only.\n"
         "  --debug_dir,      Debug directory to put the split srcs and patches, zip mode only.\n");
     return 2;
   }
@@ -1476,6 +1540,11 @@ int imgdiff(int argc, const char** argv) {
     // Compute bsdiff patches for each chunk's data (the uncompressed data, in the case of
     // deflate chunks).
     if (blocks_limit > 0) {
+      if (split_info_file.empty()) {
+        printf("split-info path cannot be empty when generating patches with a block-limit.\n");
+        return 1;
+      }
+
       std::vector<ZipModeImage> split_tgt_images;
       std::vector<ZipModeImage> split_src_images;
       std::vector<SortedRangeSet> split_src_ranges;
@@ -1483,7 +1552,7 @@ int imgdiff(int argc, const char** argv) {
                                                &split_src_images, &split_src_ranges);
 
       if (!ZipModeImage::GeneratePatches(split_tgt_images, split_src_images, split_src_ranges,
-                                         argv[optind + 2], debug_dir)) {
+                                         argv[optind + 2], split_info_file, debug_dir)) {
         return 1;
       }
 

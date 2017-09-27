@@ -778,11 +778,13 @@ TEST(ImgdiffTest, zip_mode_store_large_apk) {
 
   // Compute patch.
   TemporaryFile patch_file;
+  TemporaryFile split_info_file;
   TemporaryDir debug_dir;
+  std::string split_info_arg = android::base::StringPrintf("--split-info=%s", split_info_file.path);
   std::string debug_dir_arg = android::base::StringPrintf("--debug-dir=%s", debug_dir.path);
   std::vector<const char*> args = {
-    "imgdiff", "-z", "--block-limit=10", debug_dir_arg.c_str(), src_file.path, tgt_file.path,
-    patch_file.path,
+    "imgdiff", "-z", "--block-limit=10", split_info_arg.c_str(), debug_dir_arg.c_str(),
+    src_file.path, tgt_file.path, patch_file.path,
   };
   ASSERT_EQ(0, imgdiff(args.size(), args.data()));
 
@@ -864,14 +866,40 @@ TEST(ImgdiffTest, zip_mode_deflate_large_apk) {
 
   // Compute patch.
   TemporaryFile patch_file;
+  TemporaryFile split_info_file;
   TemporaryDir debug_dir;
   ASSERT_TRUE(ZipModeImage::GeneratePatches(split_tgt_images, split_src_images, split_src_ranges,
-                                            patch_file.path, debug_dir.path));
+                                            patch_file.path, split_info_file.path, debug_dir.path));
+
+  // Verify the content of split info.
+  // Expect 5 pieces of patch. ["a","b"; "c"; "d-0"; "d-1"; "e"]
+  std::string split_info_string;
+  android::base::ReadFileToString(split_info_file.path, &split_info_string);
+  std::vector<std::string> info_list =
+      android::base::Split(android::base::Trim(split_info_string), "\n");
+
+  ASSERT_EQ(static_cast<size_t>(7), info_list.size());
+  ASSERT_EQ("2", android::base::Trim(info_list[0]));
+  ASSERT_EQ("5", android::base::Trim(info_list[1]));
+
+  std::vector<size_t> patch_size;
+  for (size_t i = 0; i < 5; i++) {
+    struct stat st = {};
+    std::string path = android::base::StringPrintf("%s/patch-%zu", debug_dir.path, i);
+    ASSERT_EQ(0, stat(path.c_str(), &st));
+    patch_size.push_back(st.st_size);
+  }
+
+  ASSERT_EQ(std::to_string(patch_size[0]) + " 36864 2,22,31", android::base::Trim(info_list[2]));
+  ASSERT_EQ(std::to_string(patch_size[1]) + " 32768 2,31,40", android::base::Trim(info_list[3]));
+  ASSERT_EQ(std::to_string(patch_size[2]) + " 40960 2,0,11", android::base::Trim(info_list[4]));
+  ASSERT_EQ(std::to_string(patch_size[3]) + " 40960 2,11,21", android::base::Trim(info_list[5]));
+  ASSERT_EQ(std::to_string(patch_size[4]) + " 8833 4,21,22,40,41",
+            android::base::Trim(info_list[6]));
 
   std::string tgt;
   ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
 
-  // Expect 5 pieces of patch. ["a","b"; "c"; "d-0"; "d-1"; "e"]
   GenerateAndCheckSplitTarget(debug_dir.path, 5, tgt);
 }
 
@@ -901,11 +929,13 @@ TEST(ImgdiffTest, zip_mode_no_match_source) {
 
   // Compute patch.
   TemporaryFile patch_file;
+  TemporaryFile split_info_file;
   TemporaryDir debug_dir;
+  std::string split_info_arg = android::base::StringPrintf("--split-info=%s", split_info_file.path);
   std::string debug_dir_arg = android::base::StringPrintf("--debug-dir=%s", debug_dir.path);
   std::vector<const char*> args = {
-    "imgdiff", "-z", "--block-limit=10", debug_dir_arg.c_str(), src_file.path, tgt_file.path,
-    patch_file.path,
+    "imgdiff", "-z", "--block-limit=10", debug_dir_arg.c_str(), split_info_arg.c_str(),
+    src_file.path, tgt_file.path, patch_file.path,
   };
   ASSERT_EQ(0, imgdiff(args.size(), args.data()));
 
@@ -941,11 +971,13 @@ TEST(ImgdiffTest, zip_mode_large_enough_limit) {
 
   // Compute patch with a limit of 20 blocks.
   TemporaryFile patch_file;
+  TemporaryFile split_info_file;
   TemporaryDir debug_dir;
+  std::string split_info_arg = android::base::StringPrintf("--split-info=%s", split_info_file.path);
   std::string debug_dir_arg = android::base::StringPrintf("--debug-dir=%s", debug_dir.path);
   std::vector<const char*> args = {
-    "imgdiff", "-z", "--block-limit=20", debug_dir_arg.c_str(), src_file.path, tgt_file.path,
-    patch_file.path,
+    "imgdiff", "-z", "--block-limit=20", split_info_arg.c_str(), debug_dir_arg.c_str(),
+    src_file.path, tgt_file.path, patch_file.path,
   };
   ASSERT_EQ(0, imgdiff(args.size(), args.data()));
 
