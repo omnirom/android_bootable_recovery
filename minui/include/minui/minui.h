@@ -21,6 +21,7 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 
 //
 // Graphics.
@@ -128,6 +129,9 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface);
 // these specialized images from Android resources.
 int res_create_localized_alpha_surface(const char* name, const char* locale,
                                        GRSurface** pSurface);
+
+// Return a list of locale strings embedded in |png_name|. Return a empty list in case of failure.
+std::vector<std::string> get_locales_in_png(const std::string& png_name);
 
 // Free a surface allocated by any of the res_create_*_surface()
 // functions.
