@@ -80,6 +80,10 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   void SetColor(UIElement e) const;
 
+  // Check the background text image. Use volume up/down button to cycle through the locales
+  // embedded in the png file, and power button to go back to recovery main menu.
+  void CheckBackgroundTextImages(const std::string& saved_locale);
+
  protected:
   // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
   // rounded corners).
@@ -199,6 +203,10 @@ class ScreenRecoveryUI : public RecoveryUI {
 
  private:
   void SetLocale(const std::string&);
+
+  // Display the background texts for "erasing", "error", "no_command" and "installing" for the
+  // selected locale.
+  void SelectAndShowBackgroundText(const std::vector<std::string>& locales_entries, size_t sel);
 };
 
 #endif  // RECOVERY_UI_H
