@@ -1191,6 +1191,11 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         run_graphics_test();
         break;
 
+      case Device::RUN_LOCALE_TEST: {
+        ScreenRecoveryUI* screen_ui = static_cast<ScreenRecoveryUI*>(ui);
+        screen_ui->CheckBackgroundTextImages(locale);
+        break;
+      }
       case Device::MOUNT_SYSTEM:
         // For a system image built with the root directory (i.e. system_root_image == "true"), we
         // mount it to /system_root, and symlink /system to /system_root/system to make adb shell

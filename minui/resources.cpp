@@ -396,6 +396,41 @@ bool matches_locale(const std::string& prefix, const std::string& locale) {
   return std::regex_match(locale, loc_regex);
 }
 
+std::vector<std::string> get_locales_in_png(const std::string& png_name) {
+  png_structp png_ptr = nullptr;
+  png_infop info_ptr = nullptr;
+  png_uint_32 width, height;
+  png_byte channels;
+
+  int status = open_png(png_name.c_str(), &png_ptr, &info_ptr, &width, &height, &channels);
+  if (status < 0) {
+    printf("Failed to open %s\n", png_name.c_str());
+    return {};
+  }
+  if (channels != 1) {
+    printf("Expect input png to have 1 data channel, this file has %d\n", channels);
+    png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
+    return {};
+  }
+
+  std::vector<std::string> result;
+  std::vector<unsigned char> row(width);
+  for (png_uint_32 y = 0; y < height; ++y) {
+    png_read_row(png_ptr, row.data(), nullptr);
+    int h = (row[3] << 8) | row[2];
+    std::string loc(reinterpret_cast<char*>(&row[5]));
+    if (!loc.empty()) {
+      result.push_back(loc);
+    }
+    for (int i = 0; i < h; ++i, ++y) {
+      png_read_row(png_ptr, row.data(), NULL);
+    }
+  }
+
+  png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
+  return result;
+}
+
 int res_create_localized_alpha_surface(const char* name,
                                        const char* locale,
                                        GRSurface** pSurface) {
