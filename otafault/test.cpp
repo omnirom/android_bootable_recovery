@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "ota_io.h"
+#include "otafault/ota_io.h"
 
 int main(int /* argc */, char** /* argv */) {
     int fd = open("testdata/test.file", O_RDWR);
