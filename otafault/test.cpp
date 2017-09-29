@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "ota_io.h"
