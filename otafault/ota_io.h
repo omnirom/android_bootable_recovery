@@ -23,8 +23,9 @@
 #ifndef _UPDATER_OTA_IO_H_
 #define _UPDATER_OTA_IO_H_
 
+#include <stddef.h>
 #include <stdio.h>
-#include <sys/stat.h>
+#include <sys/stat.h>  // mode_t
 
 #include <memory>
 
