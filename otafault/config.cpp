@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
+#include "config.h"
+
 #include <map>
 #include <string>
-
-#include <stdio.h>
-#include <unistd.h>
 
 #include <android-base/stringprintf.h>
 #include <ziparchive/zip_archive.h>
 
-#include "config.h"
 #include "ota_io.h"
 
 #define OTAIO_MAX_FNAME_SIZE 128
