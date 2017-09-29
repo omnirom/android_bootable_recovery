@@ -143,7 +143,6 @@ LOCAL_STATIC_LIBRARIES := \
     libdivsufsort \
     libdivsufsort64 \
     libfs_mgr \
-    liblog \
     libvintf_recovery \
     libvintf \
     libtinyxml2 \
@@ -154,6 +153,7 @@ LOCAL_STATIC_LIBRARIES := \
     libcrypto \
     libbz \
     libziparchive \
+    liblog \
     libutils \
     libz \
     libbase \
