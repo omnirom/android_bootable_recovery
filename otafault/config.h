@@ -15,13 +15,13 @@
  */
 
 /*
- * Read configuration files in the OTA package to determine which files, if any, will trigger errors.
+ * Read configuration files in the OTA package to determine which files, if any, will trigger
+ * errors.
  *
- * OTA packages can be modified to trigger errors by adding a top-level
- * directory called .libotafault, which may optionally contain up to three
- * files called READ, WRITE, and FSYNC. Each one of these optional files
- * contains the name of a single file on the device disk which will cause
- * an IO error on the first call of the appropriate I/O action to that file.
+ * OTA packages can be modified to trigger errors by adding a top-level directory called
+ * .libotafault, which may optionally contain up to three files called READ, WRITE, and FSYNC.
+ * Each one of these optional files contains the name of a single file on the device disk which
+ * will cause an IO error on the first call of the appropriate I/O action to that file.
  *
  * Example:
  * ota.zip
@@ -29,17 +29,15 @@
  *   .libotafault
  *     WRITE
  *
- * If the contents of the file WRITE were /system/build.prop, the first write
- * action to /system/build.prop would fail with EIO. Note that READ and
- * FSYNC files are absent, so these actions will not cause an error.
+ * If the contents of the file WRITE were /system/build.prop, the first write action to
+ * /system/build.prop would fail with EIO. Note that READ and FSYNC files are absent, so these
+ * actions will not cause an error.
  */
 
 #ifndef _UPDATER_OTA_IO_CFG_H_
 #define _UPDATER_OTA_IO_CFG_H_
 
 #include <string>
-
-#include <stdbool.h>
 
 #include <ziparchive/zip_archive.h>
 

@@ -18,8 +18,6 @@ include $(CLEAR_VARS)
 
 otafault_static_libs := \
     libziparchive \
-    libz \
-    libselinux \
     libbase \
     liblog
 
