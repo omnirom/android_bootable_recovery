@@ -1,4 +1,5 @@
 subdirs = [
     "bootloader_message",
+    "otafault",
     "otautil",
 ]
