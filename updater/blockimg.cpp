@@ -51,7 +51,7 @@
 
 #include "edify/expr.h"
 #include "error_code.h"
-#include "ota_io.h"
+#include "otafault/ota_io.h"
 #include "print_sha1.h"
 #include "rangeset.h"
 #include "updater/install.h"

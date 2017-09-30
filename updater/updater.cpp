@@ -30,8 +30,8 @@
 #include <selinux/selinux.h>
 #include <ziparchive/zip_archive.h>
 
-#include "config.h"
 #include "edify/expr.h"
+#include "otafault/config.h"
 #include "otautil/DirUtil.h"
 #include "otautil/SysUtil.h"
 #include "updater/blockimg.h"
