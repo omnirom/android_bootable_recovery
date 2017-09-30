@@ -112,11 +112,13 @@ LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_STATIC_LIBRARIES := \
     libapplypatch_modes \
     libapplypatch \
-    libbase \
     libedify \
     libotafault \
-    libcrypto \
     libbspatch \
+    libbase \
+    libziparchive \
+    liblog \
+    libcrypto \
     libbz
 LOCAL_SHARED_LIBRARIES := \
     libbase \

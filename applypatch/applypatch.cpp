@@ -39,7 +39,7 @@
 #include <openssl/sha.h>
 
 #include "edify/expr.h"
-#include "ota_io.h"
+#include "otafault/ota_io.h"
 #include "print_sha1.h"
 
 static int LoadPartitionContents(const std::string& filename, FileContents* file);

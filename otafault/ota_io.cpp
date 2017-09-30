@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-#include "ota_io.h"
+#include "otafault/ota_io.h"
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <map>
-#include <memory>
 #include <mutex>
 
 #include <android-base/thread_annotations.h>
-#include "config.h"
+
+#include "otafault/config.h"
 
 static std::mutex filename_mutex;
 static std::map<intptr_t, const char*> filename_cache GUARDED_BY(filename_mutex);

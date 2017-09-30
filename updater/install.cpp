@@ -59,7 +59,7 @@
 #include "edify/expr.h"
 #include "error_code.h"
 #include "mounts.h"
-#include "ota_io.h"
+#include "otafault/ota_io.h"
 #include "otautil/DirUtil.h"
 #include "print_sha1.h"
 #include "tune2fs.h"
