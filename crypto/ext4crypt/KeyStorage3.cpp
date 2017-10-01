@@ -84,6 +84,18 @@ static const char* kFn_secdiscardable = "secdiscardable";
 static const char* kFn_stretching = "stretching";
 static const char* kFn_version = "version";
 
+#include <stdio.h>
+void printhex(const char *name, const char *s) {
+	char hex[(strlen(s) * 2) + 1];
+	char *h = hex;
+	const char *p = s;
+	while (*p) {
+		sprintf(h, "%02X", (unsigned int) *p++);
+		h += 2;
+	}
+	LOG(ERROR) << name << ": " << hex << "\n";
+}
+
 static bool checkSize(const std::string& kind, size_t actual, size_t expected) {
     if (actual != expected) {
         LOG(ERROR) << "Wrong number of bytes in " << kind << ", expected " << expected << " got "
@@ -443,6 +455,7 @@ static bool decryptWithoutKeymaster(const std::string& preKey,
 }*/
 
 bool retrieveKey(const std::string& dir, const KeyAuthentication& auth, std::string* key) {
+	printhex("secret", auth.secret.c_str());
     std::string version;
     if (!readFileToString(dir + "/" + kFn_version, &version)) return false;
     if (version != kCurrentVersion) {
