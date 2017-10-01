@@ -274,12 +274,14 @@ int main(int argc, char **argv) {
 	TWFunc::Update_Log_File();
 	// Offer to decrypt if the device is encrypted
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
-		LOGINFO("Is encrypted, do decrypt page first\n");
-		if (gui_startPage("decrypt", 1, 1) != 0) {
-			LOGERR("Failed to start decrypt GUI page.\n");
-		} else {
-			// Check for and load custom theme if present
-			gui_loadCustomResources();
+		if (!TWFunc::Path_Exists("/data/system_de/0/spblob")) {
+			LOGINFO("Is encrypted, do decrypt page first\n");
+			if (gui_startPage("decrypt", 1, 1) != 0) {
+				LOGERR("Failed to start decrypt GUI page.\n");
+			} else {
+				// Check for and load custom theme if present
+				gui_loadCustomResources();
+			}
 		}
 	} else if (datamedia) {
 		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {

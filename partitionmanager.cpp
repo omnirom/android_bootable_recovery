@@ -189,7 +189,10 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 					gui_msg("decrypt_success=Successfully decrypted with default password.");
 					DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 				} else {
-					gui_err("unable_to_decrypt=Unable to decrypt with default password.");
+					if (TWFunc::Path_Exists("/data/system_de/0/spblob"))
+						LOGERR("TWRP cannot decrypt this type of encryption yet!\n");
+					else
+						gui_err("unable_to_decrypt=Unable to decrypt with default password.");
 				}
 			}
 		} else {
