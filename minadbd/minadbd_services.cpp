@@ -21,6 +21,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <string>
+#include <thread>
+
 #include "adb.h"
 #include "fdevent.h"
 #include "fuse_adb_provider.h"
@@ -40,15 +43,26 @@ void service_bootstrap_func(void* x) {
     free(sti);
 }
 
+#if PLATFORM_SDK_VERSION < 26
 static void sideload_host_service(int sfd, void* data) {
     char* args = reinterpret_cast<char*>(data);
+#else
+static void sideload_host_service(int sfd, const std::string& args) {
+#endif
     int file_size;
     int block_size;
+#if PLATFORM_SDK_VERSION < 26
     if (sscanf(args, "%d:%d", &file_size, &block_size) != 2) {
         printf("bad sideload-host arguments: %s\n", args);
+#else
+    if (sscanf(args.c_str(), "%d:%d", &file_size, &block_size) != 2) {
+        printf("bad sideload-host arguments: %s\n", args.c_str());
+#endif
         exit(1);
     }
+#if PLATFORM_SDK_VERSION < 26
     free(args);
+#endif
 
     printf("sideload-host file size %d block size %d\n", file_size, block_size);
 
@@ -59,6 +73,7 @@ static void sideload_host_service(int sfd, void* data) {
     exit(result == 0 ? 0 : 1);
 }
 
+#if PLATFORM_SDK_VERSION < 26
 static int create_service_thread(void (*func)(int, void *), void *cookie) {
     int s[2];
     if (adb_socketpair(s)) {
@@ -88,6 +103,20 @@ static int create_service_thread(void (*func)(int, void *), void *cookie) {
     //VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
     return s[0];
 }
+#else
+static int create_service_thread(void (*func)(int, const std::string&), const std::string& args) {
+    int s[2];
+    if (adb_socketpair(s)) {
+        printf("cannot create service socket pair\n");
+        return -1;
+    }
+
+    std::thread([s, func, args]() { func(s[1], args); }).detach();
+
+    //VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
+    return s[0];
+}
+#endif
 
 int service_to_fd(const char* name, const atransport* transport) {
     int ret = -1;
@@ -98,7 +127,11 @@ int service_to_fd(const char* name, const atransport* transport) {
         // sideload-host).
         exit(3);
     } else if (!strncmp(name, "sideload-host:", 14)) {
+#if PLATFORM_SDK_VERSION < 26
         char* arg = strdup(name + 14);
+#else
+        std::string arg(name + 14);
+#endif
         ret = create_service_thread(sideload_host_service, arg);
     }
     if (ret >= 0) {

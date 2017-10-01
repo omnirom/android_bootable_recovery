@@ -21,8 +21,7 @@
 #include "libtar_listhash.h"
 
 #ifdef HAVE_EXT4_CRYPT
-#define EXT4_KEY_DESCRIPTOR_SIZE 8
-#define EXT4_KEY_DESCRIPTOR_HEX 17
+# include "ext4crypt_tar.h"
 #endif
 
 #ifdef __cplusplus
@@ -70,7 +69,7 @@ struct tar_header
 	char *gnu_longlink;
 	char *selinux_context;
 #ifdef HAVE_EXT4_CRYPT
-	char *e4crypt_policy;
+	struct ext4_encryption_policy *eep;
 #endif
 	int has_cap_data;
 	struct vfs_cap_data cap_data;

@@ -18,6 +18,10 @@
 # include <stdlib.h>
 #endif
 
+#ifdef HAVE_EXT4_CRYPT
+# include "ext4crypt_tar.h"
+#endif
+
 #define BIT_ISSET(bitmask, bit) ((bitmask) & (bit))
 
 // Used to identify selinux_context in extended ('x')
@@ -138,9 +142,8 @@ th_read(TAR *t)
 	if (t->th_buf.selinux_context != NULL)
 		free(t->th_buf.selinux_context);
 #ifdef HAVE_EXT4_CRYPT
-	if (t->th_buf.e4crypt_policy != NULL) {
-		free(t->th_buf.e4crypt_policy);
-	}
+	if (t->th_buf.eep != NULL)
+		free(t->th_buf.eep);
 #endif
 	if (t->th_buf.has_cap_data)
 	{
@@ -345,16 +348,40 @@ th_read(TAR *t)
 			start = strstr(buf, E4CRYPT_TAG);
 			if (start && start+E4CRYPT_TAG_LEN < buf+len)
 			{
+				t->th_buf.eep = (struct ext4_encryption_policy*)malloc(sizeof(struct ext4_encryption_policy));
+				if (!t->th_buf.eep) {
+					printf("malloc ext4_encryption_policy\n");
+					return -1;
+				}
 				start += E4CRYPT_TAG_LEN;
-				char *end = strchr(start, '\n');
-				if(!end)
-					end = strchr(start, '\0');
-				if(end)
+				if (*start == '2')
 				{
-					t->th_buf.e4crypt_policy = strndup(start, end-start);
+					start++;
+					if (start + sizeof(struct ext4_encryption_policy) != '\n')
+						printf("did not find newline char in expected location, continuing anyway...\n");
+					memcpy(t->th_buf.eep, start, sizeof(struct ext4_encryption_policy));
 #ifdef DEBUG
-					printf("    th_read(): E4Crypt policy detected: %s\n", t->th_buf.e4crypt_policy);
+					printf("    th_read(): E4Crypt policy v2 detected: %i %i %i %i %s\n",
+						(int)t->th_buf.eep->version,
+						(int)t->th_buf.eep->contents_encryption_mode,
+						(int)t->th_buf.eep->filenames_encryption_mode,
+						(int)t->th_buf.eep->flags,
+						t->th_buf.eep->master_key_descriptor);
 #endif
+				}
+				else
+				{
+					e4crypt_policy_fill_default_struct(t->th_buf.eep);
+					char *end = strchr(start, '\n');
+					if(!end)
+						end = strchr(start, '\0');
+					if(end)
+					{
+						strncpy(t->th_buf.eep->master_key_descriptor, start, end-start);
+#ifdef DEBUG
+						printf("    th_read(): E4Crypt policy v1 detected: %s\n", t->th_buf.eep->master_key_descriptor);
+#endif
+					}
 				}
 			}
 #endif // HAVE_EXT4_CRYPT
@@ -557,22 +584,22 @@ th_write(TAR *t)
 	}
 
 #ifdef HAVE_EXT4_CRYPT
-	if((t->options & TAR_STORE_EXT4_POL) && t->th_buf.e4crypt_policy != NULL)
+	if((t->options & TAR_STORE_EXT4_POL) && t->th_buf.eep != NULL)
 	{
 #ifdef DEBUG
 		printf("th_write(): using e4crypt_policy %s\n",
-		       t->th_buf.e4crypt_policy);
+		       t->th_buf.eep->master_key_descriptor);
 #endif
-		/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *content* *newline* */
+		/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *version code* *content* *newline* */
 		//                                                       size   newline
-		sz = E4CRYPT_TAG_LEN + strlen(t->th_buf.e4crypt_policy) + 3  +    1;
+		sz = E4CRYPT_TAG_LEN + sizeof(struct ext4_encryption_policy) + 1 + 3  +    1;
 
 		if(sz >= 100) // another ascci digit for size
 			++sz;
 
 		if (total_sz + sz >= T_BLOCKSIZE)
 		{
-			if (th_write_extended(t, &buf, total_sz))
+			if (th_write_extended(t, &buf[0], total_sz))
 				return -1;
 			ptr = buf;
 			total_sz = sz;
@@ -580,7 +607,8 @@ th_write(TAR *t)
 		else
 			total_sz += sz;
 
-		snprintf(ptr, T_BLOCKSIZE, "%d "E4CRYPT_TAG"%s", (int)sz, t->th_buf.e4crypt_policy);
+		snprintf(ptr, T_BLOCKSIZE, "%d "E4CRYPT_TAG"2", (int)sz);
+		memcpy(ptr + sz - sizeof(struct ext4_encryption_policy) - 1, t->th_buf.eep, sizeof(struct ext4_encryption_policy));
 		char *nlptr = ptr + sz - 1;
 		*nlptr = '\n';
 		ptr += sz;
@@ -599,7 +627,7 @@ th_write(TAR *t)
 
 		if (total_sz + sz >= T_BLOCKSIZE)
 		{
-			if (th_write_extended(t, &buf, total_sz))
+			if (th_write_extended(t, &buf[0], total_sz))
 				return -1;
 			ptr = buf;
 			total_sz = sz;
@@ -623,7 +651,7 @@ th_write(TAR *t)
 
 			if (total_sz + sz >= T_BLOCKSIZE)
 			{
-				if (th_write_extended(t, &buf, total_sz))
+				if (th_write_extended(t, &buf[0], total_sz))
 					return -1;
 				ptr = buf;
 				total_sz = sz;
@@ -644,7 +672,7 @@ th_write(TAR *t)
 
 			if (total_sz + sz >= T_BLOCKSIZE)
 			{
-				if (th_write_extended(t, &buf, total_sz))
+				if (th_write_extended(t, &buf[0], total_sz))
 					return -1;
 				ptr = buf;
 				total_sz = sz;
@@ -665,7 +693,7 @@ th_write(TAR *t)
 
 			if (total_sz + sz >= T_BLOCKSIZE)
 			{
-				if (th_write_extended(t, &buf, total_sz))
+				if (th_write_extended(t, &buf[0], total_sz))
 					return -1;
 				ptr = buf;
 				total_sz = sz;
@@ -679,7 +707,7 @@ th_write(TAR *t)
 			ptr += sz;
 		}
 	}
-	if (total_sz > 0 && th_write_extended(t, &buf, total_sz)) // write any outstanding tar extended header
+	if (total_sz > 0 && th_write_extended(t, &buf[0], total_sz)) // write any outstanding tar extended header
 		return -1;
 
 	th_finish(t);

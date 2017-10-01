@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <libgen.h>
+#include <sys/sysmacros.h>
 
 #include "c.h"
 #include "at.h"

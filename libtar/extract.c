@@ -549,22 +549,23 @@ tar_extract_dir(TAR *t, const char *realname)
 	}
 
 #ifdef HAVE_EXT4_CRYPT
-	if(t->th_buf.e4crypt_policy != NULL)
+	if(t->th_buf.eep != NULL)
 	{
 #ifdef DEBUG
-		printf("tar_extract_file(): restoring EXT4 crypt policy %s to dir %s\n", t->th_buf.e4crypt_policy, realname);
+		printf("tar_extract_file(): restoring EXT4 crypt policy %s to dir %s\n", t->th_buf.eep->master_key_descriptor, realname);
 #endif
 		char binary_policy[EXT4_KEY_DESCRIPTOR_SIZE];
-		if (!lookup_ref_tar(t->th_buf.e4crypt_policy, &binary_policy)) {
-			printf("error looking up proper e4crypt policy for '%s' - %s\n", realname, t->th_buf.e4crypt_policy);
+		if (!lookup_ref_tar(t->th_buf.eep->master_key_descriptor, &binary_policy[0])) {
+			printf("error looking up proper e4crypt policy for '%s' - %s\n", realname, t->th_buf.eep->master_key_descriptor);
 			return -1;
 		}
-		char policy_hex[EXT4_KEY_DESCRIPTOR_HEX];
+		char policy_hex[EXT4_KEY_DESCRIPTOR_SIZE_HEX];
 		policy_to_hex(binary_policy, policy_hex);
-		printf("restoring policy %s > '%s' to '%s'\n", t->th_buf.e4crypt_policy, policy_hex, realname);
-		if (!e4crypt_policy_set(realname, binary_policy, EXT4_KEY_DESCRIPTOR_SIZE, 0))
+		printf("restoring policy %s > '%s' to '%s'\n", t->th_buf.eep->master_key_descriptor, policy_hex, realname);
+		memcpy(&t->th_buf.eep->master_key_descriptor, binary_policy, EXT4_KEY_DESCRIPTOR_SIZE);
+		if (!e4crypt_policy_set_struct(realname, t->th_buf.eep))
 		{
-			printf("tar_extract_file(): failed to restore EXT4 crypt policy %s to dir '%s' '%s'!!!\n", t->th_buf.e4crypt_policy, realname, policy_hex);
+			printf("tar_extract_file(): failed to restore EXT4 crypt policy to dir '%s' '%s'!!!\n", realname, policy_hex);
 			//return -1; // This may not be an error in some cases, so log and ignore
 		}
 	}

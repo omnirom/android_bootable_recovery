@@ -22,6 +22,7 @@
  */
 
 #include "ext4_crypt.h"
+#include "ext4crypt_tar.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -41,28 +42,12 @@
 #define XATTR_NAME_ENCRYPTION_POLICY "encryption.policy"
 #define EXT4_KEYREF_DELIMITER ((char)'.')
 
-// ext4enc:TODO Include structure from somewhere sensible
-// MUST be in sync with ext4_crypto.c in kernel
-#define EXT4_KEY_DESCRIPTOR_SIZE 8
-#define EXT4_KEY_DESCRIPTOR_SIZE_HEX 17
-
-struct ext4_encryption_policy {
-    char version;
-    char contents_encryption_mode;
-    char filenames_encryption_mode;
-    char flags;
-    char master_key_descriptor[EXT4_KEY_DESCRIPTOR_SIZE];
-} __attribute__((__packed__));
-
 #define EXT4_ENCRYPTION_MODE_AES_256_XTS    1
 #define EXT4_ENCRYPTION_MODE_AES_256_CTS    4
+#define EXT4_ENCRYPTION_MODE_AES_256_HEH    126
 #define EXT4_ENCRYPTION_MODE_PRIVATE        127
 
 static int encryption_mode = EXT4_ENCRYPTION_MODE_PRIVATE;
-
-// ext4enc:TODO Get value from somewhere sensible
-#define EXT4_IOC_SET_ENCRYPTION_POLICY _IOR('f', 19, struct ext4_encryption_policy)
-#define EXT4_IOC_GET_ENCRYPTION_POLICY _IOW('f', 21, struct ext4_encryption_policy)
 
 #define HEX_LOOKUP "0123456789abcdef"
 
@@ -143,6 +128,48 @@ extern "C" bool e4crypt_policy_get(const char *directory, char *policy,
     }
     memcpy(policy, eep.master_key_descriptor, EXT4_KEY_DESCRIPTOR_SIZE);
 
+    return true;
+}
+
+extern "C" void e4crypt_policy_fill_default_struct(ext4_encryption_policy *eep) {
+	eep->version = 0;
+    eep->contents_encryption_mode = encryption_mode;
+    eep->filenames_encryption_mode = EXT4_ENCRYPTION_MODE_AES_256_CTS;
+    eep->flags = 0;
+    memset((void*)&eep->master_key_descriptor[0], 0, EXT4_KEY_DESCRIPTOR_SIZE);
+}
+
+extern "C" bool e4crypt_policy_set_struct(const char *directory, const ext4_encryption_policy *eep) {
+    int fd = open(directory, O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (fd == -1) {
+		printf("failed to open %s\n", directory);
+        PLOG(ERROR) << "Failed to open directory " << directory;
+        return false;
+    }
+    if (ioctl(fd, EXT4_IOC_SET_ENCRYPTION_POLICY, eep)) {
+		printf("failed to set policy for '%s'\n", directory);
+        PLOG(ERROR) << "Failed to set encryption policy for " << directory;
+        close(fd);
+        return false;
+    }
+    close(fd);
+    return true;
+}
+
+extern "C" bool e4crypt_policy_get_struct(const char *directory, ext4_encryption_policy *eep) {
+    int fd = open(directory, O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (fd == -1) {
+        printf("Failed to open '%s'\n", directory);
+        PLOG(ERROR) << "Failed to open directory " << directory;
+        return false;
+    }
+    memset(eep, 0, sizeof(ext4_encryption_policy));
+    if (ioctl(fd, EXT4_IOC_GET_ENCRYPTION_POLICY, eep) != 0) {
+        PLOG(ERROR) << "Failed to get encryption policy for " << directory;
+        close(fd);
+        return false;
+    }
+    close(fd);
     return true;
 }
 
