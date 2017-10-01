@@ -17,7 +17,11 @@
 #include "Ext4Crypt.h"
 #include "Decrypt.h"
 
+#ifdef USE_KEYSTORAGE_3
+#include "KeyStorage3.h"
+#else
 #include "KeyStorage.h"
+#endif
 #include "Utils.h"
 
 #include <algorithm>
