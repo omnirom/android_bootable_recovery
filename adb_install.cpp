@@ -64,9 +64,48 @@ static void set_usb_driver(bool enabled) {
     }
 }
 
+// On Android 8.0 for some reason init can't seem to completely stop adbd
+// so we have to kill it too if it doesn't die on its own.
+static void kill_adbd() {
+    DIR* dir = opendir("/proc");
+    if (dir) {
+        struct dirent* de = 0;
+
+        while ((de = readdir(dir)) != 0) {
+            if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+                continue;
+
+            int pid = -1;
+            int ret = sscanf(de->d_name, "%d", &pid);
+
+            if (ret == 1) {
+                char cmdpath[PATH_MAX];
+                sprintf(cmdpath, "/proc/%d/cmdline", pid);
+
+                FILE* file = fopen(cmdpath, "r");
+                size_t task_size = PATH_MAX;
+                char task[PATH_MAX];
+                char* p = task;
+                if (getline(&p, &task_size, file) > 0) {
+                    if (strstr(task, "adbd") != 0) {
+                        printf("adbd pid %d found, sending kill.\n", pid);
+                        kill(pid, SIGINT);
+                        usleep(5000);
+                        kill(pid, SIGKILL);
+                    }
+                }
+                fclose(file);
+            }
+        }
+        closedir(dir);
+    }
+}
+
 static void stop_adbd() {
     printf("Stopping adbd...\n");
     property_set("ctl.stop", "adbd");
+    usleep(5000);
+    kill_adbd();
     set_usb_driver(false);
 }
 

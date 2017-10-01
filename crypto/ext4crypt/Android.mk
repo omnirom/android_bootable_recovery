@@ -17,7 +17,9 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     LOCAL_CFLAGS += -DUSE_KEYSTORAGE_3
     LOCAL_SRC_FILES += Keymaster3.cpp KeyStorage3.cpp
-    LOCAL_SHARED_LIBRARIES += android.hardware.keymaster@3.0 libkeystore_binder libhidlbase libutils
+    LOCAL_SHARED_LIBRARIES += android.hardware.keymaster@3.0 libkeystore_binder libhidlbase libutils libkeyutils libbinder
+    LOCAL_SRC_FILES += Weaver1.cpp
+    LOCAL_SHARED_LIBRARIES += android.hardware.weaver@1.0
 else
     LOCAL_SRC_FILES += Keymaster.cpp KeyStorage.cpp
 endif

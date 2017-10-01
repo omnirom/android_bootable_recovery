@@ -142,9 +142,7 @@ bool Keymaster::deleteKey(const std::string& key) {
 
 bool Keymaster::upgradeKey(const std::string& oldKey, const AuthorizationSet& inParams,
                            std::string* newKey) {
-    LOG(ERROR) << "NOT upgrading key in TWRP";
-    return false;
-    /*auto oldKeyBlob = blob2hidlVec(oldKey);
+    auto oldKeyBlob = blob2hidlVec(oldKey);
     ErrorCode km_error;
     auto hidlCb = [&] (ErrorCode ret, const hidl_vec<uint8_t>& upgradedKeyBlob) {
         km_error = ret;
@@ -162,7 +160,7 @@ bool Keymaster::upgradeKey(const std::string& oldKey, const AuthorizationSet& in
         LOG(ERROR) << "upgrade_key failed, code " << int32_t(km_error);
         return false;
     }
-    return true;*/
+    return true;
 }
 
 KeymasterOperation Keymaster::begin(KeyPurpose purpose, const std::string& key,

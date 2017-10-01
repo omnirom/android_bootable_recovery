@@ -184,7 +184,7 @@ static KeymasterOperation begin(Keymaster& keymaster, const std::string& dir,
         LOG(DEBUG) << "Upgrading key: " << dir;
         std::string newKey;
         if (!keymaster.upgradeKey(kmKey, keyParams, &newKey)) return KeymasterOperation();
-        auto newKeyPath = dir + "/" + kFn_keymaster_key_blob_upgraded;
+        /*auto newKeyPath = dir + "/" + kFn_keymaster_key_blob_upgraded;
         if (!writeStringToFile(newKey, newKeyPath)) return KeymasterOperation();
         if (rename(newKeyPath.c_str(), kmKeyPath.c_str()) != 0) {
             PLOG(ERROR) << "Unable to move upgraded key to location: " << kmKeyPath;
@@ -192,7 +192,7 @@ static KeymasterOperation begin(Keymaster& keymaster, const std::string& dir,
         }
         if (!keymaster.deleteKey(kmKey)) {
             LOG(ERROR) << "Key deletion failed during upgrade, continuing anyway: " << dir;
-        }
+        }*/
         kmKey = newKey;
         LOG(INFO) << "Key upgraded: " << dir;
     }
@@ -230,6 +230,7 @@ static bool decryptWithKeymasterKey(Keymaster& keymaster, const std::string& dir
     auto bodyAndMac = ciphertext.substr(GCM_NONCE_BYTES);
     auto opParams = AuthorizationSetBuilder()
             .Authorization(TAG_NONCE, blob2hidlVec(nonce));
+    LOG(ERROR) << "decrypt with keymaster calling begin\n";
     auto opHandle = begin(keymaster, dir, KeyPurpose::DECRYPT, keyParams, opParams, nullptr);
     if (!opHandle) return false;
     if (!opHandle.updateCompletely(bodyAndMac, message)) return false;
@@ -465,8 +466,10 @@ bool retrieveKey(const std::string& dir, const KeyAuthentication& auth, std::str
         Keymaster keymaster;
         if (!keymaster) return false;
         auto keyParams = beginParams(auth, appId);
+        LOG(ERROR) << "retrieveKey with keymaster\n";
         if (!decryptWithKeymasterKey(keymaster, dir, keyParams, encryptedMessage, key)) return false;
     } else {
+		LOG(ERROR) << "retrieveKey withOUT keymaster\n";
         if (!decryptWithoutKeymaster(appId, encryptedMessage, key)) return false;
     }
     return true;
