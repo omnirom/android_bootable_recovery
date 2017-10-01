@@ -656,7 +656,9 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			//ExcludeAll(Mount_Point + "/user_de");
 			//ExcludeAll(Mount_Point + "/misc/profiles/cur/0"); // might be important later
 			ExcludeAll(Mount_Point + "/misc/gatekeeper");
+			ExcludeAll(Mount_Point + "/misc/keystore");
 			ExcludeAll(Mount_Point + "/drm/kek.dat");
+			ExcludeAll(Mount_Point + "/system_de/0/spblob"); // contains data needed to decrypt pixel 2
 			int retry_count = 3;
 			while (!Decrypt_DE() && --retry_count)
 				usleep(2000);
@@ -668,7 +670,12 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 				DataManager::SetValue(TW_IS_FBE, 1);
 				DataManager::SetValue(TW_IS_ENCRYPTED, 1);
 				string filename;
-				DataManager::SetValue(TW_CRYPTO_PWTYPE, Get_Password_Type(0, filename));
+				int pwd_type = Get_Password_Type(0, filename);
+				if (pwd_type < 0) {
+					LOGERR("This TWRP does not have synthetic password decrypt support\n");
+					pwd_type = 0; // default password
+				}
+				DataManager::SetValue(TW_CRYPTO_PWTYPE, pwd_type);
 				DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
 				DataManager::SetValue("tw_crypto_display", "");
 			}

@@ -30,6 +30,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <assert.h>
 
 #include "twadbstream.h"
 #include "libtwadbbu.hpp"
@@ -50,8 +51,8 @@ bool twadbbu::Check_ADB_Backup_File(std::string fname) {
 	bytes = read(fd, &buf, sizeof(buf));
 	close(fd);
 
-	if (memcpy(&adbbuhdr, buf, sizeof(adbbuhdr)) < 0) {
-		printf("Unable to memcpy: %s.\n", fname.c_str(), strerror(errno));
+	if (memcpy(&adbbuhdr, buf, sizeof(adbbuhdr)) == NULL) {
+		printf("Unable to memcpy: %s (%s).\n", fname.c_str(), strerror(errno));
 		return false;
 	}
 	adbbuhdrcrc = adbbuhdr.crc;
@@ -77,7 +78,7 @@ std::vector<std::string> twadbbu::Get_ADB_Backup_Files(std::string fname) {
 	while (1) {
 		std::string cmdstr;
 		int readbytes;
-		if (readbytes = read(fd, &buf, sizeof(buf)) > 0) {
+		if ((readbytes = read(fd, &buf, sizeof(buf))) > 0) {
 			memcpy(&structcmd, buf, sizeof(structcmd));
 			assert(structcmd.type == TWENDADB || structcmd.type == TWIMG || structcmd.type == TWFN);
 			cmdstr = structcmd.type;

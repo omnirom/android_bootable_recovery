@@ -41,8 +41,12 @@
 
 #include <private/android_filesystem_config.h>
 
-#include "ext4_crypt.h"
+#include <ext4_utils/ext4_crypt.h>
+#ifndef HAVE_LIBKEYUTILS
 #include "key_control.h"
+#else
+#include <keyutils.h>
+#endif
 
 #include <hardware/gatekeeper.h>
 #include "HashPassword.h"
