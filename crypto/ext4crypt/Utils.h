@@ -24,6 +24,14 @@
 #include <vector>
 #include <string>
 
+// DISALLOW_COPY_AND_ASSIGN disallows the copy and operator= functions. It goes in the private:
+// declarations in a class.
+#if !defined(DISALLOW_COPY_AND_ASSIGN)
+#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
+    TypeName(const TypeName&) = delete;  \
+    void operator=(const TypeName&) = delete
+#endif
+
 namespace android {
 namespace vold {
 

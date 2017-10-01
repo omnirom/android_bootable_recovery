@@ -541,7 +541,9 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			//ExcludeAll(Mount_Point + "/user_de");
 			//ExcludeAll(Mount_Point + "/misc/profiles/cur/0"); // might be important later
 			ExcludeAll(Mount_Point + "/misc/gatekeeper");
+			ExcludeAll(Mount_Point + "/misc/keystore");
 			ExcludeAll(Mount_Point + "/drm/kek.dat");
+			ExcludeAll(Mount_Point + "/system_de/0/spblob"); // contains data needed to decrypt pixel 2
 			int retry_count = 3;
 			while (!Decrypt_DE() && --retry_count)
 				usleep(2000);

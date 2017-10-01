@@ -45,8 +45,13 @@
 
 #include <private/android_filesystem_config.h>
 
+#if 0
 #include "ext4_crypt.h"
 #include "key_control.h"
+#else
+#include <ext4_utils/ext4_crypt.h>
+#include <keyutils.h>
+#endif
 
 #include <hardware/gatekeeper.h>
 #include "HashPassword.h"
@@ -436,6 +441,7 @@ static bool parse_hex(const char* hex, std::string* result) {
 // TODO: rename to 'install' for consistency, and take flags to know which keys to install
 bool e4crypt_unlock_user_key(userid_t user_id, int serial, const char* token_hex,
                              const char* secret_hex) {
+    printf("e4crypt_unlock_user_key %i serial=%i token_present=%i\n", user_id, serial, (strcmp(token_hex, "!") != 0));
     if (e4crypt_is_native()) {
         if (s_ce_key_raw_refs.count(user_id) != 0) {
             LOG(WARNING) << "Tried to unlock already-unlocked key for user " << user_id;
@@ -444,6 +450,7 @@ bool e4crypt_unlock_user_key(userid_t user_id, int serial, const char* token_hex
         std::string token, secret;
         if (!parse_hex(token_hex, &token)) return false;
         if (!parse_hex(secret_hex, &secret)) return false;
+        LOG(ERROR) << "secret " << secret.empty() << " token " << token.empty();
         android::vold::KeyAuthentication auth(token, secret);
         if (!read_and_install_user_ce_key(user_id, auth)) {
             LOG(ERROR) << "Couldn't read key for " << user_id;

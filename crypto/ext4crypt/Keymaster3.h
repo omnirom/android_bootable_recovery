@@ -25,6 +25,7 @@
 
 #include <android/hardware/keymaster/3.0/IKeymasterDevice.h>
 #include <keystore/authorization_set.h>
+#include "Utils.h"
 
 namespace android {
 namespace vold {
