@@ -24,6 +24,10 @@
 # include <string.h>
 #endif
 
+#ifdef HAVE_EXT4_CRYPT
+# include "ext4crypt_tar.h"
+#endif
+
 
 #ifndef _POSIX_LOGIN_NAME_MAX
 # define _POSIX_LOGIN_NAME_MAX	9
@@ -45,8 +49,8 @@ th_print(TAR *t)
 	printf("  linkname = \"%.100s\"\n", t->th_buf.linkname);
 	printf("  magic    = \"%.6s\"\n", t->th_buf.magic);
 	/*printf("  version  = \"%.2s\"\n", t->th_buf.version); */
-	printf("  version[0] = \'%c\',version[1] = \'%c\'\n",
-	       t->th_buf.version[0], t->th_buf.version[1]);
+	/*printf("  version[0] = \'%c\',version[1] = \'%c\'\n",
+	       t->th_buf.version[0], t->th_buf.version[1]);*/
 	printf("  uname    = \"%.32s\"\n", t->th_buf.uname);
 	printf("  gname    = \"%.32s\"\n", t->th_buf.gname);
 	printf("  devmajor = \"%.8s\"\n", t->th_buf.devmajor);
@@ -57,6 +61,10 @@ th_print(TAR *t)
 	       (t->th_buf.gnu_longname ? t->th_buf.gnu_longname : "[NULL]"));
 	printf("  gnu_longlink = \"%s\"\n",
 	       (t->th_buf.gnu_longlink ? t->th_buf.gnu_longlink : "[NULL]"));
+#ifdef HAVE_EXT4_CRYPT
+	printf("  eep = \"%s\"\n",
+	       (t->th_buf.eep ? t->th_buf.eep->master_key_descriptor : "[NULL]"));
+#endif
 }
 
 

@@ -28,13 +28,10 @@ int main(int argc, char *argv[]) {
 		printf("Must specify a path\n");
 		return -1;
 	} else  {
-		char e4crypt_policy[EXT4_KEY_DESCRIPTOR_SIZE];
-		if (e4crypt_policy_get(argv[1], e4crypt_policy, EXT4_KEY_DESCRIPTOR_SIZE, 0))
-		{
-			char* ptr = tar_policy;
-			memset(tar_policy, 0, sizeof(tar_policy));
+		ext4_encryption_policy eep;
+		if (e4crypt_policy_get_struct(argv[1], &eep, sizeof(eep))) {
 			char policy_hex[EXT4_KEY_DESCRIPTOR_SIZE_HEX];
-			policy_to_hex(e4crypt_policy, policy_hex);
+			policy_to_hex(eep.master_key_descriptor, policy_hex);
 			printf("%s\n", policy_hex);
 		} else {
 			printf("No policy set\n");
