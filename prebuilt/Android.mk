@@ -282,8 +282,11 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libtinyxml2.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hidl.token@1.0.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeyutils.so
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.gatekeeper@1.0.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/hwservicemanager
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/avbctl
+    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/hwservicemanager
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.weaver@1.0.so
     #RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/android.hardware.keymaster@3.0-service
 endif
 

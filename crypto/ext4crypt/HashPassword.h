@@ -19,6 +19,14 @@
 
 #include <string>
 
+#define FBE_PERSONALIZATION "Android FBE credential hash"
+#define PERSONALISATION_WEAVER_KEY "weaver-key"
+#define PERSONALISATION_WEAVER_PASSWORD "weaver-pwd"
+
+void* PersonalizedHashBinary(const char* prefix, const char* key, const size_t key_size);
+
+std::string PersonalizedHash(const char* prefix, const char* key, const size_t key_size);
+std::string PersonalizedHash(const char* prefix, const std::string& Password);
 std::string HashPassword(const std::string& Password);
 
 #endif
