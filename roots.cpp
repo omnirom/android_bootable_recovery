@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -38,7 +39,6 @@
 #include <ext4_utils/wipe.h>
 #include <fs_mgr.h>
 
-#include "common.h"
 #include "mounts.h"
 
 static struct fstab* fstab = nullptr;
@@ -77,7 +77,7 @@ Volume* volume_for_path(const char* path) {
   if (path == nullptr || path[0] == '\0') return nullptr;
   std::string str(path);
   while (true) {
-    Volume* result = fs_mgr_get_entry_for_mount_point(fstab, str.c_str());
+    Volume* result = fs_mgr_get_entry_for_mount_point(fstab, str);
     if (result != nullptr || str == "/") {
       return result;
     }
