@@ -17,7 +17,7 @@
 cc_library_static {
     name: "libbootloader_message",
     srcs: ["bootloader_message.cpp"],
-    cppflags: [
+    cflags: [
         "-Wall",
         "-Werror",
     ],
