@@ -69,11 +69,15 @@ void load_volume_table() {
   printf("\n");
 }
 
+Volume* volume_for_mount_point(const std::string& mount_point) {
+  return fs_mgr_get_entry_for_mount_point(fstab, mount_point);
+}
+
 // Finds the volume specified by the given path. fs_mgr_get_entry_for_mount_point() does exact match
 // only, so it attempts the prefixes recursively (e.g. "/cache/recovery/last_log",
 // "/cache/recovery", "/cache", "/" for a given path of "/cache/recovery/last_log") and returns the
 // first match or nullptr.
-Volume* volume_for_path(const char* path) {
+static Volume* volume_for_path(const char* path) {
   if (path == nullptr || path[0] == '\0') return nullptr;
   std::string str(path);
   while (true) {
