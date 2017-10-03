@@ -165,7 +165,7 @@ void ScreenRecoveryUI::draw_background_locked() {
       int stage_height = gr_get_height(stageMarkerEmpty);
       int stage_width = gr_get_width(stageMarkerEmpty);
       int x = (gr_fb_width() - max_stage * gr_get_width(stageMarkerEmpty)) / 2;
-      int y = gr_fb_height() - stage_height;
+      int y = gr_fb_height() - stage_height - kMarginHeight;
       for (int i = 0; i < max_stage; ++i) {
         GRSurface* stage_surface = (i < stage) ? stageMarkerFill : stageMarkerEmpty;
         gr_blit(stage_surface, 0, 0, stage_width, stage_height, x, y);
