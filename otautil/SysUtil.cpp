@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "SysUtil.h"
+#include "otautil/SysUtil.h"
 
 #include <fcntl.h>
 #include <stdint.h>  // SIZE_MAX
