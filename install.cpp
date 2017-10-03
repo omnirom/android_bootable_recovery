@@ -653,7 +653,7 @@ int install_package(const std::string& path, bool* wipe_cache, const std::string
   std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
   int time_total = static_cast<int>(duration.count());
 
-  bool has_cache = volume_for_path("/cache") != nullptr;
+  bool has_cache = volume_for_mount_point("/cache") != nullptr;
   // Skip logging the uncrypt_status on devices without /cache.
   if (has_cache) {
     static constexpr const char* UNCRYPT_STATUS = "/cache/recovery/uncrypt_status";
