@@ -30,4 +30,8 @@ cc_library_static {
         "-Werror",
         "-Wall",
     ],
+
+    export_include_dirs: [
+        "include",
+    ],
 }
