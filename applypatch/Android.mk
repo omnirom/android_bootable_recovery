@@ -29,6 +29,7 @@ LOCAL_C_INCLUDES := \
     bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
+    libedify \
     libotafault \
     libbase \
     libcrypto \

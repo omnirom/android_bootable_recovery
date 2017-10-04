@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "expr.h"
+#include "edify/expr.h"
 
 #include <stdarg.h>
 #include <stdio.h>
