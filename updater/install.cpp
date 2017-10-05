@@ -57,10 +57,10 @@
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
+#include "error_code.h"
 #include "mounts.h"
 #include "otafault/ota_io.h"
 #include "otautil/DirUtil.h"
-#include "otautil/error_code.h"
 #include "print_sha1.h"
 #include "tune2fs.h"
 #include "updater/updater.h"
