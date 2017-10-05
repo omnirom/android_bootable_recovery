@@ -116,7 +116,7 @@
 #include <cutils/sockets.h>
 #include <fs_mgr.h>
 
-#include "error_code.h"
+#include "otautil/error_code.h"
 
 static constexpr int WINDOW_SIZE = 5;
 static constexpr int FIBMAP_RETRY_LIMIT = 3;
