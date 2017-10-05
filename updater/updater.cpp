@@ -31,6 +31,7 @@
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
+#include "error_code.h"
 #include "otafault/config.h"
 #include "otautil/DirUtil.h"
 #include "otautil/SysUtil.h"
