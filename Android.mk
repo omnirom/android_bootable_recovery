@@ -260,7 +260,6 @@ LOCAL_MODULE := librecovery_ui_vr
 include $(BUILD_STATIC_LIBRARY)
 
 include \
-    $(LOCAL_PATH)/applypatch/Android.mk \
     $(LOCAL_PATH)/boot_control/Android.mk \
     $(LOCAL_PATH)/minadbd/Android.mk \
     $(LOCAL_PATH)/minui/Android.mk \
