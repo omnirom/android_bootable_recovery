@@ -30,7 +30,6 @@ LOCAL_C_INCLUDES := \
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
     libotafault \
-    libotautil \
     libbase \
     libcrypto \
     libbspatch \
@@ -54,7 +53,6 @@ LOCAL_C_INCLUDES := \
     bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
-    libotautil \
     libcrypto \
     libbspatch \
     libbase \
@@ -79,7 +77,6 @@ LOCAL_C_INCLUDES := \
     bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
-    libotautil \
     libcrypto \
     libbspatch \
     libbase \
@@ -102,7 +99,6 @@ LOCAL_STATIC_LIBRARIES := \
     libapplypatch \
     libbase \
     libedify \
-    libotautil \
     libcrypto
 LOCAL_CFLAGS := -Wall -Werror
 include $(BUILD_STATIC_LIBRARY)
@@ -118,7 +114,6 @@ LOCAL_STATIC_LIBRARIES := \
     libapplypatch \
     libedify \
     libotafault \
-    libotautil \
     libbspatch \
     libbase \
     libziparchive \

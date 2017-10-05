@@ -15,8 +15,6 @@
 cc_library_static {
     name: "libotautil",
 
-    host_supported: true,
-
     srcs: [
         "SysUtil.cpp",
         "DirUtil.cpp",
