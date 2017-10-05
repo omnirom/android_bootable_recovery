@@ -50,8 +50,8 @@
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
+#include "error_code.h"
 #include "otafault/ota_io.h"
-#include "otautil/error_code.h"
 #include "print_sha1.h"
 #include "rangeset.h"
 #include "updater/install.h"

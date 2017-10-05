@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "otautil/error_code.h"
+#include "error_code.h"
 
 struct State {
     State(const std::string& script, void* cookie);
