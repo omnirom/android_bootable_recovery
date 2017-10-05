@@ -39,8 +39,8 @@
 
 #include "common/test_constants.h"
 #include "edify/expr.h"
+#include "error_code.h"
 #include "otautil/SysUtil.h"
-#include "otautil/error_code.h"
 #include "print_sha1.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
