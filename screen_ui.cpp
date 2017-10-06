@@ -149,8 +149,8 @@ int ScreenRecoveryUI::GetProgressBaseline() const {
   int elements_sum = gr_get_height(loopFrames[0]) + PixelsFromDp(kLayouts[layout_][ICON]) +
                      gr_get_height(installing_text) + PixelsFromDp(kLayouts[layout_][TEXT]) +
                      gr_get_height(progressBarFill);
-  int bottom_gap = (gr_fb_height() - elements_sum) / 2;
-  return gr_fb_height() - bottom_gap - gr_get_height(progressBarFill);
+  int bottom_gap = (ScreenHeight() - elements_sum) / 2;
+  return ScreenHeight() - bottom_gap - gr_get_height(progressBarFill);
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
@@ -159,25 +159,24 @@ void ScreenRecoveryUI::draw_background_locked() {
   pagesIdentical = false;
   gr_color(0, 0, 0, 255);
   gr_clear();
-
   if (currentIcon != NONE) {
     if (max_stage != -1) {
       int stage_height = gr_get_height(stageMarkerEmpty);
       int stage_width = gr_get_width(stageMarkerEmpty);
-      int x = (gr_fb_width() - max_stage * gr_get_width(stageMarkerEmpty)) / 2;
-      int y = gr_fb_height() - stage_height - kMarginHeight;
+      int x = (ScreenWidth() - max_stage * gr_get_width(stageMarkerEmpty)) / 2;
+      int y = ScreenHeight() - stage_height - kMarginHeight;
       for (int i = 0; i < max_stage; ++i) {
         GRSurface* stage_surface = (i < stage) ? stageMarkerFill : stageMarkerEmpty;
-        gr_blit(stage_surface, 0, 0, stage_width, stage_height, x, y);
+        DrawSurface(stage_surface, 0, 0, stage_width, stage_height, x, y);
         x += stage_width;
       }
     }
 
     GRSurface* text_surface = GetCurrentText();
-    int text_x = (gr_fb_width() - gr_get_width(text_surface)) / 2;
+    int text_x = (ScreenWidth() - gr_get_width(text_surface)) / 2;
     int text_y = GetTextBaseline();
     gr_color(255, 255, 255, 255);
-    gr_texticon(text_x, text_y, text_surface);
+    DrawTextIcon(text_x, text_y, text_surface);
   }
 }
 
@@ -188,21 +187,21 @@ void ScreenRecoveryUI::draw_foreground_locked() {
     GRSurface* frame = GetCurrentFrame();
     int frame_width = gr_get_width(frame);
     int frame_height = gr_get_height(frame);
-    int frame_x = (gr_fb_width() - frame_width) / 2;
+    int frame_x = (ScreenWidth() - frame_width) / 2;
     int frame_y = GetAnimationBaseline();
-    gr_blit(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
+    DrawSurface(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
   }
 
   if (progressBarType != EMPTY) {
     int width = gr_get_width(progressBarEmpty);
     int height = gr_get_height(progressBarEmpty);
 
-    int progress_x = (gr_fb_width() - width) / 2;
+    int progress_x = (ScreenWidth() - width) / 2;
     int progress_y = GetProgressBaseline();
 
     // Erase behind the progress bar (in case this was a progress-only update)
     gr_color(0, 0, 0, 255);
-    gr_fill(progress_x, progress_y, width, height);
+    DrawFill(progress_x, progress_y, width, height);
 
     if (progressBarType == DETERMINATE) {
       float p = progressScopeStart + progress * progressScopeSize;
@@ -211,19 +210,19 @@ void ScreenRecoveryUI::draw_foreground_locked() {
       if (rtl_locale_) {
         // Fill the progress bar from right to left.
         if (pos > 0) {
-          gr_blit(progressBarFill, width - pos, 0, pos, height, progress_x + width - pos,
-                  progress_y);
+          DrawSurface(progressBarFill, width - pos, 0, pos, height, progress_x + width - pos,
+                      progress_y);
         }
         if (pos < width - 1) {
-          gr_blit(progressBarEmpty, 0, 0, width - pos, height, progress_x, progress_y);
+          DrawSurface(progressBarEmpty, 0, 0, width - pos, height, progress_x, progress_y);
         }
       } else {
         // Fill the progress bar from left to right.
         if (pos > 0) {
-          gr_blit(progressBarFill, 0, 0, pos, height, progress_x, progress_y);
+          DrawSurface(progressBarFill, 0, 0, pos, height, progress_x, progress_y);
         }
         if (pos < width - 1) {
-          gr_blit(progressBarEmpty, pos, 0, width - pos, height, progress_x + pos, progress_y);
+          DrawSurface(progressBarEmpty, pos, 0, width - pos, height, progress_x + pos, progress_y);
         }
       }
     }
@@ -335,13 +334,34 @@ void ScreenRecoveryUI::CheckBackgroundTextImages(const std::string& saved_locale
   SetLocale(saved_locale);
 }
 
+int ScreenRecoveryUI::ScreenWidth() const {
+  return gr_fb_width();
+}
+
+int ScreenRecoveryUI::ScreenHeight() const {
+  return gr_fb_height();
+}
+
+void ScreenRecoveryUI::DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx,
+                                   int dy) const {
+  gr_blit(surface, sx, sy, w, h, dx, dy);
+}
+
 int ScreenRecoveryUI::DrawHorizontalRule(int y) const {
-  gr_fill(0, y + 4, gr_fb_width(), y + 6);
+  gr_fill(0, y + 4, ScreenWidth(), y + 6);
   return 8;
 }
 
 void ScreenRecoveryUI::DrawHighlightBar(int x, int y, int width, int height) const {
   gr_fill(x, y, x + width, y + height);
+}
+
+void ScreenRecoveryUI::DrawFill(int x, int y, int w, int h) const {
+  gr_fill(x, y, w, h);
+}
+
+void ScreenRecoveryUI::DrawTextIcon(int x, int y, GRSurface* surface) const {
+  gr_texticon(x, y, surface);
 }
 
 int ScreenRecoveryUI::DrawTextLine(int x, int y, const char* line, bool bold) const {
@@ -432,7 +452,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
       if (i == menu_sel) {
         // Draw the highlight bar.
         SetColor(IsLongPress() ? MENU_SEL_BG_ACTIVE : MENU_SEL_BG);
-        DrawHighlightBar(0, y - 2, gr_fb_width(), char_height_ + 4);
+        DrawHighlightBar(0, y - 2, ScreenWidth(), char_height_ + 4);
         // Bold white text for the selected item.
         SetColor(MENU_SEL_FG);
         y += DrawTextLine(x, y, menu_[i].c_str(), true);
@@ -449,7 +469,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
   SetColor(LOG);
   int row = text_row_;
   size_t count = 0;
-  for (int ty = gr_fb_height() - kMarginHeight - char_height_; ty >= y && count < text_rows_;
+  for (int ty = ScreenHeight() - kMarginHeight - char_height_; ty >= y && count < text_rows_;
        ty -= char_height_, ++count) {
     DrawTextLine(kMarginWidth, ty, text_[row], false);
     --row;
@@ -569,8 +589,8 @@ bool ScreenRecoveryUI::InitTextParams() {
   }
 
   gr_font_size(gr_sys_font(), &char_width_, &char_height_);
-  text_rows_ = (gr_fb_height() - kMarginHeight * 2) / char_height_;
-  text_cols_ = (gr_fb_width() - kMarginWidth * 2) / char_width_;
+  text_rows_ = (ScreenHeight() - kMarginHeight * 2) / char_height_;
+  text_cols_ = (ScreenWidth() - kMarginWidth * 2) / char_width_;
   return true;
 }
 

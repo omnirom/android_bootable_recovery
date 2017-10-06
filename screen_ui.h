@@ -124,12 +124,23 @@ class ScreenRecoveryUI : public RecoveryUI {
   virtual int GetProgressBaseline() const;
   virtual int GetTextBaseline() const;
 
+  // Returns pixel width of draw buffer.
+  virtual int ScreenWidth() const;
+  // Returns pixel height of draw buffer.
+  virtual int ScreenHeight() const;
+
   // Draws a highlight bar at (x, y) - (x + width, y + height).
   virtual void DrawHighlightBar(int x, int y, int width, int height) const;
   // Draws a horizontal rule at Y. Returns the offset it should be moving along Y-axis.
   virtual int DrawHorizontalRule(int y) const;
   // Draws a line of text. Returns the offset it should be moving along Y-axis.
   virtual int DrawTextLine(int x, int y, const char* line, bool bold) const;
+  // Draws surface portion (sx, sy, w, h) at screen location (dx, dy).
+  virtual void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx, int dy) const;
+  // Draws rectangle at (x, y) - (x + w, y + h).
+  virtual void DrawFill(int x, int y, int w, int h) const;
+  // Draws given surface (surface->pixel_bytes = 1) as text at (x, y).
+  virtual void DrawTextIcon(int x, int y, GRSurface* surface) const;
   // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
   int DrawTextLines(int x, int y, const char* const* lines) const;
   // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines.
