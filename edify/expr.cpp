@@ -31,6 +31,8 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
+#include "error_code.h"
+
 // Functions should:
 //
 //    - return a malloc()'d string
@@ -416,8 +418,5 @@ Value* ErrorAbort(State* state, CauseCode cause_code, const char* format, ...) {
     return nullptr;
 }
 
-State::State(const std::string& script, void* cookie) :
-    script(script),
-    cookie(cookie) {
-}
-
+State::State(const std::string& script, void* cookie)
+    : script(script), cookie(cookie), error_code(kNoError), cause_code(kNoCause) {}
