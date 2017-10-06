@@ -116,6 +116,7 @@ LOCAL_STATIC_LIBRARIES := \
     libapplypatch \
     libedify \
     libotafault \
+    libotautil \
     libbspatch \
     libbase \
     libziparchive \

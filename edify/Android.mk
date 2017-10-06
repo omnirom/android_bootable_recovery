@@ -30,8 +30,9 @@ LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CPPFLAGS := -Wno-unused-parameter
 LOCAL_CPPFLAGS += -Wno-deprecated-register
 LOCAL_MODULE := libedify
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
-LOCAL_STATIC_LIBRARIES += libbase
+LOCAL_STATIC_LIBRARIES += \
+    libotautil \
+    libbase
 
 include $(BUILD_STATIC_LIBRARY)
 
