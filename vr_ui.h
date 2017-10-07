@@ -28,8 +28,14 @@ class VrRecoveryUI : public ScreenRecoveryUI {
   // Can vary per device depending on screen size and lens distortion.
   const int kStereoOffset;
 
-  bool InitTextParams() override;
+  int ScreenWidth() const override;
+  int ScreenHeight() const override;
 
+  void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx, int dy) const override;
+  int DrawHorizontalRule(int y) const override;
+  void DrawHighlightBar(int x, int y, int width, int height) const override;
+  void DrawFill(int x, int y, int w, int h) const override;
+  void DrawTextIcon(int x, int y, GRSurface* surface) const override;
   int DrawTextLine(int x, int y, const char* line, bool bold) const override;
 };
 
