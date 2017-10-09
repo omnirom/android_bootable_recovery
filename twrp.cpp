@@ -58,6 +58,9 @@ struct selabel_handle *selinux_handle;
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 #include "multirom/multirom.h"
+extern "C" {
+#include "rq_inject_file_contexts.h"
+}
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
 extern int adb_server_main(int is_daemon, int server_port, int /* reply_fd */);
@@ -116,16 +119,12 @@ int main(int argc, char **argv) {
 	printf("Setting SELinux to permissive\n");
 	TWFunc::write_file("/sys/fs/selinux/enforce", "0");
 
-	// TODO: file_contexts.bin
-	TWFunc::write_file("/file_contexts",
-        "\n\n# MultiROM folders\n"
-        "/data/media/multirom(/.*)?          <<none>>\n"
-        "/data/media/0/multirom(/.*)?        <<none>>\n"
-        "/realdata/media/multirom(/.*)?      <<none>>\n"
-        "/realdata/media/0/multirom(/.*)?    <<none>>\n"
-        "/sdcard/multirom(/.*)?              <<none>>\n"
-        "/mnt/mrom(/.*)?                     <<none>>\n",
-        "ae");
+	if (TWFunc::Path_Exists("/file_contexts"))
+		inject_file_contexts("/file_contexts");
+	if (TWFunc::Path_Exists("/file_contexts.bin"))
+		inject_file_contexts("/file_contexts.bin");
+	if (TWFunc::Path_Exists("/plat_file_contexts"))
+		inject_file_contexts("/plat_file_contexts");
 
 	// MultiROM _might_ have crashed the recovery while the boot device was redirected.
 	// It would be bad to let that as is.

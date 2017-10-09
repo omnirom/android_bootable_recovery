@@ -71,6 +71,12 @@ ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
         multirom/multiromedify.cpp \
         multirom/multirom_Zip.c \
         multirom/Process.cpp
+
+    LOCAL_SRC_FILES += \
+        ../../system/extras/multirom/rq_inject_file_contexts.c
+
+    LOCAL_C_INCLUDES += \
+        system/extras/multirom
 endif
 
 ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
