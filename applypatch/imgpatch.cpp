@@ -37,6 +37,8 @@
 #include <openssl/sha.h>
 #include <zlib.h>
 
+#include "edify/expr.h"
+
 static inline int64_t Read8(const void *address) {
   return android::base::get_unaligned<int64_t>(address);
 }

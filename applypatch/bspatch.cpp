@@ -30,6 +30,7 @@
 #include <openssl/sha.h>
 
 #include "applypatch/applypatch.h"
+#include "edify/expr.h"
 #include "print_sha1.h"
 
 void ShowBSDiffLicense() {

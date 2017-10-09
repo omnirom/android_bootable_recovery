@@ -53,6 +53,7 @@ LOCAL_C_INCLUDES := \
     bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
+    libedify \
     libcrypto \
     libbspatch \
     libbase \
@@ -77,6 +78,7 @@ LOCAL_C_INCLUDES := \
     bootable/recovery
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
+    libedify \
     libcrypto \
     libbspatch \
     libbase \
