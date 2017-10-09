@@ -27,7 +27,8 @@
 
 #include <openssl/sha.h>
 
-#include "edify/expr.h"
+// Forward declaration to avoid including "edify/expr.h" in the header.
+struct Value;
 
 struct FileContents {
   uint8_t sha1[SHA_DIGEST_LENGTH];

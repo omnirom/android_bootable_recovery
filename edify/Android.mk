@@ -34,3 +34,19 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
 LOCAL_STATIC_LIBRARIES += libbase
 
 include $(BUILD_STATIC_LIBRARY)
+
+#
+# Build the host-side library (static library)
+#
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := $(edify_src_files)
+
+LOCAL_CFLAGS := -Wall -Werror
+LOCAL_CPPFLAGS := -Wno-unused-parameter
+LOCAL_CPPFLAGS += -Wno-deprecated-register
+LOCAL_MODULE := libedify
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
+LOCAL_STATIC_LIBRARIES += libbase
+
+include $(BUILD_HOST_STATIC_LIBRARY)
