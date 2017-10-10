@@ -29,6 +29,7 @@ cc_library_static {
     ],
 
     cflags: [
+        "-D_FILE_OFFSET_BITS=64",
         "-Werror",
         "-Wall",
     ],
