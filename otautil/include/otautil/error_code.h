@@ -75,4 +75,4 @@ enum UncryptErrorCode : int {
   kUncryptBlockDeviceFindError,
 };
 
-#endif // _ERROR_CODE_H_
+#endif  // _ERROR_CODE_H_
