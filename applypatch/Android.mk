@@ -111,7 +111,6 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := applypatch_main.cpp
 LOCAL_MODULE := applypatch
-LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_STATIC_LIBRARIES := \
     libapplypatch_modes \
     libapplypatch \
@@ -119,15 +118,13 @@ LOCAL_STATIC_LIBRARIES := \
     libotafault \
     libotautil \
     libbspatch \
-    libbase \
-    libziparchive \
-    liblog \
-    libcrypto \
     libbz
 LOCAL_SHARED_LIBRARIES := \
     libbase \
+    libcrypto \
+    liblog \
     libz \
-    libcutils
+    libziparchive
 LOCAL_CFLAGS := -Wall -Werror
 include $(BUILD_EXECUTABLE)
 
