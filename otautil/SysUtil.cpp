@@ -100,7 +100,7 @@ bool MemMapping::MapBlockFile(const std::string& filename) {
   }
 
   // Reserve enough contiguous address space for the whole file.
-  void* reserve = mmap64(nullptr, blocks * blksize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+  void* reserve = mmap(nullptr, blocks * blksize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
   if (reserve == MAP_FAILED) {
     PLOG(ERROR) << "failed to reserve address space";
     return false;
@@ -135,8 +135,8 @@ bool MemMapping::MapBlockFile(const std::string& filename) {
       break;
     }
 
-    void* range_start = mmap64(next, range_size, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd,
-                               static_cast<off64_t>(start) * blksize);
+    void* range_start = mmap(next, range_size, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd,
+                             static_cast<off_t>(start) * blksize);
     if (range_start == MAP_FAILED) {
       PLOG(ERROR) << "failed to map range " << i << ": " << line;
       success = false;
