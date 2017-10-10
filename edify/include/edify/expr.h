@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-// Forward declaration to avoid including "error_code.h".
+// Forward declaration to avoid including "otautil/error_code.h".
 enum ErrorCode : int;
 enum CauseCode : int;
 
