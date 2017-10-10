@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "expr.h"
+#include "edify/expr.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -31,7 +31,7 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
-#include "error_code.h"
+#include "otautil/error_code.h"
 
 // Functions should:
 //
