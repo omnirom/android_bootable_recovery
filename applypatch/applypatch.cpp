@@ -40,7 +40,7 @@
 
 #include "edify/expr.h"
 #include "otafault/ota_io.h"
-#include "print_sha1.h"
+#include "otautil/print_sha1.h"
 
 static int LoadPartitionContents(const std::string& filename, FileContents* file);
 static size_t FileSink(const unsigned char* data, size_t len, int fd);

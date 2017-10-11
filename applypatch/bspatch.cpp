@@ -31,7 +31,7 @@
 
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
-#include "print_sha1.h"
+#include "otautil/print_sha1.h"
 
 void ShowBSDiffLicense() {
     puts("The bsdiff library used herein is:\n"

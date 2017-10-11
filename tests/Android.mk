@@ -201,6 +201,7 @@ LOCAL_SRC_FILES := \
 LOCAL_STATIC_LIBRARIES := \
     libimgdiff \
     libimgpatch \
+    libotautil \
     libbsdiff \
     libbspatch \
     libziparchive \
