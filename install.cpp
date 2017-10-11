@@ -49,9 +49,9 @@
 #include <ziparchive/zip_archive.h>
 
 #include "common.h"
-#include "error_code.h"
 #include "otautil/SysUtil.h"
 #include "otautil/ThermalUtil.h"
+#include "otautil/error_code.h"
 #include "private/install.h"
 #include "roots.h"
 #include "ui.h"

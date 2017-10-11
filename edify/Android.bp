@@ -1,4 +1,4 @@
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,28 +13,33 @@
 // limitations under the License.
 
 cc_library_static {
-    name: "libotautil",
+    name: "libedify",
 
     host_supported: true,
 
     srcs: [
-        "SysUtil.cpp",
-        "DirUtil.cpp",
-        "ThermalUtil.cpp",
-    ],
-
-    static_libs: [
-        "libselinux",
-        "libbase",
+        "expr.cpp",
+        "lexer.ll",
+        "parser.yy",
     ],
 
     cflags: [
-        "-D_FILE_OFFSET_BITS=64",
-        "-Werror",
         "-Wall",
+        "-Werror",
+        "-Wno-deprecated-register",
+        "-Wno-unused-parameter",
     ],
 
     export_include_dirs: [
         "include",
+    ],
+
+    local_include_dirs: [
+        "include",
+    ],
+
+    static_libs: [
+        "libbase",
+        "libotautil",
     ],
 }
