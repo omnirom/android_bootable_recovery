@@ -166,7 +166,7 @@
 #include <zlib.h>
 
 #include "applypatch/imgdiff_image.h"
-#include "rangeset.h"
+#include "otautil/rangeset.h"
 
 using android::base::get_unaligned;
 
