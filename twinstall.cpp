@@ -60,6 +60,7 @@ extern "C" {
 }
 
 #define AB_OTA "payload_properties.txt"
+//#define TW_NO_LEGACY_PROPS 1
 
 static const char* properties_path = "/dev/__properties__";
 static const char* properties_path_renamed = "/dev/__properties_kk__";
@@ -167,19 +168,51 @@ static int Prepare_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache
 	return INSTALL_SUCCESS;
 }
 
+static int update_binary_has_legacy_properties(const char *binary) {
+	const char str_to_match[] = "ANDROID_PROPERTY_WORKSPACE";
+	int len_to_match = sizeof(str_to_match) - 1;
+	int matched = 0;
+	int c = 0;
+	int found = 0;
+
+	FILE *fp = fopen(binary, "rb");
+	if (!fp) {
+		LOGINFO("has_legacy_properties: Could not open %s!\n", binary);
+		return 0;
+	}
+
+	// TODO: maybe check if binary not script, not sure it matters though in 8.0
+
+	do {
+		c = getc(fp);
+		if(c == str_to_match[matched]) {
+			matched++;
+			if(matched > len_to_match) {
+				LOGINFO("has_legacy_properties: Found legacy property match!\n");
+				found = 1;
+				break;
+			}
+		} else {
+			matched = 0;
+		}
+	} while (c != EOF);
+	fclose(fp);
+
+	return found;
+}
+
 static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zip_type ztype) {
 	int ret_val, pipe_fd[2], status, zip_verify;
 	char buffer[1024];
 	FILE* child_data;
 
 #ifndef TW_NO_LEGACY_PROPS
-	if (DataManager::GetIntValue("tw_enable_legacy_props") != 0) {
-		/* Set legacy properties */
-		if (switch_to_legacy_properties() != 0) {
-			LOGERR("Legacy property environment did not initialize successfully. Properties may not be detected.\n");
-		} else {
-			LOGINFO("Legacy property environment initialized.\n");
-		}
+	if (!update_binary_has_legacy_properties(TMP_UPDATER_BINARY_PATH)) {
+		LOGINFO("Legacy property environment not used in updater.\n");
+	} else if (switch_to_legacy_properties() != 0) { /* Set legacy properties */
+		LOGERR("Legacy property environment did not initialize successfully. Properties may not be detected.\n");
+	} else {
+		LOGINFO("Legacy property environment initialized.\n");
 	}
 #endif
 
@@ -260,14 +293,12 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 	int waitrc = TWFunc::Wait_For_Child(pid, &status, "Updater");
 
 #ifndef TW_NO_LEGACY_PROPS
-	if (DataManager::GetIntValue("tw_enable_legacy_props") != 0) {
-		/* Unset legacy properties */
-		if (legacy_props_path_modified) {
-			if (switch_to_new_properties() != 0) {
-				LOGERR("Legacy property environment did not disable successfully. Legacy properties may still be in use.\n");
-			} else {
-				LOGINFO("Legacy property environment disabled.\n");
-			}
+	/* Unset legacy properties */
+	if (legacy_props_path_modified) {
+		if (switch_to_new_properties() != 0) {
+			LOGERR("Legacy property environment did not disable successfully. Legacy properties may still be in use.\n");
+		} else {
+			LOGINFO("Legacy property environment disabled.\n");
 		}
 	}
 #endif
