@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8fe3e8a8_97dd5fae",
+        "filename": "data.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 837,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-10-11T21:06:10Z",
+      "side": 0,
+      "message": "I\u0027d leave this LOGINFO here since the build flag still exists.",
+      "revId": "477da64554849e8a3b549212cab49e62a49aaf33",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}

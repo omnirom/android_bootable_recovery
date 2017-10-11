@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9ad21f53_ca60f489",
+        "filename": "twinstall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-10-11T21:06:10Z",
+      "side": 1,
+      "message": "remove comment",
+      "revId": "d46f060cd8a1509732424c76ec5b0cfe93d14395",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4370e8cf_04fe20b7",
+        "filename": "twinstall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-10-11T21:06:10Z",
+      "side": 1,
+      "message": "int -\u003e bool",
+      "revId": "d46f060cd8a1509732424c76ec5b0cfe93d14395",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fb77f353_d2e6889b",
+        "filename": "twinstall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-10-11T21:06:10Z",
+      "side": 1,
+      "message": "move to scope where c is actually used",
+      "revId": "d46f060cd8a1509732424c76ec5b0cfe93d14395",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "35df74ea_6ccdf9d3",
+        "filename": "twinstall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-10-11T21:06:10Z",
+      "side": 1,
+      "message": "int -\u003e bool, 0 -\u003e false",
+      "revId": "d46f060cd8a1509732424c76ec5b0cfe93d14395",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "678c12da_94056efc",
+        "filename": "twinstall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-10-11T21:06:10Z",
+      "side": 1,
+      "message": "Even it\u0027s a script - if it contains the ANDROID_PROPERTY_WORKSPACE string we could assume that it wants legacy properties (however unlikely that is).",
+      "revId": "d46f060cd8a1509732424c76ec5b0cfe93d14395",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5d33b451_6e35652a",
+        "filename": "twinstall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-10-11T21:06:10Z",
+      "side": 1,
+      "message": "Isn\u0027t reading the file character by character very slow?\nActually this would be an ideal case for mmap().",
+      "revId": "d46f060cd8a1509732424c76ec5b0cfe93d14395",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b6e1069b_3c3fa0db",
+        "filename": "twinstall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2017-10-11T21:06:10Z",
+      "side": 1,
+      "message": "true",
+      "revId": "d46f060cd8a1509732424c76ec5b0cfe93d14395",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
