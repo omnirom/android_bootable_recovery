@@ -23,25 +23,25 @@
 #include <openssl/sha.h>
 
 static std::string print_sha1(const uint8_t* sha1, size_t len) {
-    const char* hex = "0123456789abcdef";
-    std::string result = "";
-    for (size_t i = 0; i < len; ++i) {
-        result.push_back(hex[(sha1[i]>>4) & 0xf]);
-        result.push_back(hex[sha1[i] & 0xf]);
-    }
-    return result;
+  const char* hex = "0123456789abcdef";
+  std::string result = "";
+  for (size_t i = 0; i < len; ++i) {
+    result.push_back(hex[(sha1[i] >> 4) & 0xf]);
+    result.push_back(hex[sha1[i] & 0xf]);
+  }
+  return result;
 }
 
 [[maybe_unused]] static std::string print_sha1(const uint8_t sha1[SHA_DIGEST_LENGTH]) {
-    return print_sha1(sha1, SHA_DIGEST_LENGTH);
+  return print_sha1(sha1, SHA_DIGEST_LENGTH);
 }
 
 [[maybe_unused]] static std::string short_sha1(const uint8_t sha1[SHA_DIGEST_LENGTH]) {
-    return print_sha1(sha1, 4);
+  return print_sha1(sha1, 4);
 }
 
 [[maybe_unused]] static std::string print_hex(const uint8_t* bytes, size_t len) {
-    return print_sha1(bytes, len);
+  return print_sha1(bytes, len);
 }
 
 #endif  // RECOVERY_PRINT_SHA1_H

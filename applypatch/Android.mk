@@ -25,12 +25,13 @@ LOCAL_SRC_FILES := \
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include \
-    bootable/recovery
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+    $(LOCAL_PATH)/include
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
     libedify \
     libotafault \
+    libotautil \
     libbase \
     libcrypto \
     libbspatch \
@@ -50,11 +51,12 @@ LOCAL_SRC_FILES := \
     imgpatch.cpp
 LOCAL_MODULE := libimgpatch
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include \
-    bootable/recovery
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+    $(LOCAL_PATH)/include
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
     libedify \
+    libotautil \
     libcrypto \
     libbspatch \
     libbase \
@@ -75,11 +77,12 @@ LOCAL_SRC_FILES := \
 LOCAL_MODULE := libimgpatch
 LOCAL_MODULE_HOST_OS := linux
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include \
-    bootable/recovery
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+    $(LOCAL_PATH)/include
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+    $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
     libedify \
+    libotautil \
     libcrypto \
     libbspatch \
     libbase \
@@ -97,9 +100,9 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     applypatch_modes.cpp
 LOCAL_MODULE := libapplypatch_modes
-LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_STATIC_LIBRARIES := \
     libapplypatch \
+    libotautil \
     libbase \
     libedify \
     libcrypto
@@ -111,7 +114,6 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := applypatch_main.cpp
 LOCAL_MODULE := applypatch
-LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_STATIC_LIBRARIES := \
     libapplypatch_modes \
     libapplypatch \
@@ -141,6 +143,7 @@ libimgdiff_cflags := \
     -DZLIB_CONST
 
 libimgdiff_static_libraries := \
+    libotautil \
     libbsdiff \
     libdivsufsort \
     libdivsufsort64 \
@@ -161,8 +164,7 @@ LOCAL_CFLAGS := \
 LOCAL_STATIC_LIBRARIES := \
     $(libimgdiff_static_libraries)
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include \
-    bootable/recovery
+    $(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 include $(BUILD_STATIC_LIBRARY)
 
@@ -177,8 +179,7 @@ LOCAL_CFLAGS := \
 LOCAL_STATIC_LIBRARIES := \
     $(libimgdiff_static_libraries)
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include \
-    bootable/recovery
+    $(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 include $(BUILD_HOST_STATIC_LIBRARY)
 
@@ -193,6 +194,5 @@ LOCAL_STATIC_LIBRARIES := \
     $(libimgdiff_static_libraries) \
     libbz
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include \
-    bootable/recovery
+    $(LOCAL_PATH)/include
 include $(BUILD_HOST_EXECUTABLE)
