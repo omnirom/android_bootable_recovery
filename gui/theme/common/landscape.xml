@@ -447,12 +447,6 @@
 				<data variable="tw_install_reboot"/>
 			</checkbox>
 
-			<checkbox>
-				<placement x="%col1_x_right%" y="%row13a_y%"/>
-				<text>{@enable_legacy_props_chk=Enable legacy properties for old zips}</text>
-				<data variable="tw_enable_legacy_props"/>
-			</checkbox>
-
 			<button style="main_button_half_width">
 				<placement x="%col1_x_left%" y="%row15a_y%"/>
 				<text>{@zip_add_btn=Add more Zips}</text>

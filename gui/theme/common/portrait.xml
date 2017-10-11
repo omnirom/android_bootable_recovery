@@ -393,14 +393,8 @@
 			</checkbox>
 
 			<checkbox>
-				<placement x="%indent%" y="%row15_y%"/>
-				<text>{@enable_legacy_props_chk=Enable legacy properties for old zips}</text>
-				<data variable="tw_enable_legacy_props"/>
-			</checkbox>
-
-			<checkbox>
 				<condition var1="tw_has_injecttwrp" var2="1"/>
-				<placement x="%indent%" y="%row16a_y%"/>
+				<placement x="%indent%" y="%row15_y%"/>
 				<text>{@inject_twrp_chk=Inject TWRP after install}</text>
 				<data variable="tw_inject_after_zip"/>
 			</checkbox>

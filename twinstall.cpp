@@ -16,10 +16,16 @@
 	along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -167,19 +173,51 @@ static int Prepare_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache
 	return INSTALL_SUCCESS;
 }
 
+static bool update_binary_has_legacy_properties(const char *binary) {
+	const char str_to_match[] = "ANDROID_PROPERTY_WORKSPACE";
+	int len_to_match = sizeof(str_to_match) - 1;
+	bool found = false;
+
+	int fd = open(binary, O_RDONLY);
+	if (fd < 0) {
+		LOGINFO("has_legacy_properties: Could not open %s: %s!\n", binary, strerror(errno));
+		return false;
+	}
+
+	struct stat finfo;
+	if (fstat(fd, &finfo) < 0) {
+		LOGINFO("has_legacy_properties: Could not fstat %d: %s!\n", fd, strerror(errno));
+		close(fd);
+		return false;
+	}
+
+	void *data = mmap(NULL, finfo.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (data == MAP_FAILED) {
+		LOGINFO("has_legacy_properties: mmap (size=%lld) failed: %s!\n", finfo.st_size, strerror(errno));
+	} else {
+		if (memmem(data, finfo.st_size, str_to_match, len_to_match)) {
+			LOGINFO("has_legacy_properties: Found legacy property match!\n");
+			found = true;
+		}
+		munmap(data, finfo.st_size);
+	}
+	close(fd);
+
+	return found;
+}
+
 static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zip_type ztype) {
 	int ret_val, pipe_fd[2], status, zip_verify;
 	char buffer[1024];
 	FILE* child_data;
 
 #ifndef TW_NO_LEGACY_PROPS
-	if (DataManager::GetIntValue("tw_enable_legacy_props") != 0) {
-		/* Set legacy properties */
-		if (switch_to_legacy_properties() != 0) {
-			LOGERR("Legacy property environment did not initialize successfully. Properties may not be detected.\n");
-		} else {
-			LOGINFO("Legacy property environment initialized.\n");
-		}
+	if (!update_binary_has_legacy_properties(TMP_UPDATER_BINARY_PATH)) {
+		LOGINFO("Legacy property environment not used in updater.\n");
+	} else if (switch_to_legacy_properties() != 0) { /* Set legacy properties */
+		LOGERR("Legacy property environment did not initialize successfully. Properties may not be detected.\n");
+	} else {
+		LOGINFO("Legacy property environment initialized.\n");
 	}
 #endif
 
@@ -260,14 +298,12 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 	int waitrc = TWFunc::Wait_For_Child(pid, &status, "Updater");
 
 #ifndef TW_NO_LEGACY_PROPS
-	if (DataManager::GetIntValue("tw_enable_legacy_props") != 0) {
-		/* Unset legacy properties */
-		if (legacy_props_path_modified) {
-			if (switch_to_new_properties() != 0) {
-				LOGERR("Legacy property environment did not disable successfully. Legacy properties may still be in use.\n");
-			} else {
-				LOGINFO("Legacy property environment disabled.\n");
-			}
+	/* Unset legacy properties */
+	if (legacy_props_path_modified) {
+		if (switch_to_new_properties() != 0) {
+			LOGERR("Legacy property environment did not disable successfully. Legacy properties may still be in use.\n");
+		} else {
+			LOGINFO("Legacy property environment disabled.\n");
 		}
 	}
 #endif
