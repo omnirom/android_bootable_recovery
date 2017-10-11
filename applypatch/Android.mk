@@ -120,10 +120,10 @@ LOCAL_STATIC_LIBRARIES := \
     libedify \
     libotafault \
     libotautil \
-    libbspatch \
-    libbz
+    libbspatch
 LOCAL_SHARED_LIBRARIES := \
     libbase \
+    libbz \
     libcrypto \
     liblog \
     libz \
