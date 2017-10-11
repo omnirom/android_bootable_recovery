@@ -16,6 +16,7 @@
 
 #include "otautil/SysUtil.h"
 
+#include <errno.h>  // TEMP_FAILURE_RETRY
 #include <fcntl.h>
 #include <stdint.h>  // SIZE_MAX
 #include <sys/mman.h>
