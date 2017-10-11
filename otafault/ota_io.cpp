@@ -26,6 +26,7 @@
 
 #include <map>
 #include <mutex>
+#include <string>
 
 #include <android-base/thread_annotations.h>
 
