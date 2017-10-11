@@ -229,6 +229,7 @@ LOCAL_SRC_FILES := \
     asn1_decoder.cpp \
     verifier.cpp
 LOCAL_STATIC_LIBRARIES := \
+    libotautil \
     libcrypto_utils \
     libcrypto \
     libbase

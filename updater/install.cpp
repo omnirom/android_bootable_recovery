@@ -54,6 +54,7 @@
 #include <openssl/sha.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
+#include <tune2fs.h>
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
@@ -61,8 +62,7 @@
 #include "otafault/ota_io.h"
 #include "otautil/DirUtil.h"
 #include "otautil/error_code.h"
-#include "print_sha1.h"
-#include "tune2fs.h"
+#include "otautil/print_sha1.h"
 #include "updater/updater.h"
 
 // Send over the buffer to recovery though the command pipe.
