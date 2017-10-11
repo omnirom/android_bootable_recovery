@@ -121,15 +121,13 @@ LOCAL_STATIC_LIBRARIES := \
     libotafault \
     libotautil \
     libbspatch \
-    libbase \
-    libziparchive \
-    liblog \
-    libcrypto \
     libbz
 LOCAL_SHARED_LIBRARIES := \
     libbase \
+    libcrypto \
+    liblog \
     libz \
-    libcutils
+    libziparchive
 LOCAL_CFLAGS := -Wall -Werror
 include $(BUILD_EXECUTABLE)
 
