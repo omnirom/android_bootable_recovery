@@ -13,6 +13,9 @@
 # limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
+
+# libminui (static library)
+# ===============================
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
@@ -66,6 +69,8 @@ endif
 
 include $(BUILD_STATIC_LIBRARY)
 
+# libminui (shared library)
+# ===============================
 # Used by OEMs for factory test images.
 include $(CLEAR_VARS)
 LOCAL_MODULE := libminui

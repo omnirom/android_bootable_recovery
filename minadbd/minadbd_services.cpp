@@ -58,20 +58,20 @@ static int create_service_thread(void (*func)(int, const std::string&), const st
     return s[0];
 }
 
-int service_to_fd(const char* name, const atransport* transport) {
-    int ret = -1;
+int service_to_fd(const char* name, const atransport* /* transport */) {
+  int ret = -1;
 
-    if (!strncmp(name, "sideload:", 9)) {
-        // this exit status causes recovery to print a special error
-        // message saying to use a newer adb (that supports
-        // sideload-host).
-        exit(3);
-    } else if (!strncmp(name, "sideload-host:", 14)) {
-        std::string arg(name + 14);
-        ret = create_service_thread(sideload_host_service, arg);
-    }
-    if (ret >= 0) {
-        close_on_exec(ret);
-    }
-    return ret;
+  if (!strncmp(name, "sideload:", 9)) {
+    // this exit status causes recovery to print a special error
+    // message saying to use a newer adb (that supports
+    // sideload-host).
+    exit(3);
+  } else if (!strncmp(name, "sideload-host:", 14)) {
+    std::string arg(name + 14);
+    ret = create_service_thread(sideload_host_service, arg);
+  }
+  if (ret >= 0) {
+    close_on_exec(ret);
+  }
+  return ret;
 }
