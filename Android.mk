@@ -94,7 +94,7 @@ endif
 endif
 
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
-LOCAL_CFLAGS += -Wall -Wno-unused-parameter -Werror
+LOCAL_CFLAGS += -Wall -Werror
 
 ifneq ($(TARGET_RECOVERY_UI_MARGIN_HEIGHT),)
 LOCAL_CFLAGS += -DRECOVERY_UI_MARGIN_HEIGHT=$(TARGET_RECOVERY_UI_MARGIN_HEIGHT)
@@ -173,9 +173,7 @@ LOCAL_STATIC_LIBRARIES := \
     libcutils \
     libutils \
     liblog \
-    libselinux \
-    libm \
-    libc
+    libselinux
 
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
