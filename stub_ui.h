@@ -24,18 +24,18 @@ class StubRecoveryUI : public RecoveryUI {
  public:
   StubRecoveryUI() = default;
 
-  void SetBackground(Icon icon) override {}
-  void SetSystemUpdateText(bool security_update) override {}
+  void SetBackground(Icon /* icon */) override {}
+  void SetSystemUpdateText(bool /* security_update */) override {}
 
   // progress indicator
-  void SetProgressType(ProgressType type) override {}
-  void ShowProgress(float portion, float seconds) override {}
-  void SetProgress(float fraction) override {}
+  void SetProgressType(ProgressType /* type */) override {}
+  void ShowProgress(float /* portion */, float /* seconds */) override {}
+  void SetProgress(float /* fraction */) override {}
 
-  void SetStage(int current, int max) override {}
+  void SetStage(int /* current */, int /* max */) override {}
 
   // text log
-  void ShowText(bool visible) override {}
+  void ShowText(bool /* visible */) override {}
   bool IsTextVisible() override {
     return false;
   }
@@ -50,12 +50,12 @@ class StubRecoveryUI : public RecoveryUI {
     vprintf(fmt, ap);
     va_end(ap);
   }
-  void PrintOnScreenOnly(const char* fmt, ...) override {}
-  void ShowFile(const char* filename) override {}
+  void PrintOnScreenOnly(const char* /* fmt */, ...) override {}
+  void ShowFile(const char* /* filename */) override {}
 
   // menu display
-  void StartMenu(const char* const* headers, const char* const* items,
-                 int initial_selection) override {}
+  void StartMenu(const char* const* /* headers */, const char* const* /* items */,
+                 int /* initial_selection */) override {}
   int SelectMenu(int sel) override {
     return sel;
   }

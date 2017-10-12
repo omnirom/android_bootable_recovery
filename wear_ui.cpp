@@ -150,8 +150,7 @@ void WearRecoveryUI::update_progress_locked() {
   gr_flip();
 }
 
-void WearRecoveryUI::SetStage(int current, int max) {
-}
+void WearRecoveryUI::SetStage(int /* current */, int /* max */) {}
 
 void WearRecoveryUI::StartMenu(const char* const* headers, const char* const* items,
                                int initial_selection) {

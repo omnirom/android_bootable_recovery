@@ -53,7 +53,7 @@ int VrRecoveryUI::DrawHorizontalRule(int y) const {
   return y + 4;
 }
 
-void VrRecoveryUI::DrawHighlightBar(int x, int y, int width, int height) const {
+void VrRecoveryUI::DrawHighlightBar(int /* x */, int y, int /* width */, int height) const {
   gr_fill(kMarginWidth + kStereoOffset, y, ScreenWidth() - kMarginWidth + kStereoOffset, y + height);
   gr_fill(ScreenWidth() + kMarginWidth - kStereoOffset, y,
           gr_fb_width() - kMarginWidth - kStereoOffset, y + height);
