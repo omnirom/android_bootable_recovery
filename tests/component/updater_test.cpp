@@ -41,7 +41,7 @@
 #include "edify/expr.h"
 #include "otautil/SysUtil.h"
 #include "otautil/error_code.h"
-#include "print_sha1.h"
+#include "otautil/print_sha1.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
 #include "updater/updater.h"

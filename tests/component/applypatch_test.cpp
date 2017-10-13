@@ -35,7 +35,7 @@
 #include "applypatch/applypatch.h"
 #include "applypatch/applypatch_modes.h"
 #include "common/test_constants.h"
-#include "print_sha1.h"
+#include "otautil/print_sha1.h"
 
 static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize = nullptr) {
   ASSERT_NE(nullptr, sha1);

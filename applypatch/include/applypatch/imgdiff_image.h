@@ -29,7 +29,7 @@
 #include <zlib.h>
 
 #include "imgdiff.h"
-#include "rangeset.h"
+#include "otautil/rangeset.h"
 
 class ImageChunk {
  public:

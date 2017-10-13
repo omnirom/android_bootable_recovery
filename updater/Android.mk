@@ -67,7 +67,6 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_CFLAGS := \
     -Wall \
-    -Wno-unused-parameter \
     -Werror
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
@@ -93,7 +92,6 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_CFLAGS := \
     -Wall \
-    -Wno-unused-parameter \
     -Werror
 
 LOCAL_STATIC_LIBRARIES := \
