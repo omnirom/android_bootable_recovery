@@ -181,15 +181,13 @@ void MultiROM::findPath()
 {
 	TWPartition *boot = PartitionManager.Find_Partition_By_Path("/boot");
 	TWPartition *data = PartitionManager.Find_Partition_By_Path("/data");
-	if(!boot || !data)
-	{
+	if (!boot || !data) {
 		gui_print("Failed to find boot or data device!\n");
 		m_path.clear();
 		return;
 	}
 
-	if(!data->Mount(true))
-	{
+	if (!data->Mount(true)) {
 		gui_print("Failed to mount /data partition!\n");
 		m_path.clear();
 		return;
@@ -201,18 +199,26 @@ void MultiROM::findPath()
 	m_has_firmware = (fw && (fw->Current_File_System == "vfat" || fw->Current_File_System == "ext4"));
 
 	static const char *paths[] = {
-		"/data/media/multirom",
+		"/data/media/0/MultiROM/multirom",
+		"/data/media/MultiROM/multirom",
 		"/data/media/0/multirom",
+		"/data/media/multirom",
 		NULL
 	};
 
 	struct stat info;
-	for(int i = 0; paths[i]; ++i)
-	{
-		if(stat(paths[i], &info) >= 0)
-		{
+	for (int i = 0; paths[i]; ++i) {
+		if (stat(paths[i], &info) >= 0) {
 			m_path = paths[i];
 			m_curr_roms_path = m_path + "/roms/";
+			if (i < 2) {
+				// Setting/keeping the container to +i will interfere with 'Wipe Internal Storage',
+				// as well as regular TWRP, though maybe that is a good thing.
+				// TODO: set -i during 'Wipe Internal Storage' or add a new 'Wipe MultiROM' option.
+				char main_path[64];
+				strncpy(main_path, m_path.c_str(), m_path.length() - (sizeof("/multirom") - 1));
+				system_args("chattr +i \"%s\"", main_path);
+			}
 			return;
 		}
 	}
