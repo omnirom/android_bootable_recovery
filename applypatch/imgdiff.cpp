@@ -160,6 +160,8 @@
 #include <android-base/logging.h>
 #include <android-base/memory.h>
 #include <android-base/parseint.h>
+#include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <bsdiff.h>
 #include <ziparchive/zip_archive.h>
