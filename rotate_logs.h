@@ -17,24 +17,18 @@
 #ifndef _ROTATE_LOGS_H
 #define _ROTATE_LOGS_H
 
-#include <string>
+#include <stddef.h>
+#include <sys/types.h>
 
-#include <private/android_logger.h> /* private pmsg functions */
+#include <log/log_id.h>
 
-constexpr int KEEP_LOG_COUNT = 10;
+static constexpr int KEEP_LOG_COUNT = 10;
 
-ssize_t logbasename(log_id_t /* logId */,
-        char /* prio */,
-        const char *filename,
-        const char * /* buf */, size_t len,
-        void *arg);
+ssize_t logbasename(log_id_t id, char prio, const char* filename, const char* buf, size_t len,
+                    void* arg);
 
-ssize_t logrotate(
-        log_id_t logId,
-        char prio,
-        const char *filename,
-        const char *buf, size_t len,
-        void *arg);
+ssize_t logrotate(log_id_t id, char prio, const char* filename, const char* buf, size_t len,
+                  void* arg);
 
 // Rename last_log -> last_log.1 -> last_log.2 -> ... -> last_log.$max.
 // Similarly rename last_kmsg -> last_kmsg.1 -> ... -> last_kmsg.$max.
