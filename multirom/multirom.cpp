@@ -215,9 +215,7 @@ void MultiROM::findPath()
 				// Setting/keeping the container to +i will interfere with 'Wipe Internal Storage',
 				// as well as regular TWRP, though maybe that is a good thing.
 				// TODO: set -i during 'Wipe Internal Storage' or add a new 'Wipe MultiROM' option.
-				char main_path[64];
-				strncpy(main_path, m_path.c_str(), m_path.length() - (sizeof("/multirom") - 1));
-				system_args("chattr +i \"%s\"", main_path);
+				system_args("chattr +i \"%s\"", m_path.substr(0, m_path.length() - (sizeof("/multirom") - 1)).c_str());
 			}
 			return;
 		}
