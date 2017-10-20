@@ -281,6 +281,11 @@ static bool receive_new_data(const uint8_t* data, size_t size, void* cookie) {
     // Wait for nti->writer to be non-null, indicating some of this data is wanted.
     pthread_mutex_lock(&nti->mu);
     while (nti->writer == nullptr) {
+      // End the new data receiver if we encounter an error when performing block image update.
+      if (!nti->receiver_available) {
+        pthread_mutex_unlock(&nti->mu);
+        return false;
+      }
       pthread_cond_wait(&nti->cv, &nti->mu);
     }
     pthread_mutex_unlock(&nti->mu);
@@ -316,6 +321,11 @@ static bool receive_brotli_new_data(const uint8_t* data, size_t size, void* cook
     // Wait for nti->writer to be non-null, indicating some of this data is wanted.
     pthread_mutex_lock(&nti->mu);
     while (nti->writer == nullptr) {
+      // End the receiver if we encounter an error when performing block image update.
+      if (!nti->receiver_available) {
+        pthread_mutex_unlock(&nti->mu);
+        return false;
+      }
       pthread_cond_wait(&nti->cv, &nti->mu);
     }
     pthread_mutex_unlock(&nti->mu);
@@ -1591,29 +1601,44 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     }
   }
 
-  if (params.canwrite) {
-    pthread_join(params.thread, nullptr);
-
-    LOG(INFO) << "wrote " << params.written << " blocks; expected " << total_blocks;
-    LOG(INFO) << "stashed " << params.stashed << " blocks";
-    LOG(INFO) << "max alloc needed was " << params.buffer.size();
-
-    const char* partition = strrchr(blockdev_filename->data.c_str(), '/');
-    if (partition != nullptr && *(partition + 1) != 0) {
-      fprintf(cmd_pipe, "log bytes_written_%s: %zu\n", partition + 1, params.written * BLOCKSIZE);
-      fprintf(cmd_pipe, "log bytes_stashed_%s: %zu\n", partition + 1, params.stashed * BLOCKSIZE);
-      fflush(cmd_pipe);
-    }
-    // Delete stash only after successfully completing the update, as it may contain blocks needed
-    // to complete the update later.
-    DeleteStash(params.stashbase);
-  } else {
-    LOG(INFO) << "verified partition contents; update may be resumed";
-  }
-
   rc = 0;
 
 pbiudone:
+  if (params.canwrite) {
+    pthread_mutex_lock(&params.nti.mu);
+    if (params.nti.receiver_available) {
+      LOG(WARNING) << "new data receiver is still available after executing all commands.";
+    }
+    params.nti.receiver_available = false;
+    pthread_cond_broadcast(&params.nti.cv);
+    pthread_mutex_unlock(&params.nti.mu);
+    int ret = pthread_join(params.thread, nullptr);
+    if (ret != 0) {
+      LOG(WARNING) << "pthread join returned with " << strerror(ret);
+    }
+
+    if (rc == 0) {
+      LOG(INFO) << "wrote " << params.written << " blocks; expected " << total_blocks;
+      LOG(INFO) << "stashed " << params.stashed << " blocks";
+      LOG(INFO) << "max alloc needed was " << params.buffer.size();
+
+      const char* partition = strrchr(blockdev_filename->data.c_str(), '/');
+      if (partition != nullptr && *(partition + 1) != 0) {
+        fprintf(cmd_pipe, "log bytes_written_%s: %zu\n", partition + 1, params.written * BLOCKSIZE);
+        fprintf(cmd_pipe, "log bytes_stashed_%s: %zu\n", partition + 1, params.stashed * BLOCKSIZE);
+        fflush(cmd_pipe);
+      }
+      // Delete stash only after successfully completing the update, as it may contain blocks needed
+      // to complete the update later.
+      DeleteStash(params.stashbase);
+    }
+
+    pthread_mutex_destroy(&params.nti.mu);
+    pthread_cond_destroy(&params.nti.cv);
+  } else if (rc == 0) {
+    LOG(INFO) << "verified partition contents; update may be resumed";
+  }
+
   if (ota_fsync(params.fd) == -1) {
     failure_type = kFsyncFailure;
     PLOG(ERROR) << "fsync failed";
