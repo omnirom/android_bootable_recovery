@@ -28,7 +28,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
     libadf \
-    libdrm \
+    libdrm_platform \
     libsync_recovery
 
 LOCAL_STATIC_LIBRARIES := \
