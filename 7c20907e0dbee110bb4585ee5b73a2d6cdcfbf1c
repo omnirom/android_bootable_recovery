@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e9427dc4_105638fa",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1664,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-10-21T23:36:22Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "7c20907e0dbee110bb4585ee5b73a2d6cdcfbf1c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "72b35cd2_42a37d5c",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2352,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-10-21T23:36:22Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "7c20907e0dbee110bb4585ee5b73a2d6cdcfbf1c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f815532b_ad9f1ba3",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2380,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-10-21T23:36:22Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "7c20907e0dbee110bb4585ee5b73a2d6cdcfbf1c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0d97e91b_cd9cf64b",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2449,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-10-21T23:36:22Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "7c20907e0dbee110bb4585ee5b73a2d6cdcfbf1c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b3743ab5_adf6fef4",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 872,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-10-21T23:36:22Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "7c20907e0dbee110bb4585ee5b73a2d6cdcfbf1c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
