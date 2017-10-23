@@ -1,0 +1,225 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7f6464c0_376b6c1e",
+        "filename": "adbbu/Android.mk",
+        "patchSetId": 4
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "Looks like we have 4 spaces here followed by a tab. Note that make files are picky about tabs vs spaces in some cases so in make files we usually stick with spaces.",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "83792250_4f27fe82",
+        "filename": "adbbu/Android.mk",
+        "patchSetId": 4
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "Using a tab instead of spaces in a make file",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4d08c800_611d1973",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "Is there a reason to memset when we\u0027re going to overwrite the contents again later with the data from buf? There are other cases where we do this further down in the code.",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "648cf0a7_1885ddf5",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "We should probably check the return of the read function above and make sure that we read enough bytes at least to fill the adbbuhdr variable.",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "499d73a6_44a9941d",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "Why use this breakloop variable? AFAICT you can do while(1) or for(;;) and just use break;",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d2577578_8cba501e",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "Again we should check the value of readbytes, otherwise this variable is effectively unused.",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4e591871_bda67aef",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "memset followed by memcpy",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b76062ac_be9c2575",
+        "filename": "adbbu/libtwadbbu.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "memset followed by memcpy",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "852fe0ed_68674906",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 745,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "I think indents may need to be cleaned up here",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b55dbda3_7b38c77b",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "01ef3d06_0b121a4e",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "Should probably add comments, at least for public functions.",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bb85c739_a705449c",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 865,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "whitespace",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6899edfe_ac1eaabf",
+        "filename": "twrpAdbBuFifo.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-10-23T03:40:03Z",
+      "side": 1,
+      "message": "Best I can tell again, this breakloop variable is unneeded.",
+      "revId": "29fd7928e8d17ed0671a46d107cb1aef27d4b430",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
