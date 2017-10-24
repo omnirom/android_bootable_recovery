@@ -59,13 +59,13 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   int mem_level = Read4(deflate_header + 52);
   int strategy = Read4(deflate_header + 56);
 
-  std::unique_ptr<z_stream, decltype(&deflateEnd)> strm(new z_stream(), deflateEnd);
-  strm->zalloc = Z_NULL;
-  strm->zfree = Z_NULL;
-  strm->opaque = Z_NULL;
-  strm->avail_in = 0;
-  strm->next_in = nullptr;
-  int ret = deflateInit2(strm.get(), level, method, window_bits, mem_level, strategy);
+  z_stream strm;
+  strm.zalloc = Z_NULL;
+  strm.zfree = Z_NULL;
+  strm.opaque = Z_NULL;
+  strm.avail_in = 0;
+  strm.next_in = nullptr;
+  int ret = deflateInit2(&strm, level, method, window_bits, mem_level, strategy);
   if (ret != Z_OK) {
     LOG(ERROR) << "Failed to init uncompressed data deflation: " << ret;
     return false;
@@ -76,18 +76,19 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   size_t actual_target_length = 0;
   size_t total_written = 0;
   static constexpr size_t buffer_size = 32768;
-  auto compression_sink = [&](const uint8_t* data, size_t len) -> size_t {
+  auto compression_sink = [&strm, &actual_target_length, &expected_target_length, &total_written,
+                           &ret, &ctx, &sink](const uint8_t* data, size_t len) -> size_t {
     // The input patch length for an update never exceeds INT_MAX.
-    strm->avail_in = len;
-    strm->next_in = data;
+    strm.avail_in = len;
+    strm.next_in = data;
     do {
       std::vector<uint8_t> buffer(buffer_size);
-      strm->avail_out = buffer_size;
-      strm->next_out = buffer.data();
+      strm.avail_out = buffer_size;
+      strm.next_out = buffer.data();
       if (actual_target_length + len < expected_target_length) {
-        ret = deflate(strm.get(), Z_NO_FLUSH);
+        ret = deflate(&strm, Z_NO_FLUSH);
       } else {
-        ret = deflate(strm.get(), Z_FINISH);
+        ret = deflate(&strm, Z_FINISH);
       }
       if (ret != Z_OK && ret != Z_STREAM_END) {
         LOG(ERROR) << "Failed to deflate stream: " << ret;
@@ -95,20 +96,24 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
         return 0;
       }
 
-      size_t have = buffer_size - strm->avail_out;
+      size_t have = buffer_size - strm.avail_out;
       total_written += have;
       if (sink(buffer.data(), have) != have) {
         LOG(ERROR) << "Failed to write " << have << " compressed bytes to output.";
         return 0;
       }
       if (ctx) SHA1_Update(ctx, buffer.data(), have);
-    } while ((strm->avail_in != 0 || strm->avail_out == 0) && ret != Z_STREAM_END);
+    } while ((strm.avail_in != 0 || strm.avail_out == 0) && ret != Z_STREAM_END);
 
     actual_target_length += len;
     return len;
   };
 
-  if (ApplyBSDiffPatch(src_data, src_len, patch, patch_offset, compression_sink, nullptr) != 0) {
+  int bspatch_result =
+      ApplyBSDiffPatch(src_data, src_len, patch, patch_offset, compression_sink, nullptr);
+  deflateEnd(&strm);
+
+  if (bspatch_result != 0) {
     return false;
   }
 
