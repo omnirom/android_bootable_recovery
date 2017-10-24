@@ -33,7 +33,7 @@
 #include <android-base/test_utils.h>
 #include <bootloader_message/bootloader_message.h>
 #include <brotli/encode.h>
-#include <bsdiff.h>
+#include <bsdiff/bsdiff.h>
 #include <gtest/gtest.h>
 #include <ziparchive/zip_archive.h>
 #include <ziparchive/zip_writer.h>
