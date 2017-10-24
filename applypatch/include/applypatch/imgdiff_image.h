@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include <bsdiff.h>
+#include <bsdiff/bsdiff.h>
 #include <ziparchive/zip_archive.h>
 #include <zlib.h>
 
@@ -98,7 +98,8 @@ class ImageChunk {
    * repeatedly, pass nullptr if not needed.
    */
   static bool MakePatch(const ImageChunk& tgt, const ImageChunk& src,
-                        std::vector<uint8_t>* patch_data, saidx_t** bsdiff_cache);
+                        std::vector<uint8_t>* patch_data,
+                        bsdiff::SuffixArrayIndexInterface** bsdiff_cache);
 
  private:
   const uint8_t* GetRawData() const;
