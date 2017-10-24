@@ -32,6 +32,8 @@
 #include <gtest/gtest.h>
 #include <ziparchive/zip_writer.h>
 
+#include "common/test_constants.h"
+
 using android::base::get_unaligned;
 
 // Sanity check for the given imgdiff patch header.
@@ -797,44 +799,21 @@ TEST(ImgdiffTest, zip_mode_store_large_apk) {
 }
 
 TEST(ImgdiffTest, zip_mode_deflate_large_apk) {
-  // Generate 50 blocks of random data.
-  std::string random_data;
-  random_data.reserve(4096 * 50);
-  generate_n(back_inserter(random_data), 4096 * 50, []() { return rand() % 256; });
-
-  // Construct src and tgt zip files with limit = 10 blocks.
+  // Src and tgt zip files are constructed as follows.
   //     src               tgt
   //  22 blocks, "d"    4  blocks,  "a"
   //  5 blocks,  "b"    4  blocks,  "b"
-  //  3 blocks,  "a"    7  blocks,  "c" (exceeds limit)
-  //  8 blocks,  "c"    20 blocks,  "d" (exceeds limit)
-  //  1 block,   "f"    2  blocks,  "e"
-  TemporaryFile tgt_file;
-  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
-  ZipWriter tgt_writer(tgt_file_ptr);
-
-  construct_deflate_entry(
-      { { "a", 0, 4 }, { "b", 5, 4 }, { "c", 12, 8 }, { "d", 21, 20 }, { "e", 45, 2 },
-        { "f", 48, 1 } }, &tgt_writer, random_data);
-
-  ASSERT_EQ(0, tgt_writer.Finish());
-  ASSERT_EQ(0, fclose(tgt_file_ptr));
-
-  TemporaryFile src_file;
-  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
-  ZipWriter src_writer(src_file_ptr);
-
-  construct_deflate_entry(
-      { { "d", 21, 22 }, { "b", 5, 5 }, { "a", 0, 3 }, { "g", 9, 1 }, { "c", 11, 8 },
-        { "f", 45, 1 } }, &src_writer, random_data);
-
-  ASSERT_EQ(0, src_writer.Finish());
-  ASSERT_EQ(0, fclose(src_file_ptr));
+  //  3 blocks,  "a"    8  blocks,  "c" (exceeds limit)
+  //  1 block,   "g"    20 blocks,  "d" (exceeds limit)
+  //  8 blocks,  "c"    2  blocks,  "e"
+  //  1 block,   "f"    1  block ,  "f"
+  std::string tgt_path = from_testdata_base("deflate_tgt.zip");
+  std::string src_path = from_testdata_base("deflate_src.zip");
 
   ZipModeImage src_image(true, 10 * 4096);
   ZipModeImage tgt_image(false, 10 * 4096);
-  ASSERT_TRUE(src_image.Initialize(src_file.path));
-  ASSERT_TRUE(tgt_image.Initialize(tgt_file.path));
+  ASSERT_TRUE(src_image.Initialize(src_path));
+  ASSERT_TRUE(tgt_image.Initialize(tgt_path));
   ASSERT_TRUE(ZipModeImage::CheckAndProcessChunks(&tgt_image, &src_image));
 
   src_image.DumpChunks();
@@ -846,11 +825,12 @@ TEST(ImgdiffTest, zip_mode_deflate_large_apk) {
   ZipModeImage::SplitZipModeImageWithLimit(tgt_image, src_image, &split_tgt_images,
                                            &split_src_images, &split_src_ranges);
 
-  // src_piece 1: a 3 blocks, b 5 blocks
-  // src_piece 2: c 8 blocks
-  // src_piece 3: d-0 10 block
-  // src_piece 4: d-1 10 blocks
-  // src_piece 5: e 1 block, CD
+  // Expected split images with limit = 10 blocks.
+  // src_piece 0: a 3 blocks, b 5 blocks
+  // src_piece 1: c 8 blocks
+  // src_piece 2: d-0 10 block
+  // src_piece 3: d-1 10 blocks
+  // src_piece 4: e 1 block, CD
   ASSERT_EQ(split_tgt_images.size(), split_src_images.size());
   ASSERT_EQ(static_cast<size_t>(5), split_tgt_images.size());
 
@@ -883,23 +863,20 @@ TEST(ImgdiffTest, zip_mode_deflate_large_apk) {
   ASSERT_EQ("2", android::base::Trim(info_list[0]));
   ASSERT_EQ("5", android::base::Trim(info_list[1]));
 
-  std::vector<size_t> patch_size;
+  std::string tgt;
+  ASSERT_TRUE(android::base::ReadFileToString(tgt_path, &tgt));
+  ASSERT_EQ(static_cast<size_t>(160385), tgt.size());
+  std::vector<std::string> tgt_file_ranges = {
+    "36864 2,22,31", "32768 2,31,40", "40960 2,0,11", "40960 2,11,21", "8833 4,21,22,40,41",
+  };
+
   for (size_t i = 0; i < 5; i++) {
-    struct stat st = {};
+    struct stat st;
     std::string path = android::base::StringPrintf("%s/patch-%zu", debug_dir.path, i);
     ASSERT_EQ(0, stat(path.c_str(), &st));
-    patch_size.push_back(st.st_size);
+    ASSERT_EQ(std::to_string(st.st_size) + " " + tgt_file_ranges[i],
+              android::base::Trim(info_list[i + 2]));
   }
-
-  ASSERT_EQ(std::to_string(patch_size[0]) + " 36864 2,22,31", android::base::Trim(info_list[2]));
-  ASSERT_EQ(std::to_string(patch_size[1]) + " 32768 2,31,40", android::base::Trim(info_list[3]));
-  ASSERT_EQ(std::to_string(patch_size[2]) + " 40960 2,0,11", android::base::Trim(info_list[4]));
-  ASSERT_EQ(std::to_string(patch_size[3]) + " 40960 2,11,21", android::base::Trim(info_list[5]));
-  ASSERT_EQ(std::to_string(patch_size[4]) + " 8833 4,21,22,40,41",
-            android::base::Trim(info_list[6]));
-
-  std::string tgt;
-  ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
 
   GenerateAndCheckSplitTarget(debug_dir.path, 5, tgt);
 }
