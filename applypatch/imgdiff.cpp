@@ -163,7 +163,7 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
-#include <bsdiff.h>
+#include <bsdiff/bsdiff.h>
 #include <ziparchive/zip_archive.h>
 #include <zlib.h>
 
@@ -324,7 +324,8 @@ void ImageChunk::MergeAdjacentNormal(const ImageChunk& other) {
 }
 
 bool ImageChunk::MakePatch(const ImageChunk& tgt, const ImageChunk& src,
-                           std::vector<uint8_t>* patch_data, saidx_t** bsdiff_cache) {
+                           std::vector<uint8_t>* patch_data,
+                           bsdiff::SuffixArrayIndexInterface** bsdiff_cache) {
 #if defined(__ANDROID__)
   char ptemp[] = "/data/local/tmp/imgdiff-patch-XXXXXX";
 #else
@@ -1083,7 +1084,7 @@ bool ZipModeImage::GeneratePatchesInternal(const ZipModeImage& tgt_image,
   printf("Construct patches for %zu chunks...\n", tgt_image.NumOfChunks());
   patch_chunks->clear();
 
-  saidx_t* bsdiff_cache = nullptr;
+  bsdiff::SuffixArrayIndexInterface* bsdiff_cache = nullptr;
   for (size_t i = 0; i < tgt_image.NumOfChunks(); i++) {
     const auto& tgt_chunk = tgt_image[i];
 
@@ -1097,7 +1098,8 @@ bool ZipModeImage::GeneratePatchesInternal(const ZipModeImage& tgt_image,
                                       : src_image.FindChunkByName(tgt_chunk.GetEntryName());
 
     const auto& src_ref = (src_chunk == nullptr) ? src_image.PseudoSource() : *src_chunk;
-    saidx_t** bsdiff_cache_ptr = (src_chunk == nullptr) ? &bsdiff_cache : nullptr;
+    bsdiff::SuffixArrayIndexInterface** bsdiff_cache_ptr =
+        (src_chunk == nullptr) ? &bsdiff_cache : nullptr;
 
     std::vector<uint8_t> patch_data;
     if (!ImageChunk::MakePatch(tgt_chunk, src_ref, &patch_data, bsdiff_cache_ptr)) {
@@ -1114,7 +1116,7 @@ bool ZipModeImage::GeneratePatchesInternal(const ZipModeImage& tgt_image,
       patch_chunks->emplace_back(tgt_chunk, src_ref, std::move(patch_data));
     }
   }
-  free(bsdiff_cache);
+  delete bsdiff_cache;
 
   CHECK_EQ(patch_chunks->size(), tgt_image.NumOfChunks());
   return true;
