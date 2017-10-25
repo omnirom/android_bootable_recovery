@@ -24,9 +24,46 @@
 #include <android-base/test_utils.h>
 #include <gtest/gtest.h>
 #include <otautil/SysUtil.h>
+#include <otautil/ZipUtil.h>
 #include <ziparchive/zip_archive.h>
 
 #include "common/test_constants.h"
+
+TEST(ZipTest, ExtractPackageRecursive) {
+  std::string zip_path = from_testdata_base("ziptest_valid.zip");
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchive(zip_path.c_str(), &handle));
+
+  // Extract the whole package into a temp directory.
+  TemporaryDir td;
+  ASSERT_NE(nullptr, td.path);
+  ExtractPackageRecursive(handle, "", td.path, nullptr, nullptr);
+
+  // Make sure all the files are extracted correctly.
+  std::string path(td.path);
+  ASSERT_EQ(0, access((path + "/a.txt").c_str(), F_OK));
+  ASSERT_EQ(0, access((path + "/b.txt").c_str(), F_OK));
+  ASSERT_EQ(0, access((path + "/b/c.txt").c_str(), F_OK));
+  ASSERT_EQ(0, access((path + "/b/d.txt").c_str(), F_OK));
+
+  // The content of the file is the same as expected.
+  std::string content1;
+  ASSERT_TRUE(android::base::ReadFileToString(path + "/a.txt", &content1));
+  ASSERT_EQ(kATxtContents, content1);
+
+  std::string content2;
+  ASSERT_TRUE(android::base::ReadFileToString(path + "/b/d.txt", &content2));
+  ASSERT_EQ(kDTxtContents, content2);
+
+  CloseArchive(handle);
+
+  // Clean up.
+  ASSERT_EQ(0, unlink((path + "/a.txt").c_str()));
+  ASSERT_EQ(0, unlink((path + "/b.txt").c_str()));
+  ASSERT_EQ(0, unlink((path + "/b/c.txt").c_str()));
+  ASSERT_EQ(0, unlink((path + "/b/d.txt").c_str()));
+  ASSERT_EQ(0, rmdir((path + "/b").c_str()));
+}
 
 TEST(ZipTest, OpenFromMemory) {
   std::string zip_path = from_testdata_base("ziptest_dummy-update.zip");
