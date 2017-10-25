@@ -16,6 +16,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <sys/types.h>
+#include <sys/sysmacros.h>
 
 #ifdef STDC_HEADERS
 # include <string.h>

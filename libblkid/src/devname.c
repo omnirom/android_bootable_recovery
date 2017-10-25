@@ -33,6 +33,7 @@
 #include <errno.h>
 #endif
 #include <time.h>
+#include <sys/sysmacros.h>
 
 #include "blkidP.h"
 

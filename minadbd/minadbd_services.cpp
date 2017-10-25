@@ -76,7 +76,8 @@ static int create_service_thread(void (*func)(int, void *), void *cookie) {
     adb_thread_t t;
     if (adb_thread_create( &t, (adb_thread_func_t)service_bootstrap_func, sti)){
 #else
-    if (!adb_thread_create(service_bootstrap_func, sti)) {
+    //if (!adb_thread_create(service_bootstrap_func, sti)) {
+    if (1) {
 #endif
         free(sti);
         adb_close(s[0]);

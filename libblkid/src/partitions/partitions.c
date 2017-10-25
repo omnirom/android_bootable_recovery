@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/sysmacros.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdint.h>
