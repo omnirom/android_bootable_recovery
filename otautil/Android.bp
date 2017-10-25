@@ -18,12 +18,14 @@ cc_library_static {
     srcs: [
         "SysUtil.cpp",
         "DirUtil.cpp",
+        "ZipUtil.cpp",
         "ThermalUtil.cpp",
     ],
 
     static_libs: [
         "libselinux",
         "libbase",
+        "libziparchive",
     ],
 
     cflags: [
