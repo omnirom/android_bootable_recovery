@@ -148,7 +148,7 @@ TEST(ImgdiffTest, image_mode_smoke) {
 TEST(ImgdiffTest, zip_mode_smoke_store) {
   // Construct src and tgt zip files.
   TemporaryFile src_file;
-  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
   ZipWriter src_writer(src_file_ptr);
   ASSERT_EQ(0, src_writer.StartEntry("file1.txt", 0));  // Store mode.
   const std::string src_content("abcdefg");
@@ -158,7 +158,7 @@ TEST(ImgdiffTest, zip_mode_smoke_store) {
   ASSERT_EQ(0, fclose(src_file_ptr));
 
   TemporaryFile tgt_file;
-  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
   ZipWriter tgt_writer(tgt_file_ptr);
   ASSERT_EQ(0, tgt_writer.StartEntry("file1.txt", 0));  // Store mode.
   const std::string tgt_content("abcdefgxyz");
@@ -197,7 +197,7 @@ TEST(ImgdiffTest, zip_mode_smoke_store) {
 TEST(ImgdiffTest, zip_mode_smoke_compressed) {
   // Construct src and tgt zip files.
   TemporaryFile src_file;
-  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
   ZipWriter src_writer(src_file_ptr);
   ASSERT_EQ(0, src_writer.StartEntry("file1.txt", ZipWriter::kCompress));
   const std::string src_content("abcdefg");
@@ -207,7 +207,7 @@ TEST(ImgdiffTest, zip_mode_smoke_compressed) {
   ASSERT_EQ(0, fclose(src_file_ptr));
 
   TemporaryFile tgt_file;
-  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
   ZipWriter tgt_writer(tgt_file_ptr);
   ASSERT_EQ(0, tgt_writer.StartEntry("file1.txt", ZipWriter::kCompress));
   const std::string tgt_content("abcdefgxyz");
@@ -246,7 +246,7 @@ TEST(ImgdiffTest, zip_mode_smoke_compressed) {
 TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
   // Construct src and tgt zip files.
   TemporaryFile src_file;
-  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
   ZipWriter src_writer(src_file_ptr);
   ASSERT_EQ(0, src_writer.StartEntry("file1.txt", ZipWriter::kCompress));
   const std::string src_content("abcdefg");
@@ -256,7 +256,7 @@ TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
   ASSERT_EQ(0, fclose(src_file_ptr));
 
   TemporaryFile tgt_file;
-  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
   ZipWriter tgt_writer(tgt_file_ptr);
   ASSERT_EQ(0, tgt_writer.StartEntry("file1.txt", ZipWriter::kCompress));
   const std::string tgt_content("abcdefgxyz");
@@ -761,7 +761,7 @@ TEST(ImgdiffTest, zip_mode_store_large_apk) {
   //  3 blocks  'a'    12 blocks 'd' (exceeds limit)
   //                   3 blocks  'e'
   TemporaryFile tgt_file;
-  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
   ZipWriter tgt_writer(tgt_file_ptr);
   construct_store_entry(
       { { "a", 3, 'a' }, { "b", 3, 'b' }, { "c", 8, 'c' }, { "d", 12, 'd' }, { "e", 3, 'e' } },
@@ -770,7 +770,7 @@ TEST(ImgdiffTest, zip_mode_store_large_apk) {
   ASSERT_EQ(0, fclose(tgt_file_ptr));
 
   TemporaryFile src_file;
-  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
   ZipWriter src_writer(src_file_ptr);
   construct_store_entry({ { "d", 12, 'd' }, { "c", 8, 'c' }, { "b", 3, 'b' }, { "a", 3, 'a' } },
                         &src_writer);
@@ -792,7 +792,7 @@ TEST(ImgdiffTest, zip_mode_store_large_apk) {
   std::string tgt;
   ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
 
-  // Expect 4 pieces of patch.(Rougly 3'a',3'b'; 8'c'; 10'd'; 2'd'3'e')
+  // Expect 4 pieces of patch. (Roughly 3'a',3'b'; 8'c'; 10'd'; 2'd'3'e')
   GenerateAndCheckSplitTarget(debug_dir.path, 4, tgt);
 }
 
@@ -810,7 +810,7 @@ TEST(ImgdiffTest, zip_mode_deflate_large_apk) {
   //  8 blocks,  "c"    20 blocks,  "d" (exceeds limit)
   //  1 block,   "f"    2  blocks,  "e"
   TemporaryFile tgt_file;
-  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
   ZipWriter tgt_writer(tgt_file_ptr);
 
   construct_deflate_entry(
@@ -821,7 +821,7 @@ TEST(ImgdiffTest, zip_mode_deflate_large_apk) {
   ASSERT_EQ(0, fclose(tgt_file_ptr));
 
   TemporaryFile src_file;
-  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
   ZipWriter src_writer(src_file_ptr);
 
   construct_deflate_entry(
@@ -911,7 +911,7 @@ TEST(ImgdiffTest, zip_mode_no_match_source) {
   generate_n(back_inserter(random_data), 4096 * 20, []() { return rand() % 256; });
 
   TemporaryFile tgt_file;
-  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
   ZipWriter tgt_writer(tgt_file_ptr);
 
   construct_deflate_entry({ { "a", 0, 4 }, { "b", 5, 5 }, { "c", 11, 5 } }, &tgt_writer,
@@ -922,7 +922,7 @@ TEST(ImgdiffTest, zip_mode_no_match_source) {
 
   // We don't have a matching source entry.
   TemporaryFile src_file;
-  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
   ZipWriter src_writer(src_file_ptr);
   construct_store_entry({ { "d", 1, 'd' } }, &src_writer);
   ASSERT_EQ(0, src_writer.Finish());
@@ -954,7 +954,7 @@ TEST(ImgdiffTest, zip_mode_large_enough_limit) {
   generate_n(back_inserter(random_data), 4096 * 20, []() { return rand() % 256; });
 
   TemporaryFile tgt_file;
-  FILE* tgt_file_ptr = fdopen(tgt_file.fd, "wb");
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
   ZipWriter tgt_writer(tgt_file_ptr);
 
   construct_deflate_entry({ { "a", 0, 10 }, { "b", 10, 5 } }, &tgt_writer, random_data);
@@ -964,7 +964,7 @@ TEST(ImgdiffTest, zip_mode_large_enough_limit) {
 
   // Construct 10 blocks of source.
   TemporaryFile src_file;
-  FILE* src_file_ptr = fdopen(src_file.fd, "wb");
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
   ZipWriter src_writer(src_file_ptr);
   construct_deflate_entry({ { "a", 1, 10 } }, &src_writer, random_data);
   ASSERT_EQ(0, src_writer.Finish());
@@ -985,6 +985,6 @@ TEST(ImgdiffTest, zip_mode_large_enough_limit) {
   std::string tgt;
   ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
 
-  // Expect 1 pieces of patch since limit is larger than the zip file size.
+  // Expect 1 piece of patch since limit is larger than the zip file size.
   GenerateAndCheckSplitTarget(debug_dir.path, 1, tgt);
 }
