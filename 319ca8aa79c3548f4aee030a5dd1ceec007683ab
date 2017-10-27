@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "121c6ccc_1f6a4cf6",
+        "filename": "prebuilt/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-10-27T00:15:08Z",
+      "side": 1,
+      "message": "Can this be combined with the next 3 statements for ge 23?",
+      "revId": "319ca8aa79c3548f4aee030a5dd1ceec007683ab",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
