@@ -840,10 +840,11 @@ int OpenRecoveryScript::Restore_ADB_Backup(void) {
 					pos = Restore_Name.find_last_of("/");
 					Backup_FileName = Restore_Name.substr(pos + 1, Restore_Name.size());
 					part_settings.Part = PartitionManager.Find_Partition_By_Path(path);
-					part_settings.Backup_Folder = path;
+					part_settings.Restore_Name = path;
 					part_settings.partition_count = partition_count;
 					part_settings.adbbackup = true;
 					part_settings.adb_compression = twimghdr.compressed;
+					part_settings.Backup_FileName = Backup_FileName;
 					part_settings.PM_Method = PM_RESTORE;
 					ProgressTracking progress(part_settings.total_restore_size);
 					part_settings.progress = &progress;
@@ -870,6 +871,7 @@ int OpenRecoveryScript::Restore_ADB_Backup(void) {
 					pos = Restore_Name.find_last_of("/");
 					Backup_FileName = Restore_Name.substr(pos + 1, Restore_Name.size());
 					pos = Restore_Name.find_last_of("/");
+					part_settings.Restore_Name = Restore_Name.substr(0, pos);
 					part_settings.Part = PartitionManager.Find_Partition_By_Path(path);
 
 					if (path.compare("/system") == 0) {
@@ -891,6 +893,7 @@ int OpenRecoveryScript::Restore_ADB_Backup(void) {
 					part_settings.partition_count = partition_count;
 					part_settings.adbbackup = true;
 					part_settings.adb_compression = twimghdr.compressed;
+					part_settings.Backup_FileName = Backup_FileName;
 					part_settings.total_restore_size += part_settings.Part->Get_Restore_Size(&part_settings);
 					part_settings.PM_Method = PM_RESTORE;
 					ProgressTracking progress(part_settings.total_restore_size);

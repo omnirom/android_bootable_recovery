@@ -69,8 +69,6 @@ twrpTar::twrpTar(void) {
 	Total_Backup_Size = 0;
 	Archive_Current_Size = 0;
 	include_root_dir = true;
-	input_fd = -1;
-	output_fd = -1;
 }
 
 twrpTar::~twrpTar(void) {
@@ -445,7 +443,7 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 		part_settings->progress->UpdateDisplayDetails(true);
 
 		if (!part_settings->adbbackup) {
-			InfoManager backup_info(backup_folder + "/" + partition_name + ".info");
+			InfoManager backup_info(backup_folder + partition_name + ".info");
 			backup_info.SetValue("backup_size", size_backup);
 			if (use_compression && use_encryption)
 				backup_info.SetValue("backup_type", COMPRESSED_ENCRYPTED);
@@ -917,12 +915,10 @@ int twrpTar::createTar() {
 			// pigz Child
 			close(pipes[1]);
 			close(pipes[2]);
-			int stdinfd = fileno(stdin);
-			int stdoutfd = fileno(stdout);
-			close(stdinfd);
-			dup2(pipes[0], stdinfd);
-			close(stdoutfd);
-			dup2(pipes[3], stdoutfd);
+			close(0);
+			dup2(pipes[0], 0);
+			close(1);
+			dup2(pipes[3], 1);
 			if (execlp("pigz", "pigz", "-", NULL) < 0) {
 				LOGINFO("execlp pigz ERROR!\n");
 				gui_err("backup_error=Error creating backup.");
@@ -947,12 +943,10 @@ int twrpTar::createTar() {
 				close(pipes[0]);
 				close(pipes[1]);
 				close(pipes[3]);
-				int stdinfd = fileno(stdin);
-				int stdoutfd = fileno(stdout);
-				close(stdinfd);
-				dup2(pipes[2], stdinfd);
-				close(stdoutfd);
-				dup2(output_fd, stdoutfd);
+				close(0);
+				dup2(pipes[2], 0);
+				close(1);
+				dup2(output_fd, 1);
 				if (execlp("openaes", "openaes", "enc", "--key", password.c_str(), NULL) < 0) {
 					LOGINFO("execlp openaes ERROR!\n");
 					gui_err("backup_error=Error creating backup.");
@@ -1013,8 +1007,8 @@ int twrpTar::createTar() {
 		} else if (pigz_pid == 0) {
 			// Child
 			close(pigzfd[1]);   // close unused output pipe
-			dup2(pigzfd[0], fileno(stdin)); // remap stdin
-			dup2(output_fd, fileno(stdout)); // remap stdout to output file
+			dup2(pigzfd[0], 0); // remap stdin
+			dup2(output_fd, 1); // remap stdout to output file
 			if (execlp("pigz", "pigz", "-", NULL) < 0) {
 				LOGINFO("execlp pigz ERROR!\n");
 				gui_err("backup_error=Error creating backup.");
@@ -1063,8 +1057,8 @@ int twrpTar::createTar() {
 		} else if (oaes_pid == 0) {
 			// Child
 			close(oaesfd[1]);   // close unused
-			dup2(oaesfd[0], fileno(stdin)); // remap stdin
-			dup2(output_fd, fileno(stdout)); // remap stdout to output file
+			dup2(oaesfd[0], 0); // remap stdin
+			dup2(output_fd, 1); // remap stdout to output file
 			if (execlp("openaes", "openaes", "enc", "--key", password.c_str(), NULL) < 0) {
 				LOGINFO("execlp openaes ERROR!\n");
 				gui_err("backup_error=Error creating backup.");
@@ -1153,12 +1147,10 @@ int twrpTar::openTar() {
 			close(pipes[0]); // Close pipes that are not used by this child
 			close(pipes[2]);
 			close(pipes[3]);
-			int stdinfd = fileno(stdin);
-			int stdoutfd = fileno(stdout);
-			close(stdinfd);
-			dup2(input_fd, stdinfd);
-			close(stdoutfd);
-			dup2(pipes[1], stdoutfd);
+			close(0);
+			dup2(input_fd, 0);
+			close(1);
+			dup2(pipes[1], 1);
 			if (execlp("openaes", "openaes", "dec", "--key", password.c_str(), NULL) < 0) {
 				LOGINFO("execlp openaes ERROR!\n");
 				gui_err("restore_error=Error during restore process.");
@@ -1181,12 +1173,10 @@ int twrpTar::openTar() {
 				// pigz Child
 				close(pipes[1]); // Close pipes not used by this child
 				close(pipes[2]);
-				int stdinfd = fileno(stdin);
-				int stdoutfd = fileno(stdout);
-				close(stdinfd);
-				dup2(pipes[0], stdinfd);
-				close(stdoutfd);
-				dup2(pipes[3], stdoutfd);
+				close(0);
+				dup2(pipes[0], 0);
+				close(1);
+				dup2(pipes[3], 1);
 				if (execlp("pigz", "pigz", "-d", "-c", NULL) < 0) {
 					LOGINFO("execlp pigz ERROR!\n");
 					gui_err("restore_error=Error during restore process.");
@@ -1236,10 +1226,9 @@ int twrpTar::openTar() {
 		} else if (oaes_pid == 0) {
 			// Child
 			close(oaesfd[0]); // Close unused pipe
-			int stdinfd = fileno(stdin);
-			close(stdinfd);   // close stdin
-			dup2(oaesfd[1], fileno(stdout)); // remap stdout
-			dup2(input_fd, stdinfd); // remap input fd to stdin
+			close(0);   // close stdin
+			dup2(oaesfd[1], 1); // remap stdout
+			dup2(input_fd, 0); // remap input fd to stdin
 			if (execlp("openaes", "openaes", "dec", "--key", password.c_str(), NULL) < 0) {
 				LOGINFO("execlp openaes ERROR!\n");
 				gui_err("restore_error=Error during restore process.");
@@ -1292,8 +1281,8 @@ int twrpTar::openTar() {
 		} else if (pigz_pid == 0) {
 			// Child
 			close(pigzfd[0]);
-			dup2(pigzfd[1], fileno(stdout)); // remap stdout
-			dup2(input_fd, fileno(stdin)); // remap input fd to stdin
+			dup2(pigzfd[1], 1); // remap stdout
+			dup2(input_fd, 0); // remap input fd to stdin
 			if (execlp("pigz", "pigz", "-d", "-c", NULL) < 0) {
 				close(pigzfd[1]);
 				close(input_fd);
@@ -1407,10 +1396,8 @@ int twrpTar::closeTar() {
 		if (!twadbbu::Write_TWEOF())
 			return -1;
 	}
-	if (input_fd >= 0)
-		close(input_fd);
-	if (output_fd >= 0)
-		close(output_fd);
+	close(input_fd);
+	close(output_fd);
 	return 0;
 }
 
