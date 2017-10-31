@@ -137,11 +137,12 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
     LOG(ERROR) << "Error in parsing range string.";
     return false;
   }
+  range_count /= 2;
 
   std::vector<std::future<bool>> threads;
   size_t thread_num = std::thread::hardware_concurrency() ?: 4;
-  thread_num = std::min(thread_num, range_count / 2);
-  size_t group_range_count = range_count / thread_num;
+  thread_num = std::min(thread_num, range_count);
+  size_t group_range_count = (range_count + thread_num - 1) / thread_num;
 
   for (size_t t = 0; t < thread_num; t++) {
     auto thread_func = [t, group_range_count, &dm_block_device, &ranges, &partition]() {
@@ -154,7 +155,8 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
         return false;
       }
 
-      for (size_t i = 1 + group_range_count * t; i < group_range_count * (t + 1) + 1; i += 2) {
+      for (size_t i = group_range_count * 2 * t + 1;
+           i < std::min(group_range_count * 2 * (t + 1) + 1, ranges.size()); i += 2) {
         unsigned int range_start, range_end;
         bool parse_status = android::base::ParseUint(ranges[i], &range_start);
         parse_status = parse_status && android::base::ParseUint(ranges[i + 1], &range_end);
