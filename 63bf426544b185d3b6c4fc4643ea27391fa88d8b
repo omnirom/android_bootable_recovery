@@ -16,6 +16,23 @@
       "revId": "63bf426544b185d3b6c4fc4643ea27391fa88d8b",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ad964221_9ba2dc5e",
+        "filename": "crypto/ext4crypt/Decrypt.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 1002113
+      },
+      "writtenOn": "2017-11-01T21:30:15Z",
+      "side": 1,
+      "message": "strtoull() works for this",
+      "revId": "63bf426544b185d3b6c4fc4643ea27391fa88d8b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
