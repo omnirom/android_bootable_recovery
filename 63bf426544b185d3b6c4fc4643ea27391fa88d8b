@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2ce29c26_71892199",
+        "filename": "crypto/ext4crypt/Decrypt.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-01T21:27:18Z",
+      "side": 1,
+      "message": "Try strtoull as per joshua_",
+      "revId": "63bf426544b185d3b6c4fc4643ea27391fa88d8b",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
