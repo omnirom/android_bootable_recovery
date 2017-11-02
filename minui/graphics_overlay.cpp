@@ -69,6 +69,9 @@ int MinuiBackendOverlay::map_mdp_pixel_format()
 #endif
     return format;
 }
+
+static memInfo mem_info;
+
 #endif // MSM_BSP
 
 bool MinuiBackendOverlay::target_has_overlay()
@@ -461,7 +464,7 @@ GRSurface* MinuiBackendOverlay::Flip() {
         // then flip the driver so we're displaying the other buffer
         // instead.
         gr_draw = gr_framebuffer + displayed_buffer;
-        set_displayed_framebuffer(1-displayed_buffer);
+        SetDisplayedFramebuffer(1-displayed_buffer);
         overlay_display_frame(fb_fd, gr_draw->data, frame_size);
     } else {
         // Copy from the in-memory surface to the framebuffer.
@@ -613,14 +616,14 @@ GRSurface* MinuiBackendOverlay::Init() {
 
     memset(gr_draw->data, 0, gr_draw->height * gr_draw->row_bytes);
     fb_fd = fd;
-    set_displayed_framebuffer(0);
+    SetDisplayedFramebuffer(0);
 
     frame_size = fi.line_length * vi.yres;
 
     printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
 
-    overlay_blank(backend, true);
-    overlay_blank(backend, false);
+    Blank(true);
+    Blank(false);
 
     if (!alloc_ion_mem(fi.line_length * vi.yres))
         allocate_overlay(fb_fd, gr_framebuffer);
