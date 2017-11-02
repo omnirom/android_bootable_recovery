@@ -62,8 +62,8 @@ LOCAL_STATIC_LIBRARIES := \
     libpng \
     libbase
 
-LOCAL_CFLAGS := -Werror -std=c++14
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+LOCAL_CFLAGS += -Werror -std=c++14
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
 LOCAL_MODULE := libminui
