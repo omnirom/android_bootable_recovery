@@ -49,7 +49,6 @@
 #include <applypatch/applypatch.h>
 #include <bootloader_message/bootloader_message.h>
 #include <cutils/android_reboot.h>
-#include <ext4_utils/make_ext4fs.h>
 #include <ext4_utils/wipe.h>
 #include <openssl/sha.h>
 #include <selinux/label.h>
@@ -284,14 +283,8 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
 
     int status = exec_cmd(mke2fs_argv[0], const_cast<char**>(mke2fs_argv));
     if (status != 0) {
-      LOG(WARNING) << name << ": mke2fs failed (" << status << ") on " << location
-                   << ", falling back to make_ext4fs";
-      status = make_ext4fs(location.c_str(), size, mount_point.c_str(), sehandle);
-      if (status != 0) {
-        LOG(ERROR) << name << ": make_ext4fs failed (" << status << ") on " << location;
-        return StringValue("");
-      }
-      return StringValue(location);
+      LOG(ERROR) << name << ": mke2fs failed (" << status << ") on " << location;
+      return StringValue("");
     }
 
     const char* e2fsdroid_argv[] = { "/sbin/e2fsdroid_static", "-e",   "-a", mount_point.c_str(),
