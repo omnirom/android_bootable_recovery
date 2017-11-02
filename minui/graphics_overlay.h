@@ -18,6 +18,7 @@
 #define _GRAPHICS_OVERLAY_H_
 
 #include <linux/fb.h>
+#include <linux/ion.h>
 
 #include "graphics.h"
 #include "minui/minui.h"
