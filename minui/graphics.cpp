@@ -28,7 +28,9 @@
 #include "font_10x18.h"
 #endif
 
+#ifndef MSM_BSP
 #include "graphics_adf.h"
+#endif
 #include "graphics_drm.h"
 #include "graphics_fbdev.h"
 #include "graphics_overlay.h"
