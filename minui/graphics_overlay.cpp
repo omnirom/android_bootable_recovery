@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include "graphics_overlay.h"
-
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,6 +37,8 @@
 #else
 #define MSMFB_NEW_REQUEST 0
 #endif
+
+#include "graphics_overlay.h"
 
 #include "minui/minui.h"
 
