@@ -158,6 +158,7 @@ cc_binary_host {
         "libbase",
         "libutils",
         "liblog",
+        "libbrotli",
         "libbz",
         "libz",
     ],

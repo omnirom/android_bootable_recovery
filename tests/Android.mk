@@ -208,6 +208,7 @@ LOCAL_STATIC_LIBRARIES := \
     libutils \
     libbase \
     libcrypto \
+    libbrotli \
     libbz \
     libdivsufsort64 \
     libdivsufsort \
