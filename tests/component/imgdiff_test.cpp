@@ -657,19 +657,23 @@ static void construct_deflate_entry(const std::vector<std::tuple<std::string, si
   }
 }
 
-// Look for the generated source and patch pieces in the debug_dir and generate the target on
-// each pair. Concatenate the split target and match against the orignal one.
+// Look for the source and patch pieces in debug_dir. Generate a target piece from each pair.
+// Concatenate all the target pieces and match against the orignal one. Used pieces in debug_dir
+// will be cleaned up.
 static void GenerateAndCheckSplitTarget(const std::string& debug_dir, size_t count,
                                         const std::string& tgt) {
   std::string patched;
   for (size_t i = 0; i < count; i++) {
     std::string split_src_path = android::base::StringPrintf("%s/src-%zu", debug_dir.c_str(), i);
-    std::string split_patch_path = android::base::StringPrintf("%s/patch-%zu", debug_dir.c_str(), i);
-
     std::string split_src;
-    std::string split_patch;
     ASSERT_TRUE(android::base::ReadFileToString(split_src_path, &split_src));
+    ASSERT_EQ(0, unlink(split_src_path.c_str()));
+
+    std::string split_patch_path =
+        android::base::StringPrintf("%s/patch-%zu", debug_dir.c_str(), i);
+    std::string split_patch;
     ASSERT_TRUE(android::base::ReadFileToString(split_patch_path, &split_patch));
+    ASSERT_EQ(0, unlink(split_patch_path.c_str()));
 
     std::string split_tgt;
     GenerateTarget(split_src, split_patch, &split_tgt);
