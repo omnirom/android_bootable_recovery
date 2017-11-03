@@ -158,7 +158,6 @@ LOCAL_STATIC_LIBRARIES := \
     libziparchive \
     libotautil \
     libmounts \
-    libz \
     libminadbd \
     libasyncio \
     libfusesideload \
@@ -173,7 +172,8 @@ LOCAL_STATIC_LIBRARIES := \
     libcutils \
     libutils \
     liblog \
-    libselinux
+    libselinux \
+    libz
 
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
