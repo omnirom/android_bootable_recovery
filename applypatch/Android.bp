@@ -99,6 +99,7 @@ cc_binary {
 
     shared_libs: [
         "libbase",
+        "libbrotli",
         "libbz",
         "libcrypto",
         "liblog",
