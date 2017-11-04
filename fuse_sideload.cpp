@@ -41,337 +41,310 @@
 // two files is implemented.  In particular, you can't opendir() or
 // readdir() on the "/sideload" directory; ls on it won't work.
 
-#include <ctype.h>
-#include <dirent.h>
+#include "fuse_sideload.h"
+
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
+#include <limits.h>  // PATH_MAX
 #include <linux/fuse.h>
-#include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/inotify.h>
 #include <sys/mount.h>
-#include <sys/param.h>
-#include <sys/resource.h>
+#include <sys/param.h>  // MIN
 #include <sys/stat.h>
-#include <sys/statfs.h>
-#include <sys/time.h>
 #include <sys/uio.h>
 #include <unistd.h>
 
+#include <array>
 #include <string>
+#include <vector>
 
 #include <android-base/stringprintf.h>
+#include <android-base/unique_fd.h>
 #include <openssl/sha.h>
 
-#include "fuse_sideload.h"
+static constexpr uint64_t PACKAGE_FILE_ID = FUSE_ROOT_ID + 1;
+static constexpr uint64_t EXIT_FLAG_ID = FUSE_ROOT_ID + 2;
 
-#define PACKAGE_FILE_ID   (FUSE_ROOT_ID+1)
-#define EXIT_FLAG_ID      (FUSE_ROOT_ID+2)
+static constexpr int NO_STATUS = 1;
+static constexpr int NO_STATUS_EXIT = 2;
 
-#define NO_STATUS         1
-#define NO_STATUS_EXIT    2
+using SHA256Digest = std::array<uint8_t, SHA256_DIGEST_LENGTH>;
 
 struct fuse_data {
-    int ffd;   // file descriptor for the fuse socket
+  android::base::unique_fd ffd;  // file descriptor for the fuse socket
 
-    struct provider_vtab* vtab;
-    void* cookie;
+  provider_vtab vtab;
 
-    uint64_t file_size;     // bytes
+  uint64_t file_size;  // bytes
 
-    uint32_t block_size;    // block size that the adb host is using to send the file to us
-    uint32_t file_blocks;   // file size in block_size blocks
+  uint32_t block_size;   // block size that the adb host is using to send the file to us
+  uint32_t file_blocks;  // file size in block_size blocks
 
-    uid_t uid;
-    gid_t gid;
+  uid_t uid;
+  gid_t gid;
 
-    uint32_t curr_block;    // cache the block most recently read from the host
-    uint8_t* block_data;
+  uint32_t curr_block;  // cache the block most recently read from the host
+  uint8_t* block_data;
 
-    uint8_t* extra_block;   // another block of storage for reads that
-                            // span two blocks
+  uint8_t* extra_block;  // another block of storage for reads that span two blocks
 
-    uint8_t* hashes;        // SHA-256 hash of each block (all zeros
-                            // if block hasn't been read yet)
+  std::vector<SHA256Digest>
+      hashes;  // SHA-256 hash of each block (all zeros if block hasn't been read yet)
 };
 
-static void fuse_reply(struct fuse_data* fd, __u64 unique, const void *data, size_t len)
-{
-    struct fuse_out_header hdr;
-    struct iovec vec[2];
-    int res;
+static void fuse_reply(const fuse_data* fd, uint64_t unique, const void* data, size_t len) {
+  fuse_out_header hdr;
+  hdr.len = len + sizeof(hdr);
+  hdr.error = 0;
+  hdr.unique = unique;
 
-    hdr.len = len + sizeof(hdr);
-    hdr.error = 0;
-    hdr.unique = unique;
+  struct iovec vec[2];
+  vec[0].iov_base = &hdr;
+  vec[0].iov_len = sizeof(hdr);
+  vec[1].iov_base = const_cast<void*>(data);
+  vec[1].iov_len = len;
 
-    vec[0].iov_base = &hdr;
-    vec[0].iov_len = sizeof(hdr);
-    vec[1].iov_base = /* const_cast */(void*)(data);
-    vec[1].iov_len = len;
-
-    res = writev(fd->ffd, vec, 2);
-    if (res < 0) {
-        printf("*** REPLY FAILED *** %s\n", strerror(errno));
-    }
+  int res = writev(fd->ffd, vec, 2);
+  if (res == -1) {
+    printf("*** REPLY FAILED *** %s\n", strerror(errno));
+  }
 }
 
-static int handle_init(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    const struct fuse_init_in* req = reinterpret_cast<const struct fuse_init_in*>(data);
-    struct fuse_init_out out;
-    size_t fuse_struct_size;
+static int handle_init(void* data, fuse_data* fd, const fuse_in_header* hdr) {
+  const fuse_init_in* req = static_cast<const fuse_init_in*>(data);
 
+  // Kernel 2.6.16 is the first stable kernel with struct fuse_init_out defined (fuse version 7.6).
+  // The structure is the same from 7.6 through 7.22. Beginning with 7.23, the structure increased
+  // in size and added new parameters.
+  if (req->major != FUSE_KERNEL_VERSION || req->minor < 6) {
+    printf("Fuse kernel version mismatch: Kernel version %d.%d, Expected at least %d.6", req->major,
+           req->minor, FUSE_KERNEL_VERSION);
+    return -1;
+  }
 
-    /* Kernel 2.6.16 is the first stable kernel with struct fuse_init_out
-     * defined (fuse version 7.6). The structure is the same from 7.6 through
-     * 7.22. Beginning with 7.23, the structure increased in size and added
-     * new parameters.
-     */
-    if (req->major != FUSE_KERNEL_VERSION || req->minor < 6) {
-        printf("Fuse kernel version mismatch: Kernel version %d.%d, Expected at least %d.6",
-               req->major, req->minor, FUSE_KERNEL_VERSION);
-        return -1;
-    }
-
-    out.minor = MIN(req->minor, FUSE_KERNEL_MINOR_VERSION);
-    fuse_struct_size = sizeof(out);
+  fuse_init_out out;
+  out.minor = MIN(req->minor, FUSE_KERNEL_MINOR_VERSION);
+  size_t fuse_struct_size = sizeof(out);
 #if defined(FUSE_COMPAT_22_INIT_OUT_SIZE)
-    /* FUSE_KERNEL_VERSION >= 23. */
+  /* FUSE_KERNEL_VERSION >= 23. */
 
-    /* If the kernel only works on minor revs older than or equal to 22,
-     * then use the older structure size since this code only uses the 7.22
-     * version of the structure. */
-    if (req->minor <= 22) {
-        fuse_struct_size = FUSE_COMPAT_22_INIT_OUT_SIZE;
-    }
+  // If the kernel only works on minor revs older than or equal to 22, then use the older structure
+  // size since this code only uses the 7.22 version of the structure.
+  if (req->minor <= 22) {
+    fuse_struct_size = FUSE_COMPAT_22_INIT_OUT_SIZE;
+  }
 #endif
 
-    out.major = FUSE_KERNEL_VERSION;
-    out.max_readahead = req->max_readahead;
-    out.flags = 0;
-    out.max_background = 32;
-    out.congestion_threshold = 32;
-    out.max_write = 4096;
-    fuse_reply(fd, hdr->unique, &out, fuse_struct_size);
+  out.major = FUSE_KERNEL_VERSION;
+  out.max_readahead = req->max_readahead;
+  out.flags = 0;
+  out.max_background = 32;
+  out.congestion_threshold = 32;
+  out.max_write = 4096;
+  fuse_reply(fd, hdr->unique, &out, fuse_struct_size);
 
-    return NO_STATUS;
+  return NO_STATUS;
 }
 
-static void fill_attr(struct fuse_attr* attr, struct fuse_data* fd,
-                      uint64_t nodeid, uint64_t size, uint32_t mode) {
-    memset(attr, 0, sizeof(*attr));
-    attr->nlink = 1;
-    attr->uid = fd->uid;
-    attr->gid = fd->gid;
-    attr->blksize = 4096;
+static void fill_attr(fuse_attr* attr, const fuse_data* fd, uint64_t nodeid, uint64_t size,
+                      uint32_t mode) {
+  *attr = {};
+  attr->nlink = 1;
+  attr->uid = fd->uid;
+  attr->gid = fd->gid;
+  attr->blksize = 4096;
 
-    attr->ino = nodeid;
-    attr->size = size;
-    attr->blocks = (size == 0) ? 0 : (((size-1) / attr->blksize) + 1);
-    attr->mode = mode;
+  attr->ino = nodeid;
+  attr->size = size;
+  attr->blocks = (size == 0) ? 0 : (((size - 1) / attr->blksize) + 1);
+  attr->mode = mode;
 }
 
-static int handle_getattr(void* /* data */, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    struct fuse_attr_out out;
-    memset(&out, 0, sizeof(out));
-    out.attr_valid = 10;
+static int handle_getattr(void* /* data */, const fuse_data* fd, const fuse_in_header* hdr) {
+  fuse_attr_out out = {};
+  out.attr_valid = 10;
 
-    if (hdr->nodeid == FUSE_ROOT_ID) {
-        fill_attr(&(out.attr), fd, hdr->nodeid, 4096, S_IFDIR | 0555);
-    } else if (hdr->nodeid == PACKAGE_FILE_ID) {
-        fill_attr(&(out.attr), fd, PACKAGE_FILE_ID, fd->file_size, S_IFREG | 0444);
-    } else if (hdr->nodeid == EXIT_FLAG_ID) {
-        fill_attr(&(out.attr), fd, EXIT_FLAG_ID, 0, S_IFREG | 0);
-    } else {
-        return -ENOENT;
-    }
+  if (hdr->nodeid == FUSE_ROOT_ID) {
+    fill_attr(&(out.attr), fd, hdr->nodeid, 4096, S_IFDIR | 0555);
+  } else if (hdr->nodeid == PACKAGE_FILE_ID) {
+    fill_attr(&(out.attr), fd, PACKAGE_FILE_ID, fd->file_size, S_IFREG | 0444);
+  } else if (hdr->nodeid == EXIT_FLAG_ID) {
+    fill_attr(&(out.attr), fd, EXIT_FLAG_ID, 0, S_IFREG | 0);
+  } else {
+    return -ENOENT;
+  }
 
-    fuse_reply(fd, hdr->unique, &out, sizeof(out));
-    return (hdr->nodeid == EXIT_FLAG_ID) ? NO_STATUS_EXIT : NO_STATUS;
+  fuse_reply(fd, hdr->unique, &out, sizeof(out));
+  return (hdr->nodeid == EXIT_FLAG_ID) ? NO_STATUS_EXIT : NO_STATUS;
 }
 
-static int handle_lookup(void* data, struct fuse_data* fd,
-                         const struct fuse_in_header* hdr) {
-    struct fuse_entry_out out;
-    memset(&out, 0, sizeof(out));
-    out.entry_valid = 10;
-    out.attr_valid = 10;
+static int handle_lookup(void* data, const fuse_data* fd, const fuse_in_header* hdr) {
+  if (data == nullptr) return -ENOENT;
 
-    if (strncmp(FUSE_SIDELOAD_HOST_FILENAME, reinterpret_cast<const char*>(data),
-                sizeof(FUSE_SIDELOAD_HOST_FILENAME)) == 0) {
-        out.nodeid = PACKAGE_FILE_ID;
-        out.generation = PACKAGE_FILE_ID;
-        fill_attr(&(out.attr), fd, PACKAGE_FILE_ID, fd->file_size, S_IFREG | 0444);
-    } else if (strncmp(FUSE_SIDELOAD_HOST_EXIT_FLAG, reinterpret_cast<const char*>(data),
-                       sizeof(FUSE_SIDELOAD_HOST_EXIT_FLAG)) == 0) {
-        out.nodeid = EXIT_FLAG_ID;
-        out.generation = EXIT_FLAG_ID;
-        fill_attr(&(out.attr), fd, EXIT_FLAG_ID, 0, S_IFREG | 0);
-    } else {
-        return -ENOENT;
-    }
+  fuse_entry_out out = {};
+  out.entry_valid = 10;
+  out.attr_valid = 10;
 
-    fuse_reply(fd, hdr->unique, &out, sizeof(out));
-    return (out.nodeid == EXIT_FLAG_ID) ? NO_STATUS_EXIT : NO_STATUS;
+  std::string filename(static_cast<const char*>(data));
+  if (filename == FUSE_SIDELOAD_HOST_FILENAME) {
+    out.nodeid = PACKAGE_FILE_ID;
+    out.generation = PACKAGE_FILE_ID;
+    fill_attr(&(out.attr), fd, PACKAGE_FILE_ID, fd->file_size, S_IFREG | 0444);
+  } else if (filename == FUSE_SIDELOAD_HOST_EXIT_FLAG) {
+    out.nodeid = EXIT_FLAG_ID;
+    out.generation = EXIT_FLAG_ID;
+    fill_attr(&(out.attr), fd, EXIT_FLAG_ID, 0, S_IFREG | 0);
+  } else {
+    return -ENOENT;
+  }
+
+  fuse_reply(fd, hdr->unique, &out, sizeof(out));
+  return (out.nodeid == EXIT_FLAG_ID) ? NO_STATUS_EXIT : NO_STATUS;
 }
 
-static int handle_open(void* /* data */, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    if (hdr->nodeid == EXIT_FLAG_ID) return -EPERM;
-    if (hdr->nodeid != PACKAGE_FILE_ID) return -ENOENT;
+static int handle_open(void* /* data */, const fuse_data* fd, const fuse_in_header* hdr) {
+  if (hdr->nodeid == EXIT_FLAG_ID) return -EPERM;
+  if (hdr->nodeid != PACKAGE_FILE_ID) return -ENOENT;
 
-    struct fuse_open_out out;
-    memset(&out, 0, sizeof(out));
-    out.fh = 10;  // an arbitrary number; we always use the same handle
-    fuse_reply(fd, hdr->unique, &out, sizeof(out));
-    return NO_STATUS;
+  fuse_open_out out = {};
+  out.fh = 10;  // an arbitrary number; we always use the same handle
+  fuse_reply(fd, hdr->unique, &out, sizeof(out));
+  return NO_STATUS;
 }
 
-static int handle_flush(void* /* data */, struct fuse_data* /* fd */,
-                        const struct fuse_in_header* /* hdr */) {
-    return 0;
+static int handle_flush(void* /* data */, fuse_data* /* fd */, const fuse_in_header* /* hdr */) {
+  return 0;
 }
 
-static int handle_release(void* /* data */, struct fuse_data* /* fd */,
-                          const struct fuse_in_header* /* hdr */) {
-    return 0;
+static int handle_release(void* /* data */, fuse_data* /* fd */, const fuse_in_header* /* hdr */) {
+  return 0;
 }
 
 // Fetch a block from the host into fd->curr_block and fd->block_data.
 // Returns 0 on successful fetch, negative otherwise.
-static int fetch_block(struct fuse_data* fd, uint32_t block) {
-    if (block == fd->curr_block) {
-        return 0;
-    }
-
-    if (block >= fd->file_blocks) {
-        memset(fd->block_data, 0, fd->block_size);
-        fd->curr_block = block;
-        return 0;
-    }
-
-    size_t fetch_size = fd->block_size;
-    if (block * fd->block_size + fetch_size > fd->file_size) {
-        // If we're reading the last (partial) block of the file,
-        // expect a shorter response from the host, and pad the rest
-        // of the block with zeroes.
-        fetch_size = fd->file_size - (block * fd->block_size);
-        memset(fd->block_data + fetch_size, 0, fd->block_size - fetch_size);
-    }
-
-    int result = fd->vtab->read_block(fd->cookie, block, fd->block_data, fetch_size);
-    if (result < 0) return result;
-
-    fd->curr_block = block;
-
-    // Verify the hash of the block we just got from the host.
-    //
-    // - If the hash of the just-received data matches the stored hash
-    //   for the block, accept it.
-    // - If the stored hash is all zeroes, store the new hash and
-    //   accept the block (this is the first time we've read this
-    //   block).
-    // - Otherwise, return -EINVAL for the read.
-
-    uint8_t hash[SHA256_DIGEST_LENGTH];
-    SHA256(fd->block_data, fd->block_size, hash);
-    uint8_t* blockhash = fd->hashes + block * SHA256_DIGEST_LENGTH;
-    if (memcmp(hash, blockhash, SHA256_DIGEST_LENGTH) == 0) {
-        return 0;
-    }
-
-    int i;
-    for (i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
-        if (blockhash[i] != 0) {
-            fd->curr_block = -1;
-            return -EIO;
-        }
-    }
-
-    memcpy(blockhash, hash, SHA256_DIGEST_LENGTH);
+static int fetch_block(fuse_data* fd, uint32_t block) {
+  if (block == fd->curr_block) {
     return 0;
+  }
+
+  if (block >= fd->file_blocks) {
+    memset(fd->block_data, 0, fd->block_size);
+    fd->curr_block = block;
+    return 0;
+  }
+
+  size_t fetch_size = fd->block_size;
+  if (block * fd->block_size + fetch_size > fd->file_size) {
+    // If we're reading the last (partial) block of the file, expect a shorter response from the
+    // host, and pad the rest of the block with zeroes.
+    fetch_size = fd->file_size - (block * fd->block_size);
+    memset(fd->block_data + fetch_size, 0, fd->block_size - fetch_size);
+  }
+
+  int result = fd->vtab.read_block(block, fd->block_data, fetch_size);
+  if (result < 0) return result;
+
+  fd->curr_block = block;
+
+  // Verify the hash of the block we just got from the host.
+  //
+  // - If the hash of the just-received data matches the stored hash for the block, accept it.
+  // - If the stored hash is all zeroes, store the new hash and accept the block (this is the first
+  //   time we've read this block).
+  // - Otherwise, return -EINVAL for the read.
+
+  SHA256Digest hash;
+  SHA256(fd->block_data, fd->block_size, hash.data());
+
+  const SHA256Digest& blockhash = fd->hashes[block];
+  if (hash == blockhash) {
+    return 0;
+  }
+
+  for (uint8_t i : blockhash) {
+    if (i != 0) {
+      fd->curr_block = -1;
+      return -EIO;
+    }
+  }
+
+  fd->hashes[block] = hash;
+  return 0;
 }
 
-static int handle_read(void* data, struct fuse_data* fd, const struct fuse_in_header* hdr) {
-    const struct fuse_read_in* req = reinterpret_cast<const struct fuse_read_in*>(data);
-    struct fuse_out_header outhdr;
-    struct iovec vec[3];
-    int vec_used;
-    int result;
+static int handle_read(void* data, fuse_data* fd, const fuse_in_header* hdr) {
+  if (hdr->nodeid != PACKAGE_FILE_ID) return -ENOENT;
 
-    if (hdr->nodeid != PACKAGE_FILE_ID) return -ENOENT;
+  const fuse_read_in* req = static_cast<const fuse_read_in*>(data);
+  uint64_t offset = req->offset;
+  uint32_t size = req->size;
 
-    uint64_t offset = req->offset;
-    uint32_t size = req->size;
+  // The docs on the fuse kernel interface are vague about what to do when a read request extends
+  // past the end of the file. We can return a short read -- the return structure does include a
+  // length field -- but in testing that caused the program using the file to segfault. (I
+  // speculate that this is due to the reading program accessing it via mmap; maybe mmap dislikes
+  // when you return something short of a whole page?) To fix this we zero-pad reads that extend
+  // past the end of the file so we're always returning exactly as many bytes as were requested.
+  // (Users of the mapped file have to know its real length anyway.)
 
-    // The docs on the fuse kernel interface are vague about what to
-    // do when a read request extends past the end of the file.  We
-    // can return a short read -- the return structure does include a
-    // length field -- but in testing that caused the program using
-    // the file to segfault.  (I speculate that this is due to the
-    // reading program accessing it via mmap; maybe mmap dislikes when
-    // you return something short of a whole page?)  To fix this we
-    // zero-pad reads that extend past the end of the file so we're
-    // always returning exactly as many bytes as were requested.
-    // (Users of the mapped file have to know its real length anyway.)
+  fuse_out_header outhdr;
+  outhdr.len = sizeof(outhdr) + size;
+  outhdr.error = 0;
+  outhdr.unique = hdr->unique;
 
-    outhdr.len = sizeof(outhdr) + size;
-    outhdr.error = 0;
-    outhdr.unique = hdr->unique;
-    vec[0].iov_base = &outhdr;
-    vec[0].iov_len = sizeof(outhdr);
+  struct iovec vec[3];
+  vec[0].iov_base = &outhdr;
+  vec[0].iov_len = sizeof(outhdr);
 
-    uint32_t block = offset / fd->block_size;
-    result = fetch_block(fd, block);
+  uint32_t block = offset / fd->block_size;
+  int result = fetch_block(fd, block);
+  if (result != 0) return result;
+
+  // Two cases:
+  //
+  //   - the read request is entirely within this block. In this case we can reply immediately.
+  //
+  //   - the read request goes over into the next block. Note that since we mount the filesystem
+  //     with max_read=block_size, a read can never span more than two blocks. In this case we copy
+  //     the block to extra_block and issue a fetch for the following block.
+
+  uint32_t block_offset = offset - (block * fd->block_size);
+
+  int vec_used;
+  if (size + block_offset <= fd->block_size) {
+    // First case: the read fits entirely in the first block.
+
+    vec[1].iov_base = fd->block_data + block_offset;
+    vec[1].iov_len = size;
+    vec_used = 2;
+  } else {
+    // Second case: the read spills over into the next block.
+
+    memcpy(fd->extra_block, fd->block_data + block_offset, fd->block_size - block_offset);
+    vec[1].iov_base = fd->extra_block;
+    vec[1].iov_len = fd->block_size - block_offset;
+
+    result = fetch_block(fd, block + 1);
     if (result != 0) return result;
+    vec[2].iov_base = fd->block_data;
+    vec[2].iov_len = size - vec[1].iov_len;
+    vec_used = 3;
+  }
 
-    // Two cases:
-    //
-    //   - the read request is entirely within this block.  In this
-    //     case we can reply immediately.
-    //
-    //   - the read request goes over into the next block.  Note that
-    //     since we mount the filesystem with max_read=block_size, a
-    //     read can never span more than two blocks.  In this case we
-    //     copy the block to extra_block and issue a fetch for the
-    //     following block.
-
-    uint32_t block_offset = offset - (block * fd->block_size);
-
-    if (size + block_offset <= fd->block_size) {
-        // First case: the read fits entirely in the first block.
-
-        vec[1].iov_base = fd->block_data + block_offset;
-        vec[1].iov_len = size;
-        vec_used = 2;
-    } else {
-        // Second case: the read spills over into the next block.
-
-        memcpy(fd->extra_block, fd->block_data + block_offset,
-               fd->block_size - block_offset);
-        vec[1].iov_base = fd->extra_block;
-        vec[1].iov_len = fd->block_size - block_offset;
-
-        result = fetch_block(fd, block+1);
-        if (result != 0) return result;
-        vec[2].iov_base = fd->block_data;
-        vec[2].iov_len = size - vec[1].iov_len;
-        vec_used = 3;
-    }
-
-    if (writev(fd->ffd, vec, vec_used) < 0) {
-        printf("*** READ REPLY FAILED: %s ***\n", strerror(errno));
-    }
-    return NO_STATUS;
+  if (writev(fd->ffd, vec, vec_used) == -1) {
+    printf("*** READ REPLY FAILED: %s ***\n", strerror(errno));
+  }
+  return NO_STATUS;
 }
 
-int run_fuse_sideload(struct provider_vtab* vtab, void* cookie, uint64_t file_size,
-                      uint32_t block_size) {
+int run_fuse_sideload(const provider_vtab& vtab, uint64_t file_size, uint32_t block_size,
+                      const char* mount_point) {
   // If something's already mounted on our mountpoint, try to remove it. (Mostly in case of a
   // previous abnormal exit.)
-  umount2(FUSE_SIDELOAD_HOST_MOUNTPOINT, MNT_FORCE);
+  umount2(mount_point, MNT_FORCE);
 
   // fs/fuse/inode.c in kernel code uses the greater of 4096 and the passed-in max_read.
   if (block_size < 4096) {
@@ -383,9 +356,8 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie, uint64_t file_si
     return -1;
   }
 
-  struct fuse_data fd = {};
+  fuse_data fd = {};
   fd.vtab = vtab;
-  fd.cookie = cookie;
   fd.file_size = file_size;
   fd.block_size = block_size;
   fd.file_blocks = (file_size == 0) ? 0 : (((file_size - 1) / block_size) + 1);
@@ -397,33 +369,27 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie, uint64_t file_si
     goto done;
   }
 
-  fd.hashes = (uint8_t*)calloc(fd.file_blocks, SHA256_DIGEST_LENGTH);
-  if (fd.hashes == NULL) {
-    fprintf(stderr, "failed to allocate %d bites for hashes\n",
-            fd.file_blocks * SHA256_DIGEST_LENGTH);
-    result = -1;
-    goto done;
-  }
-
+  // All hashes will be zero-initialized.
+  fd.hashes.resize(fd.file_blocks);
   fd.uid = getuid();
   fd.gid = getgid();
 
   fd.curr_block = -1;
-  fd.block_data = (uint8_t*)malloc(block_size);
-  if (fd.block_data == NULL) {
+  fd.block_data = static_cast<uint8_t*>(malloc(block_size));
+  if (fd.block_data == nullptr) {
     fprintf(stderr, "failed to allocate %d bites for block_data\n", block_size);
     result = -1;
     goto done;
   }
-  fd.extra_block = (uint8_t*)malloc(block_size);
-  if (fd.extra_block == NULL) {
+  fd.extra_block = static_cast<uint8_t*>(malloc(block_size));
+  if (fd.extra_block == nullptr) {
     fprintf(stderr, "failed to allocate %d bites for extra_block\n", block_size);
     result = -1;
     goto done;
   }
 
-  fd.ffd = open("/dev/fuse", O_RDWR);
-  if (fd.ffd < 0) {
+  fd.ffd.reset(open("/dev/fuse", O_RDWR));
+  if (!fd.ffd) {
     perror("open /dev/fuse");
     result = -1;
     goto done;
@@ -431,18 +397,18 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie, uint64_t file_si
 
   {
     std::string opts = android::base::StringPrintf(
-        "fd=%d,user_id=%d,group_id=%d,max_read=%u,allow_other,rootmode=040000", fd.ffd, fd.uid,
-        fd.gid, block_size);
+        "fd=%d,user_id=%d,group_id=%d,max_read=%u,allow_other,rootmode=040000", fd.ffd.get(),
+        fd.uid, fd.gid, block_size);
 
-    result = mount("/dev/fuse", FUSE_SIDELOAD_HOST_MOUNTPOINT, "fuse",
-                   MS_NOSUID | MS_NODEV | MS_RDONLY | MS_NOEXEC, opts.c_str());
-    if (result < 0) {
+    result = mount("/dev/fuse", mount_point, "fuse", MS_NOSUID | MS_NODEV | MS_RDONLY | MS_NOEXEC,
+                   opts.c_str());
+    if (result == -1) {
       perror("mount");
       goto done;
     }
   }
 
-  uint8_t request_buffer[sizeof(struct fuse_in_header) + PATH_MAX * 8];
+  uint8_t request_buffer[sizeof(fuse_in_header) + PATH_MAX * 8];
   for (;;) {
     ssize_t len = TEMP_FAILURE_RETRY(read(fd.ffd, request_buffer, sizeof(request_buffer)));
     if (len == -1) {
@@ -454,13 +420,13 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie, uint64_t file_si
       continue;
     }
 
-    if (static_cast<size_t>(len) < sizeof(struct fuse_in_header)) {
+    if (static_cast<size_t>(len) < sizeof(fuse_in_header)) {
       fprintf(stderr, "request too short: len=%zd\n", len);
       continue;
     }
 
-    struct fuse_in_header* hdr = reinterpret_cast<struct fuse_in_header*>(request_buffer);
-    void* data = request_buffer + sizeof(struct fuse_in_header);
+    fuse_in_header* hdr = reinterpret_cast<fuse_in_header*>(request_buffer);
+    void* data = request_buffer + sizeof(fuse_in_header);
 
     result = -ENOSYS;
 
@@ -504,7 +470,7 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie, uint64_t file_si
     }
 
     if (result != NO_STATUS) {
-      struct fuse_out_header outhdr;
+      fuse_out_header outhdr;
       outhdr.len = sizeof(outhdr);
       outhdr.error = result;
       outhdr.unique = hdr->unique;
@@ -513,15 +479,12 @@ int run_fuse_sideload(struct provider_vtab* vtab, void* cookie, uint64_t file_si
   }
 
 done:
-  fd.vtab->close(fd.cookie);
+  fd.vtab.close();
 
-  result = umount2(FUSE_SIDELOAD_HOST_MOUNTPOINT, MNT_DETACH);
-  if (result < 0) {
-    printf("fuse_sideload umount failed: %s\n", strerror(errno));
+  if (umount2(mount_point, MNT_DETACH) == -1) {
+    fprintf(stderr, "fuse_sideload umount failed: %s\n", strerror(errno));
   }
 
-  if (fd.ffd) close(fd.ffd);
-  free(fd.hashes);
   free(fd.block_data);
   free(fd.extra_block);
 
