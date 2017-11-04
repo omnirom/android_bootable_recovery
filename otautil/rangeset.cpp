@@ -103,6 +103,46 @@ void RangeSet::Clear() {
   blocks_ = 0;
 }
 
+std::vector<RangeSet> RangeSet::Split(size_t groups) const {
+  if (ranges_.empty() || groups == 0) return {};
+
+  if (blocks_ < groups) {
+    groups = blocks_;
+  }
+
+  // Evenly distribute blocks, with the first few groups possibly containing one more.
+  size_t mean = blocks_ / groups;
+  std::vector<size_t> blocks_per_group(groups, mean);
+  std::fill_n(blocks_per_group.begin(), blocks_ % groups, mean + 1);
+
+  std::vector<RangeSet> result;
+
+  // Forward iterate Ranges and fill up each group with the desired number of blocks.
+  auto it = ranges_.cbegin();
+  Range range = *it;
+  for (const auto& blocks : blocks_per_group) {
+    RangeSet buffer;
+    size_t needed = blocks;
+    while (needed > 0) {
+      size_t range_blocks = range.second - range.first;
+      if (range_blocks > needed) {
+        // Split the current range and don't advance the iterator.
+        buffer.PushBack({ range.first, range.first + needed });
+        range.first = range.first + needed;
+        break;
+      }
+      buffer.PushBack(range);
+      it++;
+      if (it != ranges_.cend()) {
+        range = *it;
+      }
+      needed -= range_blocks;
+    }
+    result.push_back(std::move(buffer));
+  }
+  return result;
+}
+
 std::string RangeSet::ToString() const {
   if (ranges_.empty()) {
     return "";
