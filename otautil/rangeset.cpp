@@ -16,8 +16,10 @@
 
 #include "otautil/rangeset.h"
 
+#include <limits.h>
 #include <stddef.h>
 
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -28,45 +30,77 @@
 #include <android-base/strings.h>
 
 RangeSet::RangeSet(std::vector<Range>&& pairs) {
-  CHECK_NE(pairs.size(), static_cast<size_t>(0)) << "Invalid number of tokens";
-
-  // Sanity check the input.
-  size_t result = 0;
-  for (const auto& range : pairs) {
-    CHECK_LT(range.first, range.second) << "Empty or negative range: " << range.first << ", "
-                                        << range.second;
-    size_t sz = range.second - range.first;
-    CHECK_LE(result, SIZE_MAX - sz) << "RangeSet size overflow";
-    result += sz;
+  blocks_ = 0;
+  if (pairs.empty()) {
+    LOG(ERROR) << "Invalid number of tokens";
+    return;
   }
 
-  ranges_ = pairs;
-  blocks_ = result;
+  for (const auto& range : pairs) {
+    if (!PushBack(range)) {
+      Clear();
+      return;
+    }
+  }
 }
 
 RangeSet RangeSet::Parse(const std::string& range_text) {
   std::vector<std::string> pieces = android::base::Split(range_text, ",");
-  CHECK_GE(pieces.size(), static_cast<size_t>(3)) << "Invalid range text: " << range_text;
+  if (pieces.size() < 3) {
+    LOG(ERROR) << "Invalid range text: " << range_text;
+    return {};
+  }
 
   size_t num;
-  CHECK(android::base::ParseUint(pieces[0], &num, static_cast<size_t>(INT_MAX)))
-      << "Failed to parse the number of tokens: " << range_text;
-
-  CHECK_NE(num, static_cast<size_t>(0)) << "Invalid number of tokens: " << range_text;
-  CHECK_EQ(num % 2, static_cast<size_t>(0)) << "Number of tokens must be even: " << range_text;
-  CHECK_EQ(num, pieces.size() - 1) << "Mismatching number of tokens: " << range_text;
+  if (!android::base::ParseUint(pieces[0], &num, static_cast<size_t>(INT_MAX))) {
+    LOG(ERROR) << "Failed to parse the number of tokens: " << range_text;
+    return {};
+  }
+  if (num == 0) {
+    LOG(ERROR) << "Invalid number of tokens: " << range_text;
+    return {};
+  }
+  if (num % 2 != 0) {
+    LOG(ERROR) << "Number of tokens must be even: " << range_text;
+    return {};
+  }
+  if (num != pieces.size() - 1) {
+    LOG(ERROR) << "Mismatching number of tokens: " << range_text;
+    return {};
+  }
 
   std::vector<Range> pairs;
   for (size_t i = 0; i < num; i += 2) {
     size_t first;
-    CHECK(android::base::ParseUint(pieces[i + 1], &first, static_cast<size_t>(INT_MAX)));
     size_t second;
-    CHECK(android::base::ParseUint(pieces[i + 2], &second, static_cast<size_t>(INT_MAX)));
-
+    if (!android::base::ParseUint(pieces[i + 1], &first, static_cast<size_t>(INT_MAX)) ||
+        !android::base::ParseUint(pieces[i + 2], &second, static_cast<size_t>(INT_MAX))) {
+      return {};
+    }
     pairs.emplace_back(first, second);
   }
-
   return RangeSet(std::move(pairs));
+}
+
+bool RangeSet::PushBack(Range range) {
+  if (range.first >= range.second) {
+    LOG(ERROR) << "Empty or negative range: " << range.first << ", " << range.second;
+    return false;
+  }
+  size_t sz = range.second - range.first;
+  if (blocks_ >= SIZE_MAX - sz) {
+    LOG(ERROR) << "RangeSet size overflow";
+    return false;
+  }
+
+  ranges_.push_back(std::move(range));
+  blocks_ += sz;
+  return true;
+}
+
+void RangeSet::Clear() {
+  ranges_.clear();
+  blocks_ = 0;
 }
 
 std::string RangeSet::ToString() const {
@@ -114,8 +148,6 @@ bool RangeSet::Overlaps(const RangeSet& other) const {
   return false;
 }
 
-static constexpr size_t kBlockSize = 4096;
-
 // Ranges in the the set should be mutually exclusive; and they're sorted by the start block.
 SortedRangeSet::SortedRangeSet(std::vector<Range>&& pairs) : RangeSet(std::move(pairs)) {
   std::sort(ranges_.begin(), ranges_.end());
@@ -156,11 +188,6 @@ void SortedRangeSet::Insert(const SortedRangeSet& rs) {
 void SortedRangeSet::Insert(size_t start, size_t len) {
   Range to_insert{ start / kBlockSize, (start + len - 1) / kBlockSize + 1 };
   Insert(to_insert);
-}
-
-void SortedRangeSet::Clear() {
-  blocks_ = 0;
-  ranges_.clear();
 }
 
 bool SortedRangeSet::Overlaps(size_t start, size_t len) const {
