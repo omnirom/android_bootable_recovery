@@ -159,14 +159,8 @@ bool clear_bootloader_message(std::string* err) {
 
 bool write_bootloader_message(const std::vector<std::string>& options, std::string* err) {
   bootloader_message boot = {};
-  strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
-  strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
-  for (const auto& s : options) {
-    strlcat(boot.recovery, s.c_str(), sizeof(boot.recovery));
-    if (s.back() != '\n') {
-      strlcat(boot.recovery, "\n", sizeof(boot.recovery));
-    }
-  }
+  update_bootloader_message_in_struct(&boot, options);
+
   return write_bootloader_message(boot, err);
 }
 
@@ -175,20 +169,27 @@ bool update_bootloader_message(const std::vector<std::string>& options, std::str
   if (!read_bootloader_message(&boot, err)) {
     return false;
   }
+  update_bootloader_message_in_struct(&boot, options);
 
-  // Zero out the entire fields.
-  memset(boot.command, 0, sizeof(boot.command));
-  memset(boot.recovery, 0, sizeof(boot.recovery));
+  return write_bootloader_message(boot, err);
+}
 
-  strlcpy(boot.command, "boot-recovery", sizeof(boot.command));
-  strlcpy(boot.recovery, "recovery\n", sizeof(boot.recovery));
+bool update_bootloader_message_in_struct(bootloader_message* boot,
+                                         const std::vector<std::string>& options) {
+  if (!boot) return false;
+  // Replace the command & recovery fields.
+  memset(boot->command, 0, sizeof(boot->command));
+  memset(boot->recovery, 0, sizeof(boot->recovery));
+
+  strlcpy(boot->command, "boot-recovery", sizeof(boot->command));
+  strlcpy(boot->recovery, "recovery\n", sizeof(boot->recovery));
   for (const auto& s : options) {
-    strlcat(boot.recovery, s.c_str(), sizeof(boot.recovery));
+    strlcat(boot->recovery, s.c_str(), sizeof(boot->recovery));
     if (s.back() != '\n') {
-      strlcat(boot.recovery, "\n", sizeof(boot.recovery));
+      strlcat(boot->recovery, "\n", sizeof(boot->recovery));
     }
   }
-  return write_bootloader_message(boot, err);
+  return true;
 }
 
 bool write_reboot_bootloader(std::string* err) {

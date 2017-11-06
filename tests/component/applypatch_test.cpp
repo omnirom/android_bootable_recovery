@@ -53,8 +53,7 @@ static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize =
 }
 
 static void mangle_file(const std::string& fname) {
-  std::string content;
-  content.reserve(1024);
+  std::string content(1024, '\0');
   for (size_t i = 0; i < 1024; i++) {
     content[i] = rand() % 256;
   }
@@ -63,16 +62,11 @@ static void mangle_file(const std::string& fname) {
 
 class ApplyPatchTest : public ::testing::Test {
  public:
-  static void SetUpTestCase() {
+  virtual void SetUp() override {
     // set up files
     old_file = from_testdata_base("old.file");
     new_file = from_testdata_base("new.file");
-    patch_file = from_testdata_base("patch.bsdiff");
-    rand_file = "/cache/applypatch_test_rand.file";
-    cache_file = "/cache/saved.file";
-
-    // write stuff to rand_file
-    ASSERT_TRUE(android::base::WriteStringToFile("hello", rand_file));
+    nonexistent_file = from_testdata_base("nonexistent.file");
 
     // set up SHA constants
     sha1sum(old_file, &old_sha1, &old_size);
@@ -82,56 +76,35 @@ class ApplyPatchTest : public ::testing::Test {
     bad_sha1_b = android::base::StringPrintf("%040x", rand());
   }
 
-  static std::string old_file;
-  static std::string new_file;
-  static std::string rand_file;
-  static std::string cache_file;
-  static std::string patch_file;
+  std::string old_file;
+  std::string new_file;
+  std::string nonexistent_file;
 
-  static std::string old_sha1;
-  static std::string new_sha1;
-  static std::string bad_sha1_a;
-  static std::string bad_sha1_b;
+  std::string old_sha1;
+  std::string new_sha1;
+  std::string bad_sha1_a;
+  std::string bad_sha1_b;
 
-  static size_t old_size;
-  static size_t new_size;
+  size_t old_size;
+  size_t new_size;
 };
-
-static void cp(const std::string& src, const std::string& tgt) {
-  std::string cmd = "cp " + src + " " + tgt;
-  system(cmd.c_str());
-}
-
-static void backup_old() {
-  cp(ApplyPatchTest::old_file, ApplyPatchTest::cache_file);
-}
-
-static void restore_old() {
-  cp(ApplyPatchTest::cache_file, ApplyPatchTest::old_file);
-}
 
 class ApplyPatchCacheTest : public ApplyPatchTest {
- public:
-  virtual void SetUp() {
-    backup_old();
-  }
-
-  virtual void TearDown() {
-    restore_old();
+ protected:
+  void SetUp() override {
+    ApplyPatchTest::SetUp();
+    cache_temp_source = old_file;
   }
 };
 
-std::string ApplyPatchTest::old_file;
-std::string ApplyPatchTest::new_file;
-std::string ApplyPatchTest::rand_file;
-std::string ApplyPatchTest::patch_file;
-std::string ApplyPatchTest::cache_file;
-std::string ApplyPatchTest::old_sha1;
-std::string ApplyPatchTest::new_sha1;
-std::string ApplyPatchTest::bad_sha1_a;
-std::string ApplyPatchTest::bad_sha1_b;
-size_t ApplyPatchTest::old_size;
-size_t ApplyPatchTest::new_size;
+class ApplyPatchModesTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    cache_temp_source = cache_source.path;
+  }
+
+  TemporaryFile cache_source;
+};
 
 TEST_F(ApplyPatchTest, CheckModeSkip) {
   std::vector<std::string> sha1s;
@@ -189,43 +162,31 @@ TEST_F(ApplyPatchTest, CheckModeEmmcTarget) {
   ASSERT_EQ(0, applypatch_check(src_file.c_str(), sha1s));
 }
 
-TEST_F(ApplyPatchCacheTest, CheckCacheCorruptedSingle) {
-  mangle_file(old_file);
-  std::vector<std::string> sha1s = { old_sha1 };
-  ASSERT_EQ(0, applypatch_check(&old_file[0], sha1s));
+TEST_F(ApplyPatchCacheTest, CheckCacheCorruptedSourceSingle) {
+  TemporaryFile temp_file;
+  mangle_file(temp_file.path);
+  std::vector<std::string> sha1s_single = { old_sha1 };
+  ASSERT_EQ(0, applypatch_check(temp_file.path, sha1s_single));
+  ASSERT_EQ(0, applypatch_check(nonexistent_file.c_str(), sha1s_single));
 }
 
-TEST_F(ApplyPatchCacheTest, CheckCacheCorruptedMultiple) {
-  mangle_file(old_file);
-  std::vector<std::string> sha1s = { bad_sha1_a, old_sha1, bad_sha1_b };
-  ASSERT_EQ(0, applypatch_check(&old_file[0], sha1s));
+TEST_F(ApplyPatchCacheTest, CheckCacheCorruptedSourceMultiple) {
+  TemporaryFile temp_file;
+  mangle_file(temp_file.path);
+  std::vector<std::string> sha1s_multiple = { bad_sha1_a, old_sha1, bad_sha1_b };
+  ASSERT_EQ(0, applypatch_check(temp_file.path, sha1s_multiple));
+  ASSERT_EQ(0, applypatch_check(nonexistent_file.c_str(), sha1s_multiple));
 }
 
-TEST_F(ApplyPatchCacheTest, CheckCacheCorruptedFailure) {
-  mangle_file(old_file);
-  std::vector<std::string> sha1s = { bad_sha1_a, bad_sha1_b };
-  ASSERT_NE(0, applypatch_check(&old_file[0], sha1s));
+TEST_F(ApplyPatchCacheTest, CheckCacheCorruptedSourceFailure) {
+  TemporaryFile temp_file;
+  mangle_file(temp_file.path);
+  std::vector<std::string> sha1s_failure = { bad_sha1_a, bad_sha1_b };
+  ASSERT_NE(0, applypatch_check(temp_file.path, sha1s_failure));
+  ASSERT_NE(0, applypatch_check(nonexistent_file.c_str(), sha1s_failure));
 }
 
-TEST_F(ApplyPatchCacheTest, CheckCacheMissingSingle) {
-  unlink(&old_file[0]);
-  std::vector<std::string> sha1s = { old_sha1 };
-  ASSERT_EQ(0, applypatch_check(&old_file[0], sha1s));
-}
-
-TEST_F(ApplyPatchCacheTest, CheckCacheMissingMultiple) {
-  unlink(&old_file[0]);
-  std::vector<std::string> sha1s = { bad_sha1_a, old_sha1, bad_sha1_b };
-  ASSERT_EQ(0, applypatch_check(&old_file[0], sha1s));
-}
-
-TEST_F(ApplyPatchCacheTest, CheckCacheMissingFailure) {
-  unlink(&old_file[0]);
-  std::vector<std::string> sha1s = { bad_sha1_a, bad_sha1_b };
-  ASSERT_NE(0, applypatch_check(&old_file[0], sha1s));
-}
-
-TEST(ApplyPatchModesTest, InvalidArgs) {
+TEST_F(ApplyPatchModesTest, InvalidArgs) {
   // At least two args (including the filename).
   ASSERT_EQ(2, applypatch_modes(1, (const char* []){ "applypatch" }));
 
@@ -233,7 +194,7 @@ TEST(ApplyPatchModesTest, InvalidArgs) {
   ASSERT_EQ(2, applypatch_modes(2, (const char* []){ "applypatch", "-x" }));
 }
 
-TEST(ApplyPatchModesTest, PatchModeEmmcTarget) {
+TEST_F(ApplyPatchModesTest, PatchModeEmmcTarget) {
   std::string boot_img = from_testdata_base("boot.img");
   size_t boot_img_size;
   std::string boot_img_sha1;
@@ -303,7 +264,7 @@ TEST(ApplyPatchModesTest, PatchModeEmmcTarget) {
   ASSERT_EQ(0, applypatch_modes(args3.size(), args3.data()));
 }
 
-TEST(ApplyPatchModesTest, PatchModeInvalidArgs) {
+TEST_F(ApplyPatchModesTest, PatchModeInvalidArgs) {
   // Invalid bonus file.
   ASSERT_NE(0, applypatch_modes(3, (const char* []){ "applypatch", "-b", "/doesntexist" }));
 
@@ -364,11 +325,11 @@ TEST(ApplyPatchModesTest, PatchModeInvalidArgs) {
   ASSERT_NE(0, applypatch_modes(args6.size(), args6.data()));
 }
 
-TEST(ApplyPatchModesTest, CheckModeInvalidArgs) {
+TEST_F(ApplyPatchModesTest, CheckModeInvalidArgs) {
   // Insufficient args.
   ASSERT_EQ(2, applypatch_modes(2, (const char* []){ "applypatch", "-c" }));
 }
 
-TEST(ApplyPatchModesTest, ShowLicenses) {
+TEST_F(ApplyPatchModesTest, ShowLicenses) {
   ASSERT_EQ(0, applypatch_modes(2, (const char* []){ "applypatch", "-l" }));
 }
