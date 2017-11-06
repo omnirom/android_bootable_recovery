@@ -30,7 +30,8 @@ LOCAL_STATIC_LIBRARIES := \
     libutils \
     libz \
     libselinux \
-    libbase
+    libbase \
+    libBionicGtestMain
 
 LOCAL_SRC_FILES := \
     unit/asn1_decoder_test.cpp \
@@ -50,7 +51,8 @@ LOCAL_CFLAGS := -Wall -Werror
 LOCAL_MODULE := recovery_manual_test
 LOCAL_STATIC_LIBRARIES := \
     libminui \
-    libbase
+    libbase \
+    libBionicGtestMain
 
 LOCAL_SRC_FILES := manual/recovery_test.cpp
 LOCAL_SHARED_LIBRARIES := \
@@ -163,6 +165,7 @@ LOCAL_STATIC_LIBRARIES := \
     libsquashfs_utils \
     libcutils \
     libbrotli \
+    libBionicGtestMain \
     $(tune2fs_static_libraries)
 
 testdata_files := $(call find-subdir-files, testdata/*)
@@ -212,7 +215,8 @@ LOCAL_STATIC_LIBRARIES := \
     libbz \
     libdivsufsort64 \
     libdivsufsort \
-    libz
+    libz \
+    libBionicGtestMain
 LOCAL_SHARED_LIBRARIES := \
     liblog
 include $(BUILD_HOST_NATIVE_TEST)
