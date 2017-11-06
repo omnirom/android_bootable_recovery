@@ -74,10 +74,6 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             LOCAL_CFLAGS += -DTW_CRYPTO_SYSTEM_VOLD_DEBUG
         endif
 
-        ifeq ($(TW_CRYPTO_SYSTEM_VOLD_DISABLE_TIMEOUT),true)
-            LOCAL_CFLAGS += -DTW_CRYPTO_SYSTEM_VOLD_DISABLE_TIMEOUT
-        endif
-
         LOCAL_SRC_FILES = vold_decrypt.cpp
         LOCAL_SHARED_LIBRARIES := libcutils
         include $(BUILD_STATIC_LIBRARY)
