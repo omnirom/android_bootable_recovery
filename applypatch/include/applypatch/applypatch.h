@@ -36,12 +36,11 @@ struct FileContents {
   struct stat st;
 };
 
-// When there isn't enough room on the target filesystem to hold the
-// patched version of the file, we copy the original here and delete
-// it to free up space.  If the expected source file doesn't exist, or
-// is corrupted, we look to see if this file contains the bits we want
-// and use it as the source instead.
-#define CACHE_TEMP_SOURCE "/cache/saved.file"
+// When there isn't enough room on the target filesystem to hold the patched version of the file,
+// we copy the original here and delete it to free up space.  If the expected source file doesn't
+// exist, or is corrupted, we look to see if the cached file contains the bits we want and use it as
+// the source instead.  The default location for the cached source is "/cache/saved.file".
+extern std::string cache_temp_source;
 
 using SinkFn = std::function<size_t(const unsigned char*, size_t)>;
 

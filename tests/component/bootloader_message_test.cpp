@@ -18,53 +18,12 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include <android-base/test_utils.h>
 #include <bootloader_message/bootloader_message.h>
 #include <gtest/gtest.h>
 
-class BootloaderMessageTest : public ::testing::Test {
- protected:
-  BootloaderMessageTest() : has_misc(true) {}
-
-  virtual void SetUp() override {
-    std::string err;
-    has_misc = !get_bootloader_message_blk_device(&err).empty();
-  }
-
-  virtual void TearDown() override {
-    // Clear the BCB.
-    if (has_misc) {
-      std::string err;
-      ASSERT_TRUE(clear_bootloader_message(&err)) << "Failed to clear BCB: " << err;
-    }
-  }
-
-  bool has_misc;
-};
-
-TEST_F(BootloaderMessageTest, clear_bootloader_message) {
-  if (!has_misc) {
-    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
-    return;
-  }
-
-  // Clear the BCB.
-  std::string err;
-  ASSERT_TRUE(clear_bootloader_message(&err)) << "Failed to clear BCB: " << err;
-
-  // Verify the content.
-  bootloader_message boot;
-  ASSERT_TRUE(read_bootloader_message(&boot, &err)) << "Failed to read BCB: " << err;
-
-  // All the bytes should be cleared.
-  ASSERT_EQ(std::string(sizeof(boot), '\0'),
-            std::string(reinterpret_cast<const char*>(&boot), sizeof(boot)));
-}
-
-TEST_F(BootloaderMessageTest, read_and_write_bootloader_message) {
-  if (!has_misc) {
-    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
-    return;
-  }
+TEST(BootloaderMessageTest, read_and_write_bootloader_message) {
+  TemporaryFile temp_misc;
 
   // Write the BCB.
   bootloader_message boot = {};
@@ -73,90 +32,71 @@ TEST_F(BootloaderMessageTest, read_and_write_bootloader_message) {
   strlcpy(boot.status, "status1", sizeof(boot.status));
 
   std::string err;
-  ASSERT_TRUE(write_bootloader_message(boot, &err)) << "Failed to write BCB: " << err;
+  ASSERT_TRUE(write_bootloader_message_to(boot, temp_misc.path, &err))
+      << "Failed to write BCB: " << err;
 
   // Read and verify.
   bootloader_message boot_verify;
-  ASSERT_TRUE(read_bootloader_message(&boot_verify, &err)) << "Failed to read BCB: " << err;
+  ASSERT_TRUE(read_bootloader_message_from(&boot_verify, temp_misc.path, &err))
+      << "Failed to read BCB: " << err;
 
   ASSERT_EQ(std::string(reinterpret_cast<const char*>(&boot), sizeof(boot)),
             std::string(reinterpret_cast<const char*>(&boot_verify), sizeof(boot_verify)));
 }
 
-TEST_F(BootloaderMessageTest, write_bootloader_message_options) {
-  if (!has_misc) {
-    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
-    return;
-  }
-
+TEST(BootloaderMessageTest, update_bootloader_message_in_struct) {
   // Write the options to BCB.
   std::vector<std::string> options = { "option1", "option2" };
-  std::string err;
-  ASSERT_TRUE(write_bootloader_message(options, &err)) << "Failed to write BCB: " << err;
 
-  // Inject some bytes into boot, which should be overwritten while reading.
-  bootloader_message boot;
+  bootloader_message boot = {};
+  // Inject some bytes into boot.
   strlcpy(boot.recovery, "random message", sizeof(boot.recovery));
+  strlcpy(boot.status, "status bytes", sizeof(boot.status));
+  strlcpy(boot.stage, "stage bytes", sizeof(boot.stage));
   strlcpy(boot.reserved, "reserved bytes", sizeof(boot.reserved));
 
-  ASSERT_TRUE(read_bootloader_message(&boot, &err)) << "Failed to read BCB: " << err;
+  ASSERT_TRUE(update_bootloader_message_in_struct(&boot, options));
 
   // Verify that command and recovery fields should be set.
   ASSERT_EQ("boot-recovery", std::string(boot.command));
   std::string expected = "recovery\n" + android::base::Join(options, "\n") + "\n";
   ASSERT_EQ(expected, std::string(boot.recovery));
 
-  // The rest should be cleared.
-  ASSERT_EQ(std::string(sizeof(boot.status), '\0'), std::string(boot.status, sizeof(boot.status)));
-  ASSERT_EQ(std::string(sizeof(boot.stage), '\0'), std::string(boot.stage, sizeof(boot.stage)));
-  ASSERT_EQ(std::string(sizeof(boot.reserved), '\0'),
-            std::string(boot.reserved, sizeof(boot.reserved)));
+  // The rest should be intact.
+  ASSERT_EQ("status bytes", std::string(boot.status));
+  ASSERT_EQ("stage bytes", std::string(boot.stage));
+  ASSERT_EQ("reserved bytes", std::string(boot.reserved));
 }
 
-TEST_F(BootloaderMessageTest, write_bootloader_message_options_empty) {
-  if (!has_misc) {
-    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
-    return;
-  }
-
+TEST(BootloaderMessageTest, update_bootloader_message_recovery_options_empty) {
   // Write empty vector.
   std::vector<std::string> options;
-  std::string err;
-  ASSERT_TRUE(write_bootloader_message(options, &err)) << "Failed to write BCB: " << err;
 
   // Read and verify.
-  bootloader_message boot;
-  ASSERT_TRUE(read_bootloader_message(&boot, &err)) << "Failed to read BCB: " << err;
+  bootloader_message boot = {};
+  ASSERT_TRUE(update_bootloader_message_in_struct(&boot, options));
 
   // command and recovery fields should be set.
   ASSERT_EQ("boot-recovery", std::string(boot.command));
   ASSERT_EQ("recovery\n", std::string(boot.recovery));
 
-  // The rest should be cleared.
+  // The rest should be empty.
   ASSERT_EQ(std::string(sizeof(boot.status), '\0'), std::string(boot.status, sizeof(boot.status)));
   ASSERT_EQ(std::string(sizeof(boot.stage), '\0'), std::string(boot.stage, sizeof(boot.stage)));
   ASSERT_EQ(std::string(sizeof(boot.reserved), '\0'),
             std::string(boot.reserved, sizeof(boot.reserved)));
 }
 
-TEST_F(BootloaderMessageTest, write_bootloader_message_options_long) {
-  if (!has_misc) {
-    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
-    return;
-  }
-
+TEST(BootloaderMessageTest, update_bootloader_message_recovery_options_long) {
   // Write super long message.
   std::vector<std::string> options;
   for (int i = 0; i < 100; i++) {
     options.push_back("option: " + std::to_string(i));
   }
 
-  std::string err;
-  ASSERT_TRUE(write_bootloader_message(options, &err)) << "Failed to write BCB: " << err;
-
   // Read and verify.
-  bootloader_message boot;
-  ASSERT_TRUE(read_bootloader_message(&boot, &err)) << "Failed to read BCB: " << err;
+  bootloader_message boot = {};
+  ASSERT_TRUE(update_bootloader_message_in_struct(&boot, options));
 
   // Make sure it's long enough.
   std::string expected = "recovery\n" + android::base::Join(options, "\n") + "\n";
@@ -167,40 +107,10 @@ TEST_F(BootloaderMessageTest, write_bootloader_message_options_long) {
   ASSERT_EQ(expected.substr(0, sizeof(boot.recovery) - 1), std::string(boot.recovery));
   ASSERT_EQ('\0', boot.recovery[sizeof(boot.recovery) - 1]);
 
-  // The rest should be cleared.
+  // The rest should be empty.
   ASSERT_EQ(std::string(sizeof(boot.status), '\0'), std::string(boot.status, sizeof(boot.status)));
   ASSERT_EQ(std::string(sizeof(boot.stage), '\0'), std::string(boot.stage, sizeof(boot.stage)));
   ASSERT_EQ(std::string(sizeof(boot.reserved), '\0'),
             std::string(boot.reserved, sizeof(boot.reserved)));
 }
 
-TEST_F(BootloaderMessageTest, update_bootloader_message) {
-  if (!has_misc) {
-    GTEST_LOG_(INFO) << "Test skipped due to no /misc partition found on the device.";
-    return;
-  }
-
-  // Inject some bytes into boot, which should be not overwritten later.
-  bootloader_message boot;
-  strlcpy(boot.recovery, "random message", sizeof(boot.recovery));
-  strlcpy(boot.reserved, "reserved bytes", sizeof(boot.reserved));
-  std::string err;
-  ASSERT_TRUE(write_bootloader_message(boot, &err)) << "Failed to write BCB: " << err;
-
-  // Update the BCB message.
-  std::vector<std::string> options = { "option1", "option2" };
-  ASSERT_TRUE(update_bootloader_message(options, &err)) << "Failed to update BCB: " << err;
-
-  bootloader_message boot_verify;
-  ASSERT_TRUE(read_bootloader_message(&boot_verify, &err)) << "Failed to read BCB: " << err;
-
-  // Verify that command and recovery fields should be set.
-  ASSERT_EQ("boot-recovery", std::string(boot_verify.command));
-  std::string expected = "recovery\n" + android::base::Join(options, "\n") + "\n";
-  ASSERT_EQ(expected, std::string(boot_verify.recovery));
-
-  // The rest should be intact.
-  ASSERT_EQ(std::string(boot.status), std::string(boot_verify.status));
-  ASSERT_EQ(std::string(boot.stage), std::string(boot_verify.stage));
-  ASSERT_EQ(std::string(boot.reserved), std::string(boot_verify.reserved));
-}

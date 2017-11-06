@@ -90,10 +90,9 @@ static std::set<std::string> FindExpendableFiles() {
     while ((de = readdir(d.get())) != 0) {
       std::string path = std::string(dirs[i]) + "/" + de->d_name;
 
-      // We can't delete CACHE_TEMP_SOURCE; if it's there we might have
-      // restarted during installation and could be depending on it to
-      // be there.
-      if (path == CACHE_TEMP_SOURCE) {
+      // We can't delete cache_temp_source; if it's there we might have restarted during
+      // installation and could be depending on it to be there.
+      if (path == cache_temp_source) {
         continue;
       }
 
