@@ -1658,6 +1658,16 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 #ifdef TW_CRYPTO_USE_SYSTEM_VOLD
 	if (pwret != 0) {
 		pwret = vold_decrypt(Password);
+		switch (pwret) {
+			case VD_SUCCESS:
+				break;
+			case VD_ERR_MISSING_VDC:
+				gui_msg(Msg(msg::kError, "decrypt_data_vold_os_missing=Missing files needed for vold decrypt: {1}")("/system/bin/vdc"));
+				break;
+			case VD_ERR_MISSING_VOLD:
+				gui_msg(Msg(msg::kError, "decrypt_data_vold_os_missing=Missing files needed for vold decrypt: {1}")("/system/bin/vold"));
+				break;
+		}
 	}
 #endif // TW_CRYPTO_USE_SYSTEM_VOLD
 
