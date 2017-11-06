@@ -5,10 +5,22 @@ on fs
     chmod 0664 /dev/ion
     chown system system /dev/ion
 
+
+# Oreo has qseecomd in /vendor/bin so add the additional
+# service. Only an existing binary will be started, never both.
+
 service sys_qseecomd /system/bin/qseecomd
     user root
     group root
     setenv PATH /system/bin
     setenv LD_LIBRARY_PATH /system/lib64:/system/lib
+    disabled
+    oneshot
+
+service ven_qseecomd /vendor/bin/qseecomd
+    user root
+    group root
+    setenv PATH /vendor/bin:/system/bin
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64:/vendor/lib:/system/lib
     disabled
     oneshot
