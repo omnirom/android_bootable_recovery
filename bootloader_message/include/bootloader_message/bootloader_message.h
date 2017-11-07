@@ -207,6 +207,11 @@ bool write_bootloader_message(const std::vector<std::string>& options, std::stri
 // only update the command and recovery fields.
 bool update_bootloader_message(const std::vector<std::string>& options, std::string* err);
 
+// Update bootloader message (boots into recovery with the |options|) in |boot|. Will only update
+// the command and recovery fields.
+bool update_bootloader_message_in_struct(bootloader_message* boot,
+                                         const std::vector<std::string>& options);
+
 // Clear BCB.
 bool clear_bootloader_message(std::string* err);
 
