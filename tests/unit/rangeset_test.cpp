@@ -17,11 +17,23 @@
 #include <signal.h>
 #include <sys/types.h>
 
+#include <limits>
 #include <vector>
 
 #include <gtest/gtest.h>
 
 #include "otautil/rangeset.h"
+
+TEST(RangeSetTest, ctor) {
+  RangeSet rs(std::vector<Range>{ Range{ 8, 10 }, Range{ 1, 5 } });
+  ASSERT_TRUE(rs);
+
+  RangeSet rs2(std::vector<Range>{});
+  ASSERT_FALSE(rs2);
+
+  RangeSet rs3(std::vector<Range>{ Range{ 8, 10 }, Range{ 5, 1 } });
+  ASSERT_FALSE(rs3);
+}
 
 TEST(RangeSetTest, Parse_smoke) {
   RangeSet rs = RangeSet::Parse("2,1,10");
@@ -37,27 +49,64 @@ TEST(RangeSetTest, Parse_smoke) {
 
   // Leading zeros are fine. But android::base::ParseUint() doesn't like trailing zeros like "10 ".
   ASSERT_EQ(rs, RangeSet::Parse(" 2, 1,   10"));
-  ASSERT_EXIT(RangeSet::Parse("2,1,10 "), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse("2,1,10 "));
 }
 
 TEST(RangeSetTest, Parse_InvalidCases) {
   // Insufficient number of tokens.
-  ASSERT_EXIT(RangeSet::Parse(""), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("2,1"), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse(""));
+  ASSERT_FALSE(RangeSet::Parse("2,1"));
 
   // The first token (i.e. the number of following tokens) is invalid.
-  ASSERT_EXIT(RangeSet::Parse("a,1,1"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("3,1,1"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("-3,1,1"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("2,1,2,3"), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse("a,1,1"));
+  ASSERT_FALSE(RangeSet::Parse("3,1,1"));
+  ASSERT_FALSE(RangeSet::Parse("-3,1,1"));
+  ASSERT_FALSE(RangeSet::Parse("2,1,2,3"));
 
   // Invalid tokens.
-  ASSERT_EXIT(RangeSet::Parse("2,1,10a"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("2,,10"), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse("2,1,10a"));
+  ASSERT_FALSE(RangeSet::Parse("2,,10"));
 
   // Empty or negative range.
-  ASSERT_EXIT(RangeSet::Parse("2,2,2"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("2,2,1"), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse("2,2,2"));
+  ASSERT_FALSE(RangeSet::Parse("2,2,1"));
+}
+
+TEST(RangeSetTest, Clear) {
+  RangeSet rs = RangeSet::Parse("2,1,6");
+  ASSERT_TRUE(rs);
+  rs.Clear();
+  ASSERT_FALSE(rs);
+
+  // No-op to clear an empty RangeSet.
+  rs.Clear();
+  ASSERT_FALSE(rs);
+}
+
+TEST(RangeSetTest, PushBack) {
+  RangeSet rs;
+  ASSERT_FALSE(rs);
+
+  ASSERT_TRUE(rs.PushBack({ 3, 5 }));
+  ASSERT_EQ(RangeSet::Parse("2,3,5"), rs);
+
+  ASSERT_TRUE(rs.PushBack({ 5, 15 }));
+  ASSERT_EQ(RangeSet::Parse("4,3,5,5,15"), rs);
+  ASSERT_EQ(static_cast<size_t>(2), rs.size());
+  ASSERT_EQ(static_cast<size_t>(12), rs.blocks());
+}
+
+TEST(RangeSetTest, PushBack_InvalidInput) {
+  RangeSet rs;
+  ASSERT_FALSE(rs);
+  ASSERT_FALSE(rs.PushBack({ 5, 3 }));
+  ASSERT_FALSE(rs);
+  ASSERT_FALSE(rs.PushBack({ 15, 15 }));
+  ASSERT_FALSE(rs);
+
+  ASSERT_TRUE(rs.PushBack({ 5, 15 }));
+  ASSERT_FALSE(rs.PushBack({ 5, std::numeric_limits<size_t>::max() - 2 }));
+  ASSERT_EQ(RangeSet::Parse("2,5,15"), rs);
 }
 
 TEST(RangeSetTest, Overlaps) {
@@ -90,7 +139,7 @@ TEST(RangeSetTest, equality) {
   ASSERT_NE(RangeSet::Parse("2,1,6"), RangeSet::Parse("2,1,7"));
   ASSERT_NE(RangeSet::Parse("2,1,6"), RangeSet::Parse("2,2,7"));
 
-  // The orders of Range's matter. "4,1,5,8,10" != "4,8,10,1,5".
+  // The orders of Range's matter, e.g. "4,1,5,8,10" != "4,8,10,1,5".
   ASSERT_NE(RangeSet::Parse("4,1,5,8,10"), RangeSet::Parse("4,8,10,1,5"));
 }
 
@@ -111,13 +160,14 @@ TEST(RangeSetTest, iterators) {
   ASSERT_EQ((std::vector<Range>{ Range{ 8, 10 }, Range{ 1, 5 } }), ranges);
 }
 
-TEST(RangeSetTest, tostring) {
+TEST(RangeSetTest, ToString) {
+  ASSERT_EQ("", RangeSet::Parse("").ToString());
   ASSERT_EQ("2,1,6", RangeSet::Parse("2,1,6").ToString());
   ASSERT_EQ("4,1,5,8,10", RangeSet::Parse("4,1,5,8,10").ToString());
   ASSERT_EQ("6,1,3,4,6,15,22", RangeSet::Parse("6,1,3,4,6,15,22").ToString());
 }
 
-TEST(SortedRangeSetTest, insertion) {
+TEST(SortedRangeSetTest, Insert) {
   SortedRangeSet rs({ { 2, 3 }, { 4, 6 }, { 8, 14 } });
   rs.Insert({ 1, 2 });
   ASSERT_EQ(SortedRangeSet({ { 1, 3 }, { 4, 6 }, { 8, 14 } }), rs);
