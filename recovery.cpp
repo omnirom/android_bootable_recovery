@@ -50,9 +50,9 @@
 #include <bootloader_message/bootloader_message.h>
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h> /* for property_list */
-#include <healthd/BatteryMonitor.h>
-#include <private/android_logger.h> /* private pmsg functions */
-#include <private/android_filesystem_config.h>  /* for AID_SYSTEM */
+#include <health2/Health.h>
+#include <private/android_filesystem_config.h> /* for AID_SYSTEM */
+#include <private/android_logger.h>            /* private pmsg functions */
 #include <selinux/android.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
@@ -1260,56 +1260,76 @@ void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity
 }
 
 static bool is_battery_ok() {
-    struct healthd_config healthd_config = {
-            .batteryStatusPath = android::String8(android::String8::kEmptyString),
-            .batteryHealthPath = android::String8(android::String8::kEmptyString),
-            .batteryPresentPath = android::String8(android::String8::kEmptyString),
-            .batteryCapacityPath = android::String8(android::String8::kEmptyString),
-            .batteryVoltagePath = android::String8(android::String8::kEmptyString),
-            .batteryTemperaturePath = android::String8(android::String8::kEmptyString),
-            .batteryTechnologyPath = android::String8(android::String8::kEmptyString),
-            .batteryCurrentNowPath = android::String8(android::String8::kEmptyString),
-            .batteryCurrentAvgPath = android::String8(android::String8::kEmptyString),
-            .batteryChargeCounterPath = android::String8(android::String8::kEmptyString),
-            .batteryFullChargePath = android::String8(android::String8::kEmptyString),
-            .batteryCycleCountPath = android::String8(android::String8::kEmptyString),
-            .energyCounter = NULL,
-            .boot_min_cap = 0,
-            .screen_on = NULL
-    };
-    healthd_board_init(&healthd_config);
+  using android::hardware::health::V1_0::BatteryStatus;
+  using android::hardware::health::V2_0::Result;
+  using android::hardware::health::V2_0::toString;
+  using android::hardware::health::V2_0::implementation::Health;
 
-    android::BatteryMonitor monitor;
-    monitor.init(&healthd_config);
+  struct healthd_config healthd_config = {
+    .batteryStatusPath = android::String8(android::String8::kEmptyString),
+    .batteryHealthPath = android::String8(android::String8::kEmptyString),
+    .batteryPresentPath = android::String8(android::String8::kEmptyString),
+    .batteryCapacityPath = android::String8(android::String8::kEmptyString),
+    .batteryVoltagePath = android::String8(android::String8::kEmptyString),
+    .batteryTemperaturePath = android::String8(android::String8::kEmptyString),
+    .batteryTechnologyPath = android::String8(android::String8::kEmptyString),
+    .batteryCurrentNowPath = android::String8(android::String8::kEmptyString),
+    .batteryCurrentAvgPath = android::String8(android::String8::kEmptyString),
+    .batteryChargeCounterPath = android::String8(android::String8::kEmptyString),
+    .batteryFullChargePath = android::String8(android::String8::kEmptyString),
+    .batteryCycleCountPath = android::String8(android::String8::kEmptyString),
+    .energyCounter = NULL,
+    .boot_min_cap = 0,
+    .screen_on = NULL
+  };
 
-    int wait_second = 0;
-    while (true) {
-        int charge_status = monitor.getChargeStatus();
-        // Treat unknown status as charged.
-        bool charged = (charge_status != android::BATTERY_STATUS_DISCHARGING &&
-                        charge_status != android::BATTERY_STATUS_NOT_CHARGING);
-        android::BatteryProperty capacity;
-        android::status_t status = monitor.getProperty(android::BATTERY_PROP_CAPACITY, &capacity);
-        ui_print("charge_status %d, charged %d, status %d, capacity %lld\n", charge_status,
-                 charged, status, capacity.valueInt64);
-        // At startup, the battery drivers in devices like N5X/N6P take some time to load
-        // the battery profile. Before the load finishes, it reports value 50 as a fake
-        // capacity. BATTERY_READ_TIMEOUT_IN_SEC is set that the battery drivers are expected
-        // to finish loading the battery profile earlier than 10 seconds after kernel startup.
-        if (status == 0 && capacity.valueInt64 == 50) {
-            if (wait_second < BATTERY_READ_TIMEOUT_IN_SEC) {
-                sleep(1);
-                wait_second++;
-                continue;
-            }
-        }
-        // If we can't read battery percentage, it may be a device without battery. In this
-        // situation, use 100 as a fake battery percentage.
-        if (status != 0) {
-            capacity.valueInt64 = 100;
-        }
-        return (charged && capacity.valueInt64 >= BATTERY_WITH_CHARGER_OK_PERCENTAGE) ||
-                (!charged && capacity.valueInt64 >= BATTERY_OK_PERCENTAGE);
+  auto health =
+      android::hardware::health::V2_0::implementation::Health::initInstance(&healthd_config);
+
+  int wait_second = 0;
+  while (true) {
+    auto charge_status = BatteryStatus::UNKNOWN;
+    health
+        ->getChargeStatus([&charge_status](auto res, auto out_status) {
+          if (res == Result::SUCCESS) {
+            charge_status = out_status;
+          }
+        })
+        .isOk();  // should not have transport error
+
+    // Treat unknown status as charged.
+    bool charged = (charge_status != BatteryStatus::DISCHARGING &&
+                    charge_status != BatteryStatus::NOT_CHARGING);
+
+    Result res = Result::UNKNOWN;
+    int32_t capacity = INT32_MIN;
+    health
+        ->getCapacity([&res, &capacity](auto out_res, auto out_capacity) {
+          res = out_res;
+          capacity = out_capacity;
+        })
+        .isOk();  // should not have transport error
+
+    ui_print("charge_status %d, charged %d, status %s, capacity %" PRId32 "\n", charge_status,
+             charged, toString(res).c_str(), capacity);
+    // At startup, the battery drivers in devices like N5X/N6P take some time to load
+    // the battery profile. Before the load finishes, it reports value 50 as a fake
+    // capacity. BATTERY_READ_TIMEOUT_IN_SEC is set that the battery drivers are expected
+    // to finish loading the battery profile earlier than 10 seconds after kernel startup.
+    if (res == Result::SUCCESS && capacity == 50) {
+      if (wait_second < BATTERY_READ_TIMEOUT_IN_SEC) {
+        sleep(1);
+        wait_second++;
+        continue;
+      }
+    }
+    // If we can't read battery percentage, it may be a device without battery. In this
+    // situation, use 100 as a fake battery percentage.
+    if (res != Result::SUCCESS) {
+      capacity = 100;
+    }
+    return (charged && capacity >= BATTERY_WITH_CHARGER_OK_PERCENTAGE) ||
+           (!charged && capacity >= BATTERY_OK_PERCENTAGE);
     }
 }
 
