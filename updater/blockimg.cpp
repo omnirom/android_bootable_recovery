@@ -492,6 +492,10 @@ static void PrintHashForCorruptedSourceBlocks(const CommandParameters& params,
   }
 
   RangeSet src = RangeSet::Parse(params.tokens[pos++]);
+  if (!src) {
+    LOG(ERROR) << "Failed to parse range in " << params.cmdline;
+    return;
+  }
 
   RangeSet locs;
   // If there's no stashed blocks, content in the buffer is consecutive and has the same
@@ -936,6 +940,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
     params.cpos++;
   } else {
     RangeSet src = RangeSet::Parse(params.tokens[params.cpos++]);
+    CHECK(static_cast<bool>(src));
     *overlap = src.Overlaps(tgt);
 
     if (ReadBlocks(src, params.buffer, params.fd) == -1) {
@@ -948,6 +953,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
     }
 
     RangeSet locs = RangeSet::Parse(params.tokens[params.cpos++]);
+    CHECK(static_cast<bool>(locs));
     MoveRange(params.buffer, locs, params.buffer);
   }
 
@@ -970,6 +976,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
     }
 
     RangeSet locs = RangeSet::Parse(tokens[1]);
+    CHECK(static_cast<bool>(locs));
     MoveRange(params.buffer, locs, stash);
   }
 
@@ -1034,6 +1041,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* 
 
   // <tgt_range>
   tgt = RangeSet::Parse(params.tokens[params.cpos++]);
+  CHECK(static_cast<bool>(tgt));
 
   std::vector<uint8_t> tgtbuffer(tgt.blocks() * BLOCKSIZE);
   if (ReadBlocks(tgt, tgtbuffer, params.fd) == -1) {
@@ -1146,6 +1154,7 @@ static int PerformCommandStash(CommandParameters& params) {
   }
 
   RangeSet src = RangeSet::Parse(params.tokens[params.cpos++]);
+  CHECK(static_cast<bool>(src));
 
   allocate(src.blocks() * BLOCKSIZE, params.buffer);
   if (ReadBlocks(src, params.buffer, params.fd) == -1) {
@@ -1196,6 +1205,7 @@ static int PerformCommandZero(CommandParameters& params) {
   }
 
   RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
+  CHECK(static_cast<bool>(tgt));
 
   LOG(INFO) << "  zeroing " << tgt.blocks() << " blocks";
 
@@ -1238,6 +1248,7 @@ static int PerformCommandNew(CommandParameters& params) {
   }
 
   RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
+  CHECK(static_cast<bool>(tgt));
 
   if (params.canwrite) {
     LOG(INFO) << " writing " << tgt.blocks() << " blocks of new data";
@@ -1368,6 +1379,7 @@ static int PerformCommandErase(CommandParameters& params) {
   }
 
   RangeSet tgt = RangeSet::Parse(params.tokens[params.cpos++]);
+  CHECK(static_cast<bool>(tgt));
 
   if (params.canwrite) {
     LOG(INFO) << " erasing " << tgt.blocks() << " blocks";
@@ -1773,6 +1785,7 @@ Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique
   }
 
   RangeSet rs = RangeSet::Parse(ranges->data);
+  CHECK(static_cast<bool>(rs));
 
   SHA_CTX ctx;
   SHA1_Init(&ctx);
@@ -1884,6 +1897,11 @@ Value* BlockImageRecoverFn(const char* name, State* state,
     ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
     return StringValue("");
   }
+  RangeSet rs = RangeSet::Parse(ranges->data);
+  if (!rs) {
+    ErrorAbort(state, kArgsParsingFailure, "failed to parse ranges: %s", ranges->data.c_str());
+    return StringValue("");
+  }
 
   // Output notice to log when recover is attempted
   LOG(INFO) << filename->data << " image corrupted, attempting to recover...";
@@ -1909,7 +1927,7 @@ Value* BlockImageRecoverFn(const char* name, State* state,
   }
 
   uint8_t buffer[BLOCKSIZE];
-  for (const auto& range : RangeSet::Parse(ranges->data)) {
+  for (const auto& range : rs) {
     for (size_t j = range.first; j < range.second; ++j) {
       // Stay within the data area, libfec validates and corrects metadata
       if (status.data_size <= static_cast<uint64_t>(j) * BLOCKSIZE) {
