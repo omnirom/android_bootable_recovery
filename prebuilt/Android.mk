@@ -306,8 +306,10 @@ endif
 TWRP_AUTOGEN := $(intermediates)/teamwin
 GEN := $(intermediates)/teamwin
 $(GEN): $(RELINK)
-$(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,init)/init
+$(GEN): $(RELINK_SOURCE_FILES) $(TARGET_ROOT_OUT_SBIN)/adbd $(call intermediates-dir-for,EXECUTABLES,init)/init
 	$(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
+	#adbd needs to be relinked in root/sbin before it gets copied by the makefile to recovery/root/sbin
+	$(RELINK) $(TARGET_ROOT_OUT_SBIN) $(TARGET_ROOT_OUT_SBIN)/adbd
 
 LOCAL_GENERATED_SOURCES := $(GEN)
 LOCAL_SRC_FILES := teamwin $(GEN)
@@ -545,6 +547,15 @@ ifneq ($(TW_EXCLUDE_SUPERSU), true)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
 	include $(BUILD_PREBUILT)
 endif
+
+#~ include $(CLEAR_VARS)
+#~ 	#RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT_SBIN)/adbd
+#~ 	LOCAL_MODULE := $(TARGET_ROOT_OUT_SBIN)/adbd
+#~ 	LOCAL_MODULE_TAGS := eng
+#~ 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+#~ 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+#~ 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
+#~ include $(BUILD_PREBUILT)
 
 #TWRP App "placeholder"
 include $(CLEAR_VARS)
