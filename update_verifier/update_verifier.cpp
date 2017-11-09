@@ -58,6 +58,8 @@
 #include <android/hardware/boot/1.0/IBootControl.h>
 #include <cutils/android_reboot.h>
 
+#include "otautil/rangeset.h"
+
 using android::sp;
 using android::hardware::boot::V1_0::IBootControl;
 using android::hardware::boot::V1_0::BoolResult;
@@ -129,42 +131,33 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
   // followed by 'count' number comma separated integers. Every two integers reprensent a
   // block range with the first number included in range but second number not included.
   // For example '4,64536,65343,74149,74150' represents: [64536,65343) and [74149,74150).
-  std::vector<std::string> ranges = android::base::Split(range_str, ",");
-  size_t range_count;
-  bool status = android::base::ParseUint(ranges[0], &range_count);
-  if (!status || (range_count == 0) || (range_count % 2 != 0) ||
-      (range_count != ranges.size() - 1)) {
-    LOG(ERROR) << "Error in parsing range string.";
+  RangeSet ranges = RangeSet::Parse(range_str);
+  if (!ranges) {
+    LOG(ERROR) << "Error parsing RangeSet string " << range_str;
     return false;
   }
-  range_count /= 2;
+
+  // RangeSet::Split() splits the ranges into multiple groups with same number of blocks (except for
+  // the last group).
+  size_t thread_num = std::thread::hardware_concurrency() ?: 4;
+  std::vector<RangeSet> groups = ranges.Split(thread_num);
 
   std::vector<std::future<bool>> threads;
-  size_t thread_num = std::thread::hardware_concurrency() ?: 4;
-  thread_num = std::min(thread_num, range_count);
-  size_t group_range_count = (range_count + thread_num - 1) / thread_num;
-
-  for (size_t t = 0; t < thread_num; t++) {
-    auto thread_func = [t, group_range_count, &dm_block_device, &ranges, &partition]() {
-      size_t blk_count = 0;
-      static constexpr size_t kBlockSize = 4096;
-      std::vector<uint8_t> buf(1024 * kBlockSize);
+  for (const auto& group : groups) {
+    auto thread_func = [&group, &dm_block_device, &partition]() {
       android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(dm_block_device.c_str(), O_RDONLY)));
       if (fd.get() == -1) {
         PLOG(ERROR) << "Error reading " << dm_block_device << " for partition " << partition;
         return false;
       }
 
-      for (size_t i = group_range_count * 2 * t + 1;
-           i < std::min(group_range_count * 2 * (t + 1) + 1, ranges.size()); i += 2) {
-        unsigned int range_start, range_end;
-        bool parse_status = android::base::ParseUint(ranges[i], &range_start);
-        parse_status = parse_status && android::base::ParseUint(ranges[i + 1], &range_end);
-        if (!parse_status || range_start >= range_end) {
-          LOG(ERROR) << "Invalid range pair " << ranges[i] << ", " << ranges[i + 1];
-          return false;
-        }
+      static constexpr size_t kBlockSize = 4096;
+      std::vector<uint8_t> buf(1024 * kBlockSize);
 
+      size_t block_count = 0;
+      for (const auto& range : group) {
+        size_t range_start = range.first;
+        size_t range_end = range.second;
         if (lseek64(fd.get(), static_cast<off64_t>(range_start) * kBlockSize, SEEK_SET) == -1) {
           PLOG(ERROR) << "lseek to " << range_start << " failed";
           return false;
@@ -179,9 +172,9 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
           }
           remain -= to_read;
         }
-        blk_count += (range_end - range_start);
+        block_count += (range_end - range_start);
       }
-      LOG(INFO) << "Finished reading " << blk_count << " blocks on " << dm_block_device;
+      LOG(INFO) << "Finished reading " << block_count << " blocks on " << dm_block_device;
       return true;
     };
 
