@@ -49,6 +49,14 @@ class RangeSet {
   // bounds. For example, "3,5" contains blocks 3 and 4. So "3,5" and "5,7" are not overlapped.
   bool Overlaps(const RangeSet& other) const;
 
+  // Returns a vector of RangeSets that contain the same set of blocks represented by the current
+  // RangeSet. The RangeSets in the vector contain similar number of blocks, with a maximum delta
+  // of 1-block between any two of them. For example, 14 blocks would be split into 4 + 4 + 3 + 3,
+  // as opposed to 4 + 4 + 4 + 2. If the total number of blocks (T) is less than groups, it
+  // returns a vector of T 1-block RangeSets. Otherwise the number of the returned RangeSets must
+  // equal to groups. The current RangeSet remains intact after the split.
+  std::vector<RangeSet> Split(size_t groups) const;
+
   // Returns the number of Range's in this RangeSet.
   size_t size() const {
     return ranges_.size();

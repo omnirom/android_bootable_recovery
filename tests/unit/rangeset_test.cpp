@@ -123,6 +123,86 @@ TEST(RangeSetTest, Overlaps) {
   ASSERT_FALSE(RangeSet::Parse("2,5,7").Overlaps(RangeSet::Parse("2,3,5")));
 }
 
+TEST(RangeSetTest, Split) {
+  RangeSet rs1 = RangeSet::Parse("2,1,2");
+  ASSERT_TRUE(rs1);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,1,2") }), rs1.Split(1));
+
+  RangeSet rs2 = RangeSet::Parse("2,5,10");
+  ASSERT_TRUE(rs2);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,5,8"), RangeSet::Parse("2,8,10") }),
+            rs2.Split(2));
+
+  RangeSet rs3 = RangeSet::Parse("4,0,1,5,10");
+  ASSERT_TRUE(rs3);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("4,0,1,5,7"), RangeSet::Parse("2,7,10") }),
+            rs3.Split(2));
+
+  RangeSet rs4 = RangeSet::Parse("6,1,3,3,4,4,5");
+  ASSERT_TRUE(rs4);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,1,3"), RangeSet::Parse("2,3,4"),
+                                    RangeSet::Parse("2,4,5") }),
+            rs4.Split(3));
+
+  RangeSet rs5 = RangeSet::Parse("2,0,10");
+  ASSERT_TRUE(rs5);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,0,3"), RangeSet::Parse("2,3,6"),
+                                    RangeSet::Parse("2,6,8"), RangeSet::Parse("2,8,10") }),
+            rs5.Split(4));
+
+  RangeSet rs6 = RangeSet::Parse(
+      "20,0,268,269,271,286,447,8350,32770,33022,98306,98558,163842,164094,196609,204800,229378,"
+      "229630,294914,295166,457564");
+  ASSERT_TRUE(rs6);
+  size_t rs6_blocks = rs6.blocks();
+  auto splits = rs6.Split(4);
+  ASSERT_EQ(
+      (std::vector<RangeSet>{
+          RangeSet::Parse("12,0,268,269,271,286,447,8350,32770,33022,98306,98558,118472"),
+          RangeSet::Parse("8,118472,163842,164094,196609,204800,229378,229630,237216"),
+          RangeSet::Parse("4,237216,294914,295166,347516"), RangeSet::Parse("2,347516,457564") }),
+      splits);
+  size_t sum = 0;
+  for (const auto& element : splits) {
+    sum += element.blocks();
+  }
+  ASSERT_EQ(rs6_blocks, sum);
+}
+
+TEST(RangeSetTest, Split_EdgeCases) {
+  // Empty RangeSet.
+  RangeSet rs1;
+  ASSERT_FALSE(rs1);
+  ASSERT_EQ((std::vector<RangeSet>{}), rs1.Split(2));
+  ASSERT_FALSE(rs1);
+
+  // Zero group.
+  RangeSet rs2 = RangeSet::Parse("2,1,5");
+  ASSERT_TRUE(rs2);
+  ASSERT_EQ((std::vector<RangeSet>{}), rs2.Split(0));
+
+  // The number of blocks equals to the number of groups.
+  RangeSet rs3 = RangeSet::Parse("2,1,5");
+  ASSERT_TRUE(rs3);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,1,2"), RangeSet::Parse("2,2,3"),
+                                    RangeSet::Parse("2,3,4"), RangeSet::Parse("2,4,5") }),
+            rs3.Split(4));
+
+  // Less blocks than the number of groups.
+  RangeSet rs4 = RangeSet::Parse("2,1,5");
+  ASSERT_TRUE(rs4);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,1,2"), RangeSet::Parse("2,2,3"),
+                                    RangeSet::Parse("2,3,4"), RangeSet::Parse("2,4,5") }),
+            rs4.Split(8));
+
+  // Less blocks than the number of groups.
+  RangeSet rs5 = RangeSet::Parse("2,0,3");
+  ASSERT_TRUE(rs5);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,0,1"), RangeSet::Parse("2,1,2"),
+                                    RangeSet::Parse("2,2,3") }),
+            rs5.Split(4));
+}
+
 TEST(RangeSetTest, GetBlockNumber) {
   RangeSet rs = RangeSet::Parse("2,1,10");
   ASSERT_EQ(static_cast<size_t>(1), rs.GetBlockNumber(0));
