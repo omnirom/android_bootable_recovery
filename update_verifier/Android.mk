@@ -22,6 +22,10 @@ LOCAL_SRC_FILES := \
     update_verifier.cpp
 
 LOCAL_MODULE := libupdate_verifier
+
+LOCAL_STATIC_LIBRARIES := \
+    libotautil
+
 LOCAL_SHARED_LIBRARIES := \
     libbase \
     libcutils \
@@ -54,7 +58,9 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := update_verifier
 LOCAL_STATIC_LIBRARIES := \
-    libupdate_verifier
+    libupdate_verifier \
+    libotautil
+
 LOCAL_SHARED_LIBRARIES := \
     libbase \
     libcutils \
