@@ -34,6 +34,10 @@
 #include "graphics.h"
 #include <pixelflinger/pixelflinger.h>
 
+#ifdef IMX_EPDC
+#include <linux/mxcfb.h>
+#endif
+
 static GRSurface* fbdev_init(minui_backend*);
 static GRSurface* fbdev_flip(minui_backend*);
 static void fbdev_blank(minui_backend*, bool);
@@ -58,6 +62,52 @@ static minui_backend my_backend = {
 minui_backend* open_fbdev() {
     return &my_backend;
 }
+
+#ifdef IMX_EPDC
+static unsigned int marker_val = 1;
+static int epdc_fd;
+
+static unsigned int epdc_update(int left, int top, int width, int height, int wave_mode,
+	int wait_for_complete, uint flags)
+{
+	struct mxcfb_update_data upd_data;
+	int retval;
+
+	upd_data.update_mode = UPDATE_MODE_PARTIAL;
+	upd_data.waveform_mode = wave_mode;
+	upd_data.update_region.left = left;
+	upd_data.update_region.width = width;
+	upd_data.update_region.top = top;
+	upd_data.update_region.height = height;
+	upd_data.temp = TEMP_USE_AMBIENT;
+	upd_data.flags = flags;
+
+	if (wait_for_complete) {
+		/* Get unique marker value */
+		upd_data.update_marker = marker_val++;
+	} else {
+		upd_data.update_marker = 0;
+	}
+
+	retval = ioctl(epdc_fd, MXCFB_SEND_UPDATE, &upd_data);
+	while (retval < 0) {
+		/* We have limited memory available for updates, so wait and
+		 * then try again after some updates have completed */
+		sleep(1);
+		retval = ioctl(epdc_fd, MXCFB_SEND_UPDATE, &upd_data);
+	}
+
+	if (wait_for_complete) {
+		/* Wait for update to complete */
+		retval = ioctl(epdc_fd, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
+		if (retval < 0) {
+			printf("Wait for update complete failed.  Error = 0x%x", retval);
+		}
+	}
+
+	return upd_data.waveform_mode;
+}
+#endif
 
 static void fbdev_blank(minui_backend* backend __unused, bool blank)
 {
@@ -111,9 +161,20 @@ static void set_displayed_framebuffer(unsigned n)
 #endif
     }
     displayed_buffer = n;
+
+#ifdef IMX_EPDC
+    epdc_update(0, 0, vi.xres, vi.yres, WAVEFORM_MODE_AUTO, 1, 0);
+#endif
 }
 
 static GRSurface* fbdev_init(minui_backend* backend) {
+
+#ifdef IMX_EPDC
+    int auto_update_mode;
+    struct mxcfb_waveform_modes wv_modes;
+    int scheme = UPDATE_SCHEME_QUEUE_AND_MERGE;
+#endif
+
     int retry = 20;
     int fd = -1;
     while (fd == -1) {
@@ -166,6 +227,21 @@ static GRSurface* fbdev_init(minui_backend* backend) {
         close(fd);
         return NULL;
     }
+
+#ifdef IMX_EPDC
+    vi.bits_per_pixel = 16;
+    vi.grayscale = 0;
+    vi.yoffset = 0;
+    vi.rotate = IMX_SCREEN_ROTATION; //FB_ROTATE_UR = 0 is default
+    vi.activate = FB_ACTIVATE_FORCE;
+    epdc_fd = fd;
+
+    if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
+        perror("failed to put fb0 info");
+        close(fd);
+        return NULL;
+    }
+#endif
 
     // We print this out for informational purposes only, but
     // throughout we assume that the framebuffer device uses an RGBX
@@ -269,6 +345,31 @@ static GRSurface* fbdev_init(minui_backend* backend) {
 #if defined(RECOVERY_BGRA)
     printf("RECOVERY_BGRA\n");
 #endif
+
+#ifdef IMX_EPDC
+    auto_update_mode = AUTO_UPDATE_MODE_REGION_MODE;
+    if (ioctl(fd, MXCFB_SET_AUTO_UPDATE_MODE, &auto_update_mode) < 0) {
+        perror("set auto update mode failed\n");
+        return NULL;
+    }
+
+    wv_modes.mode_init = 0;
+    wv_modes.mode_du = 1;
+    wv_modes.mode_gc4 = 2;
+    wv_modes.mode_gc8 = 2;
+    wv_modes.mode_gc16 = 2;
+    wv_modes.mode_gc32 = 2;
+    if (ioctl(fd, MXCFB_SET_WAVEFORM_MODES, &wv_modes) < 0) {
+        perror("set waveform modes failed\n");
+        return NULL;
+    }
+
+    if (ioctl(fd, MXCFB_SET_UPDATE_SCHEME, &scheme) < 0) {
+        perror("set update scheme failed\n");
+        return NULL;
+    }
+#endif
+
     fb_fd = fd;
     set_displayed_framebuffer(0);
 

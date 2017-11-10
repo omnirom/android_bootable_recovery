@@ -172,6 +172,16 @@ ifeq ($(TW_DISABLE_TTF), true)
     $(error stopping)
 endif
 
+ifeq ($(TW_TARGET_USES_IMX_EPDC), true)
+  LOCAL_CFLAGS += -DIMX_EPDC
+endif
+
+ifneq ($(TW_SCREEN_ROTATION_IMX),)
+  LOCAL_CFLAGS += -DIMX_SCREEN_ROTATION=$(TW_SCREEN_ROTATION_IMX)
+else
+  LOCAL_CFLAGS += -DIMX_SCREEN_ROTATION=0
+endif
+
 LOCAL_CLANG := true
 
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
