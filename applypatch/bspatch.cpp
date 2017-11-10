@@ -26,7 +26,7 @@
 #include <string>
 
 #include <android-base/logging.h>
-#include <bspatch.h>
+#include <bsdiff/bspatch.h>
 #include <openssl/sha.h>
 
 #include "applypatch/applypatch.h"
