@@ -651,11 +651,11 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
 
   int result;
   if (use_bsdiff) {
-    result = ApplyBSDiffPatch(source_file.data.data(), source_file.data.size(), patch.get(), 0,
-                              sink, &ctx);
+    result =
+        ApplyBSDiffPatch(source_file.data.data(), source_file.data.size(), *patch, 0, sink, &ctx);
   } else {
-    result = ApplyImagePatch(source_file.data.data(), source_file.data.size(), patch.get(), sink,
-                             &ctx, bonus_data);
+    result = ApplyImagePatch(source_file.data.data(), source_file.data.size(), *patch, sink, &ctx,
+                             bonus_data);
   }
 
   if (result != 0) {

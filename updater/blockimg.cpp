@@ -1318,7 +1318,7 @@ static int PerformCommandDiff(CommandParameters& params) {
 
       RangeSinkWriter writer(params.fd, tgt);
       if (params.cmdname[0] == 'i') {  // imgdiff
-        if (ApplyImagePatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value,
+        if (ApplyImagePatch(params.buffer.data(), blocks * BLOCKSIZE, patch_value,
                             std::bind(&RangeSinkWriter::Write, &writer, std::placeholders::_1,
                                       std::placeholders::_2),
                             nullptr, nullptr) != 0) {
@@ -1327,7 +1327,7 @@ static int PerformCommandDiff(CommandParameters& params) {
           return -1;
         }
       } else {
-        if (ApplyBSDiffPatch(params.buffer.data(), blocks * BLOCKSIZE, &patch_value, 0,
+        if (ApplyBSDiffPatch(params.buffer.data(), blocks * BLOCKSIZE, patch_value, 0,
                              std::bind(&RangeSinkWriter::Write, &writer, std::placeholders::_1,
                                        std::placeholders::_2),
                              nullptr) != 0) {
