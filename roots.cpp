@@ -321,7 +321,9 @@ int format_volume(const char* volume, const char* directory) {
   }
 
   // Has to be f2fs because we checked earlier.
-  std::vector<std::string> f2fs_args = { "/sbin/mkfs.f2fs", "-t", "-d1", v->blk_device };
+  std::vector<std::string> f2fs_args = { "/sbin/mkfs.f2fs", "-d1", "-f",
+                                         "-O", "encrypt", "-O", "quota",
+                                         v->blk_device };
   if (length >= 512) {
     f2fs_args.push_back(std::to_string(length / 512));
   }
