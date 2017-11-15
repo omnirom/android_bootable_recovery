@@ -16,10 +16,9 @@ LOCAL_PATH:= $(call my-dir)
 
 minadbd_cflags := \
     -Wall -Werror \
-    -Wno-missing-field-initializers \
     -DADB_HOST=0 \
 
-# libadbd (static library)
+# libminadbd (static library)
 # ===============================
 include $(CLEAR_VARS)
 
@@ -30,7 +29,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libminadbd
 LOCAL_CFLAGS := $(minadbd_cflags)
-LOCAL_CONLY_FLAGS := -Wimplicit-function-declaration
 LOCAL_C_INCLUDES := bootable/recovery system/core/adb
 LOCAL_WHOLE_STATIC_LIBRARIES := libadbd
 LOCAL_STATIC_LIBRARIES := libcrypto libbase
