@@ -175,7 +175,7 @@ using android::base::get_unaligned;
 static constexpr size_t VERSION = 2;
 
 // We assume the header "IMGDIFF#" is 8 bytes.
-static_assert(VERSION <= 9, "VERSION occupies more than one byte.");
+static_assert(VERSION <= 9, "VERSION occupies more than one byte");
 
 static constexpr size_t BLOCK_SIZE = 4096;
 static constexpr size_t BUFFER_SIZE = 0x8000;
@@ -229,8 +229,8 @@ static bool RemoveUsedBlocks(size_t* start, size_t* length, const SortedRangeSet
   }
 
   // TODO find the largest non-overlap chunk.
-  printf("Removing block %s from %zu - %zu\n", used_ranges.ToString().c_str(), *start,
-         *start + *length - 1);
+  LOG(INFO) << "Removing block " << used_ranges.ToString() << " from " << *start << " - "
+            << *start + *length - 1;
 
   // If there's no duplicate entry name, we should only overlap in the head or tail block. Try to
   // trim both blocks. Skip this source chunk in case it still overlaps with the used ranges.
@@ -241,7 +241,7 @@ static bool RemoveUsedBlocks(size_t* start, size_t* length, const SortedRangeSet
     return true;
   }
 
-  printf("Failed to remove the overlapped block ranges; skip the source\n");
+  LOG(WARNING) << "Failed to remove the overlapped block ranges; skip the source";
   return false;
 }
 
@@ -251,6 +251,7 @@ static const struct option OPTIONS[] = {
   { "block-limit", required_argument, nullptr, 0 },
   { "debug-dir", required_argument, nullptr, 0 },
   { "split-info", required_argument, nullptr, 0 },
+  { "verbose", no_argument, nullptr, 'v' },
   { nullptr, 0, nullptr, 0 },
 };
 
@@ -282,6 +283,11 @@ size_t ImageChunk::DataLengthForPatch() const {
     return uncompressed_data_.size();
   }
   return raw_data_len_;
+}
+
+void ImageChunk::Dump(size_t index) const {
+  LOG(INFO) << "chunk: " << index << ", type: " << type_ << ", start: " << start_
+            << ", len: " << DataLengthForPatch() << ", name: " << entry_name_;
 }
 
 bool ImageChunk::operator==(const ImageChunk& other) const {
@@ -334,7 +340,7 @@ bool ImageChunk::MakePatch(const ImageChunk& tgt, const ImageChunk& src,
 
   int fd = mkstemp(ptemp);
   if (fd == -1) {
-    printf("MakePatch failed to create a temporary file: %s\n", strerror(errno));
+    PLOG(ERROR) << "MakePatch failed to create a temporary file";
     return false;
   }
   close(fd);
@@ -342,18 +348,18 @@ bool ImageChunk::MakePatch(const ImageChunk& tgt, const ImageChunk& src,
   int r = bsdiff::bsdiff(src.DataForPatch(), src.DataLengthForPatch(), tgt.DataForPatch(),
                          tgt.DataLengthForPatch(), ptemp, bsdiff_cache);
   if (r != 0) {
-    printf("bsdiff() failed: %d\n", r);
+    LOG(ERROR) << "bsdiff() failed: " << r;
     return false;
   }
 
   android::base::unique_fd patch_fd(open(ptemp, O_RDONLY));
   if (patch_fd == -1) {
-    printf("failed to open %s: %s\n", ptemp, strerror(errno));
+    PLOG(ERROR) << "Failed to open " << ptemp;
     return false;
   }
   struct stat st;
   if (fstat(patch_fd, &st) != 0) {
-    printf("failed to stat patch file %s: %s\n", ptemp, strerror(errno));
+    PLOG(ERROR) << "Failed to stat patch file " << ptemp;
     return false;
   }
 
@@ -361,7 +367,7 @@ bool ImageChunk::MakePatch(const ImageChunk& tgt, const ImageChunk& src,
 
   patch_data->resize(sz);
   if (!android::base::ReadFully(patch_fd, patch_data->data(), sz)) {
-    printf("failed to read \"%s\" %s\n", ptemp, strerror(errno));
+    PLOG(ERROR) << "Failed to read " << ptemp;
     unlink(ptemp);
     return false;
   }
@@ -373,7 +379,7 @@ bool ImageChunk::MakePatch(const ImageChunk& tgt, const ImageChunk& src,
 
 bool ImageChunk::ReconstructDeflateChunk() {
   if (type_ != CHUNK_DEFLATE) {
-    printf("attempt to reconstruct non-deflate chunk\n");
+    LOG(ERROR) << "Attempted to reconstruct non-deflate chunk";
     return false;
   }
 
@@ -403,7 +409,7 @@ bool ImageChunk::TryReconstruction(int level) {
   strm.next_in = uncompressed_data_.data();
   int ret = deflateInit2(&strm, level, METHOD, WINDOWBITS, MEMLEVEL, STRATEGY);
   if (ret < 0) {
-    printf("failed to initialize deflate: %d\n", ret);
+    LOG(ERROR) << "Failed to initialize deflate: " << ret;
     return false;
   }
 
@@ -414,7 +420,7 @@ bool ImageChunk::TryReconstruction(int level) {
     strm.next_out = buffer.data();
     ret = deflate(&strm, Z_FINISH);
     if (ret < 0) {
-      printf("failed to deflate: %d\n", ret);
+      LOG(ERROR) << "Failed to deflate: " << ret;
       return false;
     }
 
@@ -490,17 +496,19 @@ size_t PatchChunk::GetHeaderSize() const {
 }
 
 // Return the offset of the next patch into the patch data.
-size_t PatchChunk::WriteHeaderToFd(int fd, size_t offset) const {
+size_t PatchChunk::WriteHeaderToFd(int fd, size_t offset, size_t index) const {
   Write4(fd, type_);
   switch (type_) {
     case CHUNK_NORMAL:
-      printf("normal   (%10zu, %10zu)  %10zu\n", target_start_, target_len_, data_.size());
+      LOG(INFO) << android::base::StringPrintf("chunk %zu: normal   (%10zu, %10zu)  %10zu", index,
+                                               target_start_, target_len_, data_.size());
       Write8(fd, static_cast<int64_t>(source_start_));
       Write8(fd, static_cast<int64_t>(source_len_));
       Write8(fd, static_cast<int64_t>(offset));
       return offset + data_.size();
     case CHUNK_DEFLATE:
-      printf("deflate  (%10zu, %10zu)  %10zu\n", target_start_, target_len_, data_.size());
+      LOG(INFO) << android::base::StringPrintf("chunk %zu: deflate  (%10zu, %10zu)  %10zu", index,
+                                               target_start_, target_len_, data_.size());
       Write8(fd, static_cast<int64_t>(source_start_));
       Write8(fd, static_cast<int64_t>(source_len_));
       Write8(fd, static_cast<int64_t>(offset));
@@ -513,10 +521,11 @@ size_t PatchChunk::WriteHeaderToFd(int fd, size_t offset) const {
       Write4(fd, ImageChunk::STRATEGY);
       return offset + data_.size();
     case CHUNK_RAW:
-      printf("raw      (%10zu, %10zu)\n", target_start_, target_len_);
+      LOG(INFO) << android::base::StringPrintf("chunk %zu: raw      (%10zu, %10zu)", index,
+                                               target_start_, target_len_);
       Write4(fd, static_cast<int32_t>(data_.size()));
       if (!android::base::WriteFully(fd, data_.data(), data_.size())) {
-        CHECK(false) << "failed to write " << data_.size() << " bytes patch";
+        CHECK(false) << "Failed to write " << data_.size() << " bytes patch";
       }
       return offset;
     default:
@@ -545,14 +554,14 @@ bool PatchChunk::WritePatchDataToFd(const std::vector<PatchChunk>& patch_chunks,
 
   // Write out the headers.
   if (!android::base::WriteStringToFd("IMGDIFF" + std::to_string(VERSION), patch_fd)) {
-    printf("failed to write \"IMGDIFF%zu\": %s\n", VERSION, strerror(errno));
+    PLOG(ERROR) << "Failed to write \"IMGDIFF" << VERSION << "\"";
     return false;
   }
 
   Write4(patch_fd, static_cast<int32_t>(patch_chunks.size()));
+  LOG(INFO) << "Writing " << patch_chunks.size() << " patch headers...";
   for (size_t i = 0; i < patch_chunks.size(); ++i) {
-    printf("chunk %zu: ", i);
-    offset = patch_chunks[i].WriteHeaderToFd(patch_fd, offset);
+    offset = patch_chunks[i].WriteHeaderToFd(patch_fd, offset, i);
   }
 
   // Append each chunk's bsdiff patch, in order.
@@ -561,7 +570,7 @@ bool PatchChunk::WritePatchDataToFd(const std::vector<PatchChunk>& patch_chunks,
       continue;
     }
     if (!android::base::WriteFully(patch_fd, patch.data_.data(), patch.data_.size())) {
-      printf("failed to write %zu bytes patch to patch_fd\n", patch.data_.size());
+      PLOG(ERROR) << "Failed to write " << patch.data_.size() << " bytes patch to patch_fd";
       return false;
     }
   }
@@ -603,10 +612,9 @@ void Image::MergeAdjacentNormalChunks() {
 
 void Image::DumpChunks() const {
   std::string type = is_source_ ? "source" : "target";
-  printf("Dumping chunks for %s\n", type.c_str());
+  LOG(INFO) << "Dumping chunks for " << type;
   for (size_t i = 0; i < chunks_.size(); ++i) {
-    printf("chunk %zu: ", i);
-    chunks_[i].Dump();
+    chunks_[i].Dump(i);
   }
 }
 
@@ -615,19 +623,19 @@ bool Image::ReadFile(const std::string& filename, std::vector<uint8_t>* file_con
 
   android::base::unique_fd fd(open(filename.c_str(), O_RDONLY));
   if (fd == -1) {
-    printf("failed to open \"%s\" %s\n", filename.c_str(), strerror(errno));
+    PLOG(ERROR) << "Failed to open " << filename;
     return false;
   }
   struct stat st;
   if (fstat(fd, &st) != 0) {
-    printf("failed to stat \"%s\": %s\n", filename.c_str(), strerror(errno));
+    PLOG(ERROR) << "Failed to stat " << filename;
     return false;
   }
 
   size_t sz = static_cast<size_t>(st.st_size);
   file_content->resize(sz);
   if (!android::base::ReadFully(fd, file_content->data(), sz)) {
-    printf("failed to read \"%s\" %s\n", filename.c_str(), strerror(errno));
+    PLOG(ERROR) << "Failed to read " << filename;
     return false;
   }
   fd.reset();
@@ -643,14 +651,14 @@ bool ZipModeImage::Initialize(const std::string& filename) {
   // Omit the trailing zeros before we pass the file to ziparchive handler.
   size_t zipfile_size;
   if (!GetZipFileSize(&zipfile_size)) {
-    printf("failed to parse the actual size of %s\n", filename.c_str());
+    LOG(ERROR) << "Failed to parse the actual size of " << filename;
     return false;
   }
   ZipArchiveHandle handle;
   int err = OpenArchiveFromMemory(const_cast<uint8_t*>(file_content_.data()), zipfile_size,
                                   filename.c_str(), &handle);
   if (err != 0) {
-    printf("failed to open zip file %s: %s\n", filename.c_str(), ErrorCodeString(err));
+    LOG(ERROR) << "Failed to open zip file " << filename << ": " << ErrorCodeString(err);
     CloseArchive(handle);
     return false;
   }
@@ -669,7 +677,7 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
   void* cookie;
   int ret = StartIteration(handle, &cookie, nullptr, nullptr);
   if (ret != 0) {
-    printf("failed to iterate over entries in %s: %s\n", filename.c_str(), ErrorCodeString(ret));
+    LOG(ERROR) << "Failed to iterate over entries in " << filename << ": " << ErrorCodeString(ret);
     return false;
   }
 
@@ -685,7 +693,7 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
   }
 
   if (ret != -1) {
-    printf("Error while iterating over zip entries: %s\n", ErrorCodeString(ret));
+    LOG(ERROR) << "Error while iterating over zip entries: " << ErrorCodeString(ret);
     return false;
   }
   std::sort(temp_entries.begin(), temp_entries.end(),
@@ -697,7 +705,7 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
   if (is_source_) {
     for (auto& entry : temp_entries) {
       if (!AddZipEntryToChunks(handle, entry.first, &entry.second)) {
-        printf("Failed to add %s to source chunks\n", entry.first.c_str());
+        LOG(ERROR) << "Failed to add " << entry.first << " to source chunks";
         return false;
       }
     }
@@ -725,7 +733,7 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
       // Add the next zip entry.
       std::string entry_name = temp_entries[nextentry].first;
       if (!AddZipEntryToChunks(handle, entry_name, &temp_entries[nextentry].second)) {
-        printf("Failed to add %s to target chunks\n", entry_name.c_str());
+        LOG(ERROR) << "Failed to add " << entry_name << " to target chunks";
         return false;
       }
 
@@ -771,8 +779,8 @@ bool ZipModeImage::AddZipEntryToChunks(ZipArchiveHandle handle, const std::strin
     std::vector<uint8_t> uncompressed_data(uncompressed_len);
     int ret = ExtractToMemory(handle, entry, uncompressed_data.data(), uncompressed_len);
     if (ret != 0) {
-      printf("failed to extract %s with size %zu: %s\n", entry_name.c_str(), uncompressed_len,
-             ErrorCodeString(ret));
+      LOG(ERROR) << "Failed to extract " << entry_name << " with size " << uncompressed_len << ": "
+                 << ErrorCodeString(ret);
       return false;
     }
     ImageChunk curr(CHUNK_DEFLATE, entry->offset, &file_content_, compressed_len, entry_name);
@@ -793,7 +801,7 @@ bool ZipModeImage::AddZipEntryToChunks(ZipArchiveHandle handle, const std::strin
 // offset 22: comment, n bytes
 bool ZipModeImage::GetZipFileSize(size_t* input_file_size) {
   if (file_content_.size() < 22) {
-    printf("file is too small to be a zip file\n");
+    LOG(ERROR) << "File is too small to be a zip file";
     return false;
   }
 
@@ -872,8 +880,8 @@ bool ZipModeImage::CheckAndProcessChunks(ZipModeImage* tgt_image, ZipModeImage* 
     } else if (!tgt_chunk.ReconstructDeflateChunk()) {
       // We cannot recompress the data and get exactly the same bits as are in the input target
       // image. Treat the chunk as a normal non-deflated chunk.
-      printf("failed to reconstruct target deflate chunk [%s]; treating as normal\n",
-             tgt_chunk.GetEntryName().c_str());
+      LOG(WARNING) << "Failed to reconstruct target deflate chunk [" << tgt_chunk.GetEntryName()
+                   << "]; treating as normal";
 
       tgt_chunk.ChangeDeflateChunkToNormal();
       src_chunk->ChangeDeflateChunkToNormal();
@@ -902,7 +910,7 @@ bool ZipModeImage::SplitZipModeImageWithLimit(const ZipModeImage& tgt_image,
   size_t limit = tgt_image.limit_;
 
   src_image.DumpChunks();
-  printf("Splitting %zu tgt chunks...\n", tgt_image.NumOfChunks());
+  LOG(INFO) << "Splitting " << tgt_image.NumOfChunks() << " tgt chunks...";
 
   SortedRangeSet used_src_ranges;  // ranges used for previous split source images.
 
@@ -1049,7 +1057,7 @@ void ZipModeImage::ValidateSplitImages(const std::vector<ZipModeImage>& split_tg
                                        size_t total_tgt_size) {
   CHECK_EQ(split_tgt_images.size(), split_src_images.size());
 
-  printf("Validating %zu images\n", split_tgt_images.size());
+  LOG(INFO) << "Validating " << split_tgt_images.size() << " images";
 
   // Verify that the target image pieces is continuous and can add up to the total size.
   size_t last_offset = 0;
@@ -1081,7 +1089,7 @@ void ZipModeImage::ValidateSplitImages(const std::vector<ZipModeImage>& split_tg
 bool ZipModeImage::GeneratePatchesInternal(const ZipModeImage& tgt_image,
                                            const ZipModeImage& src_image,
                                            std::vector<PatchChunk>* patch_chunks) {
-  printf("Construct patches for %zu chunks...\n", tgt_image.NumOfChunks());
+  LOG(INFO) << "Constructing patches for " << tgt_image.NumOfChunks() << " chunks...";
   patch_chunks->clear();
 
   bsdiff::SuffixArrayIndexInterface* bsdiff_cache = nullptr;
@@ -1103,12 +1111,12 @@ bool ZipModeImage::GeneratePatchesInternal(const ZipModeImage& tgt_image,
 
     std::vector<uint8_t> patch_data;
     if (!ImageChunk::MakePatch(tgt_chunk, src_ref, &patch_data, bsdiff_cache_ptr)) {
-      printf("Failed to generate patch, name: %s\n", tgt_chunk.GetEntryName().c_str());
+      LOG(ERROR) << "Failed to generate patch, name: " << tgt_chunk.GetEntryName();
       return false;
     }
 
-    printf("patch %3zu is %zu bytes (of %zu)\n", i, patch_data.size(),
-           tgt_chunk.GetRawDataLength());
+    LOG(INFO) << "patch " << i << " is " << patch_data.size() << " bytes (of "
+              << tgt_chunk.GetRawDataLength() << ")";
 
     if (PatchChunk::RawDataIsSmaller(tgt_chunk, patch_data.size())) {
       patch_chunks->emplace_back(tgt_chunk);
@@ -1133,7 +1141,7 @@ bool ZipModeImage::GeneratePatches(const ZipModeImage& tgt_image, const ZipModeI
   android::base::unique_fd patch_fd(
       open(patch_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
   if (patch_fd == -1) {
-    printf("failed to open \"%s\": %s\n", patch_name.c_str(), strerror(errno));
+    PLOG(ERROR) << "Failed to open " << patch_name;
     return false;
   }
 
@@ -1146,12 +1154,12 @@ bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_im
                                    const std::string& patch_name,
                                    const std::string& split_info_file,
                                    const std::string& debug_dir) {
-  printf("Construct patches for %zu split images...\n", split_tgt_images.size());
+  LOG(INFO) << "Constructing patches for " << split_tgt_images.size() << " split images...";
 
   android::base::unique_fd patch_fd(
       open(patch_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
   if (patch_fd == -1) {
-    printf("failed to open \"%s\": %s\n", patch_name.c_str(), strerror(errno));
+    PLOG(ERROR) << "Failed to open " << patch_name;
     return false;
   }
 
@@ -1160,7 +1168,7 @@ bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_im
     std::vector<PatchChunk> patch_chunks;
     if (!ZipModeImage::GeneratePatchesInternal(split_tgt_images[i], split_src_images[i],
                                                &patch_chunks)) {
-      printf("failed to generate split patch\n");
+      LOG(ERROR) << "Failed to generate split patch";
       return false;
     }
 
@@ -1188,12 +1196,12 @@ bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_im
           open(src_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
 
       if (fd == -1) {
-        printf("Failed to open %s\n", src_name.c_str());
+        PLOG(ERROR) << "Failed to open " << src_name;
         return false;
       }
       if (!android::base::WriteFully(fd, split_src_images[i].PseudoSource().DataForPatch(),
                                      split_src_images[i].PseudoSource().DataLengthForPatch())) {
-        printf("Failed to write split source data into %s\n", src_name.c_str());
+        PLOG(ERROR) << "Failed to write split source data into " << src_name;
         return false;
       }
 
@@ -1201,7 +1209,7 @@ bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_im
       fd.reset(open(patch_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
 
       if (fd == -1) {
-        printf("Failed to open %s\n", patch_name.c_str());
+        PLOG(ERROR) << "Failed to open " << patch_name;
         return false;
       }
       if (!PatchChunk::WritePatchDataToFd(patch_chunks, fd)) {
@@ -1219,8 +1227,7 @@ bool ZipModeImage::GeneratePatches(const std::vector<ZipModeImage>& split_tgt_im
   std::string split_info_string = android::base::StringPrintf(
       "%zu\n%zu\n", VERSION, split_info_list.size()) + android::base::Join(split_info_list, '\n');
   if (!android::base::WriteStringToFile(split_info_string, split_info_file)) {
-    printf("failed to write split info to \"%s\": %s\n", split_info_file.c_str(),
-           strerror(errno));
+    PLOG(ERROR) << "Failed to write split info to " << split_info_file;
     return false;
   }
 
@@ -1265,7 +1272,7 @@ bool ImageModeImage::Initialize(const std::string& filename) {
       // not expect zlib headers.
       int ret = inflateInit2(&strm, -15);
       if (ret < 0) {
-        printf("failed to initialize inflate: %d\n", ret);
+        LOG(ERROR) << "Failed to initialize inflate: " << ret;
         return false;
       }
 
@@ -1277,8 +1284,8 @@ bool ImageModeImage::Initialize(const std::string& filename) {
         strm.next_out = uncompressed_data.data() + uncompressed_len;
         ret = inflate(&strm, Z_NO_FLUSH);
         if (ret < 0) {
-          printf("Warning: inflate failed [%s] at offset [%zu], treating as a normal chunk\n",
-                 strm.msg, chunk_offset);
+          LOG(WARNING) << "Inflate failed [" << strm.msg << "] at offset [" << chunk_offset
+                       << "]; treating as a normal chunk";
           break;
         }
         uncompressed_len = allocated - strm.avail_out;
@@ -1299,13 +1306,13 @@ bool ImageModeImage::Initialize(const std::string& filename) {
       // matches the size of the data we got when we actually did the decompression.
       size_t footer_index = pos + raw_data_len + GZIP_FOOTER_LEN - 4;
       if (sz - footer_index < 4) {
-        printf("Warning: invalid footer position; treating as a nomal chunk\n");
+        LOG(WARNING) << "invalid footer position; treating as a normal chunk";
         continue;
       }
       size_t footer_size = get_unaligned<uint32_t>(file_content_.data() + footer_index);
       if (footer_size != uncompressed_len) {
-        printf("Warning: footer size %zu != decompressed size %zu; treating as a nomal chunk\n",
-               footer_size, uncompressed_len);
+        LOG(WARNING) << "footer size " << footer_size << " != " << uncompressed_len
+                     << "; treating as a normal chunk";
         continue;
       }
 
@@ -1345,12 +1352,12 @@ bool ImageModeImage::Initialize(const std::string& filename) {
 bool ImageModeImage::SetBonusData(const std::vector<uint8_t>& bonus_data) {
   CHECK(is_source_);
   if (chunks_.size() < 2 || !chunks_[1].SetBonusData(bonus_data)) {
-    printf("Failed to set bonus data\n");
+    LOG(ERROR) << "Failed to set bonus data";
     DumpChunks();
     return false;
   }
 
-  printf("  using %zu bytes of bonus data\n", bonus_data.size());
+  LOG(INFO) << "  using " << bonus_data.size() << " bytes of bonus data";
   return true;
 }
 
@@ -1362,14 +1369,14 @@ bool ImageModeImage::CheckAndProcessChunks(ImageModeImage* tgt_image, ImageModeI
   src_image->MergeAdjacentNormalChunks();
 
   if (tgt_image->NumOfChunks() != src_image->NumOfChunks()) {
-    printf("source and target don't have same number of chunks!\n");
+    LOG(ERROR) << "Source and target don't have same number of chunks!";
     tgt_image->DumpChunks();
     src_image->DumpChunks();
     return false;
   }
   for (size_t i = 0; i < tgt_image->NumOfChunks(); ++i) {
     if ((*tgt_image)[i].GetType() != (*src_image)[i].GetType()) {
-      printf("source and target don't have same chunk structure! (chunk %zu)\n", i);
+      LOG(ERROR) << "Source and target don't have same chunk structure! (chunk " << i << ")";
       tgt_image->DumpChunks();
       src_image->DumpChunks();
       return false;
@@ -1390,8 +1397,8 @@ bool ImageModeImage::CheckAndProcessChunks(ImageModeImage* tgt_image, ImageModeI
     } else if (!tgt_chunk.ReconstructDeflateChunk()) {
       // We cannot recompress the data and get exactly the same bits as are in the input target
       // image, fall back to normal
-      printf("failed to reconstruct target deflate chunk %zu [%s]; treating as normal\n", i,
-             tgt_chunk.GetEntryName().c_str());
+      LOG(WARNING) << "Failed to reconstruct target deflate chunk " << i << " ["
+                   << tgt_chunk.GetEntryName() << "]; treating as normal";
       tgt_chunk.ChangeDeflateChunkToNormal();
       src_chunk.ChangeDeflateChunkToNormal();
     }
@@ -1403,7 +1410,7 @@ bool ImageModeImage::CheckAndProcessChunks(ImageModeImage* tgt_image, ImageModeI
   src_image->MergeAdjacentNormalChunks();
   if (tgt_image->NumOfChunks() != src_image->NumOfChunks()) {
     // This shouldn't happen.
-    printf("merging normal chunks went awry\n");
+    LOG(ERROR) << "Merging normal chunks went awry";
     return false;
   }
 
@@ -1415,7 +1422,7 @@ bool ImageModeImage::CheckAndProcessChunks(ImageModeImage* tgt_image, ImageModeI
 bool ImageModeImage::GeneratePatches(const ImageModeImage& tgt_image,
                                      const ImageModeImage& src_image,
                                      const std::string& patch_name) {
-  printf("Construct patches for %zu chunks...\n", tgt_image.NumOfChunks());
+  LOG(INFO) << "Constructing patches for " << tgt_image.NumOfChunks() << " chunks...";
   std::vector<PatchChunk> patch_chunks;
   patch_chunks.reserve(tgt_image.NumOfChunks());
 
@@ -1430,11 +1437,11 @@ bool ImageModeImage::GeneratePatches(const ImageModeImage& tgt_image,
 
     std::vector<uint8_t> patch_data;
     if (!ImageChunk::MakePatch(tgt_chunk, src_chunk, &patch_data, nullptr)) {
-      printf("Failed to generate patch for target chunk %zu: ", i);
+      LOG(ERROR) << "Failed to generate patch for target chunk " << i;
       return false;
     }
-    printf("patch %3zu is %zu bytes (of %zu)\n", i, patch_data.size(),
-           tgt_chunk.GetRawDataLength());
+    LOG(INFO) << "patch " << i << " is " << patch_data.size() << " bytes (of "
+              << tgt_chunk.GetRawDataLength() << ")";
 
     if (PatchChunk::RawDataIsSmaller(tgt_chunk, patch_data.size())) {
       patch_chunks.emplace_back(tgt_chunk);
@@ -1448,7 +1455,7 @@ bool ImageModeImage::GeneratePatches(const ImageModeImage& tgt_image,
   android::base::unique_fd patch_fd(
       open(patch_name.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR));
   if (patch_fd == -1) {
-    printf("failed to open \"%s\": %s\n", patch_name.c_str(), strerror(errno));
+    PLOG(ERROR) << "Failed to open " << patch_name;
     return false;
   }
 
@@ -1456,6 +1463,7 @@ bool ImageModeImage::GeneratePatches(const ImageModeImage& tgt_image,
 }
 
 int imgdiff(int argc, const char** argv) {
+  bool verbose = false;
   bool zip_mode = false;
   std::vector<uint8_t> bonus_data;
   size_t blocks_limit = 0;
@@ -1464,9 +1472,10 @@ int imgdiff(int argc, const char** argv) {
 
   int opt;
   int option_index;
-  optind = 1;  // Reset the getopt state so that we can call it multiple times for test.
+  optind = 0;  // Reset the getopt state so that we can call it multiple times for test.
 
-  while ((opt = getopt_long(argc, const_cast<char**>(argv), "zb:", OPTIONS, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, const_cast<char**>(argv), "zb:v", OPTIONS, &option_index)) !=
+         -1) {
     switch (opt) {
       case 'z':
         zip_mode = true;
@@ -1474,27 +1483,30 @@ int imgdiff(int argc, const char** argv) {
       case 'b': {
         android::base::unique_fd fd(open(optarg, O_RDONLY));
         if (fd == -1) {
-          printf("failed to open bonus file %s: %s\n", optarg, strerror(errno));
+          PLOG(ERROR) << "Failed to open bonus file " << optarg;
           return 1;
         }
         struct stat st;
         if (fstat(fd, &st) != 0) {
-          printf("failed to stat bonus file %s: %s\n", optarg, strerror(errno));
+          PLOG(ERROR) << "Failed to stat bonus file " << optarg;
           return 1;
         }
 
         size_t bonus_size = st.st_size;
         bonus_data.resize(bonus_size);
         if (!android::base::ReadFully(fd, bonus_data.data(), bonus_size)) {
-          printf("failed to read bonus file %s: %s\n", optarg, strerror(errno));
+          PLOG(ERROR) << "Failed to read bonus file " << optarg;
           return 1;
         }
         break;
       }
+      case 'v':
+        verbose = true;
+        break;
       case 0: {
         std::string name = OPTIONS[option_index].name;
         if (name == "block-limit" && !android::base::ParseUint(optarg, &blocks_limit)) {
-          printf("failed to parse size blocks_limit: %s\n", optarg);
+          LOG(ERROR) << "Failed to parse size blocks_limit: " << optarg;
           return 1;
         } else if (name == "split-info") {
           split_info_file = optarg;
@@ -1504,22 +1516,28 @@ int imgdiff(int argc, const char** argv) {
         break;
       }
       default:
-        printf("unexpected opt: %s\n", optarg);
+        LOG(ERROR) << "unexpected opt: " << static_cast<char>(opt);
         return 2;
     }
   }
 
+  if (!verbose) {
+    android::base::SetMinimumLogSeverity(android::base::WARNING);
+  }
+
   if (argc - optind != 3) {
-    printf("usage: %s [options] <src-img> <tgt-img> <patch-file>\n", argv[0]);
-    printf(
-        "  -z <zip-mode>,    Generate patches in zip mode, src and tgt should be zip files.\n"
-        "  -b <bonus-file>,  Bonus file in addition to src, image mode only.\n"
-        "  --block-limit,    For large zips, split the src and tgt based on the block limit;\n"
-        "                    and generate patches between each pair of pieces. Concatenate these\n"
-        "                    patches together and output them into <patch-file>.\n"
-        "  --split-info,     Output the split information (patch_size, tgt_size, src_ranges);\n"
-        "                    zip mode with block-limit only.\n"
-        "  --debug_dir,      Debug directory to put the split srcs and patches, zip mode only.\n");
+    LOG(ERROR) << "usage: " << argv[0] << " [options] <src-img> <tgt-img> <patch-file>";
+    LOG(ERROR)
+        << "  -z <zip-mode>,    Generate patches in zip mode, src and tgt should be zip files.\n"
+           "  -b <bonus-file>,  Bonus file in addition to src, image mode only.\n"
+           "  --block-limit,    For large zips, split the src and tgt based on the block limit;\n"
+           "                    and generate patches between each pair of pieces. Concatenate "
+           "these\n"
+           "                    patches together and output them into <patch-file>.\n"
+           "  --split-info,     Output the split information (patch_size, tgt_size, src_ranges);\n"
+           "                    zip mode with block-limit only.\n"
+           "  --debug_dir,      Debug directory to put the split srcs and patches, zip mode only.\n"
+           "  -v, --verbose,    Enable verbose logging.";
     return 2;
   }
 
@@ -1538,14 +1556,11 @@ int imgdiff(int argc, const char** argv) {
       return 1;
     }
 
-    // TODO save and output the split information so that caller can create split transfer lists
-    // accordingly.
-
     // Compute bsdiff patches for each chunk's data (the uncompressed data, in the case of
     // deflate chunks).
     if (blocks_limit > 0) {
       if (split_info_file.empty()) {
-        printf("split-info path cannot be empty when generating patches with a block-limit.\n");
+        LOG(ERROR) << "split-info path cannot be empty when generating patches with a block-limit";
         return 1;
       }
 
