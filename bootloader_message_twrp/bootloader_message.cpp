@@ -341,7 +341,7 @@ get_args(int *argc, char ***argv) {
                 (*argv)[*argc] = strdup(arg);
             }
             printf("Got arguments from boot message\n");
-        } else if (boot.recovery[0] != 0 && boot.recovery[0] != 255) {
+        } else if (boot.recovery[0] != 0 && boot.recovery[0] != (char)255) {
             printf("Bad boot message\n\"%.20s\"\n", boot.recovery);
         }
     }
