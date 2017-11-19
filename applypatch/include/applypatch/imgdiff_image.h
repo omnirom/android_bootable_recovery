@@ -62,10 +62,7 @@ class ImageChunk {
   const uint8_t* DataForPatch() const;
   size_t DataLengthForPatch() const;
 
-  void Dump() const {
-    printf("type: %d, start: %zu, len: %zu, name: %s\n", type_, start_, DataLengthForPatch(),
-           entry_name_.c_str());
-  }
+  void Dump(size_t index) const;
 
   void SetUncompressedData(std::vector<uint8_t> data);
   bool SetBonusData(const std::vector<uint8_t>& bonus_data);
@@ -140,7 +137,7 @@ class PatchChunk {
 
  private:
   size_t GetHeaderSize() const;
-  size_t WriteHeaderToFd(int fd, size_t offset) const;
+  size_t WriteHeaderToFd(int fd, size_t offset, size_t index) const;
 
   // The patch chunk type is the same as the target chunk type. The only exception is we change
   // the |type_| to CHUNK_RAW if target length is smaller than the patch size.
