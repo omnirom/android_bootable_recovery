@@ -1,0 +1,78 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b09bd1d4_e3766d0a",
+        "filename": "adbbu/adbbumain.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-20T22:36:12Z",
+      "side": 1,
+      "message": "Since main is an int, ret should probably also be an int so we can just return ret instead of having another if statement here.",
+      "revId": "ec87ef0bde284d9092b4f694ae81e52dcd74c392",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "13895d68_24340e47",
+        "filename": "adbbu/libtwadbbu.hpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-20T22:36:12Z",
+      "side": 1,
+      "message": "whitespace",
+      "range": {
+        "startLine": 48,
+        "startChar": 118,
+        "endLine": 48,
+        "endChar": 119
+      },
+      "revId": "ec87ef0bde284d9092b4f694ae81e52dcd74c392",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "872c8b41_e2963a50",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-20T22:36:12Z",
+      "side": 1,
+      "message": "need another tab here",
+      "revId": "ec87ef0bde284d9092b4f694ae81e52dcd74c392",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "437b0b23_d1702478",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-20T22:36:12Z",
+      "side": 1,
+      "message": "The tab right before the comment should be converted to spaces",
+      "revId": "ec87ef0bde284d9092b4f694ae81e52dcd74c392",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
