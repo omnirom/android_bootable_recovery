@@ -262,17 +262,20 @@ int format_volume(const char* volume, const char* directory) {
   }
 
   int64_t length = 0;
-  if (v->length != 0) {
+  if (v->length > 0) {
     length = v->length;
-  } else if (v->key_loc != nullptr && strcmp(v->key_loc, "footer") == 0) {
+  } else if (v->length < 0 ||
+             (v->key_loc != nullptr && strcmp(v->key_loc, "footer") == 0)) {
     android::base::unique_fd fd(open(v->blk_device, O_RDONLY));
     if (fd == -1) {
       PLOG(ERROR) << "format_volume: failed to open " << v->blk_device;
       return -1;
     }
-    length = get_file_size(fd.get(), CRYPT_FOOTER_OFFSET);
+    length =
+        get_file_size(fd.get(), v->length ? -v->length : CRYPT_FOOTER_OFFSET);
     if (length <= 0) {
-      LOG(ERROR) << "get_file_size: invalid size " << length << " for " << v->blk_device;
+      LOG(ERROR) << "get_file_size: invalid size " << length << " for "
+                 << v->blk_device;
       return -1;
     }
   }
