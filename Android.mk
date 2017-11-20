@@ -147,10 +147,21 @@ endif
 LOCAL_C_INCLUDES += \
     system/vold \
 
+# Health HAL dependency
 LOCAL_STATIC_LIBRARIES := \
+    android.hardware.health@2.0-impl \
+    android.hardware.health@2.0 \
+    android.hardware.health@1.0 \
+    android.hardware.health@1.0-convert \
+    libhidltransport \
+    libhidlbase \
+    libhwbinder \
+    libvndksupport \
+    libbatterymonitor
+
+LOCAL_STATIC_LIBRARIES += \
     librecovery \
     libverifier \
-    libbatterymonitor \
     libbootloader_message \
     libfs_mgr \
     libext4_utils \
@@ -169,8 +180,8 @@ LOCAL_STATIC_LIBRARIES := \
     libvintf \
     libtinyxml2 \
     libbase \
-    libcutils \
     libutils \
+    libcutils \
     liblog \
     libselinux \
     libz
