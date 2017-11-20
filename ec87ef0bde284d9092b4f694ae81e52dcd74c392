@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "f30fecdc_472924bb",
+        "filename": "adbbu/adbbumain.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-11-20T23:56:06Z",
+      "side": 1,
+      "message": "Since I am catching a boolean from the backup function I returned the int appropriate for ret with the if statement. I could change to a ternary if you want.",
+      "parentUuid": "b09bd1d4_e3766d0a",
+      "revId": "ec87ef0bde284d9092b4f694ae81e52dcd74c392",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "13895d68_24340e47",
         "filename": "adbbu/libtwadbbu.hpp",
         "patchSetId": 7
@@ -30,6 +48,30 @@
       "writtenOn": "2017-11-20T22:36:12Z",
       "side": 1,
       "message": "whitespace",
+      "range": {
+        "startLine": 48,
+        "startChar": 118,
+        "endLine": 48,
+        "endChar": 119
+      },
+      "revId": "ec87ef0bde284d9092b4f694ae81e52dcd74c392",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "97a3a3e5_1dd9d24b",
+        "filename": "adbbu/libtwadbbu.hpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-11-20T23:56:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "13895d68_24340e47",
       "range": {
         "startLine": 48,
         "startChar": 118,
@@ -59,6 +101,24 @@
     },
     {
       "key": {
+        "uuid": "d9e7f78c_6b0cc107",
+        "filename": "adbbu/twrpback.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-11-20T23:56:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "872c8b41_e2963a50",
+      "revId": "ec87ef0bde284d9092b4f694ae81e52dcd74c392",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "437b0b23_d1702478",
         "filename": "adbbu/twrpback.hpp",
         "patchSetId": 7
@@ -70,6 +130,24 @@
       "writtenOn": "2017-11-20T22:36:12Z",
       "side": 1,
       "message": "The tab right before the comment should be converted to spaces",
+      "revId": "ec87ef0bde284d9092b4f694ae81e52dcd74c392",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "682f8e75_a906b4c9",
+        "filename": "adbbu/twrpback.hpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-11-20T23:56:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "437b0b23_d1702478",
       "revId": "ec87ef0bde284d9092b4f694ae81e52dcd74c392",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
