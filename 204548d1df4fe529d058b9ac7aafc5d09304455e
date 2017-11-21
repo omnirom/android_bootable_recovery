@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b24f92cf_7f3ef3a5",
+        "filename": "gui/theme/common/portrait.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 2212,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-21T13:46:52Z",
+      "side": 1,
+      "message": "We can do away with all of this adbbackup stuff in the file selector by changing this line to:\n\u003cfilter folders\u003d\"1\" files\u003d\"1\" nav\u003d\"0\" extn\u003d\".ab\"/\u003e",
+      "revId": "204548d1df4fe529d058b9ac7aafc5d09304455e",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
