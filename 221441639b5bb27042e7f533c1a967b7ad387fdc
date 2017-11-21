@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "16794938_f28b7d09",
+        "filename": "twrpAdbBuFifo.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 276,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-21T03:59:03Z",
+      "side": 1,
+      "message": "I think we can remove this line",
+      "revId": "221441639b5bb27042e7f533c1a967b7ad387fdc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
