@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "80c46bb0_ba561914",
+        "filename": "gui/fileselector.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-21T13:27:41Z",
+      "side": 1,
+      "message": "mShowAdbBuFiles needed to be defaulted to 0",
+      "range": {
+        "startLine": 43,
+        "startChar": 47,
+        "endLine": 43,
+        "endChar": 62
+      },
+      "revId": "cfa704e2b90ef9f9b0d094f9a3e584e2986b7264",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "03bfb4ad_8b25d2d8",
         "filename": "twrpAdbBuFifo.cpp",
         "patchSetId": 8
