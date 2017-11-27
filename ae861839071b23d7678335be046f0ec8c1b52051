@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c556ffea_ecf759b5",
+        "filename": "gui/action.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1221,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-27T15:33:22Z",
+      "side": 1,
+      "message": "Needed to handle the return from stream_adb_backup",
+      "revId": "ae861839071b23d7678335be046f0ec8c1b52051",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
