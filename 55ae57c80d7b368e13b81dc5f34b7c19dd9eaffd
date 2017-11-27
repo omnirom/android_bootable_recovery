@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8e6818eb_0f4f88f5",
+        "filename": "Android.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-27T16:08:34Z",
+      "side": 1,
+      "message": "I\u0027m not sure that setting this path automatically is a safe idea and I think we should leave it up to the device configs to set it properly. I suppose if we\u0027re certain that no devices use any other path then it might be ok, but I know we have some TWRP devices set up to use the TeamWin device/qcom/common path instead of this one. I suspect that decrypt will work with either.",
+      "revId": "55ae57c80d7b368e13b81dc5f34b7c19dd9eaffd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
