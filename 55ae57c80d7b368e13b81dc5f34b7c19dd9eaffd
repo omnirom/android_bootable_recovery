@@ -16,6 +16,24 @@
       "revId": "55ae57c80d7b368e13b81dc5f34b7c19dd9eaffd",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7b212bc3_d65c32ea",
+        "filename": "Android.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1000173
+      },
+      "writtenOn": "2017-11-27T18:49:50Z",
+      "side": 1,
+      "message": "Does anyone build in Lineage tree and not use lineage cryptfs_hw? Don\u0027t think so. Anyway, it shouldn\u0027t make a difference. Lineage cryptfs_hw is just more up to date with CAF. It\u0027s been tested on all my devices (find7, r7, r7plus, ether, lettuce) and hw decrypt works fine.",
+      "parentUuid": "8e6818eb_0f4f88f5",
+      "revId": "55ae57c80d7b368e13b81dc5f34b7c19dd9eaffd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
