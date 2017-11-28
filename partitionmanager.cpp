@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <sys/vfs.h>
 #include <unistd.h>
+#include <map>
 #include <vector>
 #include <dirent.h>
 #include <time.h>
@@ -33,6 +34,12 @@
 #include <sys/wait.h>
 #include <linux/fs.h>
 #include <sys/mount.h>
+
+#include <sys/poll.h>
+#include <sys/socket.h>
+#include <linux/types.h>
+#include <linux/netlink.h>
+
 #include "variables.h"
 #include "twcommon.h"
 #include "partitions.hpp"
@@ -80,6 +87,7 @@ extern bool datamedia;
 TWPartitionManager::TWPartitionManager(void) {
 	mtp_was_enabled = false;
 	mtp_write_fd = -1;
+	uevent_pfd.fd = -1;
 	stop_backup.set_value(0);
 #ifdef AB_OTA_UPDATER
 	char slot_suffix[PROPERTY_VALUE_MAX];
@@ -98,22 +106,88 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 	TWPartition* settings_partition = NULL;
 	TWPartition* andsec_partition = NULL;
 	unsigned int storageid = 1 << 16;	// upper 16 bits are for physical storage device, we pretend to have only one
+	std::map<string, Flags_Map> twrp_flags;
+
+	fstabFile = fopen("/etc/twrp.flags", "rt");
+	if (fstabFile != NULL) {
+		LOGINFO("reading /etc/twrp.flags\n");
+		while (fgets(fstab_line, sizeof(fstab_line), fstabFile) != NULL) {
+			if (fstab_line[0] != '/')
+				continue;
+
+			size_t line_size = strlen(fstab_line);
+			if (fstab_line[line_size - 1] != '\n')
+				fstab_line[line_size] = '\n';
+			Flags_Map line_flags;
+			line_flags.Primary_Block_Device = "";
+			line_flags.Alternate_Block_Device = "";
+			line_flags.fstab_line = (char*)malloc(MAX_FSTAB_LINE_LENGTH);
+			if (!line_flags.fstab_line) {
+				LOGERR("malloc error on line_flags.fstab_line\n");
+				return false;
+			}
+			memcpy(line_flags.fstab_line, fstab_line, MAX_FSTAB_LINE_LENGTH);
+			bool found_separator = false;
+			char *fs_loc = NULL;
+			char *block_loc = NULL;
+			char *flags_loc = NULL;
+			size_t index, item_index = 0;
+			for (index = 0; index < line_size; index++) {
+				if (fstab_line[index] <= 32) {
+					fstab_line[index] = '\0';
+					found_separator = true;
+				} else if (found_separator) {
+					if (item_index == 0) {
+						fs_loc = fstab_line + index;
+					} else if (item_index == 1) {
+						block_loc = fstab_line + index;
+					} else if (item_index > 1) {
+						char *ptr = fstab_line + index;
+						if (*ptr == '/') {
+							line_flags.Alternate_Block_Device = ptr;
+						} else if (strlen(ptr) > strlen("flags=") && strncmp(ptr, "flags=", strlen("flags=")) == 0) {
+							flags_loc = ptr;
+							// Once we find the flags=, we're done scanning the line
+							break;
+						}
+					}
+					found_separator = false;
+					item_index++;
+				}
+			}
+			if (block_loc)
+				line_flags.Primary_Block_Device = block_loc;
+			if (fs_loc)
+				line_flags.File_System = fs_loc;
+			if (flags_loc)
+				line_flags.Flags = flags_loc;
+			string Mount_Point = fstab_line;
+			twrp_flags[Mount_Point] = line_flags;
+			memset(fstab_line, 0, sizeof(fstab_line));
+		}
+		fclose(fstabFile);
+	}
 
 	fstabFile = fopen(Fstab_Filename.c_str(), "rt");
 	if (fstabFile == NULL) {
 		LOGERR("Critical Error: Unable to open fstab at '%s'.\n", Fstab_Filename.c_str());
 		return false;
-	}
+	} else
+		LOGINFO("Reading %s\n", Fstab_Filename.c_str());
 
 	while (fgets(fstab_line, sizeof(fstab_line), fstabFile) != NULL) {
 		if (fstab_line[0] != '/')
 			continue;
 
-		if (fstab_line[strlen(fstab_line) - 1] != '\n')
-			fstab_line[strlen(fstab_line)] = '\n';
+		if (strstr(fstab_line, "swap"))
+			continue; // Skip swap in recovery
+
+		size_t line_size = strlen(fstab_line);
+		if (fstab_line[line_size - 1] != '\n')
+			fstab_line[line_size] = '\n';
 
 		TWPartition* partition = new TWPartition();
-		if (partition->Process_Fstab_Line(fstab_line, Display_Error))
+		if (partition->Process_Fstab_Line(fstab_line, Display_Error, &twrp_flags))
 			Partitions.push_back(partition);
 		else
 			delete partition;
@@ -121,6 +195,24 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 		memset(fstab_line, 0, sizeof(fstab_line));
 	}
 	fclose(fstabFile);
+
+	if (twrp_flags.size() > 0) {
+		LOGINFO("Processing remaining twrp.flags\n");
+		// Add any items from twrp.flags that did not exist in the recovery.fstab
+		for (std::map<string, Flags_Map>::iterator mapit=twrp_flags.begin(); mapit!=twrp_flags.end(); mapit++) {
+			if (Find_Partition_By_Path(mapit->first) == NULL) {
+				TWPartition* partition = new TWPartition();
+				if (partition->Process_Fstab_Line(mapit->second.fstab_line, Display_Error, NULL))
+					Partitions.push_back(partition);
+				else
+					delete partition;
+			}
+			if (mapit->second.fstab_line)
+				free(mapit->second.fstab_line);
+			mapit->second.fstab_line = NULL;
+		}
+	}
+	LOGINFO("Done processing fstab files\n");
 
 	std::vector<TWPartition*>::iterator iter;
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
@@ -216,6 +308,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 #ifdef AB_OTA_UPDATER
 	DataManager::SetValue("tw_active_slot", Get_Active_Slot_Display());
 #endif
+	setup_uevent();
 	return true;
 }
 
@@ -326,6 +419,8 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Is_Adopted_Storage ");
 	if (Part->SlotSelect)
 		printf("SlotSelect ");
+	if (Part->Mount_Read_Only)
+		printf("Mount_Read_Only ");
 	printf("\n");
 	if (!Part->SubPartition_Of.empty())
 		printf("   SubPartition_Of: %s\n", Part->SubPartition_Of.c_str());
@@ -367,7 +462,7 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   MTD_Name: %s\n", Part->MTD_Name.c_str());
 	printf("   Backup_Method: %s\n", Part->Backup_Method_By_Name().c_str());
 	if (Part->Mount_Flags || !Part->Mount_Options.empty())
-		printf("   Mount_Options: %s\n", Part->Mount_Options.c_str());
+		printf("   Mount_Flags: %i, Mount_Options: %s\n", Part->Mount_Flags, Part->Mount_Options.c_str());
 	if (Part->MTP_Storage_ID)
 		printf("   MTP_Storage_ID: %i\n", Part->MTP_Storage_ID);
 	printf("\n");
@@ -452,12 +547,22 @@ int TWPartitionManager::Mount_Settings_Storage(bool Display_Error) {
 	return Mount_By_Path(DataManager::GetSettingsStoragePath(), Display_Error);
 }
 
-TWPartition* TWPartitionManager::Find_Partition_By_Path(string Path) {
+TWPartition* TWPartitionManager::Find_Partition_By_Path(const string& Path) {
 	std::vector<TWPartition*>::iterator iter;
 	string Local_Path = TWFunc::Get_Root_Path(Path);
 
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		if ((*iter)->Mount_Point == Local_Path || (!(*iter)->Symlink_Mount_Point.empty() && (*iter)->Symlink_Mount_Point == Local_Path))
+			return (*iter);
+	}
+	return NULL;
+}
+
+TWPartition* TWPartitionManager::Find_Partition_By_Block_Device(const string& Block_Device) {
+	std::vector<TWPartition*>::iterator iter;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Primary_Block_Device == Block_Device || (!(*iter)->Actual_Block_Device.empty() && (*iter)->Actual_Block_Device == Block_Device))
 			return (*iter);
 	}
 	return NULL;
@@ -1631,7 +1736,7 @@ int TWPartitionManager::Open_Lun_File(string Partition_Path, string Lun_File) {
 	if (!Part->UnMount(true) || !Part->Is_Present)
 		return false;
 
-	if (TWFunc::write_file(Lun_File, Part->Actual_Block_Device)) {
+	if (TWFunc::write_to_file(Lun_File, Part->Actual_Block_Device)) {
 		LOGERR("Unable to write to ums lunfile '%s': (%s)\n", Lun_File.c_str(), strerror(errno));
 		return false;
 	}
@@ -1703,7 +1808,7 @@ int TWPartitionManager::usb_storage_disable(void) {
 
 	for (index=0; index<2; index++) {
 		sprintf(lun_file, CUSTOM_LUN_FILE, index);
-		ret = TWFunc::write_file(lun_file, str);
+		ret = TWFunc::write_to_file(lun_file, str);
 		if (ret < 0) {
 			break;
 		}
@@ -1914,7 +2019,7 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 	std::vector<TWPartition*>::iterator iter;
 	if (ListType == "mount") {
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-			if ((*iter)->Can_Be_Mounted && !(*iter)->Is_SubPartition) {
+			if ((*iter)->Can_Be_Mounted) {
 				struct PartitionList part;
 				part.Display_Name = (*iter)->Display_Name;
 				part.Mount_Point = (*iter)->Mount_Point;
@@ -2108,8 +2213,8 @@ bool TWPartitionManager::Enable_MTP(void) {
 		property_get("usb.product.mtpadb", product, "4EE2");
 		string vendorstr = vendor;
 		string productstr = product;
-		TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
-		TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
+		TWFunc::write_to_file("/sys/class/android_usb/android0/idVendor", vendorstr);
+		TWFunc::write_to_file("/sys/class/android_usb/android0/idProduct", productstr);
 		property_set("sys.usb.config", "mtp,adb");
 	}
 	/* To enable MTP debug, use the twrp command line feature:
@@ -2163,8 +2268,8 @@ bool TWPartitionManager::Disable_MTP(void) {
 		property_get("usb.product.adb", product, "D001");
 		string vendorstr = vendor;
 		string productstr = product;
-		TWFunc::write_file("/sys/class/android_usb/android0/idVendor", vendorstr);
-		TWFunc::write_file("/sys/class/android_usb/android0/idProduct", productstr);
+		TWFunc::write_to_file("/sys/class/android_usb/android0/idVendor", vendorstr);
+		TWFunc::write_to_file("/sys/class/android_usb/android0/idProduct", productstr);
 		usleep(2000);
 	}
 #ifdef TW_HAS_MTP
@@ -2226,15 +2331,23 @@ bool TWPartitionManager::Add_Remove_MTP_Storage(TWPartition* Part, int message_t
 		} else if (message_type == MTP_MESSAGE_ADD_STORAGE && Part->Is_Mounted()) {
 			mtp_message.message_type = MTP_MESSAGE_ADD_STORAGE; // Add
 			mtp_message.storage_id = Part->MTP_Storage_ID;
-			mtp_message.path = Part->Storage_Path.c_str();
-			mtp_message.display = Part->Storage_Name.c_str();
+			if (Part->Storage_Path.size() >= sizeof(mtp_message.path)) {
+				LOGERR("Storage path '%s' too large for mtpmsg\n", Part->Storage_Path.c_str());
+				return false;
+			}
+			strcpy(mtp_message.path, Part->Storage_Path.c_str());
+			if (Part->Storage_Name.size() >= sizeof(mtp_message.display)) {
+				LOGERR("Storage name '%s' too large for mtpmsg\n", Part->Storage_Name.c_str());
+				return false;
+			}
+			strcpy(mtp_message.display, Part->Storage_Name.c_str());
 			mtp_message.maxFileSize = Part->Get_Max_FileSize();
 			LOGINFO("sending message to add %i '%s' '%s'\n", mtp_message.storage_id, mtp_message.path, mtp_message.display);
 			if (write(mtp_write_fd, &mtp_message, sizeof(mtp_message)) <= 0) {
 				LOGINFO("error sending message to add storage %i\n", Part->MTP_Storage_ID);
 				return false;
 			} else {
-				LOGINFO("Message sent, add storage ID: %i\n", Part->MTP_Storage_ID);
+				LOGINFO("Message sent, add storage ID: %i '%s'\n", Part->MTP_Storage_ID, mtp_message.path);
 				return true;
 			}
 		} else {
@@ -2444,15 +2557,23 @@ void TWPartitionManager::Translate_Partition_Display_Names() {
 	if (part)
 		part->Backup_Display_Name = gui_lookup("android_secure", "Android Secure");
 
+	std::vector<TWPartition*>::iterator sysfs;
+	for (sysfs = Partitions.begin(); sysfs != Partitions.end(); sysfs++) {
+		if (!(*sysfs)->Sysfs_Entry.empty()) {
+			Translate_Partition((*sysfs)->Mount_Point.c_str(), "autostorage", "Storage", "autostorage", "Storage");
+		}
+	}
+
 	// This updates the text on all of the storage selection buttons in the GUI
 	DataManager::SetBackupFolder();
 }
 
-void TWPartitionManager::Decrypt_Adopted() {
+bool TWPartitionManager::Decrypt_Adopted() {
 #ifdef TW_INCLUDE_CRYPTO
+	bool ret = false;
 	if (!Mount_By_Path("/data", false)) {
 		LOGERR("Cannot decrypt adopted storage because /data will not mount\n");
-		return;
+		return false;
 	}
 	LOGINFO("Decrypt adopted storage starting\n");
 	char* xmlFile = PageManager::LoadFileToBuffer("/data/system/storage.xml", NULL);
@@ -2470,11 +2591,15 @@ void TWPartitionManager::Decrypt_Adopted() {
 				Primary_Storage_UUID = psuuid->value();
 			}
 		}
+	} else {
+		LOGINFO("No /data/system/storage.xml for adopted storage\n");
+		return false;
 	}
 	std::vector<TWPartition*>::iterator adopt;
 	for (adopt = Partitions.begin(); adopt != Partitions.end(); adopt++) {
 		if ((*adopt)->Removable && (*adopt)->Is_Present) {
 			if ((*adopt)->Decrypt_Adopted() == 0) {
+				ret = true;
 				if (volumes) {
 					xml_node<>* volume = volumes->first_node("volume");
 					while (volume) {
@@ -2525,9 +2650,10 @@ void TWPartitionManager::Decrypt_Adopted() {
 		delete doc;
 		free(xmlFile);
 	}
+	return ret;
 #else
 	LOGINFO("Decrypt_Adopted: no crypto support\n");
-	return;
+	return false;
 #endif
 }
 
@@ -2585,4 +2711,203 @@ string TWPartitionManager::Get_Active_Slot_Suffix() {
 }
 string TWPartitionManager::Get_Active_Slot_Display() {
 	return Active_Slot_Display;
+}
+
+void TWPartitionManager::Remove_Uevent_Devices(const string& Mount_Point) {
+	std::vector<TWPartition*>::iterator iter;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); ) {
+		if ((*iter)->Is_SubPartition && (*iter)->SubPartition_Of == Mount_Point) {
+			TWPartition *part = *iter;
+			LOGINFO("%s was removed by uevent data\n", (*iter)->Mount_Point.c_str());
+			(*iter)->UnMount(false);
+			rmdir((*iter)->Mount_Point.c_str());
+			iter = Partitions.erase(iter);
+			delete part;
+		} else {
+			iter++;
+		}
+	}
+}
+
+void TWPartitionManager::Handle_Uevent(const Uevent_Block_Data& uevent_data) {
+	std::vector<TWPartition*>::iterator iter;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if (!(*iter)->Sysfs_Entry.empty()) {
+			string device;
+			size_t wildcard = (*iter)->Sysfs_Entry.find("*");
+			if (wildcard != string::npos) {
+				device = (*iter)->Sysfs_Entry.substr(0, wildcard);
+			} else {
+				device = (*iter)->Sysfs_Entry;
+			}
+			if (device == uevent_data.sysfs_path.substr(0, device.size())) {
+				// Found a match
+				if (uevent_data.action == "add") {
+					(*iter)->Primary_Block_Device = "/dev/block/" + uevent_data.block_device;
+					(*iter)->Alternate_Block_Device = (*iter)->Primary_Block_Device;
+					(*iter)->Is_Present = true;
+					LOGINFO("Found a match '%s' '%s'\n", uevent_data.block_device.c_str(), device.c_str());
+					if (!Decrypt_Adopted()) {
+						LOGINFO("No adopted storage so finding actual block device\n");
+						(*iter)->Find_Actual_Block_Device();
+					}
+					return;
+				} else if (uevent_data.action == "remove") {
+					(*iter)->Is_Present = false;
+					(*iter)->Primary_Block_Device = "";
+					(*iter)->Actual_Block_Device = "";
+					Remove_Uevent_Devices((*iter)->Mount_Point);
+					return;
+				}
+			}
+		}
+	}
+	LOGINFO("Found no matching fstab entry for uevent device '%s' - %s\n", uevent_data.sysfs_path.c_str(), uevent_data.action.c_str());
+}
+
+void TWPartitionManager::setup_uevent() {
+	struct sockaddr_nl nls;
+
+	if (uevent_pfd.fd >= 0) {
+		LOGINFO("uevent already set up\n");
+		return;
+	}
+
+	// Open hotplug event netlink socket
+	memset(&nls,0,sizeof(struct sockaddr_nl));
+	nls.nl_family = AF_NETLINK;
+	nls.nl_pid = getpid();
+	nls.nl_groups = -1;
+	uevent_pfd.events = POLLIN;
+	uevent_pfd.fd = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_KOBJECT_UEVENT);
+	if (uevent_pfd.fd==-1) {
+		LOGERR("uevent not root\n");
+		return;
+	}
+
+	// Listen to netlink socket
+	if (::bind(uevent_pfd.fd, (struct sockaddr *) &nls, sizeof(struct sockaddr_nl)) < 0) {
+		LOGERR("Bind failed\n");
+		return;
+	}
+	set_select_fd();
+	Coldboot();
+}
+
+Uevent_Block_Data TWPartitionManager::get_event_block_values(char *buf, int len) {
+	Uevent_Block_Data ret;
+	ret.subsystem = "";
+	char *ptr = buf;
+	const char *end = buf + len;
+
+	buf[len - 1] = '\0';
+	while (ptr < end) {
+		if (strncmp(ptr, "ACTION=", strlen("ACTION=")) == 0) {
+			ptr += strlen("ACTION=");
+			ret.action = ptr;
+		} else if (strncmp(ptr, "SUBSYSTEM=", strlen("SUBSYSTEM=")) == 0) {
+			ptr += strlen("SUBSYSTEM=");
+			ret.subsystem = ptr;
+		} else if (strncmp(ptr, "DEVTYPE=", strlen("DEVTYPE=")) == 0) {
+			ptr += strlen("DEVTYPE=");
+			ret.type = ptr;
+		} else if (strncmp(ptr, "DEVPATH=", strlen("DEVPATH=")) == 0) {
+			ptr += strlen("DEVPATH=");
+			ret.sysfs_path += ptr;
+		} else if (strncmp(ptr, "DEVNAME=", strlen("DEVNAME=")) == 0) {
+			ptr += strlen("DEVNAME=");
+			ret.block_device += ptr;
+		} else if (strncmp(ptr, "MAJOR=", strlen("MAJOR=")) == 0) {
+			ptr += strlen("MAJOR=");
+			ret.major = atoi(ptr);
+		} else if (strncmp(ptr, "MINOR=", strlen("MINOR=")) == 0) {
+			ptr += strlen("MINOR=");
+			ret.minor = atoi(ptr);
+		}
+		ptr += strlen(ptr) + 1;
+	}
+	return ret;
+}
+
+void TWPartitionManager::read_uevent() {
+	char buf[1024];
+
+	int len = recv(uevent_pfd.fd, buf, sizeof(buf), MSG_DONTWAIT);
+	if (len == -1) {
+		LOGERR("recv error on uevent\n");
+		return;
+	}
+	/*int i = 0; // Print all uevent output for test /debug
+	while (i<len) {
+		printf("%s\n", buf+i);
+		i += strlen(buf+i)+1;
+	}*/
+	Uevent_Block_Data uevent_data = get_event_block_values(buf, len);
+	if (uevent_data.subsystem == "block" && uevent_data.type == "disk") {
+		PartitionManager.Handle_Uevent(uevent_data);
+	}
+}
+
+void TWPartitionManager::close_uevent() {
+	if (uevent_pfd.fd > 0)
+		close(uevent_pfd.fd);
+	uevent_pfd.fd = -1;
+}
+
+void TWPartitionManager::Add_Partition(TWPartition* Part) {
+	Partitions.push_back(Part);
+}
+
+void TWPartitionManager::Coldboot_Scan(std::vector<string> *sysfs_entries, const string& Path, int depth) {
+	string Real_Path = Path;
+	char real_path[PATH_MAX];
+	if (realpath(Path.c_str(), &real_path[0])) {
+		string Real_Path = real_path;
+		std::vector<string>::iterator iter;
+		for (iter = sysfs_entries->begin(); iter != sysfs_entries->end(); iter++) {
+			if (Real_Path.find((*iter)) != string::npos) {
+				string Write_Path = Real_Path + "/uevent";
+				if (TWFunc::Path_Exists(Write_Path)) {
+					const char* write_val = "add\n";
+					TWFunc::write_to_file(Write_Path, write_val);
+					break;
+				}
+			}
+		}
+	}
+
+	DIR* d = opendir(Path.c_str());
+	if (d != NULL) {
+		struct dirent* de;
+		while ((de = readdir(d)) != NULL) {
+			if (de->d_name[0] == '.' || (de->d_type != DT_DIR && depth > 0))
+				continue;
+			if (strlen(de->d_name) >= 4 && (strncmp(de->d_name, "ram", 3) == 0 || strncmp(de->d_name, "loop", 4) == 0))
+				continue;
+
+			string item = Path + "/";
+			item.append(de->d_name);
+			Coldboot_Scan(sysfs_entries, item, depth + 1);
+		}
+		closedir(d);
+	}
+}
+
+void TWPartitionManager::Coldboot() {
+	std::vector<TWPartition*>::iterator iter;
+	std::vector<string> sysfs_entries;
+
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if (!(*iter)->Sysfs_Entry.empty()) {
+			size_t wildcard_pos = (*iter)->Sysfs_Entry.find("*");
+			if (wildcard_pos == string::npos)
+				wildcard_pos = (*iter)->Sysfs_Entry.size();
+			sysfs_entries.push_back((*iter)->Sysfs_Entry.substr(0, wildcard_pos));
+		}
+	}
+
+	if (sysfs_entries.size() > 0)
+		Coldboot_Scan(&sysfs_entries, "/sys/block", 0);
 }
