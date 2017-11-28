@@ -298,6 +298,11 @@ ifeq ($(TW_INCLUDE_L_CRYPTO), true)
 endif
 ifeq ($(TW_INCLUDE_CRYPTO), true)
     LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO
+    
+    ifeq ($(TARGET_HW_DISK_ENCRYPTION),true)
+    LOCAL_SHARED_LIBRARIES += libcryptfs_hw
+    endif
+    
     LOCAL_SHARED_LIBRARIES += libcryptfslollipop libgpt_twrp
     LOCAL_C_INCLUDES += external/boringssl/src/include
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
