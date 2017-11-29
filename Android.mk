@@ -89,7 +89,7 @@ LOCAL_REQUIRED_MODULES := e2fsdroid_static mke2fs_static mke2fs.conf
 
 ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
 ifeq ($(HOST_OS),linux)
-LOCAL_REQUIRED_MODULES += mkfs.f2fs
+LOCAL_REQUIRED_MODULES += sload.f2fs mkfs.f2fs
 endif
 endif
 
