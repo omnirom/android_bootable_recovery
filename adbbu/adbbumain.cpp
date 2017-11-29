@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 #include "twrpback.hpp"
 #include "twadbstream.h"
