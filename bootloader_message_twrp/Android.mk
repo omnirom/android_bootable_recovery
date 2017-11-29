@@ -19,7 +19,7 @@ LOCAL_CLANG := true
 LOCAL_SRC_FILES := bootloader_message.cpp
 LOCAL_MODULE := libbootloader_message_twrp
 LOCAL_C_INCLUDES += bionic $(LOCAL_PATH)/include
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 22; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 21; echo $$?),0)
     LOCAL_C_INCLUDES += external/stlport/stlport
     LOCAL_SHARED_LIBRARIES += libstlport
 else
