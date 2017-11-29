@@ -16,6 +16,24 @@
       "revId": "69038b98a292ecdf36a1e099cd16d60f074386f8",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "31c215c6_2f42ec1f",
+        "filename": "minui/graphics_overlay.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 625,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2017-11-29T17:48:11Z",
+      "side": 1,
+      "message": "These should probably be converted to Blank(true); and Blank(false);",
+      "parentUuid": "af696b40_dd190193",
+      "revId": "69038b98a292ecdf36a1e099cd16d60f074386f8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
