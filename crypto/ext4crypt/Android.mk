@@ -15,12 +15,19 @@ ifneq ($(wildcard hardware/libhardware/include/hardware/keymaster0.h),)
     LOCAL_C_INCLUDES +=  external/boringssl/src/include
 endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
-    LOCAL_CFLAGS += -DUSE_KEYSTORAGE_3 -DHAVE_LIBKEYUTILS -DHAVE_SYNTH_PWD_SUPPORT -DHAVE_GATEKEEPER1
+    LOCAL_CFLAGS += -DUSE_KEYSTORAGE_3 -DHAVE_GATEKEEPER1
     LOCAL_SRC_FILES += Keymaster3.cpp KeyStorage3.cpp
-    LOCAL_SHARED_LIBRARIES += android.hardware.keymaster@3.0 libkeystore_binder libhidlbase libutils libkeyutils libbinder
+    LOCAL_SHARED_LIBRARIES += android.hardware.keymaster@3.0 libkeystore_binder libhidlbase libutils libbinder
     LOCAL_SHARED_LIBRARIES += android.hardware.gatekeeper@1.0
-    LOCAL_SRC_FILES += Weaver1.cpp
-    LOCAL_SHARED_LIBRARIES += android.hardware.weaver@1.0
+    ifneq ($(wildcard hardware/interfaces/weaver/Android.bp),)
+        LOCAL_CFLAGS += -DHAVE_SYNTH_PWD_SUPPORT
+        LOCAL_SRC_FILES += Weaver1.cpp
+        LOCAL_SHARED_LIBRARIES += android.hardware.weaver@1.0
+    endif
+    ifneq ($(wildcard system/core/libkeyutils/Android.bp),)
+        LOCAL_CFLAGS += -DHAVE_LIBKEYUTILS
+        LOCAL_SHARED_LIBRARIES += libkeyutils
+    endif
 else
     LOCAL_SRC_FILES += Keymaster.cpp KeyStorage.cpp
 endif
