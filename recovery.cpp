@@ -1333,6 +1333,7 @@ static bool is_battery_ok() {
     }
 }
 
+// Set the retry count to |retry_count| in BCB.
 static void set_retry_bootloader_message(int retry_count, const std::vector<std::string>& args) {
   std::vector<std::string> options;
   for (const auto& arg : args) {
@@ -1341,8 +1342,8 @@ static void set_retry_bootloader_message(int retry_count, const std::vector<std:
     }
   }
 
-  // Increment the retry counter by 1.
-  options.push_back(android::base::StringPrintf("--retry_count=%d", retry_count + 1));
+  // Update the retry counter in BCB.
+  options.push_back(android::base::StringPrintf("--retry_count=%d", retry_count));
   std::string err;
   if (!update_bootloader_message(options, &err)) {
     LOG(ERROR) << err;
@@ -1377,303 +1378,331 @@ static void log_failure_code(ErrorCode code, const char *update_package) {
 }
 
 int main(int argc, char **argv) {
-    // We don't have logcat yet under recovery; so we'll print error on screen and
-    // log to stdout (which is redirected to recovery.log) as we used to do.
-    android::base::InitLogging(argv, &UiLogger);
+  // We don't have logcat yet under recovery; so we'll print error on screen and
+  // log to stdout (which is redirected to recovery.log) as we used to do.
+  android::base::InitLogging(argv, &UiLogger);
 
-    // Take last pmsg contents and rewrite it to the current pmsg session.
-    static const char filter[] = "recovery/";
-    // Do we need to rotate?
-    bool doRotate = false;
+  // Take last pmsg contents and rewrite it to the current pmsg session.
+  static const char filter[] = "recovery/";
+  // Do we need to rotate?
+  bool doRotate = false;
 
-    __android_log_pmsg_file_read(
-        LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter,
-        logbasename, &doRotate);
-    // Take action to refresh pmsg contents
-    __android_log_pmsg_file_read(
-        LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter,
-        logrotate, &doRotate);
+  __android_log_pmsg_file_read(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter, logbasename, &doRotate);
+  // Take action to refresh pmsg contents
+  __android_log_pmsg_file_read(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter, logrotate, &doRotate);
 
-    // If this binary is started with the single argument "--adbd",
-    // instead of being the normal recovery binary, it turns into kind
-    // of a stripped-down version of adbd that only supports the
-    // 'sideload' command.  Note this must be a real argument, not
-    // anything in the command file or bootloader control block; the
-    // only way recovery should be run with this argument is when it
-    // starts a copy of itself from the apply_from_adb() function.
-    if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
-        minadbd_main();
-        return 0;
+  // If this binary is started with the single argument "--adbd",
+  // instead of being the normal recovery binary, it turns into kind
+  // of a stripped-down version of adbd that only supports the
+  // 'sideload' command.  Note this must be a real argument, not
+  // anything in the command file or bootloader control block; the
+  // only way recovery should be run with this argument is when it
+  // starts a copy of itself from the apply_from_adb() function.
+  if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
+    minadbd_main();
+    return 0;
+  }
+
+  time_t start = time(nullptr);
+
+  // redirect_stdio should be called only in non-sideload mode. Otherwise
+  // we may have two logger instances with different timestamps.
+  redirect_stdio(TEMPORARY_LOG_FILE);
+
+  printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
+
+  load_volume_table();
+  has_cache = volume_for_mount_point(CACHE_ROOT) != nullptr;
+
+  std::vector<std::string> args = get_args(argc, argv);
+  std::vector<char*> args_to_parse(args.size());
+  std::transform(args.cbegin(), args.cend(), args_to_parse.begin(),
+                 [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
+
+  const char* update_package = nullptr;
+  bool should_wipe_data = false;
+  bool should_prompt_and_wipe_data = false;
+  bool should_wipe_cache = false;
+  bool should_wipe_ab = false;
+  size_t wipe_package_size = 0;
+  bool show_text = false;
+  bool sideload = false;
+  bool sideload_auto_reboot = false;
+  bool just_exit = false;
+  bool shutdown_after = false;
+  int retry_count = 0;
+  bool security_update = false;
+
+  int arg;
+  int option_index;
+  while ((arg = getopt_long(args_to_parse.size(), args_to_parse.data(), "", OPTIONS,
+                            &option_index)) != -1) {
+    switch (arg) {
+      case 'n':
+        android::base::ParseInt(optarg, &retry_count, 0);
+        break;
+      case 'u':
+        update_package = optarg;
+        break;
+      case 'w':
+        should_wipe_data = true;
+        break;
+      case 'c':
+        should_wipe_cache = true;
+        break;
+      case 't':
+        show_text = true;
+        break;
+      case 's':
+        sideload = true;
+        break;
+      case 'a':
+        sideload = true;
+        sideload_auto_reboot = true;
+        break;
+      case 'x':
+        just_exit = true;
+        break;
+      case 'l':
+        locale = optarg;
+        break;
+      case 'p':
+        shutdown_after = true;
+        break;
+      case 'r':
+        reason = optarg;
+        break;
+      case 'e':
+        security_update = true;
+        break;
+      case 0: {
+        std::string option = OPTIONS[option_index].name;
+        if (option == "wipe_ab") {
+          should_wipe_ab = true;
+        } else if (option == "wipe_package_size") {
+          android::base::ParseUint(optarg, &wipe_package_size);
+        } else if (option == "prompt_and_wipe_data") {
+          should_prompt_and_wipe_data = true;
+        }
+        break;
+      }
+      case '?':
+        LOG(ERROR) << "Invalid command argument";
+        continue;
     }
+  }
 
-    time_t start = time(NULL);
-
-    // redirect_stdio should be called only in non-sideload mode. Otherwise
-    // we may have two logger instances with different timestamps.
-    redirect_stdio(TEMPORARY_LOG_FILE);
-
-    printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
-
-    load_volume_table();
-    has_cache = volume_for_mount_point(CACHE_ROOT) != nullptr;
-
-    std::vector<std::string> args = get_args(argc, argv);
-    std::vector<char*> args_to_parse(args.size());
-    std::transform(args.cbegin(), args.cend(), args_to_parse.begin(),
-                   [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
-
-    const char *update_package = NULL;
-    bool should_wipe_data = false;
-    bool should_prompt_and_wipe_data = false;
-    bool should_wipe_cache = false;
-    bool should_wipe_ab = false;
-    size_t wipe_package_size = 0;
-    bool show_text = false;
-    bool sideload = false;
-    bool sideload_auto_reboot = false;
-    bool just_exit = false;
-    bool shutdown_after = false;
-    int retry_count = 0;
-    bool security_update = false;
-
-    int arg;
-    int option_index;
-    while ((arg = getopt_long(args_to_parse.size(), args_to_parse.data(), "", OPTIONS,
-                              &option_index)) != -1) {
-        switch (arg) {
-        case 'n': android::base::ParseInt(optarg, &retry_count, 0); break;
-        case 'u': update_package = optarg; break;
-        case 'w': should_wipe_data = true; break;
-        case 'c': should_wipe_cache = true; break;
-        case 't': show_text = true; break;
-        case 's': sideload = true; break;
-        case 'a': sideload = true; sideload_auto_reboot = true; break;
-        case 'x': just_exit = true; break;
-        case 'l': locale = optarg; break;
-        case 'p': shutdown_after = true; break;
-        case 'r': reason = optarg; break;
-        case 'e': security_update = true; break;
-        case 0: {
-            std::string option = OPTIONS[option_index].name;
-            if (option == "wipe_ab") {
-                should_wipe_ab = true;
-            } else if (option == "wipe_package_size") {
-                android::base::ParseUint(optarg, &wipe_package_size);
-            } else if (option == "prompt_and_wipe_data") {
-                should_prompt_and_wipe_data = true;
-            }
-            break;
-        }
-        case '?':
-            LOG(ERROR) << "Invalid command argument";
-            continue;
-        }
+  if (locale.empty()) {
+    if (has_cache) {
+      locale = load_locale_from_cache();
     }
 
     if (locale.empty()) {
-        if (has_cache) {
-            locale = load_locale_from_cache();
-        }
-
-        if (locale.empty()) {
-            locale = DEFAULT_LOCALE;
-        }
+      locale = DEFAULT_LOCALE;
     }
+  }
 
-    printf("locale is [%s]\n", locale.c_str());
-    printf("stage is [%s]\n", stage.c_str());
-    printf("reason is [%s]\n", reason);
+  printf("locale is [%s]\n", locale.c_str());
+  printf("stage is [%s]\n", stage.c_str());
+  printf("reason is [%s]\n", reason);
 
-    Device* device = make_device();
-    if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
-        printf("Quiescent recovery mode.\n");
-        ui = new StubRecoveryUI();
+  Device* device = make_device();
+  if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
+    printf("Quiescent recovery mode.\n");
+    ui = new StubRecoveryUI();
+  } else {
+    ui = device->GetUI();
+
+    if (!ui->Init(locale)) {
+      printf("Failed to initialize UI, use stub UI instead.\n");
+      ui = new StubRecoveryUI();
+    }
+  }
+
+  // Set background string to "installing security update" for security update,
+  // otherwise set it to "installing system update".
+  ui->SetSystemUpdateText(security_update);
+
+  int st_cur, st_max;
+  if (!stage.empty() && sscanf(stage.c_str(), "%d/%d", &st_cur, &st_max) == 2) {
+    ui->SetStage(st_cur, st_max);
+  }
+
+  ui->SetBackground(RecoveryUI::NONE);
+  if (show_text) ui->ShowText(true);
+
+  sehandle = selinux_android_file_context_handle();
+  selinux_android_set_sehandle(sehandle);
+  if (!sehandle) {
+    ui->Print("Warning: No file_contexts\n");
+  }
+
+  device->StartRecovery();
+
+  printf("Command:");
+  for (const auto& arg : args) {
+    printf(" \"%s\"", arg.c_str());
+  }
+  printf("\n\n");
+
+  property_list(print_property, nullptr);
+  printf("\n");
+
+  ui->Print("Supported API: %d\n", kRecoveryApiVersion);
+
+  int status = INSTALL_SUCCESS;
+
+  if (update_package != nullptr) {
+    // It's not entirely true that we will modify the flash. But we want
+    // to log the update attempt since update_package is non-NULL.
+    modified_flash = true;
+
+    if (!is_battery_ok()) {
+      ui->Print("battery capacity is not enough for installing package, needed is %d%%\n",
+                BATTERY_OK_PERCENTAGE);
+      // Log the error code to last_install when installation skips due to
+      // low battery.
+      log_failure_code(kLowBattery, update_package);
+      status = INSTALL_SKIPPED;
+    } else if (bootreason_in_blacklist()) {
+      // Skip update-on-reboot when bootreason is kernel_panic or similar
+      ui->Print("bootreason is in the blacklist; skip OTA installation\n");
+      log_failure_code(kBootreasonInBlacklist, update_package);
+      status = INSTALL_SKIPPED;
     } else {
-        ui = device->GetUI();
-
-        if (!ui->Init(locale)) {
-            printf("Failed to initialize UI, use stub UI instead.\n");
-            ui = new StubRecoveryUI();
-        }
-    }
-
-    // Set background string to "installing security update" for security update,
-    // otherwise set it to "installing system update".
-    ui->SetSystemUpdateText(security_update);
-
-    int st_cur, st_max;
-    if (!stage.empty() && sscanf(stage.c_str(), "%d/%d", &st_cur, &st_max) == 2) {
-        ui->SetStage(st_cur, st_max);
-    }
-
-    ui->SetBackground(RecoveryUI::NONE);
-    if (show_text) ui->ShowText(true);
-
-    sehandle = selinux_android_file_context_handle();
-    selinux_android_set_sehandle(sehandle);
-    if (!sehandle) {
-        ui->Print("Warning: No file_contexts\n");
-    }
-
-    device->StartRecovery();
-
-    printf("Command:");
-    for (const auto& arg : args) {
-        printf(" \"%s\"", arg.c_str());
-    }
-    printf("\n\n");
-
-    property_list(print_property, NULL);
-    printf("\n");
-
-    ui->Print("Supported API: %d\n", kRecoveryApiVersion);
-
-    int status = INSTALL_SUCCESS;
-
-    if (update_package != NULL) {
-        // It's not entirely true that we will modify the flash. But we want
-        // to log the update attempt since update_package is non-NULL.
-        modified_flash = true;
-
-        if (!is_battery_ok()) {
-            ui->Print("battery capacity is not enough for installing package, needed is %d%%\n",
-                      BATTERY_OK_PERCENTAGE);
-            // Log the error code to last_install when installation skips due to
-            // low battery.
-            log_failure_code(kLowBattery, update_package);
-            status = INSTALL_SKIPPED;
-        } else if (bootreason_in_blacklist()) {
-            // Skip update-on-reboot when bootreason is kernel_panic or similar
-            ui->Print("bootreason is in the blacklist; skip OTA installation\n");
-            log_failure_code(kBootreasonInBlacklist, update_package);
-            status = INSTALL_SKIPPED;
-        } else {
-            status = install_package(update_package, &should_wipe_cache,
-                                     TEMPORARY_INSTALL_FILE, true, retry_count);
-            if (status == INSTALL_SUCCESS && should_wipe_cache) {
-                wipe_cache(false, device);
-            }
-            if (status != INSTALL_SUCCESS) {
-                ui->Print("Installation aborted.\n");
-                // When I/O error happens, reboot and retry installation RETRY_LIMIT
-                // times before we abandon this OTA update.
-                if (status == INSTALL_RETRY && retry_count < RETRY_LIMIT) {
-                    copy_logs();
-                    set_retry_bootloader_message(retry_count, args);
-                    // Print retry count on screen.
-                    ui->Print("Retry attempt %d\n", retry_count);
-
-                    // Reboot and retry the update
-                    if (!reboot("reboot,recovery")) {
-                        ui->Print("Reboot failed\n");
-                    } else {
-                        while (true) {
-                            pause();
-                        }
-                    }
-                }
-                // If this is an eng or userdebug build, then automatically
-                // turn the text display on if the script fails so the error
-                // message is visible.
-                if (is_ro_debuggable()) {
-                    ui->ShowText(true);
-                }
-            }
-        }
-    } else if (should_wipe_data) {
-        if (!wipe_data(device)) {
-            status = INSTALL_ERROR;
-        }
-    } else if (should_prompt_and_wipe_data) {
-        ui->ShowText(true);
-        ui->SetBackground(RecoveryUI::ERROR);
-        if (!prompt_and_wipe_data(device)) {
-            status = INSTALL_ERROR;
-        }
-        ui->ShowText(false);
-    } else if (should_wipe_cache) {
-        if (!wipe_cache(false, device)) {
-            status = INSTALL_ERROR;
-        }
-    } else if (should_wipe_ab) {
-        if (!wipe_ab_device(wipe_package_size)) {
-            status = INSTALL_ERROR;
-        }
-    } else if (sideload) {
-        // 'adb reboot sideload' acts the same as user presses key combinations
-        // to enter the sideload mode. When 'sideload-auto-reboot' is used, text
-        // display will NOT be turned on by default. And it will reboot after
-        // sideload finishes even if there are errors. Unless one turns on the
-        // text display during the installation. This is to enable automated
-        // testing.
-        if (!sideload_auto_reboot) {
-            ui->ShowText(true);
-        }
-        status = apply_from_adb(&should_wipe_cache, TEMPORARY_INSTALL_FILE);
-        if (status == INSTALL_SUCCESS && should_wipe_cache) {
-            if (!wipe_cache(false, device)) {
-                status = INSTALL_ERROR;
-            }
-        }
-        ui->Print("\nInstall from ADB complete (status: %d).\n", status);
-        if (sideload_auto_reboot) {
-            ui->Print("Rebooting automatically.\n");
-        }
-    } else if (!just_exit) {
-      // If this is an eng or userdebug build, automatically turn on the text display if no command
-      // is specified. Note that this should be called before setting the background to avoid
-      // flickering the background image.
-      if (is_ro_debuggable()) {
-        ui->ShowText(true);
+      // It's a fresh update. Initialize the retry_count in the BCB to 1; therefore we can later
+      // identify the interrupted update due to unexpected reboots.
+      if (retry_count == 0) {
+        set_retry_bootloader_message(retry_count + 1, args);
       }
-      status = INSTALL_NONE;  // No command specified
-      ui->SetBackground(RecoveryUI::NO_COMMAND);
-    }
 
-    if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
-        ui->SetBackground(RecoveryUI::ERROR);
-        if (!ui->IsTextVisible()) {
-            sleep(5);
+      status = install_package(update_package, &should_wipe_cache, TEMPORARY_INSTALL_FILE, true,
+                               retry_count);
+      if (status == INSTALL_SUCCESS && should_wipe_cache) {
+        wipe_cache(false, device);
+      }
+      if (status != INSTALL_SUCCESS) {
+        ui->Print("Installation aborted.\n");
+        // When I/O error happens, reboot and retry installation RETRY_LIMIT
+        // times before we abandon this OTA update.
+        if (status == INSTALL_RETRY && retry_count < RETRY_LIMIT) {
+          copy_logs();
+          retry_count += 1;
+          set_retry_bootloader_message(retry_count, args);
+          // Print retry count on screen.
+          ui->Print("Retry attempt %d\n", retry_count);
+
+          // Reboot and retry the update
+          if (!reboot("reboot,recovery")) {
+            ui->Print("Reboot failed\n");
+          } else {
+            while (true) {
+              pause();
+            }
+          }
         }
-    }
-
-    Device::BuiltinAction after = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
-    // 1. If the recovery menu is visible, prompt and wait for commands.
-    // 2. If the state is INSTALL_NONE, wait for commands. (i.e. In user build, manually reboot into
-    //    recovery to sideload a package.)
-    // 3. sideload_auto_reboot is an option only available in user-debug build, reboot the device
-    //    without waiting.
-    // 4. In all other cases, reboot the device. Therefore, normal users will observe the device
-    //    reboot after it shows the "error" screen for 5s.
-    if ((status == INSTALL_NONE && !sideload_auto_reboot) || ui->IsTextVisible()) {
-        Device::BuiltinAction temp = prompt_and_wait(device, status);
-        if (temp != Device::NO_ACTION) {
-            after = temp;
+        // If this is an eng or userdebug build, then automatically
+        // turn the text display on if the script fails so the error
+        // message is visible.
+        if (is_ro_debuggable()) {
+          ui->ShowText(true);
         }
+      }
     }
-
-    // Save logs and clean up before rebooting or shutting down.
-    finish_recovery();
-
-    switch (after) {
-        case Device::SHUTDOWN:
-            ui->Print("Shutting down...\n");
-            android::base::SetProperty(ANDROID_RB_PROPERTY, "shutdown,");
-            break;
-
-        case Device::REBOOT_BOOTLOADER:
-            ui->Print("Rebooting to bootloader...\n");
-            android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,bootloader");
-            break;
-
-        default:
-            ui->Print("Rebooting...\n");
-            reboot("reboot,");
-            break;
+  } else if (should_wipe_data) {
+    if (!wipe_data(device)) {
+      status = INSTALL_ERROR;
     }
-    while (true) {
-        pause();
+  } else if (should_prompt_and_wipe_data) {
+    ui->ShowText(true);
+    ui->SetBackground(RecoveryUI::ERROR);
+    if (!prompt_and_wipe_data(device)) {
+      status = INSTALL_ERROR;
     }
-    // Should be unreachable.
-    return EXIT_SUCCESS;
+    ui->ShowText(false);
+  } else if (should_wipe_cache) {
+    if (!wipe_cache(false, device)) {
+      status = INSTALL_ERROR;
+    }
+  } else if (should_wipe_ab) {
+    if (!wipe_ab_device(wipe_package_size)) {
+      status = INSTALL_ERROR;
+    }
+  } else if (sideload) {
+    // 'adb reboot sideload' acts the same as user presses key combinations
+    // to enter the sideload mode. When 'sideload-auto-reboot' is used, text
+    // display will NOT be turned on by default. And it will reboot after
+    // sideload finishes even if there are errors. Unless one turns on the
+    // text display during the installation. This is to enable automated
+    // testing.
+    if (!sideload_auto_reboot) {
+      ui->ShowText(true);
+    }
+    status = apply_from_adb(&should_wipe_cache, TEMPORARY_INSTALL_FILE);
+    if (status == INSTALL_SUCCESS && should_wipe_cache) {
+      if (!wipe_cache(false, device)) {
+        status = INSTALL_ERROR;
+      }
+    }
+    ui->Print("\nInstall from ADB complete (status: %d).\n", status);
+    if (sideload_auto_reboot) {
+      ui->Print("Rebooting automatically.\n");
+    }
+  } else if (!just_exit) {
+    // If this is an eng or userdebug build, automatically turn on the text display if no command
+    // is specified. Note that this should be called before setting the background to avoid
+    // flickering the background image.
+    if (is_ro_debuggable()) {
+      ui->ShowText(true);
+    }
+    status = INSTALL_NONE;  // No command specified
+    ui->SetBackground(RecoveryUI::NO_COMMAND);
+  }
+
+  if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
+    ui->SetBackground(RecoveryUI::ERROR);
+    if (!ui->IsTextVisible()) {
+      sleep(5);
+    }
+  }
+
+  Device::BuiltinAction after = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
+  // 1. If the recovery menu is visible, prompt and wait for commands.
+  // 2. If the state is INSTALL_NONE, wait for commands. (i.e. In user build, manually reboot into
+  //    recovery to sideload a package.)
+  // 3. sideload_auto_reboot is an option only available in user-debug build, reboot the device
+  //    without waiting.
+  // 4. In all other cases, reboot the device. Therefore, normal users will observe the device
+  //    reboot after it shows the "error" screen for 5s.
+  if ((status == INSTALL_NONE && !sideload_auto_reboot) || ui->IsTextVisible()) {
+    Device::BuiltinAction temp = prompt_and_wait(device, status);
+    if (temp != Device::NO_ACTION) {
+      after = temp;
+    }
+  }
+
+  // Save logs and clean up before rebooting or shutting down.
+  finish_recovery();
+
+  switch (after) {
+    case Device::SHUTDOWN:
+      ui->Print("Shutting down...\n");
+      android::base::SetProperty(ANDROID_RB_PROPERTY, "shutdown,");
+      break;
+
+    case Device::REBOOT_BOOTLOADER:
+      ui->Print("Rebooting to bootloader...\n");
+      android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,bootloader");
+      break;
+
+    default:
+      ui->Print("Rebooting...\n");
+      reboot("reboot,");
+      break;
+  }
+  while (true) {
+    pause();
+  }
+  // Should be unreachable.
+  return EXIT_SUCCESS;
 }
