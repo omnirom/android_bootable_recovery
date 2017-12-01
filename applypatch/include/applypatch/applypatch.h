@@ -18,7 +18,6 @@
 #define _APPLYPATCH_H
 
 #include <stdint.h>
-#include <sys/stat.h>
 
 #include <functional>
 #include <memory>
@@ -33,7 +32,6 @@ struct Value;
 struct FileContents {
   uint8_t sha1[SHA_DIGEST_LENGTH];
   std::vector<unsigned char> data;
-  struct stat st;
 };
 
 // When there isn't enough room on the target filesystem to hold the patched version of the file,
