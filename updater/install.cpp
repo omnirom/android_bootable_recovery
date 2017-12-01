@@ -569,7 +569,11 @@ Value* ApplyPatchSpaceFn(const char* name, State* state, const std::vector<std::
                       name, bytes_str.c_str());
   }
 
-  return StringValue(CacheSizeCheck(bytes) ? "" : "t");
+  // Skip the cache size check if the update is a retry.
+  if (state->is_retry || CacheSizeCheck(bytes) == 0) {
+    return StringValue("t");
+  }
+  return StringValue("");
 }
 
 // apply_patch(src_file, tgt_file, tgt_sha1, tgt_size, patch1_sha1, patch1_blob, [...])
