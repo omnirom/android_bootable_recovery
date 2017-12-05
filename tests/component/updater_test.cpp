@@ -227,6 +227,102 @@ TEST_F(UpdaterTest, file_getprop) {
     expect("", script6.c_str(), kNoCause);
 }
 
+TEST_F(UpdaterTest, package_extract_dir) {
+  // package_extract_dir expects 2 arguments.
+  expect(nullptr, "package_extract_dir()", kArgsParsingFailure);
+  expect(nullptr, "package_extract_dir(\"arg1\")", kArgsParsingFailure);
+  expect(nullptr, "package_extract_dir(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
+
+  std::string zip_path = from_testdata_base("ziptest_valid.zip");
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchive(zip_path.c_str(), &handle));
+
+  // Need to set up the ziphandle.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+
+  // Extract "b/c.txt" and "b/d.txt" with package_extract_dir("b", "<dir>").
+  TemporaryDir td;
+  std::string temp_dir(td.path);
+  std::string script("package_extract_dir(\"b\", \"" + temp_dir + "\")");
+  expect("t", script.c_str(), kNoCause, &updater_info);
+
+  // Verify.
+  std::string data;
+  std::string file_c = temp_dir + "/c.txt";
+  ASSERT_TRUE(android::base::ReadFileToString(file_c, &data));
+  ASSERT_EQ(kCTxtContents, data);
+
+  std::string file_d = temp_dir + "/d.txt";
+  ASSERT_TRUE(android::base::ReadFileToString(file_d, &data));
+  ASSERT_EQ(kDTxtContents, data);
+
+  // Modify the contents in order to retry. It's expected to be overwritten.
+  ASSERT_TRUE(android::base::WriteStringToFile("random", file_c));
+  ASSERT_TRUE(android::base::WriteStringToFile("random", file_d));
+
+  // Extract again and verify.
+  expect("t", script.c_str(), kNoCause, &updater_info);
+
+  ASSERT_TRUE(android::base::ReadFileToString(file_c, &data));
+  ASSERT_EQ(kCTxtContents, data);
+  ASSERT_TRUE(android::base::ReadFileToString(file_d, &data));
+  ASSERT_EQ(kDTxtContents, data);
+
+  // Clean up the temp files under td.
+  ASSERT_EQ(0, unlink(file_c.c_str()));
+  ASSERT_EQ(0, unlink(file_d.c_str()));
+
+  // Extracting "b/" (with slash) should give the same result.
+  script = "package_extract_dir(\"b/\", \"" + temp_dir + "\")";
+  expect("t", script.c_str(), kNoCause, &updater_info);
+
+  ASSERT_TRUE(android::base::ReadFileToString(file_c, &data));
+  ASSERT_EQ(kCTxtContents, data);
+  ASSERT_TRUE(android::base::ReadFileToString(file_d, &data));
+  ASSERT_EQ(kDTxtContents, data);
+
+  ASSERT_EQ(0, unlink(file_c.c_str()));
+  ASSERT_EQ(0, unlink(file_d.c_str()));
+
+  // Extracting "" is allowed. The entries will carry the path name.
+  script = "package_extract_dir(\"\", \"" + temp_dir + "\")";
+  expect("t", script.c_str(), kNoCause, &updater_info);
+
+  std::string file_a = temp_dir + "/a.txt";
+  ASSERT_TRUE(android::base::ReadFileToString(file_a, &data));
+  ASSERT_EQ(kATxtContents, data);
+  std::string file_b = temp_dir + "/b.txt";
+  ASSERT_TRUE(android::base::ReadFileToString(file_b, &data));
+  ASSERT_EQ(kBTxtContents, data);
+  std::string file_b_c = temp_dir + "/b/c.txt";
+  ASSERT_TRUE(android::base::ReadFileToString(file_b_c, &data));
+  ASSERT_EQ(kCTxtContents, data);
+  std::string file_b_d = temp_dir + "/b/d.txt";
+  ASSERT_TRUE(android::base::ReadFileToString(file_b_d, &data));
+  ASSERT_EQ(kDTxtContents, data);
+
+  ASSERT_EQ(0, unlink(file_a.c_str()));
+  ASSERT_EQ(0, unlink(file_b.c_str()));
+  ASSERT_EQ(0, unlink(file_b_c.c_str()));
+  ASSERT_EQ(0, unlink(file_b_d.c_str()));
+  ASSERT_EQ(0, rmdir((temp_dir + "/b").c_str()));
+
+  // Extracting non-existent entry should still give "t".
+  script = "package_extract_dir(\"doesntexist\", \"" + temp_dir + "\")";
+  expect("t", script.c_str(), kNoCause, &updater_info);
+
+  // Only relative zip_path is allowed.
+  script = "package_extract_dir(\"/b\", \"" + temp_dir + "\")";
+  expect("", script.c_str(), kNoCause, &updater_info);
+
+  // Only absolute dest_path is allowed.
+  script = "package_extract_dir(\"b\", \"path\")";
+  expect("", script.c_str(), kNoCause, &updater_info);
+
+  CloseArchive(handle);
+}
+
 // TODO: Test extracting to block device.
 TEST_F(UpdaterTest, package_extract_file) {
   // package_extract_file expects 1 or 2 arguments.
