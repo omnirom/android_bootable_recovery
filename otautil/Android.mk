@@ -23,7 +23,8 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_LIBRARIES := \
     libselinux \
-    libbase
+    libbase \
+    libziparchive
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 26; echo $$?),0)
 # Android 8.1 header
