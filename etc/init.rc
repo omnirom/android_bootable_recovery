@@ -11,6 +11,7 @@ on init
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /sdcard
 
+    symlink /system/bin /bin
     symlink /system/etc /etc
 
     mount cgroup none /acct cpuacct
