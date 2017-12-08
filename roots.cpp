@@ -324,16 +324,23 @@ int format_volume(const char* volume, const char* directory) {
   }
 
   // Has to be f2fs because we checked earlier.
-  std::vector<std::string> f2fs_args = { "/sbin/mkfs.f2fs", "-d1", "-f",
-                                         "-O", "encrypt", "-O", "quota",
-                                         v->blk_device };
+  std::string cmd("/sbin/mkfs.f2fs");
+  std::vector<std::string> make_f2fs_cmd = { cmd,       "-d1", "-f",    "-O",
+                                             "encrypt", "-O",  "quota", v->blk_device };
   if (length >= 512) {
-    f2fs_args.push_back(std::to_string(length / 512));
+    make_f2fs_cmd.push_back(std::to_string(length / 512));
   }
 
-  int result = exec_cmd(f2fs_args);
+  int result = exec_cmd(make_f2fs_cmd);
+  if (result == 0 && directory != nullptr) {
+    cmd = "/sbin/sload.f2fs";
+    std::vector<std::string> sload_f2fs_cmd = {
+      cmd, "-f", directory, "-t", volume, v->blk_device,
+    };
+    result = exec_cmd(sload_f2fs_cmd);
+  }
   if (result != 0) {
-    PLOG(ERROR) << "format_volume: Failed to make f2fs on " << v->blk_device;
+    PLOG(ERROR) << "format_volume: Failed " << cmd << " on " << v->blk_device;
     return -1;
   }
   return 0;
