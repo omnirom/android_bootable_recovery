@@ -306,9 +306,9 @@ bool Symlink_Vendor_Folder(void) {
 		LOGINFO("Symlinking vendor folder...\n");
 		if (!TWFunc::Path_Exists("/vendor") || vrename("/vendor", "/vendor-orig") == 0) {
 			TWFunc::Recursive_Mkdir("/vendor/firmware/keymaster");
-			vsymlink("/system/vendor/lib64", "/vendor/lib64");
-			vsymlink("/system/vendor/lib", "/vendor/lib");
-			vsymlink("/system/vendor/bin", "/vendor/bin");
+			vsymlink("/system/vendor/lib64", "/vendor/lib64", true);
+			vsymlink("/system/vendor/lib", "/vendor/lib", true);
+			vsymlink("/system/vendor/bin", "/vendor/bin", true);
 			is_vendor_symlinked = true;
 			property_set("vold_decrypt.symlinked_vendor", "1");
 		}
@@ -436,7 +436,8 @@ typedef struct {
 	string TWRP_Service_Name;
 	bool is_running;
 	bool resume;
-	bool exists;
+	bool bin_exists;
+	bool svc_exists;
 } AdditionalService;
 
 typedef struct {
@@ -650,7 +651,8 @@ vector<AdditionalService> Get_List_Of_Additional_Services(void) {
 	for (size_t i = 0; i < service_names.size(); ++i) {
 		AdditionalService svc;
 		svc.Service_Name = service_names[i];
-		svc.exists = false;
+		svc.bin_exists = false;
+		svc.svc_exists = false;
 		services.push_back(svc);
 
 #ifdef _USING_SHORT_SERVICE_NAMES
@@ -658,7 +660,8 @@ vector<AdditionalService> Get_List_Of_Additional_Services(void) {
 		// allows for multiple definitions in custom .rc files
 		if (service_names[i].length() > 12) {
 			svc.Service_Name = service_names[i].substr(0, 12); // 16-4(prefix)=12
-			svc.exists = false;
+			svc.bin_exists = false;
+			svc.svc_exists = false;
 			services.push_back(svc);
 		}
 #endif
@@ -698,12 +701,14 @@ vector<AdditionalService> Get_List_Of_Additional_Services(void) {
 			}
 
 			if (RC_Services[i].Service_Name == prefix + services[j].Service_Name) {
+				services[j].svc_exists = true;
+
 				if (!services[j].VOLD_Service_Name.empty() && TWFunc::Path_Exists(path)) {
 					// Duplicate match, log but use previous definition
 					LOGERROR("Service %s: VOLD_Service_Name already defined as %s\n", RC_Services[i].Service_Name.c_str(), services[j].VOLD_Service_Name.c_str());
 				}
 				else if (TWFunc::Path_Exists(path)) {
-					services[j].exists = true;
+					services[j].bin_exists = true;
 					services[j].VOLD_Service_Name = RC_Services[i].Service_Name; // prefix + service_name
 					services[j].Service_Path = RC_Services[i].Service_Path;
 					services[j].Service_Binary = RC_Services[i].Service_Binary;
@@ -732,7 +737,9 @@ vector<AdditionalService> Get_List_Of_Additional_Services(void) {
 
 	LOGINFO("List of additional services for vold_decrypt:\n");
 	for (size_t i = 0; i < services.size(); ++i) {
-		if (services[i].exists) {
+		if (!services[i].svc_exists) {
+			LOGINFO("    %s: Disabled due to lack of .rc service entry\n", services[i].Service_Name.c_str());
+		} else if (services[i].bin_exists) {
 			if (services[i].TWRP_Service_Name.empty()) {
 				LOGINFO("    %s: Enabled as %s -> %s\n",
 				        services[i].Service_Name.c_str(),
@@ -746,8 +753,9 @@ vector<AdditionalService> Get_List_Of_Additional_Services(void) {
 				       );
 			}
 		}
-		else
+		else {
 			LOGINFO("    %s: Disabled due to lack of matching binary\n", services[i].Service_Name.c_str());
+		}
 	}
 	return services;
 }
@@ -781,12 +789,16 @@ typedef struct {
 int Exec_vdc_cryptfs(const string& command, const string& argument, vdc_ReturnValues* vdcResult) {
 	pid_t pid;
 	int status;
-	int pipe_fd[2];
-	vdcResult->Output.clear();
+	int pipe_fd[2][2];
 
-	if (pipe(pipe_fd)) {
-		LOGERROR("exec_vdc_cryptfs: pipe() error!\n");
-		return -1;
+	vdcResult->Output.clear();
+	vdcResult->ResponseCode = vdcResult->Sequence = vdcResult->Message = -1;
+
+	for (int i = 0; i < 2; ++i) {
+		if (pipe(pipe_fd[i])) {
+			LOGERROR("exec_vdc_cryptfs: pipe() error!\n");
+			return -1;
+		}
 	}
 
 	const char *cmd[] = { "/system/bin/vdc", "cryptfs" };
@@ -804,10 +816,11 @@ int Exec_vdc_cryptfs(const string& command, const string& argument, vdc_ReturnVa
 
 		case 0: // child
 			fflush(stdout); fflush(stderr);
-			close(pipe_fd[0]);
-			dup2(pipe_fd[1], STDOUT_FILENO);
-			dup2(pipe_fd[1], STDERR_FILENO);
-			close(pipe_fd[1]);
+			for (int i = 0; i < 2; ++i) {
+				close(pipe_fd[i][0]);
+				dup2(pipe_fd[i][1], ((i == 0) ? STDOUT_FILENO : STDERR_FILENO));
+				close(pipe_fd[i][1]);
+			}
 
 #ifdef TW_CRYPTO_SYSTEM_VOLD_DEBUG
 			if (has_strace) {
@@ -829,25 +842,30 @@ int Exec_vdc_cryptfs(const string& command, const string& argument, vdc_ReturnVa
 		default:
 		{
 			int timeout = 30*100;
-			vdcResult->Output.clear();
-			close(pipe_fd[1]);
 
-			// Non-blocking read loop with timeout
-			int flags = fcntl(pipe_fd[0], F_GETFL, 0);
-			fcntl(pipe_fd[0], F_SETFL, flags | O_NONBLOCK);
+			for (int i = 0; i < 2; ++i) {
+				close(pipe_fd[i][1]);
+
+				// Non-blocking read loop with timeout
+				int flags = fcntl(pipe_fd[i][0], F_GETFL, 0);
+				fcntl(pipe_fd[i][0], F_SETFL, flags | O_NONBLOCK);
+			}
 
 			char buffer[128];
 			ssize_t count;
+			string strout[2];
 			pid_t retpid = waitpid(pid, &status, WNOHANG);
 			while (true) {
-				count = read(pipe_fd[0], buffer, sizeof(buffer));
-				if (count == -1) {
-					if (errno == EINTR)
-						continue;
-					else if (errno != EAGAIN)
-						LOGERROR("exec_vdc_cryptfs: read() error %d (%s)\n!", errno, strerror(errno));
-				} else if (count > 0) {
-					vdcResult->Output.append(buffer, count);
+				for (int i = 0; i < 2; ++i) {
+					count = read(pipe_fd[i][0], buffer, sizeof(buffer));
+					if (count == -1) {
+						if (errno == EINTR)
+							continue;
+						else if (errno != EAGAIN)
+							LOGERROR("exec_vdc_cryptfs: read() error %d (%s)\n!", errno, strerror(errno));
+					} else if (count > 0) {
+						strout[i].append(buffer, count);
+					}
 				}
 
 				retpid = waitpid(pid, &status, WNOHANG);
@@ -856,11 +874,23 @@ int Exec_vdc_cryptfs(const string& command, const string& argument, vdc_ReturnVa
 				else
 					break;
 			};
-			close(pipe_fd[0]);
-			if (vdcResult->Output.length() > 0 && vdcResult->Output[vdcResult->Output.length() - 1] == '\n')
-				vdcResult->Output.erase(vdcResult->Output.length() - 1);
-			vdcResult->ResponseCode = vdcResult->Sequence = vdcResult->Message = -1;
-			sscanf(vdcResult->Output.c_str(), "%d %d %d", &vdcResult->ResponseCode, &vdcResult->Sequence, &vdcResult->Message);
+
+			for (int i = 0; i < 2; ++i) {
+				close(pipe_fd[i][0]);
+			}
+
+			if (!strout[0].empty()) {
+				sscanf(strout[0].c_str(), "%d %d %d", &vdcResult->ResponseCode, &vdcResult->Sequence, &vdcResult->Message);
+				vdcResult->Output = "I:" + strout[0];
+			}
+			if (!strout[1].empty()) {
+				vdcResult->Output += "E:" + strout[1];
+			}
+			std::replace(vdcResult->Output.begin(), vdcResult->Output.end(), '\n', '|');
+
+			if (!vdcResult->Output.empty() && vdcResult->Output[vdcResult->Output.length() - 1] != '|')
+				vdcResult->Output += "|";
+			vdcResult->Output += "RC=" + TWFunc::to_string(WEXITSTATUS(status));
 
 			// Error handling
 			if (retpid == 0 && timeout == 0) {
@@ -907,9 +937,6 @@ int Run_vdc(const string& Password) {
 		// cryptfs getpwtype returns: R1=213(PasswordTypeResult)   R2=?   R3="password", "pattern", "pin", "default"
 		res = Exec_vdc_cryptfs("getpwtype", "", &vdcResult);
 		if (vdcResult.ResponseCode == PASSWORD_TYPE_RESULT) {
-			char str_res[4 + sizeof(int) + 1];
-			snprintf(str_res, sizeof(str_res), "ret=%d", res);
-			vdcResult.Output += str_res;
 			res = 0;
 			break;
 		}
@@ -919,7 +946,7 @@ int Run_vdc(const string& Password) {
 	}
 
 	if (res == 0 && (t2.tv_sec - t1.tv_sec) < 5)
-		LOGINFO("Connected to vold (%s)\n", vdcResult.Output.c_str());
+		LOGINFO("Connected to vold: %s\n", vdcResult.Output.c_str());
 	else if (res == VD_ERR_VOLD_OPERATION_TIMEDOUT)
 		return VD_ERR_VOLD_OPERATION_TIMEDOUT; // should never happen for getpwtype
 	else if (res)
@@ -937,7 +964,7 @@ int Run_vdc(const string& Password) {
 	else if (res)
 		return VD_ERR_FORK_EXECL_ERROR;
 
-	LOGINFO("vdc cryptfs result (passwd): %s (ret=%d)\n", vdcResult.Output.c_str(), res);
+	LOGINFO("vdc cryptfs result (passwd): %s\n", vdcResult.Output.c_str());
 	/*
 	if (res == 0 && vdcResult.ResponseCode != COMMAND_OKAY)
 		return VD_ERR_VOLD_UNEXPECTED_RESPONSE;
@@ -952,7 +979,7 @@ int Run_vdc(const string& Password) {
 		else if (res)
 			return VD_ERR_FORK_EXECL_ERROR;
 
-		LOGINFO("vdc cryptfs result (hex_pw): %s (ret=%d)\n", vdcResult.Output.c_str(), res);
+		LOGINFO("vdc cryptfs result (hex_pw): %s\n", vdcResult.Output.c_str());
 		/*
 		if (res == 0 && vdcResult.ResponseCode != COMMAND_OKAY)
 			return VD_ERR_VOLD_UNEXPECTED_RESPONSE;
@@ -1037,7 +1064,7 @@ int Vold_Decrypt_Core(const string& Password) {
 	LOGINFO("Starting services...\n");
 #ifdef TW_CRYPTO_SYSTEM_VOLD_SERVICES
 	for (size_t i = 0; i < Services.size(); ++i) {
-		if (Services[i].exists)
+		if (Services[i].bin_exists)
 			Services[i].is_running = Start_Service(Services[i].VOLD_Service_Name);
 	}
 #endif
@@ -1046,7 +1073,7 @@ int Vold_Decrypt_Core(const string& Password) {
 	if (is_vold_running) {
 #ifdef TW_CRYPTO_SYSTEM_VOLD_SERVICES
 		for (size_t i = 0; i < Services.size(); ++i) {
-			if (Services[i].exists && !Is_Service_Running(Services[i].VOLD_Service_Name) && Services[i].resume) {
+			if (Services[i].bin_exists && !Is_Service_Running(Services[i].VOLD_Service_Name) && Services[i].resume) {
 				// if system_service has died restart the twrp_service
 				LOGINFO("%s is not running, resuming %s!\n", Services[i].VOLD_Service_Name.c_str(), Services[i].TWRP_Service_Name.c_str());
 				Start_Service(Services[i].TWRP_Service_Name);
@@ -1070,7 +1097,7 @@ int Vold_Decrypt_Core(const string& Password) {
 	for (size_t i = 0; i < Services.size(); ++i) {
 		if (!Is_Service_Running(Services[i].VOLD_Service_Name) && Services[i].resume)
 			Stop_Service(Services[i].TWRP_Service_Name);
-		else if (Services[i].exists)
+		else if (Services[i].bin_exists)
 			Stop_Service(Services[i].VOLD_Service_Name);
 	}
 #endif
