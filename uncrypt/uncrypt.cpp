@@ -172,10 +172,14 @@ static struct fstab* read_fstab() {
     return fstab;
 }
 
-static const char* find_block_device(const char* path, bool* encryptable, bool* encrypted) {
+static const char* find_block_device(const char* path, bool* encryptable, bool* encrypted, bool *f2fs_fs) {
     // Look for a volume whose mount point is the prefix of path and
     // return its block device.  Set encrypted if it's currently
     // encrypted.
+
+    // ensure f2fs_fs is set to 0 first.
+    if (f2fs_fs)
+        *f2fs_fs = false;
     for (int i = 0; i < fstab->num_entries; ++i) {
         struct fstab_rec* v = &fstab->recs[i];
         if (!v->mount_point) {
@@ -192,6 +196,8 @@ static const char* find_block_device(const char* path, bool* encryptable, bool* 
                     *encrypted = true;
                 }
             }
+            if (f2fs_fs && strcmp(v->fs_type, "f2fs") == 0)
+                *f2fs_fs = true;
             return v->blk_device;
         }
     }
@@ -244,7 +250,7 @@ static int retry_fibmap(const int fd, const char* name, int* block, const int he
 }
 
 static int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
-                             bool encrypted, int socket) {
+                             bool encrypted, bool f2fs_fs, int socket) {
     std::string err;
     if (!android::base::RemoveFileIfExists(map_file, &err)) {
         LOG(ERROR) << "failed to remove the existing map file " << map_file << ": " << err;
@@ -305,6 +311,17 @@ static int produce_block_map(const char* path, const char* map_file, const char*
             PLOG(ERROR) << "failed to open " << blk_dev << " for writing";
             return kUncryptBlockOpenError;
         }
+    }
+
+#ifndef F2FS_IOC_SET_DONTMOVE
+#ifndef F2FS_IOCTL_MAGIC
+#define F2FS_IOCTL_MAGIC		0xf5
+#endif
+#define F2FS_IOC_SET_DONTMOVE		_IO(F2FS_IOCTL_MAGIC, 13)
+#endif
+    if (f2fs_fs && ioctl(fd, F2FS_IOC_SET_DONTMOVE) < 0) {
+        PLOG(ERROR) << "Failed to set non-movable file for f2fs: " << path << " on " << blk_dev;
+        return kUncryptIoctlError;
     }
 
     off64_t pos = 0;
@@ -458,7 +475,8 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
 
     bool encryptable;
     bool encrypted;
-    const char* blk_dev = find_block_device(path, &encryptable, &encrypted);
+    bool f2fs_fs;
+    const char* blk_dev = find_block_device(path, &encryptable, &encrypted, &f2fs_fs);
     if (blk_dev == nullptr) {
         LOG(ERROR) << "failed to find block device for " << path;
         return kUncryptBlockDeviceFindError;
@@ -479,7 +497,7 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
     // and /sdcard we leave the file alone.
     if (strncmp(path, "/data/", 6) == 0) {
         LOG(INFO) << "writing block map " << map_file;
-        return produce_block_map(path, map_file, blk_dev, encrypted, socket);
+        return produce_block_map(path, map_file, blk_dev, encrypted, f2fs_fs, socket);
     }
 
     return 0;
