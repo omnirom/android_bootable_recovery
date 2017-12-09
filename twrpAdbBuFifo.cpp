@@ -306,20 +306,26 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 								LOGERR("Cannot write to ADB_CONTROL_BU_FD: %s\n", strerror(errno));
 							}
 							gui_msg(Msg(msg::kError, "restore_read_only=Cannot restore {1} -- mounted read only.")(part_settings.Part->Backup_Display_Name));
-							return false;
+							ret = false;
+							int fd = open(TW_ADB_RESTORE, O_RDONLY);
+							close(fd); 
+							break;
 
 						}
-					}
-					part_settings.partition_count = partition_count;
-					part_settings.adbbackup = true;
-					part_settings.adb_compression = twimghdr.compressed;
-					part_settings.total_restore_size += part_settings.Part->Get_Restore_Size(&part_settings);
-					part_settings.PM_Method = PM_RESTORE;
-					ProgressTracking progress(part_settings.total_restore_size);
-					part_settings.progress = &progress;
-					if (!PartitionManager.Restore_Partition(&part_settings)) {
-						LOGERR("ADB Restore failed.\n");
-						ret = false;
+						else {
+							part_settings.partition_count = partition_count;
+							part_settings.adbbackup = true;
+							part_settings.adb_compression = twimghdr.compressed;
+							part_settings.total_restore_size += part_settings.Part->Get_Restore_Size(&part_settings);
+							part_settings.PM_Method = PM_RESTORE;
+							ProgressTracking progress(part_settings.total_restore_size);
+							part_settings.progress = &progress;
+							if (!PartitionManager.Restore_Partition(&part_settings)) {
+								LOGERR("ADB Restore failed.\n");
+								ret = false;
+								break;
+							}
+						}
 					}
 				}
 			}

@@ -127,7 +127,6 @@ void twrpback::close_restore_fds() {
 
 bool twrpback::backup(std::string command) {
 	twrpMD5 digest;
-	bool breakloop = false;
 	int bytes = 0, errctr = 0;
 	char adbReadStream[MAX_ADB_READ];
 	uint64_t totalbytes = 0, dataChunkBytes = 0, fileBytes = 0;
@@ -197,7 +196,7 @@ bool twrpback::backup(std::string command) {
 	}
 
 	//loop until TWENDADB sent
-	while (!breakloop) {
+	while (true) {
 		if (read(adb_control_bu_fd, &cmd, sizeof(cmd)) > 0) {
 			struct AdbBackupControlType structcmd;
 
@@ -219,7 +218,7 @@ bool twrpback::backup(std::string command) {
 				std::stringstream str;
 				str << totalbytes;
 				adblogwrite(str.str() + " total bytes written\n");
-				breakloop = true;
+				break;
 			}
 			//we recieved the TWSTREAMHDR structure metadata to write to adb
 			else if (cmdtype == TWSTREAMHDR) {
@@ -452,11 +451,10 @@ bool twrpback::restore(void) {
 	uint64_t totalbytes = 0, dataChunkBytes = 0;
 	uint64_t md5fnsize = 0;
 	bool writedata, read_from_adb;
-	bool breakloop, eofsent, md5trsent;
+	bool eofsent, md5trsent;
 	bool compressed;
 	bool md5TrailerReceived = false;
 
-	breakloop = false;
 	read_from_adb = true;
 
 	signal(SIGPIPE, SIG_IGN);
@@ -527,7 +525,7 @@ bool twrpback::restore(void) {
 	}
 
 	//Loop until we receive TWENDADB from TWRP
-	while (!breakloop) {
+	while (true) {
 		memset(&cmd, 0, sizeof(cmd));
 		if (read(adb_control_bu_fd, &cmd, sizeof(cmd)) > 0) {
 			struct AdbBackupControlType structcmd;
@@ -546,8 +544,8 @@ bool twrpback::restore(void) {
 			//Break when TWRP sends TWENDADB
 			else if (cmdtype == TWENDADB) {
 				adblogwrite("Received TWENDADB\n");
-				breakloop = true;
 				close_restore_fds();
+				break;
 			}
 			//we received an error, exit and unlink
 			else if (cmdtype == TWERROR) {
