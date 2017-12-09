@@ -321,7 +321,7 @@ bool twrpback::backup(std::string command) {
 						return false;
 					}
 					totalbytes += paddingBytes;
-					digest.update((unsigned char *) padding, paddingBytes);
+					//digest.update((unsigned char *) padding, paddingBytes);
 					fflush(adbd_fp);
 				}
 
