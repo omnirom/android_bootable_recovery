@@ -318,6 +318,15 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
       LOG(ERROR) << name << ": mkfs.f2fs failed (" << status << ") on " << location;
       return StringValue("");
     }
+
+    const char* sload_argv[] = { "/sbin/sload.f2fs", "-t", mount_point.c_str(), location.c_str(),
+                                 nullptr };
+    status = exec_cmd(sload_argv[0], const_cast<char**>(sload_argv));
+    if (status != 0) {
+      LOG(ERROR) << name << ": sload.f2fs failed (" << status << ") on " << location;
+      return StringValue("");
+    }
+
     return StringValue(location);
   } else {
     LOG(ERROR) << name << ": unsupported fs_type \"" << fs_type << "\" partition_type \""
