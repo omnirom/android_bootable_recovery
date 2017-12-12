@@ -295,7 +295,6 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libhidlbase.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libhidltransport.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.keymaster@3.0.so
-    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hidl.base@1.0.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libziparchive.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_blkid.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_quota.so
@@ -306,6 +305,9 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hidl.token@1.0.so
     ifneq ($(wildcard system/core/libkeyutils/Android.bp),)
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeyutils.so
+    endif
+    ifeq ($(wildcard system/libhidl/transport/HidlTransportUtils.cpp),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hidl.base@1.0.so
     endif
 endif
 
