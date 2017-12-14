@@ -881,9 +881,12 @@ void TWFunc::Auto_Generate_Backup_Name() {
 	}
 }
 
-void TWFunc::Fixup_Time_On_Boot()
+void TWFunc::Fixup_Time_On_Boot(const string& time_paths)
 {
 #ifdef QCOM_RTC_FIX
+	static bool fixed = false;
+	if (fixed)
+		return;
 
 	LOGINFO("TWFunc::Fixup_Time: Pre-fix date and time: %s\n", TWFunc::Get_Current_Date().c_str());
 
@@ -904,6 +907,7 @@ void TWFunc::Fixup_Time_On_Boot()
 		if (tv.tv_sec > 1405209403) { // Anything older then 12 Jul 2014 23:56:43 GMT will do nicely thank you ;)
 
 			LOGINFO("TWFunc::Fixup_Time: Date and time corrected: %s\n", TWFunc::Get_Current_Date().c_str());
+			fixed = true;
 			return;
 
 		}
@@ -925,22 +929,28 @@ void TWFunc::Fixup_Time_On_Boot()
 	// Like, ats_1 is for modem and ats_2 is for TOD (time of day?).
 	// Look at file time_genoff.h in CodeAurora, qcom-opensource/time-services
 
-	static const char *paths[] = { "/data/system/time/", "/data/time/"  };
+	std::vector<std::string> paths; // space separated list of paths
+	if (time_paths.empty()) {
+		paths = Split_String("/data/system/time/ /data/time/", " ");
+		if (!PartitionManager.Mount_By_Path("/data", false))
+			return;
+	} else {
+		// When specific path(s) are used, Fixup_Time needs those
+		// partitions to already be mounted!
+		paths = Split_String(time_paths, " ");
+	}
 
 	FILE *f;
 	offset = 0;
 	struct dirent *dt;
 	std::string ats_path;
 
-	if (!PartitionManager.Mount_By_Path("/data", false))
-		return;
-
 	// Prefer ats_2, it seems to be the one we want according to logcat on hammerhead
 	// - it is the one for ATS_TOD (time of day?).
 	// However, I never saw a device where the offset differs between ats files.
-	for (size_t i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i)
+	for (size_t i = 0; i < paths.size(); ++i)
 	{
-		DIR *d = opendir(paths[i]);
+		DIR *d = opendir(paths[i].c_str());
 		if (!d)
 			continue;
 
@@ -950,7 +960,7 @@ void TWFunc::Fixup_Time_On_Boot()
 				continue;
 
 			if (ats_path.empty() || strcmp(dt->d_name, "ats_2") == 0)
-				ats_path = std::string(paths[i]).append(dt->d_name);
+				ats_path = paths[i].append(dt->d_name);
 		}
 
 		closedir(d);
@@ -993,6 +1003,7 @@ void TWFunc::Fixup_Time_On_Boot()
 	settimeofday(&tv, NULL);
 
 	LOGINFO("TWFunc::Fixup_Time: Date and time corrected: %s\n", TWFunc::Get_Current_Date().c_str());
+	fixed = true;
 
 #endif
 }
