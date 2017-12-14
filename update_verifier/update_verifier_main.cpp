@@ -16,11 +16,20 @@
 
 // See the comments in update_verifier.cpp.
 
+#include <string>
+
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 
 #include "update_verifier/update_verifier.h"
 
 int main(int argc, char** argv) {
+  std::string s = android::base::GetProperty("ro.boot.slot_suffix", "");
+
+  if (s.empty()) {
+    return 0;  // non-A/B update device, so we quit
+  }
+
   // Set up update_verifier logging to be written to kmsg; because we may not have Logd during
   // boot time.
   android::base::InitLogging(argv, &android::base::KernelLogger);
