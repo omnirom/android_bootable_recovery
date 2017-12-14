@@ -21,14 +21,13 @@
 #include <bootloader_message/bootloader_message.h>
 #include <gtest/gtest.h>
 
-#include "common/component_test_util.h"
-
 class BootloaderMessageTest : public ::testing::Test {
  protected:
   BootloaderMessageTest() : has_misc(true) {}
 
   virtual void SetUp() override {
-    has_misc = parse_misc();
+    std::string err;
+    has_misc = !get_bootloader_message_blk_device(&err).empty();
   }
 
   virtual void TearDown() override {

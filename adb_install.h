@@ -17,6 +17,8 @@
 #ifndef _ADB_INSTALL_H
 #define _ADB_INSTALL_H
 
+#include <sys/types.h>
+
 //class RecoveryUI;
 
 static void set_usb_driver(bool enabled);

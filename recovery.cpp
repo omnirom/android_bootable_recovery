@@ -40,7 +40,6 @@
 #include <string>
 #include <vector>
 
-#include <adb.h>
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
@@ -114,8 +113,9 @@ static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
-// We will try to apply the update package 5 times at most in case of an I/O error.
-static const int EIO_RETRY_COUNT = 4;
+// We will try to apply the update package 5 times at most in case of an I/O error or
+// bspatch | imgpatch error.
+static const int RETRY_LIMIT = 4;
 static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
 // GmsCore enters recovery mode to install package when having enough battery
 // percentage. Normally, the threshold is 40% without charger and 20% with charger.
@@ -250,7 +250,7 @@ static void redirect_stdio(const char* filename) {
         auto start = std::chrono::steady_clock::now();
 
         // Child logger to actually write to the log file.
-        FILE* log_fp = fopen(filename, "a");
+        FILE* log_fp = fopen(filename, "ae");
         if (log_fp == nullptr) {
             PLOG(ERROR) << "fopen \"" << filename << "\" failed";
             close(pipefd[0]);
@@ -419,27 +419,27 @@ static void copy_log_file_to_pmsg(const char* source, const char* destination) {
 static off_t tmplog_offset = 0;
 
 static void copy_log_file(const char* source, const char* destination, bool append) {
-    FILE* dest_fp = fopen_path(destination, append ? "a" : "w");
-    if (dest_fp == nullptr) {
-        PLOG(ERROR) << "Can't open " << destination;
-    } else {
-        FILE* source_fp = fopen(source, "r");
-        if (source_fp != nullptr) {
-            if (append) {
-                fseeko(source_fp, tmplog_offset, SEEK_SET);  // Since last write
-            }
-            char buf[4096];
-            size_t bytes;
-            while ((bytes = fread(buf, 1, sizeof(buf), source_fp)) != 0) {
-                fwrite(buf, 1, bytes, dest_fp);
-            }
-            if (append) {
-                tmplog_offset = ftello(source_fp);
-            }
-            check_and_fclose(source_fp, source);
-        }
-        check_and_fclose(dest_fp, destination);
+  FILE* dest_fp = fopen_path(destination, append ? "ae" : "we");
+  if (dest_fp == nullptr) {
+    PLOG(ERROR) << "Can't open " << destination;
+  } else {
+    FILE* source_fp = fopen(source, "re");
+    if (source_fp != nullptr) {
+      if (append) {
+        fseeko(source_fp, tmplog_offset, SEEK_SET);  // Since last write
+      }
+      char buf[4096];
+      size_t bytes;
+      while ((bytes = fread(buf, 1, sizeof(buf), source_fp)) != 0) {
+        fwrite(buf, 1, bytes, dest_fp);
+      }
+      if (append) {
+        tmplog_offset = ftello(source_fp);
+      }
+      check_and_fclose(source_fp, source);
     }
+    check_and_fclose(dest_fp, destination);
+  }
 }
 
 static void copy_logs() {
@@ -478,40 +478,38 @@ static void copy_logs() {
     sync();
 }
 
-// clear the recovery command and prepare to boot a (hopefully working) system,
+// Clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read). This function is
 // idempotent: call it as many times as you like.
 static void finish_recovery() {
-    // Save the locale to cache, so if recovery is next started up
-    // without a --locale argument (eg, directly from the bootloader)
-    // it will use the last-known locale.
-    if (!locale.empty() && has_cache) {
-        LOG(INFO) << "Saving locale \"" << locale << "\"";
-
-        FILE* fp = fopen_path(LOCALE_FILE, "w");
-        if (!android::base::WriteStringToFd(locale, fileno(fp))) {
-            PLOG(ERROR) << "Failed to save locale to " << LOCALE_FILE;
-        }
-        check_and_fclose(fp, LOCALE_FILE);
+  // Save the locale to cache, so if recovery is next started up without a '--locale' argument
+  // (e.g., directly from the bootloader) it will use the last-known locale.
+  if (!locale.empty() && has_cache) {
+    LOG(INFO) << "Saving locale \"" << locale << "\"";
+    if (ensure_path_mounted(LOCALE_FILE) != 0) {
+      LOG(ERROR) << "Failed to mount " << LOCALE_FILE;
+    } else if (!android::base::WriteStringToFile(locale, LOCALE_FILE)) {
+      PLOG(ERROR) << "Failed to save locale to " << LOCALE_FILE;
     }
+  }
 
-    copy_logs();
+  copy_logs();
 
-    // Reset to normal system boot so recovery won't cycle indefinitely.
-    std::string err;
-    if (!clear_bootloader_message(&err)) {
-        LOG(ERROR) << "Failed to clear BCB message: " << err;
+  // Reset to normal system boot so recovery won't cycle indefinitely.
+  std::string err;
+  if (!clear_bootloader_message(&err)) {
+    LOG(ERROR) << "Failed to clear BCB message: " << err;
+  }
+
+  // Remove the command file, so recovery won't repeat indefinitely.
+  if (has_cache) {
+    if (ensure_path_mounted(COMMAND_FILE) != 0 || (unlink(COMMAND_FILE) && errno != ENOENT)) {
+      LOG(WARNING) << "Can't unlink " << COMMAND_FILE;
     }
+    ensure_path_unmounted(CACHE_ROOT);
+  }
 
-    // Remove the command file, so recovery won't repeat indefinitely.
-    if (has_cache) {
-        if (ensure_path_mounted(COMMAND_FILE) != 0 || (unlink(COMMAND_FILE) && errno != ENOENT)) {
-            LOG(WARNING) << "Can't unlink " << COMMAND_FILE;
-        }
-        ensure_path_unmounted(CACHE_ROOT);
-    }
-
-    sync();  // For good measure.
+  sync();  // For good measure.
 }
 
 struct saved_log_file {
@@ -552,7 +550,7 @@ static bool erase_volume(const char* volume) {
             }
 
             std::string data(sb.st_size, '\0');
-            FILE* f = fopen(path.c_str(), "rb");
+            FILE* f = fopen(path.c_str(), "rbe");
             fread(&data[0], 1, data.size(), f);
             fclose(f);
 
@@ -580,7 +578,7 @@ static bool erase_volume(const char* volume) {
       ui->Print("Failed to make convert_fbe dir %s\n", strerror(errno));
       return true;
     }
-    FILE* f = fopen(CONVERT_FBE_FILE, "wb");
+    FILE* f = fopen(CONVERT_FBE_FILE, "wbe");
     if (!f) {
       ui->Print("Failed to convert to file encryption %s\n", strerror(errno));
       return true;
@@ -760,12 +758,13 @@ static bool wipe_data(Device* device) {
 }
 
 static bool prompt_and_wipe_data(Device* device) {
+  // Use a single string and let ScreenRecoveryUI handles the wrapping.
   const char* const headers[] = {
-    "Can't load Android system. Your data may be corrupt.",
-    "If you continue to get this message, you may need to",
-    "perform a factory data reset and erase all user data",
+    "Can't load Android system. Your data may be corrupt. "
+    "If you continue to get this message, you may need to "
+    "perform a factory data reset and erase all user data "
     "stored on this device.",
-    NULL
+    nullptr
   };
   const char* const items[] = {
     "Try again",
@@ -1157,7 +1156,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         {
           bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
           if (adb) {
-            status = apply_from_adb(ui, &should_wipe_cache, TEMPORARY_INSTALL_FILE);
+            status = apply_from_adb(&should_wipe_cache, TEMPORARY_INSTALL_FILE);
           } else {
             status = apply_from_sdcard(device, &should_wipe_cache);
           }
@@ -1528,9 +1527,9 @@ int main(int argc, char **argv) {
             }
             if (status != INSTALL_SUCCESS) {
                 ui->Print("Installation aborted.\n");
-                // When I/O error happens, reboot and retry installation EIO_RETRY_COUNT
+                // When I/O error happens, reboot and retry installation RETRY_LIMIT
                 // times before we abandon this OTA update.
-                if (status == INSTALL_RETRY && retry_count < EIO_RETRY_COUNT) {
+                if (status == INSTALL_RETRY && retry_count < RETRY_LIMIT) {
                     copy_logs();
                     set_retry_bootloader_message(retry_count, args);
                     // Print retry count on screen.
@@ -1582,7 +1581,7 @@ int main(int argc, char **argv) {
         if (!sideload_auto_reboot) {
             ui->ShowText(true);
         }
-        status = apply_from_adb(ui, &should_wipe_cache, TEMPORARY_INSTALL_FILE);
+        status = apply_from_adb(&should_wipe_cache, TEMPORARY_INSTALL_FILE);
         if (status == INSTALL_SUCCESS && should_wipe_cache) {
             if (!wipe_cache(false, device)) {
                 status = INSTALL_ERROR;
@@ -1593,25 +1592,32 @@ int main(int argc, char **argv) {
             ui->Print("Rebooting automatically.\n");
         }
     } else if (!just_exit) {
-        status = INSTALL_NONE;  // No command specified
-        ui->SetBackground(RecoveryUI::NO_COMMAND);
+      // If this is an eng or userdebug build, automatically turn on the text display if no command
+      // is specified. Note that this should be called before setting the background to avoid
+      // flickering the background image.
+      if (is_ro_debuggable()) {
+        ui->ShowText(true);
+      }
+      status = INSTALL_NONE;  // No command specified
+      ui->SetBackground(RecoveryUI::NO_COMMAND);
+    }
 
-        // http://b/17489952
-        // If this is an eng or userdebug build, automatically turn on the
-        // text display if no command is specified.
-        if (is_ro_debuggable()) {
-            ui->ShowText(true);
+    if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
+        ui->SetBackground(RecoveryUI::ERROR);
+        if (!ui->IsTextVisible()) {
+            sleep(5);
         }
     }
 
-    if (!sideload_auto_reboot && (status == INSTALL_ERROR || status == INSTALL_CORRUPT)) {
-        copy_logs();
-        ui->SetBackground(RecoveryUI::ERROR);
-    }
-
     Device::BuiltinAction after = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
-    if ((status != INSTALL_SUCCESS && status != INSTALL_SKIPPED && !sideload_auto_reboot) ||
-            ui->IsTextVisible()) {
+    // 1. If the recovery menu is visible, prompt and wait for commands.
+    // 2. If the state is INSTALL_NONE, wait for commands. (i.e. In user build, manually reboot into
+    //    recovery to sideload a package.)
+    // 3. sideload_auto_reboot is an option only available in user-debug build, reboot the device
+    //    without waiting.
+    // 4. In all other cases, reboot the device. Therefore, normal users will observe the device
+    //    reboot after it shows the "error" screen for 5s.
+    if ((status == INSTALL_NONE && !sideload_auto_reboot) || ui->IsTextVisible()) {
         Device::BuiltinAction temp = prompt_and_wait(device, status);
         if (temp != Device::NO_ACTION) {
             after = temp;

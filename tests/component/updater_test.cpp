@@ -15,10 +15,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,6 +31,7 @@
 #include <android-base/strings.h>
 #include <android-base/test_utils.h>
 #include <bootloader_message/bootloader_message.h>
+#include <brotli/encode.h>
 #include <bsdiff.h>
 #include <gtest/gtest.h>
 #include <ziparchive/zip_archive.h>
@@ -222,102 +225,6 @@ TEST_F(UpdaterTest, file_getprop) {
     std::string script6("file_getprop(\"" + std::string(temp_file2.path) +
                        "\", \"ro.product.model\")");
     expect("", script6.c_str(), kNoCause);
-}
-
-TEST_F(UpdaterTest, package_extract_dir) {
-  // package_extract_dir expects 2 arguments.
-  expect(nullptr, "package_extract_dir()", kArgsParsingFailure);
-  expect(nullptr, "package_extract_dir(\"arg1\")", kArgsParsingFailure);
-  expect(nullptr, "package_extract_dir(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
-
-  std::string zip_path = from_testdata_base("ziptest_valid.zip");
-  ZipArchiveHandle handle;
-  ASSERT_EQ(0, OpenArchive(zip_path.c_str(), &handle));
-
-  // Need to set up the ziphandle.
-  UpdaterInfo updater_info;
-  updater_info.package_zip = handle;
-
-  // Extract "b/c.txt" and "b/d.txt" with package_extract_dir("b", "<dir>").
-  TemporaryDir td;
-  std::string temp_dir(td.path);
-  std::string script("package_extract_dir(\"b\", \"" + temp_dir + "\")");
-  expect("t", script.c_str(), kNoCause, &updater_info);
-
-  // Verify.
-  std::string data;
-  std::string file_c = temp_dir + "/c.txt";
-  ASSERT_TRUE(android::base::ReadFileToString(file_c, &data));
-  ASSERT_EQ(kCTxtContents, data);
-
-  std::string file_d = temp_dir + "/d.txt";
-  ASSERT_TRUE(android::base::ReadFileToString(file_d, &data));
-  ASSERT_EQ(kDTxtContents, data);
-
-  // Modify the contents in order to retry. It's expected to be overwritten.
-  ASSERT_TRUE(android::base::WriteStringToFile("random", file_c));
-  ASSERT_TRUE(android::base::WriteStringToFile("random", file_d));
-
-  // Extract again and verify.
-  expect("t", script.c_str(), kNoCause, &updater_info);
-
-  ASSERT_TRUE(android::base::ReadFileToString(file_c, &data));
-  ASSERT_EQ(kCTxtContents, data);
-  ASSERT_TRUE(android::base::ReadFileToString(file_d, &data));
-  ASSERT_EQ(kDTxtContents, data);
-
-  // Clean up the temp files under td.
-  ASSERT_EQ(0, unlink(file_c.c_str()));
-  ASSERT_EQ(0, unlink(file_d.c_str()));
-
-  // Extracting "b/" (with slash) should give the same result.
-  script = "package_extract_dir(\"b/\", \"" + temp_dir + "\")";
-  expect("t", script.c_str(), kNoCause, &updater_info);
-
-  ASSERT_TRUE(android::base::ReadFileToString(file_c, &data));
-  ASSERT_EQ(kCTxtContents, data);
-  ASSERT_TRUE(android::base::ReadFileToString(file_d, &data));
-  ASSERT_EQ(kDTxtContents, data);
-
-  ASSERT_EQ(0, unlink(file_c.c_str()));
-  ASSERT_EQ(0, unlink(file_d.c_str()));
-
-  // Extracting "" is allowed. The entries will carry the path name.
-  script = "package_extract_dir(\"\", \"" + temp_dir + "\")";
-  expect("t", script.c_str(), kNoCause, &updater_info);
-
-  std::string file_a = temp_dir + "/a.txt";
-  ASSERT_TRUE(android::base::ReadFileToString(file_a, &data));
-  ASSERT_EQ(kATxtContents, data);
-  std::string file_b = temp_dir + "/b.txt";
-  ASSERT_TRUE(android::base::ReadFileToString(file_b, &data));
-  ASSERT_EQ(kBTxtContents, data);
-  std::string file_b_c = temp_dir + "/b/c.txt";
-  ASSERT_TRUE(android::base::ReadFileToString(file_b_c, &data));
-  ASSERT_EQ(kCTxtContents, data);
-  std::string file_b_d = temp_dir + "/b/d.txt";
-  ASSERT_TRUE(android::base::ReadFileToString(file_b_d, &data));
-  ASSERT_EQ(kDTxtContents, data);
-
-  ASSERT_EQ(0, unlink(file_a.c_str()));
-  ASSERT_EQ(0, unlink(file_b.c_str()));
-  ASSERT_EQ(0, unlink(file_b_c.c_str()));
-  ASSERT_EQ(0, unlink(file_b_d.c_str()));
-  ASSERT_EQ(0, rmdir((temp_dir + "/b").c_str()));
-
-  // Extracting non-existent entry should still give "t".
-  script = "package_extract_dir(\"doesntexist\", \"" + temp_dir + "\")";
-  expect("t", script.c_str(), kNoCause, &updater_info);
-
-  // Only relative zip_path is allowed.
-  script = "package_extract_dir(\"/b\", \"" + temp_dir + "\")";
-  expect("", script.c_str(), kNoCause, &updater_info);
-
-  // Only absolute dest_path is allowed.
-  script = "package_extract_dir(\"b\", \"path\")";
-  expect("", script.c_str(), kNoCause, &updater_info);
-
-  CloseArchive(handle);
 }
 
 // TODO: Test extracting to block device.
@@ -570,7 +477,7 @@ TEST_F(UpdaterTest, block_image_update) {
   ASSERT_EQ(0, fclose(zip_file_ptr));
 
   MemMapping map;
-  ASSERT_EQ(0, sysMapFile(zip_file.path, &map));
+  ASSERT_TRUE(map.MapFile(zip_file.path));
   ZipArchiveHandle handle;
   ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
 
@@ -578,7 +485,7 @@ TEST_F(UpdaterTest, block_image_update) {
   UpdaterInfo updater_info;
   updater_info.package_zip = handle;
   TemporaryFile temp_pipe;
-  updater_info.cmd_pipe = fopen(temp_pipe.path, "wb");
+  updater_info.cmd_pipe = fopen(temp_pipe.path, "wbe");
   updater_info.package_zip_addr = map.addr;
   updater_info.package_zip_len = map.length;
 
@@ -605,5 +512,146 @@ TEST_F(UpdaterTest, block_image_update) {
   ASSERT_EQ(0, rmdir(stash_base.c_str()));
 
   ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
+  CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, new_data_short_write) {
+  // Create a zip file with new_data.
+  TemporaryFile zip_file;
+  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
+  ZipWriter zip_writer(zip_file_ptr);
+
+  // Add the empty new data.
+  ASSERT_EQ(0, zip_writer.StartEntry("empty_new_data", 0));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  // Add the short written new data.
+  ASSERT_EQ(0, zip_writer.StartEntry("short_new_data", 0));
+  std::string new_data_short = std::string(10, 'a');
+  ASSERT_EQ(0, zip_writer.WriteBytes(new_data_short.data(), new_data_short.size()));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  // Add the data of exactly one block.
+  ASSERT_EQ(0, zip_writer.StartEntry("exact_new_data", 0));
+  std::string new_data_exact = std::string(4096, 'a');
+  ASSERT_EQ(0, zip_writer.WriteBytes(new_data_exact.data(), new_data_exact.size()));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  // Add a dummy patch data.
+  ASSERT_EQ(0, zip_writer.StartEntry("patch_data", 0));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+
+  std::vector<std::string> transfer_list = {
+    "4",
+    "1",
+    "0",
+    "0",
+    "new 2,0,1",
+  };
+  ASSERT_EQ(0, zip_writer.StartEntry("transfer_list", 0));
+  std::string commands = android::base::Join(transfer_list, '\n');
+  ASSERT_EQ(0, zip_writer.WriteBytes(commands.data(), commands.size()));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  ASSERT_EQ(0, zip_writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file_ptr));
+
+  MemMapping map;
+  ASSERT_TRUE(map.MapFile(zip_file.path));
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
+
+  // Set up the handler, command_pipe, patch offset & length.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+  TemporaryFile temp_pipe;
+  updater_info.cmd_pipe = fopen(temp_pipe.path, "wbe");
+  updater_info.package_zip_addr = map.addr;
+  updater_info.package_zip_len = map.length;
+
+  // Updater should report the failure gracefully rather than stuck in deadlock.
+  TemporaryFile update_file;
+  std::string script_empty_data = "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list"), "empty_new_data", "patch_data"))";
+  expect("", script_empty_data.c_str(), kNoCause, &updater_info);
+
+  std::string script_short_data = "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list"), "short_new_data", "patch_data"))";
+  expect("", script_short_data.c_str(), kNoCause, &updater_info);
+
+  // Expect to write 1 block of new data successfully.
+  std::string script_exact_data = "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list"), "exact_new_data", "patch_data"))";
+  expect("t", script_exact_data.c_str(), kNoCause, &updater_info);
+  CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, brotli_new_data) {
+  // Create a zip file with new_data.
+  TemporaryFile zip_file;
+  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
+  ZipWriter zip_writer(zip_file_ptr);
+
+  // Add a brotli compressed new data entry.
+  ASSERT_EQ(0, zip_writer.StartEntry("new.dat.br", 0));
+
+  auto generator = []() { return rand() % 128; };
+  // Generate 100 blocks of random data.
+  std::string brotli_new_data;
+  brotli_new_data.reserve(4096 * 100);
+  generate_n(back_inserter(brotli_new_data), 4096 * 100, generator);
+
+  size_t encoded_size = BrotliEncoderMaxCompressedSize(brotli_new_data.size());
+  std::vector<uint8_t> encoded_data(encoded_size);
+  ASSERT_TRUE(BrotliEncoderCompress(
+      BROTLI_DEFAULT_QUALITY, BROTLI_DEFAULT_WINDOW, BROTLI_DEFAULT_MODE, brotli_new_data.size(),
+      reinterpret_cast<const uint8_t*>(brotli_new_data.data()), &encoded_size, encoded_data.data()));
+
+  ASSERT_EQ(0, zip_writer.WriteBytes(encoded_data.data(), encoded_size));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  // Add a dummy patch data.
+  ASSERT_EQ(0, zip_writer.StartEntry("patch_data", 0));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+
+  // Write a few small chunks of new data, then a large chunk, and finally a few small chunks.
+  // This helps us to catch potential short writes.
+  std::vector<std::string> transfer_list = {
+    "4",
+    "100",
+    "0",
+    "0",
+    "new 2,0,1",
+    "new 2,1,2",
+    "new 4,2,50,50,97",
+    "new 2,97,98",
+    "new 2,98,99",
+    "new 2,99,100",
+  };
+  ASSERT_EQ(0, zip_writer.StartEntry("transfer_list", 0));
+  std::string commands = android::base::Join(transfer_list, '\n');
+  ASSERT_EQ(0, zip_writer.WriteBytes(commands.data(), commands.size()));
+  ASSERT_EQ(0, zip_writer.FinishEntry());
+  ASSERT_EQ(0, zip_writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file_ptr));
+
+  MemMapping map;
+  ASSERT_TRUE(map.MapFile(zip_file.path));
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
+
+  // Set up the handler, command_pipe, patch offset & length.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+  TemporaryFile temp_pipe;
+  updater_info.cmd_pipe = fopen(temp_pipe.path, "wb");
+  updater_info.package_zip_addr = map.addr;
+  updater_info.package_zip_len = map.length;
+
+  // Check if we can decompress the new data correctly.
+  TemporaryFile update_file;
+  std::string script_new_data =
+      "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list"), "new.dat.br", "patch_data"))";
+  expect("t", script_new_data.c_str(), kNoCause, &updater_info);
+
+  std::string updated_content;
+  ASSERT_TRUE(android::base::ReadFileToString(update_file.path, &updated_content));
+  ASSERT_EQ(brotli_new_data, updated_content);
   CloseArchive(handle);
 }

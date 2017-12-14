@@ -56,7 +56,7 @@ static int open_png(const char* name, png_structp* png_ptr, png_infop* info_ptr,
 
     snprintf(resPath, sizeof(resPath)-1, "/res/images/%s.png", name);
     resPath[sizeof(resPath)-1] = '\0';
-    FILE* fp = fopen(resPath, "rb");
+    FILE* fp = fopen(resPath, "rbe");
     if (fp == NULL) {
         result = -1;
         goto exit;

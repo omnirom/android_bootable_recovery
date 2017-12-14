@@ -19,37 +19,35 @@
 
 #include <sys/types.h>
 
+#include <string>
 #include <vector>
-
-struct MappedRange {
-  void* addr;
-  size_t length;
-};
 
 /*
  * Use this to keep track of mapped segments.
  */
-struct MemMapping {
-  unsigned char* addr; /* start of data */
-  size_t length;       /* length of data */
+class MemMapping {
+ public:
+  ~MemMapping();
+  // Map a file into a private, read-only memory segment. If 'filename' begins with an '@'
+  // character, it is a map of blocks to be mapped, otherwise it is treated as an ordinary file.
+  bool MapFile(const std::string& filename);
+  size_t ranges() const {
+    return ranges_.size();
+  };
 
-  std::vector<MappedRange> ranges;
+  unsigned char* addr;  // start of data
+  size_t length;        // length of data
+
+ private:
+  struct MappedRange {
+    void* addr;
+    size_t length;
+  };
+
+  bool MapBlockFile(const std::string& filename);
+  bool MapFD(int fd);
+
+  std::vector<MappedRange> ranges_;
 };
-
-/*
- * Map a file into a private, read-only memory segment.  If 'fn'
- * begins with an '@' character, it is a map of blocks to be mapped,
- * otherwise it is treated as an ordinary file.
- *
- * On success, "pMap" is filled in, and zero is returned.
- */
-int sysMapFile(const char* fn, MemMapping* pMap);
-
-/*
- * Release the pages associated with a shared memory segment.
- *
- * This does not free "pMap"; it just releases the memory.
- */
-void sysReleaseMap(MemMapping* pMap);
 
 #endif  // _OTAUTIL_SYSUTIL

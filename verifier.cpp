@@ -474,81 +474,80 @@ std::unique_ptr<EC_KEY, ECKEYDeleter> parse_ec_key(FILE* file) {
 // Otherwise returns false if the file failed to parse, or if it contains zero
 // keys. The contents in certs would be unspecified on failure.
 bool load_keys(const char* filename, std::vector<Certificate>& certs) {
-    std::unique_ptr<FILE, decltype(&fclose)> f(fopen(filename, "r"), fclose);
-    if (!f) {
-        PLOG(ERROR) << "error opening " << filename;
+  std::unique_ptr<FILE, decltype(&fclose)> f(fopen(filename, "re"), fclose);
+  if (!f) {
+    PLOG(ERROR) << "error opening " << filename;
+    return false;
+  }
+
+  while (true) {
+    certs.emplace_back(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+    Certificate& cert = certs.back();
+    uint32_t exponent = 0;
+
+    char start_char;
+    if (fscanf(f.get(), " %c", &start_char) != 1) return false;
+    if (start_char == '{') {
+      // a version 1 key has no version specifier.
+      cert.key_type = Certificate::KEY_TYPE_RSA;
+      exponent = 3;
+      cert.hash_len = SHA_DIGEST_LENGTH;
+    } else if (start_char == 'v') {
+      int version;
+      if (fscanf(f.get(), "%d {", &version) != 1) return false;
+      switch (version) {
+        case 2:
+          cert.key_type = Certificate::KEY_TYPE_RSA;
+          exponent = 65537;
+          cert.hash_len = SHA_DIGEST_LENGTH;
+          break;
+        case 3:
+          cert.key_type = Certificate::KEY_TYPE_RSA;
+          exponent = 3;
+          cert.hash_len = SHA256_DIGEST_LENGTH;
+          break;
+        case 4:
+          cert.key_type = Certificate::KEY_TYPE_RSA;
+          exponent = 65537;
+          cert.hash_len = SHA256_DIGEST_LENGTH;
+          break;
+        case 5:
+          cert.key_type = Certificate::KEY_TYPE_EC;
+          cert.hash_len = SHA256_DIGEST_LENGTH;
+          break;
+        default:
+          return false;
+      }
+    }
+
+    if (cert.key_type == Certificate::KEY_TYPE_RSA) {
+      cert.rsa = parse_rsa_key(f.get(), exponent);
+      if (!cert.rsa) {
         return false;
+      }
+
+      LOG(INFO) << "read key e=" << exponent << " hash=" << cert.hash_len;
+    } else if (cert.key_type == Certificate::KEY_TYPE_EC) {
+      cert.ec = parse_ec_key(f.get());
+      if (!cert.ec) {
+        return false;
+      }
+    } else {
+      LOG(ERROR) << "Unknown key type " << cert.key_type;
+      return false;
     }
 
-    while (true) {
-        certs.emplace_back(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
-        Certificate& cert = certs.back();
-        uint32_t exponent = 0;
-
-        char start_char;
-        if (fscanf(f.get(), " %c", &start_char) != 1) return false;
-        if (start_char == '{') {
-            // a version 1 key has no version specifier.
-            cert.key_type = Certificate::KEY_TYPE_RSA;
-            exponent = 3;
-            cert.hash_len = SHA_DIGEST_LENGTH;
-        } else if (start_char == 'v') {
-            int version;
-            if (fscanf(f.get(), "%d {", &version) != 1) return false;
-            switch (version) {
-                case 2:
-                    cert.key_type = Certificate::KEY_TYPE_RSA;
-                    exponent = 65537;
-                    cert.hash_len = SHA_DIGEST_LENGTH;
-                    break;
-                case 3:
-                    cert.key_type = Certificate::KEY_TYPE_RSA;
-                    exponent = 3;
-                    cert.hash_len = SHA256_DIGEST_LENGTH;
-                    break;
-                case 4:
-                    cert.key_type = Certificate::KEY_TYPE_RSA;
-                    exponent = 65537;
-                    cert.hash_len = SHA256_DIGEST_LENGTH;
-                    break;
-                case 5:
-                    cert.key_type = Certificate::KEY_TYPE_EC;
-                    cert.hash_len = SHA256_DIGEST_LENGTH;
-                    break;
-                default:
-                    return false;
-            }
-        }
-
-        if (cert.key_type == Certificate::KEY_TYPE_RSA) {
-            cert.rsa = parse_rsa_key(f.get(), exponent);
-            if (!cert.rsa) {
-              return false;
-            }
-
-            LOG(INFO) << "read key e=" << exponent << " hash=" << cert.hash_len;
-        } else if (cert.key_type == Certificate::KEY_TYPE_EC) {
-            cert.ec = parse_ec_key(f.get());
-            if (!cert.ec) {
-              return false;
-            }
-        } else {
-            LOG(ERROR) << "Unknown key type " << cert.key_type;
-            return false;
-        }
-
-        // if the line ends in a comma, this file has more keys.
-        int ch = fgetc(f.get());
-        if (ch == ',') {
-            // more keys to come.
-            continue;
-        } else if (ch == EOF) {
-            break;
-        } else {
-            LOG(ERROR) << "unexpected character between keys";
-            return false;
-        }
+    // if the line ends in a comma, this file has more keys.
+    int ch = fgetc(f.get());
+    if (ch == ',') {
+      // more keys to come.
+      continue;
+    } else if (ch == EOF) {
+      break;
+    } else {
+      LOG(ERROR) << "unexpected character between keys";
+      return false;
     }
-
-    return true;
+  }
+  return true;
 }
