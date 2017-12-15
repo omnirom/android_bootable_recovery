@@ -34,6 +34,24 @@
       "revId": "55ae57c80d7b368e13b81dc5f34b7c19dd9eaffd",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b49adf27_94b31fd3",
+        "filename": "Android.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 1002138
+      },
+      "writtenOn": "2017-12-15T17:41:58Z",
+      "side": 1,
+      "message": "I sadly must disagree. A look at the github bug tracker and XDA show that many users have decryption issues when using TWRP in conjunction with a current LineageOS. Here are two examples for Xioamoi Devices which personally know they don\u0027t work because of this. However there are many more devices of many more manufacturers affected.\n\nhttps://github.com/TeamWin/Team-Win-Recovery-Project/issues/1108\n\nhttps://forum.xda-developers.com/showpost.php?p\u003d74822607\u0026postcount\u003d412",
+      "parentUuid": "7b212bc3_d65c32ea",
+      "revId": "55ae57c80d7b368e13b81dc5f34b7c19dd9eaffd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
