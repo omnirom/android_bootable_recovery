@@ -287,9 +287,26 @@ bool Get_Password_Data(const std::string& spblob_path, const std::string& handle
 			return false;
 		}
 		memcpy(pwd->salt, intptr + 1, pwd->salt_len);
+		intptr++;
+		byteptr = (const unsigned char*)intptr;
+		byteptr += pwd->salt_len;
 	} else {
 		printf("Get_Password_Data salt_len is 0\n");
 		return false;
+	}
+	intptr = (const int*)byteptr;
+	pwd->handle_len = *intptr;
+	endianswap(&pwd->handle_len);
+	if (pwd->handle_len != 0) {
+		pwd->password_handle = malloc(pwd->handle_len);
+		if (!pwd->password_handle) {
+			printf("Get_Password_Data malloc password_handle\n");
+			return false;
+		}
+		memcpy(pwd->password_handle, intptr + 1, pwd->handle_len);
+	} else {
+		printf("Get_Password_Data handle_len is 0\n");
+		// Not an error if using weaver
 	}
 	return true;
 }
@@ -496,7 +513,7 @@ bool Find_Keystore_Alias_SubID_And_Prep_Files(const userid_t user_id, std::strin
 /* C++ replacement for function of the same name
  * https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#867
  * returning an empty string indicates an error */
-std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const std::string& handle_str, const userid_t user_id, const void* application_id, const size_t application_id_size) {
+std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const std::string& handle_str, const userid_t user_id, const void* application_id, const size_t application_id_size, uint32_t auth_token_len) {
 	std::string disk_decryption_secret_key = "";
 
 	std::string keystore_alias_subid;
@@ -511,6 +528,11 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 	if (service == NULL) {
 		printf("error: could not connect to keystore service\n");
 		return disk_decryption_secret_key;
+	}
+
+	if (auth_token_len > 0) {
+		printf("Starting keystore_auth service...\n");
+		property_set("ctl.start", "keystore_auth");
 	}
 
 	// Read the data from the .spblob file per: https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#869
@@ -578,6 +600,36 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
     //printf("spblob_data size: %lu actual_size %i, final_size: %i\n", spblob_data.size(), actual_size, final_size);
     intermediate_key.resize(actual_size + final_size - 16, '\0');// not sure why we have to trim the size by 16 as I don't see where this is done in Java side
     //printf("intermediate key: "); output_hex((const unsigned char*)intermediate_key.data(), intermediate_key.size()); printf("\n");
+
+	// When using secdis (aka not weaver) you must supply an auth token to the keystore prior to the begin operation
+	if (auth_token_len > 0) {
+		/*::keystore::KeyStoreServiceReturnCode auth_result = service->addAuthToken(auth_token, auth_token_len);
+		if (!auth_result.isOk()) {
+			// The keystore checks the uid of the calling process and will return a permission denied on this operation for user 0
+			printf("keystore error adding auth token\n");
+			return disk_decryption_secret_key;
+		}*/
+		// The keystore refuses to allow the root user to supply auth tokens, so we write the auth token to a file earlier and
+		// run a separate service that runs user the system user to add the auth token. We wait for the auth token file to be
+		// deleted by the keymaster_auth service and check for a /auth_error file in case of errors. We quit after after a while if
+		// the /auth_token file never gets deleted.
+		int auth_wait_count = 20;
+		while (access("/auth_token", F_OK) == 0 && auth_wait_count-- > 0)
+			usleep(5000);
+		if (auth_wait_count == 0 || access("/auth_error", F_OK) == 0) {
+			printf("error during keymaster_auth service\n");
+			/* If you are getting this error, make sure that you have the keymaster_auth service defined in your init scripts, preferrably in init.recovery.{ro.hardware}.rc
+			 * service keystore_auth /sbin/keystore_auth
+			 *     disabled
+			 *     oneshot
+			 *     user system
+			 *     group root
+			 *     seclabel u:r:recovery:s0
+			 *
+			 * And check dmesg for error codes regarding this service if needed. */
+			return disk_decryption_secret_key;
+		}
+	}
 
 	int32_t ret;
 
@@ -677,11 +729,40 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 
 #define PASSWORD_TOKEN_SIZE 32
 
-bool Free_Return(bool retval, void* weaver_key, void* pwd_salt) {
+/* C++ replacement for
+ * https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#992
+ * called here
+ * https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#813 */
+bool Get_Secdis(const std::string& spblob_path, const std::string& handle_str, std::string& secdis_data) {
+	std::string secdis_file = spblob_path + handle_str + ".secdis";
+	if (!android::base::ReadFileToString(secdis_file, &secdis_data)) {
+		printf("Failed to read '%s'\n", secdis_file.c_str());
+		return false;
+	}
+	//output_hex(secdis_data.data(), secdis_data.size());printf("\n");
+	return true;
+}
+
+// C++ replacement for https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#1033
+userid_t fakeUid(const userid_t uid) {
+    return 100000 + uid;
+}
+
+bool Is_Weaver(const std::string& spblob_path, const std::string& handle_str) {
+	std::string weaver_file = spblob_path + handle_str + ".weaver";
+	struct stat st;
+	if (stat(weaver_file.c_str(), &st) == 0)
+		return true;
+	return false;
+}
+
+bool Free_Return(bool retval, void* weaver_key, password_data_struct* pwd) {
 	if (weaver_key)
 		free(weaver_key);
-	if (pwd_salt)
-		free(pwd_salt);
+	if (pwd->salt)
+		free(pwd->salt);
+	if (pwd->password_handle)
+		free(pwd->password_handle);
 	return retval;
 }
 
@@ -692,6 +773,12 @@ bool Decrypt_User_Synth_Pass(const userid_t user_id, const std::string& Password
 	void* weaver_key = NULL;
 	password_data_struct pwd;
 	pwd.salt = NULL;
+	pwd.salt_len = 0;
+	pwd.password_handle = NULL;
+	pwd.handle_len = 0;
+	char application_id[PASSWORD_TOKEN_SIZE + SHA512_DIGEST_LENGTH];
+
+    uint32_t auth_token_len = 0;
 
 	std::string secret; // this will be the disk decryption key that is sent to vold
 	std::string token = "!"; // there is no token used for this kind of decrypt, key escrow is handled by weaver
@@ -708,14 +795,14 @@ bool Decrypt_User_Synth_Pass(const userid_t user_id, const std::string& Password
 	// Get the handle: https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/LockSettingsService.java#2017
 	if (!Find_Handle(spblob_path, handle_str)) {
 		printf("Error getting handle\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
+		return Free_Return(retval, weaver_key, &pwd);
 	}
 	printf("Handle is '%s'\n", handle_str.c_str());
 	// Now we begin driving unwrapPasswordBasedSyntheticPassword from: https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#758
 	// First we read the password data which contains scrypt parameters
 	if (!Get_Password_Data(spblob_path, handle_str, &pwd)) {
 		printf("Failed to Get_Password_Data\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
+		return Free_Return(retval, weaver_key, &pwd);
 	}
 	//printf("pwd N %i R %i P %i salt ", pwd.scryptN, pwd.scryptR, pwd.scryptP); output_hex((char*)pwd.salt, pwd.salt_len); printf("\n");
 	unsigned char password_token[PASSWORD_TOKEN_SIZE];
@@ -723,81 +810,152 @@ bool Decrypt_User_Synth_Pass(const userid_t user_id, const std::string& Password
 	// The password token is the password scrypted with the parameters from the password data file
 	if (!Get_Password_Token(&pwd, Password, &password_token[0])) {
 		printf("Failed to Get_Password_Token\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
+		return Free_Return(retval, weaver_key, &pwd);
 	}
 	//output_hex(&password_token[0], PASSWORD_TOKEN_SIZE);printf("\n");
-	// BEGIN PIXEL 2 WEAVER
-	// Get the weaver data from the .weaver file which tells us which slot to use when we ask weaver for the escrowed key
-	// https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#768
-	weaver_data_struct wd;
-	if (!Get_Weaver_Data(spblob_path, handle_str, &wd)) {
-		printf("Failed to get weaver data\n");
-		// Fail over to gatekeeper path for Pixel 1???
-		return Free_Return(retval, weaver_key, pwd.salt);
-	}
-	// The weaver key is the the password token prefixed with "weaver-key" padded to 128 with nulls with the password token appended then SHA512
-	// https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#1059
-	weaver_key = PersonalizedHashBinary(PERSONALISATION_WEAVER_KEY, (char*)&password_token[0], PASSWORD_TOKEN_SIZE);
-	if (!weaver_key) {
-		printf("malloc error getting weaver_key\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
-	}
-	// Now we start driving weaverVerify: https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#343
-	// Called from https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#776
-	android::vold::Weaver weaver;
-    if (!weaver) {
-		printf("Failed to get weaver service\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
-	}
-	// Get the key size from weaver service
-	uint32_t weaver_key_size = 0;
-	if (!weaver.GetKeySize(&weaver_key_size)) {
-		printf("Failed to get weaver key size\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
+	if (Is_Weaver(spblob_path, handle_str)) {
+		printf("using weaver\n");
+		// BEGIN PIXEL 2 WEAVER
+		// Get the weaver data from the .weaver file which tells us which slot to use when we ask weaver for the escrowed key
+		// https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#768
+		weaver_data_struct wd;
+		if (!Get_Weaver_Data(spblob_path, handle_str, &wd)) {
+			printf("Failed to get weaver data\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
+		// The weaver key is the the password token prefixed with "weaver-key" padded to 128 with nulls with the password token appended then SHA512
+		// https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#1059
+		weaver_key = PersonalizedHashBinary(PERSONALISATION_WEAVER_KEY, (char*)&password_token[0], PASSWORD_TOKEN_SIZE);
+		if (!weaver_key) {
+			printf("malloc error getting weaver_key\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
+		// Now we start driving weaverVerify: https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#343
+		// Called from https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#776
+		android::vold::Weaver weaver;
+		if (!weaver) {
+			printf("Failed to get weaver service\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
+		// Get the key size from weaver service
+		uint32_t weaver_key_size = 0;
+		if (!weaver.GetKeySize(&weaver_key_size)) {
+			printf("Failed to get weaver key size\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		} else {
+			//printf("weaver key size is %u\n", weaver_key_size);
+		}
+		//printf("weaver key: "); output_hex((unsigned char*)weaver_key, weaver_key_size); printf("\n");
+		// Send the slot from the .weaver file, the computed weaver key, and get the escrowed key data
+		std::vector<uint8_t> weaver_payload;
+		// TODO: we should return more information about the status including time delays before the next retry
+		if (!weaver.WeaverVerify(wd.slot, weaver_key, &weaver_payload)) {
+			printf("failed to weaver verify\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
+		//printf("weaver payload: "); output_hex(&weaver_payload); printf("\n");
+		// Done with weaverVerify
+		// Now we will compute the application ID
+		// https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#964
+		// Called from https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#780
+		// The escrowed weaver key data is prefixed with "weaver-pwd" padded to 128 with nulls with the weaver payload appended then SHA512
+		void* weaver_secret = PersonalizedHashBinary(PERSONALISATION_WEAVER_PASSWORD, (const char*)weaver_payload.data(), weaver_payload.size());
+		//printf("weaver secret: "); output_hex((unsigned char*)weaver_secret, SHA512_DIGEST_LENGTH); printf("\n");
+		// The application ID is the password token and weaver secret appended to each other
+		memcpy((void*)&application_id[0], (void*)&password_token[0], PASSWORD_TOKEN_SIZE);
+		memcpy((void*)&application_id[PASSWORD_TOKEN_SIZE], weaver_secret, SHA512_DIGEST_LENGTH);
+		//printf("application ID: "); output_hex((unsigned char*)application_id, PASSWORD_TOKEN_SIZE + SHA512_DIGEST_LENGTH); printf("\n");
+		// END PIXEL 2 WEAVER
 	} else {
-		//printf("weaver key size is %u\n", weaver_key_size);
+		printf("using secdis\n");
+		std::string secdis_data;
+		if (!Get_Secdis(spblob_path, handle_str, secdis_data)) {
+			printf("Failed to get secdis data\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
+		void* secdiscardable = PersonalizedHashBinary(PERSONALISATION_SECDISCARDABLE, (char*)secdis_data.data(), secdis_data.size());
+		if (!secdiscardable) {
+			printf("malloc error getting secdiscardable\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
+		memcpy((void*)&application_id[0], (void*)&password_token[0], PASSWORD_TOKEN_SIZE);
+		memcpy((void*)&application_id[PASSWORD_TOKEN_SIZE], secdiscardable, SHA512_DIGEST_LENGTH);
+
+		int ret = -1;
+		bool request_reenroll = false;
+		android::sp<android::hardware::gatekeeper::V1_0::IGatekeeper> gk_device;
+		gk_device = ::android::hardware::gatekeeper::V1_0::IGatekeeper::getService();
+		if (gk_device == nullptr) {
+			printf("failed to get gatekeeper service\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
+		if (pwd.handle_len <= 0) {
+			printf("no password handle supplied\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
+		android::hardware::hidl_vec<uint8_t> pwd_handle_hidl;
+		pwd_handle_hidl.setToExternal(const_cast<uint8_t *>((const uint8_t *)pwd.password_handle), pwd.handle_len);
+		void* gk_pwd_token = PersonalizedHashBinary(PERSONALIZATION_USER_GK_AUTH, (char*)&password_token[0], PASSWORD_TOKEN_SIZE);
+		if (!gk_pwd_token) {
+			printf("malloc error getting gatekeeper_key\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
+		android::hardware::hidl_vec<uint8_t> gk_pwd_token_hidl;
+		gk_pwd_token_hidl.setToExternal(const_cast<uint8_t *>((const uint8_t *)gk_pwd_token), SHA512_DIGEST_LENGTH);
+		android::hardware::Return<void> hwRet =
+			gk_device->verify(fakeUid(user_id), 0 /* challange */,
+							  pwd_handle_hidl,
+							  gk_pwd_token_hidl,
+							  [&ret, &request_reenroll, &auth_token_len]
+								(const android::hardware::gatekeeper::V1_0::GatekeeperResponse &rsp) {
+									ret = static_cast<int>(rsp.code); // propagate errors
+									if (rsp.code >= android::hardware::gatekeeper::V1_0::GatekeeperStatusCode::STATUS_OK) {
+										auth_token_len = rsp.data.size();
+										request_reenroll = (rsp.code == android::hardware::gatekeeper::V1_0::GatekeeperStatusCode::STATUS_REENROLL);
+										ret = 0; // all success states are reported as 0
+										// The keystore refuses to allow the root user to supply auth tokens, so we write the auth token to a file here and later
+										// run a separate service that runs as the system user to add the auth token. We wait for the auth token file to be
+										// deleted by the keymaster_auth service and check for a /auth_error file in case of errors. We quit after a while seconds if
+										// the /auth_token file never gets deleted.
+										unlink("/auth_token");
+										FILE* auth_file = fopen("/auth_token","wb");
+										if (auth_file != NULL) {
+											fwrite(rsp.data.data(), sizeof(uint8_t), rsp.data.size(), auth_file);
+											fclose(auth_file);
+										} else {
+											printf("failed to open /auth_token for writing\n");
+											ret = -2;
+										}
+									} else if (rsp.code == android::hardware::gatekeeper::V1_0::GatekeeperStatusCode::ERROR_RETRY_TIMEOUT && rsp.timeout > 0) {
+										ret = rsp.timeout;
+									}
+								}
+							 );
+		free(gk_pwd_token);
+		if (!hwRet.isOk() || ret != 0) {
+			printf("gatekeeper verification failed\n");
+			return Free_Return(retval, weaver_key, &pwd);
+		}
 	}
-	//printf("weaver key: "); output_hex((unsigned char*)weaver_key, weaver_key_size); printf("\n");
-	// Send the slot from the .weaver file, the computed weaver key, and get the escrowed key data
-	std::vector<uint8_t> weaver_payload;
-	// TODO: we should return more information about the status including time delays before the next retry
-	if (!weaver.WeaverVerify(wd.slot, weaver_key, &weaver_payload)) {
-		printf("failed to weaver verify\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
-	}
-	//printf("weaver payload: "); output_hex(&weaver_payload); printf("\n");
-	// Done with weaverVerify
-	// Now we will compute the application ID
-	// https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#964
-	// Called from https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#780
-	// The escrowed weaver key data is prefixed with "weaver-pwd" padded to 128 with nulls with the weaver payload appended then SHA512
-	void* weaver_secret = PersonalizedHashBinary(PERSONALISATION_WEAVER_PASSWORD, (const char*)weaver_payload.data(), weaver_payload.size());
-	//printf("weaver secret: "); output_hex((unsigned char*)weaver_secret, SHA512_DIGEST_LENGTH); printf("\n");
-	// The application ID is the password token and weaver secret appended to each other
-	char application_id[PASSWORD_TOKEN_SIZE + SHA512_DIGEST_LENGTH];
-	memcpy((void*)&application_id[0], (void*)&password_token[0], PASSWORD_TOKEN_SIZE);
-	memcpy((void*)&application_id[PASSWORD_TOKEN_SIZE], weaver_secret, SHA512_DIGEST_LENGTH);
-	//printf("application ID: "); output_hex((unsigned char*)application_id, PASSWORD_TOKEN_SIZE + SHA512_DIGEST_LENGTH); printf("\n");
-	// END PIXEL 2 WEAVER
 	// Now we will handle https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#816
 	// Plus we will include the last bit that computes the disk decrypt key found in:
 	// https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#153
-	secret = android::keystore::unwrapSyntheticPasswordBlob(spblob_path, handle_str, user_id, (const void*)&application_id[0], PASSWORD_TOKEN_SIZE + SHA512_DIGEST_LENGTH);
+	secret = android::keystore::unwrapSyntheticPasswordBlob(spblob_path, handle_str, user_id, (const void*)&application_id[0], PASSWORD_TOKEN_SIZE + SHA512_DIGEST_LENGTH, auth_token_len);
 	if (!secret.size()) {
 		printf("failed to unwrapSyntheticPasswordBlob\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
+		return Free_Return(retval, weaver_key, &pwd);
 	}
 	if (!e4crypt_unlock_user_key(user_id, 0, token.c_str(), secret.c_str())) {
 		printf("e4crypt_unlock_user_key returned fail\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
+		return Free_Return(retval, weaver_key, &pwd);
 	}
 	if (!e4crypt_prepare_user_storage(nullptr, user_id, 0, flags)) {
 		printf("failed to e4crypt_prepare_user_storage\n");
-		return Free_Return(retval, weaver_key, pwd.salt);
+		return Free_Return(retval, weaver_key, &pwd);
 	}
 	printf("Decrypted Successfully!\n");
 	retval = true;
-	return Free_Return(retval, weaver_key, pwd.salt);
+	return Free_Return(retval, weaver_key, &pwd);
 }
 #endif //HAVE_SYNTH_PWD_SUPPORT
 
