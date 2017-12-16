@@ -581,6 +581,23 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error,
 			Process_TW_Flags(flagptr, Display_Error, 1); // Forcing the fstab to ver 1 because this data is coming from the /etc/twrp.flags which should be using the TWRP v1 flags format
 		}
 	}
+
+	if (Mount_Point == "/persist" && Can_Be_Mounted) {
+		bool mounted = Is_Mounted();
+		if (mounted || Mount(false)) {
+			if (TWFunc::Path_Exists(PERSIST_SETTINGS_FILE)) {
+				// Read the backup settings file
+				LOGINFO("Attempt to load settings from /persist settings file...\n");
+				DataManager::LoadPersistValues();
+				DataManager::update_tz_environment_variables();
+				TWFunc::Set_Brightness(DataManager::GetStrValue("tw_brightness"));
+			}
+			TWFunc::Fixup_Time_On_Boot("/persist/time/");
+			if (!mounted)
+				UnMount(false);
+		}
+	}
+
 	return true;
 }
 
