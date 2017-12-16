@@ -24,6 +24,8 @@
 #define PERSONALISATION_WEAVER_PASSWORD "weaver-pwd"
 #define PERSONALISATION_APPLICATION_ID "application-id"
 #define PERSONALIZATION_FBE_KEY "fbe-key"
+#define PERSONALIZATION_USER_GK_AUTH "user-gk-authentication"
+#define PERSONALISATION_SECDISCARDABLE "secdiscardable-transform"
 
 void* PersonalizedHashBinary(const char* prefix, const char* key, const size_t key_size);
 
