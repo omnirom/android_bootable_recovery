@@ -17,7 +17,7 @@
         <string name="data_backup">Data (εκτός αποθ. χώρου)</string>
         <string name="sdcard">Κάρτα SD</string>
         <string name="internal">Εσωτερικός χώρος αποθήκευσης</string>
-        <string name="microsd">Micro SDCard</string>
+        <string name="microsd">Κάρτα Micro SD</string>
         <string name="usbotg">USB OTG</string>
         <string name="android_secure">Android secure</string>
         <string name="dalvik">Dalvik / ART Cache</string>
