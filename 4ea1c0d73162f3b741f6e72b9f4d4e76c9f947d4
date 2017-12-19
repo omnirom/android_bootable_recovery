@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "06e88d1d_1bd944a5",
+        "filename": "partition.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 585,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2017-12-19T00:27:04Z",
+      "side": 1,
+      "message": "Will the twrp settings override if they are stored on external and internal media?",
+      "revId": "4ea1c0d73162f3b741f6e72b9f4d4e76c9f947d4",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
