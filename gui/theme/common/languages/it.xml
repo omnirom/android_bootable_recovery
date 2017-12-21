@@ -20,9 +20,9 @@
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
 		<string name="data_backup">Data (escl. archivio)</string>
-		<string name="sdcard">SDCard</string>
+		<string name="sdcard">Scheda SD</string>
 		<string name="internal">Archivio interno</string>
-		<string name="microsd">Micro SD</string>
+		<string name="microsd">Scheda Micro SD</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Secure</string>
 		<string name="dalvik">Dalvik / ART Cache</string>
