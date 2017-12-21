@@ -450,7 +450,7 @@
 		<string name="swipe_su_install">   Namesti</string>
 		<string name="su_installing">Nameščanje SuperSU-ja</string>
 		<string name="sel_storage_list">Izberite pomnilniško napravo</string>
-		<string name="ok_btn">V redu</string>
+		<string name="ok_btn">OK</string>
 		<string name="no_kernel_selinux">Jedro nima podpore za branje vsebin SELinux.</string>
 		<string name="full_selinux">Prisotna je polna podpora za SELinux.</string>
 		<string name="no_selinux">Ni podpore za SELinux (libselinux manjka).</string>
