@@ -19,9 +19,9 @@
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
-		<string name="sdcard">SD Kaart</string>
+		<string name="sdcard">SD kaart</string>
 		<string name="internal">Interne opslag</string>
-		<string name="microsd">Micro SDCard</string>
+		<string name="microsd">Micro SD kaart</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Secure</string>
 		<string name="dalvik">Dalvik / ART Cache</string>
@@ -300,7 +300,7 @@
 		<string name="ctr_navbar_rdo">Navbar knoppen centreren</string>
 		<string name="lft_navbar_rdo">Navbar knoppen links uitlijnen</string>
 		<string name="rht_navbar_rdo">Navbar knoppen rechts uitlijnen</string>
-		<string name="restore_defaults_btn">Standaardwaarden herstellen</string>
+		<string name="restore_defaults_btn">Standaardwaarden herst.</string>
 		<string name="settings_tz_btn">Tijdzone</string>
 		<string name="settings_screen_btn">Scherm</string>
 		<string name="settings_screen_bright_btn">Scherm helderheid</string>
@@ -363,12 +363,12 @@
 		<string name="sel_lang_btn">Taal selecteren</string>
 		<string name="set_language_btn">Taal instellen</string>
 		<string name="advanced_hdr">Geavanceerd</string>
-		<string name="copy_log_confirm">Log naar SD-kaart kopiëren?</string>
-		<string name="copying_log">Log naar SD-kaart kopiëren...</string>
+		<string name="copy_log_confirm">Log naar SD kaart kopiëren?</string>
+		<string name="copying_log">Log naar SD kaart kopiëren...</string>
 		<string name="copy_log_complete">Log kopie voltooid</string>
 		<string name="fix_context_btn">Context repareren</string>
-		<string name="part_sd_btn">SD-kaart Partitioneren</string>
-		<string name="part_sd_s_btn">SD-kaart</string>
+		<string name="part_sd_btn">SD kaart Partitioneren</string>
+		<string name="part_sd_s_btn">SD kaart</string>
 		<string name="file_manager_btn">Bestandsbeheer</string>
 		<string name="language_hdr">Taal</string>
 		<string name="terminal_btn">Terminal</string>
@@ -379,9 +379,9 @@
 		<string name="injecting_twrp">TWRP Opnieuw injecteren...</string>
 		<string name="inject_twrp_complete">TWRP injectie voltooid</string>
 		<string name="swipe_to_confirm">Veeg om te bevestigen</string>
-		<string name="part_sd_hdr">SD-kaart Partitioneren</string>
+		<string name="part_sd_hdr">SD kaart Partitioneren</string>
 		<string name="invalid_partsd_sel">U moet een verwisselbaar apparaat selecteren</string>
-		<string name="part_sd_lose">U verliest alle bestanden op uw SD-kaart!</string>
+		<string name="part_sd_lose">U verliest alle bestanden op uw SD kaart!</string>
 		<string name="part_sd_undo">Deze actie kan niet ongedaan gemaakt worden!</string>
 		<string name="part_sd_ext_sz">EXT-grootte:</string>
 		<string name="part_sd_swap_sz">Swap grootte:</string>
@@ -390,7 +390,7 @@
 		<string name="file_system">Bestandsysteem:</string>
 		<string name="swipe_part_sd">Veeg om te partitioneren</string>
 		<string name="swipe_part_sd_s">Partitie</string>
-		<string name="partitioning_sd">SD-kaart partitioneren...</string>
+		<string name="partitioning_sd">SD kaart partitioneren...</string>
 		<string name="partitioning_sd2">Dit duurt een paar minuten.</string>
 		<string name="part_sd_complete">Partitionering voltooid</string>
 		<string name="dumlock_hdr">HTC Dumlock</string>
@@ -471,7 +471,7 @@
 		<string name="swipe_su_install">   Installeren</string>
 		<string name="su_installing">Installeren van SuperSU</string>
 		<string name="sel_storage_list">Selecteer opslag</string>
-		<string name="ok_btn">Oké</string>
+		<string name="ok_btn">OK</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel heeft geen ondersteuning voor het lezen van SELinux contexten.</string>
@@ -536,9 +536,9 @@
 		<string name="no_crypto_support">Er is geen crypto ondersteuning gecompileerd in deze build.</string>
 		<string name="decrypt_success_dev">Data succesvol gedecodeerd, nieuw block device: \'{1}\'</string>
 		<string name="done">Gereed.</string>
-		<string name="start_partition_sd">SD-kaart partitioneren...</string>
+		<string name="start_partition_sd">SD kaart partitioneren...</string>
 		<string name="partition_sd_locate">Kan apparaat om te partitioneren niet vinden.</string>
-		<string name="ext_swap_size">EXT + Swap grootte zijn groter dan de sd-kaart.</string>
+		<string name="ext_swap_size">EXT + Swap grootte zijn groter dan de sd kaart.</string>
 		<string name="remove_part_table">Partitie-tabel word verwijderd...</string>
 		<string name="unable_rm_part">Kan partitie-tabel niet verwijderen.</string>
 		<string name="create_part">Partitie {1} aanmaken...</string>
