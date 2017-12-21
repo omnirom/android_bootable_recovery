@@ -397,7 +397,7 @@ bool matches_locale(const std::string& prefix, const std::string& locale) {
   // match the locale string without the {script} section.
   // For instance, prefix == "en" matches locale == "en-US", prefix == "sr-Latn" matches locale
   // == "sr-Latn-BA", and prefix == "zh-CN" matches locale == "zh-Hans-CN".
-  if (android::base::StartsWith(locale, prefix.c_str())) {
+  if (android::base::StartsWith(locale, prefix)) {
     return true;
   }
 
