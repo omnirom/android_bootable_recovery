@@ -19,7 +19,7 @@
 		<string name="data">Veri</string>
 		<string name="sdcard">SD Kart</string>
 		<string name="internal">Dahili Depolama</string>
-		<string name="microsd">Micro SDCard</string>
+		<string name="microsd">Micro SD Kart</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Secure</string>
 		<string name="dalvik">Dalvik / ART Önbelleği</string>
