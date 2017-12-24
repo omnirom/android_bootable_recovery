@@ -27,6 +27,8 @@
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
+
 struct MountedVolume {
     std::string device;
     std::string mount_point;
@@ -60,13 +62,6 @@ bool scan_mounted_volumes() {
     return true;
 }
 
-MountedVolume* find_mounted_volume_by_device(const char* device) {
-    for (size_t i = 0; i < g_mounts_state.size(); ++i) {
-        if (g_mounts_state[i]->device == device) return g_mounts_state[i];
-    }
-    return nullptr;
-}
-
 MountedVolume* find_mounted_volume_by_mount_point(const char* mount_point) {
     for (size_t i = 0; i < g_mounts_state.size(); ++i) {
         if (g_mounts_state[i]->mount_point == mount_point) return g_mounts_state[i];
@@ -75,15 +70,13 @@ MountedVolume* find_mounted_volume_by_mount_point(const char* mount_point) {
 }
 
 int unmount_mounted_volume(MountedVolume* volume) {
-    // Intentionally pass the empty string to umount if the caller tries
-    // to unmount a volume they already unmounted using this
-    // function.
-    std::string mount_point = volume->mount_point;
-    volume->mount_point.clear();
-    return umount(mount_point.c_str());
-}
-
-int remount_read_only(MountedVolume* volume) {
-    return mount(volume->device.c_str(), volume->mount_point.c_str(), volume->filesystem.c_str(),
-                 MS_NOATIME | MS_NODEV | MS_NODIRATIME | MS_RDONLY | MS_REMOUNT, 0);
+  // Intentionally pass the empty string to umount if the caller tries to unmount a volume they
+  // already unmounted using this function.
+  std::string mount_point = volume->mount_point;
+  volume->mount_point.clear();
+  int result = umount(mount_point.c_str());
+  if (result == -1) {
+    PLOG(WARNING) << "Failed to umount " << mount_point;
+  }
+  return result;
 }

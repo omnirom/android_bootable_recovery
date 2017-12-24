@@ -91,7 +91,12 @@ int ev_sync_key_state(ev_set_key_callback set_key_cb, void* data);
 using ev_callback = std::function<int(int fd, uint32_t epevents)>;
 using ev_set_key_callback = std::function<int(int code, int value)>;
 
+#ifdef TW_USE_MINUI_WITH_OPTIONAL_TOUCH_EVENTS
+int ev_init(ev_callback input_cb, bool allow_touch_inputs = false);
+void ev_iterate_touch_inputs(const std::function<void(int)>& action);
+#else
 int ev_init(ev_callback input_cb);
+#endif
 int ev_add_fd(int fd, ev_callback cb);
 int ev_sync_key_state(const ev_set_key_callback& set_key_cb);
 #endif

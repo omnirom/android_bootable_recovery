@@ -24,10 +24,13 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 
+#include <android-base/thread_annotations.h>
 #include "config.h"
 
-static std::map<intptr_t, const char*> filename_cache;
+static std::mutex filename_mutex;
+static std::map<intptr_t, const char*> filename_cache GUARDED_BY(filename_mutex);
 static std::string read_fault_file_name = "";
 static std::string write_fault_file_name = "";
 static std::string fsync_fault_file_name = "";
@@ -55,23 +58,28 @@ bool have_eio_error = false;
 int ota_open(const char* path, int oflags) {
     // Let the caller handle errors; we do not care if open succeeds or fails
     int fd = open(path, oflags);
+    std::lock_guard<std::mutex> lock(filename_mutex);
     filename_cache[fd] = path;
     return fd;
 }
 
 int ota_open(const char* path, int oflags, mode_t mode) {
     int fd = open(path, oflags, mode);
+    std::lock_guard<std::mutex> lock(filename_mutex);
     filename_cache[fd] = path;
-    return fd; }
+    return fd;
+}
 
 FILE* ota_fopen(const char* path, const char* mode) {
     FILE* fh = fopen(path, mode);
+    std::lock_guard<std::mutex> lock(filename_mutex);
     filename_cache[(intptr_t)fh] = path;
     return fh;
 }
 
 static int __ota_close(int fd) {
     // descriptors can be reused, so make sure not to leave them in the cache
+    std::lock_guard<std::mutex> lock(filename_mutex);
     filename_cache.erase(fd);
     return close(fd);
 }
@@ -85,6 +93,7 @@ int ota_close(unique_fd& fd) {
 }
 
 static int __ota_fclose(FILE* fh) {
+    std::lock_guard<std::mutex> lock(filename_mutex);
     filename_cache.erase(reinterpret_cast<intptr_t>(fh));
     return fclose(fh);
 }
@@ -99,6 +108,7 @@ int ota_fclose(unique_file& fh) {
 
 size_t ota_fread(void* ptr, size_t size, size_t nitems, FILE* stream) {
     if (should_fault_inject(OTAIO_READ)) {
+        std::lock_guard<std::mutex> lock(filename_mutex);
         auto cached = filename_cache.find((intptr_t)stream);
         const char* cached_path = cached->second;
         if (cached != filename_cache.end() &&
@@ -119,6 +129,7 @@ size_t ota_fread(void* ptr, size_t size, size_t nitems, FILE* stream) {
 
 ssize_t ota_read(int fd, void* buf, size_t nbyte) {
     if (should_fault_inject(OTAIO_READ)) {
+        std::lock_guard<std::mutex> lock(filename_mutex);
         auto cached = filename_cache.find(fd);
         const char* cached_path = cached->second;
         if (cached != filename_cache.end()
@@ -138,6 +149,7 @@ ssize_t ota_read(int fd, void* buf, size_t nbyte) {
 
 size_t ota_fwrite(const void* ptr, size_t size, size_t count, FILE* stream) {
     if (should_fault_inject(OTAIO_WRITE)) {
+        std::lock_guard<std::mutex> lock(filename_mutex);
         auto cached = filename_cache.find((intptr_t)stream);
         const char* cached_path = cached->second;
         if (cached != filename_cache.end() &&
@@ -157,6 +169,7 @@ size_t ota_fwrite(const void* ptr, size_t size, size_t count, FILE* stream) {
 
 ssize_t ota_write(int fd, const void* buf, size_t nbyte) {
     if (should_fault_inject(OTAIO_WRITE)) {
+        std::lock_guard<std::mutex> lock(filename_mutex);
         auto cached = filename_cache.find(fd);
         const char* cached_path = cached->second;
         if (cached != filename_cache.end() &&
@@ -176,6 +189,7 @@ ssize_t ota_write(int fd, const void* buf, size_t nbyte) {
 
 int ota_fsync(int fd) {
     if (should_fault_inject(OTAIO_FSYNC)) {
+        std::lock_guard<std::mutex> lock(filename_mutex);
         auto cached = filename_cache.find(fd);
         const char* cached_path = cached->second;
         if (cached != filename_cache.end() &&

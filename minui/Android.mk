@@ -51,8 +51,11 @@ ifeq ($(TW_NEW_ION_HEAP), true)
 endif
 
 LOCAL_STATIC_LIBRARIES += libpng
-LOCAL_WHOLE_STATIC_LIBRARIES += \
-    libdrm
+ifneq ($(wildcard external/libdrm/Android.common.mk),)
+LOCAL_WHOLE_STATIC_LIBRARIES += libdrm_platform
+else
+LOCAL_WHOLE_STATIC_LIBRARIES += libdrm
+endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     LOCAL_CFLAGS += -DHAS_LIBSYNC
     LOCAL_WHOLE_STATIC_LIBRARIES += libsync_recovery

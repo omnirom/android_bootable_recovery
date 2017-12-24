@@ -74,7 +74,6 @@
 #endif
 
 #include "otautil/DirUtil.h"
-#include "otautil/ZipUtil.h"
 #include "print_sha1.h"
 #include "tune2fs.h"
 #include "updater/updater.h"
@@ -194,8 +193,8 @@ Value* MountFn(const char* name, State* state, const std::vector<std::unique_ptr
 
   if (mount(location.c_str(), mount_point.c_str(), fs_type.c_str(),
             MS_NOATIME | MS_NODEV | MS_NODIRATIME, mount_options.c_str()) < 0) {
-    uiPrintf(state, "%s: failed to mount %s at %s: %s\n", name, location.c_str(),
-             mount_point.c_str(), strerror(errno));
+    uiPrintf(state, "%s: Failed to mount %s at %s: %s", name, location.c_str(), mount_point.c_str(),
+             strerror(errno));
     return StringValue("");
   }
 
@@ -244,12 +243,12 @@ Value* UnmountFn(const char* name, State* state, const std::vector<std::unique_p
   scan_mounted_volumes();
   MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point.c_str());
   if (vol == nullptr) {
-    uiPrintf(state, "unmount of %s failed; no such volume\n", mount_point.c_str());
+    uiPrintf(state, "Failed to unmount %s: No such volume", mount_point.c_str());
     return nullptr;
   } else {
     int ret = unmount_mounted_volume(vol);
     if (ret != 0) {
-      uiPrintf(state, "unmount of %s failed (%d): %s\n", mount_point.c_str(), ret, strerror(errno));
+      uiPrintf(state, "Failed to unmount %s: %s", mount_point.c_str(), strerror(errno));
     }
   }
 
@@ -316,9 +315,31 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
   }
 
   if (fs_type == "ext4") {
-    int status = make_ext4fs(location.c_str(), size, mount_point.c_str(), sehandle);
+    const char* mke2fs_argv[] = { "/sbin/mke2fs_static", "-t",    "ext4", "-b", "4096",
+                                  location.c_str(),      nullptr, nullptr };
+    std::string size_str;
+    if (size != 0) {
+      size_str = std::to_string(size / 4096LL);
+      mke2fs_argv[6] = size_str.c_str();
+    }
+
+    int status = exec_cmd(mke2fs_argv[0], const_cast<char**>(mke2fs_argv));
     if (status != 0) {
-      LOG(ERROR) << name << ": make_ext4fs failed (" << status << ") on " << location;
+      LOG(WARNING) << name << ": mke2fs failed (" << status << ") on " << location
+                   << ", falling back to make_ext4fs";
+      status = make_ext4fs(location.c_str(), size, mount_point.c_str(), sehandle);
+      if (status != 0) {
+        LOG(ERROR) << name << ": make_ext4fs failed (" << status << ") on " << location;
+        return StringValue("");
+      }
+      return StringValue(location);
+    }
+
+    const char* e2fsdroid_argv[] = { "/sbin/e2fsdroid_static", "-e",   "-a", mount_point.c_str(),
+                                     location.c_str(),         nullptr };
+    status = exec_cmd(e2fsdroid_argv[0], const_cast<char**>(e2fsdroid_argv));
+    if (status != 0) {
+      LOG(ERROR) << name << ": e2fsdroid failed (" << status << ") on " << location;
       return StringValue("");
     }
     return StringValue(location);
@@ -330,9 +351,11 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
     std::string num_sectors = std::to_string(size / 512);
 
     const char* f2fs_path = "/sbin/mkfs.f2fs";
-    const char* const f2fs_argv[] = { "mkfs.f2fs", "-t", "-d1", location.c_str(),
-                                      num_sectors.c_str(), nullptr };
-    int status = exec_cmd(f2fs_path, const_cast<char* const*>(f2fs_argv));
+    const char* f2fs_argv[] = {
+      "mkfs.f2fs", "-t", "-d1", location.c_str(), (size < 512) ? nullptr : num_sectors.c_str(),
+      nullptr
+    };
+    int status = exec_cmd(f2fs_path, const_cast<char**>(f2fs_argv));
     if (status != 0) {
       LOG(ERROR) << name << ": mkfs.f2fs failed (" << status << ") on " << location;
       return StringValue("");
@@ -398,36 +421,6 @@ Value* SetProgressFn(const char* name, State* state, const std::vector<std::uniq
   fprintf(ui->cmd_pipe, "set_progress %f\n", frac);
 
   return StringValue(frac_str);
-}
-
-// package_extract_dir(package_dir, dest_dir)
-//   Extracts all files from the package underneath package_dir and writes them to the
-//   corresponding tree beneath dest_dir. Any existing files are overwritten.
-//   Example: package_extract_dir("system", "/system")
-//
-//   Note: package_dir needs to be a relative path; dest_dir needs to be an absolute path.
-Value* PackageExtractDirFn(const char* name, State* state,
-                           const std::vector<std::unique_ptr<Expr>>&argv) {
-  if (argv.size() != 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %zu", name,
-                      argv.size());
-  }
-
-  std::vector<std::string> args;
-  if (!ReadArgs(state, argv, &args)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-  }
-  const std::string& zip_path = args[0];
-  const std::string& dest_path = args[1];
-
-  ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
-
-  // To create a consistent system image, never use the clock for timestamps.
-  constexpr struct utimbuf timestamp = { 1217592000, 1217592000 };  // 8/1/2008 default
-
-  bool success = ExtractPackageRecursive(za, zip_path, dest_path, &timestamp, sehandle);
-
-  return StringValue(success ? "t" : "");
 }
 
 // package_extract_file(package_file[, dest_file])
@@ -712,15 +705,15 @@ Value* ApplyPatchCheckFn(const char* name, State* state, const std::vector<std::
   return StringValue(result == 0 ? "t" : "");
 }
 
-// This is the updater side handler for ui_print() in edify script. Contents
-// will be sent over to the recovery side for on-screen display.
+// This is the updater side handler for ui_print() in edify script. Contents will be sent over to
+// the recovery side for on-screen display.
 Value* UIPrintFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
   std::vector<std::string> args;
   if (!ReadArgs(state, argv, &args)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
 
-  std::string buffer = android::base::Join(args, "") + "\n";
+  std::string buffer = android::base::Join(args, "");
   uiPrint(state, buffer);
   return StringValue(buffer);
 }
@@ -1052,7 +1045,6 @@ void RegisterInstallFunctions() {
   RegisterFunction("format", FormatFn);
   RegisterFunction("show_progress", ShowProgressFn);
   RegisterFunction("set_progress", SetProgressFn);
-  RegisterFunction("package_extract_dir", PackageExtractDirFn);
   RegisterFunction("package_extract_file", PackageExtractFileFn);
 
   RegisterFunction("getprop", GetPropFn);

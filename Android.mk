@@ -590,7 +590,7 @@ endif
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := fuse_sideload.cpp
 LOCAL_CLANG := true
-LOCAL_CFLAGS := -O2 -g -DADB_HOST=0 -Wall -Wno-unused-parameter
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 
 LOCAL_MODULE_TAGS := optional
@@ -605,13 +605,35 @@ else
 endif
 include $(BUILD_SHARED_LIBRARY)
 
+# static libfusesideload
+# =============================== (required to fix build errors in 8.1 due to use by tests)
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := fuse_sideload.cpp
+LOCAL_CLANG := true
+LOCAL_CFLAGS := -Wall -Werror
+LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
+
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE := libfusesideload
+LOCAL_SHARED_LIBRARIES := libcutils libc
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
+    LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
+    LOCAL_STATIC_LIBRARIES += libmincrypttwrp
+    LOCAL_CFLAGS += -DUSE_MINCRYPT
+else
+    LOCAL_STATIC_LIBRARIES += libcrypto_static
+endif
+include $(BUILD_STATIC_LIBRARY)
+
 # libmounts (static library)
 # ===============================
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := mounts.cpp
-LOCAL_CLANG := true
-LOCAL_CFLAGS := -Wall -Wno-unused-parameter -Werror
+LOCAL_CFLAGS := \
+    -Wall \
+    -Werror
 LOCAL_MODULE := libmounts
+LOCAL_STATIC_LIBRARIES := libbase
 include $(BUILD_STATIC_LIBRARY)
 
 # librecovery (static library)
@@ -619,7 +641,7 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     install.cpp
-LOCAL_CFLAGS := -Wno-unused-parameter -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
 ifeq ($(AB_OTA_UPDATER),true)
@@ -632,7 +654,8 @@ LOCAL_STATIC_LIBRARIES := \
     libvintf_recovery \
     libcrypto_utils \
     libcrypto \
-    libbase
+    libbase \
+    libziparchive \
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -661,6 +684,7 @@ else
     LOCAL_SHARED_LIBRARIES += libcrypto libbase
     LOCAL_SRC_FILES += verifier.cpp asn1_decoder.cpp
 endif
+
 ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
 endif
@@ -679,7 +703,6 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
 LOCAL_MODULE := libverifier
-LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := \
     asn1_decoder.cpp \
     verifier.cpp \
@@ -687,16 +710,40 @@ LOCAL_SRC_FILES := \
 LOCAL_STATIC_LIBRARIES := libcrypto_static
 include $(BUILD_STATIC_LIBRARY)
 
+# Wear default device
+# ===============================
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := wear_device.cpp
+
+# Should match TARGET_RECOVERY_UI_LIB in BoardConfig.mk.
+LOCAL_MODULE := librecovery_ui_wear
+
+include $(BUILD_STATIC_LIBRARY)
+
+# vr headset default device
+# ===============================
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := vr_device.cpp
+
+# should match TARGET_RECOVERY_UI_LIB set in BoardConfig.mk
+LOCAL_MODULE := librecovery_ui_vr
+
+include $(BUILD_STATIC_LIBRARY)
+
 commands_recovery_local_path := $(LOCAL_PATH)
-include $(LOCAL_PATH)/tests/Android.mk \
-    $(LOCAL_PATH)/tools/Android.mk \
+
+include \
+    $(LOCAL_PATH)/applypatch/Android.mk \
+    $(LOCAL_PATH)/boot_control/Android.mk \
     $(LOCAL_PATH)/edify/Android.mk \
     $(LOCAL_PATH)/otafault/Android.mk \
-    $(LOCAL_PATH)/bootloader_message/Android.mk \
-    $(LOCAL_PATH)/bootloader_message_twrp/Android.mk \
+    $(LOCAL_PATH)/tests/Android.mk \
+    $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
     $(LOCAL_PATH)/update_verifier/Android.mk \
-    $(LOCAL_PATH)/applypatch/Android.mk
+    $(LOCAL_PATH)/bootloader_message/Android.mk \
+    $(LOCAL_PATH)/bootloader_message_twrp/Android.mk
 
 ifeq ($(wildcard system/core/uncrypt/Android.mk),)
     include $(commands_recovery_local_path)/uncrypt/Android.mk

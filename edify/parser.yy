@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#include <android-base/macros.h>
+
 #include "expr.h"
 #include "yydefs.h"
 #include "parser.h"
@@ -121,6 +123,7 @@ arglist:    /* empty */ {
     $$->emplace_back($1);
 }
 | arglist ',' expr {
+    UNUSED($1);
     $$->push_back(std::unique_ptr<Expr>($3));
 }
 ;

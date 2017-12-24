@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
+
 #include <string>
 #include <vector>
 
@@ -26,12 +28,6 @@
 #include <ziparchive/zip_writer.h>
 
 using android::base::get_unaligned;
-
-static ssize_t MemorySink(const unsigned char* data, ssize_t len, void* token) {
-  std::string* s = static_cast<std::string*>(token);
-  s->append(reinterpret_cast<const char*>(data), len);
-  return len;
-}
 
 // Sanity check for the given imgdiff patch header.
 static void verify_patch_header(const std::string& patch, size_t* num_normal, size_t* num_raw,
@@ -79,6 +75,18 @@ static void verify_patch_header(const std::string& patch, size_t* num_normal, si
   if (num_deflate != nullptr) *num_deflate = deflate;
 }
 
+static void verify_patched_image(const std::string& src, const std::string& patch,
+                                 const std::string& tgt) {
+  std::string patched;
+  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
+                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
+                               [&patched](const unsigned char* data, size_t len) {
+                                 patched.append(reinterpret_cast<const char*>(data), len);
+                                 return len;
+                               }));
+  ASSERT_EQ(tgt, patched);
+}
+
 TEST(ImgdiffTest, invalid_args) {
   // Insufficient inputs.
   ASSERT_EQ(2, imgdiff(1, (const char* []){ "imgdiff" }));
@@ -124,11 +132,7 @@ TEST(ImgdiffTest, image_mode_smoke) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, zip_mode_smoke_store) {
@@ -177,11 +181,7 @@ TEST(ImgdiffTest, zip_mode_smoke_store) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, zip_mode_smoke_compressed) {
@@ -230,11 +230,7 @@ TEST(ImgdiffTest, zip_mode_smoke_compressed) {
   ASSERT_EQ(1U, num_deflate);
   ASSERT_EQ(2U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
@@ -286,11 +282,7 @@ TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
   ASSERT_EQ(1U, num_deflate);
   ASSERT_EQ(2U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_simple) {
@@ -333,11 +325,40 @@ TEST(ImgdiffTest, image_mode_simple) {
   ASSERT_EQ(1U, num_deflate);
   ASSERT_EQ(2U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
+}
+
+TEST(ImgdiffTest, image_mode_bad_gzip) {
+  // Modify the uncompressed length in the gzip footer.
+  const std::vector<char> src_data = { 'a',    'b',    'c',    'd',    'e',    'f',    'g',
+                                       'h',    '\x1f', '\x8b', '\x08', '\x00', '\xc4', '\x1e',
+                                       '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xac',
+                                       '\x02', '\x00', '\x67', '\xba', '\x8e', '\xeb', '\x03',
+                                       '\xff', '\xff', '\xff' };
+  const std::string src(src_data.cbegin(), src_data.cend());
+  TemporaryFile src_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src, src_file.path));
+
+  // Modify the uncompressed length in the gzip footer.
+  const std::vector<char> tgt_data = {
+    'a',    'b',    'c',    'd',    'e',    'f',    'g',    'x',    'y',    'z',    '\x1f', '\x8b',
+    '\x08', '\x00', '\x62', '\x1f', '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xa8', '\xac',
+    '\xac', '\xaa', '\x02', '\x00', '\x96', '\x30', '\x06', '\xb7', '\x06', '\xff', '\xff', '\xff'
+  };
+  const std::string tgt(tgt_data.cbegin(), tgt_data.cend());
+  TemporaryFile tgt_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(tgt, tgt_file.path));
+
+  TemporaryFile patch_file;
+  std::vector<const char*> args = {
+    "imgdiff", src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  // Verify.
+  std::string patch;
+  ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch));
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_different_num_chunks) {
@@ -413,11 +434,7 @@ TEST(ImgdiffTest, image_mode_merge_chunks) {
   ASSERT_EQ(1U, num_deflate);
   ASSERT_EQ(2U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_spurious_magic) {
@@ -454,11 +471,7 @@ TEST(ImgdiffTest, image_mode_spurious_magic) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_short_input1) {
@@ -494,11 +507,7 @@ TEST(ImgdiffTest, image_mode_short_input1) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_short_input2) {
@@ -534,11 +543,7 @@ TEST(ImgdiffTest, image_mode_short_input2) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(1U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
 }
 
 TEST(ImgdiffTest, image_mode_single_entry_long) {
@@ -577,9 +582,44 @@ TEST(ImgdiffTest, image_mode_single_entry_long) {
   ASSERT_EQ(0U, num_deflate);
   ASSERT_EQ(0U, num_raw);
 
-  std::string patched;
-  ASSERT_EQ(0, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
-                               reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
-                               MemorySink, &patched));
-  ASSERT_EQ(tgt, patched);
+  verify_patched_image(src, patch, tgt);
+}
+
+TEST(ImgpatchTest, image_mode_patch_corruption) {
+  // src: "abcdefgh" + gzipped "xyz" (echo -n "xyz" | gzip -f | hd).
+  const std::vector<char> src_data = { 'a',    'b',    'c',    'd',    'e',    'f',    'g',
+                                       'h',    '\x1f', '\x8b', '\x08', '\x00', '\xc4', '\x1e',
+                                       '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xac',
+                                       '\x02', '\x00', '\x67', '\xba', '\x8e', '\xeb', '\x03',
+                                       '\x00', '\x00', '\x00' };
+  const std::string src(src_data.cbegin(), src_data.cend());
+  TemporaryFile src_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src, src_file.path));
+
+  // tgt: "abcdefgxyz" + gzipped "xxyyzz".
+  const std::vector<char> tgt_data = {
+    'a',    'b',    'c',    'd',    'e',    'f',    'g',    'x',    'y',    'z',    '\x1f', '\x8b',
+    '\x08', '\x00', '\x62', '\x1f', '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xa8', '\xac',
+    '\xac', '\xaa', '\x02', '\x00', '\x96', '\x30', '\x06', '\xb7', '\x06', '\x00', '\x00', '\x00'
+  };
+  const std::string tgt(tgt_data.cbegin(), tgt_data.cend());
+  TemporaryFile tgt_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(tgt, tgt_file.path));
+
+  TemporaryFile patch_file;
+  std::vector<const char*> args = {
+    "imgdiff", src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  // Verify.
+  std::string patch;
+  ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch));
+  verify_patched_image(src, patch, tgt);
+
+  // Corrupt the end of the patch and expect the ApplyImagePatch to fail.
+  patch.insert(patch.end() - 10, 10, '0');
+  ASSERT_EQ(-1, ApplyImagePatch(reinterpret_cast<const unsigned char*>(src.data()), src.size(),
+                                reinterpret_cast<const unsigned char*>(patch.data()), patch.size(),
+                                [](const unsigned char* /*data*/, size_t len) { return len; }));
 }
