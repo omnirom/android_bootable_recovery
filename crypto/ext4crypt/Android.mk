@@ -14,6 +14,8 @@ ifneq ($(wildcard hardware/libhardware/include/hardware/keymaster0.h),)
     LOCAL_CFLAGS += -DTW_CRYPTO_HAVE_KEYMASTERX
     LOCAL_C_INCLUDES +=  external/boringssl/src/include
 endif
+
+ifneq ($(TW_CRYPTO_USE_KEYMASTER_V1), true)
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     LOCAL_CFLAGS += -DUSE_KEYSTORAGE_3 -DHAVE_GATEKEEPER1
     LOCAL_SRC_FILES += Keymaster3.cpp KeyStorage3.cpp
@@ -31,6 +33,9 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
 else
     LOCAL_SRC_FILES += Keymaster.cpp KeyStorage.cpp
 endif
+else
+    LOCAL_SRC_FILES += Keymaster.cpp KeyStorage.cpp
+endif # TW_CRYPTO_USE_KEYMASTER_V1
 
 include $(BUILD_SHARED_LIBRARY)
 
