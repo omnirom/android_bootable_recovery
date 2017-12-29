@@ -2406,16 +2406,20 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 	int src_fd = -1, dest_fd = -1;
 	ssize_t bs;
 	bool ret = false;
+	bool adb_backup_fix = false;
 	void* buffer = NULL;
 	unsigned long long backedup_size = 0;
+	int adb_backup_count = 5;
 	string srcfn, destfn;
 
 	if (part_settings->PM_Method == PM_BACKUP) {
 		srcfn = Actual_Block_Device;
 		if (part_settings->adbbackup)
 			destfn = TW_ADB_BACKUP;
-		else
+		else {
 			destfn = part_settings->Backup_Folder + "/" + Backup_FileName;
+			adb_backup_fix = true;
+		}
 	}
 	else {
 		destfn = Actual_Block_Device;
@@ -2474,6 +2478,11 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 		Remain -= (unsigned long long)(bs);
 		if (part_settings->progress)
 			part_settings->progress->UpdateSize(backedup_size);
+		if (adb_backup_fix) {
+			adb_backup_count--;
+			if (adb_backup_count == 0)
+				goto exit;
+		}
 		if (PartitionManager.Check_Backup_Cancel() != 0)
 			goto exit;
 	}
