@@ -218,21 +218,21 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 				memcpy(&md5check, cmd, sizeof(cmd));
 				if (strcmp(md5check.md5, adbmd5.md5) != 0) {
 					LOGERR("md5 doesn't match!\n");
-					LOGERR("file md5: %s\n", adbmd5.md5);
-					LOGERR("check md5: %s\n", md5check.md5);
+					LOGERR("Stored file md5: %s\n", adbmd5.md5);
+					LOGERR("ADB Backup check md5: %s\n", md5check.md5);
 					ret = false;
 					break;
 				}
 				else {
-					LOGINFO("adbrestore md5 matches\n");
-					LOGINFO("adbmd5.md5: %s\n", adbmd5.md5);
-					LOGINFO("md5check.md5: %s\n", md5check.md5);
-					ret = true;
-					break;
+					LOGINFO("ADB Backup md5 matches\n");
+					LOGINFO("Stored file md5: %s\n", adbmd5.md5);
+					LOGINFO("ADB Backup check md5: %s\n", md5check.md5);
+					continue;
 				}
 			}
 			else if (cmdtype == TWENDADB) {
 				LOGINFO("received TWENDADB\n");
+				ret = 1;
 				break;
 			}
 			else {
@@ -270,6 +270,7 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
 						ret = false;
+						break;
 					}
 				}
 				else if (cmdtype == TWFN) {
@@ -320,6 +321,7 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
 						ret = false;
+						break;
 					}
 				}
 			}
