@@ -2414,8 +2414,9 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 		srcfn = Actual_Block_Device;
 		if (part_settings->adbbackup)
 			destfn = TW_ADB_BACKUP;
-		else
+		else {
 			destfn = part_settings->Backup_Folder + "/" + Backup_FileName;
+		}
 	}
 	else {
 		destfn = Actual_Block_Device;
