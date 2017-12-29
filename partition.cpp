@@ -2414,8 +2414,9 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 		srcfn = Actual_Block_Device;
 		if (part_settings->adbbackup)
 			destfn = TW_ADB_BACKUP;
-		else
+		else {
 			destfn = part_settings->Backup_Folder + "/" + Backup_FileName;
+		}
 	}
 	else {
 		destfn = Actual_Block_Device;
@@ -2474,6 +2475,7 @@ bool TWPartition::Raw_Read_Write(PartitionSettings *part_settings) {
 		Remain -= (unsigned long long)(bs);
 		if (part_settings->progress)
 			part_settings->progress->UpdateSize(backedup_size);
+		}
 		if (PartitionManager.Check_Backup_Cancel() != 0)
 			goto exit;
 	}
