@@ -141,7 +141,6 @@ int OpenRecoveryScript::run_script_file(void) {
 			if (strcmp(command, "install") == 0) {
 				// Install Zip
 				DataManager::SetValue("tw_action_text2", "Installing Zip");
-				PartitionManager.Mount_All_Storage();
 				ret_val = Install_Command(value);
 				install_cmd = -1;
 			} else if (strcmp(command, "wipe") == 0) {
