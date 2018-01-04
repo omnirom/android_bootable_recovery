@@ -18,6 +18,9 @@
 #include "Decrypt.h"
 
 #include "KeyStorage.h"
+#ifdef HAVE_KEYSTORAGE3
+#include "KeyStorage3.h"
+#endif
 #include "Utils.h"
 
 #include <algorithm>
@@ -63,6 +66,8 @@
 #include <android-base/file.h>
 //#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
+
+#include <hardware/keymaster_common.h>
 
 #define LOG(x) std::cout
 #define PLOG(x) std::cout
@@ -111,6 +116,27 @@ struct ext4_encryption_key {
     char raw[EXT4_MAX_KEY_SIZE];
     uint32_t size;
 };
+}
+
+int get_keystorage_version() {
+    static int ver = -1;
+    if (ver >= 0)
+        return ver;
+    const hw_module_t* module;
+    int ret = hw_get_module_by_class(KEYSTORE_HARDWARE_MODULE_ID, NULL, &module);
+    if (ret != 0) {
+        LOG(ERROR) << "hw_get_module_by_class returned " << ret;
+        ver = 3;
+    }
+    if (module->module_api_version == KEYMASTER_MODULE_API_VERSION_1_0) {
+        ver = 1;
+    } else if (module->module_api_version == KEYMASTER_MODULE_API_VERSION_2_0) {
+        ver = 1;
+    } else {
+        LOG(ERROR) << "keymaster module_api_version is " << module->module_api_version;
+        ver = 3;
+    }
+    return ver;
 }
 
 static bool e4crypt_is_emulated() {
@@ -244,7 +270,7 @@ static void fixate_user_ce_key(const std::string& directory_path, const std::str
                                const std::vector<std::string>& paths) {
     for (auto const other_path: paths) {
         if (other_path != to_fix) {
-            android::vold::destroyKey(other_path);
+            //android::vold::destroyKey(other_path);
         }
     }
     auto const current_path = get_ce_key_current_path(directory_path);
@@ -263,7 +289,11 @@ static bool read_and_fixate_user_ce_key(userid_t user_id,
     auto const paths = get_ce_key_paths(directory_path);
     for (auto const ce_key_path: paths) {
         LOG(DEBUG) << "Trying user CE key " << ce_key_path;
+#ifdef HAVE_KEYSTORAGE3
+        if ((get_keystorage_version() == 3 && android::vold::retrieveKey3(ce_key_path, auth, ce_key)) || (get_keystorage_version() == 1 && android::vold::retrieveKey(ce_key_path, auth, ce_key))) {
+#else
         if (android::vold::retrieveKey(ce_key_path, auth, ce_key)) {
+#endif
             LOG(DEBUG) << "Successfully retrieved key";
             fixate_user_ce_key(directory_path, ce_key_path, paths);
             return true;
@@ -355,7 +385,11 @@ static bool load_all_de_keys() {
         if (s_de_key_raw_refs.count(user_id) == 0) {
             auto key_path = de_dir + "/" + entry->d_name;
             std::string key;
+#ifdef HAVE_KEYSTORAGE3
+            if ((get_keystorage_version() == 3 && !android::vold::retrieveKey3(key_path, kEmptyAuthentication, &key)) || (get_keystorage_version() == 1 && !android::vold::retrieveKey(key_path, kEmptyAuthentication, &key))) return false;
+#else
             if (!android::vold::retrieveKey(key_path, kEmptyAuthentication, &key)) return false;
+#endif
             std::string raw_ref;
             if (!install_key(key, &raw_ref)) return false;
             s_de_key_raw_refs[user_id] = raw_ref;
@@ -376,8 +410,12 @@ bool e4crypt_initialize_global_de() {
 
     std::string device_key;
     if (path_exists(device_key_path)) {
+#ifdef HAVE_KEYSTORAGE3
+        if ((get_keystorage_version() == 3 && !android::vold::retrieveKey3(device_key_path, kEmptyAuthentication, &device_key)) || (get_keystorage_version() == 1 && !android::vold::retrieveKey(device_key_path, kEmptyAuthentication, &device_key))) return false;
+#else
         if (!android::vold::retrieveKey(device_key_path,
                 kEmptyAuthentication, &device_key)) return false;
+#endif
     } else {
         LOG(INFO) << "NOT Creating new key\n";
         return false;

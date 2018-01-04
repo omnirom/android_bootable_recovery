@@ -42,9 +42,9 @@ using ::keystore::AuthorizationSet;
 // ongoing Keymaster operation.  Aborts the operation
 // in the destructor if it is unfinished. Methods log failures
 // to LOG(ERROR).
-class KeymasterOperation {
+class KeymasterOperation3 {
   public:
-    ~KeymasterOperation();
+    ~KeymasterOperation3();
     // Is this instance valid? This is false if creation fails, and becomes
     // false on finish or if an update fails.
     explicit operator bool() { return mError == ErrorCode::OK; }
@@ -55,17 +55,17 @@ class KeymasterOperation {
     // Finish and write the output to this string, unless pointer is null.
     bool finish(std::string* output);
     // Move constructor
-    KeymasterOperation(KeymasterOperation&& rhs) {
+    KeymasterOperation3(KeymasterOperation3&& rhs) {
         mDevice = std::move(rhs.mDevice);
         mOpHandle = std::move(rhs.mOpHandle);
         mError = std::move(rhs.mError);
     }
     // Construct an object in an error state for error returns
-    KeymasterOperation()
+    KeymasterOperation3()
         : mDevice{nullptr}, mOpHandle{0},
           mError {ErrorCode::UNKNOWN_ERROR} {}
     // Move Assignment
-    KeymasterOperation& operator= (KeymasterOperation&& rhs) {
+    KeymasterOperation3& operator= (KeymasterOperation3&& rhs) {
         mDevice = std::move(rhs.mDevice);
         mOpHandle = std::move(rhs.mOpHandle);
         mError = std::move(rhs.mError);
@@ -75,23 +75,23 @@ class KeymasterOperation {
     }
 
   private:
-    KeymasterOperation(const sp<IKeymasterDevice>& d, uint64_t h)
+    KeymasterOperation3(const sp<IKeymasterDevice>& d, uint64_t h)
         : mDevice{d}, mOpHandle{h}, mError {ErrorCode::OK} {}
-    KeymasterOperation(ErrorCode error)
+    KeymasterOperation3(ErrorCode error)
         : mDevice{nullptr}, mOpHandle{0},
           mError {error} {}
     sp<IKeymasterDevice> mDevice;
     uint64_t mOpHandle;
     ErrorCode mError;
-    DISALLOW_COPY_AND_ASSIGN(KeymasterOperation);
-    friend class Keymaster;
+    DISALLOW_COPY_AND_ASSIGN(KeymasterOperation3);
+    friend class Keymaster3;
 };
 
 // Wrapper for a Keymaster device for methods that start a KeymasterOperation or are not
 // part of one.
-class Keymaster {
+class Keymaster3 {
   public:
-    Keymaster();
+    Keymaster3();
     // false if we failed to open the keymaster device.
     explicit operator bool() { return mDevice.get() != nullptr; }
     // Generate a key in the keymaster from the given params.
@@ -102,13 +102,13 @@ class Keymaster {
     bool upgradeKey(const std::string& oldKey, const AuthorizationSet& inParams,
                     std::string* newKey);
     // Begin a new cryptographic operation, collecting output parameters if pointer is non-null
-    KeymasterOperation begin(KeyPurpose purpose, const std::string& key,
+    KeymasterOperation3 begin(KeyPurpose purpose, const std::string& key,
                              const AuthorizationSet& inParams, AuthorizationSet* outParams);
     bool isSecure();
 
   private:
     sp<hardware::keymaster::V3_0::IKeymasterDevice> mDevice;
-    DISALLOW_COPY_AND_ASSIGN(Keymaster);
+    DISALLOW_COPY_AND_ASSIGN(Keymaster3);
 };
 
 }  // namespace vold

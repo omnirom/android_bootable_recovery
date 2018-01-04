@@ -15,6 +15,7 @@
  */
 
 #include "KeyStorage3.h"
+#include "KeyStorage.h"
 
 #include "Keymaster3.h"
 #include "ScryptParameters.h"
@@ -57,7 +58,7 @@ namespace android {
 namespace vold {
 using namespace keystore;
 
-const KeyAuthentication kEmptyAuthentication{"", ""};
+//const KeyAuthentication kEmptyAuthentication{"", ""};
 
 static constexpr size_t AES_KEY_BYTES = 32;
 static constexpr size_t GCM_NONCE_BYTES = 12;
@@ -165,14 +166,14 @@ static bool writeStringToFile(const std::string& payload, const std::string& fil
     return true;
 }
 
-static KeymasterOperation begin(Keymaster& keymaster, const std::string& dir,
+static KeymasterOperation3 begin(Keymaster3& keymaster, const std::string& dir,
                                 KeyPurpose purpose,
                                 const AuthorizationSet &keyParams,
                                 const AuthorizationSet &opParams,
                                 AuthorizationSet* outParams) {
     auto kmKeyPath = dir + "/" + kFn_keymaster_key_blob;
     std::string kmKey;
-    if (!readFileToString(kmKeyPath, &kmKey)) return KeymasterOperation();
+    if (!readFileToString(kmKeyPath, &kmKey)) return KeymasterOperation3();
     AuthorizationSet inParams(keyParams);
     inParams.append(opParams.begin(), opParams.end());
     for (;;) {
@@ -183,13 +184,13 @@ static KeymasterOperation begin(Keymaster& keymaster, const std::string& dir,
         if (opHandle.errorCode() != ErrorCode::KEY_REQUIRES_UPGRADE) return opHandle;
         LOG(DEBUG) << "Upgrading key: " << dir;
         std::string newKey;
-        if (!keymaster.upgradeKey(kmKey, keyParams, &newKey)) return KeymasterOperation();
+        if (!keymaster.upgradeKey(kmKey, keyParams, &newKey)) return KeymasterOperation3();
         // Upgrade the key in memory but do not replace the key in storage
         /*auto newKeyPath = dir + "/" + kFn_keymaster_key_blob_upgraded;
-        if (!writeStringToFile(newKey, newKeyPath)) return KeymasterOperation();
+        if (!writeStringToFile(newKey, newKeyPath)) return KeymasterOperation3();
         if (rename(newKeyPath.c_str(), kmKeyPath.c_str()) != 0) {
             PLOG(ERROR) << "Unable to move upgraded key to location: " << kmKeyPath;
-            return KeymasterOperation();
+            return KeymasterOperation3();
         }
         if (!keymaster.deleteKey(kmKey)) {
             LOG(ERROR) << "Key deletion failed during upgrade, continuing anyway: " << dir;
@@ -224,7 +225,7 @@ static KeymasterOperation begin(Keymaster& keymaster, const std::string& dir,
     return true;
 }*/
 
-static bool decryptWithKeymasterKey(Keymaster& keymaster, const std::string& dir,
+static bool decryptWithKeymasterKey(Keymaster3& keymaster, const std::string& dir,
                                     const AuthorizationSet &keyParams,
                                     const std::string& ciphertext, std::string* message) {
     auto nonce = ciphertext.substr(0, GCM_NONCE_BYTES);
@@ -443,7 +444,7 @@ static bool decryptWithoutKeymaster(const std::string& preKey,
     return true;
 }*/
 
-bool retrieveKey(const std::string& dir, const KeyAuthentication& auth, std::string* key) {
+bool retrieveKey3(const std::string& dir, const KeyAuthentication& auth, std::string* key) {
     std::string version;
     if (!readFileToString(dir + "/" + kFn_version, &version)) return false;
     if (version != kCurrentVersion) {
@@ -463,7 +464,7 @@ bool retrieveKey(const std::string& dir, const KeyAuthentication& auth, std::str
     std::string encryptedMessage;
     if (!readFileToString(dir + "/" + kFn_encrypted_key, &encryptedMessage)) return false;
     if (auth.usesKeymaster()) {
-        Keymaster keymaster;
+        Keymaster3 keymaster;
         if (!keymaster) return false;
         auto keyParams = beginParams(auth, appId);
         if (!decryptWithKeymasterKey(keymaster, dir, keyParams, encryptedMessage, key)) return false;
@@ -476,7 +477,7 @@ bool retrieveKey(const std::string& dir, const KeyAuthentication& auth, std::str
 static bool deleteKey(const std::string& dir) {
     std::string kmKey;
     if (!readFileToString(dir + "/" + kFn_keymaster_key_blob, &kmKey)) return false;
-    Keymaster keymaster;
+    Keymaster3 keymaster;
     if (!keymaster) return false;
     if (!keymaster.deleteKey(kmKey)) return false;
     return true;
@@ -513,7 +514,7 @@ static bool recursiveDeleteKey(const std::string& dir) {
     return true;
 }
 
-bool destroyKey(const std::string& dir) {
+bool destroyKey3(const std::string& dir) {
     bool success = true;
     // Try each thing, even if previous things failed.
     success &= deleteKey(dir);
