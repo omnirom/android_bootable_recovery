@@ -21,6 +21,7 @@ cc_library_static {
         "SysUtil.cpp",
         "DirUtil.cpp",
         "ThermalUtil.cpp",
+        "mounts.cpp",
         "paths.cpp",
         "rangeset.cpp",
     ],
@@ -39,4 +40,12 @@ cc_library_static {
     export_include_dirs: [
         "include",
     ],
+
+    target: {
+        darwin: {
+            exclude_srcs: [
+                "mounts.cpp",
+            ],
+        },
+    },
 }

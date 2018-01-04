@@ -61,22 +61,6 @@ cc_library_static {
 }
 
 cc_library_static {
-    name: "libmounts",
-
-    defaults: [
-        "recovery_defaults",
-    ],
-
-    srcs: [
-        "mounts.cpp",
-    ],
-
-    static_libs: [
-        "libbase",
-    ],
-}
-
-cc_library_static {
     name: "libverifier",
 
     defaults: [
