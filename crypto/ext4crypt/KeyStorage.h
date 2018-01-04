@@ -24,11 +24,15 @@ namespace vold {
 
 // Represents the information needed to decrypt a disk encryption key.
 // If "token" is nonempty, it is passed in as a required Gatekeeper auth token.
-// If "secret" is nonempty, it is appended to the application-specific
+// If "token" and "secret" are nonempty, "secret" is appended to the application-specific
 // binary needed to unlock.
+// If only "secret" is nonempty, it is used to decrypt in a non-Keymaster process.
 class KeyAuthentication {
   public:
     KeyAuthentication(std::string t, std::string s) : token{t}, secret{s} {};
+
+    bool usesKeymaster() const { return !token.empty() || secret.empty(); };
+
     const std::string token;
     const std::string secret;
 };

@@ -31,11 +31,11 @@ using android::hardware::hidl_string;
 namespace android {
 namespace vold {
 
-KeymasterOperation::~KeymasterOperation() {
+KeymasterOperation3::~KeymasterOperation3() {
     if (mDevice.get()) mDevice->abort(mOpHandle);
 }
 
-bool KeymasterOperation::updateCompletely(const std::string& input, std::string* output) {
+bool KeymasterOperation3::updateCompletely(const std::string& input, std::string* output) {
     if (output)
         output->clear();
     auto it = input.begin();
@@ -75,7 +75,7 @@ bool KeymasterOperation::updateCompletely(const std::string& input, std::string*
     return true;
 }
 
-bool KeymasterOperation::finish(std::string* output) {
+bool KeymasterOperation3::finish(std::string* output) {
     ErrorCode km_error;
     auto hidlCb = [&] (ErrorCode ret, const hidl_vec<KeyParameter>& /*ignored*/,
             const hidl_vec<uint8_t>& _output) {
@@ -98,7 +98,7 @@ bool KeymasterOperation::finish(std::string* output) {
     return true;
 }
 
-Keymaster::Keymaster() {
+Keymaster3::Keymaster3() {
     mDevice = ::android::hardware::keymaster::V3_0::IKeymasterDevice::getService();
 }
 
@@ -124,7 +124,7 @@ Keymaster::Keymaster() {
     return true;
 }*/
 
-bool Keymaster::deleteKey(const std::string& key) {
+bool Keymaster3::deleteKey(const std::string& key) {
 	LOG(ERROR) << "NOT deleting key in TWRP";
 	return false;
     /*auto keyBlob = blob2hidlVec(key);
@@ -140,7 +140,7 @@ bool Keymaster::deleteKey(const std::string& key) {
     return true;*/
 }
 
-bool Keymaster::upgradeKey(const std::string& oldKey, const AuthorizationSet& inParams,
+bool Keymaster3::upgradeKey(const std::string& oldKey, const AuthorizationSet& inParams,
                            std::string* newKey) {
     auto oldKeyBlob = blob2hidlVec(oldKey);
     ErrorCode km_error;
@@ -163,7 +163,7 @@ bool Keymaster::upgradeKey(const std::string& oldKey, const AuthorizationSet& in
     return true;
 }
 
-KeymasterOperation Keymaster::begin(KeyPurpose purpose, const std::string& key,
+KeymasterOperation3 Keymaster3::begin(KeyPurpose purpose, const std::string& key,
                                     const AuthorizationSet& inParams,
                                     AuthorizationSet* outParams) {
     auto keyBlob = blob2hidlVec(key);
@@ -182,15 +182,15 @@ KeymasterOperation Keymaster::begin(KeyPurpose purpose, const std::string& key,
     auto error = mDevice->begin(purpose, keyBlob, inParams.hidl_data(), hidlCb);
     if (!error.isOk()) {
         LOG(ERROR) << "begin failed: " << error.description();
-        return KeymasterOperation(ErrorCode::UNKNOWN_ERROR);
+        return KeymasterOperation3(ErrorCode::UNKNOWN_ERROR);
     }
     if (km_error != ErrorCode::OK) {
         LOG(ERROR) << "begin failed, code " << int32_t(km_error);
-        return KeymasterOperation(km_error);
+        return KeymasterOperation3(km_error);
     }
-    return KeymasterOperation(mDevice, mOpHandle);
+    return KeymasterOperation3(mDevice, mOpHandle);
 }
-bool Keymaster::isSecure() {
+bool Keymaster3::isSecure() {
     bool _isSecure = false;
     auto rc = mDevice->getHardwareFeatures(
             [&] (bool isSecure, bool, bool, bool, bool, const hidl_string&, const hidl_string&) {
@@ -204,7 +204,7 @@ bool Keymaster::isSecure() {
 using namespace ::android::vold;
 
 int keymaster_compatibility_cryptfs_scrypt() {
-    Keymaster dev;
+    Keymaster3 dev;
     if (!dev) {
         LOG(ERROR) << "Failed to initiate keymaster session";
         return -1;
