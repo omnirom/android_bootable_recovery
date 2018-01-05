@@ -688,7 +688,7 @@ endif
 ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
 endif
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -eq 26; echo $$?),0)
     LOCAL_SRC_FILES += otautil/ZipUtil.cpp otautil/SysUtil.cpp
     LOCAL_SHARED_LIBRARIES += libziparchive libext4_utils libcrypto libcrypto_utils
     LOCAL_STATIC_LIBRARIES += libvintf_recovery libfs_mgr liblogwrap libavb libvintf libtinyxml2 libz
