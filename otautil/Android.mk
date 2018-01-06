@@ -18,8 +18,12 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     SysUtil.cpp \
     DirUtil.cpp \
-    ZipUtil.cpp \
     ThermalUtil.cpp
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 26; echo $$?),0)
+LOCAL_SRC_FILES := \
+    ZipUtil.cpp
+endif
 
 LOCAL_STATIC_LIBRARIES := \
     libselinux \

@@ -39,7 +39,7 @@ else
 endif
 
 LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++ libaosprecovery libselinux
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -eq 26; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libziparchive
 else
     LOCAL_SHARED_LIBRARIES += libminzip
