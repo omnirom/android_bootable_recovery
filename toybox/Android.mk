@@ -247,7 +247,6 @@ LOCAL_SRC_FILES += \
     toys/android/sendevent.c \
     toys/android/start.c \
     toys/net/ifconfig.c \
-    toys/net/microcom.c \
     toys/net/netcat.c \
     toys/net/netstat.c \
     toys/net/rfkill.c \
