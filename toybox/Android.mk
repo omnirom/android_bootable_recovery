@@ -231,6 +231,11 @@ LOCAL_SRC_FILES += \
     toys/pending/ftpget.c
 endif
 
+ifneq ($(wildcard toys/net/microcom.c),)
+LOCAL_SRC_FILES += \
+    toys/net/microcom.c
+endif
+
 # Account for master branch changes pulld into CM14.1
 ifneq ($(CM_BUILD),)
 LOCAL_SRC_FILES += \
@@ -238,7 +243,6 @@ LOCAL_SRC_FILES += \
     toys/android/sendevent.c \
     toys/android/start.c \
     toys/net/ifconfig.c \
-    toys/net/microcom.c \
     toys/net/netcat.c \
     toys/net/netstat.c \
     toys/net/rfkill.c \
@@ -260,7 +264,6 @@ LOCAL_SRC_FILES += \
     toys/android/sendevent.c \
     toys/android/start.c \
     toys/net/ifconfig.c \
-    toys/net/microcom.c \
     toys/net/netcat.c \
     toys/net/netstat.c \
     toys/net/rfkill.c \
