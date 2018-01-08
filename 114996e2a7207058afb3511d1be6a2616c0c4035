@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "101d59a3_6dca48c1",
+        "filename": "toybox/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 272,
+      "author": {
+        "id": 1001882
+      },
+      "writtenOn": "2018-01-08T03:54:32Z",
+      "side": 0,
+      "message": "This one exists...",
+      "range": {
+        "startLine": 272,
+        "startChar": 4,
+        "endLine": 272,
+        "endChar": 23
+      },
+      "revId": "114996e2a7207058afb3511d1be6a2616c0c4035",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
