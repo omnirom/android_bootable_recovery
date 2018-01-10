@@ -14,12 +14,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-ifdef project-path-for
-    RECOVERY_PATH := $(call project-path-for,recovery)
-else
-    RECOVERY_PATH := bootable/recovery
-endif
-
 include $(CLEAR_VARS)
 
 otafault_static_libs := \
@@ -39,7 +33,7 @@ LOCAL_SRC_FILES := config.cpp ota_io.cpp
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libotafault
 LOCAL_CLANG := true
-LOCAL_C_INCLUDES := $(RECOVERY_PATH)
+LOCAL_C_INCLUDES := $(commands_recovery_local_path)
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
 LOCAL_WHOLE_STATIC_LIBRARIES := $(otafault_static_libs)
 
@@ -54,7 +48,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := otafault_test
 LOCAL_STATIC_LIBRARIES := $(otafault_static_libs)
 LOCAL_CFLAGS := -Werror
-LOCAL_C_INCLUDES := $(RECOVERY_PATH)
+LOCAL_C_INCLUDES := $(commands_recovery_local_path)
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 include $(BUILD_EXECUTABLE)
