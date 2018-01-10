@@ -14,29 +14,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(CLEAR_VARS)
-
-BOARD_RECOVERY_DEFINES := BOARD_BML_BOOT BOARD_BML_RECOVERY
-
-$(foreach board_define,$(BOARD_RECOVERY_DEFINES), \
-  $(if $($(board_define)), \
-    $(eval LOCAL_CFLAGS += -D$(board_define)=\"$($(board_define))\") \
-  ) \
-  )
-
-LOCAL_C_INCLUDES += \
-    $(LOCAL_PATH)/include \
-    external/bzip2 \
-    external/zlib \
-    $(commands_recovery_local_path)
-
-LOCAL_CLANG := true
-LOCAL_SRC_FILES := applypatch.cpp bspatch.cpp freecache.cpp imgpatch.cpp utils.cpp
-LOCAL_MODULE := libapplypatch
-LOCAL_MODULE_TAGS := eng
-LOCAL_C_INCLUDES += $(RECOVERY_PATH)
-LOCAL_STATIC_LIBRARIES += libbase libotafault libmtdutils libcrypto_static libbz libz
-
 # libapplypatch (static library)
 # ===============================
 include $(CLEAR_VARS)
@@ -47,10 +24,10 @@ LOCAL_SRC_FILES := \
     imgpatch.cpp
 LOCAL_MODULE := libapplypatch
 LOCAL_MODULE_TAGS := eng
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/include \
     $(commands_recovery_local_path)
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_STATIC_LIBRARIES := \
     libotafault \
     libbase \
@@ -62,12 +39,20 @@ LOCAL_WHOLE_STATIC_LIBRARIES += libmtdutils
 LOCAL_CFLAGS := \
     -DZLIB_CONST \
     -Werror
+
+BOARD_RECOVERY_DEFINES := BOARD_BML_BOOT BOARD_BML_RECOVERY
+
+$(foreach board_define,$(BOARD_RECOVERY_DEFINES), \
+  $(if $($(board_define)), \
+    $(eval LOCAL_CFLAGS += -D$(board_define)=\"$($(board_define))\") \
+  ) \
+  )
+
 include $(BUILD_STATIC_LIBRARY)
 
 # libimgpatch (static library)
 # ===============================
 include $(CLEAR_VARS)
-
 LOCAL_SRC_FILES := \
     bspatch.cpp \
     imgpatch.cpp
@@ -130,11 +115,6 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := applypatch_main.cpp
 LOCAL_MODULE := applypatch
-LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libmtdutils libcrypto_static libbz \
-                          libedify \
-
-LOCAL_SHARED_LIBRARIES += libz libcutils libc
-
 LOCAL_C_INCLUDES := $(commands_recovery_local_path)
 LOCAL_STATIC_LIBRARIES := \
     libapplypatch_modes \
