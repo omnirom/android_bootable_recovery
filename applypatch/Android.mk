@@ -14,12 +14,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-ifdef project-path-for
-    RECOVERY_PATH := $(call project-path-for,recovery)
-else
-    RECOVERY_PATH := bootable/recovery
-endif
-
 include $(CLEAR_VARS)
 
 BOARD_RECOVERY_DEFINES := BOARD_BML_BOOT BOARD_BML_RECOVERY
@@ -100,7 +94,6 @@ LOCAL_SRC_FILES := \
     bspatch.cpp \
     imgpatch.cpp
 LOCAL_MODULE := libimgpatch
-LOCAL_C_INCLUDES += $(RECOVERY_PATH)
 LOCAL_MODULE_HOST_OS := linux
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/include \
@@ -137,7 +130,6 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := applypatch_main.cpp
 LOCAL_MODULE := applypatch
-LOCAL_C_INCLUDES += $(RECOVERY_PATH)
 LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libmtdutils libcrypto_static libbz \
                           libedify \
 
