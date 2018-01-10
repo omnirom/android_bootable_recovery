@@ -238,7 +238,9 @@ LOCAL_SRC_FILES += \
     toys/android/sendevent.c \
     toys/android/start.c \
     toys/net/ifconfig.c \
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
     toys/net/microcom.c \
+endif
     toys/net/netcat.c \
     toys/net/netstat.c \
     toys/net/rfkill.c \
