@@ -920,35 +920,39 @@ void TWFunc::Fixup_Time_On_Boot()
 	// Like, ats_1 is for modem and ats_2 is for TOD (time of day?).
 	// Look at file time_genoff.h in CodeAurora, qcom-opensource/time-services
 
-	static const char *paths[] = { "/data/system/time/", "/data/time/"  };
+	static const char *partitions[] = { "/persist", "/data" };
+	static const char *paths[] = { "/time/", "/system/time/"  };
 
 	FILE *f;
 	offset = 0;
 	struct dirent *dt;
-	std::string ats_path;
+	std::string ats_path = std::string();
 
-	if (!PartitionManager.Mount_By_Path("/data", false))
-		return;
-
-	// Prefer ats_2, it seems to be the one we want according to logcat on hammerhead
-	// - it is the one for ATS_TOD (time of day?).
-	// However, I never saw a device where the offset differs between ats files.
-	for (size_t i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i)
+	for (size_t i = 0; i < (sizeof(partitions)/sizeof(partitions[0]); ++i)
 	{
-		DIR *d = opendir(paths[i]);
-		if (!d)
+		if (!PartitionManager.Mount_By_Path(partitions[i], false))
 			continue;
 
-		while ((dt = readdir(d)))
+		// Prefer ats_2, it seems to be the one we want according to logcat on hammerhead
+		// - it is the one for ATS_TOD (time of day?).
+		// However, I never saw a device where the offset differs between ats files.
+		for (size_t j = 0; j < (sizeof(paths)/sizeof(paths[0])); ++j)
 		{
-			if (dt->d_type != DT_REG || strncmp(dt->d_name, "ats_", 4) != 0)
+			DIR *d = opendir(std::string(partitions[i]).append(paths[j]).c_str());
+			if (!d)
 				continue;
 
-			if (ats_path.empty() || strcmp(dt->d_name, "ats_2") == 0)
-				ats_path = std::string(paths[i]).append(dt->d_name);
-		}
+			while ((dt = readdir(d)))
+			{
+				if (dt->d_type != DT_REG || strncmp(dt->d_name, "ats_", 4) != 0)
+					continue;
 
-		closedir(d);
+				if (ats_path.empty() || strcmp(dt->d_name, "ats_2") == 0)
+					ats_path = std::string(partitions[i]).append(paths[j]).append(dt->d_name);
+			}
+
+			closedir(d);
+		}
 	}
 
 	if (ats_path.empty())
