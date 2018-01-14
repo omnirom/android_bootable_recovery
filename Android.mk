@@ -153,6 +153,7 @@ LOCAL_STATIC_LIBRARIES := \
     android.hardware.health@2.0 \
     android.hardware.health@1.0 \
     android.hardware.health@1.0-convert \
+    libhealthstoragedefault \
     libhidltransport \
     libhidlbase \
     libhwbinder \
