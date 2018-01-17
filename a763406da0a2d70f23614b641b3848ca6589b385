@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7ed9e524_80a92fdf",
+        "filename": "gui/theme/common/languages/pt_PT.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2018-01-17T00:39:33Z",
+      "side": 1,
+      "message": "white space",
+      "revId": "a763406da0a2d70f23614b641b3848ca6589b385",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "95860447_f2342600",
+        "filename": "gui/theme/common/languages/pt_PT.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2018-01-17T00:39:33Z",
+      "side": 1,
+      "message": "white space",
+      "revId": "a763406da0a2d70f23614b641b3848ca6589b385",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
