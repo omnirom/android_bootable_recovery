@@ -16,7 +16,7 @@
         <string name="data">Données</string>
         <string name="sdcard">Carte SD</string>
         <string name="internal">Mémoire interne</string>
-        <string name="microsd">Carte microSD</string>
+        <string name="microsd">Carte micro SD</string>
         <string name="usbotg">USB OTG</string>
         <string name="android_secure">Android Sécurisé</string>
         <string name="dalvik">Cache Dalvik / ART</string>
@@ -61,7 +61,7 @@
         <string name="adb_sideload_btn">Transfert via ADB</string>
         <string name="install_hdr">Installer</string>
         <string name="select_storage_hdr">Sélectionner l'emplacement</string>
-        <string name="select_storage_btn">Sélectionner l'emplacement</string>
+        <string name="select_storage_btn">Sélect. l'emplacement</string>
         <string name="queue_hdr">Mettre en file d'attente</string>
         <string name="zip_queue_count">%tw_zip_queue_count% de max de 10 fichiers en file d'attente</string>
         <string name="zip_queue_count_s">Fichier %tw_zip_queue_count% sur 10 :</string>
@@ -228,7 +228,7 @@
         <string name="restore_try_decrypt_s">Tentative de décryptage</string>
         <string name="restore_backup_date">Sauvegarde effectuée sur %tw_restore_file_date%</string>
         <string name="restore_sel_part">Sélectionner les Partitions à restaurer :</string>
-        <string name="restore_enable_digest_chk" version="2">Activer la vérification Digest des fichiers de sauvegarde</string>
+        <string name="restore_enable_digest_chk" version="2">Activer la vérif. Digest des fichiers de sauvegarde</string>
         <string name="restore_completed">Restauration terminée</string>
         <string name="swipe_restore">Glisser pour Restaurer</string>
         <string name="swipe_restore_s">Restaurer</string>
@@ -290,7 +290,7 @@
         <string name="ctr_navbar_rdo">Centrer les Boutons de la barre de navigation</string>
         <string name="lft_navbar_rdo">Aligner les boutons de la barre de navigation à gauche</string>
         <string name="rht_navbar_rdo">Aligner les boutons de barre de navigation à droite</string>
-        <string name="restore_defaults_btn">Rétablir les paramètres par défaut</string>
+        <string name="restore_defaults_btn">Rétablir les param. par défaut</string>
         <string name="settings_tz_btn">Fuseau horaire</string>
         <string name="settings_screen_btn">Écran</string>
         <string name="settings_screen_bright_btn">Luminosité</string>
