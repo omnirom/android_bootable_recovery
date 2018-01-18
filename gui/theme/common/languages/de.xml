@@ -464,7 +464,7 @@
 		<string name="swipe_to_sideload">ADB Sideload starten</string>
 		<string name="swipe_sideload">Start</string>
 		<string name="sideload_confirm">ADB Sideload</string>
-		<string name="sideload_usage">Syntax: adb sideload Dateiname.zip</string>
+		<string name="sideload_usage">Syntax: adb sideload dateiname.zip</string>
 		<string name="sideload_complete">ADB Sideload abgeschlossen</string>
 		<string name="fix_contexts_hdr">SELinux Kontexte</string>
 		<string name="fix_contexts_note1">Das Korrigieren der Kontexte wird selten benötigt!</string>
