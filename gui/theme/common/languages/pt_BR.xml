@@ -17,9 +17,9 @@
 		<string name="recovery">Recuperação</string>
 		<string name="cache">Cache</string>
 		<string name="data">Dados</string>
-		<string name="sdcard">SDCard</string>
+		<string name="sdcard">Cartão SD</string>
 		<string name="internal">Armazenamento interno</string>
-		<string name="microsd">Micro SDCard</string>
+		<string name="microsd">Cartão Micro SD</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Seguro</string>
 		<string name="dalvik">Dalvik / Cache de arte</string>
