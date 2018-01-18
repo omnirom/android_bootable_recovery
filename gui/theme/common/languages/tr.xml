@@ -19,7 +19,7 @@
 		<string name="data">Veri</string>
 		<string name="sdcard">SD Kart</string>
 		<string name="internal">Dahili Depolama</string>
-		<string name="microsd">Micro SDCard</string>
+		<string name="microsd">Micro SD Kart</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Secure</string>
 		<string name="dalvik">Dalvik / ART Önbelleği</string>
@@ -450,7 +450,7 @@
 		<string name="swipe_su_install">   Yükle</string>
 		<string name="su_installing">SuperSU Yükleniyor</string>
 		<string name="sel_storage_list">Depolama Seç</string>
-		<string name="ok_btn">Tamam</string>
+		<string name="ok_btn">OK</string>
 		<string name="no_kernel_selinux">Kernel SELinux içeriklerini okuma desteğine sahip değil.</string>
 		<string name="full_selinux">Tam SELinux desteği mevcut.</string>
 		<string name="no_selinux">SELinux desteği yok (libselinux yok).</string>
