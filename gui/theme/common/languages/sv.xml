@@ -13,8 +13,9 @@
 		<string name="vendor">Leverantör</string>
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
-		<string name="sdcard">SDCard</string>
+		<string name="sdcard">SD-kort</string>
 		<string name="internal">Intern lagring</string>
+		<string name="microsd">Micro SD-kort</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="dalvik">Dalvik / ART Cache</string>
 		<string name="sdext">SD-EXT</string>
