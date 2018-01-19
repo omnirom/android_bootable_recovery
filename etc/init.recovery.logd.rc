@@ -21,6 +21,7 @@ service logd /sbin/logd
     socket logd stream 0666 logd logd
     socket logdr seqpacket 0666 logd logd
     socket logdw dgram 0222 logd logd
+    capabilities SYSLOG AUDIT_CONTROL SETGID
     group root system
     seclabel u:r:logd:s0
 
