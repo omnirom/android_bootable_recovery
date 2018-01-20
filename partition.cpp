@@ -277,7 +277,7 @@ TWPartition::TWPartition() {
 	Size_Raw = 0;
 
 	if(fstab_line) {
-		Process_Fstab_Line(fstab_line, true);
+		Process_Fstab_Line(fstab_line, true, NULL);
 		Partition_Post_Processing(true);
 	}
 #endif //TARGET_RECOVERY_IS_MULTIROM
