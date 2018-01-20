@@ -26,6 +26,7 @@
 #include "../partitions.hpp"
 #include "../progresstracking.hpp"
 #include "../twrp-functions.hpp"
+#include "../gui/gui.hpp"
 #include "../twinstall.h"
 #include "../minzip/SysUtil.h"
 #include "../minzip/Zip.h"
@@ -1501,7 +1502,13 @@ bool MultiROM::verifyZIP(const std::string& file, int &verify_status)
 		LOGERR("Failed to sysMapFile '%s'\n", file.c_str());
 		return false;
 	}
-	int ret_val = verify_file(map.addr, map.length);
+	std::vector<Certificate> loadedKeys;
+	if (!load_keys("/res/keys", loadedKeys)) {
+		LOGINFO("Failed to load keys");
+		gui_err("verify_zip_fail=Zip signature verification failed!");
+		return -1;
+	}
+	int ret_val = verify_file(map.addr, map.length, loadedKeys, NULL);
 	sysReleaseMap(&map);
 	if (ret_val != VERIFY_SUCCESS) {
 		LOGERR("Zip signature verification failed: %i\n", ret_val);
