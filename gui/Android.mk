@@ -38,7 +38,13 @@ else
     LOCAL_SRC_FILES += hardwarekeyboard.cpp
 endif
 
-LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++ libminzip libaosprecovery libselinux
+LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++ libaosprecovery libselinux
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
+    LOCAL_SHARED_LIBRARIES += libziparchive
+else
+    LOCAL_SHARED_LIBRARIES += libminzip
+    LOCAL_CFLAGS += -DUSE_MINZIP
+endif
 LOCAL_MODULE := libguitwrp
 
 #TWRP_EVENT_LOGGING := true

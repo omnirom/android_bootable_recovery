@@ -19,8 +19,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "sysdeps.h"
-
 #include "adb.h"
 #include "adb_io.h"
 #include "fuse_adb_provider.h"

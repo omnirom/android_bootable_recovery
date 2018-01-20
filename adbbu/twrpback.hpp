@@ -1,5 +1,5 @@
 /*
-		Copyright 2013 to 2016 TeamWin
+		Copyright 2013 to 2017 TeamWin
 		TWRP is free software: you can redistribute it and/or modify
 		it under the terms of the GNU General Public License as published by
 		the Free Software Foundation, either version 3 of the License, or
@@ -14,23 +14,25 @@
 		along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <fstream>
+#ifndef _TWRPBACK_HPP
+#define _TWRPBACK_HPP
 
-#include "../orscmd/orscmd.h"
-#include "../variables.h"
-#include "../twcommon.h"
+#include <fstream>
+#include "../twrpDigest/twrpMD5.hpp"
 
 class twrpback {
 public:
 	int adbd_fd;                                                             // adbd data stream
-
 	twrpback(void);
 	virtual ~twrpback(void);
-	int backup(std::string command);                                         // adb backup stream
-	int restore(void);                                                       // adb restore stream
+	bool backup(std::string command);                                        // adb backup stream
+	bool restore(void);                                                      // adb restore stream
 	void adblogwrite(std::string writemsg);                                  // adb debugging log function
-	void close_backup_fds();                                                 // close backup resources
-	void close_restore_fds();                                                // close restore resources
+	void createFifos(void);                                                  // create fifos needed for adb backup
+	void closeFifos(void);                                                   // close created fifos
+	void streamFileForTWRP(void);                                            // stream file to twrp via bu
+	void setStreamFileName(std::string fn);                                  // tell adb backup what file to load on storage
+	void threadStream(void);                                                 // thread bu for streaming
 
 private:
 	int read_fd;                                                             // ors input fd
@@ -45,5 +47,13 @@ private:
 	char cmd[512];                                                           // store result of commands
 	char operation[512];                                                     // operation to send to ors
 	std::ofstream adblogfile;                                                // adb stream log file
+	std::string streamFn;
+	typedef void (twrpback::*ThreadPtr)(void);
+	typedef void* (*PThreadPtr)(void *);
 	void adbloginit(void);                                                   // setup adb log stream file
+	void close_backup_fds();                                                 // close backup resources
+	void close_restore_fds();                                                // close restore resources
+	bool checkMD5Trailer(char adbReadStream[], uint64_t md5fnsize, twrpMD5* digest); // Check MD5 Trailer
 };
+
+#endif // _TWRPBACK_HPP

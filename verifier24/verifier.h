@@ -24,7 +24,7 @@
 
 enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT };
 
-static const float VERIFICATION_PROGRESS_FRACTION = 0.25;
+static const float VERIFICATION_PROGRESS_FRAC = 0.25;
 
 typedef struct {
     p256_int x;

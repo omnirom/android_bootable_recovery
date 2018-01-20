@@ -21,7 +21,7 @@
 #ifndef _PAGES_HEADER_HPP
 #define _PAGES_HEADER_HPP
 
-#include "../minzip/Zip.h"
+#include "../zipwrap.hpp"
 #include <vector>
 #include <map>
 #include <string>
@@ -116,7 +116,7 @@ public:
 
 public:
 	int Load(LoadingContext& ctx, const std::string& filename);
-	int LoadLanguage(char* languageFile, ZipArchive* package);
+	int LoadLanguage(char* languageFile, ZipWrap* package);
 	void MakeEmergencyConsoleIfNeeded();
 
 	Page* FindPage(std::string name);
@@ -155,8 +155,8 @@ class PageManager
 {
 public:
 	// Used by GUI
-	static char* LoadFileToBuffer(std::string filename, ZipArchive* package);
-	static void LoadLanguageList(ZipArchive* package);
+	static char* LoadFileToBuffer(std::string filename, ZipWrap* package);
+	static void LoadLanguageList(ZipWrap* package);
 	static void LoadLanguage(std::string filename);
 	static int LoadPackage(std::string name, std::string package, std::string startpage);
 	static PageSet* SelectPackage(std::string name);

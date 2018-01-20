@@ -48,7 +48,11 @@ endif
 ifneq ($(wildcard external/libdrm/Android.mk),)
   LOCAL_CFLAGS += -DHAS_DRM
   LOCAL_SRC_FILES += graphics_drm.cpp
-  LOCAL_WHOLE_STATIC_LIBRARIES += libdrm
+  ifneq ($(wildcard external/libdrm/Android.common.mk),)
+    LOCAL_WHOLE_STATIC_LIBRARIES += libdrm_platform
+  else
+    LOCAL_WHOLE_STATIC_LIBRARIES += libdrm
+  endif
 endif
 
 LOCAL_C_INCLUDES += \
@@ -180,6 +184,9 @@ ifneq ($(TW_INCLUDE_JPEG),)
     LOCAL_SHARED_LIBRARIES += libjpeg
 endif
 LOCAL_STATIC_LIBRARIES += libpixelflinger_twrp
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
+LOCAL_SHARED_LIBRARIES += libcutils liblog libutils
+endif
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminuitwrp
 

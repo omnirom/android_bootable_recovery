@@ -427,7 +427,11 @@ int MtpDataPacket::readDataAsync(struct usb_request *req) {
 
 // Wait for result of readDataAsync
 int MtpDataPacket::readDataWait(struct usb_device *device) {
+#ifdef HAS_USBHOST_TIMEOUT
+	struct usb_request *req = usb_request_wait(device, 200);
+#else
 	struct usb_request *req = usb_request_wait(device);
+#endif
 	return (req ? req->actual_length : -1);
 }
 

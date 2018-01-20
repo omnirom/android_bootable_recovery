@@ -14,32 +14,16 @@
 
 LOCAL_PATH := $(call my-dir)
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
-    include $(CLEAR_VARS)
-    LOCAL_CLANG := true
-    LOCAL_SRC_FILES := bootloader_message.cpp
-    LOCAL_MODULE := libbootloader_message
-    LOCAL_STATIC_LIBRARIES := libfs_mgr
-    LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-    LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-    include $(BUILD_STATIC_LIBRARY)
-endif
-
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := bootloader_message.cpp
 LOCAL_MODULE := libbootloader_message
-LOCAL_C_INCLUDES += bionic $(LOCAL_PATH)/include
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-    LOCAL_C_INCLUDES += external/stlport/stlport
-    LOCAL_SHARED_LIBRARIES += libstlport
-else
-    LOCAL_SHARED_LIBRARIES += libc++
+LOCAL_STATIC_LIBRARIES := libbase libfs_mgr
+LOCAL_CFLAGS := -Werror
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 26; echo $$?),0)
+    TARGET_GLOBAL_CFLAGS += -DUSE_OLD_BOOTLOADER_MESSAGE
+    CLANG_TARGET_GLOBAL_CFLAGS += -DUSE_OLD_BOOTLOADER_MESSAGE
 endif
-LOCAL_CFLAGS := -DEXCLUDE_FS_MGR
-# ignore bootloader's factory reset command even when written to /misc
-ifeq ($(TW_IGNORE_MISC_WIPE_DATA), true)
-    LOCAL_CFLAGS += -DIGNORE_MISC_WIPE_DATA
-endif
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)

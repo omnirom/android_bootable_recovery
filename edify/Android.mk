@@ -1,23 +1,36 @@
 # Copyright 2009 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
 
 edify_src_files := \
-	lexer.ll \
-	parser.yy \
-	expr.cpp
+    lexer.ll \
+    parser.yy \
+    expr.cpp
 
 #
-# Build the host-side command line tool
+# Build the host-side command line tool (host executable)
 #
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-		$(edify_src_files) \
-		main.cpp
+    $(edify_src_files) \
+    edify_parser.cpp
 
+LOCAL_CFLAGS := -Werror
 LOCAL_CPPFLAGS := -g -O0
-LOCAL_MODULE := edify
+LOCAL_MODULE := edify_parser
 LOCAL_YACCFLAGS := -v
 LOCAL_CPPFLAGS += -Wno-unused-parameter
 LOCAL_CPPFLAGS += -Wno-deprecated-register
@@ -28,12 +41,13 @@ LOCAL_STATIC_LIBRARIES += libbase
 include $(BUILD_HOST_EXECUTABLE)
 
 #
-# Build the device-side library
+# Build the device-side library (static library)
 #
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(edify_src_files)
 
+LOCAL_CFLAGS := -Werror
 LOCAL_CPPFLAGS := -Wno-unused-parameter
 LOCAL_CPPFLAGS += -Wno-deprecated-register
 LOCAL_MODULE := libedify

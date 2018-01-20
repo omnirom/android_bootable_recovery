@@ -511,7 +511,7 @@
 		<string name="done">Hotovo.</string>
 		<string name="start_partition_sd">Dělení SD karty...</string>
 		<string name="partition_sd_locate">Nelze najít zařízení na rozdělení.</string>
-		<string name="ext_swap_size">Velikost EXT + Swap je větší jako velikost SD-karty.</string>
+		<string name="ext_swap_size">Velikost EXT + Swap je větší jako velikost SD karty.</string>
 		<string name="remove_part_table">Vymazávání tabulky rozdělení...</string>
 		<string name="unable_rm_part">Nelze vymazat tabulku rozdělení.</string>
 		<string name="create_part">Vytváření oddílu {1}...</string>

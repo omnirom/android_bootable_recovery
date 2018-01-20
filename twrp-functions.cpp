@@ -35,6 +35,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cctype>
 #include <algorithm>
 #include "twrp-functions.hpp"
 #include "twcommon.h"
@@ -43,7 +44,7 @@
 #include "data.hpp"
 #include "partitions.hpp"
 #include "variables.h"
-#include "bootloader.h"
+#include "bootloader_message_twrp/include/bootloader_message_twrp/bootloader_message.h"
 #include "cutils/properties.h"
 #include "cutils/android_reboot.h"
 #include <sys/reboot.h>
@@ -136,7 +137,7 @@ int TWFunc::Exec_Cmd_Show_Output(const string& cmd) {
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
 // Returns "file.name" from a full /path/to/file.name
-string TWFunc::Get_Filename(string Path) {
+string TWFunc::Get_Filename(const string& Path) {
 	size_t pos = Path.find_last_of("/");
 	if (pos != string::npos) {
 		string Filename;
@@ -147,7 +148,7 @@ string TWFunc::Get_Filename(string Path) {
 }
 
 // Returns "/path/to/" from a full /path/to/file.name
-string TWFunc::Get_Path(string Path) {
+string TWFunc::Get_Path(const string& Path) {
 	size_t pos = Path.find_last_of("/");
 	if (pos != string::npos) {
 		string Pathonly;
@@ -429,7 +430,7 @@ int32_t TWFunc::timespec_diff_ms(timespec& start, timespec& end)
 #ifndef BUILD_TWRPTAR_MAIN
 
 // Returns "/path" from a full /path/to/file.name
-string TWFunc::Get_Root_Path(string Path) {
+string TWFunc::Get_Root_Path(const string& Path) {
 	string Local_Path = Path;
 
 	// Make sure that we have a leading slash
@@ -585,8 +586,8 @@ void TWFunc::Update_Log_File(void) {
 	// Reset bootloader message
 	TWPartition* Part = PartitionManager.Find_Partition_By_Path("/misc");
 	if (Part != NULL) {
-		string err;
-		if (!clear_bootloader_message(&err)) {
+		std::string err;
+		if (!clear_bootloader_message((void*)&err)) {
 			if (err == "no misc device set") {
 				LOGINFO("%s\n", err.c_str());
 			} else {
@@ -606,7 +607,7 @@ void TWFunc::Update_Log_File(void) {
 
 void TWFunc::Update_Intent_File(string Intent) {
 	if (PartitionManager.Mount_By_Path("/cache", false) && !Intent.empty()) {
-		TWFunc::write_file("/cache/recovery/intent", Intent);
+		TWFunc::write_to_file("/cache/recovery/intent", Intent);
 	}
 }
 
@@ -798,7 +799,7 @@ int TWFunc::read_file(string fn, uint64_t& results) {
 	return -1;
 }
 
-int TWFunc::write_file(string fn, string& line) {
+int TWFunc::write_to_file(const string& fn, const string& line) {
 	FILE *file;
 	file = fopen(fn.c_str(), "w");
 	if (file != NULL) {
@@ -915,6 +916,10 @@ void TWFunc::Auto_Generate_Backup_Name() {
 		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 		return;
 	}
+	else {
+		//remove periods from build display so it doesn't confuse the extension code
+		propvalue.erase(remove(propvalue.begin(), propvalue.end(), '.'), propvalue.end());
+	}
 	string Backup_Name = Get_Current_Date();
 	Backup_Name += "_" + propvalue;
 	if (Backup_Name.size() > MAX_BACKUP_NAME_LEN)
@@ -934,9 +939,12 @@ void TWFunc::Auto_Generate_Backup_Name() {
 	}
 }
 
-void TWFunc::Fixup_Time_On_Boot()
+void TWFunc::Fixup_Time_On_Boot(const string& time_paths /* = "" */)
 {
 #ifdef QCOM_RTC_FIX
+	static bool fixed = false;
+	if (fixed)
+		return;
 
 	LOGINFO("TWFunc::Fixup_Time: Pre-fix date and time: %s\n", TWFunc::Get_Current_Date().c_str());
 
@@ -957,6 +965,7 @@ void TWFunc::Fixup_Time_On_Boot()
 		if (tv.tv_sec > 1405209403) { // Anything older then 12 Jul 2014 23:56:43 GMT will do nicely thank you ;)
 
 			LOGINFO("TWFunc::Fixup_Time: Date and time corrected: %s\n", TWFunc::Get_Current_Date().c_str());
+			fixed = true;
 			return;
 
 		}
@@ -978,22 +987,28 @@ void TWFunc::Fixup_Time_On_Boot()
 	// Like, ats_1 is for modem and ats_2 is for TOD (time of day?).
 	// Look at file time_genoff.h in CodeAurora, qcom-opensource/time-services
 
-	static const char *paths[] = { "/data/system/time/", "/data/time/"  };
+	std::vector<std::string> paths; // space separated list of paths
+	if (time_paths.empty()) {
+		paths = Split_String("/data/system/time/ /data/time/", " ");
+		if (!PartitionManager.Mount_By_Path("/data", false))
+			return;
+	} else {
+		// When specific path(s) are used, Fixup_Time needs those
+		// partitions to already be mounted!
+		paths = Split_String(time_paths, " ");
+	}
 
 	FILE *f;
 	offset = 0;
 	struct dirent *dt;
 	std::string ats_path;
 
-	if (!PartitionManager.Mount_By_Path("/data", false))
-		return;
-
 	// Prefer ats_2, it seems to be the one we want according to logcat on hammerhead
 	// - it is the one for ATS_TOD (time of day?).
 	// However, I never saw a device where the offset differs between ats files.
-	for (size_t i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i)
+	for (size_t i = 0; i < paths.size(); ++i)
 	{
-		DIR *d = opendir(paths[i]);
+		DIR *d = opendir(paths[i].c_str());
 		if (!d)
 			continue;
 
@@ -1003,34 +1018,38 @@ void TWFunc::Fixup_Time_On_Boot()
 				continue;
 
 			if (ats_path.empty() || strcmp(dt->d_name, "ats_2") == 0)
-				ats_path = std::string(paths[i]).append(dt->d_name);
+				ats_path = paths[i] + dt->d_name;
 		}
 
 		closedir(d);
 	}
 
-	if (ats_path.empty())
-	{
+	if (ats_path.empty()) {
 		LOGINFO("TWFunc::Fixup_Time: no ats files found, leaving untouched!\n");
-		return;
-	}
-
-	f = fopen(ats_path.c_str(), "r");
-	if (!f)
-	{
+	} else if ((f = fopen(ats_path.c_str(), "r")) == NULL) {
 		LOGINFO("TWFunc::Fixup_Time: failed to open file %s\n", ats_path.c_str());
-		return;
-	}
-
-	if (fread(&offset, sizeof(offset), 1, f) != 1)
-	{
+	} else if (fread(&offset, sizeof(offset), 1, f) != 1) {
 		LOGINFO("TWFunc::Fixup_Time: failed load uint64 from file %s\n", ats_path.c_str());
 		fclose(f);
-		return;
-	}
-	fclose(f);
+	} else {
+		fclose(f);
 
-	LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %llu\n", ats_path.c_str(), offset);
+		LOGINFO("TWFunc::Fixup_Time: Setting time offset from file %s, offset %llu\n", ats_path.c_str(), (unsigned long long) offset);
+		DataManager::SetValue("tw_qcom_ats_offset", (unsigned long long) offset, 1);
+		fixed = true;
+	}
+
+	if (!fixed) {
+		// Failed to get offset from ats file, check twrp settings
+		unsigned long long value;
+		if (DataManager::GetValue("tw_qcom_ats_offset", value) < 0) {
+			return;
+		} else {
+			offset = (uint64_t) value;
+			LOGINFO("TWFunc::Fixup_Time: Setting time offset from twrp setting file, offset %llu\n", (unsigned long long) offset);
+			// Do not consider the settings file as a definitive answer, keep fixed=false so next run will try ats files again
+		}
+	}
 
 	gettimeofday(&tv, NULL);
 
@@ -1046,7 +1065,6 @@ void TWFunc::Fixup_Time_On_Boot()
 	settimeofday(&tv, NULL);
 
 	LOGINFO("TWFunc::Fixup_Time: Date and time corrected: %s\n", TWFunc::Get_Current_Date().c_str());
-
 #endif
 }
 
@@ -1095,11 +1113,11 @@ int TWFunc::Set_Brightness(std::string brightness_value)
 
 	if (DataManager::GetIntValue("tw_has_brightnesss_file")) {
 		LOGINFO("TWFunc::Set_Brightness: Setting brightness control to %s\n", brightness_value.c_str());
-		result = TWFunc::write_file(DataManager::GetStrValue("tw_brightness_file"), brightness_value);
+		result = TWFunc::write_to_file(DataManager::GetStrValue("tw_brightness_file"), brightness_value);
 		DataManager::GetValue("tw_secondary_brightness_file", secondary_brightness_file);
 		if (!secondary_brightness_file.empty()) {
 			LOGINFO("TWFunc::Set_Brightness: Setting secondary brightness control to %s\n", brightness_value.c_str());
-			TWFunc::write_file(secondary_brightness_file, brightness_value);
+			TWFunc::write_to_file(secondary_brightness_file, brightness_value);
 		}
 	}
 	return result;
@@ -1424,8 +1442,27 @@ void TWFunc::copy_kernel_log(string curr_storage) {
 
 	std::string result;
 	Exec_Cmd(dmesgCmd, result);
-	write_file(dmesgDst, result);
+	write_to_file(dmesgDst, result);
 	gui_msg(Msg("copy_kernel_log=Copied kernel log to {1}")(dmesgDst));
 	tw_set_default_metadata(dmesgDst.c_str());
+}
+
+bool TWFunc::isNumber(string strtocheck) {
+	int num = 0;
+	std::istringstream iss(strtocheck);
+
+	if (!(iss >> num).fail())
+		return true;
+	else
+		return false;
+}
+
+int TWFunc::stream_adb_backup(string &Restore_Name) {
+	string cmd = "/sbin/bu --twrp stream " + Restore_Name;
+	LOGINFO("stream_adb_backup: %s\n", cmd.c_str());
+	int ret = TWFunc::Exec_Cmd(cmd);
+	if (ret != 0)
+		return -1;
+	return ret;
 }
 #endif // ndef BUILD_TWRPTAR_MAIN

@@ -28,16 +28,37 @@
 #include <stdlib.h>
 #include <openssl/sha.h>
 
+#include "HashPassword.h"
+
 #define PASS_PADDING_SIZE 128
 #define SHA512_HEX_SIZE SHA512_DIGEST_LENGTH * 2
 
-std::string HashPassword(const std::string& Password) {
-	size_t size = PASS_PADDING_SIZE + Password.size();
+void* PersonalizedHashBinary(const char* prefix, const char* key, const size_t key_size) {
+	size_t size = PASS_PADDING_SIZE + key_size;
 	unsigned char* buffer = (unsigned char*)calloc(1, size);
-	const char* prefix = "Android FBE credential hash";
+	if (!buffer) return NULL; // failed to malloc
 	memcpy((void*)buffer, (void*)prefix, strlen(prefix));
 	unsigned char* ptr = buffer + PASS_PADDING_SIZE;
-	memcpy((void*)ptr, Password.c_str(), Password.size());
+	memcpy((void*)ptr, key, key_size);
+	unsigned char hash[SHA512_DIGEST_LENGTH];
+	SHA512_CTX sha512;
+	SHA512_Init(&sha512);
+	SHA512_Update(&sha512, buffer, size);
+	SHA512_Final(hash, &sha512);
+	free(buffer);
+	void* ret = malloc(SHA512_DIGEST_LENGTH);
+	if (!ret) return NULL; // failed to malloc
+	memcpy(ret, (void*)&hash[0], SHA512_DIGEST_LENGTH);
+	return ret;
+}
+
+std::string PersonalizedHash(const char* prefix, const char* key, const size_t key_size) {
+	size_t size = PASS_PADDING_SIZE + key_size;
+	unsigned char* buffer = (unsigned char*)calloc(1, size);
+	if (!buffer) return ""; // failed to malloc
+	memcpy((void*)buffer, (void*)prefix, strlen(prefix));
+	unsigned char* ptr = buffer + PASS_PADDING_SIZE;
+	memcpy((void*)ptr, key, key_size);
 	unsigned char hash[SHA512_DIGEST_LENGTH];
 	SHA512_CTX sha512;
 	SHA512_Init(&sha512);
@@ -49,5 +70,15 @@ std::string HashPassword(const std::string& Password) {
 		sprintf(hex_hash + (index * 2), "%02X", hash[index]);
 	hex_hash[128] = 0;
 	std::string ret = hex_hash;
+	free(buffer);
 	return ret;
+}
+
+std::string PersonalizedHash(const char* prefix, const std::string& Password) {
+	return PersonalizedHash(prefix, Password.c_str(), Password.size());
+}
+
+std::string HashPassword(const std::string& Password) {
+	const char* prefix = FBE_PERSONALIZATION;
+	return PersonalizedHash(prefix, Password);
 }

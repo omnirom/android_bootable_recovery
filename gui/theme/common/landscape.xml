@@ -2047,7 +2047,7 @@
 			<fileselector>
 				<placement x="%col1_x_left%" y="%row1a_y%" w="%content_quarter_width%" h="%fileselector_install_height%"/>
 				<text>{@restore_sel_pack_fs=Select Package to Restore:}</text>
-				<filter folders="1" files="0" nav="0"/>
+				<filter folders="1" files="1" nav="0" extn=".ab"/>
 				<path name="tw_backups_folder"/>
 				<data name="tw_restore" default=""/>
 				<selection name="tw_restore_name"/>
@@ -2273,6 +2273,7 @@
 
 			<checkbox>
 				<placement x="%col1_x_right%" y="%row6_y%"/>
+				<condition var1="tw_enable_adb_backup" op="=" var2="0"/>
 				<text>{@restore_enable_digest_chk=Enable Digest Verification of Backup Files}</text>
 				<data variable="tw_skip_digest_check"/>
 			</checkbox>

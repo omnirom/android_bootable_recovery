@@ -23,6 +23,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <android-base/file.h>
+
 #include "fuse_sideload.h"
 
 struct file_data {
@@ -41,14 +43,9 @@ static int read_block_file(void* cookie, uint32_t block, uint8_t* buffer, uint32
         return -EIO;
     }
 
-    while (fetch_size > 0) {
-        ssize_t r = TEMP_FAILURE_RETRY(read(fd->fd, buffer, fetch_size));
-        if (r == -1) {
-            fprintf(stderr, "read on sdcard failed: %s\n", strerror(errno));
-            return -EIO;
-        }
-        fetch_size -= r;
-        buffer += r;
+    if (!android::base::ReadFully(fd->fd, buffer, fetch_size)) {
+        fprintf(stderr, "read on sdcard failed: %s\n", strerror(errno));
+        return -EIO;
     }
 
     return 0;

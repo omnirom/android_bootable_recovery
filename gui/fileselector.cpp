@@ -30,6 +30,7 @@ extern "C" {
 #include "objects.hpp"
 #include "../data.hpp"
 #include "../twrp-functions.hpp"
+#include "../adbbu/libtwadbbu.hpp"
 
 int GUIFileSelector::mSortOrder = 0;
 
@@ -312,7 +313,10 @@ int GUIFileSelector::GetFileList(const std::string folder)
 		} else if (data.fileType == DT_REG || data.fileType == DT_LNK || data.fileType == DT_BLK) {
 #ifndef TARGET_RECOVERY_IS_MULTIROM
 			if (mExtn.empty() || (data.fileName.length() > mExtn.length() && data.fileName.substr(data.fileName.length() - mExtn.length()) == mExtn)) {
-				mFileList.push_back(data);
+				if (mExtn == ".ab" && twadbbu::Check_ADB_Backup_File(path))
+					mFolderList.push_back(data);
+				else
+					mFileList.push_back(data);
 			}
 #else
 			if(mExtn.empty()) {
@@ -411,8 +415,8 @@ void GUIFileSelector::NotifySelect(size_t item_selected)
 				cwd += str;
 			}
 
-			if (mShowNavFolders == 0 && mShowFiles == 0) {
-				// nav folders and files are disabled, this is probably the restore list and we need to save chosen location to mVariable instead of mPathVar
+			if (mShowNavFolders == 0 && (mShowFiles == 0 || mExtn == ".ab")) {
+				// this is probably the restore list and we need to save chosen location to mVariable instead of mPathVar
 				DataManager::SetValue(mVariable, cwd);
 			} else {
 				// We are changing paths, so we need to set mPathVar

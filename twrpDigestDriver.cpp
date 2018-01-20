@@ -157,7 +157,7 @@ bool twrpDigestDriver::Write_Digest(string Full_Filename) {
 	digest_str = digest_str + "  " + TWFunc::Get_Filename(Full_Filename) + "\n";
 	LOGINFO("digest_filename: %s\n", digest_filename.c_str());
 
-	if (TWFunc::write_file(digest_filename, digest_str) == 0) {
+	if (TWFunc::write_to_file(digest_filename, digest_str) == 0) {
 		tw_set_default_metadata(digest_filename.c_str());
 		gui_msg("digest_created= * Digest Created.");
 	}

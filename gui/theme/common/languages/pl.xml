@@ -21,7 +21,7 @@
 		<string name="data">Data</string>
 		<string name="sdcard">Karta SD</string>
 		<string name="internal">Pamięć Wewnętrzna</string>
-		<string name="microsd">Karta MicroSD</string>
+		<string name="microsd">Karta Micro SD</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android Secure</string>
 		<string name="dalvik">Dalvik / ART Cache</string>

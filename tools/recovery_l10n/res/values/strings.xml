@@ -9,6 +9,7 @@
     <item>erasing</item>
     <item>no_command</item>
     <item>error</item>
+    <item>installing_security</item>
   </string-array>
 
   <!-- Displayed on the screen beneath the animated android while the

@@ -1,0 +1,5 @@
+# healthd for pre Android 8.0
+
+service healthd /sbin/healthd -r
+    critical
+    seclabel u:r:healthd:s0

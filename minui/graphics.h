@@ -17,28 +17,22 @@
 #ifndef _GRAPHICS_H_
 #define _GRAPHICS_H_
 
-#include "minui.h"
+#include "minui/minui.h"
 
-// TODO: lose the function pointers.
-struct minui_backend {
-    // Initializes the backend and returns a GRSurface* to draw into.
-    GRSurface* (*init)(minui_backend*);
+class MinuiBackend {
+ public:
+  // Initializes the backend and returns a GRSurface* to draw into.
+  virtual GRSurface* Init() = 0;
 
-    // Causes the current drawing surface (returned by the most recent
-    // call to flip() or init()) to be displayed, and returns a new
-    // drawing surface.
-    GRSurface* (*flip)(minui_backend*);
+  // Causes the current drawing surface (returned by the most recent call to Flip() or Init()) to
+  // be displayed, and returns a new drawing surface.
+  virtual GRSurface* Flip() = 0;
 
-    // Blank (or unblank) the screen.
-    void (*blank)(minui_backend*, bool);
+  // Blank (or unblank) the screen.
+  virtual void Blank(bool) = 0;
 
-    // Device cleanup when drawing is done.
-    void (*exit)(minui_backend*);
+  // Device cleanup when drawing is done.
+  virtual ~MinuiBackend() {};
 };
 
-minui_backend* open_fbdev();
-minui_backend* open_adf();
-minui_backend* open_drm();
-minui_backend* open_overlay();
-
-#endif
+#endif  // _GRAPHICS_H_

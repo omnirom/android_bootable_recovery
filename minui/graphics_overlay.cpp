@@ -34,50 +34,30 @@
 #ifdef MSM_BSP
 #include <linux/msm_mdp.h>
 #include <linux/msm_ion.h>
+#else
+#define MSMFB_NEW_REQUEST 0
 #endif
 
-#include "minui.h"
-#include "graphics.h"
+#include "graphics_overlay.h"
+
+#include "minui/minui.h"
 
 #define MDP_V4_0 400
 #define MAX_DISPLAY_DIM  2048
-
-static GRSurface* overlay_init(minui_backend*);
-static GRSurface* overlay_flip(minui_backend*);
-static void overlay_blank(minui_backend*, bool);
-static void overlay_exit(minui_backend*);
-
-static GRSurface gr_framebuffer[2];
-static bool double_buffered;
-static GRSurface* gr_draw = NULL;
-static int displayed_buffer;
-
-static fb_var_screeninfo vi;
-static int fb_fd = -1;
-static bool isMDP5 = false;
-static int leftSplit = 0;
-static int rightSplit = 0;
 #define ALIGN(x, align) (((x) + ((align)-1)) & ~((align)-1))
 
-static size_t frame_size = 0;
+MinuiBackendOverlay::MinuiBackendOverlay() :
+  gr_draw(nullptr),
+  fb_fd(-1),
+  isMDP5(false),
+  leftSplit(0),
+  rightSplit(0),
+  frame_size(0),
+  overlayL_id(MSMFB_NEW_REQUEST),
+  overlayR_id(MSMFB_NEW_REQUEST) {}
 
 #ifdef MSM_BSP
-typedef struct {
-    unsigned char *mem_buf;
-    int size;
-    int ion_fd;
-    int mem_fd;
-    struct ion_handle_data handle_data;
-} memInfo;
-
-//Left and right overlay id
-static int overlayL_id = MSMFB_NEW_REQUEST;
-static int overlayR_id = MSMFB_NEW_REQUEST;
-
-static memInfo mem_info;
-#
-
-static int map_mdp_pixel_format()
+int MinuiBackendOverlay::map_mdp_pixel_format()
 {
     int format = MDP_RGB_565;
 #if defined(RECOVERY_BGRA)
@@ -89,68 +69,54 @@ static int map_mdp_pixel_format()
 #endif
     return format;
 }
+
+static memInfo mem_info;
+
 #endif // MSM_BSP
 
-static minui_backend my_backend = {
-    .init = overlay_init,
-    .flip = overlay_flip,
-    .blank = overlay_blank,
-    .exit = overlay_exit,
-};
-
-bool target_has_overlay(char *version)
+bool MinuiBackendOverlay::target_has_overlay()
 {
     int ret;
     int mdp_version;
     bool overlay_supported = false;
-
-    if (strlen(version) >= 8) {
-        if(!strncmp(version, "msmfb", strlen("msmfb"))) {
-            char str_ver[4];
-            memcpy(str_ver, version + strlen("msmfb"), 3);
-            str_ver[3] = '\0';
-            mdp_version = atoi(str_ver);
-            if (mdp_version >= MDP_V4_0) {
-                overlay_supported = true;
-            }
-        } else if (!strncmp(version, "mdssfb", strlen("mdssfb"))) {
-            overlay_supported = true;
-            isMDP5 = true;
-        }
-    }
-
-    return overlay_supported;
-}
-
-minui_backend* open_overlay() {
     fb_fix_screeninfo fi;
     int fd;
 
     fd = open("/dev/graphics/fb0", O_RDWR);
     if (fd < 0) {
         perror("open_overlay cannot open fb0");
-        return NULL;
+        return false;
     }
 
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
         perror("failed to get fb0 info");
         close(fd);
-        return NULL;
-    }
-
-    if (target_has_overlay(fi.id)) {
-#ifdef MSM_BSP
-        close(fd);
-        return &my_backend;
-#else
-        printf("Overlay graphics may work (%s), but not enabled. Use TW_TARGET_USES_QCOM_BSP := true to enable.\n", fi.id);
-#endif
+        return false;
     }
     close(fd);
-    return NULL;
+
+    if (strlen(fi.id) >= 8) {
+        if(!strncmp(fi.id, "msmfb", strlen("msmfb"))) {
+            char str_ver[4];
+            memcpy(str_ver, fi.id + strlen("msmfb"), 3);
+            str_ver[3] = '\0';
+            mdp_version = atoi(str_ver);
+            if (mdp_version >= MDP_V4_0) {
+                overlay_supported = true;
+            }
+        } else if (!strncmp(fi.id, "mdssfb", strlen("mdssfb"))) {
+            overlay_supported = true;
+            isMDP5 = true;
+        }
+    }
+#ifndef MSM_BSP
+    if (overlay_supported)
+        printf("Overlay graphics may work (%s), but not enabled. Use TW_TARGET_USES_QCOM_BSP := true to enable.\n", fi.id);
+#endif
+    return overlay_supported;
 }
 
-static void overlay_blank(minui_backend* backend __unused, bool blank)
+void MinuiBackendOverlay::Blank(bool blank)
 {
 #if defined(TW_NO_SCREEN_BLANK) && defined(TW_BRIGHTNESS_PATH) && defined(TW_MAX_BRIGHTNESS)
     int fd;
@@ -173,7 +139,7 @@ static void overlay_blank(minui_backend* backend __unused, bool blank)
 #endif
 }
 
-static void set_displayed_framebuffer(unsigned n)
+void MinuiBackendOverlay::SetDisplayedFramebuffer(unsigned n)
 {
     if (n > 1 || !double_buffered) return;
 
@@ -187,7 +153,7 @@ static void set_displayed_framebuffer(unsigned n)
 }
 
 #ifdef MSM_BSP
-void setDisplaySplit(void) {
+void MinuiBackendOverlay::setDisplaySplit(void) {
     char split[64] = {0};
     if (!isMDP5)
         return;
@@ -209,7 +175,7 @@ void setDisplaySplit(void) {
         fclose(fp);
 }
 
-int getLeftSplit(void) {
+int MinuiBackendOverlay::getLeftSplit(void) {
    //Default even split for all displays with high res
    int lSplit = vi.xres / 2;
 
@@ -220,11 +186,11 @@ int getLeftSplit(void) {
    return lSplit;
 }
 
-int getRightSplit(void) {
+int MinuiBackendOverlay::getRightSplit(void) {
    return rightSplit;
 }
 
-int free_ion_mem(void) {
+int MinuiBackendOverlay::free_ion_mem(void) {
     int ret = 0;
 
     if (mem_info.mem_buf)
@@ -247,7 +213,7 @@ int free_ion_mem(void) {
     return 0;
 }
 
-int alloc_ion_mem(unsigned int size)
+int MinuiBackendOverlay::alloc_ion_mem(unsigned int size)
 {
     int result;
     struct ion_fd_data fd_data;
@@ -298,7 +264,7 @@ int alloc_ion_mem(unsigned int size)
     return 0;
 }
 
-bool isDisplaySplit(void) {
+bool MinuiBackendOverlay::isDisplaySplit(void) {
     if (vi.xres > MAX_DISPLAY_DIM)
         return true;
     //check if right split is set by driver
@@ -308,7 +274,7 @@ bool isDisplaySplit(void) {
     return false;
 }
 
-int allocate_overlay(int fd, GRSurface gr_fb[])
+int MinuiBackendOverlay::allocate_overlay(int fd, GRSurface gr_fb[])
 {
     int ret = 0;
 
@@ -407,7 +373,7 @@ int allocate_overlay(int fd, GRSurface gr_fb[])
     return 0;
 }
 
-int overlay_display_frame(int fd, void* data, size_t size)
+int MinuiBackendOverlay::overlay_display_frame(int fd, void* data, size_t size)
 {
     int ret = 0;
     struct msmfb_overlay_data ovdataL, ovdataR;
@@ -480,7 +446,7 @@ int overlay_display_frame(int fd, void* data, size_t size)
     return ret;
 }
 
-static GRSurface* overlay_flip(minui_backend* backend __unused) {
+GRSurface* MinuiBackendOverlay::Flip() {
     if (double_buffered) {
 #if defined(RECOVERY_BGRA)
         // In case of BGRA, do some byte swapping
@@ -498,7 +464,7 @@ static GRSurface* overlay_flip(minui_backend* backend __unused) {
         // then flip the driver so we're displaying the other buffer
         // instead.
         gr_draw = gr_framebuffer + displayed_buffer;
-        set_displayed_framebuffer(1-displayed_buffer);
+        SetDisplayedFramebuffer(1-displayed_buffer);
         overlay_display_frame(fb_fd, gr_draw->data, frame_size);
     } else {
         // Copy from the in-memory surface to the framebuffer.
@@ -507,7 +473,7 @@ static GRSurface* overlay_flip(minui_backend* backend __unused) {
     return gr_draw;
 }
 
-int free_overlay(int fd)
+int MinuiBackendOverlay::free_overlay(int fd)
 {
     int ret = 0;
     struct mdp_display_commit ext_commit;
@@ -557,7 +523,10 @@ int free_overlay(int fd)
     return 0;
 }
 
-static GRSurface* overlay_init(minui_backend* backend) {
+GRSurface* MinuiBackendOverlay::Init() {
+	if (!target_has_overlay())
+	    return NULL;
+
     int fd = open("/dev/graphics/fb0", O_RDWR);
     if (fd == -1) {
         perror("cannot open fb0");
@@ -647,14 +616,14 @@ static GRSurface* overlay_init(minui_backend* backend) {
 
     memset(gr_draw->data, 0, gr_draw->height * gr_draw->row_bytes);
     fb_fd = fd;
-    set_displayed_framebuffer(0);
+    SetDisplayedFramebuffer(0);
 
     frame_size = fi.line_length * vi.yres;
 
     printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
 
-    overlay_blank(backend, true);
-    overlay_blank(backend, false);
+    Blank(true);
+    Blank(false);
 
     if (!alloc_ion_mem(fi.line_length * vi.yres))
         allocate_overlay(fb_fd, gr_framebuffer);
@@ -662,7 +631,7 @@ static GRSurface* overlay_init(minui_backend* backend) {
     return gr_draw;
 }
 
-static void overlay_exit(minui_backend* backend __unused) {
+MinuiBackendOverlay::~MinuiBackendOverlay() {
     free_overlay(fb_fd);
     free_ion_mem();
 
@@ -680,15 +649,17 @@ static void overlay_exit(minui_backend* backend __unused) {
     }
 }
 #else // MSM_BSP
-static GRSurface* overlay_flip(minui_backend* backend __unused) {
+
+GRSurface* MinuiBackendOverlay::Flip() {
     return NULL;
 }
 
-static GRSurface* overlay_init(minui_backend* backend __unused) {
+GRSurface* MinuiBackendOverlay::Init() {
+	target_has_overlay(); // Don't care about return value, just for logging
     return NULL;
 }
 
-static void overlay_exit(minui_backend* backend __unused) {
+MinuiBackendOverlay::~MinuiBackendOverlay() {
     return;
 }
 #endif // MSM_BSP

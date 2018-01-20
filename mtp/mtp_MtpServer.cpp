@@ -170,7 +170,7 @@ int twmtp_MtpServer::mtppipe_thread(void)
 				if (mtp_message.storage_id) {
 					long reserveSpace = 1;
 					bool removable = false;
-					MtpStorage* storage = new MtpStorage(mtp_message.storage_id, mtp_message.path, mtp_message.display, reserveSpace, removable, mtp_message.maxFileSize, refserver);
+					MtpStorage* storage = new MtpStorage(mtp_message.storage_id, &mtp_message.path[0], &mtp_message.display[0], reserveSpace, removable, mtp_message.maxFileSize, refserver);
 					server->addStorage(storage);
 					MTPD("mtppipe done adding storage\n");
 				} else {

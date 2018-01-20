@@ -1,0 +1,17 @@
+# Service names must be less than 16 characters in android-7.1 and
+# below. The makefile will truncate service names if needed in any
+# init.recovery.vold_decryp.*.rc file found in the vold_decrypt
+# directory.
+# It cannot however do this for any .rc file(s) that may be
+# overridden by the device tree files!
+
+# The seclabels are not needed when built in Android 8.0 tree
+# in 7.1 however the below do not exist, so run them under vold
+service ven_keymaster-3-0 /vendor/bin/hw/android.hardware.keymaster@3.0-service
+    user root
+    group root
+    setenv PATH /vendor/bin:/system/bin
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64:/vendor/lib:/system/lib
+    disabled
+    oneshot
+    seclabel u:r:vold:s0

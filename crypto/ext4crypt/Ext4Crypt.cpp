@@ -41,8 +41,16 @@
 
 #include <private/android_filesystem_config.h>
 
+#ifdef HAVE_SYNTH_PWD_SUPPORT
+#include <ext4_utils/ext4_crypt.h>
+#else
 #include "ext4_crypt.h"
+#endif
+#ifndef HAVE_LIBKEYUTILS
 #include "key_control.h"
+#else
+#include <keyutils.h>
+#endif
 
 #include <hardware/gatekeeper.h>
 #include "HashPassword.h"

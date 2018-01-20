@@ -51,9 +51,9 @@ struct selabel_handle;
 class TWFunc
 {
 public:
-	static string Get_Root_Path(string Path);                                   // Trims any trailing folders or filenames from the path, also adds a leading / if not present
-	static string Get_Path(string Path);                                        // Trims everything after the last / in the string
-	static string Get_Filename(string Path);                                    // Trims the path off of a filename
+	static string Get_Root_Path(const string& Path);                            // Trims any trailing folders or filenames from the path, also adds a leading / if not present
+	static string Get_Path(const string& Path);                                 // Trims everything after the last / in the string
+	static string Get_Filename(const string& Path);                             // Trims the path off of a filename
 
 	static int Exec_Cmd(const string& cmd, string &result);                     //execute a command and return the result as a string by reference
 	static int Exec_Cmd(const string& cmd);                                     //execute a command
@@ -89,7 +89,7 @@ public:
 	static int read_file(string fn, vector<string>& results); //read from file
 	static int read_file(string fn, string& results); //read from file
 	static int read_file(string fn, uint64_t& results); //read from file
-	static int write_file(string fn, string& line); //write from file
+	static int write_to_file(const string& fn, const string& line);             //write to file
 #ifdef TARGET_RECOVERY_IS_MULTIROM
 	static int write_file(string fn, const string& line); //write from file
 	static int write_file(string fn, const string& line, const char *mode); //write from file
@@ -99,7 +99,7 @@ public:
 	static string System_Property_Get(string Prop_Name);                // Returns value of Prop_Name from reading /system/build.prop
 	static string Get_Current_Date(void);                               // Returns the current date in ccyy-m-dd--hh-nn-ss format
 	static void Auto_Generate_Backup_Name();                            // Populates TW_BACKUP_NAME with a backup name based on current date and ro.build.display.id from /system/build.prop
-	static void Fixup_Time_On_Boot(); // Fixes time on devices which need it
+	static void Fixup_Time_On_Boot(const string& time_paths = ""); // Fixes time on devices which need it (time_paths is a space separated list of paths to check for ats_* files)
 	static std::vector<std::string> Split_String(const std::string& str, const std::string& delimiter, bool removeEmpty = true); // Splits string by delimiter
 	static bool Create_Dir_Recursive(const std::string& path, mode_t mode = 0755, uid_t uid = -1, gid_t gid = -1);  // Create directory and it's parents, if they don't exist. mode, uid and gid are set to all _newly_ created folders. If whole path exists, do nothing.
 	static int Set_Brightness(std::string brightness_value); // Well, you can read, it does what it says, passing return int from TWFunc::Write_File ;)
@@ -120,6 +120,8 @@ public:
 #endif //TARGET_RECOVERY_IS_MULTIROM
 	static unsigned long long IOCTL_Get_Block_Size(const char* block_device);
 	static void copy_kernel_log(string curr_storage); // Copy Kernel Log to Current Storage (PSTORE/KMSG)
+	static bool isNumber(string strtocheck); // return true if number, false if not a number
+	static int stream_adb_backup(string &Restore_Name); // Tell ADB Backup to Stream to TWRP from GUI selection
 
 private:
 	static void Copy_Log(string Source, string Destination);
