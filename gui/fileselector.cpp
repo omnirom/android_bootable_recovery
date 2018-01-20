@@ -415,7 +415,11 @@ void GUIFileSelector::NotifySelect(size_t item_selected)
 				cwd += str;
 			}
 
+#ifndef TARGET_RECOVERY_IS_MULTIROM
 			if (mShowNavFolders == 0 && (mShowFiles == 0 || mExtn == ".ab")) {
+#else
+			if (mShowNavFolders == 0 && (mShowFiles == 0 || mExtn.back() == ".ab")) {
+#endif
 				// this is probably the restore list and we need to save chosen location to mVariable instead of mPathVar
 				DataManager::SetValue(mVariable, cwd);
 			} else {
