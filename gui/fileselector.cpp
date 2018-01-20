@@ -271,7 +271,7 @@ int GUIFileSelector::GetFileList(const std::string folder)
 				mFolderList.push_back(data);
 		} else if (data.fileType == DT_REG || data.fileType == DT_LNK || data.fileType == DT_BLK) {
 			if (mExtn.empty() || (data.fileName.length() > mExtn.length() && data.fileName.substr(data.fileName.length() - mExtn.length()) == mExtn)) {
-				if (mExtn == ".ab" && twadbbu::Check_ADB_Backup_File(path))
+				if (mExtn.compare(".ab") == 0 && twadbbu::Check_ADB_Backup_File(path))
 					mFolderList.push_back(data);
 				else
 					mFileList.push_back(data);
@@ -358,7 +358,7 @@ void GUIFileSelector::NotifySelect(size_t item_selected)
 				cwd += str;
 			}
 
-			if (mShowNavFolders == 0 && (mShowFiles == 0 || mExtn == ".ab")) {
+			if (mShowNavFolders == 0 && (mShowFiles == 0 || mExtn.compare(".ab") == 0)) {
 				// this is probably the restore list and we need to save chosen location to mVariable instead of mPathVar
 				DataManager::SetValue(mVariable, cwd);
 			} else {
