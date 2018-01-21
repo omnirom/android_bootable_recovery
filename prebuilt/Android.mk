@@ -21,13 +21,19 @@ else
 	RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
 	RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
 	ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
-	    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
-	    ifneq ($(wildcard external/zip/Android.mk),)
-                RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
-	    endif
-	    ifneq ($(wildcard external/unzip/Android.mk),)
-                RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
-	    endif
+		RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
+
+		ifneq ($(wildcard external/zip/Android.mk),)
+			RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
+		endif
+		ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 27; echo $$?),0)
+			# system/core/libziparchive provides unzip
+			RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/unzip
+		else
+			ifneq ($(wildcard external/unzip/Android.mk),)
+				RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
+			endif
+		endif
 	endif
 endif
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/pigz
