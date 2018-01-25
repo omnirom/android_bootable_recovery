@@ -42,6 +42,7 @@ struct drm_surface {
 
 static drm_surface *drm_surfaces[2];
 static int current_buffer;
+static GRSurface *draw_buf = NULL;
 
 static drmModeCrtc *main_monitor_crtc;
 static drmModeConnector *main_monitor_connector;
@@ -450,15 +451,40 @@ static GRSurface* drm_init(minui_backend* backend __unused) {
         return NULL;
     }
 
+    draw_buf = (GRSurface *)malloc(sizeof(GRSurface));
+    if (!draw_buf) {
+        printf("failed to alloc draw_buf\n");
+        drm_destroy_surface(drm_surfaces[0]);
+        drm_destroy_surface(drm_surfaces[1]);
+        drmModeFreeResources(res);
+        close(drm_fd);
+        return NULL;
+    }
+
+    memcpy(draw_buf, &drm_surfaces[0]->base, sizeof(GRSurface));
+    draw_buf->data = (unsigned char *)calloc(draw_buf->height * draw_buf->row_bytes, 1);
+    if (!draw_buf->data) {
+        printf("failed to alloc draw_buf surface\n");
+        free(draw_buf);
+        drm_destroy_surface(drm_surfaces[0]);
+        drm_destroy_surface(drm_surfaces[1]);
+        drmModeFreeResources(res);
+        close(drm_fd);
+        return NULL;
+    }
+
     current_buffer = 0;
 
     drm_enable_crtc(drm_fd, main_monitor_crtc, drm_surfaces[1]);
 
-    return &(drm_surfaces[0]->base);
+    return draw_buf;
 }
 
 static GRSurface* drm_flip(minui_backend* backend __unused) {
     int ret;
+    memcpy(drm_surfaces[current_buffer]->base.data,
+            draw_buf->data, draw_buf->height * draw_buf->row_bytes);
+
 
     ret = drmModePageFlip(drm_fd, main_monitor_crtc->crtc_id,
                           drm_surfaces[current_buffer]->fb_id, 0, NULL);
@@ -467,7 +493,7 @@ static GRSurface* drm_flip(minui_backend* backend __unused) {
         return NULL;
     }
     current_buffer = 1 - current_buffer;
-    return &(drm_surfaces[current_buffer]->base);
+    return draw_buf;
 }
 
 static void drm_exit(minui_backend* backend __unused) {
