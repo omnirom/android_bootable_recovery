@@ -108,6 +108,56 @@ static inline int ABS(int x) {
     return x<0?-x:x;
 }
 
+#ifdef TW_VIBRATOR_INPUT_DEV
+// vibrator events are stopped when the file
+// is closed, so just leave it open indefinitely.
+static int vib_fd = -1;
+int vibrate(int timeout_ms)
+{
+    int ret;
+    struct ff_effect effect;
+    struct input_event play;
+
+    memset(&effect, 0, sizeof(effect));
+    memset(&play, 0, sizeof(play));
+
+    effect.type = FF_RUMBLE;
+	effect.id = -1;
+    effect.replay.length = timeout_ms;
+    /* 75% magnitude - 0xffff is max */
+    effect.u.rumble.strong_magnitude = 0xbfff;
+
+	// reset session to avoid hitting max number of effects
+	if (vib_fd >= 0)
+		close(vib_fd);
+	vib_fd = open(TW_VIBRATOR_INPUT_DEV, O_WRONLY);
+	if (vib_fd < 0) {
+		printf("failed to open %s!\n", TW_VIBRATOR_INPUT_DEV);
+		return -1;
+	}
+
+    /* upload effect */
+    ret = ioctl(vib_fd, EVIOCSFF, &effect);
+    if (ret < 0) {
+        printf("failed to upload FF_RUMBLE effect\n");
+        return -1;
+    }
+
+	printf("uploaded effect!\n");
+    play.type = EV_FF;
+    play.code = effect.id;
+    play.value = 1;
+
+    ret = write(vib_fd, (const void *)&play, sizeof(play));
+    if (ret < 0) {
+        printf("failed to play FF_RUMBLE effect\n");
+        return -1;
+    }
+
+	printf("played effect!\n");
+    return 0;
+}
+#else
 int vibrate(int timeout_ms)
 {
     char str[20];
@@ -129,6 +179,7 @@ int vibrate(int timeout_ms)
 
     return 0;
 }
+#endif
 
 /* Returns empty tokens */
 static char *vk_strtok_r(char *str, const char *delim, char **save_str)
