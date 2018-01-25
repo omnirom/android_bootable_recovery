@@ -42,6 +42,7 @@ struct drm_surface {
 
 static drm_surface *drm_surfaces[2];
 static int current_buffer;
+static bool flip_pending = false;
 static GRSurface *draw_buf = NULL;
 
 static drmModeCrtc *main_monitor_crtc;
@@ -480,18 +481,36 @@ static GRSurface* drm_init(minui_backend* backend __unused) {
     return draw_buf;
 }
 
+static void drm_page_flip_event(int fd, unsigned int frame, unsigned int sec,
+        unsigned int usec, void *data) {
+    flip_pending = false;
+}
+
 static GRSurface* drm_flip(minui_backend* backend __unused) {
     int ret;
+    drmEventContext ev;
+
+    memset(&ev, 0, sizeof(ev));
+
     memcpy(drm_surfaces[current_buffer]->base.data,
             draw_buf->data, draw_buf->height * draw_buf->row_bytes);
 
+    ev.version = 2;
+    ev.page_flip_handler = drm_page_flip_event;
+
+    /* wait for previous page flip, if any, to complete */
+    while (flip_pending) {
+        drmHandleEvent(drm_fd, &ev);
+    }
 
     ret = drmModePageFlip(drm_fd, main_monitor_crtc->crtc_id,
-                          drm_surfaces[current_buffer]->fb_id, 0, NULL);
+                          drm_surfaces[current_buffer]->fb_id, DRM_MODE_PAGE_FLIP_EVENT, NULL);
     if (ret < 0) {
         printf("drmModePageFlip failed ret=%d\n", ret);
         return NULL;
     }
+
+    flip_pending = true;
     current_buffer = 1 - current_buffer;
     return draw_buf;
 }
