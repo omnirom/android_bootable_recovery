@@ -103,13 +103,17 @@ static_assert(sizeof(struct bootloader_message) == 2048,
  * implementations are free to use all 32 bytes and may store private
  * data past the first NUL-byte in this field. It is encouraged, but
  * not mandatory, to use 'struct bootloader_control' described below.
+ *
+ * The update_channel field is used to store the Omaha update channel
+ * if update_engine is compiled with Omaha support.
  */
 struct bootloader_message_ab {
     struct bootloader_message message;
     char slot_suffix[32];
+    char update_channel[128];
 
     // Round up the entire struct to 4096-byte.
-    char reserved[2016];
+    char reserved[1888];
 };
 
 /**
