@@ -817,7 +817,7 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& blockd
   size_t max_stash_size = maxblocks * BLOCKSIZE;
 
   if (res == -1 && errno != ENOENT) {
-    ErrorAbort(state, kStashCreationFailure, "stat \"%s\" failed: %s\n", dirname.c_str(),
+    ErrorAbort(state, kStashCreationFailure, "stat \"%s\" failed: %s", dirname.c_str(),
                strerror(errno));
     return -1;
   } else if (res != 0) {
@@ -825,19 +825,19 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& blockd
     res = mkdir(dirname.c_str(), STASH_DIRECTORY_MODE);
 
     if (res != 0) {
-      ErrorAbort(state, kStashCreationFailure, "mkdir \"%s\" failed: %s\n", dirname.c_str(),
+      ErrorAbort(state, kStashCreationFailure, "mkdir \"%s\" failed: %s", dirname.c_str(),
                  strerror(errno));
       return -1;
     }
 
     if (chown(dirname.c_str(), AID_SYSTEM, AID_SYSTEM) != 0) {  // system user
-      ErrorAbort(state, kStashCreationFailure, "chown \"%s\" failed: %s\n", dirname.c_str(),
+      ErrorAbort(state, kStashCreationFailure, "chown \"%s\" failed: %s", dirname.c_str(),
                  strerror(errno));
       return -1;
     }
 
     if (CacheSizeCheck(max_stash_size) != 0) {
-      ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%zu needed)\n",
+      ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%zu needed)",
                  max_stash_size);
       return -1;
     }
@@ -869,7 +869,7 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& blockd
   if (max_stash_size > existing) {
     size_t needed = max_stash_size - existing;
     if (CacheSizeCheck(needed) != 0) {
-      ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%zu more needed)\n",
+      ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%zu more needed)",
                  needed);
       return -1;
     }
@@ -1517,7 +1517,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
 
   std::vector<std::string> lines = android::base::Split(transfer_list_value->data, "\n");
   if (lines.size() < 2) {
-    ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zd]\n",
+    ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zd]",
                lines.size());
     return StringValue("");
   }
@@ -1533,7 +1533,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   // Second line in transfer list is the total number of blocks we expect to write.
   size_t total_blocks;
   if (!android::base::ParseUint(lines[1], &total_blocks)) {
-    ErrorAbort(state, kArgsParsingFailure, "unexpected block count [%s]\n", lines[1].c_str());
+    ErrorAbort(state, kArgsParsingFailure, "unexpected block count [%s]", lines[1].c_str());
     return StringValue("");
   }
 
@@ -1543,7 +1543,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
 
   size_t start = 2;
   if (lines.size() < 4) {
-    ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]\n",
+    ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]",
                lines.size());
     return StringValue("");
   }
@@ -1554,7 +1554,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   // Fourth line is the maximum number of blocks that will be stashed simultaneously
   size_t stash_max_blocks;
   if (!android::base::ParseUint(lines[3], &stash_max_blocks)) {
-    ErrorAbort(state, kArgsParsingFailure, "unexpected maximum stash blocks [%s]\n",
+    ErrorAbort(state, kArgsParsingFailure, "unexpected maximum stash blocks [%s]",
                lines[3].c_str());
     return StringValue("");
   }

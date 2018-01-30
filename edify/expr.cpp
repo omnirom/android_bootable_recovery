@@ -114,9 +114,9 @@ Value* IfElseFn(const char* name, State* state, const std::vector<std::unique_pt
 Value* AbortFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
     std::string msg;
     if (!argv.empty() && Evaluate(state, argv[0], &msg)) {
-        state->errmsg = msg;
+      state->errmsg += msg;
     } else {
-        state->errmsg = "called abort()";
+      state->errmsg += "called abort()";
     }
     return nullptr;
 }
@@ -410,12 +410,15 @@ Value* ErrorAbort(State* state, const char* format, ...) {
 }
 
 Value* ErrorAbort(State* state, CauseCode cause_code, const char* format, ...) {
-    va_list ap;
-    va_start(ap, format);
-    android::base::StringAppendV(&state->errmsg, format, ap);
-    va_end(ap);
-    state->cause_code = cause_code;
-    return nullptr;
+  std::string err_message;
+  va_list ap;
+  va_start(ap, format);
+  android::base::StringAppendV(&err_message, format, ap);
+  va_end(ap);
+  // Ensure that there's exactly one line break at the end of the error message.
+  state->errmsg = android::base::Trim(err_message) + "\n";
+  state->cause_code = cause_code;
+  return nullptr;
 }
 
 State::State(const std::string& script, void* cookie)
