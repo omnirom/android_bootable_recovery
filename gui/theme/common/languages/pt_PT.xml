@@ -22,7 +22,7 @@
 		<string name="data_backup">Dados (excl. armazenamento)</string>
 		<string name="sdcard">Cartão SD</string>
 		<string name="internal">Armazenamento interno</string>
-		<string name="microsd">Cartão SD</string>
+		<string name="microsd">Cartão Micro SD</string>
 		<string name="usbotg">USB OTG</string>
 		<string name="android_secure">Android seguro</string>
 		<string name="dalvik">Cache Dalvik / ART</string>
