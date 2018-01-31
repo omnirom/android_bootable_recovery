@@ -268,7 +268,7 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
 
   int64_t size;
   if (!android::base::ParseInt(fs_size, &size)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s: failed to parse int in %s\n", name,
+    return ErrorAbort(state, kArgsParsingFailure, "%s: failed to parse int in %s", name,
                       fs_size.c_str());
   }
 
@@ -352,12 +352,12 @@ Value* ShowProgressFn(const char* name, State* state,
 
   double frac;
   if (!android::base::ParseDouble(frac_str.c_str(), &frac)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s: failed to parse double in %s\n", name,
+    return ErrorAbort(state, kArgsParsingFailure, "%s: failed to parse double in %s", name,
                       frac_str.c_str());
   }
   int sec;
   if (!android::base::ParseInt(sec_str.c_str(), &sec)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s: failed to parse int in %s\n", name,
+    return ErrorAbort(state, kArgsParsingFailure, "%s: failed to parse int in %s", name,
                       sec_str.c_str());
   }
 
@@ -380,7 +380,7 @@ Value* SetProgressFn(const char* name, State* state, const std::vector<std::uniq
 
   double frac;
   if (!android::base::ParseDouble(frac_str.c_str(), &frac)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s: failed to parse double in %s\n", name,
+    return ErrorAbort(state, kArgsParsingFailure, "%s: failed to parse double in %s", name,
                       frac_str.c_str());
   }
 
@@ -574,8 +574,8 @@ Value* ApplyPatchSpaceFn(const char* name, State* state, const std::vector<std::
 
   size_t bytes;
   if (!android::base::ParseUint(bytes_str.c_str(), &bytes)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count\n\n",
-                      name, bytes_str.c_str());
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count", name,
+                      bytes_str.c_str());
   }
 
   // Skip the cache size check if the update is a retry.
