@@ -30,6 +30,8 @@ cc_defaults {
 cc_library_static {
     name: "libapplypatch",
 
+    host_supported: true,
+
     defaults: [
         "applypatch_defaults",
     ],
