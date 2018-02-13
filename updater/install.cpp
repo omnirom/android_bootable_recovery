@@ -94,6 +94,244 @@ void uiPrintf(State* _Nonnull state, const char* _Nonnull format, ...) {
   uiPrint(state, error_msg);
 }
 
+// This is the updater side handler for ui_print() in edify script. Contents will be sent over to
+// the recovery side for on-screen display.
+Value* UIPrintFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  std::vector<std::string> args;
+  if (!ReadArgs(state, argv, &args)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
+  }
+
+  std::string buffer = android::base::Join(args, "");
+  uiPrint(state, buffer);
+  return StringValue(buffer);
+}
+
+// package_extract_file(package_file[, dest_file])
+//   Extracts a single package_file from the update package and writes it to dest_file,
+//   overwriting existing files if necessary. Without the dest_file argument, returns the
+//   contents of the package file as a binary blob.
+Value* PackageExtractFileFn(const char* name, State* state,
+                            const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() < 1 || argv.size() > 2) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 or 2 args, got %zu", name,
+                      argv.size());
+  }
+
+  if (argv.size() == 2) {
+    // The two-argument version extracts to a file.
+
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argv, &args)) {
+      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %zu args", name,
+                        argv.size());
+    }
+    const std::string& zip_path = args[0];
+    const std::string& dest_path = args[1];
+
+    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
+    ZipString zip_string_path(zip_path.c_str());
+    ZipEntry entry;
+    if (FindEntry(za, zip_string_path, &entry) != 0) {
+      LOG(ERROR) << name << ": no " << zip_path << " in package";
+      return StringValue("");
+    }
+
+    unique_fd fd(TEMP_FAILURE_RETRY(
+        ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
+    if (fd == -1) {
+      PLOG(ERROR) << name << ": can't open " << dest_path << " for write";
+      return StringValue("");
+    }
+
+    bool success = true;
+    int32_t ret = ExtractEntryToFile(za, &entry, fd);
+    if (ret != 0) {
+      LOG(ERROR) << name << ": Failed to extract entry \"" << zip_path << "\" ("
+                 << entry.uncompressed_length << " bytes) to \"" << dest_path
+                 << "\": " << ErrorCodeString(ret);
+      success = false;
+    }
+    if (ota_fsync(fd) == -1) {
+      PLOG(ERROR) << "fsync of \"" << dest_path << "\" failed";
+      success = false;
+    }
+    if (ota_close(fd) == -1) {
+      PLOG(ERROR) << "close of \"" << dest_path << "\" failed";
+      success = false;
+    }
+
+    return StringValue(success ? "t" : "");
+  } else {
+    // The one-argument version returns the contents of the file as the result.
+
+    std::vector<std::string> args;
+    if (!ReadArgs(state, argv, &args)) {
+      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %zu args", name,
+                        argv.size());
+    }
+    const std::string& zip_path = args[0];
+
+    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
+    ZipString zip_string_path(zip_path.c_str());
+    ZipEntry entry;
+    if (FindEntry(za, zip_string_path, &entry) != 0) {
+      return ErrorAbort(state, kPackageExtractFileFailure, "%s(): no %s in package", name,
+                        zip_path.c_str());
+    }
+
+    std::string buffer;
+    buffer.resize(entry.uncompressed_length);
+
+    int32_t ret =
+        ExtractToMemory(za, &entry, reinterpret_cast<uint8_t*>(&buffer[0]), buffer.size());
+    if (ret != 0) {
+      return ErrorAbort(state, kPackageExtractFileFailure,
+                        "%s: Failed to extract entry \"%s\" (%zu bytes) to memory: %s", name,
+                        zip_path.c_str(), buffer.size(), ErrorCodeString(ret));
+    }
+
+    return new Value(VAL_BLOB, buffer);
+  }
+}
+
+// apply_patch(src_file, tgt_file, tgt_sha1, tgt_size, patch1_sha1, patch1_blob, [...])
+//   Applies a binary patch to the src_file to produce the tgt_file. If the desired target is the
+//   same as the source, pass "-" for tgt_file. tgt_sha1 and tgt_size are the expected final SHA1
+//   hash and size of the target file. The remaining arguments must come in pairs: a SHA1 hash (a
+//   40-character hex string) and a blob. The blob is the patch to be applied when the source
+//   file's current contents have the given SHA1.
+//
+//   The patching is done in a safe manner that guarantees the target file either has the desired
+//   SHA1 hash and size, or it is untouched -- it will not be left in an unrecoverable intermediate
+//   state. If the process is interrupted during patching, the target file may be in an intermediate
+//   state; a copy exists in the cache partition so restarting the update can successfully update
+//   the file.
+Value* ApplyPatchFn(const char* name, State* state,
+                    const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() < 6 || (argv.size() % 2) == 1) {
+    return ErrorAbort(state, kArgsParsingFailure,
+                      "%s(): expected at least 6 args and an "
+                      "even number, got %zu",
+                      name, argv.size());
+  }
+
+  std::vector<std::string> args;
+  if (!ReadArgs(state, argv, &args, 0, 4)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  }
+  const std::string& source_filename = args[0];
+  const std::string& target_filename = args[1];
+  const std::string& target_sha1 = args[2];
+  const std::string& target_size_str = args[3];
+
+  size_t target_size;
+  if (!android::base::ParseUint(target_size_str.c_str(), &target_size)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count", name,
+                      target_size_str.c_str());
+  }
+
+  int patchcount = (argv.size() - 4) / 2;
+  std::vector<std::unique_ptr<Value>> arg_values;
+  if (!ReadValueArgs(state, argv, &arg_values, 4, argv.size() - 4)) {
+    return nullptr;
+  }
+
+  for (int i = 0; i < patchcount; ++i) {
+    if (arg_values[i * 2]->type != VAL_STRING) {
+      return ErrorAbort(state, kArgsParsingFailure, "%s(): sha-1 #%d is not string", name, i * 2);
+    }
+    if (arg_values[i * 2 + 1]->type != VAL_BLOB) {
+      return ErrorAbort(state, kArgsParsingFailure, "%s(): patch #%d is not blob", name, i * 2 + 1);
+    }
+  }
+
+  std::vector<std::string> patch_sha_str;
+  std::vector<std::unique_ptr<Value>> patches;
+  for (int i = 0; i < patchcount; ++i) {
+    patch_sha_str.push_back(arg_values[i * 2]->data);
+    patches.push_back(std::move(arg_values[i * 2 + 1]));
+  }
+
+  int result = applypatch(source_filename.c_str(), target_filename.c_str(), target_sha1.c_str(),
+                          target_size, patch_sha_str, patches, nullptr);
+
+  return StringValue(result == 0 ? "t" : "");
+}
+
+// apply_patch_check(filename, [sha1, ...])
+//   Returns true if the contents of filename or the temporary copy in the cache partition (if
+//   present) have a SHA-1 checksum equal to one of the given sha1 values. sha1 values are
+//   specified as 40 hex digits. This function differs from sha1_check(read_file(filename),
+//   sha1 [, ...]) in that it knows to check the cache partition copy, so apply_patch_check() will
+//   succeed even if the file was corrupted by an interrupted apply_patch() update.
+Value* ApplyPatchCheckFn(const char* name, State* state,
+                         const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() < 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): expected at least 1 arg, got %zu", name,
+                      argv.size());
+  }
+
+  std::vector<std::string> args;
+  if (!ReadArgs(state, argv, &args, 0, 1)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  }
+  const std::string& filename = args[0];
+
+  std::vector<std::string> sha1s;
+  if (argv.size() > 1 && !ReadArgs(state, argv, &sha1s, 1, argv.size() - 1)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  }
+  int result = applypatch_check(filename.c_str(), sha1s);
+
+  return StringValue(result == 0 ? "t" : "");
+}
+
+// sha1_check(data)
+//    to return the sha1 of the data (given in the format returned by
+//    read_file).
+//
+// sha1_check(data, sha1_hex, [sha1_hex, ...])
+//    returns the sha1 of the file if it matches any of the hex
+//    strings passed, or "" if it does not equal any of them.
+//
+Value* Sha1CheckFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() < 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects at least 1 arg", name);
+  }
+
+  std::vector<std::unique_ptr<Value>> args;
+  if (!ReadValueArgs(state, argv, &args)) {
+    return nullptr;
+  }
+
+  if (args[0]->type == VAL_INVALID) {
+    return StringValue("");
+  }
+  uint8_t digest[SHA_DIGEST_LENGTH];
+  SHA1(reinterpret_cast<const uint8_t*>(args[0]->data.c_str()), args[0]->data.size(), digest);
+
+  if (argv.size() == 1) {
+    return StringValue(print_sha1(digest));
+  }
+
+  for (size_t i = 1; i < argv.size(); ++i) {
+    uint8_t arg_digest[SHA_DIGEST_LENGTH];
+    if (args[i]->type != VAL_STRING) {
+      LOG(ERROR) << name << "(): arg " << i << " is not a string; skipping";
+    } else if (ParseSha1(args[i]->data.c_str(), arg_digest) != 0) {
+      // Warn about bad args and skip them.
+      LOG(ERROR) << name << "(): error parsing \"" << args[i]->data << "\" as sha-1; skipping";
+    } else if (memcmp(digest, arg_digest, SHA_DIGEST_LENGTH) == 0) {
+      // Found a match.
+      return args[i].release();
+    }
+  }
+
+  // Didn't match any of the hex strings; return false.
+  return StringValue("");
+}
+
 // mount(fs_type, partition_type, location, mount_point)
 // mount(fs_type, partition_type, location, mount_point, mount_options)
 
@@ -367,7 +605,8 @@ Value* ShowProgressFn(const char* name, State* state,
   return StringValue(frac_str);
 }
 
-Value* SetProgressFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+Value* SetProgressFn(const char* name, State* state,
+                     const std::vector<std::unique_ptr<Expr>>& argv) {
   if (argv.size() != 1) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
   }
@@ -390,93 +629,6 @@ Value* SetProgressFn(const char* name, State* state, const std::vector<std::uniq
   return StringValue(frac_str);
 }
 
-// package_extract_file(package_file[, dest_file])
-//   Extracts a single package_file from the update package and writes it to dest_file,
-//   overwriting existing files if necessary. Without the dest_file argument, returns the
-//   contents of the package file as a binary blob.
-Value* PackageExtractFileFn(const char* name, State* state,
-                            const std::vector<std::unique_ptr<Expr>>& argv) {
-  if (argv.size() < 1 || argv.size() > 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 or 2 args, got %zu", name,
-                      argv.size());
-  }
-
-  if (argv.size() == 2) {
-    // The two-argument version extracts to a file.
-
-    std::vector<std::string> args;
-    if (!ReadArgs(state, argv, &args)) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %zu args", name,
-                        argv.size());
-    }
-    const std::string& zip_path = args[0];
-    const std::string& dest_path = args[1];
-
-    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
-    ZipString zip_string_path(zip_path.c_str());
-    ZipEntry entry;
-    if (FindEntry(za, zip_string_path, &entry) != 0) {
-      LOG(ERROR) << name << ": no " << zip_path << " in package";
-      return StringValue("");
-    }
-
-    unique_fd fd(TEMP_FAILURE_RETRY(
-        ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
-    if (fd == -1) {
-      PLOG(ERROR) << name << ": can't open " << dest_path << " for write";
-      return StringValue("");
-    }
-
-    bool success = true;
-    int32_t ret = ExtractEntryToFile(za, &entry, fd);
-    if (ret != 0) {
-      LOG(ERROR) << name << ": Failed to extract entry \"" << zip_path << "\" ("
-                 << entry.uncompressed_length << " bytes) to \"" << dest_path
-                 << "\": " << ErrorCodeString(ret);
-      success = false;
-    }
-    if (ota_fsync(fd) == -1) {
-      PLOG(ERROR) << "fsync of \"" << dest_path << "\" failed";
-      success = false;
-    }
-    if (ota_close(fd) == -1) {
-      PLOG(ERROR) << "close of \"" << dest_path << "\" failed";
-      success = false;
-    }
-
-    return StringValue(success ? "t" : "");
-  } else {
-    // The one-argument version returns the contents of the file as the result.
-
-    std::vector<std::string> args;
-    if (!ReadArgs(state, argv, &args)) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %zu args", name,
-                        argv.size());
-    }
-    const std::string& zip_path = args[0];
-
-    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
-    ZipString zip_string_path(zip_path.c_str());
-    ZipEntry entry;
-    if (FindEntry(za, zip_string_path, &entry) != 0) {
-      return ErrorAbort(state, kPackageExtractFileFailure, "%s(): no %s in package", name,
-                        zip_path.c_str());
-    }
-
-    std::string buffer;
-    buffer.resize(entry.uncompressed_length);
-
-    int32_t ret = ExtractToMemory(za, &entry, reinterpret_cast<uint8_t*>(&buffer[0]), buffer.size());
-    if (ret != 0) {
-      return ErrorAbort(state, kPackageExtractFileFailure,
-                        "%s: Failed to extract entry \"%s\" (%zu bytes) to memory: %s", name,
-                        zip_path.c_str(), buffer.size(), ErrorCodeString(ret));
-    }
-
-    return new Value(VAL_BLOB, buffer);
-  }
-}
-
 Value* GetPropFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
   if (argv.size() != 1) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
@@ -495,7 +647,8 @@ Value* GetPropFn(const char* name, State* state, const std::vector<std::unique_p
 //   interprets 'file' as a getprop-style file (key=value pairs, one
 //   per line. # comment lines, blank lines, lines without '=' ignored),
 //   and returns the value for 'key' (or "" if it isn't defined).
-Value* FileGetPropFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+Value* FileGetPropFn(const char* name, State* state,
+                     const std::vector<std::unique_ptr<Expr>>& argv) {
   if (argv.size() != 2) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects 2 args, got %zu", name,
                       argv.size());
@@ -561,7 +714,8 @@ Value* FileGetPropFn(const char* name, State* state, const std::vector<std::uniq
 }
 
 // apply_patch_space(bytes)
-Value* ApplyPatchSpaceFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+Value* ApplyPatchSpaceFn(const char* name, State* state,
+                         const std::vector<std::unique_ptr<Expr>>& argv) {
   if (argv.size() != 1) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 args, got %zu", name,
                       argv.size());
@@ -583,110 +737,6 @@ Value* ApplyPatchSpaceFn(const char* name, State* state, const std::vector<std::
     return StringValue("t");
   }
   return StringValue("");
-}
-
-// apply_patch(src_file, tgt_file, tgt_sha1, tgt_size, patch1_sha1, patch1_blob, [...])
-//   Applies a binary patch to the src_file to produce the tgt_file. If the desired target is the
-//   same as the source, pass "-" for tgt_file. tgt_sha1 and tgt_size are the expected final SHA1
-//   hash and size of the target file. The remaining arguments must come in pairs: a SHA1 hash (a
-//   40-character hex string) and a blob. The blob is the patch to be applied when the source
-//   file's current contents have the given SHA1.
-//
-//   The patching is done in a safe manner that guarantees the target file either has the desired
-//   SHA1 hash and size, or it is untouched -- it will not be left in an unrecoverable intermediate
-//   state. If the process is interrupted during patching, the target file may be in an intermediate
-//   state; a copy exists in the cache partition so restarting the update can successfully update
-//   the file.
-Value* ApplyPatchFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
-    if (argv.size() < 6 || (argv.size() % 2) == 1) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s(): expected at least 6 args and an "
-                          "even number, got %zu", name, argv.size());
-    }
-
-    std::vector<std::string> args;
-    if (!ReadArgs(state, argv, &args, 0, 4)) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-    }
-    const std::string& source_filename = args[0];
-    const std::string& target_filename = args[1];
-    const std::string& target_sha1 = args[2];
-    const std::string& target_size_str = args[3];
-
-    size_t target_size;
-    if (!android::base::ParseUint(target_size_str.c_str(), &target_size)) {
-        return ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count",
-                          name, target_size_str.c_str());
-    }
-
-    int patchcount = (argv.size()-4) / 2;
-    std::vector<std::unique_ptr<Value>> arg_values;
-    if (!ReadValueArgs(state, argv, &arg_values, 4, argv.size() - 4)) {
-        return nullptr;
-    }
-
-    for (int i = 0; i < patchcount; ++i) {
-        if (arg_values[i * 2]->type != VAL_STRING) {
-            return ErrorAbort(state, kArgsParsingFailure, "%s(): sha-1 #%d is not string", name,
-                              i * 2);
-        }
-        if (arg_values[i * 2 + 1]->type != VAL_BLOB) {
-            return ErrorAbort(state, kArgsParsingFailure, "%s(): patch #%d is not blob", name,
-                              i * 2 + 1);
-        }
-    }
-
-    std::vector<std::string> patch_sha_str;
-    std::vector<std::unique_ptr<Value>> patches;
-    for (int i = 0; i < patchcount; ++i) {
-        patch_sha_str.push_back(arg_values[i * 2]->data);
-        patches.push_back(std::move(arg_values[i * 2 + 1]));
-    }
-
-    int result = applypatch(source_filename.c_str(), target_filename.c_str(),
-                            target_sha1.c_str(), target_size,
-                            patch_sha_str, patches, nullptr);
-
-    return StringValue(result == 0 ? "t" : "");
-}
-
-// apply_patch_check(filename, [sha1, ...])
-//   Returns true if the contents of filename or the temporary copy in the cache partition (if
-//   present) have a SHA-1 checksum equal to one of the given sha1 values. sha1 values are
-//   specified as 40 hex digits. This function differs from sha1_check(read_file(filename),
-//   sha1 [, ...]) in that it knows to check the cache partition copy, so apply_patch_check() will
-//   succeed even if the file was corrupted by an interrupted apply_patch() update.
-Value* ApplyPatchCheckFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
-  if (argv.size() < 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s(): expected at least 1 arg, got %zu", name,
-                      argv.size());
-  }
-
-  std::vector<std::string> args;
-  if (!ReadArgs(state, argv, &args, 0, 1)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-  }
-  const std::string& filename = args[0];
-
-  std::vector<std::string> sha1s;
-  if (argv.size() > 1 && !ReadArgs(state, argv, &sha1s, 1, argv.size() - 1)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-  }
-  int result = applypatch_check(filename.c_str(), sha1s);
-
-  return StringValue(result == 0 ? "t" : "");
-}
-
-// This is the updater side handler for ui_print() in edify script. Contents will be sent over to
-// the recovery side for on-screen display.
-Value* UIPrintFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
-  std::vector<std::string> args;
-  if (!ReadArgs(state, argv, &args)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
-  }
-
-  std::string buffer = android::base::Join(args, "");
-  uiPrint(state, buffer);
-  return StringValue(buffer);
 }
 
 Value* WipeCacheFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
@@ -734,51 +784,6 @@ Value* RunProgramFn(const char* name, State* state, const std::vector<std::uniqu
   }
 
   return StringValue(std::to_string(status));
-}
-
-// sha1_check(data)
-//    to return the sha1 of the data (given in the format returned by
-//    read_file).
-//
-// sha1_check(data, sha1_hex, [sha1_hex, ...])
-//    returns the sha1 of the file if it matches any of the hex
-//    strings passed, or "" if it does not equal any of them.
-//
-Value* Sha1CheckFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
-  if (argv.size() < 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects at least 1 arg", name);
-  }
-
-  std::vector<std::unique_ptr<Value>> args;
-  if (!ReadValueArgs(state, argv, &args)) {
-    return nullptr;
-  }
-
-  if (args[0]->type == VAL_INVALID) {
-    return StringValue("");
-  }
-  uint8_t digest[SHA_DIGEST_LENGTH];
-  SHA1(reinterpret_cast<const uint8_t*>(args[0]->data.c_str()), args[0]->data.size(), digest);
-
-  if (argv.size() == 1) {
-    return StringValue(print_sha1(digest));
-  }
-
-  for (size_t i = 1; i < argv.size(); ++i) {
-    uint8_t arg_digest[SHA_DIGEST_LENGTH];
-    if (args[i]->type != VAL_STRING) {
-      LOG(ERROR) << name << "(): arg " << i << " is not a string; skipping";
-    } else if (ParseSha1(args[i]->data.c_str(), arg_digest) != 0) {
-      // Warn about bad args and skip them.
-      LOG(ERROR) << name << "(): error parsing \"" << args[i]->data << "\" as sha-1; skipping";
-    } else if (memcmp(digest, arg_digest, SHA_DIGEST_LENGTH) == 0) {
-      // Found a match.
-      return args[i].release();
-    }
-  }
-
-  // Didn't match any of the hex strings; return false.
-  return StringValue("");
 }
 
 // Read a local file and return its contents (the Value* returned
