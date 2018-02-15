@@ -300,9 +300,12 @@ LOCAL_SRC_FILES += \
 endif
 
 LOCAL_CFLAGS += \
-    -std=c99 \
+    -std=gnu11 \
     -Os \
+    -Wall -Werror \
     -Wno-char-subscripts \
+    -Wno-gnu-variable-sized-type-not-at-end \
+    -Wno-missing-field-initializers \
     -Wno-sign-compare \
     -Wno-string-plus-int \
     -Wno-uninitialized \
