@@ -148,6 +148,8 @@ class RecoveryUI {
   // be configured via subclassing. Setting brightness_normal_ to 0 to disable screensaver.
   unsigned int brightness_normal_;
   unsigned int brightness_dimmed_;
+  std::string brightness_file_;
+  std::string max_brightness_file_;
 
   // Whether we should listen for touch inputs (default: false).
   bool touch_screen_allowed_;
