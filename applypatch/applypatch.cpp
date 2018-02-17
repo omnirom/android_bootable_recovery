@@ -450,9 +450,8 @@ int CacheSizeCheck(size_t bytes) {
     if (MakeFreeSpaceOnCache(bytes) < 0) {
         printf("unable to make %zu bytes available on /cache\n", bytes);
         return 1;
-    } else {
-        return 0;
     }
+    return 0;
 }
 
 // This function applies binary patches to EMMC target files in a way that is safe (the original
@@ -477,7 +476,7 @@ int CacheSizeCheck(size_t bytes) {
 // become obsolete since we have dropped the support for patching non-EMMC targets (EMMC targets
 // have the size embedded in the filename).
 int applypatch(const char* source_filename, const char* target_filename,
-               const char* target_sha1_str, size_t target_size __unused,
+               const char* target_sha1_str, size_t /* target_size */,
                const std::vector<std::string>& patch_sha1_str,
                const std::vector<std::unique_ptr<Value>>& patch_data, const Value* bonus_data) {
   printf("patch %s: ", source_filename);
