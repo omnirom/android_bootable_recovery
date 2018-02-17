@@ -111,6 +111,12 @@ static std::set<std::string> FindExpendableFiles() {
 }
 
 int MakeFreeSpaceOnCache(size_t bytes_needed) {
+#ifndef __ANDROID__
+  // TODO (xunchang) implement a heuristic cache size check during host simulation.
+  printf("Skip making (%zu) bytes free space on cache; program is running on host\n", bytes_needed);
+  return 0;
+#endif
+
   size_t free_now = FreeSpaceForFile("/cache");
   printf("%zu bytes free on /cache (%zu needed)\n", free_now, bytes_needed);
 
