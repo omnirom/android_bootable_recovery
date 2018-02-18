@@ -39,6 +39,12 @@ cc_library_static {
         "-Wthread-safety",
         "-Wthread-safety-negative",
     ],
+
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
 }
 
 cc_test {
