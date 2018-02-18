@@ -189,7 +189,7 @@ static int exec_cmd(const std::vector<std::string>& args) {
   argv.push_back(nullptr);
 
   pid_t child;
-  if ((child = vfork()) == 0) {
+  if ((child = fork()) == 0) {
     execv(argv[0], argv.data());
     _exit(EXIT_FAILURE);
   }
