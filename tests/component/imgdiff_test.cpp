@@ -969,3 +969,104 @@ TEST(ImgdiffTest, zip_mode_large_enough_limit) {
   // Expect 1 piece of patch since limit is larger than the zip file size.
   GenerateAndCheckSplitTarget(debug_dir.path, 1, tgt);
 }
+
+TEST(ImgdiffTest, zip_mode_large_apk_small_target_chunk) {
+  TemporaryFile tgt_file;
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
+  ZipWriter tgt_writer(tgt_file_ptr);
+
+  // The first entry is less than 4096 bytes, followed immediately by an entry that has a very
+  // large counterpart in the source file. Therefore the first entry will be patched separately.
+  std::string small_chunk("a", 2000);
+  ASSERT_EQ(0, tgt_writer.StartEntry("a", 0));
+  ASSERT_EQ(0, tgt_writer.WriteBytes(small_chunk.data(), small_chunk.size()));
+  ASSERT_EQ(0, tgt_writer.FinishEntry());
+  construct_store_entry(
+      {
+          { "b", 12, 'b' }, { "c", 3, 'c' },
+      },
+      &tgt_writer);
+  ASSERT_EQ(0, tgt_writer.Finish());
+  ASSERT_EQ(0, fclose(tgt_file_ptr));
+
+  TemporaryFile src_file;
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
+  ZipWriter src_writer(src_file_ptr);
+  construct_store_entry({ { "a", 1, 'a' }, { "b", 13, 'b' }, { "c", 1, 'c' } }, &src_writer);
+  ASSERT_EQ(0, src_writer.Finish());
+  ASSERT_EQ(0, fclose(src_file_ptr));
+
+  // Compute patch.
+  TemporaryFile patch_file;
+  TemporaryFile split_info_file;
+  TemporaryDir debug_dir;
+  std::string split_info_arg = android::base::StringPrintf("--split-info=%s", split_info_file.path);
+  std::string debug_dir_arg = android::base::StringPrintf("--debug-dir=%s", debug_dir.path);
+  std::vector<const char*> args = {
+    "imgdiff",     "-z",          "--block-limit=10", split_info_arg.c_str(), debug_dir_arg.c_str(),
+    src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  std::string tgt;
+  ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
+
+  // Expect three split src images:
+  // src_piece 0: a 1 blocks
+  // src_piece 1: b-0 10 blocks
+  // src_piece 2: b-1 3 blocks, c 1 blocks, CD
+  GenerateAndCheckSplitTarget(debug_dir.path, 3, tgt);
+}
+
+TEST(ImgdiffTest, zip_mode_large_apk_skipped_small_target_chunk) {
+  TemporaryFile tgt_file;
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
+  ZipWriter tgt_writer(tgt_file_ptr);
+
+  construct_store_entry(
+      {
+          { "a", 11, 'a' },
+      },
+      &tgt_writer);
+
+  // Construct a tiny target entry of 1 byte, which will be skipped due to the tail alignment of
+  // the previous entry.
+  std::string small_chunk("b", 1);
+  ASSERT_EQ(0, tgt_writer.StartEntry("b", 0));
+  ASSERT_EQ(0, tgt_writer.WriteBytes(small_chunk.data(), small_chunk.size()));
+  ASSERT_EQ(0, tgt_writer.FinishEntry());
+
+  ASSERT_EQ(0, tgt_writer.Finish());
+  ASSERT_EQ(0, fclose(tgt_file_ptr));
+
+  TemporaryFile src_file;
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
+  ZipWriter src_writer(src_file_ptr);
+  construct_store_entry(
+      {
+          { "a", 11, 'a' }, { "b", 11, 'b' },
+      },
+      &src_writer);
+  ASSERT_EQ(0, src_writer.Finish());
+  ASSERT_EQ(0, fclose(src_file_ptr));
+
+  // Compute patch.
+  TemporaryFile patch_file;
+  TemporaryFile split_info_file;
+  TemporaryDir debug_dir;
+  std::string split_info_arg = android::base::StringPrintf("--split-info=%s", split_info_file.path);
+  std::string debug_dir_arg = android::base::StringPrintf("--debug-dir=%s", debug_dir.path);
+  std::vector<const char*> args = {
+    "imgdiff",     "-z",          "--block-limit=10", split_info_arg.c_str(), debug_dir_arg.c_str(),
+    src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  std::string tgt;
+  ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
+
+  // Expect two split src images:
+  // src_piece 0: a-0 10 blocks
+  // src_piece 1: a-0 1 block, CD
+  GenerateAndCheckSplitTarget(debug_dir.path, 2, tgt);
+}
