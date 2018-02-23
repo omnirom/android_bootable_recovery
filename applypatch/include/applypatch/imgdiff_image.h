@@ -265,8 +265,9 @@ class ZipModeImage : public Image {
                                   std::vector<SortedRangeSet>& split_src_ranges,
                                   size_t total_tgt_size);
   // Construct the dummy split images based on the chunks info and source ranges; and move them into
-  // the given vectors.
-  static void AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
+  // the given vectors. Return true if we add a new split image into |split_tgt_images|, and
+  // false otherwise.
+  static bool AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
                                          const ZipModeImage& src_image,
                                          const SortedRangeSet& split_src_ranges,
                                          const std::vector<ImageChunk>& split_tgt_chunks,
