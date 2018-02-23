@@ -955,14 +955,17 @@ bool ZipModeImage::SplitZipModeImageWithLimit(const ZipModeImage& tgt_image,
                                       tgt->GetRawDataLength());
       }
     } else {
-      ZipModeImage::AddSplitImageFromChunkList(tgt_image, src_image, src_ranges, split_tgt_chunks,
-                                               split_src_chunks, split_tgt_images,
-                                               split_src_images);
+      bool added_image = ZipModeImage::AddSplitImageFromChunkList(
+          tgt_image, src_image, src_ranges, split_tgt_chunks, split_src_chunks, split_tgt_images,
+          split_src_images);
 
       split_tgt_chunks.clear();
       split_src_chunks.clear();
-      used_src_ranges.Insert(src_ranges);
-      split_src_ranges->push_back(std::move(src_ranges));
+      // No need to update the split_src_ranges if we don't update the split source images.
+      if (added_image) {
+        used_src_ranges.Insert(src_ranges);
+        split_src_ranges->push_back(std::move(src_ranges));
+      }
       src_ranges.Clear();
 
       // We don't have enough space for the current chunk; start a new split image and handle
@@ -973,9 +976,12 @@ bool ZipModeImage::SplitZipModeImageWithLimit(const ZipModeImage& tgt_image,
 
   // TODO Trim it in case the CD exceeds limit too much.
   src_ranges.Insert(central_directory->GetStartOffset(), central_directory->DataLengthForPatch());
-  ZipModeImage::AddSplitImageFromChunkList(tgt_image, src_image, src_ranges, split_tgt_chunks,
-                                           split_src_chunks, split_tgt_images, split_src_images);
-  split_src_ranges->push_back(std::move(src_ranges));
+  bool added_image = ZipModeImage::AddSplitImageFromChunkList(tgt_image, src_image, src_ranges,
+                                                              split_tgt_chunks, split_src_chunks,
+                                                              split_tgt_images, split_src_images);
+  if (added_image) {
+    split_src_ranges->push_back(std::move(src_ranges));
+  }
 
   ValidateSplitImages(*split_tgt_images, *split_src_images, *split_src_ranges,
                       tgt_image.file_content_.size());
@@ -983,7 +989,7 @@ bool ZipModeImage::SplitZipModeImageWithLimit(const ZipModeImage& tgt_image,
   return true;
 }
 
-void ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
+bool ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
                                               const ZipModeImage& src_image,
                                               const SortedRangeSet& split_src_ranges,
                                               const std::vector<ImageChunk>& split_tgt_chunks,
@@ -991,12 +997,6 @@ void ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
                                               std::vector<ZipModeImage>* split_tgt_images,
                                               std::vector<ZipModeImage>* split_src_images) {
   CHECK(!split_tgt_chunks.empty());
-  // Target chunks should occupy at least one block.
-  // TODO put a warning and change the type to raw if it happens in extremely rare cases.
-  size_t tgt_size = split_tgt_chunks.back().GetStartOffset() +
-                    split_tgt_chunks.back().DataLengthForPatch() -
-                    split_tgt_chunks.front().GetStartOffset();
-  CHECK_GE(tgt_size, BLOCK_SIZE);
 
   std::vector<ImageChunk> aligned_tgt_chunks;
 
@@ -1015,7 +1015,12 @@ void ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
 
     i++;
   }
-  CHECK_LT(i, split_tgt_chunks.size());
+
+  // Nothing left after alignment in the current split tgt chunks; skip adding the split_tgt_image.
+  if (i == split_tgt_chunks.size()) {
+    return false;
+  }
+
   aligned_tgt_chunks.insert(aligned_tgt_chunks.end(), split_tgt_chunks.begin() + i + 1,
                             split_tgt_chunks.end());
   CHECK(!aligned_tgt_chunks.empty());
@@ -1024,8 +1029,10 @@ void ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
   size_t end_offset =
       aligned_tgt_chunks.back().GetStartOffset() + aligned_tgt_chunks.back().GetRawDataLength();
   if (end_offset % BLOCK_SIZE != 0 && end_offset < tgt_image.file_content_.size()) {
+    size_t tail_block_length = std::min<size_t>(tgt_image.file_content_.size() - end_offset,
+                                                BLOCK_SIZE - (end_offset % BLOCK_SIZE));
     aligned_tgt_chunks.emplace_back(CHUNK_NORMAL, end_offset, &tgt_image.file_content_,
-                                    BLOCK_SIZE - (end_offset % BLOCK_SIZE));
+                                    tail_block_length);
   }
 
   ZipModeImage split_tgt_image(false);
@@ -1049,6 +1056,8 @@ void ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
 
   split_tgt_images->push_back(std::move(split_tgt_image));
   split_src_images->push_back(std::move(split_src_image));
+
+  return true;
 }
 
 void ZipModeImage::ValidateSplitImages(const std::vector<ZipModeImage>& split_tgt_images,
@@ -1536,7 +1545,7 @@ int imgdiff(int argc, const char** argv) {
            "                    patches together and output them into <patch-file>.\n"
            "  --split-info,     Output the split information (patch_size, tgt_size, src_ranges);\n"
            "                    zip mode with block-limit only.\n"
-           "  --debug_dir,      Debug directory to put the split srcs and patches, zip mode only.\n"
+           "  --debug-dir,      Debug directory to put the split srcs and patches, zip mode only.\n"
            "  -v, --verbose,    Enable verbose logging.";
     return 2;
   }
