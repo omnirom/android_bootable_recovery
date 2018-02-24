@@ -640,6 +640,11 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue(TW_REBOOT_RECOVERY, "1");
 #endif
 	mConst.SetValue(TW_REBOOT_POWEROFF, "1");
+#ifdef TW_HAS_FORCED_RECOVERY
+	mConst.SetValue(TW_REBOOT_FORCED_RECOVERY, "1");
+#else
+	mConst.SetValue(TW_REBOOT_FORCED_RECOVERY, "0");
+#endif
 #ifdef TW_NO_REBOOT_BOOTLOADER
 	printf("TW_NO_REBOOT_BOOTLOADER := true\n");
 	mConst.SetValue(TW_REBOOT_BOOTLOADER, "0");

@@ -605,6 +605,13 @@ int TWFunc::tw_reboot(RebootCommand command)
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "recovery");
 #endif
+		case rb_forcedrecovery:
+			check_and_run_script("/sbin/rebootforcedrecovery.sh", "reboot forced-recovery");
+#ifdef ANDROID_RB_PROPERTY
+			return property_set(ANDROID_RB_PROPERTY, "reboot,forced-recovery");
+#else
+			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "forced-recovery");
+#endif
 		case rb_bootloader:
 			check_and_run_script("/sbin/rebootbootloader.sh", "reboot bootloader");
 #ifdef ANDROID_RB_PROPERTY

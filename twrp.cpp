@@ -339,6 +339,8 @@ int main(int argc, char **argv) {
 	DataManager::GetValue("tw_reboot_arg", Reboot_Arg);
 	if (Reboot_Arg == "recovery")
 		TWFunc::tw_reboot(rb_recovery);
+	else if (Reboot_Arg == "forced-recovery")
+		TWFunc::tw_reboot(rb_forcedrecovery);
 	else if (Reboot_Arg == "poweroff")
 		TWFunc::tw_reboot(rb_poweroff);
 	else if (Reboot_Arg == "bootloader")

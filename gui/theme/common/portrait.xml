@@ -2891,6 +2891,25 @@
 				</actions>
 			</button>
 
+			<button style="main_button">
+				<condition var1="tw_reboot_forced_recovery" var2="1"/>
+				<placement x="%indent%" y="%row18a_y%"/>
+				<text>{@rb_forcedrecovery_btn=Forced Recovery}</text>
+				<actions>
+					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=forced-recovery</action>
+					<action function="set">tw_reboot_param=forced-recovery</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</button>
+
 			<text style="text_m">
 				<condition var1="tw_has_boot_slots" var2="1"/>
 				<placement x="%center_x%" y="%row18_y%" placement="5"/>
