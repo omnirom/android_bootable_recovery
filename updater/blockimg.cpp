@@ -1727,9 +1727,11 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
 
     const Command* cmd = cmd_map[params.cmdname];
 
+    // Skip the command if we explicitly set the corresponding function pointer to nullptr, e.g.
+    // "erase" during block_image_verify.
     if (cmd->f == nullptr) {
-      LOG(ERROR) << "failed to find the function for command [" << line << "]";
-      goto pbiudone;
+      LOG(DEBUG) << "skip executing command [" << line << "]";
+      continue;
     }
 
     // Skip all commands before the saved last command index when resuming an update.
