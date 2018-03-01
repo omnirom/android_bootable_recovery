@@ -41,6 +41,7 @@
 #include "common/test_constants.h"
 #include "edify/expr.h"
 #include "otautil/SysUtil.h"
+#include "otautil/cache_location.h"
 #include "otautil/error_code.h"
 #include "otautil/print_sha1.h"
 #include "updater/blockimg.h"
@@ -104,7 +105,16 @@ class UpdaterTest : public ::testing::Test {
     RegisterBuiltins();
     RegisterInstallFunctions();
     RegisterBlockImageFunctions();
+
+    // Mock the location of last_command_file.
+    CacheLocation::location().set_cache_temp_source(temp_saved_source_.path);
+    CacheLocation::location().set_last_command_file(temp_last_command_.path);
+    CacheLocation::location().set_stash_directory_base(temp_stash_base_.path);
   }
+
+  TemporaryFile temp_saved_source_;
+  TemporaryFile temp_last_command_;
+  TemporaryDir temp_stash_base_;
 };
 
 TEST_F(UpdaterTest, getprop) {
@@ -542,7 +552,7 @@ TEST_F(UpdaterTest, block_image_update_fail) {
   expect("", script.c_str(), kNoCause, &updater_info);
   // Updater generates the stash name based on the input file name.
   std::string name_digest = get_sha1(update_file.path);
-  std::string stash_base = "/cache/recovery/" + name_digest;
+  std::string stash_base = std::string(temp_stash_base_.path) + "/" + name_digest;
   ASSERT_EQ(0, access(stash_base.c_str(), F_OK));
   ASSERT_EQ(-1, access((stash_base + src_hash).c_str(), F_OK));
   ASSERT_EQ(0, rmdir(stash_base.c_str()));
@@ -709,8 +719,7 @@ TEST_F(UpdaterTest, brotli_new_data) {
 }
 
 TEST_F(UpdaterTest, last_command_update) {
-  TemporaryFile temp_file;
-  last_command_file = temp_file.path;
+  std::string last_command_file = CacheLocation::location().last_command_file();
 
   std::string block1 = std::string(4096, '1');
   std::string block2 = std::string(4096, '2');
@@ -797,8 +806,7 @@ TEST_F(UpdaterTest, last_command_update) {
 }
 
 TEST_F(UpdaterTest, last_command_update_unresumable) {
-  TemporaryFile temp_file;
-  last_command_file = temp_file.path;
+  std::string last_command_file = CacheLocation::location().last_command_file();
 
   std::string block1 = std::string(4096, '1');
   std::string block2 = std::string(4096, '2');
@@ -853,8 +861,7 @@ TEST_F(UpdaterTest, last_command_update_unresumable) {
 }
 
 TEST_F(UpdaterTest, last_command_verify) {
-  TemporaryFile temp_file;
-  last_command_file = temp_file.path;
+  std::string last_command_file = CacheLocation::location().last_command_file();
 
   std::string block1 = std::string(4096, '1');
   std::string block2 = std::string(4096, '2');

@@ -35,6 +35,7 @@
 #include "applypatch/applypatch.h"
 #include "applypatch/applypatch_modes.h"
 #include "common/test_constants.h"
+#include "otautil/cache_location.h"
 #include "otautil/print_sha1.h"
 
 static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize = nullptr) {
@@ -93,14 +94,14 @@ class ApplyPatchCacheTest : public ApplyPatchTest {
  protected:
   void SetUp() override {
     ApplyPatchTest::SetUp();
-    cache_temp_source = old_file;
+    CacheLocation::location().set_cache_temp_source(old_file);
   }
 };
 
 class ApplyPatchModesTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    cache_temp_source = cache_source.path;
+    CacheLocation::location().set_cache_temp_source(cache_source.path);
   }
 
   TemporaryFile cache_source;

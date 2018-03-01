@@ -34,6 +34,7 @@
 #include "otafault/config.h"
 #include "otautil/DirUtil.h"
 #include "otautil/SysUtil.h"
+#include "otautil/cache_location.h"
 #include "otautil/error_code.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
@@ -167,6 +168,10 @@ int main(int argc, char** argv) {
     }
   }
   ota_io_init(za, state.is_retry);
+
+  // Initialize the cache_temp_source, last_command_file and stash_directory_base to their default
+  // locations.
+  CacheLocation::location().ResetLocations();
 
   std::string result;
   bool status = Evaluate(&state, root, &result);
