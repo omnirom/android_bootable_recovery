@@ -33,6 +33,7 @@
 #include <android-base/stringprintf.h>
 
 #include "applypatch/applypatch.h"
+#include "otautil/cache_location.h"
 
 static int EliminateOpenFiles(std::set<std::string>* files) {
   std::unique_ptr<DIR, decltype(&closedir)> d(opendir("/proc"), closedir);
@@ -92,7 +93,7 @@ static std::set<std::string> FindExpendableFiles() {
 
       // We can't delete cache_temp_source; if it's there we might have restarted during
       // installation and could be depending on it to be there.
-      if (path == cache_temp_source) {
+      if (path == CacheLocation::location().cache_temp_source()) {
         continue;
       }
 

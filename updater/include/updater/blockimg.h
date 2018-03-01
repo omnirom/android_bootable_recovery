@@ -19,7 +19,6 @@
 
 #include <string>
 
-extern std::string last_command_file;
 void RegisterBlockImageFunctions();
 
 #endif
