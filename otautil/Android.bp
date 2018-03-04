@@ -21,6 +21,7 @@ cc_library_static {
         "SysUtil.cpp",
         "DirUtil.cpp",
         "ThermalUtil.cpp",
+        "cache_location.cpp",
         "rangeset.cpp",
     ],
 

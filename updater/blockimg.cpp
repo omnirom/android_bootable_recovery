@@ -53,6 +53,7 @@
 
 #include "edify/expr.h"
 #include "otafault/ota_io.h"
+#include "otautil/cache_location.h"
 #include "otautil/error_code.h"
 #include "otautil/print_sha1.h"
 #include "otautil/rangeset.h"
@@ -65,17 +66,15 @@
 #define DEBUG_ERASE  0
 
 static constexpr size_t BLOCKSIZE = 4096;
-static constexpr const char* STASH_DIRECTORY_BASE = "/cache/recovery";
 static constexpr mode_t STASH_DIRECTORY_MODE = 0700;
 static constexpr mode_t STASH_FILE_MODE = 0600;
-
-std::string last_command_file = "/cache/recovery/last_command";
 
 static CauseCode failure_type = kNoCause;
 static bool is_retry = false;
 static std::unordered_map<std::string, RangeSet> stash_map;
 
 static void DeleteLastCommandFile() {
+  std::string last_command_file = CacheLocation::location().last_command_file();
   if (unlink(last_command_file.c_str()) == -1 && errno != ENOENT) {
     PLOG(ERROR) << "Failed to unlink: " << last_command_file;
   }
@@ -84,6 +83,7 @@ static void DeleteLastCommandFile() {
 // Parse the last command index of the last update and save the result to |last_command_index|.
 // Return true if we successfully read the index.
 static bool ParseLastCommandFile(int* last_command_index) {
+  std::string last_command_file = CacheLocation::location().last_command_file();
   android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(last_command_file.c_str(), O_RDONLY)));
   if (fd == -1) {
     if (errno != ENOENT) {
@@ -119,6 +119,7 @@ static bool ParseLastCommandFile(int* last_command_index) {
 // Update the last command index in the last_command_file if the current command writes to the
 // stash either explicitly or implicitly.
 static bool UpdateLastCommandIndex(int command_index, const std::string& command_string) {
+  std::string last_command_file = CacheLocation::location().last_command_file();
   std::string last_command_tmp = last_command_file + ".tmp";
   std::string content = std::to_string(command_index) + "\n" + command_string;
   android::base::unique_fd wfd(
@@ -676,7 +677,7 @@ static std::string GetStashFileName(const std::string& base, const std::string& 
         return "";
     }
 
-    std::string fn(STASH_DIRECTORY_BASE);
+    std::string fn(CacheLocation::location().stash_directory_base());
     fn += "/" + base + "/" + id + postfix;
 
     return fn;
