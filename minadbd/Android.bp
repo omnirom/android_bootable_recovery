@@ -22,7 +22,6 @@ cc_defaults {
     ],
 
     include_dirs: [
-        "bootable/recovery",
         "system/core/adb",
     ],
 }
@@ -41,6 +40,7 @@ cc_library_static {
     ],
 
     static_libs: [
+        "libfusesideload",
         "libbase",
         "libcrypto",
     ],
