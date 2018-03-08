@@ -27,9 +27,6 @@ class CacheLocation {
  public:
   static CacheLocation& location();
 
-  // Reset the locations to their default values.
-  void ResetLocations();
-
   // getter and setter functions.
   std::string cache_temp_source() const {
     return cache_temp_source_;
@@ -53,7 +50,7 @@ class CacheLocation {
   }
 
  private:
-  CacheLocation() {}
+  CacheLocation();
   DISALLOW_COPY_AND_ASSIGN(CacheLocation);
 
   // When there isn't enough room on the target filesystem to hold the patched version of the file,

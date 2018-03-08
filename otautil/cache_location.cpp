@@ -25,8 +25,7 @@ CacheLocation& CacheLocation::location() {
   return cache_location;
 }
 
-void CacheLocation::ResetLocations() {
-  cache_temp_source_ = kDefaultCacheTempSource;
-  last_command_file_ = kDefaultLastCommandFile;
-  stash_directory_base_ = kDefaultStashDirectoryBase;
-}
+CacheLocation::CacheLocation()
+    : cache_temp_source_(kDefaultCacheTempSource),
+      last_command_file_(kDefaultLastCommandFile),
+      stash_directory_base_(kDefaultStashDirectoryBase) {}
