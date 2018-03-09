@@ -116,17 +116,13 @@ int main(int argc, char **argv) {
 	gui_init();
 	printf("=> Linking mtab\n");
 	symlink("/proc/mounts", "/etc/mtab");
-	if (TWFunc::Path_Exists("/etc/twrp.fstab")) {
-		if (TWFunc::Path_Exists("/etc/recovery.fstab")) {
-			printf("Renaming regular /etc/recovery.fstab -> /etc/recovery.fstab.bak\n");
-			rename("/etc/recovery.fstab", "/etc/recovery.fstab.bak");
-		}
-		printf("Moving /etc/twrp.fstab -> /etc/recovery.fstab\n");
-		rename("/etc/twrp.fstab", "/etc/recovery.fstab");
+	std::string fstab_filename = "/etc/twrp.fstab";
+	if (!TWFunc::Path_Exists(fstab_filename)) {
+		fstab_filename = "/etc/recovery.fstab";
 	}
-	printf("=> Processing recovery.fstab\n");
-	if (!PartitionManager.Process_Fstab("/etc/recovery.fstab", 1)) {
-		LOGERR("Failing out of recovery due to problem with recovery.fstab.\n");
+	printf("=> Processing %s\n", fstab_filename.c_str());
+	if (!PartitionManager.Process_Fstab(fstab_filename, 1)) {
+		LOGERR("Failing out of recovery due to problem with fstab.\n");
 		return -1;
 	}
 	PartitionManager.Output_Partition_Logging();
