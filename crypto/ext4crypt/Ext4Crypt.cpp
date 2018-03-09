@@ -157,16 +157,6 @@ static bool fill_key(const std::string& key, ext4_encryption_key* ext4_key) {
     return true;
 }
 
-static std::string keyname(const std::string& raw_ref) {
-    std::ostringstream o;
-    o << "ext4:";
-    for (auto i : raw_ref) {
-        o << std::hex << std::setw(2) << std::setfill('0') << (int)i;
-    }
-    LOG(INFO) << "keyname is " << o.str() << "\n";
-    return o.str();
-}
-
 // Get the keyring we store all keys in
 static bool e4crypt_keyring(key_serial_t* device_keyring) {
     *device_keyring = keyctl_search(KEY_SPEC_SESSION_KEYRING, "keyring", "e4crypt", 0);
@@ -177,23 +167,41 @@ static bool e4crypt_keyring(key_serial_t* device_keyring) {
     return true;
 }
 
+static char const* const NAME_PREFIXES[] = {
+    "ext4",
+    "f2fs",
+    "fscrypt",
+    nullptr
+};
+
+static std::string keyname(const std::string& prefix, const std::string& raw_ref) {
+    std::ostringstream o;
+    o << prefix << ":";
+    for (unsigned char i : raw_ref) {
+        o << std::hex << std::setw(2) << std::setfill('0') << (int)i;
+    }
+    return o.str();
+}
+
 // Install password into global keyring
 // Return raw key reference for use in policy
 static bool install_key(const std::string& key, std::string* raw_ref) {
     ext4_encryption_key ext4_key;
     if (!fill_key(key, &ext4_key)) return false;
     *raw_ref = generate_key_ref(ext4_key.raw, ext4_key.size);
-    auto ref = keyname(*raw_ref);
     key_serial_t device_keyring;
     if (!e4crypt_keyring(&device_keyring)) return false;
-    key_serial_t key_id =
-        add_key("logon", ref.c_str(), (void*)&ext4_key, sizeof(ext4_key), device_keyring);
-    if (key_id == -1) {
-        PLOG(ERROR) << "Failed to insert key into keyring " << device_keyring << "\n";
-        return false;
+    for (char const* const* name_prefix = NAME_PREFIXES; *name_prefix != nullptr; name_prefix++) {
+        auto ref = keyname(*name_prefix, *raw_ref);
+        key_serial_t key_id =
+            add_key("logon", ref.c_str(), (void*)&ext4_key, sizeof(ext4_key), device_keyring);
+        if (key_id == -1) {
+            PLOG(ERROR) << "Failed to insert key into keyring " << device_keyring;
+            return false;
+        }
+        LOG(DEBUG) << "Added key " << key_id << " (" << ref << ") to keyring " << device_keyring
+                   << " in process " << getpid();
     }
-    LOG(DEBUG) << "Added key " << key_id << " (" << ref << ") to keyring " << device_keyring
-               << " in process " << getpid() << "\n";
     return true;
 }
 
