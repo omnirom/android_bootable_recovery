@@ -856,18 +856,20 @@ Value* SymlinkFn(const char* name, State* state, const std::vector<std::unique_p
   if (argv.size() == 0) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1+ args, got %zu", name, argv.size());
   }
-  std::string target;
-  if (!Evaluate(state, argv[0], &target)) {
-    return nullptr;
-  }
 
-  std::vector<std::string> srcs;
-  if (!ReadArgs(state, argv, &srcs, 1, argv.size())) {
+  std::vector<std::string> args;
+  if (!ReadArgs(state, argv, &args)) {
     return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
 
+  const auto& target = args[0];
+  if (target.empty()) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() target argument can't be empty", name);
+  }
+
   size_t bad = 0;
-  for (const auto& src : srcs) {
+  for (size_t i = 1; i < args.size(); ++i) {
+    const auto& src = args[i];
     if (unlink(src.c_str()) == -1 && errno != ENOENT) {
       PLOG(ERROR) << name << ": failed to remove " << src;
       ++bad;
