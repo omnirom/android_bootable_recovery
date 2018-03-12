@@ -147,6 +147,7 @@ LOCAL_STATIC_LIBRARIES := \
     libfs_mgr \
     libvintf_recovery \
     libvintf \
+    libhidl-gen-utils \
     libtinyxml2 \
     libselinux \
     libext4_utils \
