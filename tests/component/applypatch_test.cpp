@@ -30,6 +30,7 @@
 #include <android-base/file.h>
 #include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
+#include <bsdiff/bsdiff.h>
 #include <openssl/sha.h>
 
 #include "applypatch/applypatch.h"
@@ -37,6 +38,8 @@
 #include "common/test_constants.h"
 #include "otautil/cache_location.h"
 #include "otautil/print_sha1.h"
+
+using namespace std::string_literals;
 
 static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize = nullptr) {
   ASSERT_NE(nullptr, sha1);
@@ -263,6 +266,54 @@ TEST_F(ApplyPatchModesTest, PatchModeEmmcTarget) {
     patch3.c_str()
   };
   ASSERT_EQ(0, applypatch_modes(args3.size(), args3.data()));
+}
+
+// Ensures that applypatch works with a bsdiff based recovery-from-boot.p.
+TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithBsdiffPatch) {
+  std::string boot_img_file = from_testdata_base("boot.img");
+  std::string boot_img_sha1;
+  size_t boot_img_size;
+  sha1sum(boot_img_file, &boot_img_sha1, &boot_img_size);
+
+  std::string recovery_img_file = from_testdata_base("recovery.img");
+  std::string recovery_img_sha1;
+  size_t recovery_img_size;
+  sha1sum(recovery_img_file, &recovery_img_sha1, &recovery_img_size);
+
+  // Generate the bsdiff patch of recovery-from-boot.p.
+  std::string src_content;
+  ASSERT_TRUE(android::base::ReadFileToString(boot_img_file, &src_content));
+
+  std::string tgt_content;
+  ASSERT_TRUE(android::base::ReadFileToString(recovery_img_file, &tgt_content));
+
+  TemporaryFile patch_file;
+  ASSERT_EQ(0,
+            bsdiff::bsdiff(reinterpret_cast<const uint8_t*>(src_content.data()), src_content.size(),
+                           reinterpret_cast<const uint8_t*>(tgt_content.data()), tgt_content.size(),
+                           patch_file.path, nullptr));
+
+  // applypatch <src-file> <tgt-file> <tgt-sha1> <tgt-size> <src-sha1>:<patch>
+  std::string src_file_arg =
+      "EMMC:" + boot_img_file + ":" + std::to_string(boot_img_size) + ":" + boot_img_sha1;
+  TemporaryFile tgt_file;
+  std::string tgt_file_arg = "EMMC:"s + tgt_file.path;
+  std::string recovery_img_size_arg = std::to_string(recovery_img_size);
+  std::string patch_arg = boot_img_sha1 + ":" + patch_file.path;
+  std::vector<const char*> args = { "applypatch",
+                                    src_file_arg.c_str(),
+                                    tgt_file_arg.c_str(),
+                                    recovery_img_sha1.c_str(),
+                                    recovery_img_size_arg.c_str(),
+                                    patch_arg.c_str() };
+  ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
+
+  // Double check the patched recovery image.
+  std::string tgt_file_sha1;
+  size_t tgt_file_size;
+  sha1sum(tgt_file.path, &tgt_file_sha1, &tgt_file_size);
+  ASSERT_EQ(recovery_img_size, tgt_file_size);
+  ASSERT_EQ(recovery_img_sha1, tgt_file_sha1);
 }
 
 TEST_F(ApplyPatchModesTest, PatchModeInvalidArgs) {
