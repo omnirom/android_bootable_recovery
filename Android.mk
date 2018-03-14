@@ -179,6 +179,7 @@ LOCAL_STATIC_LIBRARIES += \
     libcrypto \
     libvintf_recovery \
     libvintf \
+    libhidl-gen-utils \
     libtinyxml2 \
     libbase \
     libutils \
