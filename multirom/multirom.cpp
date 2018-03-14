@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <linux/capability.h>
@@ -28,8 +29,14 @@
 #include "../twrp-functions.hpp"
 #include "../gui/gui.hpp"
 #include "../twinstall.h"
+#ifdef USE_MINZIP
 #include "../minzip/SysUtil.h"
 #include "../minzip/Zip.h"
+#else
+#include <ziparchive/zip_archive.h>
+#include "otautil/ZipUtil.h"
+#include "otautil/SysUtil.h"
+#endif
 #include "multirom_Zip.h"
 #ifdef USE_OLD_VERIFIER
 #include "../verifier24/verifier.h"
@@ -1498,7 +1505,11 @@ bool MultiROM::verifyZIP(const std::string& file, int &verify_status)
 
 	gui_print("Verifying zip signature...\n");
 	MemMapping map;
+#ifdef USE_MINZIP
 	if (sysMapFile(file.c_str(), &map) != 0) {
+#else
+	if (!map.MapFile(file.c_str())) {
+#endif
 		LOGERR("Failed to sysMapFile '%s'\n", file.c_str());
 		return false;
 	}
@@ -1509,7 +1520,9 @@ bool MultiROM::verifyZIP(const std::string& file, int &verify_status)
 		return -1;
 	}
 	int ret_val = verify_file(map.addr, map.length, loadedKeys, NULL);
+#ifdef USE_MINZIP
 	sysReleaseMap(&map);
+#endif
 	if (ret_val != VERIFY_SUCCESS) {
 		LOGERR("Zip signature verification failed: %i\n", ret_val);
 		return false;
@@ -1522,6 +1535,9 @@ bool MultiROM::prepareZIP(std::string& file, EdifyHacker *hacker, bool& restore_
 	bool res = false;
 
 	const ZipEntry *script_entry;
+#ifndef USE_MINZIP
+	ZipString zip_string(MR_UPDATE_SCRIPT_NAME);
+#endif
 	int script_len;
 	char* script_data = NULL;
 	int itr = 0;
@@ -1539,19 +1555,33 @@ bool MultiROM::prepareZIP(std::string& file, EdifyHacker *hacker, bool& restore_
 	system_args("mkdir -p /tmp/%s", MR_UPDATE_SCRIPT_PATH);
 
 	MemMapping map;
+#ifdef USE_MINZIP
 	if (sysMapFile(file.c_str(), &map) != 0) {
+#else
+	if (!map.MapFile(file.c_str())) {
+#endif
 		LOGERR("Failed to sysMapFile '%s'\n", file.c_str());
 		return false;
 	}
 
+#ifdef USE_MINZIP
 	ZipArchive zip;
 	if (mzOpenZipArchive(map.addr, map.length, &zip) != 0)
+#else
+	ZipArchiveHandle zip;
+    if (OpenArchiveFromMemory(map.addr, map.length, file.c_str(), &zip) != 0)
+#endif
 	{
 		gui_print("Failed to open ZIP archive %s!\n", file.c_str());
 		goto exit;
 	}
 
+#ifdef USE_MINZIP
 	script_entry = mzFindZipEntry(&zip, MR_UPDATE_SCRIPT_NAME);
+#else
+	if (FindEntry(zip, zip_string, (ZipEntry*)script_entry) != 0)
+        script_entry = NULL;
+#endif
 	if(!script_entry)
 	{
 		gui_print("No entry for " MR_UPDATE_SCRIPT_NAME " in ZIP file %s!\n", file.c_str());
@@ -1572,8 +1602,12 @@ bool MultiROM::prepareZIP(std::string& file, EdifyHacker *hacker, bool& restore_
 		goto exit;
 	}
 
+#ifdef USE_MINZIP
 	mzCloseZipArchive(&zip);
 	sysReleaseMap(&map);
+#else
+    CloseArchive(zip);
+#endif
 
 	if(!hacker->loadBuffer(script_data, script_len))
 	{
@@ -1644,8 +1678,12 @@ bool MultiROM::prepareZIP(std::string& file, EdifyHacker *hacker, bool& restore_
 
 exit:
 	free(script_data);
+#ifdef USE_MINZIP
 	mzCloseZipArchive(&zip);
 	sysReleaseMap(&map);
+#else
+    CloseArchive(zip);
+#endif
 	return false;
 }
 

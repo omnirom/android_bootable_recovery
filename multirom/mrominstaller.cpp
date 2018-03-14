@@ -8,8 +8,14 @@
 #define statvfs statfs
 
 #include "mrominstaller.h"
+#ifdef USE_MINZIP
 #include "../minzip/SysUtil.h"
 #include "../minzip/Zip.h"
+#else
+#include <ziparchive/zip_archive.h>
+#include "otautil/ZipUtil.h"
+#include "otautil/SysUtil.h"
+#endif
 #include "multirom_Zip.h"
 #include "../common.h"
 #include "multirom.h"
@@ -44,29 +50,52 @@ std::string MROMInstaller::open(const std::string& file)
 {
 	char* manifest = NULL;
 	const ZipEntry *script_entry;
-	ZipArchive zip;
 
 	MemMapping map;
+#ifdef USE_MINZIP
+	ZipArchive zip;
 	if (sysMapFile(file.c_str(), &map) != 0) {
+#else
+	ZipArchiveHandle zip;
+	if (!map.MapFile(file.c_str())) {
+#endif
 		LOGERR("Failed to sysMapFile '%s'\n", file.c_str());
 		return ("Failed to sysMapFile '" + file + "'!");
 	}
 
+#ifdef USE_MINZIP
 	if (mzOpenZipArchive(map.addr, map.length, &zip) != 0)
+#else
+    if (OpenArchiveFromMemory(map.addr, map.length, file.c_str(), &zip) != 0)
+#endif
 		return "Failed to open installer file!";
 
+#ifdef USE_MINZIP
 	script_entry = mzFindZipEntry(&zip, "manifest.txt");
+#else
+	ZipString zip_string("manifest.txt");
+	if (FindEntry(zip, zip_string, (ZipEntry*)script_entry) != 0)
+        script_entry = NULL;
+#endif
 	if(!script_entry)
 	{
+#ifdef USE_MINZIP
 		mzCloseZipArchive(&zip);
 		sysReleaseMap(&map);
+#else
+		CloseArchive(zip);
+#endif
 		return "Failed to find manifest.txt";
 	}
 
 	int res = read_data(&zip, script_entry, &manifest, NULL);
 
+#ifdef USE_MINZIP
 	mzCloseZipArchive(&zip);
 	sysReleaseMap(&map);
+#else
+	CloseArchive(zip);
+#endif
 
 	if(res < 0)
 		return "Failed to read manifest.txt!";
@@ -298,27 +327,46 @@ std::string MROMInstaller::parseBaseFolders(bool ntfs)
 
 bool MROMInstaller::extractDir(const std::string& name, const std::string& dest)
 {
-	ZipArchive zip;
 
 	MemMapping map;
+#ifdef USE_MINZIP
+	ZipArchive zip;
 	if (sysMapFile(m_file.c_str(), &map) != 0) {
+#else
+	ZipArchiveHandle zip;
+	if (!map.MapFile(m_file.c_str())) {
+#endif
 		LOGERR("Failed to sysMapFile '%s'\n", m_file.c_str());
 		return false;
 	}
 
+#ifdef USE_MINZIP
 	if (mzOpenZipArchive(map.addr, map.length, &zip) != 0)
+#else
+    if (OpenArchiveFromMemory(map.addr, map.length, m_file.c_str(), &zip) != 0)
+#endif
 	{
 		gui_print("Failed to open ZIP file %s\n", m_file.c_str());
+#ifdef USE_MINZIP
 		sysReleaseMap(&map);
+#endif
 		return false;
 	}
 
 	// To create a consistent system image, never use the clock for timestamps.
     struct utimbuf timestamp = { 1217592000, 1217592000 };  // 8/1/2008 default
+#ifdef USE_MINZIP
 	bool success = mzExtractRecursive(&zip, name.c_str(), dest.c_str(), &timestamp, NULL, NULL, NULL);
+#else
+	bool success = ExtractPackageRecursive(zip, name, dest, &timestamp, NULL);
+#endif
 
+#ifdef USE_MINZIP
 	mzCloseZipArchive(&zip);
 	sysReleaseMap(&map);
+#else
+	CloseArchive(zip);
+#endif
 
 	if(!success)
 	{
@@ -330,23 +378,42 @@ bool MROMInstaller::extractDir(const std::string& name, const std::string& dest)
 
 bool MROMInstaller::extractFile(const std::string& name, const std::string& dest)
 {
-	ZipArchive zip;
 	MemMapping map;
+#ifdef USE_MINZIP
+	ZipArchive zip;
 	if (sysMapFile(m_file.c_str(), &map) != 0) {
+#else
+	ZipArchiveHandle zip;
+	if (!map.MapFile(m_file.c_str())) {
+#endif
 		LOGERR("Failed to sysMapFile '%s'\n", m_file.c_str());
 		return false;
 	}
 
+#ifdef USE_MINZIP
 	if (mzOpenZipArchive(map.addr, map.length, &zip) != 0)
+#else
+    if (OpenArchiveFromMemory(map.addr, map.length, m_file.c_str(), &zip) != 0)
+#endif
 	{
 		gui_print("Failed to open ZIP file %s\n", m_file.c_str());
+#ifdef USE_MINZIP
 		sysReleaseMap(&map);
+#endif
 		return false;
 	}
 
 	bool res = false;
 	FILE* f = NULL;
+#ifdef USE_MINZIP
 	const ZipEntry* entry = mzFindZipEntry(&zip, name.c_str());
+#else
+	ZipString zip_string(name.c_str());
+    ZipEntry *entry;
+
+	if (FindEntry(zip, zip_string, entry) != 0)
+        entry = NULL;
+#endif
 	if (entry == NULL)
 	{
 		gui_print("Could not find file %s in zip %s\n", name.c_str(), m_file.c_str());
@@ -360,40 +427,81 @@ bool MROMInstaller::extractFile(const std::string& name, const std::string& dest
 		goto exit;
 	}
 
+#ifdef USE_MINZIP
 	res = mzExtractZipEntryToFile(&zip, entry, fileno(f));
+#else
+	res = ExtractEntryToFile(zip, entry, fileno(f));
+#endif
+#ifdef USE_MINZIP
 	if(!res)
+#else
+    if(res != 0)
+#endif
 		gui_print("Failed to extract file %s from the ZIP!", name.c_str());
 
 	fclose(f);
 exit:
+#ifdef USE_MINZIP
 	mzCloseZipArchive(&zip);
 	sysReleaseMap(&map);
+#else
+	CloseArchive(zip);
+#endif
 	return res;
 }
 
 bool MROMInstaller::hasEntry(const std::string& name)
 {
-	ZipArchive zip;
 	MemMapping map;
+#ifdef USE_MINZIP
+	ZipArchive zip;
 	if (sysMapFile(m_file.c_str(), &map) != 0) {
+#else
+	ZipArchiveHandle zip;
+	if (!map.MapFile(m_file.c_str())) {
+#endif
 		LOGERR("Failed to sysMapFile '%s'\n", m_file.c_str());
 		return false;
 	}
 
+#ifdef USE_MINZIP
 	if (mzOpenZipArchive(map.addr, map.length, &zip) != 0)
+#else
+    if (OpenArchiveFromMemory(map.addr, map.length, m_file.c_str(), &zip) != 0)
+#endif
 	{
 		gui_print("Failed to open ZIP file %s\n", m_file.c_str());
+#ifdef USE_MINZIP
 		sysReleaseMap(&map);
+#endif
 		return false;
 	}
 
 	// Check also for entry with / - according to minzip, folders
 	// usually (but not always) end with /
+#ifdef USE_MINZIP
 	const ZipEntry *entry1 = mzFindZipEntry(&zip, name.c_str());
 	const ZipEntry *entry2 = mzFindZipEntry(&zip, (name + "/").c_str());
+#else
+    ZipString zip_string1(name.c_str());
+	ZipEntry *entry1;
 
+	if(FindEntry(zip, zip_string1, entry1) != 0)
+        entry1 = NULL;
+
+	ZipString zip_string2((name + "/").c_str());
+	ZipEntry *entry2;
+
+	if (FindEntry(zip, zip_string2, entry2) != 0)
+        entry2 = NULL;
+#endif
+
+#ifdef USZE_MINZIP
 	mzCloseZipArchive(&zip);
 	sysReleaseMap(&map);
+#else
+	CloseArchive(zip);
+#endif
 
 	return entry1 || entry2;
 }
