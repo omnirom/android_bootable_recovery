@@ -21,6 +21,8 @@ LOCAL_SRC_FILES := \
     ZipUtil.cpp \
     ThermalUtil.cpp
 
+LOCAL_C_INCLUDES := system/core/libziparchive/include
+
 LOCAL_STATIC_LIBRARIES := \
     libselinux \
     libbase
