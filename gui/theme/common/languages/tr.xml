@@ -19,7 +19,7 @@
 		<string name="recovery">Recovery</string>
 		<string name="cache">Önbellek</string>
 		<string name="data">Veri</string>
-		<string name="data_backup">Veri</string>
+		<string name="data_backup">Veri (depolama hariç)</string>
 		<string name="sdcard">SD Kart</string>
 		<string name="internal">Dahili Depolama</string>
 		<string name="microsd">Micro SD Kart</string>
@@ -254,7 +254,7 @@
 		<string name="restore_try_decrypt_s">Çözülmeye Çalışılıyor</string>
 		<string name="restore_backup_date">Yedek tarihi: %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Geri Yüklenecek Bölümleri Seç:</string>
-		<string name="restore_enable_digest_chk" version="2">Yedek Dosyalarının Digest Doğrulamasını Etkinleştir</string>
+		<string name="restore_enable_digest_chk" version="2">Yedek Dosyalarının Digest Doğrulamasını etkinleştir</string>
 		<string name="restore_complete">Geri Yükleme Tamamlandı</string>
 		<string name="swipe_restore">Geri Yüklemek için Kaydır</string>
 		<string name="swipe_restore_s">   Geri Yükle</string>
@@ -309,8 +309,8 @@
 		<string name="use_rmrf_chk">Biçimlendirme yerine rm -rf kullan</string>
 		<string name="use24clock_chk">24-saat biçimini kullan</string>
 		<string name="rev_navbar_chk">Tersine çevrilmiş gezinti çubuğu düzeni</string>
-		<string name="simact_chk">Tema testi için eylemleri canlandır</string>
-		<string name="simfail_chk">Eylemler canlandırılamadı</string>
+		<string name="simact_chk">Tema testi için eylemleri taklit et</string>
+		<string name="simfail_chk">Eylemlerin başarısızlığını taklit et</string>
 		<string name="ctr_navbar_rdo">Merkezi gezinti çubuğu düğmeleri</string>
 		<string name="lft_navbar_rdo">Gezinti çubuğu düğmelerini sola hizala</string>
 		<string name="rht_navbar_rdo">Gezinti çubuğu düğmelerini sağa hizala</string>
@@ -367,7 +367,7 @@
 		<string name="screen_bright_slider">Parlaklık: %tw_brightness_pct%%</string>
 		<string name="screen_bright_na">Parlaklık ayarı kullanılamıyor</string>
 		<string name="vibration_hdr">Titreşim</string>
-		<string name="button_vibration_hdr">Düğme Titireşimi</string>
+		<string name="button_vibration_hdr">Düğme Titreşimi</string>
 		<string name="kb_vibration_hdr">Klavye Titreşimi</string>
 		<string name="act_vibration_hdr">Eylem Titreşimi</string>
 		<string name="button_vibration">Düğme Titreşimi:</string>
@@ -378,7 +378,7 @@
 		<string name="set_language_btn">Dili Ayarla</string>
 		<string name="advanced_hdr">Gelişmiş</string>
 		<string name="copy_log_confirm">Kayıt SD Karta Kopyalansın mı?</string>
-		<string name="copying_log" version="2">Kayıtları SD Karta Kopyala...</string>
+		<string name="copying_log">Kayıtları SD Karta Kopyala...</string>
 		<string name="copy_log_complete" version="2">Kayıtları Kopyalama Tamamlandı</string>
 		<string name="fix_context_btn">Bağlamları Düzelt</string>
 		<string name="part_sd_btn">SD Kartı Bölümle</string>
@@ -663,11 +663,11 @@
 		<string name="size_progress">%lluMB / %lluMB, %i%%</string>
 		<string name="decrypt_cmd">Komut satırıyla veri bölümünün şifresi çözmeye çalışılıyor.</string>
 		<string name="base_pkg_err">Temel paketler yüklenemedi.</string>
-		<string name="simulating">Eylemleri taklit etme...</string>
+		<string name="simulating">Eylemler taklit ediliyor...</string>
 		<string name="backup_cancel">Yedekleme İptal Edildi</string>
 		<string name="config_twrp">TWRP'yi yapılandırma...</string>
 		<string name="config_twrp_err">Bu kernel ile TWRP yapılandırılamadı.</string>
-		<string name="copy_log">Recovery kaydı şuraya kopyaladı: {1}.</string>
+		<string name="copy_log">Recovery kaydı şuraya kopyalandı: {1}.</string>
 		<string name="max_queue">Maksimum zip kuyruğuna ulaşıldı!</string>
 		<string name="min_queue">Minimum zip kuyruğuna ulaşıldı!</string>
 		<string name="screenshot_saved">Ekran görüntüsü şuraya kaydedildi: {1}</string>
