@@ -205,67 +205,96 @@ TEST_F(ApplyPatchModesTest, PatchModeEmmcTarget) {
   sha1sum(boot_img, &boot_img_sha1, &boot_img_size);
 
   std::string recovery_img = from_testdata_base("recovery.img");
-  size_t size;
+  size_t recovery_img_size;
   std::string recovery_img_sha1;
-  sha1sum(recovery_img, &recovery_img_sha1, &size);
-  std::string recovery_img_size = std::to_string(size);
+  sha1sum(recovery_img, &recovery_img_sha1, &recovery_img_size);
+  std::string recovery_img_size_arg = std::to_string(recovery_img_size);
 
   std::string bonus_file = from_testdata_base("bonus.file");
 
   // applypatch -b <bonus-file> <src-file> <tgt-file> <tgt-sha1> <tgt-size> <src-sha1>:<patch>
-  TemporaryFile tmp1;
-  std::string src_file =
+  std::string src_file_arg =
       "EMMC:" + boot_img + ":" + std::to_string(boot_img_size) + ":" + boot_img_sha1;
-  std::string tgt_file = "EMMC:" + std::string(tmp1.path);
-  std::string patch = boot_img_sha1 + ":" + from_testdata_base("recovery-from-boot.p");
-  std::vector<const char*> args = {
-    "applypatch",
-    "-b",
-    bonus_file.c_str(),
-    src_file.c_str(),
-    tgt_file.c_str(),
-    recovery_img_sha1.c_str(),
-    recovery_img_size.c_str(),
-    patch.c_str()
-  };
+  TemporaryFile tgt_file;
+  std::string tgt_file_arg = "EMMC:"s + tgt_file.path;
+  std::string patch_arg = boot_img_sha1 + ":" + from_testdata_base("recovery-from-boot.p");
+  std::vector<const char*> args = { "applypatch",
+                                    "-b",
+                                    bonus_file.c_str(),
+                                    src_file_arg.c_str(),
+                                    tgt_file_arg.c_str(),
+                                    recovery_img_sha1.c_str(),
+                                    recovery_img_size_arg.c_str(),
+                                    patch_arg.c_str() };
   ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
+}
+
+// Tests patching the EMMC target without a separate bonus file (i.e. recovery-from-boot patch has
+// everything).
+TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithoutBonusFile) {
+  std::string boot_img = from_testdata_base("boot.img");
+  size_t boot_img_size;
+  std::string boot_img_sha1;
+  sha1sum(boot_img, &boot_img_sha1, &boot_img_size);
+
+  std::string recovery_img = from_testdata_base("recovery.img");
+  size_t recovery_img_size;
+  std::string recovery_img_sha1;
+  sha1sum(recovery_img, &recovery_img_sha1, &recovery_img_size);
+  std::string recovery_img_size_arg = std::to_string(recovery_img_size);
 
   // applypatch <src-file> <tgt-file> <tgt-sha1> <tgt-size> <src-sha1>:<patch>
-  TemporaryFile tmp2;
-  patch = boot_img_sha1 + ":" + from_testdata_base("recovery-from-boot-with-bonus.p");
-  tgt_file = "EMMC:" + std::string(tmp2.path);
-  std::vector<const char*> args2 = {
-    "applypatch",
-    src_file.c_str(),
-    tgt_file.c_str(),
-    recovery_img_sha1.c_str(),
-    recovery_img_size.c_str(),
-    patch.c_str()
-  };
-  ASSERT_EQ(0, applypatch_modes(args2.size(), args2.data()));
+  std::string src_file_arg =
+      "EMMC:" + boot_img + ":" + std::to_string(boot_img_size) + ":" + boot_img_sha1;
+  TemporaryFile tgt_file;
+  std::string tgt_file_arg = "EMMC:"s + tgt_file.path;
+  std::string patch_arg =
+      boot_img_sha1 + ":" + from_testdata_base("recovery-from-boot-with-bonus.p");
+  std::vector<const char*> args = { "applypatch",
+                                    src_file_arg.c_str(),
+                                    tgt_file_arg.c_str(),
+                                    recovery_img_sha1.c_str(),
+                                    recovery_img_size_arg.c_str(),
+                                    patch_arg.c_str() };
+  ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
+}
+
+TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithMultiplePatches) {
+  std::string boot_img = from_testdata_base("boot.img");
+  size_t boot_img_size;
+  std::string boot_img_sha1;
+  sha1sum(boot_img, &boot_img_sha1, &boot_img_size);
+
+  std::string recovery_img = from_testdata_base("recovery.img");
+  size_t recovery_img_size;
+  std::string recovery_img_sha1;
+  sha1sum(recovery_img, &recovery_img_sha1, &recovery_img_size);
+  std::string recovery_img_size_arg = std::to_string(recovery_img_size);
+
+  std::string bonus_file = from_testdata_base("bonus.file");
 
   // applypatch -b <bonus-file> <src-file> <tgt-file> <tgt-sha1> <tgt-size> \
-  //               <src-sha1-fake>:<patch1> <src-sha1>:<patch2>
-  TemporaryFile tmp3;
-  tgt_file = "EMMC:" + std::string(tmp3.path);
+  //            <src-sha1-fake1>:<patch1> <src-sha1>:<patch2> <src-sha1-fake2>:<patch3>
+  std::string src_file_arg =
+      "EMMC:" + boot_img + ":" + std::to_string(boot_img_size) + ":" + boot_img_sha1;
+  TemporaryFile tgt_file;
+  std::string tgt_file_arg = "EMMC:"s + tgt_file.path;
   std::string bad_sha1_a = android::base::StringPrintf("%040x", rand());
   std::string bad_sha1_b = android::base::StringPrintf("%040x", rand());
   std::string patch1 = bad_sha1_a + ":" + from_testdata_base("recovery-from-boot.p");
   std::string patch2 = boot_img_sha1 + ":" + from_testdata_base("recovery-from-boot.p");
   std::string patch3 = bad_sha1_b + ":" + from_testdata_base("recovery-from-boot.p");
-  std::vector<const char*> args3 = {
-    "applypatch",
-    "-b",
-    bonus_file.c_str(),
-    src_file.c_str(),
-    tgt_file.c_str(),
-    recovery_img_sha1.c_str(),
-    recovery_img_size.c_str(),
-    patch1.c_str(),
-    patch2.c_str(),
-    patch3.c_str()
-  };
-  ASSERT_EQ(0, applypatch_modes(args3.size(), args3.data()));
+  std::vector<const char*> args = { "applypatch",
+                                    "-b",
+                                    bonus_file.c_str(),
+                                    src_file_arg.c_str(),
+                                    tgt_file_arg.c_str(),
+                                    recovery_img_sha1.c_str(),
+                                    recovery_img_size_arg.c_str(),
+                                    patch1.c_str(),
+                                    patch2.c_str(),
+                                    patch3.c_str() };
+  ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
 }
 
 // Ensures that applypatch works with a bsdiff based recovery-from-boot.p.
