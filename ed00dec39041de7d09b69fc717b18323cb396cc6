@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "75fcc067_d926bcd0",
+        "filename": "crypto/ext4crypt/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1001621
+      },
+      "writtenOn": "2018-03-21T19:15:56Z",
+      "side": 1,
+      "message": "May be -DHAVE_KEYSTORAGE_3?\nBecause in right case recovery not boot up",
+      "range": {
+        "startLine": 22,
+        "startChar": 21,
+        "endLine": 22,
+        "endChar": 38
+      },
+      "revId": "ed00dec39041de7d09b69fc717b18323cb396cc6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
