@@ -378,7 +378,7 @@
 		<string name="set_language_btn">Dili Ayarla</string>
 		<string name="advanced_hdr">Gelişmiş</string>
 		<string name="copy_log_confirm">Kayıt SD Karta Kopyalansın mı?</string>
-		<string name="copying_log">Kayıtları SD Karta Kopyala...</string>
+		<string name="copying_log" version="2">Kayıtları SD Karta Kopyala...</string>
 		<string name="copy_log_complete" version="2">Kayıtları Kopyalama Tamamlandı</string>
 		<string name="fix_context_btn">Bağlamları Düzelt</string>
 		<string name="part_sd_btn">SD Kartı Bölümle</string>
