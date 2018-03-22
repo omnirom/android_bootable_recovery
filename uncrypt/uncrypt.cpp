@@ -172,10 +172,15 @@ static struct fstab* read_fstab() {
     return fstab;
 }
 
-static const char* find_block_device(const char* path, bool* encryptable, bool* encrypted) {
+static const char* find_block_device(const char* path, bool* encryptable,
+                                     bool* encrypted, bool* f2fs_fs) {
     // Look for a volume whose mount point is the prefix of path and
     // return its block device.  Set encrypted if it's currently
     // encrypted.
+
+    // ensure f2fs_fs is set to false first.
+    *f2fs_fs = false;
+
     for (int i = 0; i < fstab->num_entries; ++i) {
         struct fstab_rec* v = &fstab->recs[i];
         if (!v->mount_point) {
@@ -191,6 +196,9 @@ static const char* find_block_device(const char* path, bool* encryptable, bool* 
                 if (android::base::GetProperty("ro.crypto.state", "") == "encrypted") {
                     *encrypted = true;
                 }
+            }
+            if (strcmp(v->fs_type, "f2fs") == 0) {
+                *f2fs_fs = true;
             }
             return v->blk_device;
         }
@@ -244,7 +252,7 @@ static int retry_fibmap(const int fd, const char* name, int* block, const int he
 }
 
 static int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
-                             bool encrypted, int socket) {
+                             bool encrypted, bool f2fs_fs, int socket) {
     std::string err;
     if (!android::base::RemoveFileIfExists(map_file, &err)) {
         LOG(ERROR) << "failed to remove the existing map file " << map_file << ": " << err;
@@ -304,6 +312,31 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         if (wfd == -1) {
             PLOG(ERROR) << "failed to open " << blk_dev << " for writing";
             return kUncryptBlockOpenError;
+        }
+    }
+
+// F2FS-specific ioctl
+// It requires the below kernel commit merged in v4.16-rc1.
+//   1ad71a27124c ("f2fs: add an ioctl to disable GC for specific file")
+// In android-4.4,
+//   56ee1e817908 ("f2fs: updates on v4.16-rc1")
+// In android-4.9,
+//   2f17e34672a8 ("f2fs: updates on v4.16-rc1")
+// In android-4.14,
+//   ce767d9a55bc ("f2fs: updates on v4.16-rc1")
+#ifndef F2FS_IOC_SET_PIN_FILE
+#ifndef F2FS_IOCTL_MAGIC
+#define F2FS_IOCTL_MAGIC		0xf5
+#endif
+#define F2FS_IOC_SET_PIN_FILE	_IOW(F2FS_IOCTL_MAGIC, 13, __u32)
+#define F2FS_IOC_GET_PIN_FILE	_IOW(F2FS_IOCTL_MAGIC, 14, __u32)
+#endif
+    if (f2fs_fs) {
+        int error = ioctl(fd, F2FS_IOC_SET_PIN_FILE);
+        // Don't break the old kernels which don't support it.
+        if (error && errno != ENOTTY && errno != ENOTSUP) {
+            PLOG(ERROR) << "Failed to set pin_file for f2fs: " << path << " on " << blk_dev;
+            return kUncryptIoctlError;
         }
     }
 
@@ -458,7 +491,8 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
 
     bool encryptable;
     bool encrypted;
-    const char* blk_dev = find_block_device(path, &encryptable, &encrypted);
+    bool f2fs_fs;
+    const char* blk_dev = find_block_device(path, &encryptable, &encrypted, &f2fs_fs);
     if (blk_dev == nullptr) {
         LOG(ERROR) << "failed to find block device for " << path;
         return kUncryptBlockDeviceFindError;
@@ -479,7 +513,7 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
     // and /sdcard we leave the file alone.
     if (strncmp(path, "/data/", 6) == 0) {
         LOG(INFO) << "writing block map " << map_file;
-        return produce_block_map(path, map_file, blk_dev, encrypted, socket);
+        return produce_block_map(path, map_file, blk_dev, encrypted, f2fs_fs, socket);
     }
 
     return 0;
