@@ -74,14 +74,13 @@ static int dm_name_filter(const dirent* de) {
 }
 
 static bool read_blocks(const std::string& partition, const std::string& range_str) {
-  if (partition != "system" && partition != "vendor") {
-    LOG(ERROR) << "partition name must be system or vendor: " << partition;
+  if (partition != "system" && partition != "vendor" && partition != "product") {
+    LOG(ERROR) << "Invalid partition name \"" << partition << "\"";
     return false;
   }
-  // Iterate the content of "/sys/block/dm-X/dm/name". If it matches "system"
-  // (or "vendor"), then dm-X is a dm-wrapped system/vendor partition.
-  // Afterwards, update_verifier will read every block on the care_map_file of
-  // "/dev/block/dm-X" to ensure the partition's integrity.
+  // Iterate the content of "/sys/block/dm-X/dm/name". If it matches one of "system", "vendor" or
+  // "product", then dm-X is a dm-wrapped device for that target. We will later read all the
+  // ("cared") blocks from "/dev/block/dm-X" to ensure the target partition's integrity.
   static constexpr auto DM_PATH_PREFIX = "/sys/block/";
   dirent** namelist;
   int n = scandir(DM_PATH_PREFIX, &namelist, dm_name_filter, alphasort);
@@ -206,10 +205,9 @@ bool verify_image(const std::string& care_map_name) {
     PLOG(WARNING) << "Failed to open " << care_map_name;
     return true;
   }
-  // Care map file has four lines (two lines if vendor partition is not present):
-  // First line has the block partition name (system/vendor).
-  // Second line holds all ranges of blocks to verify.
-  // The next two lines have the same format but for vendor partition.
+  // care_map file has up to six lines, where every two lines make a pair. Within each pair, the
+  // first line has the partition name (e.g. "system"), while the second line holds the ranges of
+  // all the blocks to verify.
   std::string file_content;
   if (!android::base::ReadFdToString(care_map_fd.get(), &file_content)) {
     LOG(ERROR) << "Error reading care map contents to string.";
@@ -218,9 +216,9 @@ bool verify_image(const std::string& care_map_name) {
 
   std::vector<std::string> lines;
   lines = android::base::Split(android::base::Trim(file_content), "\n");
-  if (lines.size() != 2 && lines.size() != 4) {
+  if (lines.size() != 2 && lines.size() != 4 && lines.size() != 6) {
     LOG(ERROR) << "Invalid lines in care_map: found " << lines.size()
-               << " lines, expecting 2 or 4 lines.";
+               << " lines, expecting 2 or 4 or 6 lines.";
     return false;
   }
 
