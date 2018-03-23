@@ -46,7 +46,6 @@ TEST_F(UpdateVerifierTest, verify_image_smoke) {
     return;
   }
 
-  // The care map file can have only two or four lines.
   TemporaryFile temp_file;
   std::string content = "system\n2,0,1";
   ASSERT_TRUE(android::base::WriteStringToFile(content, temp_file.path));
@@ -58,7 +57,7 @@ TEST_F(UpdateVerifierTest, verify_image_smoke) {
 }
 
 TEST_F(UpdateVerifierTest, verify_image_wrong_lines) {
-  // The care map file can have only two or four lines.
+  // The care map file can have only 2 / 4 / 6 lines.
   TemporaryFile temp_file;
   ASSERT_FALSE(verify_image(temp_file.path));
 
