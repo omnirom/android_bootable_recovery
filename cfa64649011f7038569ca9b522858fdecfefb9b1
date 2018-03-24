@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "79be4bbc_b4ac97dc",
+        "filename": "gui/theme/common/landscape.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 2693,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2018-03-24T13:22:16Z",
+      "side": 1,
+      "message": "Shouldn\u0027t this be aligned with a column on the x coordinates?",
+      "revId": "cfa64649011f7038569ca9b522858fdecfefb9b1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
