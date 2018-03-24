@@ -23,6 +23,7 @@ LOCAL_MODULE := recovery_unit_test
 LOCAL_COMPATIBILITY_SUITE := device-tests
 LOCAL_STATIC_LIBRARIES := \
     libverifier \
+    librecovery_ui \
     libminui \
     libotautil \
     libupdater \
@@ -38,8 +39,9 @@ LOCAL_SRC_FILES := \
     unit/dirutil_test.cpp \
     unit/locale_test.cpp \
     unit/rangeset_test.cpp \
+    unit/screen_ui_test.cpp \
     unit/sysutil_test.cpp \
-    unit/zip_test.cpp \
+    unit/zip_test.cpp
 
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SHARED_LIBRARIES := liblog
