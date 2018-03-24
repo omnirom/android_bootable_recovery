@@ -16,18 +16,27 @@ LOCAL_PATH := $(call my-dir)
 
 ifneq ($(TW_EXCLUDE_DEFAULT_USB_INIT), true)
 
-include $(CLEAR_VARS)
-LOCAL_MODULE := init.recovery.usb.rc
-LOCAL_MODULE_TAGS := eng
-LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-
 # Cannot send to TARGET_RECOVERY_ROOT_OUT since build system wipes init*.rc
 # during ramdisk creation and only allows init.recovery.*.rc files to be copied
 # from TARGET_ROOT_OUT thereafter
-LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 27; echo $$?),0)
+        include $(CLEAR_VARS)
+        LOCAL_MODULE := init.recovery.usb.rc
+        LOCAL_MODULE_TAGS := eng
+        LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+        LOCAL_SRC_FILES := init.recovery.usb.ffs.rc
+        LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+        include $(BUILD_PREBUILT)
+else
+        include $(CLEAR_VARS)
+        LOCAL_MODULE := init.recovery.usb.rc
+        LOCAL_MODULE_TAGS := eng
+        LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+        LOCAL_SRC_FILES := init.recovery.usb.rc
+        LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+        include $(BUILD_PREBUILT)
+endif
 
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
 
 endif
 
