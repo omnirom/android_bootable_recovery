@@ -53,36 +53,21 @@ LOCAL_STATIC_LIBRARIES := \
 
 include $(BUILD_STATIC_LIBRARY)
 
-# recovery (static executable)
+# librecovery_ui (static library)
 # ===============================
 include $(CLEAR_VARS)
-
 LOCAL_SRC_FILES := \
-    adb_install.cpp \
-    device.cpp \
-    fuse_sdcard_provider.cpp \
-    recovery.cpp \
-    roots.cpp \
-    rotate_logs.cpp \
     screen_ui.cpp \
     ui.cpp \
     vr_ui.cpp \
-    wear_ui.cpp \
+    wear_ui.cpp
 
-LOCAL_MODULE := recovery
+LOCAL_CFLAGS := -Wall -Werror
 
-LOCAL_FORCE_STATIC_EXECUTABLE := true
-
-LOCAL_REQUIRED_MODULES := e2fsdroid_static mke2fs_static mke2fs.conf
-
-ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
-ifeq ($(HOST_OS),linux)
-LOCAL_REQUIRED_MODULES += sload.f2fs mkfs.f2fs
-endif
-endif
-
-LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
-LOCAL_CFLAGS += -Wall -Werror
+LOCAL_MODULE := librecovery_ui
+LOCAL_STATIC_LIBRARIES := \
+    libminui \
+    libbase
 
 ifneq ($(TARGET_RECOVERY_UI_MARGIN_HEIGHT),)
 LOCAL_CFLAGS += -DRECOVERY_UI_MARGIN_HEIGHT=$(TARGET_RECOVERY_UI_MARGIN_HEIGHT)
@@ -132,11 +117,50 @@ else
 LOCAL_CFLAGS += -DRECOVERY_UI_VR_STEREO_OFFSET=0
 endif
 
+include $(BUILD_STATIC_LIBRARY)
+
+# recovery (static executable)
+# ===============================
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+    adb_install.cpp \
+    device.cpp \
+    fuse_sdcard_provider.cpp \
+    recovery.cpp \
+    roots.cpp \
+    rotate_logs.cpp \
+
+
+LOCAL_MODULE := recovery
+
+LOCAL_FORCE_STATIC_EXECUTABLE := true
+
+LOCAL_REQUIRED_MODULES := e2fsdroid_static mke2fs_static mke2fs.conf
+
+ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
+ifeq ($(HOST_OS),linux)
+LOCAL_REQUIRED_MODULES += sload.f2fs mkfs.f2fs
+endif
+endif
+
+LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
+LOCAL_CFLAGS += -Wall -Werror
+
 LOCAL_C_INCLUDES += \
     system/vold \
 
-LOCAL_STATIC_LIBRARIES := \
-    librecovery \
+LOCAL_STATIC_LIBRARIES := librecovery
+
+# If $(TARGET_RECOVERY_UI_LIB) is defined, the recovery calls make_device() from the
+# $(TARGET_RECOVERY_UI_LIB), which depends on the librecovery_ui.
+ifeq ($(TARGET_RECOVERY_UI_LIB),)
+  LOCAL_SRC_FILES += default_device.cpp
+else
+  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
+endif
+
+LOCAL_STATIC_LIBRARIES += \
     libverifier \
     libbatterymonitor \
     libbootloader_message \
@@ -149,6 +173,7 @@ LOCAL_STATIC_LIBRARIES := \
     libminadbd \
     libasyncio \
     libfusesideload \
+    librecovery_ui \
     libminui \
     libpng \
     libcrypto_utils \
@@ -171,12 +196,6 @@ ifeq ($(AB_OTA_UPDATER),true)
 endif
 
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-
-ifeq ($(TARGET_RECOVERY_UI_LIB),)
-  LOCAL_SRC_FILES += default_device.cpp
-else
-  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
-endif
 
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
 LOCAL_REQUIRED_MODULES += recovery-persist recovery-refresh

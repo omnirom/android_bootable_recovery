@@ -25,10 +25,8 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
   void SetStage(int current, int max) override;
 
-  // menu display
   void StartMenu(const char* const* headers, const char* const* items,
                  int initial_selection) override;
-  int SelectMenu(int sel) override;
 
  protected:
   // progress bar vertical position, it's centered horizontally
@@ -45,8 +43,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
  private:
   void draw_background_locked() override;
   void draw_screen_locked() override;
-
-  int menu_start, menu_end;
 };
 
 #endif  // RECOVERY_WEAR_UI_H
