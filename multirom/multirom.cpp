@@ -1534,11 +1534,10 @@ bool MultiROM::prepareZIP(std::string& file, EdifyHacker *hacker, bool& restore_
 {
 	bool res = false;
 
-	const ZipEntry *script_entry;
 #ifndef USE_MINZIP
 	ZipString zip_string(MR_UPDATE_SCRIPT_NAME);
 #endif
-	int script_len;
+	size_t script_len;
 	char* script_data = NULL;
 	int itr = 0;
 	bool changed = false;
@@ -1577,12 +1576,16 @@ bool MultiROM::prepareZIP(std::string& file, EdifyHacker *hacker, bool& restore_
 	}
 
 #ifdef USE_MINZIP
+	const ZipEntry *script_entry;
 	script_entry = mzFindZipEntry(&zip, MR_UPDATE_SCRIPT_NAME);
 #else
-	if (FindEntry(zip, zip_string, (ZipEntry*)script_entry) != 0)
-        script_entry = NULL;
+	ZipEntry script_entry;
 #endif
+#ifdef USE_MINZIP
 	if(!script_entry)
+#else
+	if (FindEntry(zip, zip_string, &script_entry) != 0)
+#endif
 	{
 		gui_print("No entry for " MR_UPDATE_SCRIPT_NAME " in ZIP file %s!\n", file.c_str());
 		// could/should be a dummy file, like for certain gapps zip files where
@@ -1596,7 +1599,11 @@ bool MultiROM::prepareZIP(std::string& file, EdifyHacker *hacker, bool& restore_
 		}
 		script_len = strlen(script_data);
 	}
+#ifdef USE_MINZIP
 	else if (read_data(&zip, script_entry, &script_data, &script_len) < 0)
+#else
+	else if (read_data(zip, script_entry, &script_data, &script_len) < 0)
+#endif
 	{
 		gui_print("Failed to read updater-script entry from %s!\n", file.c_str());
 		goto exit;

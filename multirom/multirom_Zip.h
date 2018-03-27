@@ -16,9 +16,9 @@
 //#include <selinux/label.h>
 
 #ifdef USE_MINZIP
-int read_data(ZipArchive *zip, const ZipEntry *entry, char** ppData, int* pLength);
+int read_data(ZipArchive *zip, const ZipEntry *entry, char** ppData, size_t* pLength);
 #else
-int read_data(ZipArchiveHandle *zip, const ZipEntry *entry, char** ppData, int* pLength);
+int read_data(ZipArchiveHandle zip, ZipEntry entry, char** ppData, size_t* pLength);
 #endif
 
 #endif /*_MULTIROM_MINZIP_ZIP*/

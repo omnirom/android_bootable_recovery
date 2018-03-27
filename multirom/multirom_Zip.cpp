@@ -25,7 +25,7 @@
 #ifndef USE_MINZIP
 typedef struct {
     char *buf;
-    int bufLen;
+    size_t bufLen;
 } CopyProcessArgs;
 
 static bool copyProcessFunction(const uint8_t *buf, size_t buf_size,
@@ -42,17 +42,17 @@ static bool copyProcessFunction(const uint8_t *buf, size_t buf_size,
 }
 
 bool readZipEntry(ZipArchiveHandle archive, ZipEntry* pEntry,
-        char *buf, int bufLen)
+        char *buf, size_t bufLen)
 {
     CopyProcessArgs args;
-    bool ret;
+    int32_t ret;
 
     args.buf = buf;
     args.bufLen = bufLen;
     ret = ProcessZipEntryContents(archive, pEntry, copyProcessFunction,
             (void *)&args);
-    if (!ret) {
-        LOGE("Can't extract entry to buffer.\n");
+    if (ret < 0) {
+        LOGE("Can't extract entry to buffer. %d\n", ret);
         return false;
     }
     return true;
@@ -60,19 +60,19 @@ bool readZipEntry(ZipArchiveHandle archive, ZipEntry* pEntry,
 #endif
 
 #ifdef USE_MINZIP
-int read_data(ZipArchive *zip, const ZipEntry *entry,char** ppData, int* pLength)
+int read_data(ZipArchive *zip, const ZipEntry *entry,char** ppData, size_t* pLength)
 #else
-int read_data(ZipArchiveHandle *zip, const ZipEntry *entry,char** ppData, int* pLength)
+int read_data(ZipArchiveHandle zip, ZipEntry entry, char** ppData, size_t* pLength)
 #endif
 {
 #ifdef USE_MINZIP
-    int len = (int)mzGetZipEntryUncompLen(entry);
+    size_t len = (int)mzGetZipEntryUncompLen(entry);
 #else
-    int len = entry->uncompressed_length;
+    size_t len = entry.uncompressed_length;
 #endif
     bool ok;
     if (len <= 0) {
-        LOGE("Bad data length %d\n", len);
+        LOGE("Bad data length %zu\n", len);
         return -1;
     }
     char *data = (char*)malloc(len + 1);
@@ -83,7 +83,7 @@ int read_data(ZipArchiveHandle *zip, const ZipEntry *entry,char** ppData, int* p
 #ifdef USE_MINZIP
     ok = mzReadZipEntry(zip, entry, data, len);
 #else
-    ok = readZipEntry(*zip, (ZipEntry*)entry, data, len);
+    ok = readZipEntry(zip, &entry, data, len);
 #endif
     if (!ok) {
         LOGE("Error while reading data\n");

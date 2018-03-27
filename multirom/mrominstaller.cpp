@@ -49,7 +49,6 @@ int MROMInstaller::destroyWithErrorMsg(const std::string& ex)
 std::string MROMInstaller::open(const std::string& file)
 {
 	char* manifest = NULL;
-	const ZipEntry *script_entry;
 
 	MemMapping map;
 #ifdef USE_MINZIP
@@ -71,13 +70,18 @@ std::string MROMInstaller::open(const std::string& file)
 		return "Failed to open installer file!";
 
 #ifdef USE_MINZIP
+	const ZipEntry *script_entry;
 	script_entry = mzFindZipEntry(&zip, "manifest.txt");
 #else
 	ZipString zip_string("manifest.txt");
-	if (FindEntry(zip, zip_string, (ZipEntry*)script_entry) != 0)
-        script_entry = NULL;
+	ZipEntry script_entry;
+
 #endif
+#ifdef USE_MINZIP
 	if(!script_entry)
+#else
+	if (FindEntry(zip, zip_string, &script_entry) != 0)
+#endif
 	{
 #ifdef USE_MINZIP
 		mzCloseZipArchive(&zip);
@@ -88,7 +92,11 @@ std::string MROMInstaller::open(const std::string& file)
 		return "Failed to find manifest.txt";
 	}
 
+#ifdef USE_MINZIP
 	int res = read_data(&zip, script_entry, &manifest, NULL);
+#else
+	int res = read_data(zip, script_entry, &manifest, NULL);
+#endif
 
 #ifdef USE_MINZIP
 	mzCloseZipArchive(&zip);
@@ -409,12 +417,14 @@ bool MROMInstaller::extractFile(const std::string& name, const std::string& dest
 	const ZipEntry* entry = mzFindZipEntry(&zip, name.c_str());
 #else
 	ZipString zip_string(name.c_str());
-    ZipEntry *entry;
+    ZipEntry entry;
 
-	if (FindEntry(zip, zip_string, entry) != 0)
-        entry = NULL;
 #endif
+#ifdef USE_MINZIP
 	if (entry == NULL)
+#else
+	if (FindEntry(zip, zip_string, &entry) != 0)
+#endif
 	{
 		gui_print("Could not find file %s in zip %s\n", name.c_str(), m_file.c_str());
 		goto exit;
@@ -430,7 +440,7 @@ bool MROMInstaller::extractFile(const std::string& name, const std::string& dest
 #ifdef USE_MINZIP
 	res = mzExtractZipEntryToFile(&zip, entry, fileno(f));
 #else
-	res = ExtractEntryToFile(zip, entry, fileno(f));
+	res = ExtractEntryToFile(zip, &entry, fileno(f));
 #endif
 #ifdef USE_MINZIP
 	if(!res)
@@ -484,16 +494,11 @@ bool MROMInstaller::hasEntry(const std::string& name)
 	const ZipEntry *entry2 = mzFindZipEntry(&zip, (name + "/").c_str());
 #else
     ZipString zip_string1(name.c_str());
-	ZipEntry *entry1;
+	ZipEntry entry1;
 
-	if(FindEntry(zip, zip_string1, entry1) != 0)
-        entry1 = NULL;
 
 	ZipString zip_string2((name + "/").c_str());
-	ZipEntry *entry2;
-
-	if (FindEntry(zip, zip_string2, entry2) != 0)
-        entry2 = NULL;
+	ZipEntry entry2;
 #endif
 
 #ifdef USZE_MINZIP
@@ -503,7 +508,12 @@ bool MROMInstaller::hasEntry(const std::string& name)
 	CloseArchive(zip);
 #endif
 
+#ifdef USZE_MINZIP
 	return entry1 || entry2;
+#else
+	return !FindEntry(zip, zip_string1, &entry1) ||
+        !FindEntry(zip, zip_string2, &entry2);
+#endif
 }
 
 bool MROMInstaller::runScripts(const std::string& dir, const std::string& base, const std::string& root)
