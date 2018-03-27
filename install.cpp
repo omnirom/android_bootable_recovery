@@ -178,28 +178,6 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
     return INSTALL_ERROR;
   }
 
-  // Check for downgrade version.
-  int64_t build_timestamp =
-      android::base::GetIntProperty("ro.build.date.utc", std::numeric_limits<int64_t>::max());
-  int64_t pkg_post_timestamp = 0;
-  // We allow to full update to the same version we are running, in case there
-  // is a problem with the current copy of that version.
-  if (metadata["post-timestamp"].empty() ||
-      !android::base::ParseInt(metadata["post-timestamp"].c_str(), &pkg_post_timestamp) ||
-      pkg_post_timestamp < build_timestamp) {
-    if (metadata["ota-downgrade"] != "yes") {
-      LOG(ERROR) << "Update package is older than the current build, expected a build "
-                    "newer than timestamp "
-                 << build_timestamp << " but package has timestamp " << pkg_post_timestamp
-                 << " and downgrade not allowed.";
-      return INSTALL_ERROR;
-    }
-    if (pkg_pre_build_fingerprint.empty()) {
-      LOG(ERROR) << "Downgrade package must have a pre-build version set, not allowed.";
-      return INSTALL_ERROR;
-    }
-  }
-
   return 0;
 }
 
