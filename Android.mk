@@ -18,6 +18,11 @@ LOCAL_PATH := $(call my-dir)
 RECOVERY_API_VERSION := 3
 RECOVERY_FSTAB_VERSION := 2
 
+# TARGET_RECOVERY_UI_LIB should be one of librecovery_ui_{default,wear,vr} or a device-specific
+# module that defines make_device() and the exact RecoveryUI class for the target. It defaults to
+# librecovery_ui_default, which uses ScreenRecoveryUI.
+TARGET_RECOVERY_UI_LIB ?= librecovery_ui_default
+
 # libmounts (static library)
 # ===============================
 include $(CLEAR_VARS)
@@ -32,8 +37,10 @@ include $(BUILD_STATIC_LIBRARY)
 # librecovery (static library)
 # ===============================
 include $(CLEAR_VARS)
+
 LOCAL_SRC_FILES := \
     install.cpp
+
 LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
@@ -131,7 +138,6 @@ LOCAL_SRC_FILES := \
     roots.cpp \
     rotate_logs.cpp \
 
-
 LOCAL_MODULE := recovery
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
@@ -163,17 +169,9 @@ LOCAL_STATIC_LIBRARIES := \
     libvndksupport \
     libbatterymonitor
 
-LOCAL_STATIC_LIBRARIES += librecovery
-
-# If $(TARGET_RECOVERY_UI_LIB) is defined, the recovery calls make_device() from the
-# $(TARGET_RECOVERY_UI_LIB), which depends on the librecovery_ui.
-ifeq ($(TARGET_RECOVERY_UI_LIB),)
-  LOCAL_SRC_FILES += default_device.cpp
-else
-  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
-endif
-
 LOCAL_STATIC_LIBRARIES += \
+    librecovery \
+    $(TARGET_RECOVERY_UI_LIB) \
     libverifier \
     libbootloader_message \
     libfs_mgr \
@@ -252,6 +250,16 @@ LOCAL_STATIC_LIBRARIES := \
     libcrypto \
     libbase
 LOCAL_CFLAGS := -Wall -Werror
+include $(BUILD_STATIC_LIBRARY)
+
+# Generic device that uses ScreenRecoveryUI.
+# ===============================
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := default_device.cpp
+LOCAL_CFLAGS := -Wall -Werror
+
+LOCAL_MODULE := librecovery_ui_default
+
 include $(BUILD_STATIC_LIBRARY)
 
 # Wear default device
