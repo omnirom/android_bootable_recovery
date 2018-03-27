@@ -233,6 +233,7 @@ private:
 	static bool mountBaseImages(std::string base, std::string& dest);
 	static void umountBaseImages(const std::string& base);
 	static bool createFakeSystemImg();
+	static bool createFakeVendorImg();
 
 	static int system_args(const char *fmt, ...);
 	static void translateToRealdata(std::string& path);

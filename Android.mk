@@ -78,6 +78,9 @@ ifeq ($(TARGET_RECOVERY_IS_MULTIROM), true)
 
     LOCAL_C_INCLUDES += \
         system/extras/multirom
+ifeq ($(MR_DEVICE_HAS_VENDOR_PARTITION), true)
+    LOCAL_CFLAGS += -DMR_DEVICE_HAS_VENDOR_PARTITION
+endif
 endif
 
 ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)

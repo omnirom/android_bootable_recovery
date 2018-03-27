@@ -901,6 +901,9 @@ bool MultiROM::changeMounts(std::string name)
 	PartitionManager.Copy_And_Push_Context();
 
 	TWPartition *realdata, *data, *sys, *cache;
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+    TWPartition *vendor;
+#endif
 	std::vector<TWPartition*>& parts = PartitionManager.getPartitions();
 	for(std::vector<TWPartition*>::iterator itr = parts.begin(); itr != parts.end();) {
 		if ((*itr)->Mount_Point == "/system") {
@@ -912,7 +915,14 @@ bool MultiROM::changeMounts(std::string name)
 			(*itr)->UnMount(true);
 			delete *itr;
 			itr = parts.erase(itr);
+        }
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+		else if ((*itr)->Mount_Point == "/vendor") {
+			(*itr)->UnMount(true);
+			delete *itr;
+			itr = parts.erase(itr);
 		}
+#endif
 		else {
 			if((*itr)->Mount_Point == "/data") {
 				data = *itr;
@@ -988,12 +998,18 @@ bool MultiROM::changeMounts(std::string name)
 		cache = TWPartition::makePartFromFstab("/cache %s %s/cache flags=bindof=/realdata\n", fs, base.c_str());
 		sys = TWPartition::makePartFromFstab("/system %s %s/system flags=bindof=/realdata\n", fs, base.c_str());
 		data = TWPartition::makePartFromFstab("/data_t %s %s/data flags=bindof=/realdata\n", fs, base.c_str());
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+		vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor flags=bindof=/realdata\n", fs, base.c_str());
+#endif
 	}
 	else
 	{
 		cache = TWPartition::makePartFromFstab("/cache %s %s/cache.img flags=imagemount\n", fs, base.c_str());
 		sys = TWPartition::makePartFromFstab("/system %s %s/system.img flags=imagemount\n", fs, base.c_str());
 		data = TWPartition::makePartFromFstab("/data_t %s %s/data.img flags=imagemount\n", fs, base.c_str());
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+		vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor.img flags=imagemount\n", fs, base.c_str());
+#endif
 	}
 
 	// Workaround TWRP̈́'s datamedia code
@@ -1022,6 +1038,9 @@ bool MultiROM::changeMounts(std::string name)
 		sys->UnMount(false);
 		data->UnMount(false);
 		realdata->UnMount(false);
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+		vendor->UnMount(false);
+#endif
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
 		rmdir(REALDATA);
@@ -1109,7 +1128,7 @@ void MultiROM::restoreMounts()
 		std::string base_name = TWFunc::Get_Filename(line);
 		if (base_name != "boot.img" &&
 		    base_name != "cache.img" && base_name != "system.img" && base_name != "data.img" &&
-		    base_name != "cache.sparse.img" && base_name != "system.sparse.img" && base_name != "data.sparse.img") {
+		    base_name != "cache.sparse.img" && base_name != "system.sparse.img" && base_name != "data.sparse.img" && base_name != "vendor.img") {
 			FILE *f;
 			struct mntent *ent;
 
@@ -1141,6 +1160,9 @@ void MultiROM::restoreMounts()
 	// Is this really needed and entirely safe
 	KillProcessesUsingPath("/cache");
 	KillProcessesUsingPath("/system");
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+	KillProcessesUsingPath("/vendor");
+#endif
 	KillProcessesUsingPath("/data");
 	KillProcessesUsingPath("/realdata");
 
@@ -1168,6 +1190,13 @@ void MultiROM::restoreMounts()
 			if (PartitionManager.UnMount_By_Path("/data", false))
 				LOGINFO("Unmounted fake /data partition\n");
 		}
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+        if (PartitionManager.Is_Mounted_By_Path("/vendor")) {
+			mounted_count++;
+			if (PartitionManager.UnMount_By_Path("/vendor", false))
+				LOGINFO("Unmounted fake /vendor partition\n");
+		}
+#endif
 
 		if (mounted_count == 0)
 			break;
@@ -1330,6 +1359,52 @@ bool MultiROM::createFakeSystemImg()
 	return true;
 }
 
+bool MultiROM::createFakeVendorImg()
+{
+	std::string sysimg = m_path;
+	translateToRealdata(sysimg);
+
+	TWPartition *data = PartitionManager.Find_Partition_By_Path("/realdata");
+	TWPartition *sys = PartitionManager.Find_Original_Partition_By_Path("/system/vendor");
+	if(!data || !sys)
+	{
+		LOGERR("Failed to find /data or /vendor partition!\n");
+		return false;
+	}
+
+	uint64_t size = sys->GetSizeRaw();
+	if(size == 0)
+		size = sys->GetSizeTotal();
+	size = size/1024/1024 + 32;
+
+	if(!createImage(sysimg, "vendor", size))
+	{
+		LOGERR("Failed to create vendor.img!");
+		return false;
+	}
+
+	std::string loop_device = Create_LoopDevice(sysimg + "/vendor.img");
+	if (loop_device.empty())
+	{
+		system_args("rm \"%s/vendor.img\"", sysimg.c_str());
+		LOGERR("Failed to setup loop device!\n");
+		return false;
+	}
+
+	if(system_args("mv \"%s\" \"%s-orig\" && ln -s \"%s\" \"%s\"",
+		sys->Actual_Block_Device.c_str(), sys->Actual_Block_Device.c_str(), loop_device.c_str(), sys->Actual_Block_Device.c_str()) != 0)
+	{
+		Release_LoopDevice(loop_device, true);
+		system_args("rm -f \"%s/vendor.img\"", sysimg.c_str());
+		LOGERR("Failed to fake vendor device!\n");
+		return false;
+	}
+
+	system_args("rm \"%s/vendor.img\"", sysimg.c_str());
+	system_args("echo \"%s\" > /tmp/mrom_fakevendorpart", sys->Actual_Block_Device.c_str());
+	return true;
+}
+
 #define MR_UPDATE_SCRIPT_PATH  "META-INF/com/google/android/"
 #define MR_UPDATE_SCRIPT_NAME  "META-INF/com/google/android/updater-script"
 
@@ -1342,7 +1417,7 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	bool restore_script = false;
 	EdifyHacker hacker;
 	std::string boot, sysimg, loop_device;
-	DIR *dp_keep_busy[3] = { NULL, NULL, NULL };
+	DIR *dp_keep_busy[4] = { NULL, NULL, NULL, NULL };
 	TWPartition *data, *sys;
 
 	gui_print("Flashing ZIP file %s\n", file.c_str());
@@ -1377,7 +1452,8 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 	{
 		gui_print("ZIP uses block updates\n");
-		if(!createFakeSystemImg())
+		if(!createFakeSystemImg() ||
+                !createFakeVendorImg())
 			goto exit;
 	}
 
@@ -1388,6 +1464,9 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	dp_keep_busy[0] = opendir("/cache");
 	dp_keep_busy[1] = opendir("/system");
 	dp_keep_busy[2] = opendir("/data");
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+	dp_keep_busy[3] = opendir("/vendor");
+#endif
 
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, 0);
 	status = TWinstall_zip(file.c_str(), &wipe_cache);
@@ -1396,15 +1475,27 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	if (dp_keep_busy[0]) closedir(dp_keep_busy[0]);
 	if (dp_keep_busy[1]) closedir(dp_keep_busy[1]);
 	if (dp_keep_busy[2]) closedir(dp_keep_busy[2]);
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+	if (dp_keep_busy[3]) closedir(dp_keep_busy[3]);
+#endif
 
 	if((hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES) && system_args("busybox umount -d /tmpsystem") != 0)
 		system_args("dev=\"$(losetup | grep 'system\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
+
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+    if((hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES) && system_args("busybox umount -d /tmpvendor") != 0)
+		system_args("dev=\"$(losetup | grep 'vendor\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
+#endif
 
 exit:
 	// not really needed blankTimer.resetTimerAndUnblank();
 
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 		failsafeCheckPartition("/tmp/mrom_fakesyspart");
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
+		failsafeCheckPartition("/tmp/mrom_fakevendorpart");
+#endif
 
 	if(restore_script && hacker.restoreState() && hacker.writeToFile("/tmp/" MR_UPDATE_SCRIPT_NAME))
 	{
@@ -1439,7 +1530,7 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 	int status, verify_status = 0;
 	EdifyHacker hacker;
 	bool restore_script = false;
-	DIR *dp_keep_busy[3] = { NULL, NULL, NULL };
+	DIR *dp_keep_busy[4] = { NULL, NULL, NULL, NULL };
 
 	gui_print("Flashing ZIP file %s\n", file.c_str());
 
@@ -1453,7 +1544,8 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 	{
 		gui_print("ZIP uses block updates\n");
-		if(!createFakeSystemImg())
+		if(!createFakeSystemImg() ||
+                !createFakeVendorImg())
 			return false;
 	}
 
@@ -1462,6 +1554,9 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 	dp_keep_busy[0] = opendir("/cache");
 	dp_keep_busy[1] = opendir("/system");
 	dp_keep_busy[2] = opendir("/data");
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+	dp_keep_busy[3] = opendir("/vendor");
+#endif
 
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, 0);
 	status = TWinstall_zip(file.c_str(), wipe_cache);
@@ -1470,12 +1565,18 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 	if (dp_keep_busy[0]) closedir(dp_keep_busy[0]);
 	if (dp_keep_busy[1]) closedir(dp_keep_busy[1]);
 	if (dp_keep_busy[2]) closedir(dp_keep_busy[2]);
+	if (dp_keep_busy[3]) closedir(dp_keep_busy[3]);
 
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 	{
 		if(system_args("busybox umount -d /tmpsystem") != 0)
 			system_args("dev=\"$(losetup | grep 'system\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
 		failsafeCheckPartition("/tmp/mrom_fakesyspart");
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+		if(system_args("busybox umount -d /tmpvendor") != 0)
+			system_args("dev=\"$(losetup | grep 'vendor\\.img' | grep -o '/.*:')\"; losetup -d \"${dev%%:}\"");
+		failsafeCheckPartition("/tmp/mrom_fakevendorpart");
+#endif
 	}
 
 	if(restore_script && hacker.restoreState() && hacker.writeToFile("/tmp/" MR_UPDATE_SCRIPT_NAME))
@@ -2676,7 +2777,7 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 {
 	struct stat info;
 	std::string base = getRomsPath() + "/" + name;
-	int has_system = 0, has_system_image = 0, has_data = 0;
+	int has_system = 0, has_system_image = 0, has_data = 0, has_vendor = 0;
 
 	if(stat((path + "/boot.emmc.win").c_str(), &info) < 0)
 	{
@@ -2692,7 +2793,7 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 	}
 
 	struct dirent *dr;
-	while((!has_system || !has_data) && (dr = readdir(d)))
+	while((!has_system || !has_data || !has_vendor) && (dr = readdir(d)))
 	{
 		if(strstr(dr->d_name, "system.") == dr->d_name)
 			has_system = 1;
@@ -2700,6 +2801,8 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 			has_system_image = 1;
 		else if(strstr(dr->d_name, "data.") == dr->d_name)
 			has_data = 1;
+		else if(strstr(dr->d_name, "vendor.") == dr->d_name)
+			has_vendor = 1;
 	}
 	closedir(d);
 
@@ -2735,10 +2838,14 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 	if (has_system)
 	{
 		// Favor System_Files even if there is a System_Image
-		if (!has_data)
+		if (!has_data && !has_vendor)
 			DataManager::SetValue("tw_restore_selected", "/system;");
-		else
+		else if (!has_vendor)
 			DataManager::SetValue("tw_restore_selected", "/system;/data;");
+		else if (!has_data)
+			DataManager::SetValue("tw_restore_selected", "/system;/vendor;");
+		else
+			DataManager::SetValue("tw_restore_selected", "/system;/data;/vendor;");
 
 		res = PartitionManager.Run_Restore(path);
 	}
@@ -2758,6 +2865,10 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 				if (res && has_data)
 				{
 					DataManager::SetValue("tw_restore_selected", "/data;");
+                    if (has_vendor)
+                    {
+                        DataManager::SetValue("tw_restore_selected", "/data;/vendor;");
+                    }
 					res = PartitionManager.Run_Restore(path);
 				}
 			}
@@ -2962,7 +3073,6 @@ bool MultiROM::ubuntuTouchProcess(const std::string& root, const std::string& na
 	} parts[] = {
 		{ "/system", "/systemorig", "ro", "", "" },
 		{ "/persist", "/persist", "rw", "", "" },
-		{ "", "/vendor", "bind,ro", "/system/vendor", "auto" },
 
 		{ 0, 0, 0, "", "" }
 	};
