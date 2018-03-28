@@ -89,6 +89,12 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         ifeq ($(TW_CRYPTO_SYSTEM_VOLD_DEBUG),true)
             # Enabling strace will expose the password in the strace logs!!
             LOCAL_CFLAGS += -DTW_CRYPTO_SYSTEM_VOLD_DEBUG
+        else
+            ifneq ($(TW_CRYPTO_SYSTEM_VOLD_DEBUG),)
+                # Specify strace path
+                LOCAL_CFLAGS += -DTW_CRYPTO_SYSTEM_VOLD_DEBUG
+                LOCAL_CFLAGS += -DVD_STRACE_BIN=\"$(TW_CRYPTO_SYSTEM_VOLD_DEBUG)\"
+            endif
         endif
 
         LOCAL_SRC_FILES = vold_decrypt.cpp
