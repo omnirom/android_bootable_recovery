@@ -23,7 +23,6 @@
 
 #include <memory>
 
-#include "font_10x18.h"
 #include "graphics_adf.h"
 #include "graphics_drm.h"
 #include "graphics_fbdev.h"
@@ -313,42 +312,16 @@ int gr_init_font(const char* name, GRFont** dest) {
   return 0;
 }
 
-static void gr_init_font(void) {
-  int res = gr_init_font("font", &gr_font);
-  if (res == 0) {
-    return;
-  }
-
-  printf("failed to read font: res=%d\n", res);
-
-  // fall back to the compiled-in font.
-  gr_font = static_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
-  gr_font->texture = static_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
-  gr_font->texture->width = font.width;
-  gr_font->texture->height = font.height;
-  gr_font->texture->row_bytes = font.width;
-  gr_font->texture->pixel_bytes = 1;
-
-  unsigned char* bits = static_cast<unsigned char*>(malloc(font.width * font.height));
-  gr_font->texture->data = bits;
-
-  unsigned char data;
-  unsigned char* in = font.rundata;
-  while ((data = *in++)) {
-    memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
-    bits += (data & 0x7f);
-  }
-
-  gr_font->char_width = font.char_width;
-  gr_font->char_height = font.char_height;
-}
-
 void gr_flip() {
   gr_draw = gr_backend->Flip();
 }
 
 int gr_init() {
-  gr_init_font();
+  int ret = gr_init_font("font", &gr_font);
+  if (ret != 0) {
+    printf("Failed to init font: %d\n", ret);
+    return -1;
+  }
 
   auto backend = std::unique_ptr<MinuiBackend>{ std::make_unique<MinuiBackendAdf>() };
   gr_draw = backend->Init();
