@@ -132,6 +132,7 @@ int main(int argc, char **argv) {
 	// It would be bad to let that as is.
 	MultiROM::failsafeCheckPartition("/tmp/mrom_fakebootpart");
 	MultiROM::failsafeCheckPartition("/tmp/mrom_fakesyspart");
+	MultiROM::failsafeCheckPartition("/tmp/mrom_fakevendorpart");
 #endif //TARGET_RECOVERY_IS_MULTIROM
 
 	// Load default values to set DataManager constants and handle ifdefs

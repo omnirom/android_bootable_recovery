@@ -241,7 +241,7 @@ private:
 	static void normalizeROMPath(std::string& path);
 	static void restoreROMPath();
 
-	static bool copyPartWithXAttrs(const std::string& src, const std::string& dst, const std::string& part, bool skipMedia = false);
+	static bool copyPartWithXAttrs(const std::string& src, const std::string& dst, const std::string& part, const std::string& dest_part, bool skipMedia = false);
 
 	static std::string m_path;
 	static std::string m_mount_rom_paths[2];

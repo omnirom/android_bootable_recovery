@@ -111,6 +111,7 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
         static const char *offending_mounts[] = {
             "/cache",
             "/system",
+            "/vendor",
             "/data",
             "/userdata",
             NULL
@@ -163,7 +164,7 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
         }
 
         res |= OFF_CHANGED;
-        m_name = "ui_print";
+        m_name = "gui_print";
         clearArgs();
         addArg(new EdifyValue("\" \""));
         return res;
@@ -268,7 +269,7 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
                 std::string(") from following line.")));
             lastNewlineRef = (*parentList)->insert(++lastNewlineRef, new EdifyNewline());
             res |= OFF_CHANGED;
-            m_name = "ui_print";
+            m_name = "gui_print";
             clearArgs();
             addArg(new EdifyValue("\" \""));
         }
@@ -479,13 +480,13 @@ bool EdifyHacker::add(char c)
 
 /*
  * void Move_to_End_Of_Command(std::list<EdifyElement*>::iterator& itr)
- * 
+ *
  *
  * Helper function for 'applyOffendingMask' (in particular block_image_update - OFF_BLOCK_UPDATES)
- * 
+ *
  * We don't want the shell commands to be inserted "in between" two or more consecutive consecutive. newline isn't enough, we need to wait for semicolon
  * otherwise the command will get inserted after newline but before the rest of [any possible other] commands. Example: in CM14's block_image_update:
- * 
+ *
  *     block_image_update("/dev/block/platform/msm_sdcc.1/by-name/system", package_extract_file("system.transfer.list"), "system.new.dat", "system.patch.dat") ||
  *       abort("E1001: Failed to update system image.");
  *
@@ -560,19 +561,55 @@ void EdifyHacker::applyOffendingMask(std::list<EdifyElement*>::iterator& itr, in
         itr = m_elements.insert(++itr, new EdifyNewline());
     }
 
-    if((mask & OFF_BLOCK_UPDATES) && (sys = PartitionManager.Find_Original_Partition_By_Path("/system")))
+    if((mask & OFF_BLOCK_UPDATES))
     {
+
+        std::string partition;
+
+        std::list<EdifyElement*>::iterator& itr1 = itr;
+        while((*itr1)->getType() != EDF_FUNC)
+        {
+            --itr1;
+        }
+
+        if(((EdifyFunc*)(*itr1))->getArgsStr().find("system") != std::string::npos)
+        {
+            partition = "system";
+        } else if(((EdifyFunc*)(*itr1))->getArgsStr().find("vendor") != std::string::npos) {
+            partition = "vendor";
+        }
+
+
+        if (partition.empty()) {
+            return;
+        }
+
+        sys = PartitionManager.Find_Original_Partition_By_Path(partition);
+
         Move_to_End_Of_Command(itr);
 
         m_processFlags |= (EDIFY_BLOCK_UPDATES | EDIFY_CHANGED);
         itr = m_elements.insert(++itr, new EdifyValue("# Following line was added by MultiROM\n"
             "run_program(\"/sbin/sh\", \"-c\", \""
-            "mkdir -p /tmpsystem && mount -t ext4 $(readlink -f -n "));
+            "mkdir -p /tmp"));
+        itr = m_elements.insert(++itr, new EdifyValue(partition));
+        itr = m_elements.insert(++itr, new EdifyValue(" && mount -t ext4 $(readlink -f -n "));
         itr = m_elements.insert(++itr, new EdifyValue(sys->Actual_Block_Device));
-        itr = m_elements.insert(++itr, new EdifyValue(") /tmpsystem && "
-            "(chattr -R -i /system/* || true) && (rm -rf /system/* || true) && "
-            "(cp -a /tmpsystem/* /system/ || true) && cp_xattrs /tmpsystem /system"
-            "\");"));
+        itr = m_elements.insert(++itr, new EdifyValue(") /tmp"));
+        itr = m_elements.insert(++itr, new EdifyValue(partition));
+        itr = m_elements.insert(++itr, new EdifyValue(" && (chattr -R -i /"));
+        itr = m_elements.insert(++itr, new EdifyValue(partition));
+        itr = m_elements.insert(++itr, new EdifyValue("/* || true) && (rm -rf /"));
+        itr = m_elements.insert(++itr, new EdifyValue(partition));
+        itr = m_elements.insert(++itr, new EdifyValue("/* || true) && (cp -a /tmp"));
+        itr = m_elements.insert(++itr, new EdifyValue(partition));
+        itr = m_elements.insert(++itr, new EdifyValue("/* /"));
+        itr = m_elements.insert(++itr, new EdifyValue(partition));
+        itr = m_elements.insert(++itr, new EdifyValue("/ || true) && cp_xattrs /tmp"));
+        itr = m_elements.insert(++itr, new EdifyValue(partition));
+        itr = m_elements.insert(++itr, new EdifyValue(" /"));
+        itr = m_elements.insert(++itr, new EdifyValue(partition));
+        itr = m_elements.insert(++itr, new EdifyValue("\");"));
         itr = m_elements.insert(++itr, new EdifyNewline());
     }
 

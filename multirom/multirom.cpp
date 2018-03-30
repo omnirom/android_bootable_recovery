@@ -872,6 +872,9 @@ static bool MakeMultiROMRecoveryFstab(void)
 		if (strncmp(fstab_line, "/data", 5) == 0 && strchr(" \t\n", fstab_line[5]))
 			continue;
 
+        if (strncmp(fstab_line, "/vendor", 7) == 0 && strchr(" \t\n", fstab_line[5]))
+			continue;
+
 		fputs(fstab_line, fstabOUT);
 
 		memset(fstab_line, 0, sizeof(fstab_line));
@@ -992,6 +995,11 @@ bool MultiROM::changeMounts(std::string name)
 			data = TWPartition::makePartFromFstab("/data_t %s %s/data.sparse.img flags=imagemount\n", fs, base.c_str());
 		else
 			data = TWPartition::makePartFromFstab("/data_t %s %s/data flags=bindof=/realdata\n", fs, base.c_str());
+
+        if (Paths_Exist(base, "/vendor.sparse.img"))
+			data = TWPartition::makePartFromFstab("/vendor %s %s/vendor.sparse.img flags=imagemount\n", fs, base.c_str());
+		else
+			data = TWPartition::makePartFromFstab("/vendor %s %s/vendor flags=bindof=/realdata\n", fs, base.c_str());
 	}
 	else if (!(M(type) & MASK_IMAGES))
 	{
@@ -1021,6 +1029,7 @@ bool MultiROM::changeMounts(std::string name)
 	parts.push_back(cache);
 	parts.push_back(sys);
 	parts.push_back(data);
+	parts.push_back(vendor);
 
 	if(DataManager::GetStrValue("tw_storage_path").find("/data/media") == 0)
 	{
@@ -1031,7 +1040,7 @@ bool MultiROM::changeMounts(std::string name)
 
 	PartitionManager.Update_System_Details();
 
-	if(!cache->Mount(true) || !sys->Mount(true) || !data->Mount(true))
+	if(!cache->Mount(true) || !sys->Mount(true) || !data->Mount(true) || !vendor->Mount(true))
 	{
 		gui_print("Failed to mount fake partitions, canceling!\n");
 		cache->UnMount(false);
@@ -1160,9 +1169,6 @@ void MultiROM::restoreMounts()
 	// Is this really needed and entirely safe
 	KillProcessesUsingPath("/cache");
 	KillProcessesUsingPath("/system");
-#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-	KillProcessesUsingPath("/vendor");
-#endif
 	KillProcessesUsingPath("/data");
 	KillProcessesUsingPath("/realdata");
 
@@ -1365,7 +1371,7 @@ bool MultiROM::createFakeVendorImg()
 	translateToRealdata(sysimg);
 
 	TWPartition *data = PartitionManager.Find_Partition_By_Path("/realdata");
-	TWPartition *sys = PartitionManager.Find_Original_Partition_By_Path("/system/vendor");
+	TWPartition *sys = PartitionManager.Find_Original_Partition_By_Path("/vendor");
 	if(!data || !sys)
 	{
 		LOGERR("Failed to find /data or /vendor partition!\n");
@@ -1452,8 +1458,11 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 	{
 		gui_print("ZIP uses block updates\n");
-		if(!createFakeSystemImg() ||
-                !createFakeVendorImg())
+		if(!createFakeSystemImg()
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+              ||  !createFakeVendorImg()
+#endif
+          )
 			goto exit;
 	}
 
@@ -1544,8 +1553,11 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 	{
 		gui_print("ZIP uses block updates\n");
-		if(!createFakeSystemImg() ||
-                !createFakeVendorImg())
+		if(!createFakeSystemImg()
+#ifdef MR_DEVICE_HAS_VENDOR_PARTITION
+           ||   !createFakeVendorImg()
+#endif
+          )
 			return false;
 	}
 
@@ -2089,6 +2101,7 @@ bool MultiROM::createImage(const std::string& base, const char *img, int size)
 	if(TWFunc::Path_Exists("/file_contexts") &&
 		(!strcmp(img, "data") ||
 		 !strcmp(img, "system") ||
+		 !strcmp(img, "vendor") ||
 		 !strcmp(img, "cache"))) {
 		snprintf(cmd, sizeof(cmd), "make_ext4fs -l %dM -a \"/%s\" -S /file_contexts \"%s/%s.img\"", size, img, base.c_str(), img);
 	} else {
@@ -2199,6 +2212,7 @@ bool MultiROM::createDirs(std::string name, int type)
 			if (mkdir((base + "/boot").c_str(), 0777) < 0 ||
 				mkdir((base + "/system").c_str(), 0755) < 0 ||
 				mkdir((base + "/data").c_str(), 0771) < 0 ||
+				mkdir((base + "/vendor").c_str(), 0755) < 0 ||
 				mkdir((base + "/cache").c_str(), 0770) < 0)
 			{
 				gui_print("Failed to create android folders!\n");
@@ -2206,9 +2220,10 @@ bool MultiROM::createDirs(std::string name, int type)
 			}
 			system_args(
 				"chcon u:object_r:system_file:s0 \"%s/system\";"
+				"chcon u:object_r:vendor_file:s0 \"%s/vendor\";"
 				"chcon u:object_r:system_data_file:s0 \"%s/data\";"
 				"chcon u:object_r:cache_file:s0 \"%s/cache\";",
-				base.c_str(), base.c_str(), base.c_str());
+				base.c_str(), base.c_str(), base.c_str(), base.c_str());
 			break;
 		case ROM_UTOUCH_INTERNAL:
 		case ROM_UTOUCH_USB_DIR:
@@ -2240,6 +2255,10 @@ bool MultiROM::createDirs(std::string name, int type)
 			if (!createSparseImage(base, "system"))
 				return false;
 			system_args("chcon u:object_r:system_file:s0 \"%s/system.sparse.img\"", base.c_str());
+
+            if (!createSparseImage(base, "vendor"))
+				return false;
+			system_args("chcon u:object_r:vendor_file:s0 \"%s/vendor.sparse.img\"", base.c_str());
 
 			if (1) {
 				if (mkdir((base + "/data").c_str(), 0771) < 0) {
@@ -2860,7 +2879,7 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 			int is_mounted = (TWFunc::Exec_Cmd(cmd) == 0);
 
 			if (is_mounted) {
-				res = copyPartWithXAttrs("/tmp", "", "system", false);
+				res = copyPartWithXAttrs("/tmp", "", "system", "system", false);
 				umount("/tmp/system");
 				if (res && has_data)
 				{
@@ -3548,12 +3567,12 @@ void MultiROM::startSystemImageUpgrader()
 	gui_startPage("action_page", 0, 1);
 }
 
-bool MultiROM::copyPartWithXAttrs(const std::string& src, const std::string& dst, const std::string& part, bool skipMedia)
+bool MultiROM::copyPartWithXAttrs(const std::string& src, const std::string& dst, const std::string& part, const std::string& dest_part, bool skipMedia)
 {
 	if(!skipMedia)
 	{
 		gui_print("Copying /%s...\n", part.c_str());
-		if(system_args("IFS=$'\n'; for f in $(find \"%s/%s\" -maxdepth 1 -mindepth 1); do cp -a \"$f\" \"%s/%s/\"; done", src.c_str(), part.c_str(), dst.c_str(), part.c_str()) != 0)
+		if(system_args("IFS=$'\n'; for f in $(find \"%s/%s\" -maxdepth 1 -mindepth 1); do cp -a \"$f\" \"%s/%s/\"; done", src.c_str(), part.c_str(), dst.c_str(), dest_part.c_str()) != 0)
 		{
 			LOGERR("Copying failed, see log for more info!\n");
 			return false;
@@ -3575,7 +3594,7 @@ bool MultiROM::copyPartWithXAttrs(const std::string& src, const std::string& dst
 		gui_print("Copying /%s...\n", part.c_str());
 
 		snprintf(path1, sizeof(path1), "%s/%s", src.c_str(), part.c_str());
-		snprintf(path2, sizeof(path2), "%s/%s", dst.c_str(), part.c_str());
+		snprintf(path2, sizeof(path2), "%s/%s", dst.c_str(), dest_part.c_str());
 
 		if(!cp_xattrs_single_file(path1, path2))
 			return false;
@@ -3597,7 +3616,7 @@ bool MultiROM::copyPartWithXAttrs(const std::string& src, const std::string& dst
 			{
 				struct stat st;
 				snprintf(path1, sizeof(path1), "%s/%s/media", src.c_str(), part.c_str());
-				snprintf(path2, sizeof(path2), "%s/%s/media", dst.c_str(), part.c_str());
+				snprintf(path2, sizeof(path2), "%s/%s/media", dst.c_str(), dest_part.c_str());
 
 				if(stat(path1, &st) >= 0)
 				{
@@ -3607,7 +3626,7 @@ bool MultiROM::copyPartWithXAttrs(const std::string& src, const std::string& dst
 				continue;
 			}
 
-			if(system_args("cp -a \"%s/%s/%s\" \"%s/%s/\"", src.c_str(), part.c_str(), dt->d_name, dst.c_str(), part.c_str()) != 0)
+			if(system_args("cp -a \"%s/%s/%s\" \"%s/%s/\"", src.c_str(), part.c_str(), dt->d_name, dst.c_str(), dest_part.c_str()) != 0)
 			{
 				LOGERR("Copying failed, see log for more info!\n");
 				res = false;
@@ -3615,7 +3634,7 @@ bool MultiROM::copyPartWithXAttrs(const std::string& src, const std::string& dst
 			}
 
 			snprintf(path1, sizeof(path1), "%s/%s/%s", src.c_str(), part.c_str(), dt->d_name);
-			snprintf(path2, sizeof(path2), "%s/%s/%s", dst.c_str(), part.c_str(), dt->d_name);
+			snprintf(path2, sizeof(path2), "%s/%s/%s", dst.c_str(), dest_part.c_str(), dt->d_name);
 
 			if(!cp_xattrs_recursive(path1, path2, dt->d_type))
 			{
@@ -3642,6 +3661,7 @@ bool MultiROM::copyInternal(const std::string& dest_name)
 
 	if (!PartitionManager.Mount_By_Path("/system", true) ||
 		!PartitionManager.Mount_By_Path("/data", true) ||
+		!PartitionManager.Mount_By_Path("/vendor", true) ||
 		!PartitionManager.Mount_By_Path("/cache", true))
 	{
 		LOGERR("Failed to mount all partitions!\n");
@@ -3662,9 +3682,10 @@ bool MultiROM::copyInternal(const std::string& dest_name)
 	if(!extractBootForROM(dest_dir))
 		goto erase_incomplete;
 
-	static const char *parts[] = { "system", "data", "cache" };
+	static const char *parts[] = { "system", "data", "cache", "vendor" };
+    static const char *dest[] = { "system", "data", "cache", "vendor" };
 	for(size_t i = 0; i < sizeof(parts)/sizeof(parts[0]); ++i)
-		if(!copyPartWithXAttrs("", dest_dir, parts[i], strcmp(parts[i], "data") == 0))
+		if(!copyPartWithXAttrs("", dest_dir, parts[i], dest[i], strcmp(parts[i], "data") == 0))
 			goto erase_incomplete;
 
 	return true;
@@ -3677,7 +3698,7 @@ erase_incomplete:
 
 bool MultiROM::wipeInternal()
 {
-	if(!PartitionManager.Wipe_By_Path("/cache") || !PartitionManager.Wipe_By_Path("/system"))
+	if(!PartitionManager.Wipe_By_Path("/cache") || !PartitionManager.Wipe_By_Path("/system") || !PartitionManager.Wipe_By_Path("/vendor"))
 		return false;
 
 	if(!PartitionManager.Factory_Reset())
@@ -3701,6 +3722,7 @@ bool MultiROM::copySecondaryToInternal(const std::string& rom_name)
 
 	if (!PartitionManager.Mount_By_Path("/system", true) ||
 		!PartitionManager.Mount_By_Path("/data", true) ||
+		!PartitionManager.Mount_By_Path("/vendor", true) ||
 		!PartitionManager.Mount_By_Path("/cache", true))
 	{
 		LOGERR("Failed to mount all partitions!\n");
@@ -3716,9 +3738,10 @@ bool MultiROM::copySecondaryToInternal(const std::string& rom_name)
 
 	injectBoot(getBootDev(), true);
 
-	static const char *parts[] = { "system", "data", "cache" };
+	static const char *parts[] = { "system", "data", "cache", "vendor" };
+    static const char *dest[] = { "system", "data", "cache", "vendor" };
 	for(size_t i = 0; i < sizeof(parts)/sizeof(parts[0]); ++i)
-		if(!copyPartWithXAttrs(src_dir, "", parts[i], strcmp(parts[i], "data") == 0))
+		if(!copyPartWithXAttrs(src_dir, "", parts[i], dest[i], strcmp(parts[i], "data") == 0))
 			return false;
 
 	return true;
