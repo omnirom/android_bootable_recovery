@@ -45,6 +45,8 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_SHARED_LIBRARIES := liblog
+LOCAL_TEST_DATA := \
+    $(call find-test-data-in-subdirs, $(LOCAL_PATH), "*", testdata)
 include $(BUILD_NATIVE_TEST)
 
 # Manual tests
@@ -61,25 +63,8 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libpng
 
-resource_files := $(call find-files-in-subdirs, bootable/recovery, \
-    "*_text.png", \
-    res-mdpi/images \
-    res-hdpi/images \
-    res-xhdpi/images \
-    res-xxhdpi/images \
-    res-xxxhdpi/images \
-    )
-
-# The resource image files that will go to $OUT/data/nativetest/recovery.
-testimage_out_path := $(TARGET_OUT_DATA)/nativetest/recovery
-GEN := $(addprefix $(testimage_out_path)/, $(resource_files))
-
-$(GEN): PRIVATE_PATH := $(LOCAL_PATH)
-$(GEN): PRIVATE_CUSTOM_TOOL = cp $< $@
-$(GEN): $(testimage_out_path)/% : bootable/recovery/%
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
+LOCAL_TEST_DATA := \
+    $(call find-test-data-in-subdirs, bootable/recovery, "*_text.png", res-*)
 include $(BUILD_NATIVE_TEST)
 
 # Component tests
@@ -171,29 +156,8 @@ LOCAL_STATIC_LIBRARIES := \
     libBionicGtestMain \
     $(tune2fs_static_libraries)
 
-testdata_files := $(call find-subdir-files, testdata/*)
-
-# The testdata files that will go to $OUT/data/nativetest/recovery.
-testdata_out_path := $(TARGET_OUT_DATA)/nativetest/recovery
-GEN := $(addprefix $(testdata_out_path)/, $(testdata_files))
-$(GEN): PRIVATE_PATH := $(LOCAL_PATH)
-$(GEN): PRIVATE_CUSTOM_TOOL = cp $< $@
-$(GEN): $(testdata_out_path)/% : $(LOCAL_PATH)/%
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-
-# A copy of the testdata to be packed into continuous_native_tests.zip.
-testdata_continuous_zip_prefix := \
-    $(call intermediates-dir-for,PACKAGING,recovery_component_test)/DATA
-testdata_continuous_zip_path := $(testdata_continuous_zip_prefix)/nativetest/recovery
-GEN := $(addprefix $(testdata_continuous_zip_path)/, $(testdata_files))
-$(GEN): PRIVATE_PATH := $(LOCAL_PATH)
-$(GEN): PRIVATE_CUSTOM_TOOL = cp $< $@
-$(GEN): $(testdata_continuous_zip_path)/% : $(LOCAL_PATH)/%
-	$(transform-generated-source)
-LOCAL_GENERATED_SOURCES += $(GEN)
-LOCAL_PICKUP_FILES := $(testdata_continuous_zip_prefix)
-
+LOCAL_TEST_DATA := \
+    $(call find-test-data-in-subdirs, $(LOCAL_PATH), "*", testdata)
 include $(BUILD_NATIVE_TEST)
 
 # Host tests
@@ -222,4 +186,6 @@ LOCAL_STATIC_LIBRARIES := \
     libBionicGtestMain
 LOCAL_SHARED_LIBRARIES := \
     liblog
+LOCAL_TEST_DATA := \
+    $(call find-test-data-in-subdirs, $(LOCAL_PATH), "*", testdata)
 include $(BUILD_HOST_NATIVE_TEST)
