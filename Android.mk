@@ -288,6 +288,7 @@ include $(BUILD_STATIC_LIBRARY)
 include \
     $(LOCAL_PATH)/boot_control/Android.mk \
     $(LOCAL_PATH)/minui/Android.mk \
+    $(LOCAL_PATH)/sample_updater/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
