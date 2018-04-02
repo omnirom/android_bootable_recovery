@@ -23,17 +23,6 @@ RECOVERY_FSTAB_VERSION := 2
 # librecovery_ui_default, which uses ScreenRecoveryUI.
 TARGET_RECOVERY_UI_LIB ?= librecovery_ui_default
 
-# libmounts (static library)
-# ===============================
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := mounts.cpp
-LOCAL_CFLAGS := \
-    -Wall \
-    -Werror
-LOCAL_MODULE := libmounts
-LOCAL_STATIC_LIBRARIES := libbase
-include $(BUILD_STATIC_LIBRARY)
-
 # librecovery (static library)
 # ===============================
 include $(CLEAR_VARS)
@@ -49,6 +38,7 @@ ifeq ($(AB_OTA_UPDATER),true)
 endif
 
 LOCAL_MODULE := librecovery
+
 LOCAL_STATIC_LIBRARIES := \
     libminui \
     libotautil \
@@ -72,6 +62,7 @@ LOCAL_SRC_FILES := \
 LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_MODULE := librecovery_ui
+
 LOCAL_STATIC_LIBRARIES := \
     libminui \
     libbase
@@ -200,78 +191,6 @@ LOCAL_REQUIRED_MODULES += recovery-persist recovery-refresh
 endif
 
 include $(BUILD_EXECUTABLE)
-
-# recovery-persist (system partition dynamic executable run after /data mounts)
-# ===============================
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := \
-    recovery-persist.cpp \
-    rotate_logs.cpp
-LOCAL_MODULE := recovery-persist
-LOCAL_SHARED_LIBRARIES := liblog libbase
-LOCAL_CFLAGS := -Wall -Werror
-LOCAL_INIT_RC := recovery-persist.rc
-include $(BUILD_EXECUTABLE)
-
-# recovery-refresh (system partition dynamic executable run at init)
-# ===============================
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := \
-    recovery-refresh.cpp \
-    rotate_logs.cpp
-LOCAL_MODULE := recovery-refresh
-LOCAL_SHARED_LIBRARIES := liblog libbase
-LOCAL_CFLAGS := -Wall -Werror
-LOCAL_INIT_RC := recovery-refresh.rc
-include $(BUILD_EXECUTABLE)
-
-# libverifier (static library)
-# ===============================
-include $(CLEAR_VARS)
-LOCAL_MODULE := libverifier
-LOCAL_SRC_FILES := \
-    asn1_decoder.cpp \
-    verifier.cpp
-LOCAL_STATIC_LIBRARIES := \
-    libotautil \
-    libcrypto_utils \
-    libcrypto \
-    libbase
-LOCAL_CFLAGS := -Wall -Werror
-include $(BUILD_STATIC_LIBRARY)
-
-# Generic device that uses ScreenRecoveryUI.
-# ===============================
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := default_device.cpp
-LOCAL_CFLAGS := -Wall -Werror
-
-LOCAL_MODULE := librecovery_ui_default
-
-include $(BUILD_STATIC_LIBRARY)
-
-# Wear default device
-# ===============================
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := wear_device.cpp
-LOCAL_CFLAGS := -Wall -Werror
-
-# Should match TARGET_RECOVERY_UI_LIB in BoardConfig.mk.
-LOCAL_MODULE := librecovery_ui_wear
-
-include $(BUILD_STATIC_LIBRARY)
-
-# vr headset default device
-# ===============================
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := vr_device.cpp
-LOCAL_CFLAGS := -Wall -Werror
-
-# should match TARGET_RECOVERY_UI_LIB set in BoardConfig.mk
-LOCAL_MODULE := librecovery_ui_vr
-
-include $(BUILD_STATIC_LIBRARY)
 
 include \
     $(LOCAL_PATH)/boot_control/Android.mk \
