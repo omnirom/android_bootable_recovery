@@ -1,0 +1,143 @@
+// Copyright (C) 2018 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_defaults {
+    name: "recovery_defaults",
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+}
+
+// Generic device that uses ScreenRecoveryUI.
+cc_library_static {
+    name: "librecovery_ui_default",
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "default_device.cpp",
+    ],
+}
+
+// The default wear device that uses WearRecoveryUI.
+cc_library_static {
+    name: "librecovery_ui_wear",
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "wear_device.cpp",
+    ],
+}
+
+// The default VR device that uses VrRecoveryUI.
+cc_library_static {
+    name: "librecovery_ui_vr",
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "vr_device.cpp",
+    ],
+}
+
+cc_library_static {
+    name: "libmounts",
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "mounts.cpp",
+    ],
+
+    static_libs: [
+        "libbase",
+    ],
+}
+
+cc_library_static {
+    name: "libverifier",
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "asn1_decoder.cpp",
+        "verifier.cpp",
+    ],
+
+    static_libs: [
+        "libbase",
+        "libcrypto",
+        "libcrypto_utils",
+        "libotautil",
+    ],
+}
+
+// The dynamic executable that runs after /data mounts.
+cc_binary {
+    name: "recovery-persist",
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "recovery-persist.cpp",
+        "rotate_logs.cpp",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "liblog",
+    ],
+
+    init_rc: [
+        "recovery-persist.rc",
+    ],
+}
+
+// The dynamic executable that runs at init.
+cc_binary {
+    name: "recovery-refresh",
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "recovery-refresh.cpp",
+        "rotate_logs.cpp",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "liblog",
+    ],
+
+    init_rc: [
+        "recovery-refresh.rc",
+    ],
+}
