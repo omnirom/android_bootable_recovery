@@ -34,7 +34,6 @@
 static const std::string myFilename = "/data/misc/recovery/inject.txt";
 static const std::string myContent = "Hello World\nWelcome to my recovery\n";
 static const std::string kLocale = "zu";
-static const std::string kResourceTestDir = "/data/nativetest/recovery/";
 
 // Failure is expected on systems that do not deliver either the
 // recovery-persist or recovery-refresh executables. Tests also require
@@ -108,19 +107,20 @@ static int png_filter(const dirent* de) {
   return 1;
 }
 
-// Find out all png files to test under /data/nativetest/recovery/.
+// Find out all the PNG files to test, which stay under the same dir with the executable.
 static std::vector<std::string> add_files() {
+  std::string exec_dir = android::base::GetExecutableDirectory();
   std::vector<std::string> files;
-  for (const std::string& str : image_dir) {
-    std::string dir_path = kResourceTestDir + str;
+  for (const std::string& image : image_dir) {
+    std::string dir_path = exec_dir + "/" + image;
     dirent** namelist;
     int n = scandir(dir_path.c_str(), &namelist, png_filter, alphasort);
     if (n == -1) {
-      printf("Failed to scan dir %s: %s\n", kResourceTestDir.c_str(), strerror(errno));
+      printf("Failed to scan dir %s: %s\n", exec_dir.c_str(), strerror(errno));
       return files;
     }
     if (n == 0) {
-      printf("No file is added for test in %s\n", kResourceTestDir.c_str());
+      printf("No file is added for test in %s\n", exec_dir.c_str());
     }
 
     while (n--) {

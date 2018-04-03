@@ -16,16 +16,18 @@
 <configuration description="Config for recovery_component_test and recovery_unit_test">
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
-        <option name="push" value="recovery_component_test->/data/local/tmp/recovery_component_test" />
-        <option name="push" value="recovery_unit_test->/data/local/tmp/recovery_unit_test" />
+        <option name="push" value="recovery_component_test->/data/local/tmp/recovery_component_test/recovery_component_test" />
+        <option name="push" value="testdata->/data/local/tmp/recovery_component_test/testdata" />
+        <option name="push" value="recovery_unit_test->/data/local/tmp/recovery_unit_test/recovery_unit_test" />
+        <option name="push" value="testdata->/data/local/tmp/recovery_unit_test/testdata" />
     </target_preparer>
     <option name="test-suite-tag" value="apct" />
     <test class="com.android.tradefed.testtype.GTest" >
-        <option name="native-test-device-path" value="/data/local/tmp" />
+        <option name="native-test-device-path" value="/data/local/tmp/recovery_component_test" />
         <option name="module-name" value="recovery_component_test" />
     </test>
     <test class="com.android.tradefed.testtype.GTest" >
-        <option name="native-test-device-path" value="/data/local/tmp" />
+        <option name="native-test-device-path" value="/data/local/tmp/recovery_unit_test" />
         <option name="module-name" value="recovery_unit_test" />
     </test>
 </configuration>
