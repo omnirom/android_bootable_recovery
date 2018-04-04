@@ -324,19 +324,34 @@ int format_volume(const char* volume, const char* directory) {
   }
 
   // Has to be f2fs because we checked earlier.
+  static constexpr int kSectorSize = 4096;
   std::string cmd("/sbin/mkfs.f2fs");
-  std::vector<std::string> make_f2fs_cmd = { cmd,       "-d1", "-f",    "-O",
-                                             "encrypt", "-O",  "quota", v->blk_device };
-  if (length >= 512) {
-    make_f2fs_cmd.push_back(std::to_string(length / 512));
+  // clang-format off
+  std::vector<std::string> make_f2fs_cmd = {
+    cmd,
+    "-d1",
+    "-f",
+    "-O", "encrypt",
+    "-O", "quota",
+    "-w", std::to_string(kSectorSize),
+    v->blk_device,
+  };
+  // clang-format on
+  if (length >= kSectorSize) {
+    make_f2fs_cmd.push_back(std::to_string(length / kSectorSize));
   }
 
   int result = exec_cmd(make_f2fs_cmd);
   if (result == 0 && directory != nullptr) {
     cmd = "/sbin/sload.f2fs";
+    // clang-format off
     std::vector<std::string> sload_f2fs_cmd = {
-      cmd, "-f", directory, "-t", volume, v->blk_device,
+      cmd,
+      "-f", directory,
+      "-t", volume,
+      v->blk_device,
     };
+    // clang-format on
     result = exec_cmd(sload_f2fs_cmd);
   }
   if (result != 0) {
