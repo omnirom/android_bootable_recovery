@@ -681,7 +681,7 @@ vector<AdditionalService> Get_List_Of_Additional_Services(void) {
 		map<string,size_t> rc_indeces;
 #endif
 
-		if (prefix != "sys_" && prefix != "ven_") {
+		if (prefix != "sys_" && prefix != "ven_" && prefix != "odm_") {
 #ifdef _USING_SHORT_SERVICE_NAMES
 			if (RC_Services[i].Service_Name.length() > 12) {
 				// save this entry for potential binary name match

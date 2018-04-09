@@ -6,8 +6,8 @@ on fs
     chown system system /dev/ion
 
 
-# Oreo has qseecomd in /vendor/bin so add the additional
-# service. Only an existing binary will be started, never both.
+# Oreo and newer have qseecomd in /vendor/bin or /odm/bin so add the additional
+# services. Only an existing binary will be started, never multiple.
 
 service sys_qseecomd /system/bin/qseecomd
     user root
@@ -22,5 +22,13 @@ service ven_qseecomd /vendor/bin/qseecomd
     group root
     setenv PATH /vendor/bin:/system/bin
     setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64:/vendor/lib:/system/lib
+    disabled
+    oneshot
+
+service odm_qseecomd /odm/bin/qseecomd
+    user root
+    group root
+    setenv PATH /odm/bin:/vendor/bin:/system/bin
+    setenv LD_LIBRARY_PATH /odm/lib64:/vendor/lib64:/system/lib64:/odm/lib:/vendor/lib:/system/lib
     disabled
     oneshot
