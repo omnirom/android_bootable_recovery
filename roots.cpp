@@ -333,6 +333,7 @@ int format_volume(const char* volume, const char* directory) {
     "-f",
     "-O", "encrypt",
     "-O", "quota",
+    "-O", "verity",
     "-w", std::to_string(kSectorSize),
     v->blk_device,
   };
