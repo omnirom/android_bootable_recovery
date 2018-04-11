@@ -156,7 +156,7 @@ LOCAL_STATIC_LIBRARIES := \
     libhealthstoragedefault \
     libhidltransport \
     libhidlbase \
-    libhwbinder_nolto \
+    libhwbinder_noltopgo \
     libvndksupport \
     libbatterymonitor
 
