@@ -58,7 +58,7 @@ static int create_service_thread(void (*func)(int, const std::string&), const st
     return s[0];
 }
 
-int service_to_fd(const char* name, const atransport* /* transport */) {
+int service_to_fd(const char* name, atransport* /* transport */) {
   int ret = -1;
 
   if (!strncmp(name, "sideload:", 9)) {
