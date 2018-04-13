@@ -49,6 +49,13 @@ class CacheLocation {
     stash_directory_base_ = base;
   }
 
+  std::string cache_log_directory() const {
+    return cache_log_directory_;
+  }
+  void set_cache_log_directory(const std::string& log_dir) {
+    cache_log_directory_ = log_dir;
+  }
+
  private:
   CacheLocation();
   DISALLOW_COPY_AND_ASSIGN(CacheLocation);
@@ -64,6 +71,9 @@ class CacheLocation {
 
   // The base directory to write stashes during update.
   std::string stash_directory_base_;
+
+  // The location of last_log & last_kmsg.
+  std::string cache_log_directory_;
 };
 
 #endif  // _OTAUTIL_OTAUTIL_CACHE_LOCATION_H_
