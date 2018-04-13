@@ -436,13 +436,13 @@ static size_t FileSink(const unsigned char* data, size_t len, int fd) {
 
 // Return the amount of free space (in bytes) on the filesystem
 // containing filename.  filename must exist.  Return -1 on error.
-size_t FreeSpaceForFile(const char* filename) {
-    struct statfs sf;
-    if (statfs(filename, &sf) != 0) {
-        printf("failed to statfs %s: %s\n", filename, strerror(errno));
-        return -1;
-    }
-    return sf.f_bsize * sf.f_bavail;
+size_t FreeSpaceForFile(const std::string& filename) {
+  struct statfs sf;
+  if (statfs(filename.c_str(), &sf) != 0) {
+    printf("failed to statfs %s: %s\n", filename.c_str(), strerror(errno));
+    return -1;
+  }
+  return sf.f_bsize * sf.f_bavail;
 }
 
 int CacheSizeCheck(size_t bytes) {

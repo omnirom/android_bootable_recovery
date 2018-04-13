@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+#include <dirent.h>
 #include <fcntl.h>
 #include <gtest/gtest.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -23,6 +25,7 @@
 #include <sys/types.h>
 #include <time.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -30,6 +33,7 @@
 #include <android-base/file.h>
 #include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
+#include <android-base/unique_fd.h>
 #include <bsdiff/bsdiff.h>
 #include <openssl/sha.h>
 
@@ -108,6 +112,52 @@ class ApplyPatchModesTest : public ::testing::Test {
   }
 
   TemporaryFile cache_source;
+};
+
+class FreeCacheTest : public ::testing::Test {
+ protected:
+  static constexpr size_t PARTITION_SIZE = 4096 * 10;
+
+  // Returns a sorted list of files in |dirname|.
+  static std::vector<std::string> FindFilesInDir(const std::string& dirname) {
+    std::vector<std::string> file_list;
+
+    std::unique_ptr<DIR, decltype(&closedir)> d(opendir(dirname.c_str()), closedir);
+    struct dirent* de;
+    while ((de = readdir(d.get())) != 0) {
+      std::string path = dirname + "/" + de->d_name;
+
+      struct stat st;
+      if (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
+        file_list.emplace_back(de->d_name);
+      }
+    }
+
+    std::sort(file_list.begin(), file_list.end());
+    return file_list;
+  }
+
+  static void AddFilesToDir(const std::string& dir, const std::vector<std::string>& files) {
+    std::string zeros(4096, 0);
+    for (const auto& file : files) {
+      std::string path = dir + "/" + file;
+      ASSERT_TRUE(android::base::WriteStringToFile(zeros, path));
+    }
+  }
+
+  void SetUp() override {
+    CacheLocation::location().set_cache_log_directory(mock_log_dir.path);
+  }
+
+  // A mock method to calculate the free space. It assumes the partition has a total size of 40960
+  // bytes and all files are 4096 bytes in size.
+  size_t MockFreeSpaceChecker(const std::string& dirname) {
+    std::vector<std::string> files = FindFilesInDir(dirname);
+    return PARTITION_SIZE - 4096 * files.size();
+  }
+
+  TemporaryDir mock_cache;
+  TemporaryDir mock_log_dir;
 };
 
 TEST_F(ApplyPatchTest, CheckModeSkip) {
@@ -413,4 +463,83 @@ TEST_F(ApplyPatchModesTest, CheckModeInvalidArgs) {
 
 TEST_F(ApplyPatchModesTest, ShowLicenses) {
   ASSERT_EQ(0, applypatch_modes(2, (const char* []){ "applypatch", "-l" }));
+}
+
+TEST_F(FreeCacheTest, FreeCacheSmoke) {
+  std::vector<std::string> files = { "file1", "file2", "file3" };
+  AddFilesToDir(mock_cache.path, files);
+  ASSERT_EQ(files, FindFilesInDir(mock_cache.path));
+  ASSERT_EQ(4096 * 7, MockFreeSpaceChecker(mock_cache.path));
+
+  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_cache.path, [&](const std::string& dir) {
+    return this->MockFreeSpaceChecker(dir);
+  }));
+
+  ASSERT_EQ(std::vector<std::string>{ "file3" }, FindFilesInDir(mock_cache.path));
+  ASSERT_EQ(4096 * 9, MockFreeSpaceChecker(mock_cache.path));
+}
+
+TEST_F(FreeCacheTest, FreeCacheOpenFile) {
+  std::vector<std::string> files = { "file1", "file2" };
+  AddFilesToDir(mock_cache.path, files);
+  ASSERT_EQ(files, FindFilesInDir(mock_cache.path));
+  ASSERT_EQ(4096 * 8, MockFreeSpaceChecker(mock_cache.path));
+
+  std::string file1_path = mock_cache.path + "/file1"s;
+  android::base::unique_fd fd(open(file1_path.c_str(), O_RDONLY));
+
+  // file1 can't be deleted as it's opened by us.
+  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 10, mock_cache.path, [&](const std::string& dir) {
+    return this->MockFreeSpaceChecker(dir);
+  }));
+
+  ASSERT_EQ(std::vector<std::string>{ "file1" }, FindFilesInDir(mock_cache.path));
+}
+
+TEST_F(FreeCacheTest, FreeCacheLogsSmoke) {
+  std::vector<std::string> log_files = { "last_log", "last_log.1", "last_kmsg.2", "last_log.5",
+                                         "last_log.10" };
+  AddFilesToDir(mock_log_dir.path, log_files);
+  ASSERT_EQ(4096 * 5, MockFreeSpaceChecker(mock_log_dir.path));
+
+  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, [&](const std::string& dir) {
+    return this->MockFreeSpaceChecker(dir);
+  }));
+
+  // Logs with a higher index will be deleted first
+  std::vector<std::string> expected = { "last_log", "last_log.1" };
+  ASSERT_EQ(expected, FindFilesInDir(mock_log_dir.path));
+  ASSERT_EQ(4096 * 8, MockFreeSpaceChecker(mock_log_dir.path));
+}
+
+TEST_F(FreeCacheTest, FreeCacheLogsStringComparison) {
+  std::vector<std::string> log_files = { "last_log.1", "last_kmsg.1", "last_log.not_number",
+                                         "last_kmsgrandom" };
+  AddFilesToDir(mock_log_dir.path, log_files);
+  ASSERT_EQ(4096 * 6, MockFreeSpaceChecker(mock_log_dir.path));
+
+  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_log_dir.path, [&](const std::string& dir) {
+    return this->MockFreeSpaceChecker(dir);
+  }));
+
+  // Logs with incorrect format will be deleted first; and the last_kmsg with the same index is
+  // deleted before last_log.
+  std::vector<std::string> expected = { "last_log.1" };
+  ASSERT_EQ(expected, FindFilesInDir(mock_log_dir.path));
+  ASSERT_EQ(4096 * 9, MockFreeSpaceChecker(mock_log_dir.path));
+}
+
+TEST_F(FreeCacheTest, FreeCacheLogsOtherFiles) {
+  std::vector<std::string> log_files = { "last_install", "command", "block.map", "last_log",
+                                         "last_kmsg.1" };
+  AddFilesToDir(mock_log_dir.path, log_files);
+  ASSERT_EQ(4096 * 5, MockFreeSpaceChecker(mock_log_dir.path));
+
+  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, [&](const std::string& dir) {
+    return this->MockFreeSpaceChecker(dir);
+  }));
+
+  // Non log files in /cache/recovery won't be deleted.
+  std::vector<std::string> expected = { "block.map", "command", "last_install" };
+  ASSERT_EQ(expected, FindFilesInDir(mock_log_dir.path));
 }
