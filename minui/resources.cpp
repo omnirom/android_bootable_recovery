@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "private/resources.h"
+
 #include <fcntl.h>
 #include <linux/fb.h>
 #include <linux/kd.h>
@@ -48,58 +50,13 @@ static GRSurface* malloc_surface(size_t data_size) {
     return surface;
 }
 
-// This class handles the png file parsing. It also holds the ownership of the png pointer and the
-// opened file pointer. Both will be destroyed/closed when this object goes out of scope.
-class PngHandler {
- public:
-  PngHandler(const std::string& name);
-
-  ~PngHandler();
-
-  png_uint_32 width() const {
-    return width_;
-  }
-
-  png_uint_32 height() const {
-    return height_;
-  }
-
-  png_byte channels() const {
-    return channels_;
-  }
-
-  png_structp png_ptr() const {
-    return png_ptr_;
-  }
-
-  png_infop info_ptr() const {
-    return info_ptr_;
-  }
-
-  int error_code() const {
-    return error_code_;
-  };
-
-  operator bool() const {
-    return error_code_ == 0;
-  }
-
- private:
-  png_structp png_ptr_{ nullptr };
-  png_infop info_ptr_{ nullptr };
-  png_uint_32 width_;
-  png_uint_32 height_;
-  png_byte channels_;
-
-  // The |error_code_| is set to a negative value if an error occurs when opening the png file.
-  int error_code_;
-  // After initialization, we'll keep the file pointer open before destruction of PngHandler.
-  std::unique_ptr<FILE, decltype(&fclose)> png_fp_;
-};
-
-PngHandler::PngHandler(const std::string& name) : error_code_(0), png_fp_(nullptr, fclose) {
+PngHandler::PngHandler(const std::string& name) {
   std::string res_path = android::base::StringPrintf("/res/images/%s.png", name.c_str());
   png_fp_.reset(fopen(res_path.c_str(), "rbe"));
+  // Try to read from |name| if the resource path does not work.
+  if (!png_fp_) {
+    png_fp_.reset(fopen(name.c_str(), "rbe"));
+  }
   if (!png_fp_) {
     error_code_ = -1;
     return;
@@ -138,19 +95,17 @@ PngHandler::PngHandler(const std::string& name) : error_code_(0), png_fp_(nullpt
   png_set_sig_bytes(png_ptr_, sizeof(header));
   png_read_info(png_ptr_, info_ptr_);
 
-  int color_type;
-  int bit_depth;
-  png_get_IHDR(png_ptr_, info_ptr_, &width_, &height_, &bit_depth, &color_type, nullptr, nullptr,
+  png_get_IHDR(png_ptr_, info_ptr_, &width_, &height_, &bit_depth_, &color_type_, nullptr, nullptr,
                nullptr);
 
   channels_ = png_get_channels(png_ptr_, info_ptr_);
 
-  if (bit_depth == 8 && channels_ == 3 && color_type == PNG_COLOR_TYPE_RGB) {
+  if (bit_depth_ == 8 && channels_ == 3 && color_type_ == PNG_COLOR_TYPE_RGB) {
     // 8-bit RGB images: great, nothing to do.
-  } else if (bit_depth <= 8 && channels_ == 1 && color_type == PNG_COLOR_TYPE_GRAY) {
+  } else if (bit_depth_ <= 8 && channels_ == 1 && color_type_ == PNG_COLOR_TYPE_GRAY) {
     // 1-, 2-, 4-, or 8-bit gray images: expand to 8-bit gray.
     png_set_expand_gray_1_2_4_to_8(png_ptr_);
-  } else if (bit_depth <= 8 && channels_ == 1 && color_type == PNG_COLOR_TYPE_PALETTE) {
+  } else if (bit_depth_ <= 8 && channels_ == 1 && color_type_ == PNG_COLOR_TYPE_PALETTE) {
     // paletted images: expand to 8-bit RGB.  Note that we DON'T
     // currently expand the tRNS chunk (if any) to an alpha
     // channel, because minui doesn't support alpha channels in
@@ -158,8 +113,8 @@ PngHandler::PngHandler(const std::string& name) : error_code_(0), png_fp_(nullpt
     png_set_palette_to_rgb(png_ptr_);
     channels_ = 3;
   } else {
-    fprintf(stderr, "minui doesn't support PNG depth %d channels %d color_type %d\n", bit_depth,
-            channels_, color_type);
+    fprintf(stderr, "minui doesn't support PNG depth %d channels %d color_type %d\n", bit_depth_,
+            channels_, color_type_);
     error_code_ = -7;
   }
 }
