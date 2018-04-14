@@ -2217,17 +2217,29 @@ bool TWPartition::Wipe_F2FS() {
 		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkfs.f2fs"));
 		Find_Actual_Block_Device();
 		command = "mkfs.f2fs -t 0";
+		command += " " + Actual_Block_Device;
 		if (!Is_Decrypted && Length != 0) {
 			// Only use length if we're not decrypted
-			char len[32];
-			int mod_length = Length;
-			if (Length < 0)
-				mod_length *= -1;
-			sprintf(len, "%i", mod_length);
-			command += " -r ";
-			command += len;
+			unsigned long long Actual_Size = IOCTL_Get_Block_Size();
+			if (Actual_Size == 0)
+				return false;
+
+			unsigned long long Length_Pos;
+			if (Length < 0) {
+				// Convert to positive length
+				Length_Pos = (Length * -1);
+				// Subtract it from the total amount of blocks
+				Actual_Size -= Length_Pos;
+			}
+			// Divide the actual size by the sector-size
+			unsigned long long Block_Count;
+			Block_Count = (Actual_Size / 4096LLU);
+			char temp[256];
+			sprintf(temp, "%llu", Block_Count);
+			command += " ";
+			command += temp;
 		}
-		command += " " + Actual_Block_Device;
+		LOGINFO("mkfs.f2fs command: %s\n", command.c_str());
 		if (TWFunc::Exec_Cmd(command) == 0) {
 			Recreate_AndSec_Folder();
 			gui_msg("done=Done.");
