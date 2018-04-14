@@ -39,7 +39,7 @@ using SinkFn = std::function<size_t(const unsigned char*, size_t)>;
 // applypatch.cpp
 
 int ShowLicenses();
-size_t FreeSpaceForFile(const char* filename);
+size_t FreeSpaceForFile(const std::string& filename);
 int CacheSizeCheck(size_t bytes);
 int ParseSha1(const char* str, uint8_t* digest);
 
@@ -79,5 +79,9 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
 // freecache.cpp
 
 int MakeFreeSpaceOnCache(size_t bytes_needed);
+// Removes the files in |dirname| until we have at least |bytes_needed| bytes of free space on
+// the partition. The size of the free space is returned by calling |space_checker|.
+bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
+                            const std::function<size_t(const std::string&)>& space_checker);
 
 #endif

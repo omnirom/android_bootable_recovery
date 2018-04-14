@@ -19,6 +19,7 @@
 constexpr const char kDefaultCacheTempSource[] = "/cache/saved.file";
 constexpr const char kDefaultLastCommandFile[] = "/cache/recovery/last_command";
 constexpr const char kDefaultStashDirectoryBase[] = "/cache/recovery";
+constexpr const char kDefaultCacheLogDirectory[] = "/cache/recovery";
 
 CacheLocation& CacheLocation::location() {
   static CacheLocation cache_location;
@@ -28,4 +29,5 @@ CacheLocation& CacheLocation::location() {
 CacheLocation::CacheLocation()
     : cache_temp_source_(kDefaultCacheTempSource),
       last_command_file_(kDefaultLastCommandFile),
-      stash_directory_base_(kDefaultStashDirectoryBase) {}
+      stash_directory_base_(kDefaultStashDirectoryBase),
+      cache_log_directory_(kDefaultCacheLogDirectory) {}
