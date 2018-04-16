@@ -133,6 +133,10 @@ LOCAL_MODULE := recovery
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
+# Cannot link with LLD: undefined symbol: UsbNoPermissionsLongHelpText
+# http://b/77543887, lld does not handle -Wl,--gc-sections as well as ld.
+LOCAL_USE_CLANG_LLD := false
+
 LOCAL_REQUIRED_MODULES := e2fsdroid_static mke2fs_static mke2fs.conf
 
 ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
