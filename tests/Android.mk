@@ -54,17 +54,13 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS := -Wall -Werror
 LOCAL_MODULE := recovery_manual_test
 LOCAL_STATIC_LIBRARIES := \
-    libminui \
     libbase \
     libBionicGtestMain
 
 LOCAL_SRC_FILES := manual/recovery_test.cpp
 LOCAL_SHARED_LIBRARIES := \
-    liblog \
-    libpng
+    liblog
 
-LOCAL_TEST_DATA := \
-    $(call find-test-data-in-subdirs, bootable/recovery, "*_text.png", res-*)
 include $(BUILD_NATIVE_TEST)
 
 # Component tests
@@ -95,6 +91,7 @@ LOCAL_SRC_FILES := \
     component/edify_test.cpp \
     component/imgdiff_test.cpp \
     component/install_test.cpp \
+    component/resources_test.cpp \
     component/sideload_test.cpp \
     component/uncrypt_test.cpp \
     component/updater_test.cpp \
@@ -121,6 +118,7 @@ LOCAL_STATIC_LIBRARIES := \
     libbsdiff \
     libbspatch \
     libfusesideload \
+    libminui \
     libotafault \
     librecovery \
     libupdater \
@@ -132,6 +130,7 @@ LOCAL_STATIC_LIBRARIES := \
     libdivsufsort \
     libdivsufsort64 \
     libfs_mgr \
+    libpng \
     libvintf_recovery \
     libvintf \
     libhidl-gen-utils \
@@ -157,7 +156,8 @@ LOCAL_STATIC_LIBRARIES := \
     $(tune2fs_static_libraries)
 
 LOCAL_TEST_DATA := \
-    $(call find-test-data-in-subdirs, $(LOCAL_PATH), "*", testdata)
+    $(call find-test-data-in-subdirs, $(LOCAL_PATH), "*", testdata) \
+    $(call find-test-data-in-subdirs, bootable/recovery, "*_text.png", res-*)
 include $(BUILD_NATIVE_TEST)
 
 # Host tests
