@@ -652,7 +652,22 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
   uint8_t current_target_sha1[SHA_DIGEST_LENGTH];
   SHA1_Final(current_target_sha1, &ctx);
   if (memcmp(current_target_sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
-    printf("patch did not produce expected sha1\n");
+    printf("patch did not produce expected sha1 of %s\n", short_sha1(target_sha1).c_str());
+
+    printf("target size %zu sha1 %s\n", memory_sink_str.size(),
+           short_sha1(current_target_sha1).c_str());
+    printf("source size %zu sha1 %s\n", source_file.data.size(),
+           short_sha1(source_file.sha1).c_str());
+
+    uint8_t patch_digest[SHA_DIGEST_LENGTH];
+    SHA1(reinterpret_cast<const uint8_t*>(patch->data.data()), patch->data.size(), patch_digest);
+    printf("patch size %zu sha1 %s\n", patch->data.size(), short_sha1(patch_digest).c_str());
+
+    uint8_t bonus_digest[SHA_DIGEST_LENGTH];
+    SHA1(reinterpret_cast<const uint8_t*>(bonus_data->data.data()), bonus_data->data.size(),
+         bonus_digest);
+    printf("bonus size %zu sha1 %s\n", bonus_data->data.size(), short_sha1(bonus_digest).c_str());
+
     return 1;
   } else {
     printf("now %s\n", short_sha1(target_sha1).c_str());
