@@ -344,6 +344,11 @@ TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithMultiplePatches) {
                                     patch1.c_str(),
                                     patch2.c_str(),
                                     patch3.c_str() };
+  // TODO(b/67849209): Remove after addressing the flakiness.
+  printf("Calling applypatch_modes with the following args:\n");
+  for (const auto& arg : args) {
+    printf("  %s\n", arg);
+  }
   ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
 }
 
