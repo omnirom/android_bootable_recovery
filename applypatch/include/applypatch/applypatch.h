@@ -63,18 +63,18 @@ int SaveFileContents(const char* filename, const FileContents* file);
 void ShowBSDiffLicense();
 
 // Applies the bsdiff-patch given in 'patch' (from offset 'patch_offset' to the end) to the source
-// data given by (old_data, old_size). Writes the patched output through the given 'sink', and
-// updates the SHA-1 context with the output data. Returns 0 on success.
+// data given by (old_data, old_size). Writes the patched output through the given 'sink'. Returns
+// 0 on success.
 int ApplyBSDiffPatch(const unsigned char* old_data, size_t old_size, const Value& patch,
-                     size_t patch_offset, SinkFn sink, SHA_CTX* ctx);
+                     size_t patch_offset, SinkFn sink);
 
 // imgpatch.cpp
 
 // Applies the imgdiff-patch given in 'patch' to the source data given by (old_data, old_size), with
-// the optional bonus data. Writes the patched output through the given 'sink', and updates the
-// SHA-1 context with the output data. Returns 0 on success.
+// the optional bonus data. Writes the patched output through the given 'sink'. Returns 0 on
+// success.
 int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value& patch, SinkFn sink,
-                    SHA_CTX* ctx, const Value* bonus_data);
+                    const Value* bonus_data);
 
 // freecache.cpp
 
