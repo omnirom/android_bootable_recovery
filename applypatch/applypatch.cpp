@@ -627,21 +627,20 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
 
   // We store the decoded output in memory.
   std::string memory_sink_str;  // Don't need to reserve space.
-  SinkFn sink = [&memory_sink_str](const unsigned char* data, size_t len) {
+  SHA_CTX ctx;
+  SHA1_Init(&ctx);
+  SinkFn sink = [&memory_sink_str, &ctx](const unsigned char* data, size_t len) {
+    SHA1_Update(&ctx, data, len);
     memory_sink_str.append(reinterpret_cast<const char*>(data), len);
     return len;
   };
 
-  SHA_CTX ctx;
-  SHA1_Init(&ctx);
-
   int result;
   if (use_bsdiff) {
-    result =
-        ApplyBSDiffPatch(source_file.data.data(), source_file.data.size(), *patch, 0, sink, &ctx);
+    result = ApplyBSDiffPatch(source_file.data.data(), source_file.data.size(), *patch, 0, sink);
   } else {
-    result = ApplyImagePatch(source_file.data.data(), source_file.data.size(), *patch, sink, &ctx,
-                             bonus_data);
+    result =
+        ApplyImagePatch(source_file.data.data(), source_file.data.size(), *patch, sink, bonus_data);
   }
 
   if (result != 0) {
