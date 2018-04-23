@@ -203,4 +203,3 @@ include \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
-    $(LOCAL_PATH)/update_verifier/Android.mk \
