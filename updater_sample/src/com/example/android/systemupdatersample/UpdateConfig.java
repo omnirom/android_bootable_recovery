@@ -69,11 +69,11 @@ public class UpdateConfig implements Parcelable {
         if (c.mAbInstallType == AB_INSTALL_TYPE_STREAMING) {
             JSONObject meta = o.getJSONObject("ab_streaming_metadata");
             JSONArray propertyFilesJson = meta.getJSONArray("property_files");
-            InnerFile[] propertyFiles =
-                new InnerFile[propertyFilesJson.length()];
+            PackageFile[] propertyFiles =
+                new PackageFile[propertyFilesJson.length()];
             for (int i = 0; i < propertyFilesJson.length(); i++) {
                 JSONObject p = propertyFilesJson.getJSONObject(i);
-                propertyFiles[i] = new InnerFile(
+                propertyFiles[i] = new PackageFile(
                         p.getString("filename"),
                         p.getLong("offset"),
                         p.getLong("size"));
@@ -176,17 +176,17 @@ public class UpdateConfig implements Parcelable {
         private static final long serialVersionUID = 31042L;
 
         /** defines beginning of update data in archive */
-        private InnerFile[] mPropertyFiles;
+        private PackageFile[] mPropertyFiles;
 
         public StreamingMetadata() {
-            mPropertyFiles = new InnerFile[0];
+            mPropertyFiles = new PackageFile[0];
         }
 
-        public StreamingMetadata(InnerFile[] propertyFiles) {
+        public StreamingMetadata(PackageFile[] propertyFiles) {
             this.mPropertyFiles = propertyFiles;
         }
 
-        public InnerFile[] getPropertyFiles() {
+        public PackageFile[] getPropertyFiles() {
             return mPropertyFiles;
         }
     }
@@ -194,7 +194,7 @@ public class UpdateConfig implements Parcelable {
     /**
      * Description of a file in an OTA package zip file.
      */
-    public static class InnerFile implements Serializable {
+    public static class PackageFile implements Serializable {
 
         private static final long serialVersionUID = 31043L;
 
@@ -207,7 +207,7 @@ public class UpdateConfig implements Parcelable {
         /** size of the update data in archive */
         private long mSize;
 
-        public InnerFile(String filename, long offset, long size) {
+        public PackageFile(String filename, long offset, long size) {
             this.mFilename = filename;
             this.mOffset = offset;
             this.mSize = size;

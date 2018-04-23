@@ -34,6 +34,7 @@ import android.widget.Toast;
 import com.example.android.systemupdatersample.PayloadSpec;
 import com.example.android.systemupdatersample.R;
 import com.example.android.systemupdatersample.UpdateConfig;
+import com.example.android.systemupdatersample.services.PrepareStreamingService;
 import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateConfigs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
@@ -297,6 +298,17 @@ public class MainActivity extends Activity {
             updateEngineApplyPayload(payload);
         } else {
             Log.d(TAG, "Starting PrepareStreamingService");
+            PrepareStreamingService.startService(this, config, (code, payloadSpec) -> {
+                if (code == PrepareStreamingService.RESULT_CODE_SUCCESS) {
+                    updateEngineApplyPayload(payloadSpec);
+                } else {
+                    Log.e(TAG, "PrepareStreamingService failed, result code is " + code);
+                    Toast.makeText(
+                            MainActivity.this,
+                            "PrepareStreamingService failed, result code is " + code,
+                            Toast.LENGTH_LONG).show();
+                }
+            });
         }
     }
 

@@ -38,22 +38,23 @@ public final class FileDownloader {
     private String mUrl;
     private long mOffset;
     private long mSize;
-    private File mOut;
+    private File mDestination;
 
-    public FileDownloader(String url, long offset, long size, File out) {
+    public FileDownloader(String url, long offset, long size, File destination) {
         this.mUrl = url;
         this.mOffset = offset;
         this.mSize = size;
-        this.mOut = out;
+        this.mDestination = destination;
     }
 
     /**
      * Downloads the file with given offset and size.
+     * @throws IOException when can't download the file
      */
     public void download() throws IOException {
-        Log.d("FileDownloader", "downloading " + mOut.getName()
+        Log.d("FileDownloader", "downloading " + mDestination.getName()
                 + " from " + mUrl
-                + " to " + mOut.getAbsolutePath());
+                + " to " + mDestination.getAbsolutePath());
 
         URL url = new URL(mUrl);
         URLConnection connection = url.openConnection();
@@ -61,7 +62,7 @@ public final class FileDownloader {
 
         // download the file
         try (InputStream input = connection.getInputStream()) {
-            try (OutputStream output = new FileOutputStream(mOut)) {
+            try (OutputStream output = new FileOutputStream(mDestination)) {
                 long skipped = input.skip(mOffset);
                 if (skipped != mOffset) {
                     throw new IOException("Can't download file "
