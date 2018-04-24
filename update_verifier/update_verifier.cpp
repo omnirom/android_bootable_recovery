@@ -15,24 +15,26 @@
  */
 
 /*
- * This program verifies the integrity of the partitions after an A/B OTA
- * update. It gets invoked by init, and will only perform the verification if
- * it's the first boot post an A/B OTA update.
+ * update_verifier verifies the integrity of the partitions after an A/B OTA update. It gets invoked
+ * by init, and will only perform the verification if it's the first boot post an A/B OTA update
+ * (https://source.android.com/devices/tech/ota/ab/#after_reboot).
  *
- * Update_verifier relies on dm-verity to capture any corruption on the partitions
- * being verified. And its behavior varies depending on the dm-verity mode.
- * Upon detection of failures:
+ * update_verifier relies on device-mapper-verity (dm-verity) to capture any corruption on the
+ * partitions being verified (https://source.android.com/security/verifiedboot). The verification
+ * will be skipped, if dm-verity is not enabled on the device.
+ *
+ * Upon detecting verification failures, the device will be rebooted, although the trigger of the
+ * reboot depends on the dm-verity mode.
  *   enforcing mode: dm-verity reboots the device
  *   eio mode: dm-verity fails the read and update_verifier reboots the device
  *   other mode: not supported and update_verifier reboots the device
  *
- * After a predefined number of failing boot attempts, the bootloader should
- * mark the slot as unbootable and stops trying. Other dm-verity modes (
- * for example, veritymode=EIO) are not accepted and simply lead to a
- * verification failure.
+ * All these reboots prevent the device from booting into a known corrupt state. If the device
+ * continuously fails to boot into the new slot, the bootloader should mark the slot as unbootable
+ * and trigger a fallback to the old slot.
  *
- * The current slot will be marked as having booted successfully if the
- * verifier reaches the end after the verification.
+ * The current slot will be marked as having booted successfully if the verifier reaches the end
+ * after the verification.
  */
 
 #include "update_verifier/update_verifier.h"
@@ -103,12 +105,10 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
       PLOG(WARNING) << "Failed to read " << path;
     } else {
       std::string dm_block_name = android::base::Trim(content);
-#ifdef BOARD_AVB_ENABLE
       // AVB is using 'vroot' for the root block device but we're expecting 'system'.
       if (dm_block_name == "vroot") {
         dm_block_name = "system";
       }
-#endif
       if (dm_block_name == partition) {
         dm_block_device = DEV_PATH + std::string(namelist[n]->d_name);
         while (n--) {
@@ -264,19 +264,13 @@ int update_verifier(int argc, char** argv) {
   if (is_successful == BoolResult::FALSE) {
     // The current slot has not booted successfully.
 
-#if defined(PRODUCT_SUPPORTS_VERITY) || defined(BOARD_AVB_ENABLE)
     bool skip_verification = false;
     std::string verity_mode = android::base::GetProperty("ro.boot.veritymode", "");
     if (verity_mode.empty()) {
-      // With AVB it's possible to disable verification entirely and
-      // in this case ro.boot.veritymode is empty.
-#if defined(BOARD_AVB_ENABLE)
-      LOG(WARNING) << "verification has been disabled; marking without verification.";
+      // Skip the verification if ro.boot.veritymode property is not set. This could be a result
+      // that device doesn't support dm-verity, or has disabled that.
+      LOG(WARNING) << "dm-verity not enabled; marking without verification.";
       skip_verification = true;
-#else
-      LOG(ERROR) << "Failed to get dm-verity mode.";
-      return reboot_device();
-#endif
     } else if (android::base::EqualsIgnoreCase(verity_mode, "eio")) {
       // We shouldn't see verity in EIO mode if the current slot hasn't booted successfully before.
       // Continue the verification until we fail to read some blocks.
@@ -285,7 +279,7 @@ int update_verifier(int argc, char** argv) {
       LOG(WARNING) << "dm-verity in disabled mode; marking without verification.";
       skip_verification = true;
     } else if (verity_mode != "enforcing") {
-      LOG(ERROR) << "Unexpected dm-verity mode : " << verity_mode << ", expecting enforcing.";
+      LOG(ERROR) << "Unexpected dm-verity mode: " << verity_mode << ", expecting enforcing.";
       return reboot_device();
     }
 
@@ -296,9 +290,6 @@ int update_verifier(int argc, char** argv) {
         return reboot_device();
       }
     }
-#else
-    LOG(WARNING) << "dm-verity not enabled; marking without verification.";
-#endif
 
     CommandResult cr;
     module->markBootSuccessful([&cr](CommandResult result) { cr = result; });
