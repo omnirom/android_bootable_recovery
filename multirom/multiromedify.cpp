@@ -164,7 +164,7 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
         }
 
         res |= OFF_CHANGED;
-        m_name = "gui_print";
+        m_name = "ui_print";
         clearArgs();
         addArg(new EdifyValue("\" \""));
         return res;
@@ -269,7 +269,7 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
                 std::string(") from following line.")));
             lastNewlineRef = (*parentList)->insert(++lastNewlineRef, new EdifyNewline());
             res |= OFF_CHANGED;
-            m_name = "gui_print";
+            m_name = "ui_print";
             clearArgs();
             addArg(new EdifyValue("\" \""));
         }

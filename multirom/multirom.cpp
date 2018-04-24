@@ -997,9 +997,9 @@ bool MultiROM::changeMounts(std::string name)
 			data = TWPartition::makePartFromFstab("/data_t %s %s/data flags=bindof=/realdata\n", fs, base.c_str());
 
         if (Paths_Exist(base, "/vendor.sparse.img"))
-			data = TWPartition::makePartFromFstab("/vendor %s %s/vendor.sparse.img flags=imagemount\n", fs, base.c_str());
+			vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor.sparse.img flags=imagemount\n", fs, base.c_str());
 		else
-			data = TWPartition::makePartFromFstab("/vendor %s %s/vendor flags=bindof=/realdata\n", fs, base.c_str());
+			vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor flags=bindof=/realdata\n", fs, base.c_str());
 	}
 	else if (!(M(type) & MASK_IMAGES))
 	{
