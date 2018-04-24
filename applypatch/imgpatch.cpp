@@ -182,6 +182,8 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
         printf("Failed to apply bsdiff patch.\n");
         return -1;
       }
+
+      LOG(DEBUG) << "Processed chunk type normal";
     } else if (type == CHUNK_RAW) {
       const char* raw_header = patch_header + pos;
       pos += 4;
@@ -201,6 +203,8 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
         return -1;
       }
       pos += data_len;
+
+      LOG(DEBUG) << "Processed chunk type raw";
     } else if (type == CHUNK_DEFLATE) {
       // deflate chunks have an additional 60 bytes in their chunk header.
       const char* deflate_header = patch_header + pos;
@@ -276,6 +280,7 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
         return -1;
       }
 
+      LOG(DEBUG) << "Processed chunk type deflate";
     } else {
       printf("patch chunk %d is unknown type %d\n", i, type);
       return -1;
