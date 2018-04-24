@@ -31,6 +31,7 @@
 #include <vector>
 
 #include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
 #include <android-base/unique_fd.h>
@@ -46,7 +47,7 @@
 using namespace std::string_literals;
 
 static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize = nullptr) {
-  ASSERT_NE(nullptr, sha1);
+  ASSERT_TRUE(sha1 != nullptr);
 
   std::string data;
   ASSERT_TRUE(android::base::ReadFileToString(fname, &data));
@@ -66,6 +67,14 @@ static void mangle_file(const std::string& fname) {
     content[i] = rand() % 256;
   }
   ASSERT_TRUE(android::base::WriteStringToFile(content, fname));
+}
+
+static void test_logger(android::base::LogId /* id */, android::base::LogSeverity severity,
+                        const char* /* tag */, const char* /* file */, unsigned int /* line */,
+                        const char* message) {
+  if (severity >= android::base::GetMinimumLogSeverity()) {
+    fprintf(stdout, "%s\n", message);
+  }
 }
 
 class ApplyPatchTest : public ::testing::Test {
@@ -109,6 +118,8 @@ class ApplyPatchModesTest : public ::testing::Test {
  protected:
   void SetUp() override {
     CacheLocation::location().set_cache_temp_source(cache_source.path);
+    android::base::InitLogging(nullptr, &test_logger);
+    android::base::SetMinimumLogSeverity(android::base::LogSeverity::DEBUG);
   }
 
   TemporaryFile cache_source;
