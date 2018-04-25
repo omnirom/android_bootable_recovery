@@ -1697,7 +1697,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   for (size_t i = 0; i < cmdcount; ++i) {
     if (cmd_map.find(commands[i].name) != cmd_map.end()) {
       LOG(ERROR) << "Error: command [" << commands[i].name << "] already exists in the cmd map.";
-      return StringValue(strdup(""));
+      return StringValue("");
     }
     cmd_map[commands[i].name] = &commands[i];
   }
