@@ -17,9 +17,9 @@
 #include "updater/updater.h"
 
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <string>
 
@@ -34,7 +34,6 @@
 #include "otafault/config.h"
 #include "otautil/DirUtil.h"
 #include "otautil/SysUtil.h"
-#include "otautil/cache_location.h"
 #include "otautil/error_code.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"

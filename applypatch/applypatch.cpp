@@ -40,7 +40,7 @@
 
 #include "edify/expr.h"
 #include "otafault/ota_io.h"
-#include "otautil/cache_location.h"
+#include "otautil/paths.h"
 #include "otautil/print_sha1.h"
 
 static int LoadPartitionContents(const std::string& filename, FileContents* file);
@@ -403,7 +403,7 @@ int applypatch_check(const char* filename, const std::vector<std::string>& patch
     // If the source file is missing or corrupted, it might be because we were killed in the middle
     // of patching it.  A copy of it should have been made in cache_temp_source.  If that file
     // exists and matches the sha1 we're looking for, the check still passes.
-    if (LoadFileContents(CacheLocation::location().cache_temp_source().c_str(), &file) != 0) {
+    if (LoadFileContents(Paths::Get().cache_temp_source().c_str(), &file) != 0) {
       printf("failed to load cache file\n");
       return 1;
     }
@@ -525,7 +525,7 @@ int applypatch(const char* source_filename, const char* target_filename,
   printf("source file is bad; trying copy\n");
 
   FileContents copy_file;
-  if (LoadFileContents(CacheLocation::location().cache_temp_source().c_str(), &copy_file) < 0) {
+  if (LoadFileContents(Paths::Get().cache_temp_source().c_str(), &copy_file) < 0) {
     printf("failed to read copy file\n");
     return 1;
   }
@@ -620,7 +620,7 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
     printf("not enough free space on /cache\n");
     return 1;
   }
-  if (SaveFileContents(CacheLocation::location().cache_temp_source().c_str(), &source_file) < 0) {
+  if (SaveFileContents(Paths::Get().cache_temp_source().c_str(), &source_file) < 0) {
     printf("failed to back up source file\n");
     return 1;
   }
@@ -685,7 +685,7 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
   }
 
   // Delete the backup copy of the source.
-  unlink(CacheLocation::location().cache_temp_source().c_str());
+  unlink(Paths::Get().cache_temp_source().c_str());
 
   // Success!
   return 0;
