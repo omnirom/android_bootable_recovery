@@ -31,7 +31,7 @@ import sys
 import zipfile
 
 
-class GenUpdateConfig(object): # pylint: disable=too-few-public-methods
+class GenUpdateConfig(object):
     """
     A class that generates update configuration file from an OTA package.
 
@@ -43,9 +43,8 @@ class GenUpdateConfig(object): # pylint: disable=too-few-public-methods
     AB_INSTALL_TYPE_NON_STREAMING = 'NON_STREAMING'
     METADATA_NAME = 'META-INF/com/android/metadata'
 
-    def __init__(self, package, out, url, ab_install_type):
+    def __init__(self, package, url, ab_install_type):
         self.package = package
-        self.out = out
         self.url = url
         self.ab_install_type = ab_install_type
         self.streaming_required = (
@@ -59,14 +58,20 @@ class GenUpdateConfig(object): # pylint: disable=too-few-public-methods
             # compatibility.zip is available only if target supports Treble.
             'compatibility.zip',
         )
+        self._config = None
+
+    @property
+    def config(self):
+        """Returns generated config object."""
+        return self._config
 
     def run(self):
-        """generate config"""
+        """Generates config."""
         streaming_metadata = None
         if self.ab_install_type == GenUpdateConfig.AB_INSTALL_TYPE_STREAMING:
             streaming_metadata = self._gen_ab_streaming_metadata()
 
-        config = {
+        self._config = {
             '__': '*** Generated using tools/gen_update_config.py ***',
             'name': self.ab_install_type[0] + ' ' + os.path.basename(self.package)[:-4],
             'url': self.url,
@@ -74,12 +79,8 @@ class GenUpdateConfig(object): # pylint: disable=too-few-public-methods
             'ab_install_type': self.ab_install_type,
         }
 
-        with open(self.out, 'w') as out:
-            json.dump(config, out, indent=4, separators=(',', ': '), sort_keys=True)
-            print('Config is written to ' + out.name)
-
     def _gen_ab_streaming_metadata(self):
-        """Open zip file and get metadata for files required for streaming update."""
+        """Builds metadata for files required for streaming update."""
         with zipfile.ZipFile(self.package, 'r') as package_zip:
             property_files = self._get_property_files(package_zip)
 
@@ -90,7 +91,7 @@ class GenUpdateConfig(object): # pylint: disable=too-few-public-methods
         return metadata
 
     def _get_property_files(self, zip_file):
-        """Constructs the property-files list for A/B streaming metadata"""
+        """Constructs the property-files list for A/B streaming metadata."""
 
         def compute_entry_offset_size(name):
             """Computes the zip entry offset and size."""
@@ -115,8 +116,13 @@ class GenUpdateConfig(object): # pylint: disable=too-few-public-methods
 
         return property_files
 
+    def write(self, out):
+        """Writes config to the output file."""
+        with open(out, 'w') as out_file:
+            json.dump(self.config, out_file, indent=4, separators=(',', ': '), sort_keys=True)
 
-def main(): # pylint: disable=missing-docstring
+
+def main():  # pylint: disable=missing-docstring
     ab_install_type_choices = [
         GenUpdateConfig.AB_INSTALL_TYPE_STREAMING,
         GenUpdateConfig.AB_INSTALL_TYPE_NON_STREAMING]
@@ -144,10 +150,11 @@ def main(): # pylint: disable=missing-docstring
 
     gen = GenUpdateConfig(
         package=args.package,
-        out=args.out,
         url=args.url,
         ab_install_type=args.ab_install_type)
     gen.run()
+    gen.write(args.out)
+    print('Config is written to ' + args.out)
 
 
 if __name__ == '__main__':

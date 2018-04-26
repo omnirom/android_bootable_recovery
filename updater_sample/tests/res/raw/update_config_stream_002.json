@@ -1,35 +1,35 @@
 {
     "__": "*** Generated using tools/gen_update_config.py ***",
-    "name": "S ota_002",
-    "streaming_metadata": {
+    "ab_install_type": "STREAMING",
+    "ab_streaming_metadata": {
         "property_files": [
             {
                 "filename": "payload.bin",
-                "offset": 195,
-                "size": 8
+                "offset": 41,
+                "size": 7
             },
             {
                 "filename": "payload_properties.txt",
-                "offset": 276,
-                "size": 19
+                "offset": 100,
+                "size": 18
             },
             {
                 "filename": "care_map.txt",
-                "offset": 42,
-                "size": 9
+                "offset": 160,
+                "size": 8
             },
             {
                 "filename": "compatibility.zip",
-                "offset": 119,
-                "size": 14
+                "offset": 215,
+                "size": 13
             },
             {
                 "filename": "metadata",
-                "offset": 375,
-                "size": 9
+                "offset": 287,
+                "size": 8
             }
         ]
     },
-    "type": "STREAMING",
+    "name": "S ota_002_package",
     "url": "file:///data/sample-ota-packages/ota_002_package.zip"
 }
