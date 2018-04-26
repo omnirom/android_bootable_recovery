@@ -21,8 +21,8 @@ LOCAL_PACKAGE_NAME := SystemUpdaterSampleTests
 LOCAL_SDK_VERSION := system_current
 LOCAL_MODULE_TAGS := tests
 LOCAL_JAVA_LIBRARIES := \
-    android.test.runner \
-    android.test.base
+    android.test.base.stubs \
+    android.test.runner.stubs
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 LOCAL_INSTRUMENTATION_FOR := SystemUpdaterSample
 LOCAL_PROGUARD_ENABLED := disabled
