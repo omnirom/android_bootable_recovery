@@ -17,7 +17,10 @@
 #ifndef RECOVERY_INSTALL_H_
 #define RECOVERY_INSTALL_H_
 
+#include <stddef.h>
+
 #include <string>
+
 #include <ziparchive/zip_archive.h>
 
 enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE, INSTALL_SKIPPED,
@@ -25,8 +28,8 @@ enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE, INSTALL_SK
 
 // Installs the given update package. If INSTALL_SUCCESS is returned and *wipe_cache is true on
 // exit, caller should wipe the cache partition.
-int install_package(const std::string& package, bool* wipe_cache, const std::string& install_file,
-                    bool needs_mount, int retry_count);
+int install_package(const std::string& package, bool* wipe_cache, bool needs_mount,
+                    int retry_count);
 
 // Verify the package by ota keys. Return true if the package is verified successfully,
 // otherwise return false.

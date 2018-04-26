@@ -16,7 +16,6 @@
 
 #include <dirent.h>
 #include <fcntl.h>
-#include <gtest/gtest.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,12 +35,13 @@
 #include <android-base/test_utils.h>
 #include <android-base/unique_fd.h>
 #include <bsdiff/bsdiff.h>
+#include <gtest/gtest.h>
 #include <openssl/sha.h>
 
 #include "applypatch/applypatch.h"
 #include "applypatch/applypatch_modes.h"
 #include "common/test_constants.h"
-#include "otautil/cache_location.h"
+#include "otautil/paths.h"
 #include "otautil/print_sha1.h"
 
 using namespace std::string_literals;
@@ -110,14 +110,14 @@ class ApplyPatchCacheTest : public ApplyPatchTest {
  protected:
   void SetUp() override {
     ApplyPatchTest::SetUp();
-    CacheLocation::location().set_cache_temp_source(old_file);
+    Paths::Get().set_cache_temp_source(old_file);
   }
 };
 
 class ApplyPatchModesTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    CacheLocation::location().set_cache_temp_source(cache_source.path);
+    Paths::Get().set_cache_temp_source(cache_source.path);
     android::base::InitLogging(nullptr, &test_logger);
     android::base::SetMinimumLogSeverity(android::base::LogSeverity::DEBUG);
   }
@@ -157,7 +157,7 @@ class FreeCacheTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    CacheLocation::location().set_cache_log_directory(mock_log_dir.path);
+    Paths::Get().set_cache_log_directory(mock_log_dir.path);
   }
 
   // A mock method to calculate the free space. It assumes the partition has a total size of 40960
