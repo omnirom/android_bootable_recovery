@@ -14,20 +14,24 @@
  * limitations under the License.
  */
 
-#include "otautil/cache_location.h"
+#include "otautil/paths.h"
 
+constexpr const char kDefaultCacheLogDirectory[] = "/cache/recovery";
 constexpr const char kDefaultCacheTempSource[] = "/cache/saved.file";
 constexpr const char kDefaultLastCommandFile[] = "/cache/recovery/last_command";
 constexpr const char kDefaultStashDirectoryBase[] = "/cache/recovery";
-constexpr const char kDefaultCacheLogDirectory[] = "/cache/recovery";
+constexpr const char kDefaultTemporaryInstallFile[] = "/tmp/last_install";
+constexpr const char kDefaultTemporaryLogFile[] = "/tmp/recovery.log";
 
-CacheLocation& CacheLocation::location() {
-  static CacheLocation cache_location;
-  return cache_location;
+Paths& Paths::Get() {
+  static Paths paths;
+  return paths;
 }
 
-CacheLocation::CacheLocation()
-    : cache_temp_source_(kDefaultCacheTempSource),
+Paths::Paths()
+    : cache_log_directory_(kDefaultCacheLogDirectory),
+      cache_temp_source_(kDefaultCacheTempSource),
       last_command_file_(kDefaultLastCommandFile),
       stash_directory_base_(kDefaultStashDirectoryBase),
-      cache_log_directory_(kDefaultCacheLogDirectory) {}
+      temporary_install_file_(kDefaultTemporaryInstallFile),
+      temporary_log_file_(kDefaultTemporaryLogFile) {}
