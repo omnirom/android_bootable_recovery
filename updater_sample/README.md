@@ -13,7 +13,7 @@ targets the latest android.
 
 The commands expected to be run from `$ANDROID_BUILD_TOP`.
 
-1. Compile the app `$ mmma bootable/recovery/sample_updater`.
+1. Compile the app `$ mmma bootable/recovery/updater_sample`.
 2. Install the app to the device using `$ adb install <APK_PATH>`.
 3. Add update config files.
 
@@ -45,7 +45,7 @@ is located at `res/raw/sample.json`.
 
 ## Running tests
 
-1. Build `$ mmma bootable/recovery/sample_updater/`
+1. Build `$ mmma bootable/recovery/updater_sample/`
 2. Install app
    `$ adb install $OUT/system/app/SystemUpdaterSample/SystemUpdaterSample.apk`
 3. Install tests
