@@ -38,7 +38,7 @@
 #include <android-base/strings.h>
 
 #include "applypatch/applypatch.h"
-#include "otautil/cache_location.h"
+#include "otautil/paths.h"
 
 static int EliminateOpenFiles(const std::string& dirname, std::set<std::string>* files) {
   std::unique_ptr<DIR, decltype(&closedir)> d(opendir("/proc"), closedir);
@@ -95,7 +95,7 @@ static std::vector<std::string> FindExpendableFiles(
 
     // We can't delete cache_temp_source; if it's there we might have restarted during
     // installation and could be depending on it to be there.
-    if (path == CacheLocation::location().cache_temp_source()) {
+    if (path == Paths::Get().cache_temp_source()) {
       continue;
     }
 
@@ -142,7 +142,7 @@ int MakeFreeSpaceOnCache(size_t bytes_needed) {
   return 0;
 #endif
 
-  std::vector<std::string> dirs = { "/cache", CacheLocation::location().cache_log_directory() };
+  std::vector<std::string> dirs = { "/cache", Paths::Get().cache_log_directory() };
   for (const auto& dirname : dirs) {
     if (RemoveFilesInDirectory(bytes_needed, dirname, FreeSpaceForFile)) {
       return 0;
@@ -172,7 +172,7 @@ bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
   }
 
   std::vector<std::string> files;
-  if (dirname == CacheLocation::location().cache_log_directory()) {
+  if (dirname == Paths::Get().cache_log_directory()) {
     // Deletes the log files only.
     auto log_filter = [](const std::string& file_name) {
       return android::base::StartsWith(file_name, "last_log") ||

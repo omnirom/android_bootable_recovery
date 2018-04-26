@@ -15,8 +15,8 @@
  */
 
 #include <ctype.h>
-#include <errno.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
 #include <linux/fs.h>
@@ -25,13 +25,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
-#include <fec/io.h>
 
 #include <functional>
 #include <limits>
@@ -47,14 +46,15 @@
 #include <android-base/unique_fd.h>
 #include <applypatch/applypatch.h>
 #include <brotli/decode.h>
+#include <fec/io.h>
 #include <openssl/sha.h>
 #include <private/android_filesystem_config.h>
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
 #include "otafault/ota_io.h"
-#include "otautil/cache_location.h"
 #include "otautil/error_code.h"
+#include "otautil/paths.h"
 #include "otautil/print_sha1.h"
 #include "otautil/rangeset.h"
 #include "updater/install.h"
@@ -74,7 +74,7 @@ static bool is_retry = false;
 static std::unordered_map<std::string, RangeSet> stash_map;
 
 static void DeleteLastCommandFile() {
-  std::string last_command_file = CacheLocation::location().last_command_file();
+  const std::string& last_command_file = Paths::Get().last_command_file();
   if (unlink(last_command_file.c_str()) == -1 && errno != ENOENT) {
     PLOG(ERROR) << "Failed to unlink: " << last_command_file;
   }
@@ -83,7 +83,7 @@ static void DeleteLastCommandFile() {
 // Parse the last command index of the last update and save the result to |last_command_index|.
 // Return true if we successfully read the index.
 static bool ParseLastCommandFile(int* last_command_index) {
-  std::string last_command_file = CacheLocation::location().last_command_file();
+  const std::string& last_command_file = Paths::Get().last_command_file();
   android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(last_command_file.c_str(), O_RDONLY)));
   if (fd == -1) {
     if (errno != ENOENT) {
@@ -119,7 +119,7 @@ static bool ParseLastCommandFile(int* last_command_index) {
 // Update the last command index in the last_command_file if the current command writes to the
 // stash either explicitly or implicitly.
 static bool UpdateLastCommandIndex(int command_index, const std::string& command_string) {
-  std::string last_command_file = CacheLocation::location().last_command_file();
+  const std::string& last_command_file = Paths::Get().last_command_file();
   std::string last_command_tmp = last_command_file + ".tmp";
   std::string content = std::to_string(command_index) + "\n" + command_string;
   android::base::unique_fd wfd(
@@ -672,15 +672,11 @@ static int VerifyBlocks(const std::string& expected, const std::vector<uint8_t>&
 }
 
 static std::string GetStashFileName(const std::string& base, const std::string& id,
-        const std::string& postfix) {
-    if (base.empty()) {
-        return "";
-    }
-
-    std::string fn(CacheLocation::location().stash_directory_base());
-    fn += "/" + base + "/" + id + postfix;
-
-    return fn;
+                                    const std::string& postfix) {
+  if (base.empty()) {
+    return "";
+  }
+  return Paths::Get().stash_directory_base() + "/" + base + "/" + id + postfix;
 }
 
 // Does a best effort enumeration of stash files. Ignores possible non-file items in the stash

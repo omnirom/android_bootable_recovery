@@ -41,8 +41,8 @@
 #include "common/test_constants.h"
 #include "edify/expr.h"
 #include "otautil/SysUtil.h"
-#include "otautil/cache_location.h"
 #include "otautil/error_code.h"
+#include "otautil/paths.h"
 #include "otautil/print_sha1.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
@@ -106,10 +106,9 @@ class UpdaterTest : public ::testing::Test {
     RegisterInstallFunctions();
     RegisterBlockImageFunctions();
 
-    // Mock the location of last_command_file.
-    CacheLocation::location().set_cache_temp_source(temp_saved_source_.path);
-    CacheLocation::location().set_last_command_file(temp_last_command_.path);
-    CacheLocation::location().set_stash_directory_base(temp_stash_base_.path);
+    Paths::Get().set_cache_temp_source(temp_saved_source_.path);
+    Paths::Get().set_last_command_file(temp_last_command_.path);
+    Paths::Get().set_stash_directory_base(temp_stash_base_.path);
   }
 
   TemporaryFile temp_saved_source_;
@@ -719,7 +718,7 @@ TEST_F(UpdaterTest, brotli_new_data) {
 }
 
 TEST_F(UpdaterTest, last_command_update) {
-  std::string last_command_file = CacheLocation::location().last_command_file();
+  std::string last_command_file = Paths::Get().last_command_file();
 
   std::string block1 = std::string(4096, '1');
   std::string block2 = std::string(4096, '2');
@@ -806,7 +805,7 @@ TEST_F(UpdaterTest, last_command_update) {
 }
 
 TEST_F(UpdaterTest, last_command_update_unresumable) {
-  std::string last_command_file = CacheLocation::location().last_command_file();
+  std::string last_command_file = Paths::Get().last_command_file();
 
   std::string block1 = std::string(4096, '1');
   std::string block2 = std::string(4096, '2');
@@ -861,7 +860,7 @@ TEST_F(UpdaterTest, last_command_update_unresumable) {
 }
 
 TEST_F(UpdaterTest, last_command_verify) {
-  std::string last_command_file = CacheLocation::location().last_command_file();
+  std::string last_command_file = Paths::Get().last_command_file();
 
   std::string block1 = std::string(4096, '1');
   std::string block2 = std::string(4096, '2');

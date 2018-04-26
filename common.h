@@ -17,8 +17,8 @@
 #ifndef RECOVERY_COMMON_H
 #define RECOVERY_COMMON_H
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include <string>
 
@@ -38,7 +38,7 @@ extern std::string stage;
 extern const char* reason;
 
 // fopen a file, mounting volumes and making parent dirs as necessary.
-FILE* fopen_path(const char *path, const char *mode);
+FILE* fopen_path(const std::string& path, const char* mode);
 
 void ui_print(const char* format, ...);
 
