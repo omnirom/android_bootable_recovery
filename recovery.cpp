@@ -1296,7 +1296,7 @@ static bool is_battery_ok() {
                         charge_status != android::BATTERY_STATUS_NOT_CHARGING);
         android::BatteryProperty capacity;
         android::status_t status = monitor.getProperty(android::BATTERY_PROP_CAPACITY, &capacity);
-        ui_print("charge_status %d, charged %d, status %d, capacity %lld\n", charge_status,
+        ui_print("charge_status %d, charged %d, status %d, capacity %" PRId64 "\n", charge_status,
                  charged, status, capacity.valueInt64);
         // At startup, the battery drivers in devices like N5X/N6P take some time to load
         // the battery profile. Before the load finishes, it reports value 50 as a fake

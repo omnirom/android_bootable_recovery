@@ -40,7 +40,7 @@ extern const char* reason;
 // fopen a file, mounting volumes and making parent dirs as necessary.
 FILE* fopen_path(const std::string& path, const char* mode);
 
-void ui_print(const char* format, ...);
+void ui_print(const char* format, ...) __printflike(1, 2);
 
 bool is_ro_debuggable();
 
