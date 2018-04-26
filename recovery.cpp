@@ -108,6 +108,7 @@ static const char *CONVERT_FBE_DIR = "/tmp/convert_fbe";
 static const char *CONVERT_FBE_FILE = "/tmp/convert_fbe/convert_fbe";
 static const char *CACHE_ROOT = "/cache";
 static const char *DATA_ROOT = "/data";
+static const char* METADATA_ROOT = "/metadata";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
@@ -752,11 +753,19 @@ static bool wipe_data(Device* device) {
     modified_flash = true;
 
     ui->Print("\n-- Wiping data...\n");
-    bool success =
-        device->PreWipeData() &&
-        erase_volume("/data") &&
-        (has_cache ? erase_volume("/cache") : true) &&
-        device->PostWipeData();
+    bool success = device->PreWipeData();
+    if (success) {
+      success &= erase_volume(DATA_ROOT);
+      if (has_cache) {
+        success &= erase_volume(CACHE_ROOT);
+      }
+      if (volume_for_mount_point(METADATA_ROOT) != nullptr) {
+        success &= erase_volume(METADATA_ROOT);
+      }
+    }
+    if (success) {
+      success &= device->PostWipeData();
+    }
     ui->Print("Data wipe %s.\n", success ? "complete" : "failed");
     return success;
 }
