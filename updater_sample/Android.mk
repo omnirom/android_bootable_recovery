@@ -26,6 +26,10 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
+LOCAL_STATIC_JAVA_LIBRARIES += guava
+
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
+
 include $(BUILD_PACKAGE)
 
 # Use the following include to make our test apk.

@@ -17,6 +17,7 @@
 package com.example.android.systemupdatersample.util;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.example.android.systemupdatersample.UpdateConfig;
 
@@ -70,6 +71,7 @@ public final class UpdateConfigs {
                             StandardCharsets.UTF_8);
                     configs.add(UpdateConfig.fromJson(json));
                 } catch (Exception e) {
+                    Log.e("UpdateConfigs", "Can't read/parse config file " + f.getName(), e);
                     throw new RuntimeException(
                             "Can't read/parse config file " + f.getName(), e);
                 }

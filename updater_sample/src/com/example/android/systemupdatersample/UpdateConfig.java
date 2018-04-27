@@ -19,6 +19,7 @@ package com.example.android.systemupdatersample;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,13 +27,13 @@ import java.io.File;
 import java.io.Serializable;
 
 /**
- * UpdateConfig describes an update. It will be parsed from JSON, which is intended to
+ * An update description. It will be parsed from JSON, which is intended to
  * be sent from server to the update app, but in this sample app it will be stored on the device.
  */
 public class UpdateConfig implements Parcelable {
 
-    public static final int TYPE_NON_STREAMING = 0;
-    public static final int TYPE_STREAMING     = 1;
+    public static final int AB_INSTALL_TYPE_NON_STREAMING = 0;
+    public static final int AB_INSTALL_TYPE_STREAMING = 1;
 
     public static final Parcelable.Creator<UpdateConfig> CREATOR =
             new Parcelable.Creator<UpdateConfig>() {
@@ -54,18 +55,30 @@ public class UpdateConfig implements Parcelable {
         JSONObject o = new JSONObject(json);
         c.mName = o.getString("name");
         c.mUrl = o.getString("url");
-        if (TYPE_NON_STREAMING_JSON.equals(o.getString("type"))) {
-            c.mInstallType = TYPE_NON_STREAMING;
-        } else if (TYPE_STREAMING_JSON.equals(o.getString("type"))) {
-            c.mInstallType = TYPE_STREAMING;
-        } else {
-            throw new JSONException("Invalid type, expected either "
-                    + "NON_STREAMING or STREAMING, got " + o.getString("type"));
+        switch (o.getString("ab_install_type")) {
+            case AB_INSTALL_TYPE_NON_STREAMING_JSON:
+                c.mAbInstallType = AB_INSTALL_TYPE_NON_STREAMING;
+                break;
+            case AB_INSTALL_TYPE_STREAMING_JSON:
+                c.mAbInstallType = AB_INSTALL_TYPE_STREAMING;
+                break;
+            default:
+                throw new JSONException("Invalid type, expected either "
+                        + "NON_STREAMING or STREAMING, got " + o.getString("ab_install_type"));
         }
-        if (o.has("metadata")) {
-            c.mMetadata = new Metadata(
-                    o.getJSONObject("metadata").getInt("offset"),
-                    o.getJSONObject("metadata").getInt("size"));
+        if (c.mAbInstallType == AB_INSTALL_TYPE_STREAMING) {
+            JSONObject meta = o.getJSONObject("ab_streaming_metadata");
+            JSONArray propertyFilesJson = meta.getJSONArray("property_files");
+            InnerFile[] propertyFiles =
+                new InnerFile[propertyFilesJson.length()];
+            for (int i = 0; i < propertyFilesJson.length(); i++) {
+                JSONObject p = propertyFilesJson.getJSONObject(i);
+                propertyFiles[i] = new InnerFile(
+                        p.getString("filename"),
+                        p.getLong("offset"),
+                        p.getLong("size"));
+            }
+            c.mAbStreamingMetadata = new StreamingMetadata(propertyFiles);
         }
         c.mRawJson = json;
         return c;
@@ -74,8 +87,8 @@ public class UpdateConfig implements Parcelable {
     /**
      * these strings are represent types in JSON config files
      */
-    private static final String TYPE_NON_STREAMING_JSON  = "NON_STREAMING";
-    private static final String TYPE_STREAMING_JSON      = "STREAMING";
+    private static final String AB_INSTALL_TYPE_NON_STREAMING_JSON = "NON_STREAMING";
+    private static final String AB_INSTALL_TYPE_STREAMING_JSON = "STREAMING";
 
     /** name will be visible on UI */
     private String mName;
@@ -84,10 +97,10 @@ public class UpdateConfig implements Parcelable {
     private String mUrl;
 
     /** non-streaming (first saves locally) OR streaming (on the fly) */
-    private int mInstallType;
+    private int mAbInstallType;
 
     /** metadata is required only for streaming update */
-    private Metadata mMetadata;
+    private StreamingMetadata mAbStreamingMetadata;
 
     private String mRawJson;
 
@@ -97,15 +110,15 @@ public class UpdateConfig implements Parcelable {
     protected UpdateConfig(Parcel in) {
         this.mName = in.readString();
         this.mUrl = in.readString();
-        this.mInstallType = in.readInt();
-        this.mMetadata = (Metadata) in.readSerializable();
+        this.mAbInstallType = in.readInt();
+        this.mAbStreamingMetadata = (StreamingMetadata) in.readSerializable();
         this.mRawJson = in.readString();
     }
 
     public UpdateConfig(String name, String url, int installType) {
         this.mName = name;
         this.mUrl = url;
-        this.mInstallType = installType;
+        this.mAbInstallType = installType;
     }
 
     public String getName() {
@@ -121,16 +134,18 @@ public class UpdateConfig implements Parcelable {
     }
 
     public int getInstallType() {
-        return mInstallType;
+        return mAbInstallType;
+    }
+
+    public StreamingMetadata getStreamingMetadata() {
+        return mAbStreamingMetadata;
     }
 
     /**
-     * "url" must be the file located on the device.
-     *
      * @return File object for given url
      */
     public File getUpdatePackageFile() {
-        if (mInstallType != TYPE_NON_STREAMING) {
+        if (mAbInstallType != AB_INSTALL_TYPE_NON_STREAMING) {
             throw new RuntimeException("Expected non-streaming install type");
         }
         if (!mUrl.startsWith("file://")) {
@@ -148,17 +163,43 @@ public class UpdateConfig implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(mName);
         dest.writeString(mUrl);
-        dest.writeInt(mInstallType);
-        dest.writeSerializable(mMetadata);
+        dest.writeInt(mAbInstallType);
+        dest.writeSerializable(mAbStreamingMetadata);
         dest.writeString(mRawJson);
     }
 
     /**
-     * Metadata for STREAMING update
+     * Metadata for streaming A/B update.
      */
-    public static class Metadata implements Serializable {
+    public static class StreamingMetadata implements Serializable {
 
         private static final long serialVersionUID = 31042L;
+
+        /** defines beginning of update data in archive */
+        private InnerFile[] mPropertyFiles;
+
+        public StreamingMetadata() {
+            mPropertyFiles = new InnerFile[0];
+        }
+
+        public StreamingMetadata(InnerFile[] propertyFiles) {
+            this.mPropertyFiles = propertyFiles;
+        }
+
+        public InnerFile[] getPropertyFiles() {
+            return mPropertyFiles;
+        }
+    }
+
+    /**
+     * Description of a file in an OTA package zip file.
+     */
+    public static class InnerFile implements Serializable {
+
+        private static final long serialVersionUID = 31043L;
+
+        /** filename in an archive */
+        private String mFilename;
 
         /** defines beginning of update data in archive */
         private long mOffset;
@@ -166,9 +207,14 @@ public class UpdateConfig implements Parcelable {
         /** size of the update data in archive */
         private long mSize;
 
-        public Metadata(long offset, long size) {
+        public InnerFile(String filename, long offset, long size) {
+            this.mFilename = filename;
             this.mOffset = offset;
             this.mSize = size;
+        }
+
+        public String getFilename() {
+            return mFilename;
         }
 
         public long getOffset() {
@@ -178,6 +224,7 @@ public class UpdateConfig implements Parcelable {
         public long getSize() {
             return mSize;
         }
+
     }
 
 }
