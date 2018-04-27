@@ -38,6 +38,7 @@
 #include <zlib.h>
 
 #include "edify/expr.h"
+#include "otautil/print_sha1.h"
 
 static inline int64_t Read8(const void *address) {
   return android::base::get_unaligned<int64_t>(address);
@@ -76,8 +77,10 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   size_t actual_target_length = 0;
   size_t total_written = 0;
   static constexpr size_t buffer_size = 32768;
+  SHA_CTX sha_ctx;
+  SHA1_Init(&sha_ctx);
   auto compression_sink = [&strm, &actual_target_length, &expected_target_length, &total_written,
-                           &ret, &sink](const uint8_t* data, size_t len) -> size_t {
+                           &ret, &sink, &sha_ctx](const uint8_t* data, size_t len) -> size_t {
     // The input patch length for an update never exceeds INT_MAX.
     strm.avail_in = len;
     strm.next_in = data;
@@ -98,6 +101,20 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
 
       size_t have = buffer_size - strm.avail_out;
       total_written += have;
+
+      // TODO(b/67849209) Remove after debugging the unit test flakiness.
+      if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG &&
+          have != 0) {
+        SHA1_Update(&sha_ctx, data, len - strm.avail_in);
+        SHA_CTX temp_ctx;
+        memcpy(&temp_ctx, &sha_ctx, sizeof(SHA_CTX));
+        uint8_t digest_so_far[SHA_DIGEST_LENGTH];
+        SHA1_Final(digest_so_far, &temp_ctx);
+        LOG(DEBUG) << "Processed " << actual_target_length + len - strm.avail_in
+                   << " bytes input data in the sink function, sha1 so far: "
+                   << short_sha1(digest_so_far);
+      }
+
       if (sink(buffer.data(), have) != have) {
         LOG(ERROR) << "Failed to write " << have << " compressed bytes to output.";
         return 0;
@@ -111,6 +128,11 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   int bspatch_result = ApplyBSDiffPatch(src_data, src_len, patch, patch_offset, compression_sink);
   deflateEnd(&strm);
 
+  if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
+    uint8_t digest[SHA_DIGEST_LENGTH];
+    SHA1_Final(digest, &sha_ctx);
+    LOG(DEBUG) << "sha1 of " << actual_target_length << " bytes input data: " << short_sha1(digest);
+  }
   if (bspatch_result != 0) {
     return false;
   }
@@ -182,6 +204,8 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
         printf("Failed to apply bsdiff patch.\n");
         return -1;
       }
+
+      LOG(DEBUG) << "Processed chunk type normal";
     } else if (type == CHUNK_RAW) {
       const char* raw_header = patch_header + pos;
       pos += 4;
@@ -201,6 +225,8 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
         return -1;
       }
       pos += data_len;
+
+      LOG(DEBUG) << "Processed chunk type raw";
     } else if (type == CHUNK_DEFLATE) {
       // deflate chunks have an additional 60 bytes in their chunk header.
       const char* deflate_header = patch_header + pos;
@@ -276,6 +302,7 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
         return -1;
       }
 
+      LOG(DEBUG) << "Processed chunk type deflate";
     } else {
       printf("patch chunk %d is unknown type %d\n", i, type);
       return -1;

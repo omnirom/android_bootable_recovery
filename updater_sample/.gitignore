@@ -1,0 +1,10 @@
+*~
+*.bak
+*.pyc
+*.pyc-2.4
+Thumbs.db
+*.iml
+.idea/
+gen/
+.vscode
+local.properties

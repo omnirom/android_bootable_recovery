@@ -68,6 +68,7 @@
 #include "minui/minui.h"
 #include "otautil/DirUtil.h"
 #include "otautil/error_code.h"
+#include "otautil/paths.h"
 #include "roots.h"
 #include "rotate_logs.h"
 #include "screen_ui.h"
@@ -108,20 +109,13 @@ static const char *CONVERT_FBE_DIR = "/tmp/convert_fbe";
 static const char *CONVERT_FBE_FILE = "/tmp/convert_fbe/convert_fbe";
 static const char *CACHE_ROOT = "/cache";
 static const char *DATA_ROOT = "/data";
+static const char* METADATA_ROOT = "/metadata";
 static const char *SDCARD_ROOT = "/sdcard";
-static const char *TEMPORARY_LOG_FILE = "/tmp/recovery.log";
-static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
 static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
 // We will try to apply the update package 5 times at most in case of an I/O error or
 // bspatch | imgpatch error.
 static const int RETRY_LIMIT = 4;
-static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
-// GmsCore enters recovery mode to install package when having enough battery
-// percentage. Normally, the threshold is 40% without charger and 20% with charger.
-// So we should check battery with a slightly lower limitation.
-static const int BATTERY_OK_PERCENTAGE = 20;
-static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
 static constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
 static constexpr const char* DEFAULT_LOCALE = "en-US";
 
@@ -184,8 +178,8 @@ struct selabel_handle* sehandle;
  */
 
 // Open a given path, mounting partitions as necessary.
-FILE* fopen_path(const char* path, const char* mode) {
-  if (ensure_path_mounted(path) != 0) {
+FILE* fopen_path(const std::string& path, const char* mode) {
+  if (ensure_path_mounted(path.c_str()) != 0) {
     LOG(ERROR) << "Can't mount " << path;
     return nullptr;
   }
@@ -195,19 +189,19 @@ FILE* fopen_path(const char* path, const char* mode) {
   if (strchr("wa", mode[0])) {
     mkdir_recursively(path, 0777, true, sehandle);
   }
-  return fopen(path, mode);
+  return fopen(path.c_str(), mode);
 }
 
 // close a file, log an error if the error indicator is set
-static void check_and_fclose(FILE *fp, const char *name) {
-    fflush(fp);
-    if (fsync(fileno(fp)) == -1) {
-        PLOG(ERROR) << "Failed to fsync " << name;
-    }
-    if (ferror(fp)) {
-        PLOG(ERROR) << "Error in " << name;
-    }
-    fclose(fp);
+static void check_and_fclose(FILE* fp, const std::string& name) {
+  fflush(fp);
+  if (fsync(fileno(fp)) == -1) {
+    PLOG(ERROR) << "Failed to fsync " << name;
+  }
+  if (ferror(fp)) {
+    PLOG(ERROR) << "Error in " << name;
+  }
+  fclose(fp);
 }
 
 bool is_ro_debuggable() {
@@ -407,27 +401,27 @@ static void save_kernel_log(const char* destination) {
     android::base::WriteStringToFile(buffer, destination);
 }
 
-// write content to the current pmsg session.
-static ssize_t __pmsg_write(const char *filename, const char *buf, size_t len) {
-    return __android_log_pmsg_file_write(LOG_ID_SYSTEM, ANDROID_LOG_INFO,
-                                         filename, buf, len);
+// Writes content to the current pmsg session.
+static ssize_t __pmsg_write(const std::string& filename, const std::string& buf) {
+  return __android_log_pmsg_file_write(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filename.c_str(),
+                                       buf.data(), buf.size());
 }
 
-static void copy_log_file_to_pmsg(const char* source, const char* destination) {
-    std::string content;
-    android::base::ReadFileToString(source, &content);
-    __pmsg_write(destination, content.c_str(), content.length());
+static void copy_log_file_to_pmsg(const std::string& source, const std::string& destination) {
+  std::string content;
+  android::base::ReadFileToString(source, &content);
+  __pmsg_write(destination, content);
 }
 
 // How much of the temp log we have copied to the copy in cache.
 static off_t tmplog_offset = 0;
 
-static void copy_log_file(const char* source, const char* destination, bool append) {
+static void copy_log_file(const std::string& source, const std::string& destination, bool append) {
   FILE* dest_fp = fopen_path(destination, append ? "ae" : "we");
   if (dest_fp == nullptr) {
     PLOG(ERROR) << "Can't open " << destination;
   } else {
-    FILE* source_fp = fopen(source, "re");
+    FILE* source_fp = fopen(source.c_str(), "re");
     if (source_fp != nullptr) {
       if (append) {
         fseeko(source_fp, tmplog_offset, SEEK_SET);  // Since last write
@@ -447,39 +441,38 @@ static void copy_log_file(const char* source, const char* destination, bool appe
 }
 
 static void copy_logs() {
-    // We only rotate and record the log of the current session if there are
-    // actual attempts to modify the flash, such as wipes, installs from BCB
-    // or menu selections. This is to avoid unnecessary rotation (and
-    // possible deletion) of log files, if it does not do anything loggable.
-    if (!modified_flash) {
-        return;
-    }
+  // We only rotate and record the log of the current session if there are actual attempts to modify
+  // the flash, such as wipes, installs from BCB or menu selections. This is to avoid unnecessary
+  // rotation (and possible deletion) of log files, if it does not do anything loggable.
+  if (!modified_flash) {
+    return;
+  }
 
-    // Always write to pmsg, this allows the OTA logs to be caught in logcat -L
-    copy_log_file_to_pmsg(TEMPORARY_LOG_FILE, LAST_LOG_FILE);
-    copy_log_file_to_pmsg(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE);
+  // Always write to pmsg, this allows the OTA logs to be caught in `logcat -L`.
+  copy_log_file_to_pmsg(Paths::Get().temporary_log_file(), LAST_LOG_FILE);
+  copy_log_file_to_pmsg(Paths::Get().temporary_install_file(), LAST_INSTALL_FILE);
 
-    // We can do nothing for now if there's no /cache partition.
-    if (!has_cache) {
-        return;
-    }
+  // We can do nothing for now if there's no /cache partition.
+  if (!has_cache) {
+    return;
+  }
 
-    ensure_path_mounted(LAST_LOG_FILE);
-    ensure_path_mounted(LAST_KMSG_FILE);
-    rotate_logs(LAST_LOG_FILE, LAST_KMSG_FILE);
+  ensure_path_mounted(LAST_LOG_FILE);
+  ensure_path_mounted(LAST_KMSG_FILE);
+  rotate_logs(LAST_LOG_FILE, LAST_KMSG_FILE);
 
-    // Copy logs to cache so the system can find out what happened.
-    copy_log_file(TEMPORARY_LOG_FILE, LOG_FILE, true);
-    copy_log_file(TEMPORARY_LOG_FILE, LAST_LOG_FILE, false);
-    copy_log_file(TEMPORARY_INSTALL_FILE, LAST_INSTALL_FILE, false);
-    save_kernel_log(LAST_KMSG_FILE);
-    chmod(LOG_FILE, 0600);
-    chown(LOG_FILE, AID_SYSTEM, AID_SYSTEM);
-    chmod(LAST_KMSG_FILE, 0600);
-    chown(LAST_KMSG_FILE, AID_SYSTEM, AID_SYSTEM);
-    chmod(LAST_LOG_FILE, 0640);
-    chmod(LAST_INSTALL_FILE, 0644);
-    sync();
+  // Copy logs to cache so the system can find out what happened.
+  copy_log_file(Paths::Get().temporary_log_file(), LOG_FILE, true);
+  copy_log_file(Paths::Get().temporary_log_file(), LAST_LOG_FILE, false);
+  copy_log_file(Paths::Get().temporary_install_file(), LAST_INSTALL_FILE, false);
+  save_kernel_log(LAST_KMSG_FILE);
+  chmod(LOG_FILE, 0600);
+  chown(LOG_FILE, AID_SYSTEM, AID_SYSTEM);
+  chmod(LAST_KMSG_FILE, 0600);
+  chown(LAST_KMSG_FILE, AID_SYSTEM, AID_SYSTEM);
+  chmod(LAST_LOG_FILE, 0640);
+  chmod(LAST_INSTALL_FILE, 0644);
+  sync();
 }
 
 // Clear the recovery command and prepare to boot a (hopefully working) system,
@@ -752,11 +745,19 @@ static bool wipe_data(Device* device) {
     modified_flash = true;
 
     ui->Print("\n-- Wiping data...\n");
-    bool success =
-        device->PreWipeData() &&
-        erase_volume("/data") &&
-        (has_cache ? erase_volume("/cache") : true) &&
-        device->PostWipeData();
+    bool success = device->PreWipeData();
+    if (success) {
+      success &= erase_volume(DATA_ROOT);
+      if (has_cache) {
+        success &= erase_volume(CACHE_ROOT);
+      }
+      if (volume_for_mount_point(METADATA_ROOT) != nullptr) {
+        success &= erase_volume(METADATA_ROOT);
+      }
+    }
+    if (success) {
+      success &= device->PostWipeData();
+    }
     ui->Print("Data wipe %s.\n", success ? "complete" : "failed");
     return success;
 }
@@ -957,10 +958,10 @@ static void choose_recovery_file(Device* device) {
     }
   } else {
     // If cache partition is not found, view /tmp/recovery.log instead.
-    if (access(TEMPORARY_LOG_FILE, R_OK) == -1) {
+    if (access(Paths::Get().temporary_log_file().c_str(), R_OK) == -1) {
       return;
     } else {
-      entries.push_back(TEMPORARY_LOG_FILE);
+      entries.push_back(Paths::Get().temporary_log_file());
     }
   }
 
@@ -1082,8 +1083,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
             }
         }
 
-        result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache,
-                                 TEMPORARY_INSTALL_FILE, false, 0/*retry_count*/);
+        result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, false, 0 /*retry_count*/);
         break;
     }
 
@@ -1160,7 +1160,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         {
           bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
           if (adb) {
-            status = apply_from_adb(&should_wipe_cache, TEMPORARY_INSTALL_FILE);
+            status = apply_from_adb(&should_wipe_cache);
           } else {
             status = apply_from_sdcard(device, &should_wipe_cache);
           }
@@ -1259,7 +1259,7 @@ void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity
   }
 }
 
-static bool is_battery_ok() {
+static bool is_battery_ok(int* required_battery_level) {
   using android::hardware::health::V1_0::BatteryStatus;
   using android::hardware::health::V2_0::Result;
   using android::hardware::health::V2_0::toString;
@@ -1278,14 +1278,15 @@ static bool is_battery_ok() {
     .batteryChargeCounterPath = android::String8(android::String8::kEmptyString),
     .batteryFullChargePath = android::String8(android::String8::kEmptyString),
     .batteryCycleCountPath = android::String8(android::String8::kEmptyString),
-    .energyCounter = NULL,
+    .energyCounter = nullptr,
     .boot_min_cap = 0,
-    .screen_on = NULL
+    .screen_on = nullptr
   };
 
   auto health =
       android::hardware::health::V2_0::implementation::Health::initInstance(&healthd_config);
 
+  static constexpr int BATTERY_READ_TIMEOUT_IN_SEC = 10;
   int wait_second = 0;
   while (true) {
     auto charge_status = BatteryStatus::UNKNOWN;
@@ -1328,9 +1329,15 @@ static bool is_battery_ok() {
     if (res != Result::SUCCESS) {
       capacity = 100;
     }
-    return (charged && capacity >= BATTERY_WITH_CHARGER_OK_PERCENTAGE) ||
-           (!charged && capacity >= BATTERY_OK_PERCENTAGE);
-    }
+
+    // GmsCore enters recovery mode to install package when having enough battery percentage.
+    // Normally, the threshold is 40% without charger and 20% with charger. So we should check
+    // battery with a slightly lower limitation.
+    static constexpr int BATTERY_OK_PERCENTAGE = 20;
+    static constexpr int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
+    *required_battery_level = charged ? BATTERY_WITH_CHARGER_OK_PERCENTAGE : BATTERY_OK_PERCENTAGE;
+    return capacity >= *required_battery_level;
+  }
 }
 
 // Set the retry count to |retry_count| in BCB.
@@ -1362,19 +1369,20 @@ static bool bootreason_in_blacklist() {
   return false;
 }
 
-static void log_failure_code(ErrorCode code, const char *update_package) {
-    std::vector<std::string> log_buffer = {
-        update_package,
-        "0",  // install result
-        "error: " + std::to_string(code),
-    };
-    std::string log_content = android::base::Join(log_buffer, "\n");
-    if (!android::base::WriteStringToFile(log_content, TEMPORARY_INSTALL_FILE)) {
-        PLOG(ERROR) << "failed to write " << TEMPORARY_INSTALL_FILE;
-    }
+static void log_failure_code(ErrorCode code, const std::string& update_package) {
+  std::vector<std::string> log_buffer = {
+    update_package,
+    "0",  // install result
+    "error: " + std::to_string(code),
+  };
+  std::string log_content = android::base::Join(log_buffer, "\n");
+  const std::string& install_file = Paths::Get().temporary_install_file();
+  if (!android::base::WriteStringToFile(log_content, install_file)) {
+    PLOG(ERROR) << "Failed to write " << install_file;
+  }
 
-    // Also write the info into last_log.
-    LOG(INFO) << log_content;
+  // Also write the info into last_log.
+  LOG(INFO) << log_content;
 }
 
 int main(int argc, char **argv) {
@@ -1407,7 +1415,7 @@ int main(int argc, char **argv) {
 
   // redirect_stdio should be called only in non-sideload mode. Otherwise
   // we may have two logger instances with different timestamps.
-  redirect_stdio(TEMPORARY_LOG_FILE);
+  redirect_stdio(Paths::Get().temporary_log_file().c_str());
 
   printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
 
@@ -1557,9 +1565,10 @@ int main(int argc, char **argv) {
     // to log the update attempt since update_package is non-NULL.
     modified_flash = true;
 
-    if (retry_count == 0 && !is_battery_ok()) {
-      ui->Print("battery capacity is not enough for installing package, needed is %d%%\n",
-                BATTERY_OK_PERCENTAGE);
+    int required_battery_level;
+    if (retry_count == 0 && !is_battery_ok(&required_battery_level)) {
+      ui->Print("battery capacity is not enough for installing package: %d%% needed\n",
+                required_battery_level);
       // Log the error code to last_install when installation skips due to
       // low battery.
       log_failure_code(kLowBattery, update_package);
@@ -1576,8 +1585,7 @@ int main(int argc, char **argv) {
         set_retry_bootloader_message(retry_count + 1, args);
       }
 
-      status = install_package(update_package, &should_wipe_cache, TEMPORARY_INSTALL_FILE, true,
-                               retry_count);
+      status = install_package(update_package, &should_wipe_cache, true, retry_count);
       if (status == INSTALL_SUCCESS && should_wipe_cache) {
         wipe_cache(false, device);
       }
@@ -1638,7 +1646,7 @@ int main(int argc, char **argv) {
     if (!sideload_auto_reboot) {
       ui->ShowText(true);
     }
-    status = apply_from_adb(&should_wipe_cache, TEMPORARY_INSTALL_FILE);
+    status = apply_from_adb(&should_wipe_cache);
     if (status == INSTALL_SUCCESS && should_wipe_cache) {
       if (!wipe_cache(false, device)) {
         status = INSTALL_ERROR;

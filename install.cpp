@@ -52,6 +52,7 @@
 #include "otautil/SysUtil.h"
 #include "otautil/ThermalUtil.h"
 #include "otautil/error_code.h"
+#include "otautil/paths.h"
 #include "private/install.h"
 #include "roots.h"
 #include "ui.h"
@@ -627,10 +628,8 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   return result;
 }
 
-int install_package(const std::string& path, bool* wipe_cache, const std::string& install_file,
-                    bool needs_mount, int retry_count) {
+int install_package(const std::string& path, bool* wipe_cache, bool needs_mount, int retry_count) {
   CHECK(!path.empty());
-  CHECK(!install_file.empty());
   CHECK(wipe_cache != nullptr);
 
   modified_flash = true;
@@ -693,6 +692,7 @@ int install_package(const std::string& path, bool* wipe_cache, const std::string
 
   std::string log_content =
       android::base::Join(log_header, "\n") + "\n" + android::base::Join(log_buffer, "\n") + "\n";
+  const std::string& install_file = Paths::Get().temporary_install_file();
   if (!android::base::WriteStringToFile(log_content, install_file)) {
     PLOG(ERROR) << "failed to write " << install_file;
   }
