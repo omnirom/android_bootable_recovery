@@ -116,12 +116,6 @@ static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
 // We will try to apply the update package 5 times at most in case of an I/O error or
 // bspatch | imgpatch error.
 static const int RETRY_LIMIT = 4;
-static const int BATTERY_READ_TIMEOUT_IN_SEC = 10;
-// GmsCore enters recovery mode to install package when having enough battery
-// percentage. Normally, the threshold is 40% without charger and 20% with charger.
-// So we should check battery with a slightly lower limitation.
-static const int BATTERY_OK_PERCENTAGE = 20;
-static const int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
 static constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
 static constexpr const char* DEFAULT_LOCALE = "en-US";
 
@@ -1265,7 +1259,7 @@ void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity
   }
 }
 
-static bool is_battery_ok() {
+static bool is_battery_ok(int* required_battery_level) {
   using android::hardware::health::V1_0::BatteryStatus;
   using android::hardware::health::V2_0::Result;
   using android::hardware::health::V2_0::toString;
@@ -1284,14 +1278,15 @@ static bool is_battery_ok() {
     .batteryChargeCounterPath = android::String8(android::String8::kEmptyString),
     .batteryFullChargePath = android::String8(android::String8::kEmptyString),
     .batteryCycleCountPath = android::String8(android::String8::kEmptyString),
-    .energyCounter = NULL,
+    .energyCounter = nullptr,
     .boot_min_cap = 0,
-    .screen_on = NULL
+    .screen_on = nullptr
   };
 
   auto health =
       android::hardware::health::V2_0::implementation::Health::initInstance(&healthd_config);
 
+  static constexpr int BATTERY_READ_TIMEOUT_IN_SEC = 10;
   int wait_second = 0;
   while (true) {
     auto charge_status = BatteryStatus::UNKNOWN;
@@ -1334,9 +1329,15 @@ static bool is_battery_ok() {
     if (res != Result::SUCCESS) {
       capacity = 100;
     }
-    return (charged && capacity >= BATTERY_WITH_CHARGER_OK_PERCENTAGE) ||
-           (!charged && capacity >= BATTERY_OK_PERCENTAGE);
-    }
+
+    // GmsCore enters recovery mode to install package when having enough battery percentage.
+    // Normally, the threshold is 40% without charger and 20% with charger. So we should check
+    // battery with a slightly lower limitation.
+    static constexpr int BATTERY_OK_PERCENTAGE = 20;
+    static constexpr int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
+    *required_battery_level = charged ? BATTERY_WITH_CHARGER_OK_PERCENTAGE : BATTERY_OK_PERCENTAGE;
+    return capacity >= *required_battery_level;
+  }
 }
 
 // Set the retry count to |retry_count| in BCB.
@@ -1564,9 +1565,10 @@ int main(int argc, char **argv) {
     // to log the update attempt since update_package is non-NULL.
     modified_flash = true;
 
-    if (retry_count == 0 && !is_battery_ok()) {
-      ui->Print("battery capacity is not enough for installing package, needed is %d%%\n",
-                BATTERY_OK_PERCENTAGE);
+    int required_battery_level;
+    if (retry_count == 0 && !is_battery_ok(&required_battery_level)) {
+      ui->Print("battery capacity is not enough for installing package: %d%% needed\n",
+                required_battery_level);
       // Log the error code to last_install when installation skips due to
       // low battery.
       log_failure_code(kLowBattery, update_package);
