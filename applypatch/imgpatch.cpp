@@ -60,6 +60,11 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   int mem_level = Read4(deflate_header + 52);
   int strategy = Read4(deflate_header + 56);
 
+  // TODO(b/67849209) Remove after debugging the unit test flakiness.
+  if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
+    LOG(DEBUG) << "zlib version " << zlibVersion();
+  }
+
   z_stream strm;
   strm.zalloc = Z_NULL;
   strm.zfree = Z_NULL;
@@ -101,25 +106,16 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
 
       size_t have = buffer_size - strm.avail_out;
       total_written += have;
-
-      // TODO(b/67849209) Remove after debugging the unit test flakiness.
-      if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG &&
-          have != 0) {
-        SHA1_Update(&sha_ctx, data, len - strm.avail_in);
-        SHA_CTX temp_ctx;
-        memcpy(&temp_ctx, &sha_ctx, sizeof(SHA_CTX));
-        uint8_t digest_so_far[SHA_DIGEST_LENGTH];
-        SHA1_Final(digest_so_far, &temp_ctx);
-        LOG(DEBUG) << "Processed " << actual_target_length + len - strm.avail_in
-                   << " bytes input data in the sink function, sha1 so far: "
-                   << short_sha1(digest_so_far);
-      }
-
       if (sink(buffer.data(), have) != have) {
         LOG(ERROR) << "Failed to write " << have << " compressed bytes to output.";
         return 0;
       }
     } while ((strm.avail_in != 0 || strm.avail_out == 0) && ret != Z_STREAM_END);
+
+    // TODO(b/67849209) Remove after debugging the unit test flakiness.
+    if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
+      SHA1_Update(&sha_ctx, data, len);
+    }
 
     actual_target_length += len;
     return len;

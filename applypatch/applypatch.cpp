@@ -672,6 +672,14 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
          bonus_digest);
     printf("bonus size %zu sha1 %s\n", bonus_data->data.size(), short_sha1(bonus_digest).c_str());
 
+    // TODO(b/67849209) Remove after debugging the unit test flakiness.
+    if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
+      if (WriteToPartition(reinterpret_cast<const unsigned char*>(memory_sink_str.c_str()),
+                           memory_sink_str.size(), target_filename) != 0) {
+        LOG(DEBUG) << "Failed to write patched data " << target_filename;
+      }
+    }
+
     return 1;
   } else {
     printf("now %s\n", short_sha1(target_sha1).c_str());
