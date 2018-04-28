@@ -39,7 +39,7 @@
 #include <ext4_utils/wipe.h>
 #include <fs_mgr.h>
 
-#include "mounts.h"
+#include "otautil/mounts.h"
 
 static struct fstab* fstab = nullptr;
 

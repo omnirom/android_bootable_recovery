@@ -162,7 +162,6 @@ LOCAL_STATIC_LIBRARIES := \
     libsparse \
     libziparchive \
     libotautil \
-    libmounts \
     libminadbd \
     libasyncio \
     libfusesideload \

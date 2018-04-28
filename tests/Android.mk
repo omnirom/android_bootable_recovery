@@ -117,7 +117,6 @@ LOCAL_STATIC_LIBRARIES := \
     libbootloader_message \
     libverifier \
     libotautil \
-    libmounts \
     libupdate_verifier \
     libdivsufsort \
     libdivsufsort64 \
