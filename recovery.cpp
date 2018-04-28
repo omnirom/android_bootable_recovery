@@ -75,25 +75,6 @@
 #include "stub_ui.h"
 #include "ui.h"
 
-static const struct option OPTIONS[] = {
-  { "update_package", required_argument, NULL, 'u' },
-  { "retry_count", required_argument, NULL, 'n' },
-  { "wipe_data", no_argument, NULL, 'w' },
-  { "wipe_cache", no_argument, NULL, 'c' },
-  { "show_text", no_argument, NULL, 't' },
-  { "sideload", no_argument, NULL, 's' },
-  { "sideload_auto_reboot", no_argument, NULL, 'a' },
-  { "just_exit", no_argument, NULL, 'x' },
-  { "locale", required_argument, NULL, 'l' },
-  { "shutdown_after", no_argument, NULL, 'p' },
-  { "reason", required_argument, NULL, 'r' },
-  { "security", no_argument, NULL, 'e'},
-  { "wipe_ab", no_argument, NULL, 0 },
-  { "wipe_package_size", required_argument, NULL, 0 },
-  { "prompt_and_wipe_data", no_argument, NULL, 0 },
-  { NULL, 0, NULL, 0 },
-};
-
 // More bootreasons can be found in "system/core/bootstat/bootstat.cpp".
 static const std::vector<std::string> bootreason_blacklist {
   "kernel_panic",
@@ -140,9 +121,10 @@ struct selabel_handle* sehandle;
  * The arguments which may be supplied in the recovery.command file:
  *   --update_package=path - verify install an OTA package file
  *   --wipe_data - erase user data (and cache), then reboot
- *   --prompt_and_wipe_data - prompt the user that data is corrupt,
- *       with their consent erase user data (and cache), then reboot
+ *   --prompt_and_wipe_data - prompt the user that data is corrupt, with their consent erase user
+ *       data (and cache), then reboot
  *   --wipe_cache - wipe cache (but not user data), then reboot
+ *   --show_text - show the recovery text menu, used by some bootloader (e.g. http://b/36872519).
  *   --set_encrypted_filesystem=on|off - enables / diasables encrypted fs
  *   --just_exit - do nothing; exit and reboot
  *
@@ -1427,6 +1409,25 @@ int main(int argc, char **argv) {
   std::transform(args.cbegin(), args.cend(), args_to_parse.begin(),
                  [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
 
+  static constexpr struct option OPTIONS[] = {
+    { "just_exit", no_argument, nullptr, 'x' },
+    { "locale", required_argument, nullptr, 0 },
+    { "prompt_and_wipe_data", no_argument, nullptr, 0 },
+    { "reason", required_argument, nullptr, 0 },
+    { "retry_count", required_argument, nullptr, 0 },
+    { "security", no_argument, nullptr, 0 },
+    { "show_text", no_argument, nullptr, 't' },
+    { "shutdown_after", no_argument, nullptr, 0 },
+    { "sideload", no_argument, nullptr, 0 },
+    { "sideload_auto_reboot", no_argument, nullptr, 0 },
+    { "update_package", required_argument, nullptr, 0 },
+    { "wipe_ab", no_argument, nullptr, 0 },
+    { "wipe_cache", no_argument, nullptr, 0 },
+    { "wipe_data", no_argument, nullptr, 0 },
+    { "wipe_package_size", required_argument, nullptr, 0 },
+    { nullptr, 0, nullptr, 0 },
+  };
+
   const char* update_package = nullptr;
   bool should_wipe_data = false;
   bool should_prompt_and_wipe_data = false;
@@ -1446,51 +1447,41 @@ int main(int argc, char **argv) {
   while ((arg = getopt_long(args_to_parse.size(), args_to_parse.data(), "", OPTIONS,
                             &option_index)) != -1) {
     switch (arg) {
-      case 'n':
-        android::base::ParseInt(optarg, &retry_count, 0);
-        break;
-      case 'u':
-        update_package = optarg;
-        break;
-      case 'w':
-        should_wipe_data = true;
-        break;
-      case 'c':
-        should_wipe_cache = true;
-        break;
       case 't':
         show_text = true;
-        break;
-      case 's':
-        sideload = true;
-        break;
-      case 'a':
-        sideload = true;
-        sideload_auto_reboot = true;
         break;
       case 'x':
         just_exit = true;
         break;
-      case 'l':
-        locale = optarg;
-        break;
-      case 'p':
-        shutdown_after = true;
-        break;
-      case 'r':
-        reason = optarg;
-        break;
-      case 'e':
-        security_update = true;
-        break;
       case 0: {
         std::string option = OPTIONS[option_index].name;
-        if (option == "wipe_ab") {
-          should_wipe_ab = true;
-        } else if (option == "wipe_package_size") {
-          android::base::ParseUint(optarg, &wipe_package_size);
+        if (option == "locale") {
+          locale = optarg;
         } else if (option == "prompt_and_wipe_data") {
           should_prompt_and_wipe_data = true;
+        } else if (option == "reason") {
+          reason = optarg;
+        } else if (option == "retry_count") {
+          android::base::ParseInt(optarg, &retry_count, 0);
+        } else if (option == "security") {
+          security_update = true;
+        } else if (option == "sideload") {
+          sideload = true;
+        } else if (option == "sideload_auto_reboot") {
+          sideload = true;
+          sideload_auto_reboot = true;
+        } else if (option == "shutdown_after") {
+          shutdown_after = true;
+        } else if (option == "update_package") {
+          update_package = optarg;
+        } else if (option == "wipe_ab") {
+          should_wipe_ab = true;
+        } else if (option == "wipe_cache") {
+          should_wipe_cache = true;
+        } else if (option == "wipe_data") {
+          should_wipe_data = true;
+        } else if (option == "wipe_package_size") {
+          android::base::ParseUint(optarg, &wipe_package_size);
         }
         break;
       }
