@@ -24,14 +24,13 @@ tune2fs_static_libraries := \
 
 updater_common_static_libraries := \
     libapplypatch \
-    libbspatch \
-    libedify \
-    libziparchive \
-    libotautil \
     libbootloader_message \
-    libutils \
-    libmounts \
+    libedify \
     libotafault \
+    libotautil \
+    libbspatch \
+    libziparchive \
+    libutils \
     libext4_utils \
     libfec \
     libfec_rs \
@@ -61,7 +60,6 @@ LOCAL_SRC_FILES := \
     blockimg.cpp
 
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/.. \
     $(LOCAL_PATH)/include \
     external/e2fsprogs/misc
 
@@ -87,7 +85,6 @@ LOCAL_SRC_FILES := \
     updater.cpp
 
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/.. \
     $(LOCAL_PATH)/include
 
 LOCAL_CFLAGS := \

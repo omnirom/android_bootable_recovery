@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef MOUNTS_H_
-#define MOUNTS_H_
+#pragma once
 
 struct MountedVolume;
 
@@ -24,5 +23,3 @@ bool scan_mounted_volumes();
 MountedVolume* find_mounted_volume_by_mount_point(const char* mount_point);
 
 int unmount_mounted_volume(MountedVolume* volume);
-
-#endif
