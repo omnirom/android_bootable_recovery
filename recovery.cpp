@@ -75,30 +75,18 @@
 #include "stub_ui.h"
 #include "ui.h"
 
-// More bootreasons can be found in "system/core/bootstat/bootstat.cpp".
-static const std::vector<std::string> bootreason_blacklist {
-  "kernel_panic",
-  "Panic",
-};
+static constexpr const char* CACHE_LOG_DIR = "/cache/recovery";
+static constexpr const char* COMMAND_FILE = "/cache/recovery/command";
+static constexpr const char* LOG_FILE = "/cache/recovery/log";
+static constexpr const char* LAST_INSTALL_FILE = "/cache/recovery/last_install";
+static constexpr const char* LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
+static constexpr const char* LAST_LOG_FILE = "/cache/recovery/last_log";
+static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";
 
-static const char *CACHE_LOG_DIR = "/cache/recovery";
-static const char *COMMAND_FILE = "/cache/recovery/command";
-static const char *LOG_FILE = "/cache/recovery/log";
-static const char *LAST_INSTALL_FILE = "/cache/recovery/last_install";
-static const char *LOCALE_FILE = "/cache/recovery/last_locale";
-static const char *CONVERT_FBE_DIR = "/tmp/convert_fbe";
-static const char *CONVERT_FBE_FILE = "/tmp/convert_fbe/convert_fbe";
-static const char *CACHE_ROOT = "/cache";
-static const char *DATA_ROOT = "/data";
-static const char* METADATA_ROOT = "/metadata";
-static const char *SDCARD_ROOT = "/sdcard";
-static const char *LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
-static const char *LAST_LOG_FILE = "/cache/recovery/last_log";
-// We will try to apply the update package 5 times at most in case of an I/O error or
-// bspatch | imgpatch error.
-static const int RETRY_LIMIT = 4;
-static constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
-static constexpr const char* DEFAULT_LOCALE = "en-US";
+static constexpr const char* CACHE_ROOT = "/cache";
+static constexpr const char* DATA_ROOT = "/data";
+static constexpr const char* METADATA_ROOT = "/metadata";
+static constexpr const char* SDCARD_ROOT = "/sdcard";
 
 // We define RECOVERY_API_VERSION in Android.mk, which will be picked up by build system and packed
 // into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
@@ -549,18 +537,19 @@ static bool erase_volume(const char* volume) {
   ensure_path_unmounted(volume);
 
   int result;
-
   if (is_data && reason && strcmp(reason, "convert_fbe") == 0) {
-    // Create convert_fbe breadcrumb file to signal to init
-    // to convert to file based encryption, not full disk encryption
+    static constexpr const char* CONVERT_FBE_DIR = "/tmp/convert_fbe";
+    static constexpr const char* CONVERT_FBE_FILE = "/tmp/convert_fbe/convert_fbe";
+    // Create convert_fbe breadcrumb file to signal init to convert to file based encryption, not
+    // full disk encryption.
     if (mkdir(CONVERT_FBE_DIR, 0700) != 0) {
-      ui->Print("Failed to make convert_fbe dir %s\n", strerror(errno));
-      return true;
+      PLOG(ERROR) << "Failed to mkdir " << CONVERT_FBE_DIR;
+      return false;
     }
     FILE* f = fopen(CONVERT_FBE_FILE, "wbe");
     if (!f) {
-      ui->Print("Failed to convert to file encryption %s\n", strerror(errno));
-      return true;
+      PLOG(ERROR) << "Failed to convert to file encryption";
+      return false;
     }
     fclose(f);
     result = format_volume(volume, CONVERT_FBE_DIR);
@@ -887,34 +876,34 @@ static bool check_wipe_package(size_t wipe_package_size) {
     return ota_type_matched && device_type_matched && (!has_serial_number || serial_number_matched);
 }
 
-// Wipe the current A/B device, with a secure wipe of all the partitions in
-// RECOVERY_WIPE.
+// Wipes the current A/B device, with a secure wipe of all the partitions in RECOVERY_WIPE.
 static bool wipe_ab_device(size_t wipe_package_size) {
-    ui->SetBackground(RecoveryUI::ERASING);
-    ui->SetProgressType(RecoveryUI::INDETERMINATE);
+  ui->SetBackground(RecoveryUI::ERASING);
+  ui->SetProgressType(RecoveryUI::INDETERMINATE);
 
-    if (!check_wipe_package(wipe_package_size)) {
-        LOG(ERROR) << "Failed to verify wipe package";
-        return false;
-    }
-    std::string partition_list;
-    if (!android::base::ReadFileToString(RECOVERY_WIPE, &partition_list)) {
-        LOG(ERROR) << "failed to read \"" << RECOVERY_WIPE << "\"";
-        return false;
+  if (!check_wipe_package(wipe_package_size)) {
+    LOG(ERROR) << "Failed to verify wipe package";
+    return false;
+  }
+  static constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
+  std::string partition_list;
+  if (!android::base::ReadFileToString(RECOVERY_WIPE, &partition_list)) {
+    LOG(ERROR) << "failed to read \"" << RECOVERY_WIPE << "\"";
+    return false;
+  }
+
+  std::vector<std::string> lines = android::base::Split(partition_list, "\n");
+  for (const std::string& line : lines) {
+    std::string partition = android::base::Trim(line);
+    // Ignore '#' comment or empty lines.
+    if (android::base::StartsWith(partition, "#") || partition.empty()) {
+      continue;
     }
 
-    std::vector<std::string> lines = android::base::Split(partition_list, "\n");
-    for (const std::string& line : lines) {
-        std::string partition = android::base::Trim(line);
-        // Ignore '#' comment or empty lines.
-        if (android::base::StartsWith(partition, "#") || partition.empty()) {
-            continue;
-        }
-
-        // Proceed anyway even if it fails to wipe some partition.
-        secure_wipe_partition(partition);
-    }
-    return true;
+    // Proceed anyway even if it fails to wipe some partition.
+    secure_wipe_partition(partition);
+  }
+  return true;
 }
 
 static void choose_recovery_file(Device* device) {
@@ -1342,10 +1331,13 @@ static void set_retry_bootloader_message(int retry_count, const std::vector<std:
 static bool bootreason_in_blacklist() {
   std::string bootreason = android::base::GetProperty("ro.boot.bootreason", "");
   if (!bootreason.empty()) {
-    for (const auto& str : bootreason_blacklist) {
-      if (strcasecmp(str.c_str(), bootreason.c_str()) == 0) {
-        return true;
-      }
+    // More bootreasons can be found in "system/core/bootstat/bootstat.cpp".
+    static const std::vector<std::string> kBootreasonBlacklist{
+      "kernel_panic",
+      "Panic",
+    };
+    for (const auto& str : kBootreasonBlacklist) {
+      if (android::base::EqualsIgnoreCase(str, bootreason)) return true;
     }
   }
   return false;
@@ -1497,6 +1489,7 @@ int main(int argc, char **argv) {
     }
 
     if (locale.empty()) {
+      static constexpr const char* DEFAULT_LOCALE = "en-US";
       locale = DEFAULT_LOCALE;
     }
   }
@@ -1582,8 +1575,10 @@ int main(int argc, char **argv) {
       }
       if (status != INSTALL_SUCCESS) {
         ui->Print("Installation aborted.\n");
-        // When I/O error happens, reboot and retry installation RETRY_LIMIT
-        // times before we abandon this OTA update.
+
+        // When I/O error or bspatch/imgpatch error happens, reboot and retry installation
+        // RETRY_LIMIT times before we abandon this OTA update.
+        static constexpr int RETRY_LIMIT = 4;
         if (status == INSTALL_RETRY && retry_count < RETRY_LIMIT) {
           copy_logs();
           retry_count += 1;
