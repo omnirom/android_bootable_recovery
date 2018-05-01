@@ -17,6 +17,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.example.android.systemupdatersample.tests">
 
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
+
     <!-- We add an application tag here just so that we can indicate that
          this package needs to link against the android.test library,
          which is needed when building test cases. -->
