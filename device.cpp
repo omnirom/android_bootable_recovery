@@ -16,6 +16,8 @@
 
 #include "device.h"
 
+#include "ui.h"
+
 static const char* MENU_ITEMS[] = {
   "Reboot system now",
   "Reboot to bootloader",
