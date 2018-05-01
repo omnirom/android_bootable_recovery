@@ -126,6 +126,7 @@ LOCAL_SRC_FILES := \
     device.cpp \
     fuse_sdcard_provider.cpp \
     recovery.cpp \
+    recovery_main.cpp \
     roots.cpp \
     rotate_logs.cpp \
 
