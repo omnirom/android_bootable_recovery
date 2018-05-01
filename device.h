@@ -17,11 +17,37 @@
 #ifndef _RECOVERY_DEVICE_H
 #define _RECOVERY_DEVICE_H
 
+#include <stddef.h>
+
+#include <string>
+#include <vector>
+
 // Forward declaration to avoid including "ui.h".
 class RecoveryUI;
 
 class Device {
  public:
+  static constexpr const int kNoAction = -1;
+  static constexpr const int kHighlightUp = -2;
+  static constexpr const int kHighlightDown = -3;
+  static constexpr const int kInvokeItem = -4;
+
+  enum BuiltinAction {
+    NO_ACTION = 0,
+    REBOOT = 1,
+    APPLY_SDCARD = 2,
+    // APPLY_CACHE was 3.
+    APPLY_ADB_SIDELOAD = 4,
+    WIPE_DATA = 5,
+    WIPE_CACHE = 6,
+    REBOOT_BOOTLOADER = 7,
+    SHUTDOWN = 8,
+    VIEW_RECOVERY_LOGS = 9,
+    MOUNT_SYSTEM = 10,
+    RUN_GRAPHICS_TEST = 11,
+    RUN_LOCALE_TEST = 12,
+  };
+
   explicit Device(RecoveryUI* ui) : ui_(ui) {}
   virtual ~Device() {}
 
@@ -48,44 +74,23 @@ class Device {
   //
   // Returns one of the defined constants below in order to:
   //
-  //   - move the menu highlight (kHighlight{Up,Down})
-  //   - invoke the highlighted item (kInvokeItem)
-  //   - do nothing (kNoAction)
-  //   - invoke a specific action (a menu position: any non-negative number)
+  //   - move the menu highlight (kHighlight{Up,Down}: negative value)
+  //   - invoke the highlighted item (kInvokeItem: negative value)
+  //   - do nothing (kNoAction: negative value)
+  //   - invoke a specific action (a menu position: non-negative value)
   virtual int HandleMenuKey(int key, bool visible);
 
-  enum BuiltinAction {
-    NO_ACTION = 0,
-    REBOOT = 1,
-    APPLY_SDCARD = 2,
-    // APPLY_CACHE was 3.
-    APPLY_ADB_SIDELOAD = 4,
-    WIPE_DATA = 5,
-    WIPE_CACHE = 6,
-    REBOOT_BOOTLOADER = 7,
-    SHUTDOWN = 8,
-    VIEW_RECOVERY_LOGS = 9,
-    MOUNT_SYSTEM = 10,
-    RUN_GRAPHICS_TEST = 11,
-    RUN_LOCALE_TEST = 12,
-  };
+  // Returns the list of menu items (a vector of strings). The menu_position passed to
+  // InvokeMenuItem will correspond to the indexes into this array.
+  virtual const std::vector<std::string>& GetMenuItems();
 
-  // Return the list of menu items (an array of strings, NULL-terminated). The menu_position passed
-  // to InvokeMenuItem will correspond to the indexes into this array.
-  virtual const char* const* GetMenuItems();
-
-  // Perform a recovery action selected from the menu. 'menu_position' will be the item number of
-  // the selected menu item, or a non-negative number returned from HandleMenuKey(). The menu will
-  // be hidden when this is called; implementations can call ui_print() to print information to the
+  // Performs a recovery action selected from the menu. 'menu_position' will be the index of the
+  // selected menu item, or a non-negative value returned from HandleMenuKey(). The menu will be
+  // hidden when this is called; implementations can call ui_print() to print information to the
   // screen. If the menu position is one of the builtin actions, you can just return the
   // corresponding enum value. If it is an action specific to your device, you actually perform it
   // here and return NO_ACTION.
-  virtual BuiltinAction InvokeMenuItem(int menu_position);
-
-  static const int kNoAction = -1;
-  static const int kHighlightUp = -2;
-  static const int kHighlightDown = -3;
-  static const int kInvokeItem = -4;
+  virtual BuiltinAction InvokeMenuItem(size_t menu_position);
 
   // Called before and after we do a wipe data/factory reset operation, either via a reboot from the
   // main system with the --wipe_data flag, or when the user boots into recovery image manually and
