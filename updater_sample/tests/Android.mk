@@ -22,11 +22,15 @@ LOCAL_SDK_VERSION := system_current
 LOCAL_MODULE_TAGS := tests
 LOCAL_JAVA_LIBRARIES := \
     android.test.base.stubs \
-    android.test.runner.stubs
+    android.test.runner.stubs \
+    guava \
+    mockito-target-minus-junit4
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 LOCAL_INSTRUMENTATION_FOR := SystemUpdaterSample
 LOCAL_PROGUARD_ENABLED := disabled
 
-LOCAL_SRC_FILES := $(call all-subdir-java-files)
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 include $(BUILD_PACKAGE)
