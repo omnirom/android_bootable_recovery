@@ -25,9 +25,6 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
   void SetStage(int current, int max) override;
 
-  void StartMenu(const char* const* headers, const char* const* items,
-                 int initial_selection) override;
-
  protected:
   // progress bar vertical position, it's centered horizontally
   const int kProgressBarBaseline;
@@ -35,6 +32,9 @@ class WearRecoveryUI : public ScreenRecoveryUI {
   // Unusable rows when displaying the recovery menu, including the lines for headers (Android
   // Recovery, build id and etc) and the bottom lines that may otherwise go out of the screen.
   const int kMenuUnusableRows;
+
+  void StartMenu(const char* const* headers, const char* const* items,
+                 int initial_selection) override;
 
   int GetProgressBaseline() const override;
 

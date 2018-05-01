@@ -54,12 +54,11 @@ class StubRecoveryUI : public RecoveryUI {
   void ShowFile(const char* /* filename */) override {}
 
   // menu display
-  void StartMenu(const char* const* /* headers */, const char* const* /* items */,
-                 int /* initial_selection */) override {}
-  int SelectMenu(int sel) override {
-    return sel;
+  int ShowMenu(const char* const* /* headers */, const char* const* /* items */,
+               int initial_selection, bool /* menu_only */,
+               const std::function<int(int, bool)>& /* key_handler */) override {
+    return initial_selection;
   }
-  void EndMenu() override {}
 };
 
 #endif  // RECOVERY_STUB_UI_H

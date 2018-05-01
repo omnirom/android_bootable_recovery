@@ -37,6 +37,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -495,57 +496,6 @@ static bool erase_volume(const char* volume) {
   return (result == 0);
 }
 
-// Display a menu with the specified 'headers' and 'items'. Device specific HandleMenuKey() may
-// return a positive number beyond the given range. Caller sets 'menu_only' to true to ensure only
-// a menu item gets selected. 'initial_selection' controls the initial cursor location. Returns the
-// (non-negative) chosen item number, or -1 if timed out waiting for input.
-static int get_menu_selection(const char* const* headers, const char* const* items, bool menu_only,
-                              int initial_selection, Device* device) {
-  // Throw away keys pressed previously, so user doesn't accidentally trigger menu items.
-  ui->FlushKeys();
-
-  ui->StartMenu(headers, items, initial_selection);
-
-  int selected = initial_selection;
-  int chosen_item = -1;
-  while (chosen_item < 0) {
-    int key = ui->WaitKey();
-    if (key == -1) {  // WaitKey() timed out.
-      if (ui->WasTextEverVisible()) {
-        continue;
-      } else {
-        LOG(INFO) << "Timed out waiting for key input; rebooting.";
-        ui->EndMenu();
-        return -1;
-      }
-    }
-
-    bool visible = ui->IsTextVisible();
-    int action = device->HandleMenuKey(key, visible);
-
-    if (action < 0) {
-      switch (action) {
-        case Device::kHighlightUp:
-          selected = ui->SelectMenu(--selected);
-          break;
-        case Device::kHighlightDown:
-          selected = ui->SelectMenu(++selected);
-          break;
-        case Device::kInvokeItem:
-          chosen_item = selected;
-          break;
-        case Device::kNoAction:
-          break;
-      }
-    } else if (!menu_only) {
-      chosen_item = action;
-    }
-  }
-
-  ui->EndMenu();
-  return chosen_item;
-}
-
 // Returns the selected filename, or an empty string.
 static std::string browse_directory(const std::string& path, Device* device) {
   ensure_path_mounted(path.c_str());
@@ -588,7 +538,9 @@ static std::string browse_directory(const std::string& path, Device* device) {
 
   int chosen_item = 0;
   while (true) {
-    chosen_item = get_menu_selection(headers, entries, true, chosen_item, device);
+    chosen_item = ui->ShowMenu(
+        headers, entries, chosen_item, true,
+        std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
     const std::string& item = zips[chosen_item];
     if (chosen_item == 0) {
@@ -612,15 +564,17 @@ static std::string browse_directory(const std::string& path, Device* device) {
 }
 
 static bool yes_no(Device* device, const char* question1, const char* question2) {
-    const char* headers[] = { question1, question2, NULL };
-    const char* items[] = { " No", " Yes", NULL };
+  const char* headers[] = { question1, question2, NULL };
+  const char* items[] = { " No", " Yes", NULL };
 
-    int chosen_item = get_menu_selection(headers, items, true, 0, device);
-    return (chosen_item == 1);
+  int chosen_item = ui->ShowMenu(
+      headers, items, 0, true,
+      std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
+  return (chosen_item == 1);
 }
 
 static bool ask_to_wipe_data(Device* device) {
-    return yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!");
+  return yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!");
 }
 
 // Return true on success.
@@ -660,7 +614,9 @@ static bool prompt_and_wipe_data(Device* device) {
     NULL
   };
   for (;;) {
-    int chosen_item = get_menu_selection(headers, items, true, 0, device);
+    int chosen_item = ui->ShowMenu(
+        headers, items, 0, true,
+        std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
     if (chosen_item != 1) {
       return true;  // Just reboot, no wipe; not a failure, user asked for it
     }
@@ -859,7 +815,9 @@ static void choose_recovery_file(Device* device) {
 
   int chosen_item = 0;
   while (true) {
-    chosen_item = get_menu_selection(headers, menu_entries.data(), true, chosen_item, device);
+    chosen_item = ui->ShowMenu(
+        headers, menu_entries.data(), chosen_item, true,
+        std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
     if (entries[chosen_item] == "Back") break;
 
     ui->ShowFile(entries[chosen_item].c_str());
@@ -1005,7 +963,9 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
     }
     ui->SetProgressType(RecoveryUI::EMPTY);
 
-    int chosen_item = get_menu_selection(nullptr, device->GetMenuItems(), false, 0, device);
+    int chosen_item = ui->ShowMenu(
+        nullptr, device->GetMenuItems(), 0, false,
+        std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
     // Device-specific code may take some action here. It may return one of the core actions
     // handled in the switch statement below.
