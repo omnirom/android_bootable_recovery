@@ -1009,6 +1009,53 @@ void ScreenRecoveryUI::EndMenu() {
   pthread_mutex_unlock(&updateMutex);
 }
 
+int ScreenRecoveryUI::ShowMenu(const char* const* headers, const char* const* items,
+                               int initial_selection, bool menu_only,
+                               const std::function<int(int, bool)>& key_handler) {
+  // Throw away keys pressed previously, so user doesn't accidentally trigger menu items.
+  FlushKeys();
+
+  StartMenu(headers, items, initial_selection);
+
+  int selected = initial_selection;
+  int chosen_item = -1;
+  while (chosen_item < 0) {
+    int key = WaitKey();
+    if (key == -1) {  // WaitKey() timed out.
+      if (WasTextEverVisible()) {
+        continue;
+      } else {
+        LOG(INFO) << "Timed out waiting for key input; rebooting.";
+        EndMenu();
+        return -1;
+      }
+    }
+
+    bool visible = IsTextVisible();
+    int action = key_handler(key, visible);
+    if (action < 0) {
+      switch (action) {
+        case Device::kHighlightUp:
+          selected = SelectMenu(--selected);
+          break;
+        case Device::kHighlightDown:
+          selected = SelectMenu(++selected);
+          break;
+        case Device::kInvokeItem:
+          chosen_item = selected;
+          break;
+        case Device::kNoAction:
+          break;
+      }
+    } else if (!menu_only) {
+      chosen_item = action;
+    }
+  }
+
+  EndMenu();
+  return chosen_item;
+}
+
 bool ScreenRecoveryUI::IsTextVisible() {
   pthread_mutex_lock(&updateMutex);
   int visible = show_text;
