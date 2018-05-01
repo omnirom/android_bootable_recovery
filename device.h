@@ -17,7 +17,8 @@
 #ifndef _RECOVERY_DEVICE_H
 #define _RECOVERY_DEVICE_H
 
-#include "ui.h"
+// Forward declaration to avoid including "ui.h".
+class RecoveryUI;
 
 class Device {
  public:
