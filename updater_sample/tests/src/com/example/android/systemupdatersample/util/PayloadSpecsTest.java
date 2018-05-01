@@ -16,8 +16,8 @@
 
 package com.example.android.systemupdatersample.util;
 
-import static com.example.android.systemupdatersample.util.PackagePropertyFiles.PAYLOAD_BINARY_FILE_NAME;
-import static com.example.android.systemupdatersample.util.PackagePropertyFiles.PAYLOAD_PROPERTIES_FILE_NAME;
+import static com.example.android.systemupdatersample.util.PackageFiles.PAYLOAD_BINARY_FILE_NAME;
+import static com.example.android.systemupdatersample.util.PackageFiles.PAYLOAD_PROPERTIES_FILE_NAME;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;

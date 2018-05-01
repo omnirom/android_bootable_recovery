@@ -16,13 +16,30 @@
 
 package com.example.android.systemupdatersample.util;
 
-/** Utility class for property files in a package. */
-public final class PackagePropertyFiles {
+/** Utility class for an OTA package. */
+public final class PackageFiles {
 
+    /**
+     * Directory used to perform updates.
+     */
+    public static final String OTA_PACKAGE_DIR = "/data/ota_package";
+
+    /**
+     * update payload, it will be passed to {@code UpdateEngine#applyPayload}.
+     */
     public static final String PAYLOAD_BINARY_FILE_NAME = "payload.bin";
 
-    public static final String PAYLOAD_HEADER_FILE_NAME = "payload_header.bin";
-
+    /**
+     * Currently, when calling {@code UpdateEngine#applyPayload} to perform actions
+     * that don't require network access (e.g. change slot), update_engine still
+     * talks to the server to download/verify file.
+     * {@code update_engine} might throw error when rebooting if {@code UpdateEngine#applyPayload}
+     * is not supplied right headers and tokens.
+     * This behavior might change in future android versions.
+     *
+     * To avoid extra network request in {@code update_engine}, this file has to be
+     * downloaded and put in {@code OTA_PACKAGE_DIR}.
+     */
     public static final String PAYLOAD_METADATA_FILE_NAME = "payload_metadata.bin";
 
     public static final String PAYLOAD_PROPERTIES_FILE_NAME = "payload_properties.txt";
@@ -38,5 +55,5 @@ public final class PackagePropertyFiles {
      */
     public static final String COMPATIBILITY_ZIP_FILE_NAME = "compatibility.zip";
 
-    private PackagePropertyFiles() {}
+    private PackageFiles() {}
 }
