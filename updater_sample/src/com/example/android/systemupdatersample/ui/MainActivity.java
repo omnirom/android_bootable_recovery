@@ -260,7 +260,7 @@ public class MainActivity extends Activity {
      * Applies the given update
      */
     private void applyUpdate(UpdateConfig config) {
-        if (config.getInstallType() == UpdateConfig.TYPE_NON_STREAMING) {
+        if (config.getInstallType() == UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING) {
             AbNonStreamingUpdate update = new AbNonStreamingUpdate(mUpdateEngine, config);
             try {
                 update.execute();

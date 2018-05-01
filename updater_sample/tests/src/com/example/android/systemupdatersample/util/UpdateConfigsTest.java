@@ -54,8 +54,8 @@ public class UpdateConfigsTest {
     @Test
     public void configsToNames_extractsNames() {
         List<UpdateConfig> configs = Arrays.asList(
-                new UpdateConfig("blah", "http://", UpdateConfig.TYPE_NON_STREAMING),
-                new UpdateConfig("blah 2", "http://", UpdateConfig.TYPE_STREAMING)
+                new UpdateConfig("blah", "http://", UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING),
+                new UpdateConfig("blah 2", "http://", UpdateConfig.AB_INSTALL_TYPE_STREAMING)
         );
         String[] names = UpdateConfigs.configsToNames(configs);
         assertArrayEquals(new String[] {"blah", "blah 2"}, names);
