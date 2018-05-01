@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <stdio.h>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -135,10 +136,8 @@ class ScreenRecoveryUI : public RecoveryUI {
   void ShowFile(const char* filename) override;
 
   // menu display
-  void StartMenu(const char* const* headers, const char* const* items,
-                 int initial_selection) override;
-  int SelectMenu(int sel) override;
-  void EndMenu() override;
+  int ShowMenu(const char* const* headers, const char* const* items, int initial_selection,
+               bool menu_only, const std::function<int(int, bool)>& key_handler) override;
 
   void KeyLongPress(int) override;
 
@@ -163,6 +162,18 @@ class ScreenRecoveryUI : public RecoveryUI {
   const float kDensity;
 
   virtual bool InitTextParams();
+
+  // Displays some header text followed by a menu of items, which appears at the top of the screen
+  // (in place of any scrolling ui_print() output, if necessary).
+  virtual void StartMenu(const char* const* headers, const char* const* items,
+                         int initial_selection);
+
+  // Sets the menu highlight to the given index, wrapping if necessary. Returns the actual item
+  // selected.
+  virtual int SelectMenu(int sel);
+
+  // Ends menu mode, resetting the text overlay so that ui_print() statements will be displayed.
+  virtual void EndMenu();
 
   virtual void draw_background_locked();
   virtual void draw_foreground_locked();
