@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "private/recovery.h"
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -35,7 +37,6 @@
 #include <unistd.h>
 
 #include <algorithm>
-#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -64,7 +65,6 @@
 #include "fuse_sdcard_provider.h"
 #include "fuse_sideload.h"
 #include "install.h"
-#include "minadbd/minadbd.h"
 #include "minui/minui.h"
 #include "otautil/DirUtil.h"
 #include "otautil/error_code.h"
@@ -147,7 +147,6 @@ struct selabel_handle* sehandle;
  *    7b. the user reboots (pulling the battery, etc) into the main system
  */
 
-// Open a given path, mounting partitions as necessary.
 FILE* fopen_path(const std::string& path, const char* mode) {
   if (ensure_path_mounted(path.c_str()) != 0) {
     LOG(ERROR) << "Can't mount " << path;
@@ -162,8 +161,7 @@ FILE* fopen_path(const std::string& path, const char* mode) {
   return fopen(path.c_str(), mode);
 }
 
-// close a file, log an error if the error indicator is set
-static void check_and_fclose(FILE* fp, const std::string& name) {
+void check_and_fclose(FILE* fp, const std::string& name) {
   fflush(fp);
   if (fsync(fileno(fp)) == -1) {
     PLOG(ERROR) << "Failed to fsync " << name;
@@ -184,92 +182,6 @@ bool reboot(const std::string& command) {
         cmd += ",quiescent";
     }
     return android::base::SetProperty(ANDROID_RB_PROPERTY, cmd);
-}
-
-static void redirect_stdio(const char* filename) {
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-        PLOG(ERROR) << "pipe failed";
-
-        // Fall back to traditional logging mode without timestamps.
-        // If these fail, there's not really anywhere to complain...
-        freopen(filename, "a", stdout); setbuf(stdout, NULL);
-        freopen(filename, "a", stderr); setbuf(stderr, NULL);
-
-        return;
-    }
-
-    pid_t pid = fork();
-    if (pid == -1) {
-        PLOG(ERROR) << "fork failed";
-
-        // Fall back to traditional logging mode without timestamps.
-        // If these fail, there's not really anywhere to complain...
-        freopen(filename, "a", stdout); setbuf(stdout, NULL);
-        freopen(filename, "a", stderr); setbuf(stderr, NULL);
-
-        return;
-    }
-
-    if (pid == 0) {
-        /// Close the unused write end.
-        close(pipefd[1]);
-
-        auto start = std::chrono::steady_clock::now();
-
-        // Child logger to actually write to the log file.
-        FILE* log_fp = fopen(filename, "ae");
-        if (log_fp == nullptr) {
-            PLOG(ERROR) << "fopen \"" << filename << "\" failed";
-            close(pipefd[0]);
-            _exit(EXIT_FAILURE);
-        }
-
-        FILE* pipe_fp = fdopen(pipefd[0], "r");
-        if (pipe_fp == nullptr) {
-            PLOG(ERROR) << "fdopen failed";
-            check_and_fclose(log_fp, filename);
-            close(pipefd[0]);
-            _exit(EXIT_FAILURE);
-        }
-
-        char* line = nullptr;
-        size_t len = 0;
-        while (getline(&line, &len, pipe_fp) != -1) {
-            auto now = std::chrono::steady_clock::now();
-            double duration = std::chrono::duration_cast<std::chrono::duration<double>>(
-                    now - start).count();
-            if (line[0] == '\n') {
-                fprintf(log_fp, "[%12.6lf]\n", duration);
-            } else {
-                fprintf(log_fp, "[%12.6lf] %s", duration, line);
-            }
-            fflush(log_fp);
-        }
-
-        PLOG(ERROR) << "getline failed";
-
-        free(line);
-        check_and_fclose(log_fp, filename);
-        close(pipefd[0]);
-        _exit(EXIT_FAILURE);
-    } else {
-        // Redirect stdout/stderr to the logger process.
-        // Close the unused read end.
-        close(pipefd[0]);
-
-        setbuf(stdout, nullptr);
-        setbuf(stderr, nullptr);
-
-        if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
-            PLOG(ERROR) << "dup2 stdout failed";
-        }
-        if (dup2(pipefd[1], STDERR_FILENO) == -1) {
-            PLOG(ERROR) << "dup2 stderr failed";
-        }
-
-        close(pipefd[1]);
-    }
 }
 
 // command line args come from, in decreasing precedence:
@@ -1218,18 +1130,6 @@ void ui_print(const char* format, ...) {
     }
 }
 
-static constexpr char log_characters[] = "VDIWEF";
-
-void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity,
-              const char* /* tag */, const char* /* file */, unsigned int /* line */,
-              const char* message) {
-  if (severity >= android::base::ERROR && ui != nullptr) {
-    ui->Print("E:%s\n", message);
-  } else {
-    fprintf(stdout, "%c:%s\n", log_characters[severity], message);
-  }
-}
-
 static bool is_battery_ok(int* required_battery_level) {
   using android::hardware::health::V1_0::BatteryStatus;
   using android::hardware::health::V2_0::Result;
@@ -1359,37 +1259,8 @@ static void log_failure_code(ErrorCode code, const std::string& update_package) 
   LOG(INFO) << log_content;
 }
 
-int main(int argc, char **argv) {
-  // We don't have logcat yet under recovery; so we'll print error on screen and
-  // log to stdout (which is redirected to recovery.log) as we used to do.
-  android::base::InitLogging(argv, &UiLogger);
-
-  // Take last pmsg contents and rewrite it to the current pmsg session.
-  static const char filter[] = "recovery/";
-  // Do we need to rotate?
-  bool doRotate = false;
-
-  __android_log_pmsg_file_read(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter, logbasename, &doRotate);
-  // Take action to refresh pmsg contents
-  __android_log_pmsg_file_read(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter, logrotate, &doRotate);
-
-  // If this binary is started with the single argument "--adbd",
-  // instead of being the normal recovery binary, it turns into kind
-  // of a stripped-down version of adbd that only supports the
-  // 'sideload' command.  Note this must be a real argument, not
-  // anything in the command file or bootloader control block; the
-  // only way recovery should be run with this argument is when it
-  // starts a copy of itself from the apply_from_adb() function.
-  if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
-    minadbd_main();
-    return 0;
-  }
-
+int start_recovery(int argc, char** argv) {
   time_t start = time(nullptr);
-
-  // redirect_stdio should be called only in non-sideload mode. Otherwise
-  // we may have two logger instances with different timestamps.
-  redirect_stdio(Paths::Get().temporary_log_file().c_str());
 
   printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
 
