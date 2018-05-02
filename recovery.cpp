@@ -820,7 +820,7 @@ static void choose_recovery_file(Device* device) {
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
     if (entries[chosen_item] == "Back") break;
 
-    ui->ShowFile(entries[chosen_item].c_str());
+    ui->ShowFile(entries[chosen_item]);
   }
 }
 
