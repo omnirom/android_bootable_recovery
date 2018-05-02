@@ -17,6 +17,9 @@
 #ifndef RECOVERY_STUB_UI_H
 #define RECOVERY_STUB_UI_H
 
+#include <functional>
+#include <string>
+
 #include "ui.h"
 
 // Stub implementation of RecoveryUI for devices without screen.
@@ -51,7 +54,7 @@ class StubRecoveryUI : public RecoveryUI {
     va_end(ap);
   }
   void PrintOnScreenOnly(const char* /* fmt */, ...) override {}
-  void ShowFile(const char* /* filename */) override {}
+  void ShowFile(const std::string& /* filename */) override {}
 
   // menu display
   int ShowMenu(const char* const* /* headers */, const char* const* /* items */,

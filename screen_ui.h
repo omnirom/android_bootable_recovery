@@ -133,7 +133,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   // printing messages
   void Print(const char* fmt, ...) override __printflike(2, 3);
   void PrintOnScreenOnly(const char* fmt, ...) override __printflike(2, 3);
-  void ShowFile(const char* filename) override;
+  void ShowFile(const std::string& filename) override;
 
   // menu display
   int ShowMenu(const char* const* headers, const char* const* items, int initial_selection,
