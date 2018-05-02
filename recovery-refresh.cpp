@@ -42,7 +42,7 @@
 
 #include <private/android_logger.h> /* private pmsg functions */
 
-#include "rotate_logs.h"
+#include "logging.h"
 
 int main(int argc, char **argv) {
     static const char filter[] = "recovery/";

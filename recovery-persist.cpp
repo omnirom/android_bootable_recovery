@@ -41,7 +41,7 @@
 #include <android-base/logging.h>
 #include <private/android_logger.h> /* private pmsg functions */
 
-#include "rotate_logs.h"
+#include "logging.h"
 
 static const char *LAST_LOG_FILE = "/data/misc/recovery/last_log";
 static const char *LAST_PMSG_FILE = "/sys/fs/pstore/pmsg-ramoops-0";
