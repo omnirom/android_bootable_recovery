@@ -27,7 +27,9 @@
 static constexpr int kRecoveryApiVersion = 3;
 
 class RecoveryUI;
+struct selabel_handle;
 
+extern struct selabel_handle* sehandle;
 extern RecoveryUI* ui;
 extern bool modified_flash;
 
@@ -36,13 +38,6 @@ extern std::string stage;
 
 // The reason argument provided in "--reason=".
 extern const char* reason;
-
-// fopen(3)'s the given file, by mounting volumes and making parent dirs as necessary. Returns the
-// file pointer, or nullptr on error.
-FILE* fopen_path(const std::string& path, const char* mode);
-
-// In turn fflush(3)'s, fsync(3)'s and fclose(3)'s the given stream.
-void check_and_fclose(FILE* fp, const std::string& name);
 
 void ui_print(const char* format, ...) __printflike(1, 2);
 
