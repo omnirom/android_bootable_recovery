@@ -178,7 +178,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   virtual void draw_background_locked();
   virtual void draw_foreground_locked();
   virtual void draw_screen_locked();
-  virtual void draw_menu_and_text_buffer_locked(const char* const* help_message);
+  virtual void draw_menu_and_text_buffer_locked(const std::vector<std::string>& help_message);
   virtual void update_screen_locked();
   virtual void update_progress_locked();
 
@@ -212,7 +212,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   // Draws a horizontal rule at Y. Returns the offset it should be moving along Y-axis.
   virtual int DrawHorizontalRule(int y) const;
   // Draws a line of text. Returns the offset it should be moving along Y-axis.
-  virtual int DrawTextLine(int x, int y, const char* line, bool bold) const;
+  virtual int DrawTextLine(int x, int y, const std::string& line, bool bold) const;
   // Draws surface portion (sx, sy, w, h) at screen location (dx, dy).
   virtual void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx, int dy) const;
   // Draws rectangle at (x, y) - (x + w, y + h).
@@ -220,10 +220,10 @@ class ScreenRecoveryUI : public RecoveryUI {
   // Draws given surface (surface->pixel_bytes = 1) as text at (x, y).
   virtual void DrawTextIcon(int x, int y, GRSurface* surface) const;
   // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
-  int DrawTextLines(int x, int y, const char* const* lines) const;
+  int DrawTextLines(int x, int y, const std::vector<std::string>& lines) const;
   // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines.
   // Returns the offset it should be moving along Y-axis.
-  int DrawWrappedTextLines(int x, int y, const char* const* lines) const;
+  int DrawWrappedTextLines(int x, int y, const std::vector<std::string>& lines) const;
 
   Icon currentIcon;
 
