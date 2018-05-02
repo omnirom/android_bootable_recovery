@@ -42,7 +42,6 @@
 #include <android-base/strings.h>
 #include <minui/minui.h>
 
-#include "common.h"
 #include "device.h"
 #include "ui.h"
 
@@ -951,10 +950,10 @@ void ScreenRecoveryUI::ShowFile(FILE* fp) {
   }
 }
 
-void ScreenRecoveryUI::ShowFile(const char* filename) {
-  FILE* fp = fopen_path(filename, "re");
-  if (fp == nullptr) {
-    Print("  Unable to open %s: %s\n", filename, strerror(errno));
+void ScreenRecoveryUI::ShowFile(const std::string& filename) {
+  std::unique_ptr<FILE, decltype(&fclose)> fp(fopen(filename.c_str(), "re"), fclose);
+  if (!fp) {
+    Print("  Unable to open %s: %s\n", filename.c_str(), strerror(errno));
     return;
   }
 
@@ -966,8 +965,7 @@ void ScreenRecoveryUI::ShowFile(const char* filename) {
   text_ = file_viewer_text_;
   ClearText();
 
-  ShowFile(fp);
-  fclose(fp);
+  ShowFile(fp.get());
 
   text_ = old_text;
   text_col_ = old_text_col;
