@@ -33,7 +33,10 @@ struct GRSurface;
 // This class maintains the menu selection and display of the screen ui.
 class Menu {
  public:
-  Menu(bool scrollable, size_t max_items, size_t max_length);
+  // Constructs a Menu instance with the given |headers|, |items| and properties. Sets the initial
+  // selection to |initial_selection|.
+  Menu(bool scrollable, size_t max_items, size_t max_length, const char* const* headers,
+       const char* const* items, int initial_selection);
 
   bool scrollable() const {
     return scrollable_;
@@ -45,8 +48,10 @@ class Menu {
 
   // Returns count of menu items.
   size_t ItemsCount() const;
+
   // Returns the index of the first menu item.
   size_t MenuStart() const;
+
   // Returns the index of the last menu item + 1.
   size_t MenuEnd() const;
 
@@ -67,10 +72,6 @@ class Menu {
   // Checks if the menu items fit vertically on the screen. Returns true and set the
   // |cur_selection_str| if the items exceed the screen limit.
   bool ItemsOverflow(std::string* cur_selection_str) const;
-
-  // Starts the menu with |headers| and |items| in text. Sets the default selection to
-  // |initial_selection|.
-  void Start(const char* const* headers, const char* const* items, int initial_selection);
 
   // Sets the current selection to |sel|. Handle the overflow cases depending on if the menu is
   // scrollable.
