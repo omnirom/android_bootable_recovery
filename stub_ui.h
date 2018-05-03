@@ -28,6 +28,9 @@ class StubRecoveryUI : public RecoveryUI {
  public:
   StubRecoveryUI() = default;
 
+  std::string GetLocale() override {
+    return "";
+  }
   void SetBackground(Icon /* icon */) override {}
   void SetSystemUpdateText(bool /* security_update */) override {}
 
