@@ -40,7 +40,7 @@ public final class FileDownloader {
     private long mSize;
     private File mOut;
 
-    public FileDownloader(String url, long offset, long size, File out)  {
+    public FileDownloader(String url, long offset, long size, File out) {
         this.mUrl = url;
         this.mOffset = offset;
         this.mSize = size;

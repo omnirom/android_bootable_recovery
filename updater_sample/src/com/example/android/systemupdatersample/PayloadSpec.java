@@ -18,12 +18,15 @@ package com.example.android.systemupdatersample;
 
 import android.os.UpdateEngine;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Payload that will be given to {@link UpdateEngine#applyPayload)}.
  */
-public class PayloadSpec {
+public class PayloadSpec implements Serializable {
+
+    private static final long serialVersionUID = 41043L;
 
     /**
      * Creates a payload spec {@link Builder}
