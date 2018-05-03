@@ -93,8 +93,7 @@ void WearRecoveryUI::StartMenu(const char* const* headers, const char* const* it
   pthread_mutex_lock(&updateMutex);
   if (text_rows_ > 0 && text_cols_ > 0) {
     menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_ - kMenuUnusableRows - 1,
-                                   text_cols_ - 1);
-    menu_->Start(headers, items, initial_selection);
+                                   text_cols_ - 1, headers, items, initial_selection);
 
     update_screen_locked();
   }

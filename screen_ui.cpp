@@ -52,14 +52,23 @@ static double now() {
   return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
-Menu::Menu(bool scrollable, size_t max_items, size_t max_length)
+Menu::Menu(bool scrollable, size_t max_items, size_t max_length, const char* const* headers,
+           const char* const* items, int initial_selection)
     : scrollable_(scrollable),
       max_display_items_(max_items),
       max_item_length_(max_length),
-      text_headers_(nullptr),
+      text_headers_(headers),
       menu_start_(0),
-      selection_(0) {
+      selection_(initial_selection) {
   CHECK_LE(max_items, static_cast<size_t>(std::numeric_limits<int>::max()));
+
+  // It's fine to have more entries than text_rows_ if scrollable menu is supported.
+  size_t max_items_count = scrollable_ ? std::numeric_limits<int>::max() : max_display_items_;
+  for (size_t i = 0; i < max_items_count && items[i] != nullptr; ++i) {
+    text_items_.emplace_back(items[i], strnlen(items[i], max_item_length_));
+  }
+
+  CHECK(!text_items_.empty());
 }
 
 const char* const* Menu::text_headers() const {
@@ -85,26 +94,13 @@ size_t Menu::ItemsCount() const {
 }
 
 bool Menu::ItemsOverflow(std::string* cur_selection_str) const {
-  if (!scrollable_ || static_cast<size_t>(ItemsCount()) <= max_display_items_) {
+  if (!scrollable_ || ItemsCount() <= max_display_items_) {
     return false;
   }
 
   *cur_selection_str =
       android::base::StringPrintf("Current item: %d/%zu", selection_ + 1, ItemsCount());
   return true;
-}
-
-void Menu::Start(const char* const* headers, const char* const* items, int initial_selection) {
-  text_headers_ = headers;
-
-  // It's fine to have more entries than text_rows_ if scrollable menu is supported.
-  size_t max_items_count = scrollable_ ? std::numeric_limits<int>::max() : max_display_items_;
-  for (size_t i = 0; i < max_items_count && items[i] != nullptr; ++i) {
-    text_items_.emplace_back(items[i], strnlen(items[i], max_item_length_));
-  }
-
-  CHECK(!text_items_.empty());
-  selection_ = initial_selection;
 }
 
 // TODO(xunchang) modify the function parameters to button up & down.
@@ -987,9 +983,8 @@ void ScreenRecoveryUI::StartMenu(const char* const* headers, const char* const* 
                                  int initial_selection) {
   pthread_mutex_lock(&updateMutex);
   if (text_rows_ > 0 && text_cols_ > 1) {
-    menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_, text_cols_ - 1);
-    menu_->Start(headers, items, initial_selection);
-
+    menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_, text_cols_ - 1, headers, items,
+                                   initial_selection);
     update_screen_locked();
   }
   pthread_mutex_unlock(&updateMutex);
