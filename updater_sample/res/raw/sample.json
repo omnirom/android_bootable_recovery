@@ -1,18 +1,18 @@
 {
     "__name": "name will be visible on UI",
-    "__url": "https:// or file:// uri to update file (zip, xz, ...)",
-    "__type": "NON_STREAMING (from local file) OR STREAMING (on the fly)",
+    "__url": "https:// or file:// uri to update package (zip, xz, ...)",
+    "__type": "NON_STREAMING (from a local file) OR STREAMING (on the fly)",
     "name": "SAMPLE-cake-release BUILD-12345",
-    "url": "file:///data/builds/android-update.zip",
-    "type": "NON_STREAMING",
-    "streaming_metadata": {
+    "url": "http://foo.bar/builds/ota-001.zip",
+    "ab_install_type": "NON_STREAMING",
+    "ab_streaming_metadata": {
         "__": "streaming_metadata is required only for streaming update",
         "__property_files": "name, offset and size of files",
         "property_files": [
             {
-                "__filename": "payload.bin and payload_properties.txt are required",
-                "__offset": "defines beginning of update data in archive",
-                "__size": "size of the update data in archive",
+                "__filename": "name of the file in package",
+                "__offset": "defines beginning of the file in package",
+                "__size": "size of the file in package",
                 "filename": "payload.bin",
                 "offset": 531,
                 "size": 5012323
