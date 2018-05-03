@@ -17,7 +17,7 @@
 """
 Given a OTA package file, produces update config JSON file.
 
-Example:  tools/gen_update.config.py \\
+Example:  tools/gen_update_config.py \\
             --ab_install_type=STREAMING \\
             ota-build-001.zip  \\
             my-config-001.json \\
