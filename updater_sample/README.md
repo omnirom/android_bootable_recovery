@@ -30,13 +30,19 @@ to the app, but in this sample, the config files are stored on the device.
 The directory can be found in logs or on the UI. In most cases it should be located at
 `/data/user/0/com.example.android.systemupdatersample/files/configs/`.
 
-SystemUpdaterSample app downloads OTA package from `url`. If `ab_install_type`
-is `NON_STREAMING` then app downloads the whole package and
-passes it to the `update_engine`. If `ab_install_type` is `STREAMING`
-then app downloads only some files to prepare the streaming update and
-`update_engine` will stream only `payload.bin`.
-To support streaming A/B (seamless) update, OTA package file must be
-an uncompressed (ZIP_STORED) zip file.
+SystemUpdaterSample app downloads OTA package from `url`. In this sample app
+`url` is expected to point to file system, e.g. `file:///data/sample-builds/ota-002.zip`.
+
+If `ab_install_type` is `NON_STREAMING` then app checks if `url` starts
+with `file://` and passes `url` to the `update_engine`.
+
+If `ab_install_type` is `STREAMING`, app downloads only the entries in need, as
+opposed to the entire package, to initiate a streaming update. The `payload.bin`
+entry, which takes up the majority of the space in an OTA package, will be
+streamed by `update_engine` directly. The ZIP entries in such a package need to be
+saved uncompressed (`ZIP_STORED`), so that their data can be downloaded directly
+with the offset and length. As `payload.bin` itself is already in compressed
+format, the size penalty is marginal.
 
 Config files can be generated using `tools/gen_update_config.py`.
 Running `./tools/gen_update_config.py --help` shows usage of the script.
@@ -44,11 +50,15 @@ Running `./tools/gen_update_config.py --help` shows usage of the script.
 
 ## Running on a device
 
-The commands expected to be run from `$ANDROID_BUILD_TOP`.
+The commands expected to be run from `$ANDROID_BUILD_TOP` and for demo
+purpose only.
 
 1. Compile the app `$ mmma bootable/recovery/updater_sample`.
 2. Install the app to the device using `$ adb install <APK_PATH>`.
-3. Add update config files.
+3. Change permissions on `/data/ota_package/` to `0777` on the device.
+4. Set SELinux mode to permissive. See instructions below.
+5. Add update config files.
+6. Push OTA packages to the device.
 
 
 ## Development
@@ -86,13 +96,33 @@ The commands expected to be run from `$ANDROID_BUILD_TOP`.
    ```
 
 
-## Getting access to `update_engine` API and read/write access to `/data`
+## Accessing `android.os.UpdateEngine` API
 
-Run adb shell as a root, and set SELinux mode to permissive (0):
+`android.os.UpdateEngine`` APIs are marked as `@SystemApi`, meaning only system apps can access them.
+
+
+## Getting read/write access to `/data/ota_package/`
+
+Following must be included in `AndroidManifest.xml`:
+
+```xml
+    <uses-permission android:name="android.permission.ACCESS_CACHE_FILESYSTEM" />
+```
+
+Note: access to cache filesystem is granted only to system apps.
+
+
+## Setting SELinux mode to permissive (0)
 
 ```txt
-$ adb root
-$ adb shell
-# setenforce 0
-# getenforce
+local$ adb root
+local$ adb shell
+android# setenforce 0
+android# getenforce
 ```
+
+
+## License
+
+SystemUpdaterSample app is released under
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).

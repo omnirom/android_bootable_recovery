@@ -60,7 +60,7 @@ public class FileDownloaderTest {
         File packageFile = Paths
                 .get(mTargetContext.getCacheDir().getAbsolutePath(), "ota.zip")
                 .toFile();
-        Files.delete(packageFile.toPath());
+        Files.deleteIfExists(packageFile.toPath());
         Files.copy(mTestContext.getResources().openRawResource(R.raw.ota_002_package),
                 packageFile.toPath());
         String url = "file://" + packageFile.getAbsolutePath();
@@ -68,7 +68,7 @@ public class FileDownloaderTest {
         File outFile = Paths
                 .get(mTargetContext.getCacheDir().getAbsolutePath(), "care_map.txt")
                 .toFile();
-        Files.delete(outFile.toPath());
+        Files.deleteIfExists(outFile.toPath());
         // download a chunk of ota.zip
         FileDownloader downloader = new FileDownloader(url, 160, 8, outFile);
         downloader.download();
