@@ -31,6 +31,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -52,8 +53,9 @@ static double now() {
   return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
-Menu::Menu(bool scrollable, size_t max_items, size_t max_length, const char* const* headers,
-           const char* const* items, int initial_selection)
+Menu::Menu(bool scrollable, size_t max_items, size_t max_length,
+           const std::vector<std::string>& headers, const std::vector<std::string>& items,
+           size_t initial_selection)
     : scrollable_(scrollable),
       max_display_items_(max_items),
       max_item_length_(max_length),
@@ -63,15 +65,15 @@ Menu::Menu(bool scrollable, size_t max_items, size_t max_length, const char* con
   CHECK_LE(max_items, static_cast<size_t>(std::numeric_limits<int>::max()));
 
   // It's fine to have more entries than text_rows_ if scrollable menu is supported.
-  size_t max_items_count = scrollable_ ? std::numeric_limits<int>::max() : max_display_items_;
-  for (size_t i = 0; i < max_items_count && items[i] != nullptr; ++i) {
-    text_items_.emplace_back(items[i], strnlen(items[i], max_item_length_));
+  size_t items_count = scrollable_ ? items.size() : std::min(items.size(), max_display_items_);
+  for (size_t i = 0; i < items_count; ++i) {
+    text_items_.emplace_back(items[i].substr(0, max_item_length_));
   }
 
   CHECK(!text_items_.empty());
 }
 
-const char* const* Menu::text_headers() const {
+const std::vector<std::string>& Menu::text_headers() const {
   return text_headers_;
 }
 
@@ -99,7 +101,7 @@ bool Menu::ItemsOverflow(std::string* cur_selection_str) const {
   }
 
   *cur_selection_str =
-      android::base::StringPrintf("Current item: %d/%zu", selection_ + 1, ItemsCount());
+      android::base::StringPrintf("Current item: %zu/%zu", selection_ + 1, ItemsCount());
   return true;
 }
 
@@ -503,10 +505,10 @@ void ScreenRecoveryUI::draw_screen_locked() {
   gr_clear();
 
   // clang-format off
-  static std::vector<std::string> REGULAR_HELP = {
+  static std::vector<std::string> REGULAR_HELP{
     "Use volume up/down and power.",
   };
-  static std::vector<std::string> LONG_PRESS_HELP = {
+  static std::vector<std::string> LONG_PRESS_HELP{
     "Any button cycles highlight.",
     "Long-press activates.",
   };
@@ -532,22 +534,12 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
 
     y += DrawTextLines(x, y, help_message);
 
-    auto convert_to_vector = [](const char* const* items) -> std::vector<std::string> {
-      if (items == nullptr) return {};
-
-      std::vector<std::string> result;
-      for (size_t i = 0; items[i] != nullptr; ++i) {
-        result.emplace_back(items[i]);
-      }
-      return result;
-    };
-
     // Draw menu header.
     SetColor(HEADER);
     if (!menu_->scrollable()) {
-      y += DrawWrappedTextLines(x, y, convert_to_vector(menu_->text_headers()));
+      y += DrawWrappedTextLines(x, y, menu_->text_headers());
     } else {
-      y += DrawTextLines(x, y, convert_to_vector(menu_->text_headers()));
+      y += DrawTextLines(x, y, menu_->text_headers());
       // Show the current menu item number in relation to total number if items don't fit on the
       // screen.
       std::string cur_selection_str;
@@ -979,8 +971,8 @@ void ScreenRecoveryUI::ShowFile(const std::string& filename) {
   text_row_ = old_text_row;
 }
 
-void ScreenRecoveryUI::StartMenu(const char* const* headers, const char* const* items,
-                                 int initial_selection) {
+void ScreenRecoveryUI::StartMenu(const std::vector<std::string>& headers,
+                                 const std::vector<std::string>& items, size_t initial_selection) {
   pthread_mutex_lock(&updateMutex);
   if (text_rows_ > 0 && text_cols_ > 1) {
     menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_, text_cols_ - 1, headers, items,
@@ -1013,9 +1005,10 @@ void ScreenRecoveryUI::EndMenu() {
   pthread_mutex_unlock(&updateMutex);
 }
 
-int ScreenRecoveryUI::ShowMenu(const char* const* headers, const char* const* items,
-                               int initial_selection, bool menu_only,
-                               const std::function<int(int, bool)>& key_handler) {
+size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
+                                  const std::vector<std::string>& items, size_t initial_selection,
+                                  bool menu_only,
+                                  const std::function<int(int, bool)>& key_handler) {
   // Throw away keys pressed previously, so user doesn't accidentally trigger menu items.
   FlushKeys();
 
@@ -1031,7 +1024,7 @@ int ScreenRecoveryUI::ShowMenu(const char* const* headers, const char* const* it
       } else {
         LOG(INFO) << "Timed out waiting for key input; rebooting.";
         EndMenu();
-        return -1;
+        return static_cast<size_t>(-1);
       }
     }
 
