@@ -6,8 +6,8 @@
         "property_files": [
             {
                 "filename": "payload.bin",
-                "offset": 531,
-                "size": 5012323
+                "offset": 195,
+                "size": 8
             }
         ]
     }

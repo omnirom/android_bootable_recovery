@@ -73,7 +73,7 @@ public class FileDownloaderTest {
         FileDownloader downloader = new FileDownloader(url, 160, 8, outFile);
         downloader.download();
         String downloadedContent = String.join("\n", Files.readAllLines(outFile.toPath()));
-        // Look at tools/create_test_ota.py
+        // archive contains text files with uppercase filenames
         assertEquals("CARE_MAP", downloadedContent);
     }
 
