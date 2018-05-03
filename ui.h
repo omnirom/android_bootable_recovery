@@ -23,6 +23,7 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 
 // Abstract class for controlling the user interface during recovery.
 class RecoveryUI {
@@ -139,10 +140,11 @@ class RecoveryUI {
   // key_handler, which may be beyond the range of menu items. This could be used to trigger a
   // device-specific action, even without that being listed in the menu. Caller needs to handle
   // such a case accordingly (e.g. by calling Device::InvokeMenuItem() to process the action).
-  // Returns a non-negative value (the chosen item number or device-specific action code), or -1 if
-  // timed out waiting for input.
-  virtual int ShowMenu(const char* const* headers, const char* const* items, int initial_selection,
-                       bool menu_only, const std::function<int(int, bool)>& key_handler) = 0;
+  // Returns a non-negative value (the chosen item number or device-specific action code), or
+  // static_cast<size_t>(-1) if timed out waiting for input.
+  virtual size_t ShowMenu(const std::vector<std::string>& headers,
+                          const std::vector<std::string>& items, size_t initial_selection,
+                          bool menu_only, const std::function<int(int, bool)>& key_handler) = 0;
 
  protected:
   void EnqueueKey(int key_code);

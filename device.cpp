@@ -16,9 +16,13 @@
 
 #include "device.h"
 
+#include <android-base/logging.h>
+#include <android-base/macros.h>
+
 #include "ui.h"
 
-static const char* MENU_ITEMS[] = {
+// clang-format off
+static constexpr const char* kItems[]{
   "Reboot system now",
   "Reboot to bootloader",
   "Apply update from ADB",
@@ -32,10 +36,11 @@ static const char* MENU_ITEMS[] = {
   "Run graphics test",
   "Run locale test",
   "Power off",
-  nullptr,
 };
+// clang-format on
 
-static const Device::BuiltinAction MENU_ACTIONS[] = {
+// clang-format off
+static constexpr Device::BuiltinAction kMenuActions[] {
   Device::REBOOT,
   Device::REBOOT_BOOTLOADER,
   Device::APPLY_ADB_SIDELOAD,
@@ -50,18 +55,20 @@ static const Device::BuiltinAction MENU_ACTIONS[] = {
   Device::RUN_LOCALE_TEST,
   Device::SHUTDOWN,
 };
+// clang-format on
 
-static_assert(sizeof(MENU_ITEMS) / sizeof(MENU_ITEMS[0]) ==
-              sizeof(MENU_ACTIONS) / sizeof(MENU_ACTIONS[0]) + 1,
-              "MENU_ITEMS and MENU_ACTIONS should have the same length, "
-              "except for the extra NULL entry in MENU_ITEMS.");
+static_assert(arraysize(kItems) == arraysize(kMenuActions),
+              "kItems and kMenuActions should have the same length.");
 
-const char* const* Device::GetMenuItems() {
-  return MENU_ITEMS;
+static const std::vector<std::string> kMenuItems(kItems, kItems + arraysize(kItems));
+
+const std::vector<std::string>& Device::GetMenuItems() {
+  return kMenuItems;
 }
 
-Device::BuiltinAction Device::InvokeMenuItem(int menu_position) {
-  return menu_position < 0 ? NO_ACTION : MENU_ACTIONS[menu_position];
+Device::BuiltinAction Device::InvokeMenuItem(size_t menu_position) {
+  // CHECK_LT(menu_position, );
+  return kMenuActions[menu_position];
 }
 
 int Device::HandleMenuKey(int key, bool visible) {
