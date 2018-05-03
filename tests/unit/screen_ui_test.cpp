@@ -24,10 +24,8 @@ constexpr const char* HEADER[] = { "header", nullptr };
 constexpr const char* ITEMS[] = { "items1", "items2", "items3", "items4", "1234567890", nullptr };
 
 TEST(ScreenUITest, StartPhoneMenuSmoke) {
-  Menu menu(false, 10, 20);
+  Menu menu(false, 10, 20, HEADER, ITEMS, 0);
   ASSERT_FALSE(menu.scrollable());
-
-  menu.Start(HEADER, ITEMS, 0);
   ASSERT_EQ(HEADER[0], menu.text_headers()[0]);
   ASSERT_EQ(5u, menu.ItemsCount());
 
@@ -41,10 +39,8 @@ TEST(ScreenUITest, StartPhoneMenuSmoke) {
 }
 
 TEST(ScreenUITest, StartWearMenuSmoke) {
-  Menu menu(true, 10, 8);
+  Menu menu(true, 10, 8, HEADER, ITEMS, 1);
   ASSERT_TRUE(menu.scrollable());
-
-  menu.Start(HEADER, ITEMS, 1);
   ASSERT_EQ(HEADER[0], menu.text_headers()[0]);
   ASSERT_EQ(5u, menu.ItemsCount());
 
@@ -59,10 +55,8 @@ TEST(ScreenUITest, StartWearMenuSmoke) {
 }
 
 TEST(ScreenUITest, StartPhoneMenuItemsOverflow) {
-  Menu menu(false, 1, 20);
+  Menu menu(false, 1, 20, HEADER, ITEMS, 0);
   ASSERT_FALSE(menu.scrollable());
-
-  menu.Start(HEADER, ITEMS, 0);
   ASSERT_EQ(1u, menu.ItemsCount());
 
   std::string message;
@@ -76,10 +70,8 @@ TEST(ScreenUITest, StartPhoneMenuItemsOverflow) {
 }
 
 TEST(ScreenUITest, StartWearMenuItemsOverflow) {
-  Menu menu(true, 1, 20);
+  Menu menu(true, 1, 20, HEADER, ITEMS, 0);
   ASSERT_TRUE(menu.scrollable());
-
-  menu.Start(HEADER, ITEMS, 0);
   ASSERT_EQ(5u, menu.ItemsCount());
 
   std::string message;
@@ -95,10 +87,8 @@ TEST(ScreenUITest, StartWearMenuItemsOverflow) {
 }
 
 TEST(ScreenUITest, PhoneMenuSelectSmoke) {
-  Menu menu(false, 10, 20);
-
   int sel = 0;
-  menu.Start(HEADER, ITEMS, sel);
+  Menu menu(false, 10, 20, HEADER, ITEMS, sel);
   // Mimic down button 10 times (2 * items size)
   for (int i = 0; i < 10; i++) {
     sel = menu.Select(++sel);
@@ -126,10 +116,8 @@ TEST(ScreenUITest, PhoneMenuSelectSmoke) {
 }
 
 TEST(ScreenUITest, WearMenuSelectSmoke) {
-  Menu menu(true, 10, 20);
-
   int sel = 0;
-  menu.Start(HEADER, ITEMS, sel);
+  Menu menu(true, 10, 20, HEADER, ITEMS, sel);
   // Mimic pressing down button 10 times (2 * items size)
   for (int i = 0; i < 10; i++) {
     sel = menu.Select(++sel);
@@ -157,10 +145,8 @@ TEST(ScreenUITest, WearMenuSelectSmoke) {
 }
 
 TEST(ScreenUITest, WearMenuSelectItemsOverflow) {
-  Menu menu(true, 3, 20);
-
   int sel = 1;
-  menu.Start(HEADER, ITEMS, sel);
+  Menu menu(true, 3, 20, HEADER, ITEMS, sel);
   ASSERT_EQ(5u, menu.ItemsCount());
 
   // Scroll the menu to the end, and check the start & end of menu.
