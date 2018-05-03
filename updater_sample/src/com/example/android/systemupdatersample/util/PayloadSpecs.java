@@ -16,9 +16,6 @@
 
 package com.example.android.systemupdatersample.util;
 
-import android.annotation.TargetApi;
-import android.os.Build;
-
 import com.example.android.systemupdatersample.PayloadSpec;
 
 import java.io.BufferedReader;
@@ -26,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -34,7 +32,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /** The helper class that creates {@link PayloadSpec}. */
-@TargetApi(Build.VERSION_CODES.N)
 public final class PayloadSpecs {
 
     /**
@@ -68,14 +65,14 @@ public final class PayloadSpecs {
                 }
 
                 long length = entry.getCompressedSize();
-                if (PackagePropertyFiles.PAYLOAD_BINARY_FILE_NAME.equals(name)) {
+                if (PackageFiles.PAYLOAD_BINARY_FILE_NAME.equals(name)) {
                     if (entry.getMethod() != ZipEntry.STORED) {
                         throw new IOException("Invalid compression method.");
                     }
                     payloadFound = true;
                     payloadOffset = offset;
                     payloadSize = length;
-                } else if (PackagePropertyFiles.PAYLOAD_PROPERTIES_FILE_NAME.equals(name)) {
+                } else if (PackageFiles.PAYLOAD_PROPERTIES_FILE_NAME.equals(name)) {
                     InputStream inputStream = zip.getInputStream(entry);
                     if (inputStream != null) {
                         BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
@@ -98,6 +95,21 @@ public final class PayloadSpecs {
                         .size(payloadSize)
                         .properties(properties)
                         .build();
+    }
+
+    /**
+     * Creates a {@link PayloadSpec} for streaming update.
+     */
+    public static PayloadSpec forStreaming(String updateUrl,
+                                           long offset,
+                                           long size,
+                                           File propertiesFile) throws IOException {
+        return PayloadSpec.newBuilder()
+                .url(updateUrl)
+                .offset(offset)
+                .size(size)
+                .properties(Files.readAllLines(propertiesFile.toPath()))
+                .build();
     }
 
     /**

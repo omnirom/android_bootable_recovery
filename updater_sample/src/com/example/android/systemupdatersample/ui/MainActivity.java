@@ -297,7 +297,7 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Helper class to delegate UpdateEngine callbacks to MainActivity
+     * Helper class to delegate {@code update_engine} callbacks to MainActivity
      */
     class UpdateEngineCallbackImpl extends UpdateEngineCallback {
         @Override
