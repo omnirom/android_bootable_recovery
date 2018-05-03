@@ -17,7 +17,8 @@
 package com.example.android.systemupdatersample.util;
 
 import static com.example.android.systemupdatersample.util.PackageFiles.PAYLOAD_BINARY_FILE_NAME;
-import static com.example.android.systemupdatersample.util.PackageFiles.PAYLOAD_PROPERTIES_FILE_NAME;
+import static com.example.android.systemupdatersample.util.PackageFiles
+        .PAYLOAD_PROPERTIES_FILE_NAME;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -28,6 +29,8 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.example.android.systemupdatersample.PayloadSpec;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -56,16 +59,16 @@ public class PayloadSpecsTest {
 
     private File mTestDir;
 
-    private Context mContext;
+    private Context mTargetContext;
 
     @Rule
     public final ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mTargetContext = InstrumentationRegistry.getTargetContext();
 
-        mTestDir = mContext.getFilesDir();
+        mTestDir = mTargetContext.getFilesDir();
     }
 
     @Test
@@ -85,6 +88,21 @@ public class PayloadSpecsTest {
     public void forNonStreaming_IOException() throws Exception {
         thrown.expect(IOException.class);
         PayloadSpecs.forNonStreaming(new File("/fake/news.zip"));
+    }
+
+    @Test
+    public void forStreaming_works() throws Exception {
+        String url = "http://a.com/b.zip";
+        long offset = 45;
+        long size = 200;
+        File propertiesFile = createMockPropertiesFile();
+
+        PayloadSpec spec = PayloadSpecs.forStreaming(url, offset, size, propertiesFile);
+        assertEquals("same url", url, spec.getUrl());
+        assertEquals("same offset", offset, spec.getOffset());
+        assertEquals("same size", size, spec.getSize());
+        assertArrayEquals("correct properties",
+                new String[]{"k1=val1", "key2=val2"}, spec.getProperties().toArray(new String[0]));
     }
 
     /**
@@ -112,6 +130,12 @@ public class PayloadSpecsTest {
             zos.closeEntry();
         }
         return testFile;
+    }
+
+    private File createMockPropertiesFile() throws IOException {
+        File propertiesFile = new File(mTestDir, PackageFiles.PAYLOAD_PROPERTIES_FILE_NAME);
+        Files.asCharSink(propertiesFile, Charsets.UTF_8).write(PROPERTIES_CONTENTS);
+        return propertiesFile;
     }
 
 }
