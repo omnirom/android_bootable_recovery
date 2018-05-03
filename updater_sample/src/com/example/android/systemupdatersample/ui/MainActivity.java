@@ -31,13 +31,15 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.android.systemupdatersample.PayloadSpec;
 import com.example.android.systemupdatersample.R;
 import com.example.android.systemupdatersample.UpdateConfig;
-import com.example.android.systemupdatersample.updates.AbNonStreamingUpdate;
+import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateConfigs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineStatuses;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,6 +47,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * UI for SystemUpdaterSample app.
  */
 public class MainActivity extends Activity {
+
+    private static final String TAG = "MainActivity";
 
     private TextView mTextViewBuild;
     private Spinner mSpinnerConfigs;
@@ -55,16 +59,18 @@ public class MainActivity extends Activity {
     private Button mButtonReset;
     private ProgressBar mProgressBar;
     private TextView mTextViewStatus;
+    private TextView mTextViewCompletion;
 
     private List<UpdateConfig> mConfigs;
     private AtomicInteger mUpdateEngineStatus =
             new AtomicInteger(UpdateEngine.UpdateStatusConstants.IDLE);
-    private UpdateEngine mUpdateEngine = new UpdateEngine();
 
     /**
      * Listen to {@code update_engine} events.
      */
     private UpdateEngineCallbackImpl mUpdateEngineCallback = new UpdateEngineCallbackImpl();
+
+    private final UpdateEngine mUpdateEngine = new UpdateEngine();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,14 +86,14 @@ public class MainActivity extends Activity {
         this.mButtonReset = findViewById(R.id.buttonReset);
         this.mProgressBar = findViewById(R.id.progressBar);
         this.mTextViewStatus = findViewById(R.id.textViewStatus);
-
-        this.mUpdateEngine.bind(mUpdateEngineCallback);
+        this.mTextViewCompletion = findViewById(R.id.textViewCompletion);
 
         this.mTextViewConfigsDirHint.setText(UpdateConfigs.getConfigsRoot(this));
 
         uiReset();
-
         loadUpdateConfigs();
+
+        this.mUpdateEngine.bind(mUpdateEngineCallback);
     }
 
     @Override
@@ -140,7 +146,6 @@ public class MainActivity extends Activity {
                 .setMessage("Do you really want to cancel running update?")
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
-                    uiReset();
                     stopRunningUpdate();
                 })
                 .setNegativeButton(android.R.string.cancel, null).show();
@@ -156,7 +161,6 @@ public class MainActivity extends Activity {
                         + " and restore old version?")
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
-                    uiReset();
                     resetUpdate();
                 })
                 .setNegativeButton(android.R.string.cancel, null).show();
@@ -178,6 +182,13 @@ public class MainActivity extends Activity {
                 setUiStatus(status);
                 Toast.makeText(this, "Update Status changed", Toast.LENGTH_LONG)
                         .show();
+                if (status != UpdateEngine.UpdateStatusConstants.IDLE) {
+                    Log.d(TAG, "status changed, setting ui to updating mode");
+                    uiSetUpdating();
+                } else {
+                    Log.d(TAG, "status changed, resetting ui");
+                    uiReset();
+                }
             });
         }
     }
@@ -188,15 +199,16 @@ public class MainActivity extends Activity {
      * values from {@link UpdateEngine.ErrorCodeConstants}.
      */
     private void onPayloadApplicationComplete(int errorCode) {
+        final String state = UpdateEngineErrorCodes.isUpdateSucceeded(errorCode)
+                ? "SUCCESS"
+                : "FAILURE";
         runOnUiThread(() -> {
-            final String state = UpdateEngineErrorCodes.isUpdateSucceeded(errorCode)
-                    ? "SUCCESS"
-                    : "FAILURE";
             Log.i("UpdateEngine",
                     "Completed - errorCode="
                     + UpdateEngineErrorCodes.getCodeName(errorCode) + "/" + errorCode
                     + " " + state);
             Toast.makeText(this, "Update completed", Toast.LENGTH_LONG).show();
+            setUiCompletion(errorCode);
         });
     }
 
@@ -212,6 +224,7 @@ public class MainActivity extends Activity {
         mProgressBar.setEnabled(false);
         mProgressBar.setVisibility(ProgressBar.INVISIBLE);
         mTextViewStatus.setText(R.string.unknown);
+        mTextViewCompletion.setText(R.string.unknown);
     }
 
     /** sets ui updating mode */
@@ -239,7 +252,18 @@ public class MainActivity extends Activity {
      */
     private void setUiStatus(int status) {
         String statusText = UpdateEngineStatuses.getStatusText(status);
-        mTextViewStatus.setText(statusText);
+        mTextViewStatus.setText(statusText + "/" + status);
+    }
+
+    /**
+     * @param errorCode update engine error code
+     */
+    private void setUiCompletion(int errorCode) {
+        final String state = UpdateEngineErrorCodes.isUpdateSucceeded(errorCode)
+                ? "SUCCESS"
+                : "FAILURE";
+        String errorText = UpdateEngineErrorCodes.getCodeName(errorCode);
+        mTextViewCompletion.setText(state + " " + errorText + "/" + errorCode);
     }
 
     private void loadConfigsToSpinner(List<UpdateConfig> configs) {
@@ -259,19 +283,42 @@ public class MainActivity extends Activity {
     /**
      * Applies the given update
      */
-    private void applyUpdate(UpdateConfig config) {
+    private void applyUpdate(final UpdateConfig config) {
         if (config.getInstallType() == UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING) {
-            AbNonStreamingUpdate update = new AbNonStreamingUpdate(mUpdateEngine, config);
+            PayloadSpec payload;
             try {
-                update.execute();
-            } catch (Exception e) {
-                Log.e("MainActivity", "Error applying the update", e);
-                Toast.makeText(this, "Error applying the update", Toast.LENGTH_SHORT)
+                payload = PayloadSpecs.forNonStreaming(config.getUpdatePackageFile());
+            } catch (IOException e) {
+                Log.e(TAG, "Error creating payload spec", e);
+                Toast.makeText(this, "Error creating payload spec", Toast.LENGTH_LONG)
                         .show();
+                return;
             }
+            updateEngineApplyPayload(payload);
         } else {
-            Toast.makeText(this, "Streaming is not implemented", Toast.LENGTH_SHORT)
-                    .show();
+            Log.d(TAG, "Starting PrepareStreamingService");
+        }
+    }
+
+    /**
+     * Applies given payload.
+     *
+     * UpdateEngine works asynchronously. This method doesn't wait until
+     * end of the update.
+     */
+    private void updateEngineApplyPayload(PayloadSpec payloadSpec) {
+        try {
+            mUpdateEngine.applyPayload(
+                    payloadSpec.getUrl(),
+                    payloadSpec.getOffset(),
+                    payloadSpec.getSize(),
+                    payloadSpec.getProperties().toArray(new String[0]));
+        } catch (Exception e) {
+            Log.e(TAG, "UpdateEngine failed to apply the update", e);
+            Toast.makeText(
+                    this,
+                    "UpdateEngine failed to apply the update",
+                    Toast.LENGTH_LONG).show();
         }
     }
 
@@ -280,10 +327,11 @@ public class MainActivity extends Activity {
      * leave it as is.
      */
     private void stopRunningUpdate() {
-        Toast.makeText(this,
-                "stopRunningUpdate is not implemented",
-                Toast.LENGTH_SHORT).show();
-
+        try {
+            mUpdateEngine.cancel();
+        } catch (Exception e) {
+            Log.w(TAG, "UpdateEngine failed to stop the ongoing update", e);
+        }
     }
 
     /**
@@ -291,9 +339,11 @@ public class MainActivity extends Activity {
      * update has been applied.
      */
     private void resetUpdate() {
-        Toast.makeText(this,
-                "resetUpdate is not implemented",
-                Toast.LENGTH_SHORT).show();
+        try {
+            mUpdateEngine.resetStatus();
+        } catch (Exception e) {
+            Log.w(TAG, "UpdateEngine failed to reset the update", e);
+        }
     }
 
     /**
