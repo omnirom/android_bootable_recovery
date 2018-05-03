@@ -372,19 +372,22 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   // Write the header and descriptive texts.
   SetColor(INFO);
   std::string header = "Show background text image";
-  text_y += DrawTextLine(text_x, text_y, header.c_str(), true);
+  text_y += DrawTextLine(text_x, text_y, header, true);
   std::string locale_selection = android::base::StringPrintf(
       "Current locale: %s, %zu/%zu", locales_entries[sel].c_str(), sel, locales_entries.size());
-  const char* instruction[] = { locale_selection.c_str(),
-                                "Use volume up/down to switch locales and power to exit.",
-                                nullptr };
+  // clang-format off
+  std::vector<std::string> instruction = {
+    locale_selection,
+    "Use volume up/down to switch locales and power to exit."
+  };
+  // clang-format on
   text_y += DrawWrappedTextLines(text_x, text_y, instruction);
 
   // Iterate through the text images and display them in order for the current locale.
   for (const auto& p : surfaces) {
     text_y += line_spacing;
     SetColor(LOG);
-    text_y += DrawTextLine(text_x, text_y, p.first.c_str(), false);
+    text_y += DrawTextLine(text_x, text_y, p.first, false);
     gr_color(255, 255, 255, 255);
     gr_texticon(text_x, text_y, p.second.get());
     text_y += gr_get_height(p.second.get());
@@ -451,24 +454,23 @@ void ScreenRecoveryUI::DrawTextIcon(int x, int y, GRSurface* surface) const {
   gr_texticon(x, y, surface);
 }
 
-int ScreenRecoveryUI::DrawTextLine(int x, int y, const char* line, bool bold) const {
-  gr_text(gr_sys_font(), x, y, line, bold);
+int ScreenRecoveryUI::DrawTextLine(int x, int y, const std::string& line, bool bold) const {
+  gr_text(gr_sys_font(), x, y, line.c_str(), bold);
   return char_height_ + 4;
 }
 
-int ScreenRecoveryUI::DrawTextLines(int x, int y, const char* const* lines) const {
+int ScreenRecoveryUI::DrawTextLines(int x, int y, const std::vector<std::string>& lines) const {
   int offset = 0;
-  for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
-    offset += DrawTextLine(x, y + offset, lines[i], false);
+  for (const auto& line : lines) {
+    offset += DrawTextLine(x, y + offset, line, false);
   }
   return offset;
 }
 
-int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y, const char* const* lines) const {
+int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y,
+                                           const std::vector<std::string>& lines) const {
   int offset = 0;
-  for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
-    // The line will be wrapped if it exceeds text_cols_.
-    std::string line(lines[i]);
+  for (const auto& line : lines) {
     size_t next_start = 0;
     while (next_start < line.size()) {
       std::string sub = line.substr(next_start, text_cols_ + 1);
@@ -478,7 +480,7 @@ int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y, const char* const* line
         // Line too long and must be wrapped to text_cols_ columns.
         size_t last_space = sub.find_last_of(" \t\n");
         if (last_space == std::string::npos) {
-          // No space found, just draw as much as we can
+          // No space found, just draw as much as we can.
           sub.resize(text_cols_);
           next_start += text_cols_;
         } else {
@@ -486,22 +488,11 @@ int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y, const char* const* line
           next_start += last_space + 1;
         }
       }
-      offset += DrawTextLine(x, y + offset, sub.c_str(), false);
+      offset += DrawTextLine(x, y + offset, sub, false);
     }
   }
   return offset;
 }
-
-static const char* REGULAR_HELP[] = {
-  "Use volume up/down and power.",
-  nullptr,
-};
-
-static const char* LONG_PRESS_HELP[] = {
-  "Any button cycles highlight.",
-  "Long-press activates.",
-  nullptr,
-};
 
 // Redraws everything on the screen. Does not flip pages. Should only be called with updateMutex
 // locked.
@@ -515,11 +506,21 @@ void ScreenRecoveryUI::draw_screen_locked() {
   gr_color(0, 0, 0, 255);
   gr_clear();
 
+  // clang-format off
+  static std::vector<std::string> REGULAR_HELP = {
+    "Use volume up/down and power.",
+  };
+  static std::vector<std::string> LONG_PRESS_HELP = {
+    "Any button cycles highlight.",
+    "Long-press activates.",
+  };
+  // clang-format on
   draw_menu_and_text_buffer_locked(HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 }
 
 // Draws the menu and text buffer on the screen. Should only be called with updateMutex locked.
-void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(const char* const* help_message) {
+void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
+    const std::vector<std::string>& help_message) {
   int y = kMarginHeight;
   if (menu_) {
     static constexpr int kMenuIndent = 4;
@@ -530,22 +531,32 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(const char* const* help_
     std::string recovery_fingerprint =
         android::base::GetProperty("ro.bootimage.build.fingerprint", "");
     for (const auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
-      y += DrawTextLine(x, y, chunk.c_str(), false);
+      y += DrawTextLine(x, y, chunk, false);
     }
 
     y += DrawTextLines(x, y, help_message);
 
+    auto convert_to_vector = [](const char* const* items) -> std::vector<std::string> {
+      if (items == nullptr) return {};
+
+      std::vector<std::string> result;
+      for (size_t i = 0; items[i] != nullptr; ++i) {
+        result.emplace_back(items[i]);
+      }
+      return result;
+    };
+
     // Draw menu header.
     SetColor(HEADER);
     if (!menu_->scrollable()) {
-      y += DrawWrappedTextLines(x, y, menu_->text_headers());
+      y += DrawWrappedTextLines(x, y, convert_to_vector(menu_->text_headers()));
     } else {
-      y += DrawTextLines(x, y, menu_->text_headers());
+      y += DrawTextLines(x, y, convert_to_vector(menu_->text_headers()));
       // Show the current menu item number in relation to total number if items don't fit on the
       // screen.
       std::string cur_selection_str;
       if (menu_->ItemsOverflow(&cur_selection_str)) {
-        y += DrawTextLine(x, y, cur_selection_str.c_str(), true);
+        y += DrawTextLine(x, y, cur_selection_str, true);
       }
     }
 
@@ -569,7 +580,7 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(const char* const* help_
         bold = true;
       }
 
-      y += DrawTextLine(x, y, menu_->TextItem(i).c_str(), bold);
+      y += DrawTextLine(x, y, menu_->TextItem(i), bold);
 
       SetColor(MENU);
     }

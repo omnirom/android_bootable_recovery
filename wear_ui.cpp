@@ -61,13 +61,6 @@ void WearRecoveryUI::draw_background_locked() {
   }
 }
 
-static const char* SWIPE_HELP[] = {
-  "Swipe up/down to move.",
-  "Swipe left/right to select.",
-  "",
-  nullptr,
-};
-
 void WearRecoveryUI::draw_screen_locked() {
   draw_background_locked();
   if (!show_text) {
@@ -76,6 +69,13 @@ void WearRecoveryUI::draw_screen_locked() {
     SetColor(TEXT_FILL);
     gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
+    // clang-format off
+    static std::vector<std::string> SWIPE_HELP = {
+      "Swipe up/down to move.",
+      "Swipe left/right to select.",
+      "",
+    };
+    // clang-format on
     draw_menu_and_text_buffer_locked(SWIPE_HELP);
   }
 }
