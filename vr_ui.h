@@ -17,6 +17,8 @@
 #ifndef RECOVERY_VR_UI_H
 #define RECOVERY_VR_UI_H
 
+#include <string>
+
 #include "screen_ui.h"
 
 class VrRecoveryUI : public ScreenRecoveryUI {
@@ -36,7 +38,7 @@ class VrRecoveryUI : public ScreenRecoveryUI {
   void DrawHighlightBar(int x, int y, int width, int height) const override;
   void DrawFill(int x, int y, int w, int h) const override;
   void DrawTextIcon(int x, int y, GRSurface* surface) const override;
-  int DrawTextLine(int x, int y, const char* line, bool bold) const override;
+  int DrawTextLine(int x, int y, const std::string& line, bool bold) const override;
 };
 
 #endif  // RECOVERY_VR_UI_H
