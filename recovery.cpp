@@ -507,7 +507,7 @@ static std::string browse_directory(const std::string& path, Device* device) {
   }
 
   std::vector<std::string> dirs;
-  std::vector<std::string> zips = { "../" };  // "../" is always the first entry.
+  std::vector<std::string> entries{ "../" };  // "../" is always the first entry.
 
   dirent* de;
   while ((de = readdir(d.get())) != nullptr) {
@@ -518,31 +518,25 @@ static std::string browse_directory(const std::string& path, Device* device) {
       if (name == "." || name == "..") continue;
       dirs.push_back(name + "/");
     } else if (de->d_type == DT_REG && android::base::EndsWithIgnoreCase(name, ".zip")) {
-      zips.push_back(name);
+      entries.push_back(name);
     }
   }
 
   std::sort(dirs.begin(), dirs.end());
-  std::sort(zips.begin(), zips.end());
+  std::sort(entries.begin(), entries.end());
 
-  // Append dirs to the zips list.
-  zips.insert(zips.end(), dirs.begin(), dirs.end());
+  // Append dirs to the entries list.
+  entries.insert(entries.end(), dirs.begin(), dirs.end());
 
-  const char* entries[zips.size() + 1];
-  entries[zips.size()] = nullptr;
-  for (size_t i = 0; i < zips.size(); i++) {
-    entries[i] = zips[i].c_str();
-  }
+  std::vector<std::string> headers{ "Choose a package to install:", path };
 
-  const char* headers[] = { "Choose a package to install:", path.c_str(), nullptr };
-
-  int chosen_item = 0;
+  size_t chosen_item = 0;
   while (true) {
     chosen_item = ui->ShowMenu(
         headers, entries, chosen_item, true,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
-    const std::string& item = zips[chosen_item];
+    const std::string& item = entries[chosen_item];
     if (chosen_item == 0) {
       // Go up but continue browsing (if the caller is browse_directory).
       return "";
@@ -564,10 +558,10 @@ static std::string browse_directory(const std::string& path, Device* device) {
 }
 
 static bool yes_no(Device* device, const char* question1, const char* question2) {
-  const char* headers[] = { question1, question2, NULL };
-  const char* items[] = { " No", " Yes", NULL };
+  std::vector<std::string> headers{ question1, question2 };
+  std::vector<std::string> items{ " No", " Yes" };
 
-  int chosen_item = ui->ShowMenu(
+  size_t chosen_item = ui->ShowMenu(
       headers, items, 0, true,
       std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
   return (chosen_item == 1);
@@ -601,20 +595,20 @@ static bool wipe_data(Device* device) {
 
 static bool prompt_and_wipe_data(Device* device) {
   // Use a single string and let ScreenRecoveryUI handles the wrapping.
-  const char* const headers[] = {
+  std::vector<std::string> headers{
     "Can't load Android system. Your data may be corrupt. "
     "If you continue to get this message, you may need to "
     "perform a factory data reset and erase all user data "
     "stored on this device.",
-    nullptr
   };
-  const char* const items[] = {
+  // clang-format off
+  std::vector<std::string> items {
     "Try again",
     "Factory data reset",
-    NULL
   };
+  // clang-format on
   for (;;) {
-    int chosen_item = ui->ShowMenu(
+    size_t chosen_item = ui->ShowMenu(
         headers, items, 0, true,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
     if (chosen_item != 1) {
@@ -806,17 +800,12 @@ static void choose_recovery_file(Device* device) {
 
   entries.push_back("Back");
 
-  std::vector<const char*> menu_entries(entries.size());
-  std::transform(entries.cbegin(), entries.cend(), menu_entries.begin(),
-                 [](const std::string& entry) { return entry.c_str(); });
-  menu_entries.push_back(nullptr);
+  std::vector<std::string> headers{ "Select file to view" };
 
-  const char* headers[] = { "Select file to view", nullptr };
-
-  int chosen_item = 0;
+  size_t chosen_item = 0;
   while (true) {
     chosen_item = ui->ShowMenu(
-        headers, menu_entries.data(), chosen_item, true,
+        headers, entries, chosen_item, true,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
     if (entries[chosen_item] == "Back") break;
 
@@ -963,14 +952,15 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
     }
     ui->SetProgressType(RecoveryUI::EMPTY);
 
-    int chosen_item = ui->ShowMenu(
-        nullptr, device->GetMenuItems(), 0, false,
+    size_t chosen_item = ui->ShowMenu(
+        {}, device->GetMenuItems(), 0, false,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
     // Device-specific code may take some action here. It may return one of the core actions
     // handled in the switch statement below.
-    Device::BuiltinAction chosen_action =
-        (chosen_item == -1) ? Device::REBOOT : device->InvokeMenuItem(chosen_item);
+    Device::BuiltinAction chosen_action = (chosen_item == static_cast<size_t>(-1))
+                                              ? Device::REBOOT
+                                              : device->InvokeMenuItem(chosen_item);
 
     bool should_wipe_cache = false;
     switch (chosen_action) {

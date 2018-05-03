@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 
 #include "ui.h"
 
@@ -57,9 +58,10 @@ class StubRecoveryUI : public RecoveryUI {
   void ShowFile(const std::string& /* filename */) override {}
 
   // menu display
-  int ShowMenu(const char* const* /* headers */, const char* const* /* items */,
-               int initial_selection, bool /* menu_only */,
-               const std::function<int(int, bool)>& /* key_handler */) override {
+  size_t ShowMenu(const std::vector<std::string>& /* headers */,
+                  const std::vector<std::string>& /* items */, size_t initial_selection,
+                  bool /* menu_only */,
+                  const std::function<int(int, bool)>& /* key_handler */) override {
     return initial_selection;
   }
 };

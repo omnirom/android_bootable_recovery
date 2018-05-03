@@ -35,14 +35,15 @@ class Menu {
  public:
   // Constructs a Menu instance with the given |headers|, |items| and properties. Sets the initial
   // selection to |initial_selection|.
-  Menu(bool scrollable, size_t max_items, size_t max_length, const char* const* headers,
-       const char* const* items, int initial_selection);
+  Menu(bool scrollable, size_t max_items, size_t max_length,
+       const std::vector<std::string>& headers, const std::vector<std::string>& items,
+       size_t initial_selection);
 
   bool scrollable() const {
     return scrollable_;
   }
 
-  int selection() const {
+  size_t selection() const {
     return selection_;
   }
 
@@ -66,7 +67,7 @@ class Menu {
   //                                 /cache/recovery/last_log.1
   //                                 /cache/recovery/last_log.2
   //                                 ...
-  const char* const* text_headers() const;
+  const std::vector<std::string>& text_headers() const;
   std::string TextItem(size_t index) const;
 
   // Checks if the menu items fit vertically on the screen. Returns true and set the
@@ -84,15 +85,14 @@ class Menu {
   const size_t max_display_items_;
   // The length of each item to fit horizontally on a screen.
   const size_t max_item_length_;
-
-  // Internal storage for the menu headers and items in text.
-  const char* const* text_headers_;
+  // The menu headers.
+  std::vector<std::string> text_headers_;
+  // The actual menu items trimmed to fit the given properties.
   std::vector<std::string> text_items_;
-
   // The first item to display on the screen.
   size_t menu_start_;
   // Current menu selection.
-  int selection_;
+  size_t selection_;
 };
 
 // Implementation of RecoveryUI appropriate for devices with a screen
@@ -137,8 +137,9 @@ class ScreenRecoveryUI : public RecoveryUI {
   void ShowFile(const std::string& filename) override;
 
   // menu display
-  int ShowMenu(const char* const* headers, const char* const* items, int initial_selection,
-               bool menu_only, const std::function<int(int, bool)>& key_handler) override;
+  size_t ShowMenu(const std::vector<std::string>& headers, const std::vector<std::string>& items,
+                  size_t initial_selection, bool menu_only,
+                  const std::function<int(int, bool)>& key_handler) override;
 
   void KeyLongPress(int) override;
 
@@ -166,8 +167,8 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   // Displays some header text followed by a menu of items, which appears at the top of the screen
   // (in place of any scrolling ui_print() output, if necessary).
-  virtual void StartMenu(const char* const* headers, const char* const* items,
-                         int initial_selection);
+  virtual void StartMenu(const std::vector<std::string>& headers,
+                         const std::vector<std::string>& items, size_t initial_selection);
 
   // Sets the menu highlight to the given index, wrapping if necessary. Returns the actual item
   // selected.

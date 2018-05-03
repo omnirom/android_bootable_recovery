@@ -17,6 +17,9 @@
 #ifndef RECOVERY_WEAR_UI_H
 #define RECOVERY_WEAR_UI_H
 
+#include <string>
+#include <vector>
+
 #include "screen_ui.h"
 
 class WearRecoveryUI : public ScreenRecoveryUI {
@@ -33,8 +36,8 @@ class WearRecoveryUI : public ScreenRecoveryUI {
   // Recovery, build id and etc) and the bottom lines that may otherwise go out of the screen.
   const int kMenuUnusableRows;
 
-  void StartMenu(const char* const* headers, const char* const* items,
-                 int initial_selection) override;
+  void StartMenu(const std::vector<std::string>& headers, const std::vector<std::string>& items,
+                 size_t initial_selection) override;
 
   int GetProgressBaseline() const override;
 
