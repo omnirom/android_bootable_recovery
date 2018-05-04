@@ -32,6 +32,7 @@ struct selabel_handle;
 extern struct selabel_handle* sehandle;
 extern RecoveryUI* ui;
 extern bool modified_flash;
+extern bool has_cache;
 
 // The current stage, e.g. "1/2".
 extern std::string stage;
