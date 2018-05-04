@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <stdio.h>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -32,20 +33,26 @@ struct GRSurface;
 // This class maintains the menu selection and display of the screen ui.
 class Menu {
  public:
-  Menu(bool scrollable, size_t max_items, size_t max_length);
+  // Constructs a Menu instance with the given |headers|, |items| and properties. Sets the initial
+  // selection to |initial_selection|.
+  Menu(bool scrollable, size_t max_items, size_t max_length,
+       const std::vector<std::string>& headers, const std::vector<std::string>& items,
+       size_t initial_selection);
 
   bool scrollable() const {
     return scrollable_;
   }
 
-  int selection() const {
+  size_t selection() const {
     return selection_;
   }
 
   // Returns count of menu items.
   size_t ItemsCount() const;
+
   // Returns the index of the first menu item.
   size_t MenuStart() const;
+
   // Returns the index of the last menu item + 1.
   size_t MenuEnd() const;
 
@@ -60,16 +67,12 @@ class Menu {
   //                                 /cache/recovery/last_log.1
   //                                 /cache/recovery/last_log.2
   //                                 ...
-  const char* const* text_headers() const;
+  const std::vector<std::string>& text_headers() const;
   std::string TextItem(size_t index) const;
 
   // Checks if the menu items fit vertically on the screen. Returns true and set the
   // |cur_selection_str| if the items exceed the screen limit.
   bool ItemsOverflow(std::string* cur_selection_str) const;
-
-  // Starts the menu with |headers| and |items| in text. Sets the default selection to
-  // |initial_selection|.
-  void Start(const char* const* headers, const char* const* items, int initial_selection);
 
   // Sets the current selection to |sel|. Handle the overflow cases depending on if the menu is
   // scrollable.
@@ -82,15 +85,14 @@ class Menu {
   const size_t max_display_items_;
   // The length of each item to fit horizontally on a screen.
   const size_t max_item_length_;
-
-  // Internal storage for the menu headers and items in text.
-  const char* const* text_headers_;
+  // The menu headers.
+  std::vector<std::string> text_headers_;
+  // The actual menu items trimmed to fit the given properties.
   std::vector<std::string> text_items_;
-
   // The first item to display on the screen.
   size_t menu_start_;
   // Current menu selection.
-  int selection_;
+  size_t selection_;
 };
 
 // Implementation of RecoveryUI appropriate for devices with a screen
@@ -132,13 +134,12 @@ class ScreenRecoveryUI : public RecoveryUI {
   // printing messages
   void Print(const char* fmt, ...) override __printflike(2, 3);
   void PrintOnScreenOnly(const char* fmt, ...) override __printflike(2, 3);
-  void ShowFile(const char* filename) override;
+  void ShowFile(const std::string& filename) override;
 
   // menu display
-  void StartMenu(const char* const* headers, const char* const* items,
-                 int initial_selection) override;
-  int SelectMenu(int sel) override;
-  void EndMenu() override;
+  size_t ShowMenu(const std::vector<std::string>& headers, const std::vector<std::string>& items,
+                  size_t initial_selection, bool menu_only,
+                  const std::function<int(int, bool)>& key_handler) override;
 
   void KeyLongPress(int) override;
 
@@ -164,10 +165,22 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   virtual bool InitTextParams();
 
+  // Displays some header text followed by a menu of items, which appears at the top of the screen
+  // (in place of any scrolling ui_print() output, if necessary).
+  virtual void StartMenu(const std::vector<std::string>& headers,
+                         const std::vector<std::string>& items, size_t initial_selection);
+
+  // Sets the menu highlight to the given index, wrapping if necessary. Returns the actual item
+  // selected.
+  virtual int SelectMenu(int sel);
+
+  // Ends menu mode, resetting the text overlay so that ui_print() statements will be displayed.
+  virtual void EndMenu();
+
   virtual void draw_background_locked();
   virtual void draw_foreground_locked();
   virtual void draw_screen_locked();
-  virtual void draw_menu_and_text_buffer_locked(const char* const* help_message);
+  virtual void draw_menu_and_text_buffer_locked(const std::vector<std::string>& help_message);
   virtual void update_screen_locked();
   virtual void update_progress_locked();
 
@@ -201,7 +214,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   // Draws a horizontal rule at Y. Returns the offset it should be moving along Y-axis.
   virtual int DrawHorizontalRule(int y) const;
   // Draws a line of text. Returns the offset it should be moving along Y-axis.
-  virtual int DrawTextLine(int x, int y, const char* line, bool bold) const;
+  virtual int DrawTextLine(int x, int y, const std::string& line, bool bold) const;
   // Draws surface portion (sx, sy, w, h) at screen location (dx, dy).
   virtual void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx, int dy) const;
   // Draws rectangle at (x, y) - (x + w, y + h).
@@ -209,10 +222,10 @@ class ScreenRecoveryUI : public RecoveryUI {
   // Draws given surface (surface->pixel_bytes = 1) as text at (x, y).
   virtual void DrawTextIcon(int x, int y, GRSurface* surface) const;
   // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
-  int DrawTextLines(int x, int y, const char* const* lines) const;
+  int DrawTextLines(int x, int y, const std::vector<std::string>& lines) const;
   // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines.
   // Returns the offset it should be moving along Y-axis.
-  int DrawWrappedTextLines(int x, int y, const char* const* lines) const;
+  int DrawWrappedTextLines(int x, int y, const std::vector<std::string>& lines) const;
 
   Icon currentIcon;
 

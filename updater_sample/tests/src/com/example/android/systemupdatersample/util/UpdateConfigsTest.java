@@ -18,14 +18,11 @@ package com.example.android.systemupdatersample.util;
 
 import static org.junit.Assert.assertArrayEquals;
 
-import android.content.Context;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.example.android.systemupdatersample.UpdateConfig;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -41,21 +38,14 @@ import java.util.List;
 @SmallTest
 public class UpdateConfigsTest {
 
-    private Context mContext;
-
     @Rule
     public final ExpectedException thrown = ExpectedException.none();
-
-    @Before
-    public void setUp() {
-        mContext = InstrumentationRegistry.getTargetContext();
-    }
 
     @Test
     public void configsToNames_extractsNames() {
         List<UpdateConfig> configs = Arrays.asList(
-                new UpdateConfig("blah", "http://", UpdateConfig.TYPE_NON_STREAMING),
-                new UpdateConfig("blah 2", "http://", UpdateConfig.TYPE_STREAMING)
+                new UpdateConfig("blah", "http://", UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING),
+                new UpdateConfig("blah 2", "http://", UpdateConfig.AB_INSTALL_TYPE_STREAMING)
         );
         String[] names = UpdateConfigs.configsToNames(configs);
         assertArrayEquals(new String[] {"blah", "blah 2"}, names);

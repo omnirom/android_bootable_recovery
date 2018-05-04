@@ -21,7 +21,9 @@
 #include <pthread.h>
 #include <time.h>
 
+#include <functional>
 #include <string>
+#include <vector>
 
 // Abstract class for controlling the user interface during recovery.
 class RecoveryUI {
@@ -87,7 +89,9 @@ class RecoveryUI {
   virtual void Print(const char* fmt, ...) __printflike(2, 3) = 0;
   virtual void PrintOnScreenOnly(const char* fmt, ...) __printflike(2, 3) = 0;
 
-  virtual void ShowFile(const char* filename) = 0;
+  // Shows the contents of the given file. Caller ensures the patition that contains the file has
+  // been mounted.
+  virtual void ShowFile(const std::string& filename) = 0;
 
   // --- key handling ---
 
@@ -128,17 +132,19 @@ class RecoveryUI {
 
   // --- menu display ---
 
-  // Display some header text followed by a menu of items, which appears at the top of the screen
-  // (in place of any scrolling ui_print() output, if necessary).
-  virtual void StartMenu(const char* const* headers, const char* const* items,
-                         int initial_selection) = 0;
-
-  // Sets the menu highlight to the given index, wrapping if necessary. Returns the actual item
-  // selected.
-  virtual int SelectMenu(int sel) = 0;
-
-  // Ends menu mode, resetting the text overlay so that ui_print() statements will be displayed.
-  virtual void EndMenu() = 0;
+  // Displays a menu with the given 'headers' and 'items'. The supplied 'key_handler' callback,
+  // which is typically bound to Device::HandleMenuKey(), should return the expected action for the
+  // given key code and menu visibility (e.g. to move the cursor or to select an item). Caller sets
+  // 'menu_only' to true to ensure only a menu item gets selected and returned. Otherwise if
+  // 'menu_only' is false, ShowMenu() will forward any non-negative value returned from the
+  // key_handler, which may be beyond the range of menu items. This could be used to trigger a
+  // device-specific action, even without that being listed in the menu. Caller needs to handle
+  // such a case accordingly (e.g. by calling Device::InvokeMenuItem() to process the action).
+  // Returns a non-negative value (the chosen item number or device-specific action code), or
+  // static_cast<size_t>(-1) if timed out waiting for input.
+  virtual size_t ShowMenu(const std::vector<std::string>& headers,
+                          const std::vector<std::string>& items, size_t initial_selection,
+                          bool menu_only, const std::function<int(int, bool)>& key_handler) = 0;
 
  protected:
   void EnqueueKey(int key_code);

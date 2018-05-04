@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "private/recovery.h"
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -35,7 +37,7 @@
 #include <unistd.h>
 
 #include <algorithm>
-#include <chrono>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -64,7 +66,6 @@
 #include "fuse_sdcard_provider.h"
 #include "fuse_sideload.h"
 #include "install.h"
-#include "minadbd/minadbd.h"
 #include "minui/minui.h"
 #include "otautil/DirUtil.h"
 #include "otautil/error_code.h"
@@ -147,7 +148,6 @@ struct selabel_handle* sehandle;
  *    7b. the user reboots (pulling the battery, etc) into the main system
  */
 
-// Open a given path, mounting partitions as necessary.
 FILE* fopen_path(const std::string& path, const char* mode) {
   if (ensure_path_mounted(path.c_str()) != 0) {
     LOG(ERROR) << "Can't mount " << path;
@@ -162,8 +162,7 @@ FILE* fopen_path(const std::string& path, const char* mode) {
   return fopen(path.c_str(), mode);
 }
 
-// close a file, log an error if the error indicator is set
-static void check_and_fclose(FILE* fp, const std::string& name) {
+void check_and_fclose(FILE* fp, const std::string& name) {
   fflush(fp);
   if (fsync(fileno(fp)) == -1) {
     PLOG(ERROR) << "Failed to fsync " << name;
@@ -184,92 +183,6 @@ bool reboot(const std::string& command) {
         cmd += ",quiescent";
     }
     return android::base::SetProperty(ANDROID_RB_PROPERTY, cmd);
-}
-
-static void redirect_stdio(const char* filename) {
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-        PLOG(ERROR) << "pipe failed";
-
-        // Fall back to traditional logging mode without timestamps.
-        // If these fail, there's not really anywhere to complain...
-        freopen(filename, "a", stdout); setbuf(stdout, NULL);
-        freopen(filename, "a", stderr); setbuf(stderr, NULL);
-
-        return;
-    }
-
-    pid_t pid = fork();
-    if (pid == -1) {
-        PLOG(ERROR) << "fork failed";
-
-        // Fall back to traditional logging mode without timestamps.
-        // If these fail, there's not really anywhere to complain...
-        freopen(filename, "a", stdout); setbuf(stdout, NULL);
-        freopen(filename, "a", stderr); setbuf(stderr, NULL);
-
-        return;
-    }
-
-    if (pid == 0) {
-        /// Close the unused write end.
-        close(pipefd[1]);
-
-        auto start = std::chrono::steady_clock::now();
-
-        // Child logger to actually write to the log file.
-        FILE* log_fp = fopen(filename, "ae");
-        if (log_fp == nullptr) {
-            PLOG(ERROR) << "fopen \"" << filename << "\" failed";
-            close(pipefd[0]);
-            _exit(EXIT_FAILURE);
-        }
-
-        FILE* pipe_fp = fdopen(pipefd[0], "r");
-        if (pipe_fp == nullptr) {
-            PLOG(ERROR) << "fdopen failed";
-            check_and_fclose(log_fp, filename);
-            close(pipefd[0]);
-            _exit(EXIT_FAILURE);
-        }
-
-        char* line = nullptr;
-        size_t len = 0;
-        while (getline(&line, &len, pipe_fp) != -1) {
-            auto now = std::chrono::steady_clock::now();
-            double duration = std::chrono::duration_cast<std::chrono::duration<double>>(
-                    now - start).count();
-            if (line[0] == '\n') {
-                fprintf(log_fp, "[%12.6lf]\n", duration);
-            } else {
-                fprintf(log_fp, "[%12.6lf] %s", duration, line);
-            }
-            fflush(log_fp);
-        }
-
-        PLOG(ERROR) << "getline failed";
-
-        free(line);
-        check_and_fclose(log_fp, filename);
-        close(pipefd[0]);
-        _exit(EXIT_FAILURE);
-    } else {
-        // Redirect stdout/stderr to the logger process.
-        // Close the unused read end.
-        close(pipefd[0]);
-
-        setbuf(stdout, nullptr);
-        setbuf(stderr, nullptr);
-
-        if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
-            PLOG(ERROR) << "dup2 stdout failed";
-        }
-        if (dup2(pipefd[1], STDERR_FILENO) == -1) {
-            PLOG(ERROR) << "dup2 stderr failed";
-        }
-
-        close(pipefd[1]);
-    }
 }
 
 // command line args come from, in decreasing precedence:
@@ -583,57 +496,6 @@ static bool erase_volume(const char* volume) {
   return (result == 0);
 }
 
-// Display a menu with the specified 'headers' and 'items'. Device specific HandleMenuKey() may
-// return a positive number beyond the given range. Caller sets 'menu_only' to true to ensure only
-// a menu item gets selected. 'initial_selection' controls the initial cursor location. Returns the
-// (non-negative) chosen item number, or -1 if timed out waiting for input.
-static int get_menu_selection(const char* const* headers, const char* const* items, bool menu_only,
-                              int initial_selection, Device* device) {
-  // Throw away keys pressed previously, so user doesn't accidentally trigger menu items.
-  ui->FlushKeys();
-
-  ui->StartMenu(headers, items, initial_selection);
-
-  int selected = initial_selection;
-  int chosen_item = -1;
-  while (chosen_item < 0) {
-    int key = ui->WaitKey();
-    if (key == -1) {  // WaitKey() timed out.
-      if (ui->WasTextEverVisible()) {
-        continue;
-      } else {
-        LOG(INFO) << "Timed out waiting for key input; rebooting.";
-        ui->EndMenu();
-        return -1;
-      }
-    }
-
-    bool visible = ui->IsTextVisible();
-    int action = device->HandleMenuKey(key, visible);
-
-    if (action < 0) {
-      switch (action) {
-        case Device::kHighlightUp:
-          selected = ui->SelectMenu(--selected);
-          break;
-        case Device::kHighlightDown:
-          selected = ui->SelectMenu(++selected);
-          break;
-        case Device::kInvokeItem:
-          chosen_item = selected;
-          break;
-        case Device::kNoAction:
-          break;
-      }
-    } else if (!menu_only) {
-      chosen_item = action;
-    }
-  }
-
-  ui->EndMenu();
-  return chosen_item;
-}
-
 // Returns the selected filename, or an empty string.
 static std::string browse_directory(const std::string& path, Device* device) {
   ensure_path_mounted(path.c_str());
@@ -645,7 +507,7 @@ static std::string browse_directory(const std::string& path, Device* device) {
   }
 
   std::vector<std::string> dirs;
-  std::vector<std::string> zips = { "../" };  // "../" is always the first entry.
+  std::vector<std::string> entries{ "../" };  // "../" is always the first entry.
 
   dirent* de;
   while ((de = readdir(d.get())) != nullptr) {
@@ -656,29 +518,25 @@ static std::string browse_directory(const std::string& path, Device* device) {
       if (name == "." || name == "..") continue;
       dirs.push_back(name + "/");
     } else if (de->d_type == DT_REG && android::base::EndsWithIgnoreCase(name, ".zip")) {
-      zips.push_back(name);
+      entries.push_back(name);
     }
   }
 
   std::sort(dirs.begin(), dirs.end());
-  std::sort(zips.begin(), zips.end());
+  std::sort(entries.begin(), entries.end());
 
-  // Append dirs to the zips list.
-  zips.insert(zips.end(), dirs.begin(), dirs.end());
+  // Append dirs to the entries list.
+  entries.insert(entries.end(), dirs.begin(), dirs.end());
 
-  const char* entries[zips.size() + 1];
-  entries[zips.size()] = nullptr;
-  for (size_t i = 0; i < zips.size(); i++) {
-    entries[i] = zips[i].c_str();
-  }
+  std::vector<std::string> headers{ "Choose a package to install:", path };
 
-  const char* headers[] = { "Choose a package to install:", path.c_str(), nullptr };
-
-  int chosen_item = 0;
+  size_t chosen_item = 0;
   while (true) {
-    chosen_item = get_menu_selection(headers, entries, true, chosen_item, device);
+    chosen_item = ui->ShowMenu(
+        headers, entries, chosen_item, true,
+        std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
-    const std::string& item = zips[chosen_item];
+    const std::string& item = entries[chosen_item];
     if (chosen_item == 0) {
       // Go up but continue browsing (if the caller is browse_directory).
       return "";
@@ -700,15 +558,17 @@ static std::string browse_directory(const std::string& path, Device* device) {
 }
 
 static bool yes_no(Device* device, const char* question1, const char* question2) {
-    const char* headers[] = { question1, question2, NULL };
-    const char* items[] = { " No", " Yes", NULL };
+  std::vector<std::string> headers{ question1, question2 };
+  std::vector<std::string> items{ " No", " Yes" };
 
-    int chosen_item = get_menu_selection(headers, items, true, 0, device);
-    return (chosen_item == 1);
+  size_t chosen_item = ui->ShowMenu(
+      headers, items, 0, true,
+      std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
+  return (chosen_item == 1);
 }
 
 static bool ask_to_wipe_data(Device* device) {
-    return yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!");
+  return yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!");
 }
 
 // Return true on success.
@@ -735,20 +595,22 @@ static bool wipe_data(Device* device) {
 
 static bool prompt_and_wipe_data(Device* device) {
   // Use a single string and let ScreenRecoveryUI handles the wrapping.
-  const char* const headers[] = {
+  std::vector<std::string> headers{
     "Can't load Android system. Your data may be corrupt. "
     "If you continue to get this message, you may need to "
     "perform a factory data reset and erase all user data "
     "stored on this device.",
-    nullptr
   };
-  const char* const items[] = {
+  // clang-format off
+  std::vector<std::string> items {
     "Try again",
     "Factory data reset",
-    NULL
   };
+  // clang-format on
   for (;;) {
-    int chosen_item = get_menu_selection(headers, items, true, 0, device);
+    size_t chosen_item = ui->ShowMenu(
+        headers, items, 0, true,
+        std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
     if (chosen_item != 1) {
       return true;  // Just reboot, no wipe; not a failure, user asked for it
     }
@@ -938,19 +800,16 @@ static void choose_recovery_file(Device* device) {
 
   entries.push_back("Back");
 
-  std::vector<const char*> menu_entries(entries.size());
-  std::transform(entries.cbegin(), entries.cend(), menu_entries.begin(),
-                 [](const std::string& entry) { return entry.c_str(); });
-  menu_entries.push_back(nullptr);
+  std::vector<std::string> headers{ "Select file to view" };
 
-  const char* headers[] = { "Select file to view", nullptr };
-
-  int chosen_item = 0;
+  size_t chosen_item = 0;
   while (true) {
-    chosen_item = get_menu_selection(headers, menu_entries.data(), true, chosen_item, device);
+    chosen_item = ui->ShowMenu(
+        headers, entries, chosen_item, true,
+        std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
     if (entries[chosen_item] == "Back") break;
 
-    ui->ShowFile(entries[chosen_item].c_str());
+    ui->ShowFile(entries[chosen_item]);
   }
 }
 
@@ -1093,12 +952,15 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
     }
     ui->SetProgressType(RecoveryUI::EMPTY);
 
-    int chosen_item = get_menu_selection(nullptr, device->GetMenuItems(), false, 0, device);
+    size_t chosen_item = ui->ShowMenu(
+        {}, device->GetMenuItems(), 0, false,
+        std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
     // Device-specific code may take some action here. It may return one of the core actions
     // handled in the switch statement below.
-    Device::BuiltinAction chosen_action =
-        (chosen_item == -1) ? Device::REBOOT : device->InvokeMenuItem(chosen_item);
+    Device::BuiltinAction chosen_action = (chosen_item == static_cast<size_t>(-1))
+                                              ? Device::REBOOT
+                                              : device->InvokeMenuItem(chosen_item);
 
     bool should_wipe_cache = false;
     switch (chosen_action) {
@@ -1216,18 +1078,6 @@ void ui_print(const char* format, ...) {
     } else {
         fputs(buffer.c_str(), stdout);
     }
-}
-
-static constexpr char log_characters[] = "VDIWEF";
-
-void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity,
-              const char* /* tag */, const char* /* file */, unsigned int /* line */,
-              const char* message) {
-  if (severity >= android::base::ERROR && ui != nullptr) {
-    ui->Print("E:%s\n", message);
-  } else {
-    fprintf(stdout, "%c:%s\n", log_characters[severity], message);
-  }
 }
 
 static bool is_battery_ok(int* required_battery_level) {
@@ -1359,37 +1209,8 @@ static void log_failure_code(ErrorCode code, const std::string& update_package) 
   LOG(INFO) << log_content;
 }
 
-int main(int argc, char **argv) {
-  // We don't have logcat yet under recovery; so we'll print error on screen and
-  // log to stdout (which is redirected to recovery.log) as we used to do.
-  android::base::InitLogging(argv, &UiLogger);
-
-  // Take last pmsg contents and rewrite it to the current pmsg session.
-  static const char filter[] = "recovery/";
-  // Do we need to rotate?
-  bool doRotate = false;
-
-  __android_log_pmsg_file_read(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter, logbasename, &doRotate);
-  // Take action to refresh pmsg contents
-  __android_log_pmsg_file_read(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter, logrotate, &doRotate);
-
-  // If this binary is started with the single argument "--adbd",
-  // instead of being the normal recovery binary, it turns into kind
-  // of a stripped-down version of adbd that only supports the
-  // 'sideload' command.  Note this must be a real argument, not
-  // anything in the command file or bootloader control block; the
-  // only way recovery should be run with this argument is when it
-  // starts a copy of itself from the apply_from_adb() function.
-  if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
-    minadbd_main();
-    return 0;
-  }
-
+int start_recovery(int argc, char** argv) {
   time_t start = time(nullptr);
-
-  // redirect_stdio should be called only in non-sideload mode. Otherwise
-  // we may have two logger instances with different timestamps.
-  redirect_stdio(Paths::Get().temporary_log_file().c_str());
 
   printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
 

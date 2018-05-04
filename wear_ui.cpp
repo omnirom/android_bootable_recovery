@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include <string>
+#include <vector>
 
 #include <android-base/properties.h>
 #include <android-base/strings.h>
@@ -61,13 +62,6 @@ void WearRecoveryUI::draw_background_locked() {
   }
 }
 
-static const char* SWIPE_HELP[] = {
-  "Swipe up/down to move.",
-  "Swipe left/right to select.",
-  "",
-  nullptr,
-};
-
 void WearRecoveryUI::draw_screen_locked() {
   draw_background_locked();
   if (!show_text) {
@@ -76,6 +70,13 @@ void WearRecoveryUI::draw_screen_locked() {
     SetColor(TEXT_FILL);
     gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
+    // clang-format off
+    static std::vector<std::string> SWIPE_HELP = {
+      "Swipe up/down to move.",
+      "Swipe left/right to select.",
+      "",
+    };
+    // clang-format on
     draw_menu_and_text_buffer_locked(SWIPE_HELP);
   }
 }
@@ -88,14 +89,12 @@ void WearRecoveryUI::update_progress_locked() {
 
 void WearRecoveryUI::SetStage(int /* current */, int /* max */) {}
 
-void WearRecoveryUI::StartMenu(const char* const* headers, const char* const* items,
-                               int initial_selection) {
+void WearRecoveryUI::StartMenu(const std::vector<std::string>& headers,
+                               const std::vector<std::string>& items, size_t initial_selection) {
   pthread_mutex_lock(&updateMutex);
   if (text_rows_ > 0 && text_cols_ > 0) {
     menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_ - kMenuUnusableRows - 1,
-                                   text_cols_ - 1);
-    menu_->Start(headers, items, initial_selection);
-
+                                   text_cols_ - 1, headers, items, initial_selection);
     update_screen_locked();
   }
   pthread_mutex_unlock(&updateMutex);

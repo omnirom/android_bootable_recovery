@@ -20,7 +20,7 @@ import android.util.SparseArray;
 
 /**
  * Helper class to work with update_engine's error codes.
- * Many error codes are defined in  {@link UpdateEngine.UpdateStatusConstants},
+ * Many error codes are defined in  {@code UpdateEngine.UpdateStatusConstants},
  * but you can find more in system/update_engine/common/error_code.h.
  */
 public final class UpdateEngineStatuses {

@@ -31,6 +31,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -42,7 +43,6 @@
 #include <android-base/strings.h>
 #include <minui/minui.h>
 
-#include "common.h"
 #include "device.h"
 #include "ui.h"
 
@@ -53,17 +53,27 @@ static double now() {
   return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
-Menu::Menu(bool scrollable, size_t max_items, size_t max_length)
+Menu::Menu(bool scrollable, size_t max_items, size_t max_length,
+           const std::vector<std::string>& headers, const std::vector<std::string>& items,
+           size_t initial_selection)
     : scrollable_(scrollable),
       max_display_items_(max_items),
       max_item_length_(max_length),
-      text_headers_(nullptr),
+      text_headers_(headers),
       menu_start_(0),
-      selection_(0) {
+      selection_(initial_selection) {
   CHECK_LE(max_items, static_cast<size_t>(std::numeric_limits<int>::max()));
+
+  // It's fine to have more entries than text_rows_ if scrollable menu is supported.
+  size_t items_count = scrollable_ ? items.size() : std::min(items.size(), max_display_items_);
+  for (size_t i = 0; i < items_count; ++i) {
+    text_items_.emplace_back(items[i].substr(0, max_item_length_));
+  }
+
+  CHECK(!text_items_.empty());
 }
 
-const char* const* Menu::text_headers() const {
+const std::vector<std::string>& Menu::text_headers() const {
   return text_headers_;
 }
 
@@ -86,26 +96,13 @@ size_t Menu::ItemsCount() const {
 }
 
 bool Menu::ItemsOverflow(std::string* cur_selection_str) const {
-  if (!scrollable_ || static_cast<size_t>(ItemsCount()) <= max_display_items_) {
+  if (!scrollable_ || ItemsCount() <= max_display_items_) {
     return false;
   }
 
   *cur_selection_str =
-      android::base::StringPrintf("Current item: %d/%zu", selection_ + 1, ItemsCount());
+      android::base::StringPrintf("Current item: %zu/%zu", selection_ + 1, ItemsCount());
   return true;
-}
-
-void Menu::Start(const char* const* headers, const char* const* items, int initial_selection) {
-  text_headers_ = headers;
-
-  // It's fine to have more entries than text_rows_ if scrollable menu is supported.
-  size_t max_items_count = scrollable_ ? std::numeric_limits<int>::max() : max_display_items_;
-  for (size_t i = 0; i < max_items_count && items[i] != nullptr; ++i) {
-    text_items_.emplace_back(items[i], strnlen(items[i], max_item_length_));
-  }
-
-  CHECK(!text_items_.empty());
-  selection_ = initial_selection;
 }
 
 // TODO(xunchang) modify the function parameters to button up & down.
@@ -373,19 +370,22 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   // Write the header and descriptive texts.
   SetColor(INFO);
   std::string header = "Show background text image";
-  text_y += DrawTextLine(text_x, text_y, header.c_str(), true);
+  text_y += DrawTextLine(text_x, text_y, header, true);
   std::string locale_selection = android::base::StringPrintf(
       "Current locale: %s, %zu/%zu", locales_entries[sel].c_str(), sel, locales_entries.size());
-  const char* instruction[] = { locale_selection.c_str(),
-                                "Use volume up/down to switch locales and power to exit.",
-                                nullptr };
+  // clang-format off
+  std::vector<std::string> instruction = {
+    locale_selection,
+    "Use volume up/down to switch locales and power to exit."
+  };
+  // clang-format on
   text_y += DrawWrappedTextLines(text_x, text_y, instruction);
 
   // Iterate through the text images and display them in order for the current locale.
   for (const auto& p : surfaces) {
     text_y += line_spacing;
     SetColor(LOG);
-    text_y += DrawTextLine(text_x, text_y, p.first.c_str(), false);
+    text_y += DrawTextLine(text_x, text_y, p.first, false);
     gr_color(255, 255, 255, 255);
     gr_texticon(text_x, text_y, p.second.get());
     text_y += gr_get_height(p.second.get());
@@ -452,24 +452,23 @@ void ScreenRecoveryUI::DrawTextIcon(int x, int y, GRSurface* surface) const {
   gr_texticon(x, y, surface);
 }
 
-int ScreenRecoveryUI::DrawTextLine(int x, int y, const char* line, bool bold) const {
-  gr_text(gr_sys_font(), x, y, line, bold);
+int ScreenRecoveryUI::DrawTextLine(int x, int y, const std::string& line, bool bold) const {
+  gr_text(gr_sys_font(), x, y, line.c_str(), bold);
   return char_height_ + 4;
 }
 
-int ScreenRecoveryUI::DrawTextLines(int x, int y, const char* const* lines) const {
+int ScreenRecoveryUI::DrawTextLines(int x, int y, const std::vector<std::string>& lines) const {
   int offset = 0;
-  for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
-    offset += DrawTextLine(x, y + offset, lines[i], false);
+  for (const auto& line : lines) {
+    offset += DrawTextLine(x, y + offset, line, false);
   }
   return offset;
 }
 
-int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y, const char* const* lines) const {
+int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y,
+                                           const std::vector<std::string>& lines) const {
   int offset = 0;
-  for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
-    // The line will be wrapped if it exceeds text_cols_.
-    std::string line(lines[i]);
+  for (const auto& line : lines) {
     size_t next_start = 0;
     while (next_start < line.size()) {
       std::string sub = line.substr(next_start, text_cols_ + 1);
@@ -479,7 +478,7 @@ int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y, const char* const* line
         // Line too long and must be wrapped to text_cols_ columns.
         size_t last_space = sub.find_last_of(" \t\n");
         if (last_space == std::string::npos) {
-          // No space found, just draw as much as we can
+          // No space found, just draw as much as we can.
           sub.resize(text_cols_);
           next_start += text_cols_;
         } else {
@@ -487,22 +486,11 @@ int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y, const char* const* line
           next_start += last_space + 1;
         }
       }
-      offset += DrawTextLine(x, y + offset, sub.c_str(), false);
+      offset += DrawTextLine(x, y + offset, sub, false);
     }
   }
   return offset;
 }
-
-static const char* REGULAR_HELP[] = {
-  "Use volume up/down and power.",
-  nullptr,
-};
-
-static const char* LONG_PRESS_HELP[] = {
-  "Any button cycles highlight.",
-  "Long-press activates.",
-  nullptr,
-};
 
 // Redraws everything on the screen. Does not flip pages. Should only be called with updateMutex
 // locked.
@@ -516,11 +504,21 @@ void ScreenRecoveryUI::draw_screen_locked() {
   gr_color(0, 0, 0, 255);
   gr_clear();
 
+  // clang-format off
+  static std::vector<std::string> REGULAR_HELP{
+    "Use volume up/down and power.",
+  };
+  static std::vector<std::string> LONG_PRESS_HELP{
+    "Any button cycles highlight.",
+    "Long-press activates.",
+  };
+  // clang-format on
   draw_menu_and_text_buffer_locked(HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
 }
 
 // Draws the menu and text buffer on the screen. Should only be called with updateMutex locked.
-void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(const char* const* help_message) {
+void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
+    const std::vector<std::string>& help_message) {
   int y = kMarginHeight;
   if (menu_) {
     static constexpr int kMenuIndent = 4;
@@ -531,7 +529,7 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(const char* const* help_
     std::string recovery_fingerprint =
         android::base::GetProperty("ro.bootimage.build.fingerprint", "");
     for (const auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
-      y += DrawTextLine(x, y, chunk.c_str(), false);
+      y += DrawTextLine(x, y, chunk, false);
     }
 
     y += DrawTextLines(x, y, help_message);
@@ -546,7 +544,7 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(const char* const* help_
       // screen.
       std::string cur_selection_str;
       if (menu_->ItemsOverflow(&cur_selection_str)) {
-        y += DrawTextLine(x, y, cur_selection_str.c_str(), true);
+        y += DrawTextLine(x, y, cur_selection_str, true);
       }
     }
 
@@ -570,7 +568,7 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(const char* const* help_
         bold = true;
       }
 
-      y += DrawTextLine(x, y, menu_->TextItem(i).c_str(), bold);
+      y += DrawTextLine(x, y, menu_->TextItem(i), bold);
 
       SetColor(MENU);
     }
@@ -951,10 +949,10 @@ void ScreenRecoveryUI::ShowFile(FILE* fp) {
   }
 }
 
-void ScreenRecoveryUI::ShowFile(const char* filename) {
-  FILE* fp = fopen_path(filename, "re");
-  if (fp == nullptr) {
-    Print("  Unable to open %s: %s\n", filename, strerror(errno));
+void ScreenRecoveryUI::ShowFile(const std::string& filename) {
+  std::unique_ptr<FILE, decltype(&fclose)> fp(fopen(filename.c_str(), "re"), fclose);
+  if (!fp) {
+    Print("  Unable to open %s: %s\n", filename.c_str(), strerror(errno));
     return;
   }
 
@@ -966,21 +964,19 @@ void ScreenRecoveryUI::ShowFile(const char* filename) {
   text_ = file_viewer_text_;
   ClearText();
 
-  ShowFile(fp);
-  fclose(fp);
+  ShowFile(fp.get());
 
   text_ = old_text;
   text_col_ = old_text_col;
   text_row_ = old_text_row;
 }
 
-void ScreenRecoveryUI::StartMenu(const char* const* headers, const char* const* items,
-                                 int initial_selection) {
+void ScreenRecoveryUI::StartMenu(const std::vector<std::string>& headers,
+                                 const std::vector<std::string>& items, size_t initial_selection) {
   pthread_mutex_lock(&updateMutex);
   if (text_rows_ > 0 && text_cols_ > 1) {
-    menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_, text_cols_ - 1);
-    menu_->Start(headers, items, initial_selection);
-
+    menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_, text_cols_ - 1, headers, items,
+                                   initial_selection);
     update_screen_locked();
   }
   pthread_mutex_unlock(&updateMutex);
@@ -1007,6 +1003,54 @@ void ScreenRecoveryUI::EndMenu() {
     update_screen_locked();
   }
   pthread_mutex_unlock(&updateMutex);
+}
+
+size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
+                                  const std::vector<std::string>& items, size_t initial_selection,
+                                  bool menu_only,
+                                  const std::function<int(int, bool)>& key_handler) {
+  // Throw away keys pressed previously, so user doesn't accidentally trigger menu items.
+  FlushKeys();
+
+  StartMenu(headers, items, initial_selection);
+
+  int selected = initial_selection;
+  int chosen_item = -1;
+  while (chosen_item < 0) {
+    int key = WaitKey();
+    if (key == -1) {  // WaitKey() timed out.
+      if (WasTextEverVisible()) {
+        continue;
+      } else {
+        LOG(INFO) << "Timed out waiting for key input; rebooting.";
+        EndMenu();
+        return static_cast<size_t>(-1);
+      }
+    }
+
+    bool visible = IsTextVisible();
+    int action = key_handler(key, visible);
+    if (action < 0) {
+      switch (action) {
+        case Device::kHighlightUp:
+          selected = SelectMenu(--selected);
+          break;
+        case Device::kHighlightDown:
+          selected = SelectMenu(++selected);
+          break;
+        case Device::kInvokeItem:
+          chosen_item = selected;
+          break;
+        case Device::kNoAction:
+          break;
+      }
+    } else if (!menu_only) {
+      chosen_item = action;
+    }
+  }
+
+  EndMenu();
+  return chosen_item;
 }
 
 bool ScreenRecoveryUI::IsTextVisible() {
