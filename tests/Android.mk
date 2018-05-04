@@ -27,6 +27,7 @@ LOCAL_STATIC_LIBRARIES := \
     libminui \
     libotautil \
     libupdater \
+    libpng \
     libziparchive \
     libutils \
     libz \

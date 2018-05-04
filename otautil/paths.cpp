@@ -19,6 +19,7 @@
 constexpr const char kDefaultCacheLogDirectory[] = "/cache/recovery";
 constexpr const char kDefaultCacheTempSource[] = "/cache/saved.file";
 constexpr const char kDefaultLastCommandFile[] = "/cache/recovery/last_command";
+constexpr const char kDefaultResourceDirectory[] = "/res/images";
 constexpr const char kDefaultStashDirectoryBase[] = "/cache/recovery";
 constexpr const char kDefaultTemporaryInstallFile[] = "/tmp/last_install";
 constexpr const char kDefaultTemporaryLogFile[] = "/tmp/recovery.log";
@@ -32,6 +33,7 @@ Paths::Paths()
     : cache_log_directory_(kDefaultCacheLogDirectory),
       cache_temp_source_(kDefaultCacheTempSource),
       last_command_file_(kDefaultLastCommandFile),
+      resource_dir_(kDefaultResourceDirectory),
       stash_directory_base_(kDefaultStashDirectoryBase),
       temporary_install_file_(kDefaultTemporaryInstallFile),
       temporary_log_file_(kDefaultTemporaryLogFile) {}

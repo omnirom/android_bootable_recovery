@@ -32,13 +32,14 @@
 #include <string>
 #include <vector>
 
-#include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <png.h>
 
 #include "minui/minui.h"
 
 #define SURFACE_DATA_ALIGNMENT 8
+
+static std::string g_resource_dir{ "/res/images" };
 
 static GRSurface* malloc_surface(size_t data_size) {
     size_t size = sizeof(GRSurface) + data_size + SURFACE_DATA_ALIGNMENT;
@@ -51,7 +52,7 @@ static GRSurface* malloc_surface(size_t data_size) {
 }
 
 PngHandler::PngHandler(const std::string& name) {
-  std::string res_path = android::base::StringPrintf("/res/images/%s.png", name.c_str());
+  std::string res_path = g_resource_dir + "/" + name + ".png";
   png_fp_.reset(fopen(res_path.c_str(), "rbe"));
   // Try to read from |name| if the resource path does not work.
   if (!png_fp_) {
@@ -338,6 +339,10 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
   *pSurface = surface;
 
   return 0;
+}
+
+void res_set_resource_dir(const std::string& dirname) {
+  g_resource_dir = dirname;
 }
 
 // This function tests if a locale string stored in PNG (prefix) matches
