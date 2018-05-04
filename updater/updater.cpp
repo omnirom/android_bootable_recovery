@@ -32,9 +32,9 @@
 
 #include "edify/expr.h"
 #include "otafault/config.h"
-#include "otautil/DirUtil.h"
-#include "otautil/SysUtil.h"
+#include "otautil/dirutil.h"
 #include "otautil/error_code.h"
+#include "otautil/sysutil.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
 

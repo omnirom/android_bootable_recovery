@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
-
 #include <string>
 
 #include <android-base/file.h>
 #include <android-base/test_utils.h>
+#include <gtest/gtest.h>
 
-#include "otautil/SysUtil.h"
+#include "otautil/sysutil.h"
 
 TEST(SysUtilTest, InvalidArgs) {
   MemMapping mapping;
