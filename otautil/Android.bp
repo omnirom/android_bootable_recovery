@@ -17,17 +17,13 @@ cc_library_static {
 
     host_supported: true,
 
+    // Minimal set of files to support host build.
     srcs: [
-        "SysUtil.cpp",
-        "DirUtil.cpp",
-        "ThermalUtil.cpp",
-        "mounts.cpp",
         "paths.cpp",
         "rangeset.cpp",
     ],
 
     static_libs: [
-        "libselinux",
         "libbase",
     ],
 
@@ -42,9 +38,16 @@ cc_library_static {
     ],
 
     target: {
-        darwin: {
-            exclude_srcs: [
+        android: {
+            srcs: [
+                "DirUtil.cpp",
+                "SysUtil.cpp",
+                "ThermalUtil.cpp",
                 "mounts.cpp",
+            ],
+
+            static_libs: [
+                "libselinux",
             ],
         },
     },
