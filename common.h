@@ -48,6 +48,4 @@ void ui_print(const char* format, ...) __printflike(1, 2);
 
 bool is_ro_debuggable();
 
-bool reboot(const std::string& command);
-
 #endif  // RECOVERY_COMMON_H
