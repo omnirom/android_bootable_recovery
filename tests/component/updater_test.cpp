@@ -40,10 +40,10 @@
 
 #include "common/test_constants.h"
 #include "edify/expr.h"
-#include "otautil/SysUtil.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
 #include "otautil/print_sha1.h"
+#include "otautil/sysutil.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
 #include "updater/updater.h"

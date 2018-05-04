@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "otautil/ThermalUtil.h"
+#include "otautil/thermalutil.h"
 
 #include <dirent.h>
 #include <stdio.h>

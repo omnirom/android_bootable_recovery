@@ -49,10 +49,10 @@
 #include <ziparchive/zip_archive.h>
 
 #include "common.h"
-#include "otautil/SysUtil.h"
-#include "otautil/ThermalUtil.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
+#include "otautil/sysutil.h"
+#include "otautil/thermalutil.h"
 #include "private/install.h"
 #include "roots.h"
 #include "ui.h"
