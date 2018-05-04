@@ -70,11 +70,11 @@ public class FileDownloaderTest {
                 .toFile();
         Files.deleteIfExists(outFile.toPath());
         // download a chunk of ota.zip
-        FileDownloader downloader = new FileDownloader(url, 160, 8, outFile);
+        FileDownloader downloader = new FileDownloader(url, 1674, 12, outFile);
         downloader.download();
         String downloadedContent = String.join("\n", Files.readAllLines(outFile.toPath()));
         // archive contains text files with uppercase filenames
-        assertEquals("CARE_MAP", downloadedContent);
+        assertEquals("CARE_MAP-TXT", downloadedContent);
     }
 
 }
