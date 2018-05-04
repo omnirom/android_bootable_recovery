@@ -23,10 +23,10 @@
 #include <android-base/file.h>
 #include <android-base/test_utils.h>
 #include <gtest/gtest.h>
-#include <otautil/SysUtil.h>
 #include <ziparchive/zip_archive.h>
 
 #include "common/test_constants.h"
+#include "otautil/sysutil.h"
 
 TEST(ZipTest, OpenFromMemory) {
   std::string zip_path = from_testdata_base("ziptest_dummy-update.zip");

@@ -50,4 +50,8 @@ class MemMapping {
   std::vector<MappedRange> ranges_;
 };
 
+// Wrapper function to trigger a reboot, by additionally handling quiescent reboot mode. The
+// command should start with "reboot," (e.g. "reboot,bootloader" or "reboot,").
+bool reboot(const std::string& command);
+
 #endif  // _OTAUTIL_SYSUTIL
