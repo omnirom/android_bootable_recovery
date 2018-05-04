@@ -16,7 +16,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <gtest/gtest.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -28,9 +27,10 @@
 #include <android-base/file.h>
 #include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
+#include <gtest/gtest.h>
 
 #include "common/test_constants.h"
-#include "otautil/SysUtil.h"
+#include "otautil/sysutil.h"
 #include "verifier.h"
 
 using namespace std::string_literals;

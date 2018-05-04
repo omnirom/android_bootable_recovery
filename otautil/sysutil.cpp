@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "otautil/SysUtil.h"
+#include "otautil/sysutil.h"
 
 #include <errno.h>  // TEMP_FAILURE_RETRY
 #include <fcntl.h>

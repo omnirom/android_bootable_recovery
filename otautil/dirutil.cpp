@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "otautil/DirUtil.h"
+#include "otautil/dirutil.h"
 
 #include <dirent.h>
 #include <errno.h>

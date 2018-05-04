@@ -40,10 +40,10 @@ cc_library_static {
     target: {
         android: {
             srcs: [
-                "DirUtil.cpp",
-                "SysUtil.cpp",
-                "ThermalUtil.cpp",
+                "dirutil.cpp",
                 "mounts.cpp",
+                "sysutil.cpp",
+                "thermalutil.cpp",
             ],
 
             static_libs: [

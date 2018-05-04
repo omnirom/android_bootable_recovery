@@ -67,7 +67,7 @@
 #include "fuse_sideload.h"
 #include "install.h"
 #include "minui/minui.h"
-#include "otautil/DirUtil.h"
+#include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
 #include "roots.h"
