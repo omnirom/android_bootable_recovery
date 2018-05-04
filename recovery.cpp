@@ -67,9 +67,10 @@
 #include "fuse_sideload.h"
 #include "install.h"
 #include "minui/minui.h"
-#include "otautil/DirUtil.h"
+#include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
+#include "otautil/sysutil.h"
 #include "roots.h"
 #include "rotate_logs.h"
 #include "screen_ui.h"
@@ -175,14 +176,6 @@ void check_and_fclose(FILE* fp, const std::string& name) {
 
 bool is_ro_debuggable() {
     return android::base::GetBoolProperty("ro.debuggable", false);
-}
-
-bool reboot(const std::string& command) {
-    std::string cmd = command;
-    if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
-        cmd += ",quiescent";
-    }
-    return android::base::SetProperty(ANDROID_RB_PROPERTY, cmd);
 }
 
 // command line args come from, in decreasing precedence:

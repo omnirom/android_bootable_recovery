@@ -36,14 +36,12 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
-#include <android-base/properties.h>
 #include <android-base/strings.h>
-#include <cutils/android_reboot.h>
 #include <minui/minui.h>
 
-#include "common.h"
-#include "roots.h"
 #include "device.h"
+#include "otautil/sysutil.h"
+#include "roots.h"
 
 static constexpr int UI_WAIT_KEY_TIMEOUT_SEC = 120;
 static constexpr const char* BRIGHTNESS_FILE = "/sys/class/leds/lcd-backlight/brightness";

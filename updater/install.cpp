@@ -48,7 +48,6 @@
 #include <android-base/strings.h>
 #include <applypatch/applypatch.h>
 #include <bootloader_message/bootloader_message.h>
-#include <cutils/android_reboot.h>
 #include <ext4_utils/wipe.h>
 #include <openssl/sha.h>
 #include <selinux/label.h>
@@ -58,10 +57,11 @@
 
 #include "edify/expr.h"
 #include "otafault/ota_io.h"
-#include "otautil/DirUtil.h"
+#include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/mounts.h"
 #include "otautil/print_sha1.h"
+#include "otautil/sysutil.h"
 #include "updater/updater.h"
 
 // Send over the buffer to recovery though the command pipe.
@@ -874,11 +874,7 @@ Value* RebootNowFn(const char* name, State* state, const std::vector<std::unique
     return StringValue("");
   }
 
-  std::string reboot_cmd = "reboot," + property;
-  if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
-    reboot_cmd += ",quiescent";
-  }
-  android::base::SetProperty(ANDROID_RB_PROPERTY, reboot_cmd);
+  reboot("reboot," + property);
 
   sleep(5);
   return ErrorAbort(state, kRebootFailure, "%s() failed to reboot", name);
