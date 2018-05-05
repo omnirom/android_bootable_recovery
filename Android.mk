@@ -65,6 +65,7 @@ LOCAL_MODULE := librecovery_ui
 
 LOCAL_STATIC_LIBRARIES := \
     libminui \
+    libotautil \
     libbase
 
 ifneq ($(TARGET_RECOVERY_UI_MARGIN_HEIGHT),)

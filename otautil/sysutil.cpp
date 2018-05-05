@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "otautil/SysUtil.h"
+#include "otautil/sysutil.h"
 
 #include <errno.h>  // TEMP_FAILURE_RETRY
 #include <fcntl.h>
@@ -28,8 +28,10 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
+#include <cutils/android_reboot.h>
 
 bool MemMapping::MapFD(int fd) {
   struct stat sb;
@@ -200,4 +202,12 @@ MemMapping::~MemMapping() {
     }
   };
   ranges_.clear();
+}
+
+bool reboot(const std::string& command) {
+  std::string cmd = command;
+  if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
+    cmd += ",quiescent";
+  }
+  return android::base::SetProperty(ANDROID_RB_PROPERTY, cmd);
 }
