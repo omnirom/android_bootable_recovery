@@ -116,6 +116,22 @@ static bool ParseLastCommandFile(int* last_command_index) {
   return true;
 }
 
+static bool FsyncDir(const std::string& dirname) {
+  android::base::unique_fd dfd(
+      TEMP_FAILURE_RETRY(ota_open(dirname.c_str(), O_RDONLY | O_DIRECTORY)));
+  if (dfd == -1) {
+    failure_type = kFileOpenFailure;
+    PLOG(ERROR) << "Failed to open " << dirname;
+    return false;
+  }
+  if (fsync(dfd) == -1) {
+    failure_type = kFsyncFailure;
+    PLOG(ERROR) << "Failed to fsync " << dirname;
+    return false;
+  }
+  return true;
+}
+
 // Update the last command index in the last_command_file if the current command writes to the
 // stash either explicitly or implicitly.
 static bool UpdateLastCommandIndex(int command_index, const std::string& command_string) {
@@ -144,19 +160,22 @@ static bool UpdateLastCommandIndex(int command_index, const std::string& command
     return false;
   }
 
-  std::string last_command_dir = android::base::Dirname(last_command_file);
-  android::base::unique_fd dfd(
-      TEMP_FAILURE_RETRY(ota_open(last_command_dir.c_str(), O_RDONLY | O_DIRECTORY)));
-  if (dfd == -1) {
-    PLOG(ERROR) << "Failed to open " << last_command_dir;
+  if (!FsyncDir(android::base::Dirname(last_command_file))) {
     return false;
   }
 
-  if (fsync(dfd) == -1) {
-    PLOG(ERROR) << "Failed to fsync " << last_command_dir;
+  return true;
+}
+
+static bool SetPartitionUpdatedMarker(const std::string& marker) {
+  if (!android::base::WriteStringToFile("", marker)) {
+    PLOG(ERROR) << "Failed to write to marker file " << marker;
     return false;
   }
-
+  if (!FsyncDir(android::base::Dirname(marker))) {
+    return false;
+  }
+  LOG(INFO) << "Wrote partition updated marker to " << marker;
   return true;
 }
 
@@ -676,7 +695,11 @@ static std::string GetStashFileName(const std::string& base, const std::string& 
   if (base.empty()) {
     return "";
   }
-  return Paths::Get().stash_directory_base() + "/" + base + "/" + id + postfix;
+  std::string filename = Paths::Get().stash_directory_base() + "/" + base;
+  if (id.empty() && postfix.empty()) {
+    return filename;
+  }
+  return filename + "/" + id + postfix;
 }
 
 // Does a best effort enumeration of stash files. Ignores possible non-file items in the stash
@@ -864,18 +887,9 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
     }
 
     std::string dname = GetStashFileName(base, "", "");
-    android::base::unique_fd dfd(TEMP_FAILURE_RETRY(ota_open(dname.c_str(),
-                                                             O_RDONLY | O_DIRECTORY)));
-    if (dfd == -1) {
-        failure_type = kFileOpenFailure;
-        PLOG(ERROR) << "failed to open \"" << dname << "\" failed";
-        return -1;
-    }
-
-    if (ota_fsync(dfd) == -1) {
-        failure_type = kFsyncFailure;
-        PLOG(ERROR) << "fsync \"" << dname << "\" failed";
-        return -1;
+    if (!FsyncDir(dname)) {
+      failure_type = kFsyncFailure;
+      return -1;
     }
 
     return 0;
@@ -884,30 +898,18 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
 // Creates a directory for storing stash files and checks if the /cache partition
 // hash enough space for the expected amount of blocks we need to store. Returns
 // >0 if we created the directory, zero if it existed already, and <0 of failure.
-
-static int CreateStash(State* state, size_t maxblocks, const std::string& blockdev,
-                       std::string& base) {
-  if (blockdev.empty()) {
-    return -1;
-  }
-
-  // Stash directory should be different for each partition to avoid conflicts
-  // when updating multiple partitions at the same time, so we use the hash of
-  // the block device name as the base directory
-  uint8_t digest[SHA_DIGEST_LENGTH];
-  SHA1(reinterpret_cast<const uint8_t*>(blockdev.data()), blockdev.size(), digest);
-  base = print_sha1(digest);
-
+static int CreateStash(State* state, size_t maxblocks, const std::string& base) {
   std::string dirname = GetStashFileName(base, "", "");
   struct stat sb;
   int res = stat(dirname.c_str(), &sb);
-  size_t max_stash_size = maxblocks * BLOCKSIZE;
-
   if (res == -1 && errno != ENOENT) {
     ErrorAbort(state, kStashCreationFailure, "stat \"%s\" failed: %s", dirname.c_str(),
                strerror(errno));
     return -1;
-  } else if (res != 0) {
+  }
+
+  size_t max_stash_size = maxblocks * BLOCKSIZE;
+  if (res == -1) {
     LOG(INFO) << "creating stash " << dirname;
     res = mkdir(dirname.c_str(), STASH_DIRECTORY_MODE);
 
@@ -1595,6 +1597,35 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     return StringValue("");
   }
 
+  // Stash directory should be different for each partition to avoid conflicts when updating
+  // multiple partitions at the same time, so we use the hash of the block device name as the base
+  // directory.
+  uint8_t digest[SHA_DIGEST_LENGTH];
+  SHA1(reinterpret_cast<const uint8_t*>(blockdev_filename->data.data()),
+       blockdev_filename->data.size(), digest);
+  params.stashbase = print_sha1(digest);
+
+  // Possibly do return early on retry, by checking the marker. If the update on this partition has
+  // been finished (but interrupted at a later point), there could be leftover on /cache that would
+  // fail the no-op retry.
+  std::string updated_marker = GetStashFileName(params.stashbase + ".UPDATED", "", "");
+  if (is_retry) {
+    struct stat sb;
+    int result = stat(updated_marker.c_str(), &sb);
+    if (result == 0) {
+      LOG(INFO) << "Skipping already updated partition " << blockdev_filename->data
+                << " based on marker";
+      return StringValue("t");
+    }
+  } else {
+    // Delete the obsolete marker if any.
+    std::string err;
+    if (!android::base::RemoveFileIfExists(updated_marker, &err)) {
+      LOG(ERROR) << "Failed to remove partition updated marker " << updated_marker << ": " << err;
+      return StringValue("");
+    }
+  }
+
   if (params.canwrite) {
     params.nti.za = za;
     params.nti.entry = new_entry;
@@ -1662,7 +1693,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     return StringValue("");
   }
 
-  int res = CreateStash(state, stash_max_blocks, blockdev_filename->data, params.stashbase);
+  int res = CreateStash(state, stash_max_blocks, params.stashbase);
   if (res == -1) {
     return StringValue("");
   }
@@ -1799,6 +1830,13 @@ pbiudone:
       // to complete the update later.
       DeleteStash(params.stashbase);
       DeleteLastCommandFile();
+
+      // Create a marker on /cache partition, which allows skipping the update on this partition on
+      // retry. The marker will be removed once booting into normal boot, or before starting next
+      // fresh install.
+      if (!SetPartitionUpdatedMarker(updated_marker)) {
+        LOG(WARNING) << "Failed to set updated marker; continuing";
+      }
     }
 
     pthread_mutex_destroy(&params.nti.mu);
