@@ -141,6 +141,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   size_t ShowMenu(const std::vector<std::string>& headers, const std::vector<std::string>& items,
                   size_t initial_selection, bool menu_only,
                   const std::function<int(int, bool)>& key_handler) override;
+  void SetTitle(const std::vector<std::string>& lines) override;
 
   void KeyLongPress(int) override;
 
@@ -265,6 +266,8 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   bool show_text;
   bool show_text_ever;  // has show_text ever been true?
+
+  std::vector<std::string> title_lines_;
 
   bool scrollable_menu_;
   std::unique_ptr<Menu> menu_;
