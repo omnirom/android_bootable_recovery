@@ -1730,8 +1730,12 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
       continue;
     }
 
-    // Skip all commands before the saved last command index when resuming an update.
-    if (params.canwrite && params.cmdindex != -1 && params.cmdindex <= saved_last_command_index) {
+    std::string cmdname = std::string(params.cmdname);
+
+    // Skip all commands before the saved last command index when resuming an update, except for
+    // "new" command. Because new commands read in the data sequentially.
+    if (params.canwrite && params.cmdindex != -1 && params.cmdindex <= saved_last_command_index &&
+        cmdname != "new") {
       LOG(INFO) << "Skipping already executed command: " << params.cmdindex
                 << ", last executed command for previous update: " << saved_last_command_index;
       continue;
@@ -1748,7 +1752,6 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     if (!params.canwrite && saved_last_command_index != -1 && params.cmdindex != -1 &&
         params.cmdindex <= saved_last_command_index) {
       // TODO(xunchang) check that the cmdline of the saved index is correct.
-      std::string cmdname = std::string(params.cmdname);
       if ((cmdname == "move" || cmdname == "bsdiff" || cmdname == "imgdiff") &&
           !params.target_verified) {
         LOG(WARNING) << "Previously executed command " << saved_last_command_index << ": "
