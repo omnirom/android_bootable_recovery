@@ -748,6 +748,10 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
   return true;
 }
 
+std::string ScreenRecoveryUI::GetLocale() {
+  return locale_;
+}
+
 void ScreenRecoveryUI::LoadAnimation() {
   std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/res/images"), closedir);
   dirent* de;
