@@ -255,7 +255,7 @@ class ScreenRecoveryUITest : public ::testing::Test {
  protected:
   const std::string kTestLocale = "en-US";
   const std::string kTestRtlLocale = "ar";
-  const std::string kTestRtlLocaleWithSuffix = "ar_EG";
+  const std::string kTestRtlLocaleWithSuffix = "ar-EG";
 
   void SetUp() override {
     ui_ = std::make_unique<TestableScreenRecoveryUI>();
