@@ -897,7 +897,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
 
       case Device::RUN_LOCALE_TEST: {
         ScreenRecoveryUI* screen_ui = static_cast<ScreenRecoveryUI*>(ui);
-        screen_ui->CheckBackgroundTextImages(screen_ui->GetLocale());
+        screen_ui->CheckBackgroundTextImages();
         break;
       }
       case Device::MOUNT_SYSTEM:
