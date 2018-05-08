@@ -114,6 +114,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   explicit ScreenRecoveryUI(bool scrollable_menu);
 
   bool Init(const std::string& locale) override;
+  std::string GetLocale() override;
 
   // overall recovery state ("background image")
   void SetBackground(Icon icon) override;
