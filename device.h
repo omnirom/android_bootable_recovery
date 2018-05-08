@@ -58,6 +58,12 @@ class Device {
     return ui_;
   }
 
+  // Sets the UI object to the given UI. Used to override the default UI in case initialization
+  // failed, or we want a stub for some reason.
+  virtual void SetUI(RecoveryUI* ui) {
+    ui_ = ui;
+  }
+
   // Called when recovery starts up (after the UI has been obtained and initialized and after the
   // arguments have been parsed, but before anything else).
   virtual void StartRecovery() {};
