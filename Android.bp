@@ -89,13 +89,17 @@ cc_binary {
     ],
 
     srcs: [
+        "logging.cpp",
         "recovery-persist.cpp",
-        "rotate_logs.cpp",
     ],
 
     shared_libs: [
         "libbase",
         "liblog",
+    ],
+
+    static_libs: [
+        "libotautil",
     ],
 
     init_rc: [
@@ -112,13 +116,17 @@ cc_binary {
     ],
 
     srcs: [
+        "logging.cpp",
         "recovery-refresh.cpp",
-        "rotate_logs.cpp",
     ],
 
     shared_libs: [
         "libbase",
         "liblog",
+    ],
+
+    static_libs: [
+        "libotautil",
     ],
 
     init_rc: [

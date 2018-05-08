@@ -29,7 +29,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/klog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -53,8 +52,6 @@
 #include <cutils/android_reboot.h>
 #include <cutils/properties.h> /* for property_list */
 #include <health2/Health.h>
-#include <private/android_filesystem_config.h> /* for AID_SYSTEM */
-#include <private/android_logger.h>            /* private pmsg functions */
 #include <selinux/android.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
@@ -66,21 +63,19 @@
 #include "fuse_sdcard_provider.h"
 #include "fuse_sideload.h"
 #include "install.h"
+#include "logging.h"
 #include "minui/minui.h"
 #include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
 #include "otautil/sysutil.h"
 #include "roots.h"
-#include "rotate_logs.h"
 #include "screen_ui.h"
 #include "stub_ui.h"
 #include "ui.h"
 
 static constexpr const char* CACHE_LOG_DIR = "/cache/recovery";
 static constexpr const char* COMMAND_FILE = "/cache/recovery/command";
-static constexpr const char* LOG_FILE = "/cache/recovery/log";
-static constexpr const char* LAST_INSTALL_FILE = "/cache/recovery/last_install";
 static constexpr const char* LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 static constexpr const char* LAST_LOG_FILE = "/cache/recovery/last_log";
 static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";
@@ -148,31 +143,6 @@ struct selabel_handle* sehandle;
  *    7a. prompt_and_wait() shows an error icon and waits for the user
  *    7b. the user reboots (pulling the battery, etc) into the main system
  */
-
-FILE* fopen_path(const std::string& path, const char* mode) {
-  if (ensure_path_mounted(path.c_str()) != 0) {
-    LOG(ERROR) << "Can't mount " << path;
-    return nullptr;
-  }
-
-  // When writing, try to create the containing directory, if necessary. Use generous permissions,
-  // the system (init.rc) will reset them.
-  if (strchr("wa", mode[0])) {
-    mkdir_recursively(path, 0777, true, sehandle);
-  }
-  return fopen(path.c_str(), mode);
-}
-
-void check_and_fclose(FILE* fp, const std::string& name) {
-  fflush(fp);
-  if (fsync(fileno(fp)) == -1) {
-    PLOG(ERROR) << "Failed to fsync " << name;
-  }
-  if (ferror(fp)) {
-    PLOG(ERROR) << "Error in " << name;
-  }
-  fclose(fp);
-}
 
 bool is_ro_debuggable() {
     return android::base::GetBoolProperty("ro.debuggable", false);
@@ -259,98 +229,6 @@ static void set_sdcard_update_bootloader_message() {
   }
 }
 
-// Read from kernel log into buffer and write out to file.
-static void save_kernel_log(const char* destination) {
-    int klog_buf_len = klogctl(KLOG_SIZE_BUFFER, 0, 0);
-    if (klog_buf_len <= 0) {
-        PLOG(ERROR) << "Error getting klog size";
-        return;
-    }
-
-    std::string buffer(klog_buf_len, 0);
-    int n = klogctl(KLOG_READ_ALL, &buffer[0], klog_buf_len);
-    if (n == -1) {
-        PLOG(ERROR) << "Error in reading klog";
-        return;
-    }
-    buffer.resize(n);
-    android::base::WriteStringToFile(buffer, destination);
-}
-
-// Writes content to the current pmsg session.
-static ssize_t __pmsg_write(const std::string& filename, const std::string& buf) {
-  return __android_log_pmsg_file_write(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filename.c_str(),
-                                       buf.data(), buf.size());
-}
-
-static void copy_log_file_to_pmsg(const std::string& source, const std::string& destination) {
-  std::string content;
-  android::base::ReadFileToString(source, &content);
-  __pmsg_write(destination, content);
-}
-
-// How much of the temp log we have copied to the copy in cache.
-static off_t tmplog_offset = 0;
-
-static void copy_log_file(const std::string& source, const std::string& destination, bool append) {
-  FILE* dest_fp = fopen_path(destination, append ? "ae" : "we");
-  if (dest_fp == nullptr) {
-    PLOG(ERROR) << "Can't open " << destination;
-  } else {
-    FILE* source_fp = fopen(source.c_str(), "re");
-    if (source_fp != nullptr) {
-      if (append) {
-        fseeko(source_fp, tmplog_offset, SEEK_SET);  // Since last write
-      }
-      char buf[4096];
-      size_t bytes;
-      while ((bytes = fread(buf, 1, sizeof(buf), source_fp)) != 0) {
-        fwrite(buf, 1, bytes, dest_fp);
-      }
-      if (append) {
-        tmplog_offset = ftello(source_fp);
-      }
-      check_and_fclose(source_fp, source);
-    }
-    check_and_fclose(dest_fp, destination);
-  }
-}
-
-static void copy_logs() {
-  // We only rotate and record the log of the current session if there are actual attempts to modify
-  // the flash, such as wipes, installs from BCB or menu selections. This is to avoid unnecessary
-  // rotation (and possible deletion) of log files, if it does not do anything loggable.
-  if (!modified_flash) {
-    return;
-  }
-
-  // Always write to pmsg, this allows the OTA logs to be caught in `logcat -L`.
-  copy_log_file_to_pmsg(Paths::Get().temporary_log_file(), LAST_LOG_FILE);
-  copy_log_file_to_pmsg(Paths::Get().temporary_install_file(), LAST_INSTALL_FILE);
-
-  // We can do nothing for now if there's no /cache partition.
-  if (!has_cache) {
-    return;
-  }
-
-  ensure_path_mounted(LAST_LOG_FILE);
-  ensure_path_mounted(LAST_KMSG_FILE);
-  rotate_logs(LAST_LOG_FILE, LAST_KMSG_FILE);
-
-  // Copy logs to cache so the system can find out what happened.
-  copy_log_file(Paths::Get().temporary_log_file(), LOG_FILE, true);
-  copy_log_file(Paths::Get().temporary_log_file(), LAST_LOG_FILE, false);
-  copy_log_file(Paths::Get().temporary_install_file(), LAST_INSTALL_FILE, false);
-  save_kernel_log(LAST_KMSG_FILE);
-  chmod(LOG_FILE, 0600);
-  chown(LOG_FILE, AID_SYSTEM, AID_SYSTEM);
-  chmod(LAST_KMSG_FILE, 0600);
-  chown(LAST_KMSG_FILE, AID_SYSTEM, AID_SYSTEM);
-  chmod(LAST_LOG_FILE, 0640);
-  chmod(LAST_INSTALL_FILE, 0644);
-  sync();
-}
-
 // Clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read). This function is
 // idempotent: call it as many times as you like.
@@ -366,7 +244,7 @@ static void finish_recovery() {
     }
   }
 
-  copy_logs();
+  copy_logs(modified_flash, has_cache);
 
   // Reset to normal system boot so recovery won't cycle indefinitely.
   std::string err;
@@ -482,8 +360,8 @@ static bool erase_volume(const char* volume) {
     // Any part of the log we'd copied to cache is now gone.
     // Reset the pointer so we copy from the beginning of the temp
     // log.
-    tmplog_offset = 0;
-    copy_logs();
+    reset_tmplog_offset();
+    copy_logs(modified_flash, has_cache);
   }
 
   return (result == 0);
@@ -1000,7 +878,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
           if (status != INSTALL_SUCCESS) {
             ui->SetBackground(RecoveryUI::ERROR);
             ui->Print("Installation aborted.\n");
-            copy_logs();
+            copy_logs(modified_flash, has_cache);
           } else if (!ui->IsTextVisible()) {
             return Device::NO_ACTION;  // reboot if logs aren't visible
           } else {
@@ -1394,7 +1272,7 @@ int start_recovery(int argc, char** argv) {
         // RETRY_LIMIT times before we abandon this OTA update.
         static constexpr int RETRY_LIMIT = 4;
         if (status == INSTALL_RETRY && retry_count < RETRY_LIMIT) {
-          copy_logs();
+          copy_logs(modified_flash, has_cache);
           retry_count += 1;
           set_retry_bootloader_message(retry_count, args);
           // Print retry count on screen.
