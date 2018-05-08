@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef _ROTATE_LOGS_H
-#define _ROTATE_LOGS_H
+#ifndef _LOGGING_H
+#define _LOGGING_H
 
 #include <stddef.h>
 #include <sys/types.h>
+
+#include <string>
 
 #include <log/log_id.h>
 
@@ -35,4 +37,14 @@ ssize_t logrotate(log_id_t id, char prio, const char* filename, const char* buf,
 // Overwrite any existing last_log.$max and last_kmsg.$max.
 void rotate_logs(const char* last_log_file, const char* last_kmsg_file);
 
-#endif //_ROTATE_LOG_H
+// In turn fflush(3)'s, fsync(3)'s and fclose(3)'s the given stream.
+void check_and_fclose(FILE* fp, const std::string& name);
+
+void copy_log_file_to_pmsg(const std::string& source, const std::string& destination);
+void copy_log_file(const std::string& source, const std::string& destination, bool append);
+void copy_logs(bool modified_flash, bool has_cache);
+void reset_tmplog_offset();
+
+void save_kernel_log(const char* destination);
+
+#endif  //_LOGGING_H

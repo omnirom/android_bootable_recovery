@@ -24,10 +24,10 @@
 #include <private/android_logger.h> /* private pmsg functions */
 
 #include "common.h"
+#include "logging.h"
 #include "minadbd/minadbd.h"
 #include "otautil/paths.h"
 #include "private/recovery.h"
-#include "rotate_logs.h"
 #include "ui.h"
 
 static void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity,

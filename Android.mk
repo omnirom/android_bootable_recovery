@@ -126,10 +126,10 @@ LOCAL_SRC_FILES := \
     adb_install.cpp \
     device.cpp \
     fuse_sdcard_provider.cpp \
+    logging.cpp \
     recovery.cpp \
     recovery_main.cpp \
     roots.cpp \
-    rotate_logs.cpp \
 
 LOCAL_MODULE := recovery
 
