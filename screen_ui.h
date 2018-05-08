@@ -148,9 +148,9 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   void SetColor(UIElement e) const;
 
-  // Check the background text image. Use volume up/down button to cycle through the locales
-  // embedded in the png file, and power button to go back to recovery main menu.
-  void CheckBackgroundTextImages(const std::string& saved_locale);
+  // Checks the background text image, for debugging purpose. It iterates the locales embedded in
+  // the on-device resource files and shows the localized text, for manual inspection.
+  void CheckBackgroundTextImages();
 
  protected:
   // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
