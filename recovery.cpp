@@ -64,7 +64,6 @@
 #include "fuse_sideload.h"
 #include "install.h"
 #include "logging.h"
-#include "minui/minui.h"
 #include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
