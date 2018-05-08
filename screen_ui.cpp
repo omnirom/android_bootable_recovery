@@ -372,7 +372,7 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   std::string header = "Show background text image";
   text_y += DrawTextLine(text_x, text_y, header, true);
   std::string locale_selection = android::base::StringPrintf(
-      "Current locale: %s, %zu/%zu", locales_entries[sel].c_str(), sel, locales_entries.size());
+      "Current locale: %s, %zu/%zu", locales_entries[sel].c_str(), sel + 1, locales_entries.size());
   // clang-format off
   std::vector<std::string> instruction = {
     locale_selection,
@@ -395,13 +395,14 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   pthread_mutex_unlock(&updateMutex);
 }
 
-void ScreenRecoveryUI::CheckBackgroundTextImages(const std::string& saved_locale) {
+void ScreenRecoveryUI::CheckBackgroundTextImages() {
   // Load a list of locales embedded in one of the resource files.
   std::vector<std::string> locales_entries = get_locales_in_png("installing_text");
   if (locales_entries.empty()) {
     Print("Failed to load locales from the resource files\n");
     return;
   }
+  std::string saved_locale = locale_;
   size_t selected = 0;
   SelectAndShowBackgroundText(locales_entries, selected);
 
