@@ -89,7 +89,6 @@ static constexpr const char* SDCARD_ROOT = "/sdcard";
 // into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
 static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
 
-static std::string locale;
 static bool has_cache = false;
 
 RecoveryUI* ui = nullptr;
@@ -232,7 +231,8 @@ static void set_sdcard_update_bootloader_message() {
 // Clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read). This function is
 // idempotent: call it as many times as you like.
-static void finish_recovery() {
+static void finish_recovery(Device* device) {
+  std::string locale = device->GetUI()->GetLocale();
   // Save the locale to cache, so if recovery is next started up without a '--locale' argument
   // (e.g., directly from the bootloader) it will use the last-known locale.
   if (!locale.empty() && has_cache) {
@@ -809,7 +809,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
 // which is to reboot or shutdown depending on if the --shutdown_after flag was passed to recovery.
 static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
   for (;;) {
-    finish_recovery();
+    finish_recovery(device);
     switch (status) {
       case INSTALL_SUCCESS:
       case INSTALL_NONE:
@@ -897,7 +897,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
 
       case Device::RUN_LOCALE_TEST: {
         ScreenRecoveryUI* screen_ui = static_cast<ScreenRecoveryUI*>(ui);
-        screen_ui->CheckBackgroundTextImages(locale);
+        screen_ui->CheckBackgroundTextImages(screen_ui->GetLocale());
         break;
       }
       case Device::MOUNT_SYSTEM:
@@ -1105,6 +1105,7 @@ int start_recovery(int argc, char** argv) {
   bool shutdown_after = false;
   int retry_count = 0;
   bool security_update = false;
+  std::string locale;
 
   int arg;
   int option_index;
@@ -1182,6 +1183,7 @@ int start_recovery(int argc, char** argv) {
       ui = new StubRecoveryUI();
     }
   }
+  device->SetUI(ui);
 
   // Set background string to "installing security update" for security update,
   // otherwise set it to "installing system update".
@@ -1348,7 +1350,7 @@ int start_recovery(int argc, char** argv) {
   }
 
   // Save logs and clean up before rebooting or shutting down.
-  finish_recovery();
+  finish_recovery(device);
 
   switch (after) {
     case Device::SHUTDOWN:
