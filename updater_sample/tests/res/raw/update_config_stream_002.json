@@ -1,5 +1,8 @@
 {
     "__": "*** Generated using tools/gen_update_config.py ***",
+    "ab_config": {
+        "force_switch_slot": false
+    },
     "ab_install_type": "STREAMING",
     "ab_streaming_metadata": {
         "property_files": [

@@ -71,7 +71,7 @@ public class UpdateConfig implements Parcelable {
             JSONObject meta = o.getJSONObject("ab_streaming_metadata");
             JSONArray propertyFilesJson = meta.getJSONArray("property_files");
             PackageFile[] propertyFiles =
-                new PackageFile[propertyFilesJson.length()];
+                    new PackageFile[propertyFilesJson.length()];
             for (int i = 0; i < propertyFilesJson.length(); i++) {
                 JSONObject p = propertyFilesJson.getJSONObject(i);
                 propertyFiles[i] = new PackageFile(
@@ -87,6 +87,12 @@ public class UpdateConfig implements Parcelable {
                     propertyFiles,
                     authorization);
         }
+
+        // TODO: parse only for A/B updates when non-A/B is implemented
+        JSONObject ab = o.getJSONObject("ab_config");
+        boolean forceSwitchSlot = ab.getBoolean("force_switch_slot");
+        c.mAbConfig = new AbConfig(forceSwitchSlot);
+
         c.mRawJson = json;
         return c;
     }
@@ -109,6 +115,9 @@ public class UpdateConfig implements Parcelable {
     /** metadata is required only for streaming update */
     private StreamingMetadata mAbStreamingMetadata;
 
+    /** A/B update configurations */
+    private AbConfig mAbConfig;
+
     private String mRawJson;
 
     protected UpdateConfig() {
@@ -119,6 +128,7 @@ public class UpdateConfig implements Parcelable {
         this.mUrl = in.readString();
         this.mAbInstallType = in.readInt();
         this.mAbStreamingMetadata = (StreamingMetadata) in.readSerializable();
+        this.mAbConfig = (AbConfig) in.readSerializable();
         this.mRawJson = in.readString();
     }
 
@@ -148,6 +158,10 @@ public class UpdateConfig implements Parcelable {
         return mAbStreamingMetadata;
     }
 
+    public AbConfig getAbConfig() {
+        return mAbConfig;
+    }
+
     /**
      * @return File object for given url
      */
@@ -172,6 +186,7 @@ public class UpdateConfig implements Parcelable {
         dest.writeString(mUrl);
         dest.writeInt(mAbInstallType);
         dest.writeSerializable(mAbStreamingMetadata);
+        dest.writeSerializable(mAbConfig);
         dest.writeString(mRawJson);
     }
 
@@ -185,9 +200,11 @@ public class UpdateConfig implements Parcelable {
         /** defines beginning of update data in archive */
         private PackageFile[] mPropertyFiles;
 
-        /** SystemUpdaterSample receives the authorization token from the OTA server, in addition
+        /**
+         * SystemUpdaterSample receives the authorization token from the OTA server, in addition
          * to the package URL. It passes on the info to update_engine, so that the latter can
-         * fetch the data from the package server directly with the token. */
+         * fetch the data from the package server directly with the token.
+         */
         private String mAuthorization;
 
         public StreamingMetadata(PackageFile[] propertyFiles, String authorization) {
@@ -237,6 +254,29 @@ public class UpdateConfig implements Parcelable {
         public long getSize() {
             return mSize;
         }
+    }
+
+    /**
+     * A/B (seamless) update configurations.
+     */
+    public static class AbConfig implements Serializable {
+
+        private static final long serialVersionUID = 31044L;
+
+        /**
+         * if set true device will boot to new slot, otherwise user manually
+         * switches slot on the screen.
+         */
+        private boolean mForceSwitchSlot;
+
+        public AbConfig(boolean forceSwitchSlot) {
+            this.mForceSwitchSlot = forceSwitchSlot;
+        }
+
+        public boolean getForceSwitchSlot() {
+            return mForceSwitchSlot;
+        }
+
     }
 
 }

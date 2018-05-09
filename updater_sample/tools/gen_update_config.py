@@ -46,10 +46,11 @@ class GenUpdateConfig(object):
     AB_INSTALL_TYPE_STREAMING = 'STREAMING'
     AB_INSTALL_TYPE_NON_STREAMING = 'NON_STREAMING'
 
-    def __init__(self, package, url, ab_install_type):
+    def __init__(self, package, url, ab_install_type, ab_force_switch_slot):
         self.package = package
         self.url = url
         self.ab_install_type = ab_install_type
+        self.ab_force_switch_slot = ab_force_switch_slot
         self.streaming_required = (
             # payload.bin and payload_properties.txt must exist.
             'payload.bin',
@@ -80,6 +81,9 @@ class GenUpdateConfig(object):
             'url': self.url,
             'ab_streaming_metadata': streaming_metadata,
             'ab_install_type': self.ab_install_type,
+            'ab_config': {
+                'force_switch_slot': self.ab_force_switch_slot,
+            }
         }
 
     def _gen_ab_streaming_metadata(self):
@@ -126,6 +130,11 @@ def main():  # pylint: disable=missing-docstring
                         default=GenUpdateConfig.AB_INSTALL_TYPE_NON_STREAMING,
                         choices=ab_install_type_choices,
                         help='A/B update installation type')
+    parser.add_argument('--ab_force_switch_slot',
+                        type=bool,
+                        default=False,
+                        help='if set true device will boot to a new slot, otherwise user manually '
+                             'switches slot on the screen')
     parser.add_argument('package',
                         type=str,
                         help='OTA package zip file')
@@ -144,7 +153,8 @@ def main():  # pylint: disable=missing-docstring
     gen = GenUpdateConfig(
         package=args.package,
         url=args.url,
-        ab_install_type=args.ab_install_type)
+        ab_install_type=args.ab_install_type,
+        ab_force_switch_slot=args.ab_force_switch_slot)
     gen.run()
     gen.write(args.out)
     print('Config is written to ' + args.out)
