@@ -26,14 +26,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Utility class for working with json update configurations.
  */
 public final class UpdateConfigs {
 
-    private static final String UPDATE_CONFIGS_ROOT = "configs/";
+    public static final String UPDATE_CONFIGS_ROOT = "configs/";
 
     /**
      * @param configs update configs
@@ -48,13 +50,12 @@ public final class UpdateConfigs {
      * @return configs root directory
      */
     public static String getConfigsRoot(Context context) {
-        return Paths.get(context.getFilesDir().toString(),
-                UPDATE_CONFIGS_ROOT).toString();
+        return Paths
+                .get(context.getFilesDir().toString(), UPDATE_CONFIGS_ROOT)
+                .toString();
     }
 
     /**
-     * It parses only {@code .json} files.
-     *
      * @param context application context
      * @return list of configs from directory {@link UpdateConfigs#getConfigsRoot}
      */
@@ -78,6 +79,21 @@ public final class UpdateConfigs {
             }
         }
         return configs;
+    }
+
+    /**
+     * @param filename searches by given filename
+     * @param config searches in {@link UpdateConfig#getStreamingMetadata()}
+     * @return offset and size of {@code filename} in the package zip file
+     *         stored as {@link UpdateConfig.PackageFile}.
+     */
+    public static Optional<UpdateConfig.PackageFile> getPropertyFile(
+            final String filename,
+            UpdateConfig config) {
+        return Arrays
+                .stream(config.getStreamingMetadata().getPropertyFiles())
+                .filter(file -> filename.equals(file.getFilename()))
+                .findFirst();
     }
 
     private UpdateConfigs() {}
