@@ -69,14 +69,15 @@ purpose only.
       update zip file
 - [x] Add `UpdateConfig` for working with json config files
 - [x] Add applying non-streaming update
-- [ ] Prepare streaming update (partially downloading package)
-- [ ] Add applying streaming update
+- [x] Prepare streaming update (partially downloading package)
+- [x] Add applying streaming update
+- [x] Add stop/reset the update
 - [ ] Add tests for `MainActivity`
-- [ ] Add stop/reset the update
 - [ ] Verify system partition checksum for package
 - [ ] HAL compatibility check
 - [ ] Change partition demo
 - [ ] Add non-A/B updates demo
+- [ ] Add docs for passing HTTP headers to `UpdateEngine#applyPayload`
 
 
 ## Running tests
