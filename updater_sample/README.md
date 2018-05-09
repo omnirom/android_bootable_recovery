@@ -61,6 +61,17 @@ purpose only.
 6. Push OTA packages to the device.
 
 
+## Sending HTTP headers from UpdateEngine
+
+Sometimes OTA package server might require some HTTP headers to be present,
+e.g. `Authorization` header to contain valid auth token. While performing
+streaming update, `UpdateEngine` allows passing on certain HTTP headers;
+as of writing this sample app, these headers are `Authorization` and `User-Agent`.
+
+`android.os.UpdateEngine#applyPayload` contains information on
+which HTTP headers are supported.
+
+
 ## Development
 
 - [x] Create a UI with list of configs, current version,
@@ -72,12 +83,12 @@ purpose only.
 - [x] Prepare streaming update (partially downloading package)
 - [x] Add applying streaming update
 - [x] Add stop/reset the update
+- [x] Add demo for passing HTTP headers to `UpdateEngine#applyPayload`
 - [ ] Add tests for `MainActivity`
-- [ ] Verify system partition checksum for package
 - [ ] HAL compatibility check
 - [ ] Change partition demo
+- [ ] Verify system partition checksum for package
 - [ ] Add non-A/B updates demo
-- [ ] Add docs for passing HTTP headers to `UpdateEngine#applyPayload`
 
 
 ## Running tests

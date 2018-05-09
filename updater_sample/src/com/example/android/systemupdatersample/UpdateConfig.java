@@ -25,6 +25,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Optional;
 
 /**
  * An update description. It will be parsed from JSON, which is intended to
@@ -78,7 +79,9 @@ public class UpdateConfig implements Parcelable {
                         p.getLong("offset"),
                         p.getLong("size"));
             }
-            c.mAbStreamingMetadata = new StreamingMetadata(propertyFiles);
+            c.mAbStreamingMetadata = new StreamingMetadata(
+                    propertyFiles,
+                    meta.getString("authorization_token"));
         }
         c.mRawJson = json;
         return c;
@@ -178,16 +181,22 @@ public class UpdateConfig implements Parcelable {
         /** defines beginning of update data in archive */
         private PackageFile[] mPropertyFiles;
 
-        public StreamingMetadata() {
-            mPropertyFiles = new PackageFile[0];
-        }
+        /** SystemUpdaterSample receives the authorization token from the OTA server, in addition
+         * to the package URL. It passes on the info to update_engine, so that the latter can
+         * fetch the data from the package server directly with the token. */
+        private String mAuthorization;
 
-        public StreamingMetadata(PackageFile[] propertyFiles) {
+        public StreamingMetadata(PackageFile[] propertyFiles, String authorization) {
             this.mPropertyFiles = propertyFiles;
+            this.mAuthorization = authorization;
         }
 
         public PackageFile[] getPropertyFiles() {
             return mPropertyFiles;
+        }
+
+        public Optional<String> getAuthorization() {
+            return Optional.of(mAuthorization);
         }
     }
 
@@ -224,7 +233,6 @@ public class UpdateConfig implements Parcelable {
         public long getSize() {
             return mSize;
         }
-
     }
 
 }
