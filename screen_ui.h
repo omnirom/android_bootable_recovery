@@ -224,8 +224,9 @@ class ScreenRecoveryUI : public RecoveryUI {
   virtual void DrawTextIcon(int x, int y, GRSurface* surface) const;
   // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
   int DrawTextLines(int x, int y, const std::vector<std::string>& lines) const;
-  // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines.
-  // Returns the offset it should be moving along Y-axis.
+  // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines. It
+  // keeps symmetrical margins of 'x' at each end of a line. Returns the offset it should be moving
+  // along Y-axis.
   int DrawWrappedTextLines(int x, int y, const std::vector<std::string>& lines) const;
 
   Icon currentIcon;
