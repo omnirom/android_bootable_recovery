@@ -17,11 +17,13 @@
 """
 Given a OTA package file, produces update config JSON file.
 
-Example:  tools/gen_update_config.py \\
-            --ab_install_type=STREAMING \\
-            ota-build-001.zip  \\
-            my-config-001.json \\
-            http://foo.bar/ota-builds/ota-build-001.zip
+Example:
+      $ PYTHONPATH=$ANDROID_BUILD_TOP/build/make/tools/releasetools:$PYTHONPATH \\
+            bootable/recovery/updater_sample/tools/gen_update_config.py \\
+                --ab_install_type=STREAMING \\
+                ota-build-001.zip  \\
+                my-config-001.json \\
+                http://foo.bar/ota-builds/ota-build-001.zip
 """
 
 import argparse
@@ -29,6 +31,8 @@ import json
 import os.path
 import sys
 import zipfile
+
+import ota_from_target_files  # pylint: disable=import-error
 
 
 class GenUpdateConfig(object):
@@ -41,7 +45,6 @@ class GenUpdateConfig(object):
 
     AB_INSTALL_TYPE_STREAMING = 'STREAMING'
     AB_INSTALL_TYPE_NON_STREAMING = 'NON_STREAMING'
-    METADATA_NAME = 'META-INF/com/android/metadata'
 
     def __init__(self, package, url, ab_install_type):
         self.package = package
@@ -82,37 +85,27 @@ class GenUpdateConfig(object):
     def _gen_ab_streaming_metadata(self):
         """Builds metadata for files required for streaming update."""
         with zipfile.ZipFile(self.package, 'r') as package_zip:
-            property_files = self._get_property_files(package_zip)
-
             metadata = {
-                'property_files': property_files
+                'property_files': self._get_property_files(package_zip)
             }
 
         return metadata
 
-    def _get_property_files(self, zip_file):
+    @staticmethod
+    def _get_property_files(package_zip):
         """Constructs the property-files list for A/B streaming metadata."""
 
-        def compute_entry_offset_size(name):
-            """Computes the zip entry offset and size."""
-            info = zip_file.getinfo(name)
-            offset = info.header_offset + len(info.FileHeader())
-            size = info.file_size
-            return {
-                'filename': os.path.basename(name),
-                'offset': offset,
-                'size': size,
-            }
-
+        ab_ota = ota_from_target_files.AbOtaPropertyFiles()
+        property_str = ab_ota.GetPropertyFilesString(package_zip, False)
         property_files = []
-        for entry in self.streaming_required:
-            property_files.append(compute_entry_offset_size(entry))
-        for entry in self.streaming_optional:
-            if entry in zip_file.namelist():
-                property_files.append(compute_entry_offset_size(entry))
-
-        # 'META-INF/com/android/metadata' is required
-        property_files.append(compute_entry_offset_size(GenUpdateConfig.METADATA_NAME))
+        for file in property_str.split(','):
+            filename, offset, size = file.split(':')
+            inner_file = {
+                'filename': filename,
+                'offset': int(offset),
+                'size': int(size)
+            }
+            property_files.append(inner_file)
 
         return property_files
 
