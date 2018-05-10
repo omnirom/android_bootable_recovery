@@ -28,7 +28,7 @@ class StubRecoveryUI : public RecoveryUI {
  public:
   StubRecoveryUI() = default;
 
-  std::string GetLocale() override {
+  std::string GetLocale() const override {
     return "";
   }
   void SetBackground(Icon /* icon */) override {}

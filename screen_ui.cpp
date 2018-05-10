@@ -751,7 +751,7 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
   return true;
 }
 
-std::string ScreenRecoveryUI::GetLocale() {
+std::string ScreenRecoveryUI::GetLocale() const {
   return locale_;
 }
 
