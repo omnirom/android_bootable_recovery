@@ -16,7 +16,7 @@
 
 package com.example.android.systemupdatersample.util;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
