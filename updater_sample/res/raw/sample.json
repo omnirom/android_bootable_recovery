@@ -1,7 +1,7 @@
 {
     "__name": "name will be visible on UI",
     "__url": "https:// or file:// uri to update package (zip, xz, ...)",
-    "__type": "NON_STREAMING (from a local file) OR STREAMING (on the fly)",
+    "__ab_install_type": "NON_STREAMING (from a local file) OR STREAMING (on the fly)",
     "name": "SAMPLE-cake-release BUILD-12345",
     "url": "http://foo.bar/builds/ota-001.zip",
     "ab_install_type": "NON_STREAMING",
