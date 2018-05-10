@@ -41,6 +41,7 @@ import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineStatuses;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -50,6 +51,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
+
+    /** HTTP Header: User-Agent; it will be sent to the server when streaming the payload. */
+    private static final String HTTP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36";
 
     private TextView mTextViewBuild;
     private Spinner mSpinnerConfigs;
@@ -295,12 +300,17 @@ public class MainActivity extends Activity {
                         .show();
                 return;
             }
-            updateEngineApplyPayload(payload);
+            updateEngineApplyPayload(payload, null);
         } else {
             Log.d(TAG, "Starting PrepareStreamingService");
             PrepareStreamingService.startService(this, config, (code, payloadSpec) -> {
                 if (code == PrepareStreamingService.RESULT_CODE_SUCCESS) {
-                    updateEngineApplyPayload(payloadSpec);
+                    List<String> extraProperties = new ArrayList<>();
+                    extraProperties.add("USER_AGENT=" + HTTP_USER_AGENT);
+                    config.getStreamingMetadata()
+                            .getAuthorization()
+                            .ifPresent(s -> extraProperties.add("AUTHORIZATION=" + s));
+                    updateEngineApplyPayload(payloadSpec, extraProperties);
                 } else {
                     Log.e(TAG, "PrepareStreamingService failed, result code is " + code);
                     Toast.makeText(
@@ -317,14 +327,21 @@ public class MainActivity extends Activity {
      *
      * UpdateEngine works asynchronously. This method doesn't wait until
      * end of the update.
+     *
+     * @param payloadSpec contains url, offset and size to {@code PAYLOAD_BINARY_FILE_NAME}
+     * @param extraProperties additional properties to pass to {@link UpdateEngine#applyPayload}
      */
-    private void updateEngineApplyPayload(PayloadSpec payloadSpec) {
+    private void updateEngineApplyPayload(PayloadSpec payloadSpec, List<String> extraProperties) {
+        ArrayList<String> properties = new ArrayList<>(payloadSpec.getProperties());
+        if (extraProperties != null) {
+            properties.addAll(extraProperties);
+        }
         try {
             mUpdateEngine.applyPayload(
                     payloadSpec.getUrl(),
                     payloadSpec.getOffset(),
                     payloadSpec.getSize(),
-                    payloadSpec.getProperties().toArray(new String[0]));
+                    properties.toArray(new String[0]));
         } catch (Exception e) {
             Log.e(TAG, "UpdateEngine failed to apply the update", e);
             Toast.makeText(
