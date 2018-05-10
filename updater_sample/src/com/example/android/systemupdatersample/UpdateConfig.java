@@ -79,9 +79,13 @@ public class UpdateConfig implements Parcelable {
                         p.getLong("offset"),
                         p.getLong("size"));
             }
+            String authorization = null;
+            if (meta.has("authorization")) {
+                authorization = meta.getString("authorization");
+            }
             c.mAbStreamingMetadata = new StreamingMetadata(
                     propertyFiles,
-                    meta.getString("authorization_token"));
+                    authorization);
         }
         c.mRawJson = json;
         return c;
@@ -196,7 +200,7 @@ public class UpdateConfig implements Parcelable {
         }
 
         public Optional<String> getAuthorization() {
-            return Optional.of(mAuthorization);
+            return mAuthorization == null ? Optional.empty() : Optional.of(mAuthorization);
         }
     }
 
