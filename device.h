@@ -19,6 +19,7 @@
 
 #include <stddef.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -51,11 +52,15 @@ class Device {
   explicit Device(RecoveryUI* ui) : ui_(ui) {}
   virtual ~Device() {}
 
-  // Called to obtain the UI object that should be used to display the recovery user interface for
-  // this device. You should not have called Init() on the UI object already, the caller will do
-  // that after this method returns.
+  // Returns a raw pointer to the RecoveryUI object.
   virtual RecoveryUI* GetUI() {
-    return ui_;
+    return ui_.get();
+  }
+
+  // Resets the UI object to the given UI. Used to override the default UI in case initialization
+  // failed, or we want a different UI for some reason. The device object will take the ownership.
+  virtual void ResetUI(RecoveryUI* ui) {
+    ui_.reset(ui);
   }
 
   // Called when recovery starts up (after the UI has been obtained and initialized and after the
@@ -64,16 +69,15 @@ class Device {
 
   // Called from the main thread when recovery is at the main menu and waiting for input, and a key
   // is pressed. (Note that "at" the main menu does not necessarily mean the menu is visible;
-  // recovery will be at the main menu with it invisible after an unsuccessful operation [ie OTA
-  // package failure], or if recovery is started with no command.)
+  // recovery will be at the main menu with it invisible after an unsuccessful operation, such as
+  // failed to install an OTA package, or if recovery is started with no command.)
   //
   // 'key' is the code of the key just pressed. (You can call IsKeyPressed() on the RecoveryUI
-  // object you returned from GetUI if you want to find out if other keys are held down.)
+  // object you returned from GetUI() if you want to find out if other keys are held down.)
   //
   // 'visible' is true if the menu is visible.
   //
   // Returns one of the defined constants below in order to:
-  //
   //   - move the menu highlight (kHighlight{Up,Down}: negative value)
   //   - invoke the highlighted item (kInvokeItem: negative value)
   //   - do nothing (kNoAction: negative value)
@@ -81,7 +85,7 @@ class Device {
   virtual int HandleMenuKey(int key, bool visible);
 
   // Returns the list of menu items (a vector of strings). The menu_position passed to
-  // InvokeMenuItem will correspond to the indexes into this array.
+  // InvokeMenuItem() will correspond to the indexes into this array.
   virtual const std::vector<std::string>& GetMenuItems();
 
   // Performs a recovery action selected from the menu. 'menu_position' will be the index of the
@@ -106,7 +110,8 @@ class Device {
   }
 
  private:
-  RecoveryUI* ui_;
+  // The RecoveryUI object that should be used to display the user interface for this device.
+  std::unique_ptr<RecoveryUI> ui_;
 };
 
 // The device-specific library must define this function (or the default one will be used, if there

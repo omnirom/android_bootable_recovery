@@ -15,7 +15,11 @@
 # limitations under the License.
 
 """
-Tests gen_update_config.py
+Tests gen_update_config.py.
+
+Example:
+    $ PYTHONPATH=$ANDROID_BUILD_TOP/build/make/tools/releasetools:$PYTHONPATH \\
+        python3 -m unittest test_gen_update_config
 """
 
 import os.path
@@ -29,15 +33,21 @@ class GenUpdateConfigTest(unittest.TestCase): # pylint: disable=missing-docstrin
         """tests if streaming property files' offset and size are generated properly"""
         config, package = self._generate_config()
         property_files = config['ab_streaming_metadata']['property_files']
-        self.assertEqual(len(property_files), 5)
+        self.assertEqual(len(property_files), 6)
         with open(package, 'rb') as pkg_file:
             for prop in property_files:
                 filename, offset, size = prop['filename'], prop['offset'], prop['size']
                 pkg_file.seek(offset)
-                data = pkg_file.read(size).decode('ascii')
-                # data in the archive are just uppercase filenames without extension
-                expected_data = filename.split('.')[0].upper()
-                self.assertEqual(data, expected_data)
+                raw_data = pkg_file.read(size)
+                if filename in ['payload.bin', 'payload_metadata.bin']:
+                    pass
+                elif filename == 'payload_properties.txt':
+                    pass
+                elif filename == 'metadata':
+                    self.assertEqual(raw_data.decode('ascii'), 'META-INF/COM/ANDROID/METADATA')
+                else:
+                    expected_data = filename.replace('.', '-').upper()
+                    self.assertEqual(raw_data.decode('ascii'), expected_data)
 
     @staticmethod
     def _generate_config():
@@ -49,7 +59,3 @@ class GenUpdateConfigTest(unittest.TestCase): # pylint: disable=missing-docstrin
                               GenUpdateConfig.AB_INSTALL_TYPE_STREAMING)
         gen.run()
         return gen.config, ota_package
-
-
-if __name__ == '__main__':
-    unittest.main()

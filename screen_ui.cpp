@@ -372,7 +372,7 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   std::string header = "Show background text image";
   text_y += DrawTextLine(text_x, text_y, header, true);
   std::string locale_selection = android::base::StringPrintf(
-      "Current locale: %s, %zu/%zu", locales_entries[sel].c_str(), sel, locales_entries.size());
+      "Current locale: %s, %zu/%zu", locales_entries[sel].c_str(), sel + 1, locales_entries.size());
   // clang-format off
   std::vector<std::string> instruction = {
     locale_selection,
@@ -395,13 +395,14 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   pthread_mutex_unlock(&updateMutex);
 }
 
-void ScreenRecoveryUI::CheckBackgroundTextImages(const std::string& saved_locale) {
+void ScreenRecoveryUI::CheckBackgroundTextImages() {
   // Load a list of locales embedded in one of the resource files.
   std::vector<std::string> locales_entries = get_locales_in_png("installing_text");
   if (locales_entries.empty()) {
     Print("Failed to load locales from the resource files\n");
     return;
   }
+  std::string saved_locale = locale_;
   size_t selected = 0;
   SelectAndShowBackgroundText(locales_entries, selected);
 
@@ -467,20 +468,22 @@ int ScreenRecoveryUI::DrawTextLines(int x, int y, const std::vector<std::string>
 
 int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y,
                                            const std::vector<std::string>& lines) const {
+  // Keep symmetrical margins based on the given offset (i.e. x).
+  size_t text_cols = (ScreenWidth() - x * 2) / char_width_;
   int offset = 0;
   for (const auto& line : lines) {
     size_t next_start = 0;
     while (next_start < line.size()) {
-      std::string sub = line.substr(next_start, text_cols_ + 1);
-      if (sub.size() <= text_cols_) {
+      std::string sub = line.substr(next_start, text_cols + 1);
+      if (sub.size() <= text_cols) {
         next_start += sub.size();
       } else {
-        // Line too long and must be wrapped to text_cols_ columns.
+        // Line too long and must be wrapped to text_cols columns.
         size_t last_space = sub.find_last_of(" \t\n");
         if (last_space == std::string::npos) {
           // No space found, just draw as much as we can.
-          sub.resize(text_cols_);
-          next_start += text_cols_;
+          sub.resize(text_cols);
+          next_start += text_cols;
         } else {
           sub.resize(last_space);
           next_start += last_space + 1;
@@ -746,6 +749,10 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
   pthread_create(&progress_thread_, nullptr, ProgressThreadStartRoutine, this);
 
   return true;
+}
+
+std::string ScreenRecoveryUI::GetLocale() const {
+  return locale_;
 }
 
 void ScreenRecoveryUI::LoadAnimation() {

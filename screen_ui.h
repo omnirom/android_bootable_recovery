@@ -114,6 +114,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   explicit ScreenRecoveryUI(bool scrollable_menu);
 
   bool Init(const std::string& locale) override;
+  std::string GetLocale() const override;
 
   // overall recovery state ("background image")
   void SetBackground(Icon icon) override;
@@ -147,9 +148,9 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   void SetColor(UIElement e) const;
 
-  // Check the background text image. Use volume up/down button to cycle through the locales
-  // embedded in the png file, and power button to go back to recovery main menu.
-  void CheckBackgroundTextImages(const std::string& saved_locale);
+  // Checks the background text image, for debugging purpose. It iterates the locales embedded in
+  // the on-device resource files and shows the localized text, for manual inspection.
+  void CheckBackgroundTextImages();
 
  protected:
   // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
@@ -223,8 +224,9 @@ class ScreenRecoveryUI : public RecoveryUI {
   virtual void DrawTextIcon(int x, int y, GRSurface* surface) const;
   // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
   int DrawTextLines(int x, int y, const std::vector<std::string>& lines) const;
-  // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines.
-  // Returns the offset it should be moving along Y-axis.
+  // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines. It
+  // keeps symmetrical margins of 'x' at each end of a line. Returns the offset it should be moving
+  // along Y-axis.
   int DrawWrappedTextLines(int x, int y, const std::vector<std::string>& lines) const;
 
   Icon currentIcon;

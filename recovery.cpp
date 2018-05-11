@@ -64,7 +64,6 @@
 #include "fuse_sideload.h"
 #include "install.h"
 #include "logging.h"
-#include "minui/minui.h"
 #include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
@@ -89,7 +88,6 @@ static constexpr const char* SDCARD_ROOT = "/sdcard";
 // into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
 static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
 
-static std::string locale;
 static bool has_cache = false;
 
 RecoveryUI* ui = nullptr;
@@ -233,6 +231,7 @@ static void set_sdcard_update_bootloader_message() {
 // copy our log file to cache as well (for the system to read). This function is
 // idempotent: call it as many times as you like.
 static void finish_recovery() {
+  std::string locale = ui->GetLocale();
   // Save the locale to cache, so if recovery is next started up without a '--locale' argument
   // (e.g., directly from the bootloader) it will use the last-known locale.
   if (!locale.empty() && has_cache) {
@@ -897,7 +896,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
 
       case Device::RUN_LOCALE_TEST: {
         ScreenRecoveryUI* screen_ui = static_cast<ScreenRecoveryUI*>(ui);
-        screen_ui->CheckBackgroundTextImages(locale);
+        screen_ui->CheckBackgroundTextImages();
         break;
       }
       case Device::MOUNT_SYSTEM:
@@ -1125,6 +1124,7 @@ int start_recovery(int argc, char** argv) {
   bool shutdown_after = false;
   int retry_count = 0;
   bool security_update = false;
+  std::string locale;
 
   int arg;
   int option_index;
@@ -1193,15 +1193,14 @@ int start_recovery(int argc, char** argv) {
   Device* device = make_device();
   if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
     printf("Quiescent recovery mode.\n");
-    ui = new StubRecoveryUI();
+    device->ResetUI(new StubRecoveryUI());
   } else {
-    ui = device->GetUI();
-
-    if (!ui->Init(locale)) {
-      printf("Failed to initialize UI, use stub UI instead.\n");
-      ui = new StubRecoveryUI();
+    if (!device->GetUI()->Init(locale)) {
+      printf("Failed to initialize UI; using stub UI instead.\n");
+      device->ResetUI(new StubRecoveryUI());
     }
   }
+  ui = device->GetUI();
 
   // Set background string to "installing security update" for security update,
   // otherwise set it to "installing system update".

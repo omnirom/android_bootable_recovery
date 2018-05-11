@@ -25,6 +25,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Optional;
 
 /**
  * An update description. It will be parsed from JSON, which is intended to
@@ -69,16 +70,22 @@ public class UpdateConfig implements Parcelable {
         if (c.mAbInstallType == AB_INSTALL_TYPE_STREAMING) {
             JSONObject meta = o.getJSONObject("ab_streaming_metadata");
             JSONArray propertyFilesJson = meta.getJSONArray("property_files");
-            InnerFile[] propertyFiles =
-                new InnerFile[propertyFilesJson.length()];
+            PackageFile[] propertyFiles =
+                new PackageFile[propertyFilesJson.length()];
             for (int i = 0; i < propertyFilesJson.length(); i++) {
                 JSONObject p = propertyFilesJson.getJSONObject(i);
-                propertyFiles[i] = new InnerFile(
+                propertyFiles[i] = new PackageFile(
                         p.getString("filename"),
                         p.getLong("offset"),
                         p.getLong("size"));
             }
-            c.mAbStreamingMetadata = new StreamingMetadata(propertyFiles);
+            String authorization = null;
+            if (meta.has("authorization")) {
+                authorization = meta.getString("authorization");
+            }
+            c.mAbStreamingMetadata = new StreamingMetadata(
+                    propertyFiles,
+                    authorization);
         }
         c.mRawJson = json;
         return c;
@@ -176,25 +183,31 @@ public class UpdateConfig implements Parcelable {
         private static final long serialVersionUID = 31042L;
 
         /** defines beginning of update data in archive */
-        private InnerFile[] mPropertyFiles;
+        private PackageFile[] mPropertyFiles;
 
-        public StreamingMetadata() {
-            mPropertyFiles = new InnerFile[0];
-        }
+        /** SystemUpdaterSample receives the authorization token from the OTA server, in addition
+         * to the package URL. It passes on the info to update_engine, so that the latter can
+         * fetch the data from the package server directly with the token. */
+        private String mAuthorization;
 
-        public StreamingMetadata(InnerFile[] propertyFiles) {
+        public StreamingMetadata(PackageFile[] propertyFiles, String authorization) {
             this.mPropertyFiles = propertyFiles;
+            this.mAuthorization = authorization;
         }
 
-        public InnerFile[] getPropertyFiles() {
+        public PackageFile[] getPropertyFiles() {
             return mPropertyFiles;
+        }
+
+        public Optional<String> getAuthorization() {
+            return mAuthorization == null ? Optional.empty() : Optional.of(mAuthorization);
         }
     }
 
     /**
      * Description of a file in an OTA package zip file.
      */
-    public static class InnerFile implements Serializable {
+    public static class PackageFile implements Serializable {
 
         private static final long serialVersionUID = 31043L;
 
@@ -207,7 +220,7 @@ public class UpdateConfig implements Parcelable {
         /** size of the update data in archive */
         private long mSize;
 
-        public InnerFile(String filename, long offset, long size) {
+        public PackageFile(String filename, long offset, long size) {
             this.mFilename = filename;
             this.mOffset = offset;
             this.mSize = size;
@@ -224,7 +237,6 @@ public class UpdateConfig implements Parcelable {
         public long getSize() {
             return mSize;
         }
-
     }
 
 }
