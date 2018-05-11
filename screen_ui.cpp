@@ -41,9 +41,10 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-#include <minui/minui.h>
 
 #include "device.h"
+#include "minui/minui.h"
+#include "otautil/paths.h"
 #include "ui.h"
 
 // Return the current time as a double (including fractions of a second).
@@ -756,7 +757,8 @@ std::string ScreenRecoveryUI::GetLocale() const {
 }
 
 void ScreenRecoveryUI::LoadAnimation() {
-  std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/res/images"), closedir);
+  std::unique_ptr<DIR, decltype(&closedir)> dir(opendir(Paths::Get().resource_dir().c_str()),
+                                                closedir);
   dirent* de;
   std::vector<std::string> intro_frame_names;
   std::vector<std::string> loop_frame_names;
