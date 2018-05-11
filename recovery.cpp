@@ -1202,6 +1202,10 @@ int start_recovery(int argc, char** argv) {
   }
   ui = device->GetUI();
 
+  if (!has_cache) {
+    device->RemoveMenuItemForAction(Device::WIPE_CACHE);
+  }
+
   // Set background string to "installing security update" for security update,
   // otherwise set it to "installing system update".
   ui->SetSystemUpdateText(security_update);

@@ -16,59 +16,57 @@
 
 #include "device.h"
 
+#include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include <android-base/logging.h>
-#include <android-base/macros.h>
 
 #include "ui.h"
 
-// clang-format off
-static constexpr const char* kItems[]{
-  "Reboot system now",
-  "Reboot to bootloader",
-  "Apply update from ADB",
-  "Apply update from SD card",
-  "Wipe data/factory reset",
-#ifndef AB_OTA_UPDATER
-  "Wipe cache partition",
-#endif  // !AB_OTA_UPDATER
-  "Mount /system",
-  "View recovery logs",
-  "Run graphics test",
-  "Run locale test",
-  "Power off",
+static std::vector<std::pair<std::string, Device::BuiltinAction>> g_menu_actions{
+  { "Reboot system now", Device::REBOOT },
+  { "Reboot to bootloader", Device::REBOOT_BOOTLOADER },
+  { "Apply update from ADB", Device::APPLY_ADB_SIDELOAD },
+  { "Apply update from SD card", Device::APPLY_SDCARD },
+  { "Wipe data/factory reset", Device::WIPE_DATA },
+  { "Wipe cache partition", Device::WIPE_CACHE },
+  { "Mount /system", Device::MOUNT_SYSTEM },
+  { "View recovery logs", Device::VIEW_RECOVERY_LOGS },
+  { "Run graphics test", Device::RUN_GRAPHICS_TEST },
+  { "Run locale test", Device::RUN_LOCALE_TEST },
+  { "Power off", Device::SHUTDOWN },
 };
-// clang-format on
 
-// clang-format off
-static constexpr Device::BuiltinAction kMenuActions[] {
-  Device::REBOOT,
-  Device::REBOOT_BOOTLOADER,
-  Device::APPLY_ADB_SIDELOAD,
-  Device::APPLY_SDCARD,
-  Device::WIPE_DATA,
-#ifndef AB_OTA_UPDATER
-  Device::WIPE_CACHE,
-#endif  // !AB_OTA_UPDATER
-  Device::MOUNT_SYSTEM,
-  Device::VIEW_RECOVERY_LOGS,
-  Device::RUN_GRAPHICS_TEST,
-  Device::RUN_LOCALE_TEST,
-  Device::SHUTDOWN,
-};
-// clang-format on
+static std::vector<std::string> g_menu_items;
 
-static_assert(arraysize(kItems) == arraysize(kMenuActions),
-              "kItems and kMenuActions should have the same length.");
+static void PopulateMenuItems() {
+  g_menu_items.clear();
+  std::transform(g_menu_actions.cbegin(), g_menu_actions.cend(), std::back_inserter(g_menu_items),
+                 [](const auto& entry) { return entry.first; });
+}
 
-static const std::vector<std::string> kMenuItems(kItems, kItems + arraysize(kItems));
+Device::Device(RecoveryUI* ui) : ui_(ui) {
+  PopulateMenuItems();
+}
+
+void Device::RemoveMenuItemForAction(Device::BuiltinAction action) {
+  g_menu_actions.erase(
+      std::remove_if(g_menu_actions.begin(), g_menu_actions.end(),
+                     [action](const auto& entry) { return entry.second == action; }));
+  CHECK(!g_menu_actions.empty());
+
+  // Re-populate the menu items.
+  PopulateMenuItems();
+}
 
 const std::vector<std::string>& Device::GetMenuItems() {
-  return kMenuItems;
+  return g_menu_items;
 }
 
 Device::BuiltinAction Device::InvokeMenuItem(size_t menu_position) {
-  // CHECK_LT(menu_position, );
-  return kMenuActions[menu_position];
+  return g_menu_actions[menu_position].second;
 }
 
 int Device::HandleMenuKey(int key, bool visible) {
