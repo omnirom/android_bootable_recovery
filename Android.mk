@@ -23,6 +23,11 @@ RECOVERY_FSTAB_VERSION := 2
 # librecovery_ui_default, which uses ScreenRecoveryUI.
 TARGET_RECOVERY_UI_LIB ?= librecovery_ui_default
 
+recovery_common_cflags := \
+    -Wall \
+    -Werror \
+    -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
+
 # librecovery (static library)
 # ===============================
 include $(CLEAR_VARS)
@@ -30,8 +35,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     install.cpp
 
-LOCAL_CFLAGS := -Wall -Werror
-LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
+LOCAL_CFLAGS := $(recovery_common_cflags)
 
 ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
@@ -54,12 +58,11 @@ include $(BUILD_STATIC_LIBRARY)
 # ===============================
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
+    device.cpp \
     screen_ui.cpp \
     ui.cpp \
     vr_ui.cpp \
     wear_ui.cpp
-
-LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_MODULE := librecovery_ui
 
@@ -67,6 +70,8 @@ LOCAL_STATIC_LIBRARIES := \
     libminui \
     libotautil \
     libbase
+
+LOCAL_CFLAGS := $(recovery_common_cflags)
 
 ifneq ($(TARGET_RECOVERY_UI_MARGIN_HEIGHT),)
 LOCAL_CFLAGS += -DRECOVERY_UI_MARGIN_HEIGHT=$(TARGET_RECOVERY_UI_MARGIN_HEIGHT)
@@ -124,7 +129,6 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
     adb_install.cpp \
-    device.cpp \
     fuse_sdcard_provider.cpp \
     logging.cpp \
     recovery.cpp \
@@ -147,8 +151,7 @@ LOCAL_REQUIRED_MODULES += sload.f2fs mkfs.f2fs
 endif
 endif
 
-LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
-LOCAL_CFLAGS += -Wall -Werror
+LOCAL_CFLAGS := $(recovery_common_cflags)
 
 LOCAL_C_INCLUDES += \
     system/vold \
