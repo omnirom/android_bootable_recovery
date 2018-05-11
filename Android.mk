@@ -156,20 +156,20 @@ LOCAL_C_INCLUDES += \
 LOCAL_STATIC_LIBRARIES := \
     librecovery \
     $(TARGET_RECOVERY_UI_LIB) \
-    libverifier \
-    libbatterymonitor \
-    libbootloader_message \
-    libfs_mgr \
-    libext4_utils \
-    libsparse \
-    libziparchive \
-    libotautil \
-    libminadbd \
-    libasyncio \
-    libfusesideload \
     librecovery_ui \
     libminui \
+    libverifier \
+    libbootloader_message \
+    libfusesideload \
+    libminadbd \
+    libotautil \
+    libasyncio \
+    libbatterymonitor \
+    libfs_mgr \
+    libext4_utils \
     libpng \
+    libsparse \
+    libziparchive \
     libcrypto_utils \
     libcrypto \
     libvintf_recovery \
