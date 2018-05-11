@@ -16,6 +16,7 @@
 
 package com.example.android.systemupdatersample.services;
 
+import static com.example.android.systemupdatersample.util.PackageFiles.COMPATIBILITY_ZIP_FILE_NAME;
 import static com.example.android.systemupdatersample.util.PackageFiles.OTA_PACKAGE_DIR;
 import static com.example.android.systemupdatersample.util.PackageFiles.PAYLOAD_BINARY_FILE_NAME;
 import static com.example.android.systemupdatersample.util.PackageFiles.PAYLOAD_PROPERTIES_FILE_NAME;
@@ -25,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.RecoverySystem;
 import android.os.ResultReceiver;
 import android.util.Log;
 
@@ -36,7 +38,9 @@ import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateConfigs;
 import com.google.common.collect.ImmutableSet;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 
@@ -119,45 +123,51 @@ public class PrepareStreamingService extends IntentService {
         ResultReceiver resultReceiver = intent.getParcelableExtra(EXTRA_PARAM_RESULT_RECEIVER);
 
         try {
-            downloadPreStreamingFiles(config, OTA_PACKAGE_DIR);
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to download pre-streaming files", e);
+            PayloadSpec spec = execute(config);
+            resultReceiver.send(RESULT_CODE_SUCCESS, CallbackResultReceiver.createBundle(spec));
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to prepare streaming update", e);
             resultReceiver.send(RESULT_CODE_ERROR, null);
-            return;
         }
+    }
+
+    /**
+     * 1. Downloads files for streaming updates.
+     * 2. Makes sure required files are present.
+     * 3. Checks OTA package compatibility with the device.
+     * 4. Constructs {@link PayloadSpec} for streaming update.
+     */
+    private static PayloadSpec execute(UpdateConfig config)
+            throws IOException, PreparationFailedException {
+
+        downloadPreStreamingFiles(config, OTA_PACKAGE_DIR);
 
         Optional<UpdateConfig.PackageFile> payloadBinary =
                 UpdateConfigs.getPropertyFile(PAYLOAD_BINARY_FILE_NAME, config);
 
         if (!payloadBinary.isPresent()) {
-            Log.e(TAG, "Failed to find " + PAYLOAD_BINARY_FILE_NAME + " in config");
-            resultReceiver.send(RESULT_CODE_ERROR, null);
-            return;
+            throw new PreparationFailedException(
+                    "Failed to find " + PAYLOAD_BINARY_FILE_NAME + " in config");
         }
 
-        Optional<UpdateConfig.PackageFile> properties =
-                UpdateConfigs.getPropertyFile(PAYLOAD_PROPERTIES_FILE_NAME, config);
-
-        if (!properties.isPresent()) {
-            Log.e(TAG, "Failed to find " + PAYLOAD_PROPERTIES_FILE_NAME + " in config");
-            resultReceiver.send(RESULT_CODE_ERROR, null);
-            return;
+        if (!UpdateConfigs.getPropertyFile(PAYLOAD_PROPERTIES_FILE_NAME, config).isPresent()
+                || !Paths.get(OTA_PACKAGE_DIR, PAYLOAD_PROPERTIES_FILE_NAME).toFile().exists()) {
+            throw new IOException(PAYLOAD_PROPERTIES_FILE_NAME + " not found");
         }
 
-        PayloadSpec spec;
-        try {
-            spec = PayloadSpecs.forStreaming(config.getUrl(),
-                    payloadBinary.get().getOffset(),
-                    payloadBinary.get().getSize(),
-                    Paths.get(OTA_PACKAGE_DIR, properties.get().getFilename()).toFile()
-            );
-        } catch (IOException e) {
-            Log.e(TAG, "PayloadSpecs failed to create PayloadSpec for streaming", e);
-            resultReceiver.send(RESULT_CODE_ERROR, null);
-            return;
+        File compatibilityFile = Paths.get(OTA_PACKAGE_DIR, COMPATIBILITY_ZIP_FILE_NAME).toFile();
+        if (compatibilityFile.isFile()) {
+            Log.i(TAG, "Verifying OTA package for compatibility with the device");
+            if (!verifyPackageCompatibility(compatibilityFile)) {
+                throw new PreparationFailedException(
+                        "OTA package is not compatible with this device");
+            }
         }
 
-        resultReceiver.send(RESULT_CODE_SUCCESS, CallbackResultReceiver.createBundle(spec));
+        return PayloadSpecs.forStreaming(config.getUrl(),
+                payloadBinary.get().getOffset(),
+                payloadBinary.get().getSize(),
+                Paths.get(OTA_PACKAGE_DIR, PAYLOAD_PROPERTIES_FILE_NAME).toFile());
     }
 
     /**
@@ -168,6 +178,10 @@ public class PrepareStreamingService extends IntentService {
      */
     private static void downloadPreStreamingFiles(UpdateConfig config, String dir)
             throws IOException {
+        Log.d(TAG, "Deleting existing files from " + dir);
+        for (String file : PRE_STREAMING_FILES_SET) {
+            Files.deleteIfExists(Paths.get(OTA_PACKAGE_DIR, file));
+        }
         Log.d(TAG, "Downloading files to " + dir);
         for (UpdateConfig.PackageFile file : config.getStreamingMetadata().getPropertyFiles()) {
             if (PRE_STREAMING_FILES_SET.contains(file.getFilename())) {
@@ -179,6 +193,19 @@ public class PrepareStreamingService extends IntentService {
                         Paths.get(dir, file.getFilename()).toFile());
                 downloader.download();
             }
+        }
+    }
+
+    /**
+     * @param file physical location of {@link PackageFiles#COMPATIBILITY_ZIP_FILE_NAME}
+     * @return true if OTA package is compatible with this device
+     */
+    private static boolean verifyPackageCompatibility(File file) {
+        try {
+            return RecoverySystem.verifyPackageCompatibility(file);
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to verify package compatibility", e);
+            return false;
         }
     }
 
@@ -210,6 +237,12 @@ public class PrepareStreamingService extends IntentService {
                 payloadSpec = (PayloadSpec) resultData.getSerializable(BUNDLE_PARAM_PAYLOAD_SPEC);
             }
             mUpdateResultCallback.onReceiveResult(resultCode, payloadSpec);
+        }
+    }
+
+    private static class PreparationFailedException extends Exception {
+        PreparationFailedException(String message) {
+            super(message);
         }
     }
 
