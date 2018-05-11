@@ -49,7 +49,7 @@ class Device {
     RUN_LOCALE_TEST = 12,
   };
 
-  explicit Device(RecoveryUI* ui) : ui_(ui) {}
+  explicit Device(RecoveryUI* ui);
   virtual ~Device() {}
 
   // Returns a raw pointer to the RecoveryUI object.
@@ -95,6 +95,10 @@ class Device {
   // corresponding enum value. If it is an action specific to your device, you actually perform it
   // here and return NO_ACTION.
   virtual BuiltinAction InvokeMenuItem(size_t menu_position);
+
+  // Removes the menu item for the given action. This allows tailoring the menu based on the
+  // runtime info, such as the availability of /cache or /sdcard.
+  virtual void RemoveMenuItemForAction(Device::BuiltinAction action);
 
   // Called before and after we do a wipe data/factory reset operation, either via a reboot from the
   // main system with the --wipe_data flag, or when the user boots into recovery image manually and
