@@ -1101,9 +1101,9 @@ void ScreenRecoveryUI::SetLocale(const std::string& new_locale) {
   rtl_locale_ = false;
 
   if (!new_locale.empty()) {
-    size_t underscore = new_locale.find('_');
-    // lang has the language prefix prior to '_', or full string if '_' doesn't exist.
-    std::string lang = new_locale.substr(0, underscore);
+    size_t separator = new_locale.find('-');
+    // lang has the language prefix prior to the separator, or full string if none exists.
+    std::string lang = new_locale.substr(0, separator);
 
     // A bit cheesy: keep an explicit list of supported RTL languages.
     if (lang == "ar" ||  // Arabic
