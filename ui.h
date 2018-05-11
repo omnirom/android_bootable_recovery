@@ -57,7 +57,7 @@ class RecoveryUI {
   // the given locale. Returns true on success.
   virtual bool Init(const std::string& locale);
 
-  virtual std::string GetLocale() = 0;
+  virtual std::string GetLocale() const = 0;
 
   // Shows a stage indicator. Called immediately after Init().
   virtual void SetStage(int current, int max) = 0;
