@@ -84,8 +84,8 @@ which HTTP headers are supported.
 - [x] Add applying streaming update
 - [x] Add stop/reset the update
 - [x] Add demo for passing HTTP headers to `UpdateEngine#applyPayload`
+- [x] [Package compatibility check](https://source.android.com/devices/architecture/vintf/match-rules)
 - [ ] Add tests for `MainActivity`
-- [ ] HAL compatibility check
 - [ ] Change partition demo
 - [ ] Verify system partition checksum for package
 - [ ] Add non-A/B updates demo
