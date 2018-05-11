@@ -230,8 +230,8 @@ static void set_sdcard_update_bootloader_message() {
 // Clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read). This function is
 // idempotent: call it as many times as you like.
-static void finish_recovery(Device* device) {
-  std::string locale = device->GetUI()->GetLocale();
+static void finish_recovery() {
+  std::string locale = ui->GetLocale();
   // Save the locale to cache, so if recovery is next started up without a '--locale' argument
   // (e.g., directly from the bootloader) it will use the last-known locale.
   if (!locale.empty() && has_cache) {
@@ -808,7 +808,7 @@ static int apply_from_sdcard(Device* device, bool* wipe_cache) {
 // which is to reboot or shutdown depending on if the --shutdown_after flag was passed to recovery.
 static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
   for (;;) {
-    finish_recovery(device);
+    finish_recovery();
     switch (status) {
       case INSTALL_SUCCESS:
       case INSTALL_NONE:
@@ -1193,16 +1193,14 @@ int start_recovery(int argc, char** argv) {
   Device* device = make_device();
   if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
     printf("Quiescent recovery mode.\n");
-    ui = new StubRecoveryUI();
+    device->ResetUI(new StubRecoveryUI());
   } else {
-    ui = device->GetUI();
-
-    if (!ui->Init(locale)) {
-      printf("Failed to initialize UI, use stub UI instead.\n");
-      ui = new StubRecoveryUI();
+    if (!device->GetUI()->Init(locale)) {
+      printf("Failed to initialize UI; using stub UI instead.\n");
+      device->ResetUI(new StubRecoveryUI());
     }
   }
-  device->SetUI(ui);
+  ui = device->GetUI();
 
   // Set background string to "installing security update" for security update,
   // otherwise set it to "installing system update".
@@ -1369,7 +1367,7 @@ int start_recovery(int argc, char** argv) {
   }
 
   // Save logs and clean up before rebooting or shutting down.
-  finish_recovery(device);
+  finish_recovery();
 
   switch (after) {
     case Device::SHUTDOWN:
