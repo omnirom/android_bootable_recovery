@@ -48,6 +48,13 @@ class Paths {
     last_command_file_ = last_command_file;
   }
 
+  std::string resource_dir() const {
+    return resource_dir_;
+  }
+  void set_resource_dir(const std::string& resource_dir) {
+    resource_dir_ = resource_dir;
+  }
+
   std::string stash_directory_base() const {
     return stash_directory_base_;
   }
@@ -84,6 +91,9 @@ class Paths {
 
   // Path to the last command file.
   std::string last_command_file_;
+
+  // Path to the resource dir;
+  std::string resource_dir_;
 
   // Path to the base directory to write stashes during update.
   std::string stash_directory_base_;
