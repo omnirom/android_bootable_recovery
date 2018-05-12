@@ -94,6 +94,26 @@ LOCAL_SRC_FILES := \
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase
 
+# libapplypatch, libapplypatch_modes, libimgdiff, libimgpatch.
+libapplypatch_static_libraries := \
+    libapplypatch_modes \
+    libapplypatch \
+    libedify \
+    libimgdiff \
+    libimgpatch \
+    libotafault \
+    libotautil \
+    libbsdiff \
+    libbspatch \
+    libdivsufsort \
+    libdivsufsort64 \
+    libutils \
+    libbase \
+    libbz \
+    libcrypto \
+    libz \
+    libziparchive \
+
 tune2fs_static_libraries := \
     libext2_com_err \
     libext2_blkid \
@@ -102,50 +122,73 @@ tune2fs_static_libraries := \
     libext2_e2p \
     libext2fs
 
-LOCAL_STATIC_LIBRARIES := \
-    libapplypatch_modes \
-    libapplypatch \
-    libedify \
-    libimgdiff \
-    libimgpatch \
-    libbsdiff \
-    libbspatch \
-    libfusesideload \
-    libminui \
-    libotafault \
-    librecovery \
+libupdater_static_libraries := \
     libupdater \
+    libapplypatch \
+    libbspatch \
+    libedify \
+    libziparchive \
+    libotautil \
     libbootloader_message \
+    libutils \
+    libotafault \
+    libext4_utils \
+    libfec \
+    libfec_rs \
+    libfs_mgr \
+    liblog \
+    libselinux \
+    libsparse \
+    libsquashfs_utils \
+    libbz \
+    libz \
+    libbase \
+    libcrypto \
+    libcrypto_utils \
+    libcutils \
+    libtune2fs \
+    libbrotli \
+    $(tune2fs_static_libraries)
+
+librecovery_static_libraries := \
+    librecovery \
+    $(TARGET_RECOVERY_UI_LIB) \
+    libbootloader_message \
+    libfusesideload \
+    libminadbd \
+    librecovery_ui \
+    libminui \
     libverifier \
     libotautil \
-    libupdate_verifier \
-    libdivsufsort \
-    libdivsufsort64 \
+    libasyncio \
+    libbatterymonitor \
+    libcrypto_utils \
+    libcrypto \
+    libext4_utils \
     libfs_mgr \
     libpng \
+    libsparse \
     libvintf_recovery \
     libvintf \
     libhidl-gen-utils \
     libtinyxml2 \
-    libselinux \
-    libext4_utils \
-    libsparse \
-    libcrypto_utils \
-    libcrypto \
-    libbz \
     libziparchive \
-    liblog \
-    libutils \
-    libz \
     libbase \
-    libtune2fs \
-    libfec \
-    libfec_rs \
-    libsquashfs_utils \
     libcutils \
-    libbrotli \
-    libBionicGtestMain \
-    $(tune2fs_static_libraries)
+    libutils \
+    liblog \
+    libselinux \
+    libz \
+
+libupdate_verifier_static_libraries := \
+    libupdate_verifier \
+
+LOCAL_STATIC_LIBRARIES := \
+    $(libapplypatch_static_libraries) \
+    $(librecovery_static_libraries) \
+    $(libupdate_verifier_static_libraries) \
+    $(libupdater_static_libraries) \
+    libBionicGtestMain
 
 LOCAL_TEST_DATA := \
     $(call find-test-data-in-subdirs, $(LOCAL_PATH), "*", testdata) \
