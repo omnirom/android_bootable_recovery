@@ -82,3 +82,6 @@ class PngHandler {
   // After initialization, we'll keep the file pointer open before destruction of PngHandler.
   std::unique_ptr<FILE, decltype(&fclose)> png_fp_{ nullptr, fclose };
 };
+
+// Overrides the default resource dir, for testing purpose.
+void res_set_resource_dir(const std::string&);

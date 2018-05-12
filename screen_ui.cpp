@@ -41,9 +41,10 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-#include <minui/minui.h>
 
 #include "device.h"
+#include "minui/minui.h"
+#include "otautil/paths.h"
 #include "ui.h"
 
 // Return the current time as a double (including fractions of a second).
@@ -756,7 +757,8 @@ std::string ScreenRecoveryUI::GetLocale() const {
 }
 
 void ScreenRecoveryUI::LoadAnimation() {
-  std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/res/images"), closedir);
+  std::unique_ptr<DIR, decltype(&closedir)> dir(opendir(Paths::Get().resource_dir().c_str()),
+                                                closedir);
   dirent* de;
   std::vector<std::string> intro_frame_names;
   std::vector<std::string> loop_frame_names;
@@ -1099,9 +1101,9 @@ void ScreenRecoveryUI::SetLocale(const std::string& new_locale) {
   rtl_locale_ = false;
 
   if (!new_locale.empty()) {
-    size_t underscore = new_locale.find('_');
-    // lang has the language prefix prior to '_', or full string if '_' doesn't exist.
-    std::string lang = new_locale.substr(0, underscore);
+    size_t separator = new_locale.find('-');
+    // lang has the language prefix prior to the separator, or full string if none exists.
+    std::string lang = new_locale.substr(0, separator);
 
     // A bit cheesy: keep an explicit list of supported RTL languages.
     if (lang == "ar" ||  // Arabic

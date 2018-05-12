@@ -23,43 +23,20 @@ RECOVERY_FSTAB_VERSION := 2
 # librecovery_ui_default, which uses ScreenRecoveryUI.
 TARGET_RECOVERY_UI_LIB ?= librecovery_ui_default
 
-# librecovery (static library)
-# ===============================
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := \
-    install.cpp
-
-LOCAL_CFLAGS := -Wall -Werror
-LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
-
-ifeq ($(AB_OTA_UPDATER),true)
-    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
-endif
-
-LOCAL_MODULE := librecovery
-
-LOCAL_STATIC_LIBRARIES := \
-    libminui \
-    libotautil \
-    libvintf_recovery \
-    libcrypto_utils \
-    libcrypto \
-    libbase \
-    libziparchive \
-
-include $(BUILD_STATIC_LIBRARY)
+recovery_common_cflags := \
+    -Wall \
+    -Werror \
+    -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
 # librecovery_ui (static library)
 # ===============================
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
+    device.cpp \
     screen_ui.cpp \
     ui.cpp \
     vr_ui.cpp \
     wear_ui.cpp
-
-LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_MODULE := librecovery_ui
 
@@ -67,6 +44,8 @@ LOCAL_STATIC_LIBRARIES := \
     libminui \
     libotautil \
     libbase
+
+LOCAL_CFLAGS := $(recovery_common_cflags)
 
 ifneq ($(TARGET_RECOVERY_UI_MARGIN_HEIGHT),)
 LOCAL_CFLAGS += -DRECOVERY_UI_MARGIN_HEIGHT=$(TARGET_RECOVERY_UI_MARGIN_HEIGHT)
@@ -118,13 +97,38 @@ endif
 
 include $(BUILD_STATIC_LIBRARY)
 
+# librecovery (static library)
+# ===============================
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+    install.cpp
+
+LOCAL_CFLAGS := $(recovery_common_cflags)
+
+ifeq ($(AB_OTA_UPDATER),true)
+    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
+endif
+
+LOCAL_MODULE := librecovery
+
+LOCAL_STATIC_LIBRARIES := \
+    libminui \
+    libotautil \
+    libvintf_recovery \
+    libcrypto_utils \
+    libcrypto \
+    libbase \
+    libziparchive \
+
+include $(BUILD_STATIC_LIBRARY)
+
 # recovery (static executable)
 # ===============================
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
     adb_install.cpp \
-    device.cpp \
     fuse_sdcard_provider.cpp \
     logging.cpp \
     recovery.cpp \
@@ -135,20 +139,13 @@ LOCAL_MODULE := recovery
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+
 # Cannot link with LLD: undefined symbol: UsbNoPermissionsLongHelpText
 # http://b/77543887, lld does not handle -Wl,--gc-sections as well as ld.
 LOCAL_USE_CLANG_LLD := false
 
-LOCAL_REQUIRED_MODULES := e2fsdroid_static mke2fs_static mke2fs.conf
-
-ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
-ifeq ($(HOST_OS),linux)
-LOCAL_REQUIRED_MODULES += sload.f2fs mkfs.f2fs
-endif
-endif
-
-LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
-LOCAL_CFLAGS += -Wall -Werror
+LOCAL_CFLAGS := $(recovery_common_cflags)
 
 LOCAL_C_INCLUDES += \
     system/vold \
@@ -169,42 +166,52 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_STATIC_LIBRARIES += \
     librecovery \
     $(TARGET_RECOVERY_UI_LIB) \
-    libverifier \
     libbootloader_message \
-    libfs_mgr \
-    libext4_utils \
-    libsparse \
-    libziparchive \
-    libotautil \
-    libminadbd \
-    libasyncio \
     libfusesideload \
+    libminadbd \
     librecovery_ui \
     libminui \
-    libpng \
+    libverifier \
+    libotautil \
+    libasyncio \
+    libbatterymonitor \
     libcrypto_utils \
     libcrypto \
+    libext4_utils \
+    libfs_mgr \
+    libpng \
+    libsparse \
     libvintf_recovery \
     libvintf \
     libhidl-gen-utils \
     libtinyxml2 \
+    libziparchive \
     libbase \
     libutils \
     libcutils \
     liblog \
     libselinux \
-    libz
+    libz \
 
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
-ifeq ($(AB_OTA_UPDATER),true)
-    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
+LOCAL_REQUIRED_MODULES := \
+    e2fsdroid_static \
+    mke2fs_static \
+    mke2fs.conf
+
+ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
+ifeq ($(HOST_OS),linux)
+LOCAL_REQUIRED_MODULES += \
+    sload.f2fs \
+    mkfs.f2fs
+endif
 endif
 
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
-LOCAL_REQUIRED_MODULES += recovery-persist recovery-refresh
+LOCAL_REQUIRED_MODULES += \
+    recovery-persist \
+    recovery-refresh
 endif
 
 include $(BUILD_EXECUTABLE)
