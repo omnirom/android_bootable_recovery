@@ -28,32 +28,6 @@ recovery_common_cflags := \
     -Werror \
     -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
-# librecovery (static library)
-# ===============================
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := \
-    install.cpp
-
-LOCAL_CFLAGS := $(recovery_common_cflags)
-
-ifeq ($(AB_OTA_UPDATER),true)
-    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
-endif
-
-LOCAL_MODULE := librecovery
-
-LOCAL_STATIC_LIBRARIES := \
-    libminui \
-    libotautil \
-    libvintf_recovery \
-    libcrypto_utils \
-    libcrypto \
-    libbase \
-    libziparchive \
-
-include $(BUILD_STATIC_LIBRARY)
-
 # librecovery_ui (static library)
 # ===============================
 include $(CLEAR_VARS)
@@ -123,6 +97,32 @@ endif
 
 include $(BUILD_STATIC_LIBRARY)
 
+# librecovery (static library)
+# ===============================
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+    install.cpp
+
+LOCAL_CFLAGS := $(recovery_common_cflags)
+
+ifeq ($(AB_OTA_UPDATER),true)
+    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
+endif
+
+LOCAL_MODULE := librecovery
+
+LOCAL_STATIC_LIBRARIES := \
+    libminui \
+    libotautil \
+    libvintf_recovery \
+    libcrypto_utils \
+    libcrypto \
+    libbase \
+    libziparchive \
+
+include $(BUILD_STATIC_LIBRARY)
+
 # recovery (static executable)
 # ===============================
 include $(CLEAR_VARS)
@@ -139,17 +139,11 @@ LOCAL_MODULE := recovery
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+
 # Cannot link with LLD: undefined symbol: UsbNoPermissionsLongHelpText
 # http://b/77543887, lld does not handle -Wl,--gc-sections as well as ld.
 LOCAL_USE_CLANG_LLD := false
-
-LOCAL_REQUIRED_MODULES := e2fsdroid_static mke2fs_static mke2fs.conf
-
-ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
-ifeq ($(HOST_OS),linux)
-LOCAL_REQUIRED_MODULES += sload.f2fs mkfs.f2fs
-endif
-endif
 
 LOCAL_CFLAGS := $(recovery_common_cflags)
 
@@ -172,39 +166,52 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_STATIC_LIBRARIES += \
     librecovery \
     $(TARGET_RECOVERY_UI_LIB) \
-    librecovery_ui \
-    libminui \
-    libverifier \
     libbootloader_message \
     libfusesideload \
     libminadbd \
+    librecovery_ui \
+    libminui \
+    libverifier \
     libotautil \
     libasyncio \
     libbatterymonitor \
-    libfs_mgr \
-    libext4_utils \
-    libpng \
-    libsparse \
-    libziparchive \
     libcrypto_utils \
     libcrypto \
+    libext4_utils \
+    libfs_mgr \
+    libpng \
+    libsparse \
     libvintf_recovery \
     libvintf \
     libhidl-gen-utils \
     libtinyxml2 \
+    libziparchive \
     libbase \
     libutils \
     libcutils \
     liblog \
     libselinux \
-    libz
+    libz \
 
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+LOCAL_REQUIRED_MODULES := \
+    e2fsdroid_static \
+    mke2fs_static \
+    mke2fs.conf
+
+ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
+ifeq ($(HOST_OS),linux)
+LOCAL_REQUIRED_MODULES += \
+    sload.f2fs \
+    mkfs.f2fs
+endif
+endif
 
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
-LOCAL_REQUIRED_MODULES += recovery-persist recovery-refresh
+LOCAL_REQUIRED_MODULES += \
+    recovery-persist \
+    recovery-refresh
 endif
 
 include $(BUILD_EXECUTABLE)
