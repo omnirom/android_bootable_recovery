@@ -132,8 +132,7 @@ static bool FsyncDir(const std::string& dirname) {
   return true;
 }
 
-// Update the last command index in the last_command_file if the current command writes to the
-// stash either explicitly or implicitly.
+// Update the last executed command index in the last_command_file.
 static bool UpdateLastCommandIndex(int command_index, const std::string& command_string) {
   const std::string& last_command_file = Paths::Get().last_command_file();
   std::string last_command_tmp = last_command_file + ".tmp";
@@ -1161,10 +1160,6 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* 
         return -1;
       }
 
-      if (!UpdateLastCommandIndex(params.cmdindex, params.cmdline)) {
-        LOG(WARNING) << "Failed to update the last command file.";
-      }
-
       params.stashed += *src_blocks;
       // Can be deleted when the write has completed.
       if (!stash_exists) {
@@ -1275,10 +1270,6 @@ static int PerformCommandStash(CommandParameters& params) {
   LOG(INFO) << "stashing " << blocks << " blocks to " << id;
   int result = WriteStash(params.stashbase, id, blocks, params.buffer, false, nullptr);
   if (result == 0) {
-    if (!UpdateLastCommandIndex(params.cmdindex, params.cmdline)) {
-      LOG(WARNING) << "Failed to update the last command file.";
-    }
-
     params.stashed += blocks;
   }
   return result;
@@ -1701,7 +1692,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   params.createdstash = res;
 
   // When performing an update, save the index and cmdline of the current command into
-  // the last_command_file if this command writes to the stash either explicitly of implicitly.
+  // the last_command_file.
   // Upon resuming an update, read the saved index first; then
   //   1. In verification mode, check if the 'move' or 'diff' commands before the saved index has
   //      the expected target blocks already. If not, these commands cannot be skipped and we need
@@ -1797,6 +1788,11 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
         PLOG(ERROR) << "fsync failed";
         goto pbiudone;
       }
+
+      if (!UpdateLastCommandIndex(params.cmdindex, params.cmdline)) {
+        LOG(WARNING) << "Failed to update the last command file.";
+      }
+
       fprintf(cmd_pipe, "set_progress %.4f\n", static_cast<double>(params.written) / total_blocks);
       fflush(cmd_pipe);
     }
