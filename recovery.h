@@ -16,4 +16,9 @@
 
 #pragma once
 
-int start_recovery(int argc, char** argv);
+#include <string>
+#include <vector>
+
+#include "device.h"
+
+Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args);
