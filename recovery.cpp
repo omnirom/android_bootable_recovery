@@ -55,6 +55,7 @@
 #include "adb_install.h"
 #include "common.h"
 #include "device.h"
+#include "fsck_unshare_blocks.h"
 #include "fuse_sdcard_provider.h"
 #include "fuse_sideload.h"
 #include "install.h"
@@ -969,6 +970,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
                  [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
 
   static constexpr struct option OPTIONS[] = {
+    { "fsck_unshare_blocks", no_argument, nullptr, 0 },
     { "just_exit", no_argument, nullptr, 'x' },
     { "locale", required_argument, nullptr, 0 },
     { "prompt_and_wipe_data", no_argument, nullptr, 0 },
@@ -997,6 +999,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   bool sideload_auto_reboot = false;
   bool just_exit = false;
   bool shutdown_after = false;
+  bool fsck_unshare_blocks = false;
   int retry_count = 0;
   bool security_update = false;
   std::string locale;
@@ -1014,7 +1017,9 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         break;
       case 0: {
         std::string option = OPTIONS[option_index].name;
-        if (option == "locale") {
+        if (option == "fsck_unshare_blocks") {
+          fsck_unshare_blocks = true;
+        } else if (option == "locale") {
           // Handled in recovery_main.cpp
         } else if (option == "prompt_and_wipe_data") {
           should_prompt_and_wipe_data = true;
@@ -1180,6 +1185,10 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     ui->Print("\nInstall from ADB complete (status: %d).\n", status);
     if (sideload_auto_reboot) {
       ui->Print("Rebooting automatically.\n");
+    }
+  } else if (fsck_unshare_blocks) {
+    if (!do_fsck_unshare_blocks()) {
+      status = INSTALL_ERROR;
     }
   } else if (!just_exit) {
     // If this is an eng or userdebug build, automatically turn on the text display if no command
