@@ -32,11 +32,6 @@ WearRecoveryUI::WearRecoveryUI()
       kMenuUnusableRows(RECOVERY_UI_MENU_UNUSABLE_ROWS) {
   // TODO: kMenuUnusableRows should be computed based on the lines in draw_screen_locked().
 
-  // TODO: The following three variables are likely not needed. The first two are detected
-  // automatically in ScreenRecoveryUI::LoadAnimation(), based on the actual files seen on device.
-  intro_frames = 22;
-  loop_frames = 60;
-
   touch_screen_allowed_ = true;
 }
 
