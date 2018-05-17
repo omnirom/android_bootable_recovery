@@ -1069,6 +1069,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         continue;
     }
   }
+  optind = 1;
 
   printf("stage is [%s]\n", stage.c_str());
   printf("reason is [%s]\n", reason);
