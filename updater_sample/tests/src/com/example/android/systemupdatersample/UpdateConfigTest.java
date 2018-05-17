@@ -18,6 +18,7 @@ package com.example.android.systemupdatersample;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -45,7 +46,8 @@ public class UpdateConfigTest {
 
     private static final String JSON_NON_STREAMING =
             "{\"name\": \"vip update\", \"url\": \"file:///builds/a.zip\", "
-            + " \"ab_install_type\": \"NON_STREAMING\"}";
+                    + " \"ab_install_type\": \"NON_STREAMING\","
+                    + " \"ab_config\": { \"force_switch_slot\": false } }";
 
     @Rule
     public final ExpectedException thrown = ExpectedException.none();
@@ -82,6 +84,7 @@ public class UpdateConfigTest {
                 config.getStreamingMetadata().getPropertyFiles()[0].getFilename());
         assertEquals(195, config.getStreamingMetadata().getPropertyFiles()[0].getOffset());
         assertEquals(8, config.getStreamingMetadata().getPropertyFiles()[0].getSize());
+        assertTrue(config.getAbConfig().getForceSwitchSlot());
     }
 
     @Test
@@ -94,7 +97,8 @@ public class UpdateConfigTest {
     @Test
     public void getUpdatePackageFile_throwsErrorIfNotAFile() throws Exception {
         String json = "{\"name\": \"upd\", \"url\": \"http://foo.bar\","
-                + " \"ab_install_type\": \"NON_STREAMING\"}";
+                + " \"ab_install_type\": \"NON_STREAMING\","
+                + " \"ab_config\": { \"force_switch_slot\": false } }";
         UpdateConfig config = UpdateConfig.fromJson(json);
         thrown.expect(RuntimeException.class);
         config.getUpdatePackageFile();
