@@ -18,4 +18,6 @@
     <string name="action_reload">Reload</string>
     <string name="unknown">Unknown</string>
     <string name="close">CLOSE</string>
+    <string name="switch_slot">Switch Slot</string>
+    <string name="finish_update_info">To finish the update press the button below</string>
 </resources>

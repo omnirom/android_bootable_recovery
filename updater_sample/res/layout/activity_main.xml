@@ -178,6 +178,23 @@
                     android:text="Reset" />
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/textViewUpdateInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:textColor="#777"
+                android:textSize="10sp"
+                android:textStyle="italic"
+                android:text="@string/finish_update_info" />
+
+            <Button
+                android:id="@+id/buttonSwitchSlot"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:onClick="onSwitchSlotClick"
+                android:text="@string/switch_slot" />
+
         </LinearLayout>
 
     </ScrollView>
