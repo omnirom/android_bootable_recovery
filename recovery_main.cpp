@@ -317,6 +317,7 @@ int main(int argc, char** argv) {
       }
     }
   }
+  optind = 1;
 
   if (locale.empty()) {
     if (has_cache) {
