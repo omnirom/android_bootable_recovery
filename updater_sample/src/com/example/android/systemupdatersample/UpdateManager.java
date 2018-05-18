@@ -25,6 +25,7 @@ import com.example.android.systemupdatersample.services.PrepareStreamingService;
 import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineProperties;
+import com.example.android.systemupdatersample.util.UpdaterStates;
 import com.google.common.util.concurrent.AtomicDouble;
 
 import java.io.IOException;
@@ -37,7 +38,8 @@ import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
 
 /**
- * Manages the update flow. Asynchronously interacts with the {@link UpdateEngine}.
+ * Manages the update flow. It has its own state (in memory), separate from
+ * {@link UpdateEngine}'s state. Asynchronously interacts with the {@link UpdateEngine}.
  */
 public class UpdateManager {
 
@@ -55,12 +57,15 @@ public class UpdateManager {
     private AtomicInteger mEngineErrorCode = new AtomicInteger(UpdateEngineErrorCodes.UNKNOWN);
     private AtomicDouble mProgress = new AtomicDouble(0);
 
+    private AtomicInteger mState = new AtomicInteger(UpdaterStates.IDLE);
+
     private final UpdateManager.UpdateEngineCallbackImpl
             mUpdateEngineCallback = new UpdateManager.UpdateEngineCallbackImpl();
 
     private PayloadSpec mLastPayloadSpec;
     private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
 
+    private IntConsumer mOnStateChangeCallback = null;
     private IntConsumer mOnEngineStatusUpdateCallback = null;
     private DoubleConsumer mOnProgressUpdateCallback = null;
     private IntConsumer mOnEngineCompleteCallback = null;
@@ -97,8 +102,28 @@ public class UpdateManager {
      * Returns true if manual switching slot is required. Value depends on
      * the update config {@code ab_config.force_switch_slot}.
      */
-    public boolean manualSwitchSlotRequired() {
+    public boolean isManualSwitchSlotRequired() {
         return mManualSwitchSlotRequired.get();
+    }
+
+    /**
+     * Sets SystemUpdaterSample app state change callback. Value of {@code state} will be one
+     * of the values from {@link UpdaterStates}.
+     *
+     * @param onStateChangeCallback a callback with parameter {@code state}.
+     */
+    public void setOnStateChangeCallback(IntConsumer onStateChangeCallback) {
+        synchronized (mLock) {
+            this.mOnStateChangeCallback = onStateChangeCallback;
+        }
+    }
+
+    private Optional<IntConsumer> getOnStateChangeCallback() {
+        synchronized (mLock) {
+            return mOnStateChangeCallback == null
+                    ? Optional.empty()
+                    : Optional.of(mOnStateChangeCallback);
+        }
     }
 
     /**
@@ -161,6 +186,18 @@ public class UpdateManager {
     }
 
     /**
+     * Updates {@link this.mState} and if state is changed,
+     * it also notifies {@link this.mOnStateChangeCallback}.
+     */
+    private void setUpdaterState(int updaterState) {
+        int previousState = mState.get();
+        mState.set(updaterState);
+        if (previousState != updaterState) {
+            getOnStateChangeCallback().ifPresent(callback -> callback.accept(updaterState));
+        }
+    }
+
+    /**
      * Requests update engine to stop any ongoing update. If an update has been applied,
      * leave it as is.
      *
@@ -171,6 +208,7 @@ public class UpdateManager {
     public void cancelRunningUpdate() {
         try {
             mUpdateEngine.cancel();
+            setUpdaterState(UpdaterStates.IDLE);
         } catch (Exception e) {
             Log.w(TAG, "UpdateEngine failed to stop the ongoing update", e);
         }
@@ -186,6 +224,7 @@ public class UpdateManager {
     public void resetUpdate() {
         try {
             mUpdateEngine.resetStatus();
+            setUpdaterState(UpdaterStates.IDLE);
         } catch (Exception e) {
             Log.w(TAG, "UpdateEngine failed to reset the update", e);
         }
@@ -199,6 +238,7 @@ public class UpdateManager {
      */
     public void applyUpdate(Context context, UpdateConfig config) {
         mEngineErrorCode.set(UpdateEngineErrorCodes.UNKNOWN);
+        setUpdaterState(UpdaterStates.RUNNING);
 
         if (!config.getAbConfig().getForceSwitchSlot()) {
             mManualSwitchSlotRequired.set(true);
@@ -221,6 +261,7 @@ public class UpdateManager {
             payload = mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile());
         } catch (IOException e) {
             Log.e(TAG, "Error creating payload spec", e);
+            setUpdaterState(UpdaterStates.ERROR);
             return;
         }
         updateEngineApplyPayload(payload, extraProperties);
@@ -239,6 +280,7 @@ public class UpdateManager {
                 updateEngineApplyPayload(payloadSpec, extraProperties);
             } else {
                 Log.e(TAG, "PrepareStreamingService failed, result code is " + code);
+                setUpdaterState(UpdaterStates.ERROR);
             }
         });
     }
@@ -282,6 +324,7 @@ public class UpdateManager {
                     properties.toArray(new String[0]));
         } catch (Exception e) {
             Log.e(TAG, "UpdateEngine failed to apply the update", e);
+            setUpdaterState(UpdaterStates.ERROR);
         }
     }
 
@@ -322,6 +365,12 @@ public class UpdateManager {
     private void onPayloadApplicationComplete(int errorCode) {
         Log.d(TAG, "onPayloadApplicationComplete invoked, errorCode=" + errorCode);
         mEngineErrorCode.set(errorCode);
+        if (errorCode == UpdateEngine.ErrorCodeConstants.SUCCESS
+                || errorCode == UpdateEngineErrorCodes.UPDATED_BUT_NOT_ACTIVE) {
+            setUpdaterState(UpdaterStates.FINISHED);
+        } else if (errorCode != UpdateEngineErrorCodes.USER_CANCELLED) {
+            setUpdaterState(UpdaterStates.ERROR);
+        }
 
         getOnEngineCompleteCallback()
                 .ifPresent(callback -> callback.accept(errorCode));
