@@ -44,6 +44,10 @@ saved uncompressed (`ZIP_STORED`), so that their data can be downloaded directly
 with the offset and length. As `payload.bin` itself is already in compressed
 format, the size penalty is marginal.
 
+if `ab_config.force_switch_slot` set true device will boot to the
+updated partition on next reboot; otherwise button "Switch Slot" will
+become active, and user can manually set updated partition as the active slot.
+
 Config files can be generated using `tools/gen_update_config.py`.
 Running `./tools/gen_update_config.py --help` shows usage of the script.
 
@@ -85,8 +89,8 @@ which HTTP headers are supported.
 - [x] Add stop/reset the update
 - [x] Add demo for passing HTTP headers to `UpdateEngine#applyPayload`
 - [x] [Package compatibility check](https://source.android.com/devices/architecture/vintf/match-rules)
+- [x] Deferred switch slot demo
 - [ ] Add tests for `MainActivity`
-- [ ] Change partition demo
 - [ ] Verify system partition checksum for package
 - [ ] Add non-A/B updates demo
 

@@ -18,6 +18,7 @@ package com.example.android.systemupdatersample.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.UpdateEngine;
@@ -38,11 +39,13 @@ import com.example.android.systemupdatersample.services.PrepareStreamingService;
 import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateConfigs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
+import com.example.android.systemupdatersample.util.UpdateEngineProperties;
 import com.example.android.systemupdatersample.util.UpdateEngineStatuses;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -66,10 +69,14 @@ public class MainActivity extends Activity {
     private ProgressBar mProgressBar;
     private TextView mTextViewStatus;
     private TextView mTextViewCompletion;
+    private TextView mTextViewUpdateInfo;
+    private Button mButtonSwitchSlot;
 
     private List<UpdateConfig> mConfigs;
     private AtomicInteger mUpdateEngineStatus =
             new AtomicInteger(UpdateEngine.UpdateStatusConstants.IDLE);
+    private PayloadSpec mLastPayloadSpec;
+    private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
 
     /**
      * Listen to {@code update_engine} events.
@@ -93,6 +100,8 @@ public class MainActivity extends Activity {
         this.mProgressBar = findViewById(R.id.progressBar);
         this.mTextViewStatus = findViewById(R.id.textViewStatus);
         this.mTextViewCompletion = findViewById(R.id.textViewCompletion);
+        this.mTextViewUpdateInfo = findViewById(R.id.textViewUpdateInfo);
+        this.mButtonSwitchSlot = findViewById(R.id.buttonSwitchSlot);
 
         this.mTextViewConfigsDirHint.setText(UpdateConfigs.getConfigsRoot(this));
 
@@ -173,6 +182,13 @@ public class MainActivity extends Activity {
     }
 
     /**
+     * switch slot button clicked
+     */
+    public void onSwitchSlotClick(View view) {
+        setSwitchSlotOnReboot();
+    }
+
+    /**
      * Invoked when anything changes. The value of {@code status} will
      * be one of the values from {@link UpdateEngine.UpdateStatusConstants},
      * and {@code percent} will be from {@code 0.0} to {@code 1.0}.
@@ -185,16 +201,16 @@ public class MainActivity extends Activity {
                 Log.e("UpdateEngine", "StatusUpdate - status="
                         + UpdateEngineStatuses.getStatusText(status)
                         + "/" + status);
-                setUiStatus(status);
                 Toast.makeText(this, "Update Status changed", Toast.LENGTH_LONG)
                         .show();
-                if (status != UpdateEngine.UpdateStatusConstants.IDLE) {
-                    Log.d(TAG, "status changed, setting ui to updating mode");
-                    uiSetUpdating();
-                } else {
+                if (status == UpdateEngine.UpdateStatusConstants.IDLE) {
                     Log.d(TAG, "status changed, resetting ui");
                     uiReset();
+                } else {
+                    Log.d(TAG, "status changed, setting ui to updating mode");
+                    uiSetUpdating();
                 }
+                setUiStatus(status);
             });
         }
     }
@@ -215,6 +231,13 @@ public class MainActivity extends Activity {
                     + " " + state);
             Toast.makeText(this, "Update completed", Toast.LENGTH_LONG).show();
             setUiCompletion(errorCode);
+            if (errorCode == UpdateEngineErrorCodes.UPDATED_BUT_NOT_ACTIVE) {
+                // if update was successfully applied.
+                if (mManualSwitchSlotRequired.get()) {
+                    // Show "Switch Slot" button.
+                    uiShowSwitchSlotInfo();
+                }
+            }
         });
     }
 
@@ -231,6 +254,7 @@ public class MainActivity extends Activity {
         mProgressBar.setVisibility(ProgressBar.INVISIBLE);
         mTextViewStatus.setText(R.string.unknown);
         mTextViewCompletion.setText(R.string.unknown);
+        uiHideSwitchSlotInfo();
     }
 
     /** sets ui updating mode */
@@ -243,6 +267,16 @@ public class MainActivity extends Activity {
         mProgressBar.setEnabled(true);
         mButtonReset.setEnabled(true);
         mProgressBar.setVisibility(ProgressBar.VISIBLE);
+    }
+
+    private void uiShowSwitchSlotInfo() {
+        mButtonSwitchSlot.setEnabled(true);
+        mTextViewUpdateInfo.setTextColor(Color.parseColor("#777777"));
+    }
+
+    private void uiHideSwitchSlotInfo() {
+        mTextViewUpdateInfo.setTextColor(Color.parseColor("#AAAAAA"));
+        mButtonSwitchSlot.setEnabled(false);
     }
 
     /**
@@ -290,6 +324,17 @@ public class MainActivity extends Activity {
      * Applies the given update
      */
     private void applyUpdate(final UpdateConfig config) {
+        List<String> extraProperties = new ArrayList<>();
+
+        if (!config.getAbConfig().getForceSwitchSlot()) {
+            // Disable switch slot on reboot, which is enabled by default.
+            // User will enable it manually by clicking "Switch Slot" button on the screen.
+            extraProperties.add(UpdateEngineProperties.PROPERTY_DISABLE_SWITCH_SLOT_ON_REBOOT);
+            mManualSwitchSlotRequired.set(true);
+        } else {
+            mManualSwitchSlotRequired.set(false);
+        }
+
         if (config.getInstallType() == UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING) {
             PayloadSpec payload;
             try {
@@ -300,12 +345,11 @@ public class MainActivity extends Activity {
                         .show();
                 return;
             }
-            updateEngineApplyPayload(payload, null);
+            updateEngineApplyPayload(payload, extraProperties);
         } else {
             Log.d(TAG, "Starting PrepareStreamingService");
             PrepareStreamingService.startService(this, config, (code, payloadSpec) -> {
                 if (code == PrepareStreamingService.RESULT_CODE_SUCCESS) {
-                    List<String> extraProperties = new ArrayList<>();
                     extraProperties.add("USER_AGENT=" + HTTP_USER_AGENT);
                     config.getStreamingMetadata()
                             .getAuthorization()
@@ -332,6 +376,8 @@ public class MainActivity extends Activity {
      * @param extraProperties additional properties to pass to {@link UpdateEngine#applyPayload}
      */
     private void updateEngineApplyPayload(PayloadSpec payloadSpec, List<String> extraProperties) {
+        mLastPayloadSpec = payloadSpec;
+
         ArrayList<String> properties = new ArrayList<>(payloadSpec.getProperties());
         if (extraProperties != null) {
             properties.addAll(extraProperties);
@@ -349,6 +395,29 @@ public class MainActivity extends Activity {
                     "UpdateEngine failed to apply the update",
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+    /**
+     * Sets the new slot that has the updated partitions as the active slot,
+     * which device will boot into next time.
+     * This method is only supposed to be called after the payload is applied.
+     *
+     * Invoking {@link UpdateEngine#applyPayload} with the same payload url, offset, size
+     * and payload metadata headers doesn't trigger new update. It can be used to just switch
+     * active A/B slot.
+     *
+     * {@link UpdateEngine#applyPayload} might take several seconds to finish, and it will
+     * invoke callbacks {@link this#onStatusUpdate} and {@link this#onPayloadApplicationComplete)}.
+     */
+    private void setSwitchSlotOnReboot() {
+        Log.d(TAG, "setSwitchSlotOnReboot invoked");
+        List<String> extraProperties = new ArrayList<>();
+        // PROPERTY_SKIP_POST_INSTALL should be passed on to skip post-installation hooks.
+        extraProperties.add(UpdateEngineProperties.PROPERTY_SKIP_POST_INSTALL);
+        // It sets property SWITCH_SLOT_ON_REBOOT=1 by default.
+        // HTTP headers are not required, UpdateEngine is not expected to stream payload.
+        updateEngineApplyPayload(mLastPayloadSpec, extraProperties);
+        uiHideSwitchSlotInfo();
     }
 
     /**

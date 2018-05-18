@@ -15,6 +15,7 @@
  */
 
 #include <stddef.h>
+#include <stdio.h>
 
 #include <functional>
 #include <map>
@@ -23,6 +24,8 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/stringprintf.h>
+#include <android-base/test_utils.h>
 #include <gtest/gtest.h>
 
 #include "common/test_constants.h"
@@ -224,6 +227,19 @@ class TestableScreenRecoveryUI : public ScreenRecoveryUI {
 
   int KeyHandler(int key, bool visible) const;
 
+  // The following functions expose the protected members for test purpose.
+  void RunLoadAnimation() {
+    LoadAnimation();
+  }
+
+  size_t GetLoopFrames() const {
+    return loop_frames;
+  }
+
+  size_t GetIntroFrames() const {
+    return intro_frames;
+  }
+
   bool GetRtlLocale() const {
     return rtl_locale_;
   }
@@ -260,14 +276,15 @@ class ScreenRecoveryUITest : public ::testing::Test {
   void SetUp() override {
     ui_ = std::make_unique<TestableScreenRecoveryUI>();
 
-    std::string testdata_dir = from_testdata_base("");
-    Paths::Get().set_resource_dir(testdata_dir);
-    res_set_resource_dir(testdata_dir);
+    testdata_dir_ = from_testdata_base("");
+    Paths::Get().set_resource_dir(testdata_dir_);
+    res_set_resource_dir(testdata_dir_);
 
     ASSERT_TRUE(ui_->Init(kTestLocale));
   }
 
   std::unique_ptr<TestableScreenRecoveryUI> ui_;
+  std::string testdata_dir_;
 };
 
 TEST_F(ScreenRecoveryUITest, Init) {
@@ -351,4 +368,37 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
   ASSERT_EQ(4u, ui_->ShowMenu(HEADERS, ITEMS, 3, true,
                               std::bind(&TestableScreenRecoveryUI::KeyHandler, ui_.get(),
                                         std::placeholders::_1, std::placeholders::_2)));
+}
+
+TEST_F(ScreenRecoveryUITest, LoadAnimation) {
+  // Make a few copies of loop00000.png from testdata.
+  std::string image_data;
+  ASSERT_TRUE(android::base::ReadFileToString(testdata_dir_ + "/loop00000.png", &image_data));
+
+  std::vector<std::string> tempfiles;
+  TemporaryDir resource_dir;
+  for (const auto& name : { "00002", "00100", "00050" }) {
+    tempfiles.push_back(android::base::StringPrintf("%s/loop%s.png", resource_dir.path, name));
+    ASSERT_TRUE(android::base::WriteStringToFile(image_data, tempfiles.back()));
+  }
+  for (const auto& name : { "00", "01" }) {
+    tempfiles.push_back(android::base::StringPrintf("%s/intro%s.png", resource_dir.path, name));
+    ASSERT_TRUE(android::base::WriteStringToFile(image_data, tempfiles.back()));
+  }
+  Paths::Get().set_resource_dir(resource_dir.path);
+
+  ui_->RunLoadAnimation();
+
+  ASSERT_EQ(2u, ui_->GetIntroFrames());
+  ASSERT_EQ(3u, ui_->GetLoopFrames());
+
+  for (const auto& name : tempfiles) {
+    ASSERT_EQ(0, unlink(name.c_str()));
+  }
+}
+
+TEST_F(ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
+  TemporaryDir resource_dir;
+  Paths::Get().set_resource_dir(resource_dir.path);
+  ASSERT_EXIT(ui_->RunLoadAnimation(), ::testing::KilledBySignal(SIGABRT), "");
 }

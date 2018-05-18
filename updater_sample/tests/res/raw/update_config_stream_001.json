@@ -10,5 +10,8 @@
                 "size": 8
             }
         ]
+    },
+    "ab_config": {
+        "force_switch_slot": true
     }
 }

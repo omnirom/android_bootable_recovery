@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "private/recovery.h"
+#include "recovery.h"
 
 #include <ctype.h>
 #include <dirent.h>
@@ -32,7 +32,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -49,12 +48,8 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <bootloader_message/bootloader_message.h>
-#include <cutils/android_reboot.h>
 #include <cutils/properties.h> /* for property_list */
 #include <health2/Health.h>
-#include <selinux/android.h>
-#include <selinux/label.h>
-#include <selinux/selinux.h>
 #include <ziparchive/zip_archive.h>
 
 #include "adb_install.h"
@@ -70,7 +65,6 @@
 #include "otautil/sysutil.h"
 #include "roots.h"
 #include "screen_ui.h"
-#include "stub_ui.h"
 #include "ui.h"
 
 static constexpr const char* CACHE_LOG_DIR = "/cache/recovery";
@@ -88,13 +82,9 @@ static constexpr const char* SDCARD_ROOT = "/sdcard";
 // into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
 static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
 
-static bool has_cache = false;
-
-RecoveryUI* ui = nullptr;
 bool modified_flash = false;
 std::string stage;
 const char* reason = nullptr;
-struct selabel_handle* sehandle;
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -144,77 +134,6 @@ struct selabel_handle* sehandle;
 
 bool is_ro_debuggable() {
     return android::base::GetBoolProperty("ro.debuggable", false);
-}
-
-// command line args come from, in decreasing precedence:
-//   - the actual command line
-//   - the bootloader control block (one per line, after "recovery")
-//   - the contents of COMMAND_FILE (one per line)
-static std::vector<std::string> get_args(const int argc, char** const argv) {
-  CHECK_GT(argc, 0);
-
-  bootloader_message boot = {};
-  std::string err;
-  if (!read_bootloader_message(&boot, &err)) {
-    LOG(ERROR) << err;
-    // If fails, leave a zeroed bootloader_message.
-    boot = {};
-  }
-  stage = std::string(boot.stage);
-
-  if (boot.command[0] != 0) {
-    std::string boot_command = std::string(boot.command, sizeof(boot.command));
-    LOG(INFO) << "Boot command: " << boot_command;
-  }
-
-  if (boot.status[0] != 0) {
-    std::string boot_status = std::string(boot.status, sizeof(boot.status));
-    LOG(INFO) << "Boot status: " << boot_status;
-  }
-
-  std::vector<std::string> args(argv, argv + argc);
-
-  // --- if arguments weren't supplied, look in the bootloader control block
-  if (args.size() == 1) {
-    boot.recovery[sizeof(boot.recovery) - 1] = '\0';  // Ensure termination
-    std::string boot_recovery(boot.recovery);
-    std::vector<std::string> tokens = android::base::Split(boot_recovery, "\n");
-    if (!tokens.empty() && tokens[0] == "recovery") {
-      for (auto it = tokens.begin() + 1; it != tokens.end(); it++) {
-        // Skip empty and '\0'-filled tokens.
-        if (!it->empty() && (*it)[0] != '\0') args.push_back(std::move(*it));
-      }
-      LOG(INFO) << "Got " << args.size() << " arguments from boot message";
-    } else if (boot.recovery[0] != 0) {
-      LOG(ERROR) << "Bad boot message: \"" << boot_recovery << "\"";
-    }
-  }
-
-  // --- if that doesn't work, try the command file (if we have /cache).
-  if (args.size() == 1 && has_cache) {
-    std::string content;
-    if (ensure_path_mounted(COMMAND_FILE) == 0 &&
-        android::base::ReadFileToString(COMMAND_FILE, &content)) {
-      std::vector<std::string> tokens = android::base::Split(content, "\n");
-      // All the arguments in COMMAND_FILE are needed (unlike the BCB message,
-      // COMMAND_FILE doesn't use filename as the first argument).
-      for (auto it = tokens.begin(); it != tokens.end(); it++) {
-        // Skip empty and '\0'-filled tokens.
-        if (!it->empty() && (*it)[0] != '\0') args.push_back(std::move(*it));
-      }
-      LOG(INFO) << "Got " << args.size() << " arguments from " << COMMAND_FILE;
-    }
-  }
-
-  // Write the arguments (excluding the filename in args[0]) back into the
-  // bootloader control block. So the device will always boot into recovery to
-  // finish the pending work, until finish_recovery() is called.
-  std::vector<std::string> options(args.cbegin() + 1, args.cend());
-  if (!update_bootloader_message(options, &err)) {
-    LOG(ERROR) << "Failed to set BCB message: " << err;
-  }
-
-  return args;
 }
 
 // Set the BCB to reboot back into recovery (it won't resume the install from
@@ -921,21 +840,6 @@ static void print_property(const char* key, const char* name, void* /* cookie */
   printf("%s=%s\n", key, name);
 }
 
-static std::string load_locale_from_cache() {
-    if (ensure_path_mounted(LOCALE_FILE) != 0) {
-        LOG(ERROR) << "Can't mount " << LOCALE_FILE;
-        return "";
-    }
-
-    std::string content;
-    if (!android::base::ReadFileToString(LOCALE_FILE, &content)) {
-        PLOG(ERROR) << "Can't read " << LOCALE_FILE;
-        return "";
-    }
-
-    return android::base::Trim(content);
-}
-
 void ui_print(const char* format, ...) {
     std::string buffer;
     va_list ap;
@@ -1079,15 +983,7 @@ static void log_failure_code(ErrorCode code, const std::string& update_package) 
   LOG(INFO) << log_content;
 }
 
-int start_recovery(int argc, char** argv) {
-  time_t start = time(nullptr);
-
-  printf("Starting recovery (pid %d) on %s", getpid(), ctime(&start));
-
-  load_volume_table();
-  has_cache = volume_for_mount_point(CACHE_ROOT) != nullptr;
-
-  std::vector<std::string> args = get_args(argc, argv);
+Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args) {
   std::vector<char*> args_to_parse(args.size());
   std::transform(args.cbegin(), args.cend(), args_to_parse.begin(),
                  [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
@@ -1117,7 +1013,6 @@ int start_recovery(int argc, char** argv) {
   bool should_wipe_cache = false;
   bool should_wipe_ab = false;
   size_t wipe_package_size = 0;
-  bool show_text = false;
   bool sideload = false;
   bool sideload_auto_reboot = false;
   bool just_exit = false;
@@ -1132,7 +1027,7 @@ int start_recovery(int argc, char** argv) {
                             &option_index)) != -1) {
     switch (arg) {
       case 't':
-        show_text = true;
+        // Handled in recovery_main.cpp
         break;
       case 'x':
         just_exit = true;
@@ -1140,7 +1035,7 @@ int start_recovery(int argc, char** argv) {
       case 0: {
         std::string option = OPTIONS[option_index].name;
         if (option == "locale") {
-          locale = optarg;
+          // Handled in recovery_main.cpp
         } else if (option == "prompt_and_wipe_data") {
           should_prompt_and_wipe_data = true;
         } else if (option == "reason") {
@@ -1174,37 +1069,10 @@ int start_recovery(int argc, char** argv) {
         continue;
     }
   }
+  optind = 1;
 
-  if (locale.empty()) {
-    if (has_cache) {
-      locale = load_locale_from_cache();
-    }
-
-    if (locale.empty()) {
-      static constexpr const char* DEFAULT_LOCALE = "en-US";
-      locale = DEFAULT_LOCALE;
-    }
-  }
-
-  printf("locale is [%s]\n", locale.c_str());
   printf("stage is [%s]\n", stage.c_str());
   printf("reason is [%s]\n", reason);
-
-  Device* device = make_device();
-  if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
-    printf("Quiescent recovery mode.\n");
-    device->ResetUI(new StubRecoveryUI());
-  } else {
-    if (!device->GetUI()->Init(locale)) {
-      printf("Failed to initialize UI; using stub UI instead.\n");
-      device->ResetUI(new StubRecoveryUI());
-    }
-  }
-  ui = device->GetUI();
-
-  if (!has_cache) {
-    device->RemoveMenuItemForAction(Device::WIPE_CACHE);
-  }
 
   // Set background string to "installing security update" for security update,
   // otherwise set it to "installing system update".
@@ -1213,15 +1081,6 @@ int start_recovery(int argc, char** argv) {
   int st_cur, st_max;
   if (!stage.empty() && sscanf(stage.c_str(), "%d/%d", &st_cur, &st_max) == 2) {
     ui->SetStage(st_cur, st_max);
-  }
-
-  ui->SetBackground(RecoveryUI::NONE);
-  if (show_text) ui->ShowText(true);
-
-  sehandle = selinux_android_file_context_handle();
-  selinux_android_set_sehandle(sehandle);
-  if (!sehandle) {
-    ui->Print("Warning: No file_contexts\n");
   }
 
   device->StartRecovery();
@@ -1373,25 +1232,5 @@ int start_recovery(int argc, char** argv) {
   // Save logs and clean up before rebooting or shutting down.
   finish_recovery();
 
-  switch (after) {
-    case Device::SHUTDOWN:
-      ui->Print("Shutting down...\n");
-      android::base::SetProperty(ANDROID_RB_PROPERTY, "shutdown,");
-      break;
-
-    case Device::REBOOT_BOOTLOADER:
-      ui->Print("Rebooting to bootloader...\n");
-      android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,bootloader");
-      break;
-
-    default:
-      ui->Print("Rebooting...\n");
-      reboot("reboot,");
-      break;
-  }
-  while (true) {
-    pause();
-  }
-  // Should be unreachable.
-  return EXIT_SUCCESS;
+  return after;
 }
