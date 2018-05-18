@@ -90,9 +90,9 @@ which HTTP headers are supported.
 - [x] Add demo for passing HTTP headers to `UpdateEngine#applyPayload`
 - [x] [Package compatibility check](https://source.android.com/devices/architecture/vintf/match-rules)
 - [x] Deferred switch slot demo
-- [ ] Add tests for `MainActivity`
+- [ ] Add demo for passing NETWORK_ID to `UpdateEngine#applyPayload`
 - [ ] Verify system partition checksum for package
-- [ ] Add non-A/B updates demo
+- [?] Add non-A/B updates demo
 
 
 ## Running tests
