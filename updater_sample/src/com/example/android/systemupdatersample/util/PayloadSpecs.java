@@ -43,7 +43,7 @@ public final class PayloadSpecs {
      * zip file. So we enumerate the entries to identify the offset of the payload file.
      * http://developer.android.com/reference/java/util/zip/ZipFile.html#entries()
      */
-    public static PayloadSpec forNonStreaming(File packageFile) throws IOException {
+    public PayloadSpec forNonStreaming(File packageFile) throws IOException {
         boolean payloadFound = false;
         long payloadOffset = 0;
         long payloadSize = 0;
@@ -100,7 +100,7 @@ public final class PayloadSpecs {
     /**
      * Creates a {@link PayloadSpec} for streaming update.
      */
-    public static PayloadSpec forStreaming(String updateUrl,
+    public PayloadSpec forStreaming(String updateUrl,
                                            long offset,
                                            long size,
                                            File propertiesFile) throws IOException {
@@ -115,7 +115,7 @@ public final class PayloadSpecs {
     /**
      * Converts an {@link PayloadSpec} to a string.
      */
-    public static String toString(PayloadSpec payloadSpec) {
+    public String specToString(PayloadSpec payloadSpec) {
         return "<PayloadSpec url=" + payloadSpec.getUrl()
                 + ", offset=" + payloadSpec.getOffset()
                 + ", size=" + payloadSpec.getSize()
@@ -123,7 +123,5 @@ public final class PayloadSpecs {
                         payloadSpec.getProperties().toArray(new String[0]))
                 + ">";
     }
-
-    private PayloadSpecs() {}
 
 }
