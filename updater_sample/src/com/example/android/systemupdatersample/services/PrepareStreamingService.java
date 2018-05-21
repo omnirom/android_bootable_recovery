@@ -116,6 +116,8 @@ public class PrepareStreamingService extends IntentService {
                 PackageFiles.PAYLOAD_PROPERTIES_FILE_NAME
             );
 
+    private final PayloadSpecs mPayloadSpecs = new PayloadSpecs();
+
     @Override
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "On handle intent is called");
@@ -137,7 +139,7 @@ public class PrepareStreamingService extends IntentService {
      * 3. Checks OTA package compatibility with the device.
      * 4. Constructs {@link PayloadSpec} for streaming update.
      */
-    private static PayloadSpec execute(UpdateConfig config)
+    private PayloadSpec execute(UpdateConfig config)
             throws IOException, PreparationFailedException {
 
         downloadPreStreamingFiles(config, OTA_PACKAGE_DIR);
@@ -164,7 +166,7 @@ public class PrepareStreamingService extends IntentService {
             }
         }
 
-        return PayloadSpecs.forStreaming(config.getUrl(),
+        return mPayloadSpecs.forStreaming(config.getUrl(),
                 payloadBinary.get().getOffset(),
                 payloadBinary.get().getSize(),
                 Paths.get(OTA_PACKAGE_DIR, PAYLOAD_PROPERTIES_FILE_NAME).toFile());
@@ -176,7 +178,7 @@ public class PrepareStreamingService extends IntentService {
      * in directory {@code dir}.
      * @throws IOException when can't download a file
      */
-    private static void downloadPreStreamingFiles(UpdateConfig config, String dir)
+    private void downloadPreStreamingFiles(UpdateConfig config, String dir)
             throws IOException {
         Log.d(TAG, "Deleting existing files from " + dir);
         for (String file : PRE_STREAMING_FILES_SET) {
@@ -200,7 +202,7 @@ public class PrepareStreamingService extends IntentService {
      * @param file physical location of {@link PackageFiles#COMPATIBILITY_ZIP_FILE_NAME}
      * @return true if OTA package is compatible with this device
      */
-    private static boolean verifyPackageCompatibility(File file) {
+    private boolean verifyPackageCompatibility(File file) {
         try {
             return RecoverySystem.verifyPackageCompatibility(file);
         } catch (IOException e) {
