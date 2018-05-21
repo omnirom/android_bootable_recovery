@@ -82,7 +82,7 @@ static void DeleteLastCommandFile() {
 
 // Parse the last command index of the last update and save the result to |last_command_index|.
 // Return true if we successfully read the index.
-static bool ParseLastCommandFile(int* last_command_index) {
+static bool ParseLastCommandFile(size_t* last_command_index) {
   const std::string& last_command_file = Paths::Get().last_command_file();
   android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(last_command_file.c_str(), O_RDONLY)));
   if (fd == -1) {
@@ -133,7 +133,7 @@ static bool FsyncDir(const std::string& dirname) {
 }
 
 // Update the last executed command index in the last_command_file.
-static bool UpdateLastCommandIndex(int command_index, const std::string& command_string) {
+static bool UpdateLastCommandIndex(size_t command_index, const std::string& command_string) {
   const std::string& last_command_file = Paths::Get().last_command_file();
   std::string last_command_tmp = last_command_file + ".tmp";
   std::string content = std::to_string(command_index) + "\n" + command_string;
@@ -546,7 +546,6 @@ static int WriteBlocks(const RangeSet& tgt, const std::vector<uint8_t>& buffer, 
 struct CommandParameters {
     std::vector<std::string> tokens;
     size_t cpos;
-    int cmdindex;
     const char* cmdname;
     const char* cmdline;
     std::string freestash;
@@ -1690,8 +1689,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
 
   params.createdstash = res;
 
-  // When performing an update, save the index and cmdline of the current command into
-  // the last_command_file.
+  // When performing an update, save the index and cmdline of the current command into the
+  // last_command_file.
   // Upon resuming an update, read the saved index first; then
   //   1. In verification mode, check if the 'move' or 'diff' commands before the saved index has
   //      the expected target blocks already. If not, these commands cannot be skipped and we need
@@ -1700,11 +1699,12 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   //   2. In update mode, skip all commands before the saved index. Therefore, we can avoid deleting
   //      stashes with duplicate id unintentionally (b/69858743); and also speed up the update.
   // If an update succeeds or is unresumable, delete the last_command_file.
-  int saved_last_command_index;
+  bool skip_executed_command = true;
+  size_t saved_last_command_index;
   if (!ParseLastCommandFile(&saved_last_command_index)) {
     DeleteLastCommandFile();
-    // We failed to parse the last command, set it explicitly to -1.
-    saved_last_command_index = -1;
+    // We failed to parse the last command. Disallow skipping executed commands.
+    skip_executed_command = false;
   }
 
   // Build a map of the available commands
@@ -1725,13 +1725,9 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     const std::string& line = lines[i];
     if (line.empty()) continue;
 
+    size_t cmdindex = i - kTransferListHeaderLines;
     params.tokens = android::base::Split(line, " ");
     params.cpos = 0;
-    if (i - kTransferListHeaderLines > std::numeric_limits<int>::max()) {
-      params.cmdindex = -1;
-    } else {
-      params.cmdindex = i - kTransferListHeaderLines;
-    }
     params.cmdname = params.tokens[params.cpos++].c_str();
     params.cmdline = line.c_str();
     params.target_verified = false;
@@ -1754,9 +1750,9 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
 
     // Skip all commands before the saved last command index when resuming an update, except for
     // "new" command. Because new commands read in the data sequentially.
-    if (params.canwrite && params.cmdindex != -1 && params.cmdindex <= saved_last_command_index &&
+    if (params.canwrite && skip_executed_command && cmdindex <= saved_last_command_index &&
         cmdname != "new") {
-      LOG(INFO) << "Skipping already executed command: " << params.cmdindex
+      LOG(INFO) << "Skipping already executed command: " << cmdindex
                 << ", last executed command for previous update: " << saved_last_command_index;
       continue;
     }
@@ -1766,17 +1762,16 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
       goto pbiudone;
     }
 
-    // In verify mode, check if the commands before the saved last_command_index have been
-    // executed correctly. If some target blocks have unexpected contents, delete the last command
-    // file so that we will resume the update from the first command in the transfer list.
-    if (!params.canwrite && saved_last_command_index != -1 && params.cmdindex != -1 &&
-        params.cmdindex <= saved_last_command_index) {
+    // In verify mode, check if the commands before the saved last_command_index have been executed
+    // correctly. If some target blocks have unexpected contents, delete the last command file so
+    // that we will resume the update from the first command in the transfer list.
+    if (!params.canwrite && skip_executed_command && cmdindex <= saved_last_command_index) {
       // TODO(xunchang) check that the cmdline of the saved index is correct.
       if ((cmdname == "move" || cmdname == "bsdiff" || cmdname == "imgdiff") &&
           !params.target_verified) {
         LOG(WARNING) << "Previously executed command " << saved_last_command_index << ": "
                      << params.cmdline << " doesn't produce expected target blocks.";
-        saved_last_command_index = -1;
+        skip_executed_command = false;
         DeleteLastCommandFile();
       }
     }
@@ -1787,7 +1782,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
         goto pbiudone;
       }
 
-      if (!UpdateLastCommandIndex(params.cmdindex, params.cmdline)) {
+      if (!UpdateLastCommandIndex(cmdindex, params.cmdline)) {
         LOG(WARNING) << "Failed to update the last command file.";
       }
 
