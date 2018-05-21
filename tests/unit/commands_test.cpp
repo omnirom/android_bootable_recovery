@@ -159,6 +159,27 @@ TEST(CommandsTest, Parse_EmptyInput) {
   ASSERT_EQ("invalid type", err);
 }
 
+TEST(CommandsTest, Parse_ABORT_Allowed) {
+  Command::abort_allowed_ = true;
+
+  const std::string input{ "abort" };
+  std::string err;
+  Command command = Command::Parse(input, 0, &err);
+  ASSERT_TRUE(command);
+
+  ASSERT_EQ(TargetInfo(), command.target());
+  ASSERT_EQ(SourceInfo(), command.source());
+  ASSERT_EQ(StashInfo(), command.stash());
+  ASSERT_EQ(PatchInfo(), command.patch());
+}
+
+TEST(CommandsTest, Parse_ABORT_NotAllowed) {
+  const std::string input{ "abort" };
+  std::string err;
+  Command command = Command::Parse(input, 0, &err);
+  ASSERT_FALSE(command);
+}
+
 TEST(CommandsTest, Parse_BSDIFF) {
   const std::string input{
     "bsdiff 0 148 "
@@ -312,9 +333,12 @@ TEST(CommandsTest, Parse_ZERO) {
 }
 
 TEST(CommandsTest, Parse_InvalidNumberOfArgs) {
+  Command::abort_allowed_ = true;
+
   // Note that the case of having excess args in BSDIFF, IMGDIFF and MOVE is covered by
   // ParseTargetInfoAndSourceInfo_InvalidInput.
   std::vector<std::string> inputs{
+    "abort foo",
     "bsdiff",
     "erase",
     "erase 4,3,5,10,12 hash1",
