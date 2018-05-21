@@ -1666,7 +1666,6 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     return StringValue("t");
   }
 
-  size_t start = 2;
   if (lines.size() < 4) {
     ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]",
                lines.size());
@@ -1708,8 +1707,6 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     saved_last_command_index = -1;
   }
 
-  start += 2;
-
   // Build a map of the available commands
   std::unordered_map<std::string, const Command*> cmd_map;
   for (size_t i = 0; i < cmdcount; ++i) {
@@ -1722,17 +1719,18 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
 
   int rc = -1;
 
+  static constexpr size_t kTransferListHeaderLines = 4;
   // Subsequent lines are all individual transfer commands
-  for (size_t i = start; i < lines.size(); i++) {
+  for (size_t i = kTransferListHeaderLines; i < lines.size(); i++) {
     const std::string& line = lines[i];
     if (line.empty()) continue;
 
     params.tokens = android::base::Split(line, " ");
     params.cpos = 0;
-    if (i - start > std::numeric_limits<int>::max()) {
+    if (i - kTransferListHeaderLines > std::numeric_limits<int>::max()) {
       params.cmdindex = -1;
     } else {
-      params.cmdindex = i - start;
+      params.cmdindex = i - kTransferListHeaderLines;
     }
     params.cmdname = params.tokens[params.cpos++].c_str();
     params.cmdline = line.c_str();
