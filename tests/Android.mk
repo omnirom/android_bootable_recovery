@@ -174,8 +174,8 @@ librecovery_static_libraries := \
     libtinyxml2 \
     libziparchive \
     libbase \
-    libcutils \
     libutils \
+    libcutils \
     liblog \
     libselinux \
     libz \
