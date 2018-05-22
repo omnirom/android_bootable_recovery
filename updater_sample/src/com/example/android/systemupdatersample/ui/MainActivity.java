@@ -77,6 +77,7 @@ public class MainActivity extends Activity {
             new AtomicInteger(UpdateEngine.UpdateStatusConstants.IDLE);
     private PayloadSpec mLastPayloadSpec;
     private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
+    private final PayloadSpecs mPayloadSpecs = new PayloadSpecs();
 
     /**
      * Listen to {@code update_engine} events.
@@ -338,7 +339,7 @@ public class MainActivity extends Activity {
         if (config.getInstallType() == UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING) {
             PayloadSpec payload;
             try {
-                payload = PayloadSpecs.forNonStreaming(config.getUpdatePackageFile());
+                payload = mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile());
             } catch (IOException e) {
                 Log.e(TAG, "Error creating payload spec", e);
                 Toast.makeText(this, "Error creating payload spec", Toast.LENGTH_LONG)

@@ -55,6 +55,8 @@ public class PayloadSpecsTest {
     private Context mTargetContext;
     private Context mTestContext;
 
+    private PayloadSpecs mPayloadSpecs;
+
     @Rule
     public final ExpectedException thrown = ExpectedException.none();
 
@@ -64,6 +66,7 @@ public class PayloadSpecsTest {
         mTestContext = InstrumentationRegistry.getContext();
 
         mTestDir = mTargetContext.getFilesDir();
+        mPayloadSpecs = new PayloadSpecs();
     }
 
     @Test
@@ -75,7 +78,7 @@ public class PayloadSpecsTest {
         java.nio.file.Files.deleteIfExists(packageFile.toPath());
         java.nio.file.Files.copy(mTestContext.getResources().openRawResource(R.raw.ota_002_package),
                 packageFile.toPath());
-        PayloadSpec spec = PayloadSpecs.forNonStreaming(packageFile);
+        PayloadSpec spec = mPayloadSpecs.forNonStreaming(packageFile);
 
         assertEquals("correct url", "file://" + packageFile.getAbsolutePath(), spec.getUrl());
         assertEquals("correct payload offset",
@@ -90,7 +93,7 @@ public class PayloadSpecsTest {
     @Test
     public void forNonStreaming_IOException() throws Exception {
         thrown.expect(IOException.class);
-        PayloadSpecs.forNonStreaming(new File("/fake/news.zip"));
+        mPayloadSpecs.forNonStreaming(new File("/fake/news.zip"));
     }
 
     @Test
@@ -100,7 +103,7 @@ public class PayloadSpecsTest {
         long size = 200;
         File propertiesFile = createMockPropertiesFile();
 
-        PayloadSpec spec = PayloadSpecs.forStreaming(url, offset, size, propertiesFile);
+        PayloadSpec spec = mPayloadSpecs.forStreaming(url, offset, size, propertiesFile);
         assertEquals("same url", url, spec.getUrl());
         assertEquals("same offset", offset, spec.getOffset());
         assertEquals("same size", size, spec.getSize());

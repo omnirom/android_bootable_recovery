@@ -496,6 +496,10 @@ int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y,
   return offset;
 }
 
+void ScreenRecoveryUI::SetTitle(const std::vector<std::string>& lines) {
+  title_lines_ = lines;
+}
+
 // Redraws everything on the screen. Does not flip pages. Should only be called with updateMutex
 // locked.
 void ScreenRecoveryUI::draw_screen_locked() {
@@ -529,11 +533,9 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
     int x = kMarginWidth + kMenuIndent;
 
     SetColor(INFO);
-    y += DrawTextLine(x, y, "Android Recovery", true);
-    std::string recovery_fingerprint =
-        android::base::GetProperty("ro.bootimage.build.fingerprint", "");
-    for (const auto& chunk : android::base::Split(recovery_fingerprint, ":")) {
-      y += DrawTextLine(x, y, chunk, false);
+
+    for (size_t i = 0; i < title_lines_.size(); i++) {
+      y += DrawTextLine(x, y, title_lines_[i], i == 0);
     }
 
     y += DrawTextLines(x, y, help_message);
