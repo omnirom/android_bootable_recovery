@@ -1063,6 +1063,11 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     ui->SetStage(st_cur, st_max);
   }
 
+  std::vector<std::string> title_lines =
+      android::base::Split(android::base::GetProperty("ro.bootimage.build.fingerprint", ""), ":");
+  title_lines.insert(std::begin(title_lines), "Android Recovery");
+  ui->SetTitle(title_lines);
+
   device->StartRecovery();
 
   printf("Command:");
