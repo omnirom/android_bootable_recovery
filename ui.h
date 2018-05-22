@@ -134,6 +134,8 @@ class RecoveryUI {
 
   // --- menu display ---
 
+  virtual void SetTitle(const std::vector<std::string>& lines) = 0;
+
   // Displays a menu with the given 'headers' and 'items'. The supplied 'key_handler' callback,
   // which is typically bound to Device::HandleMenuKey(), should return the expected action for the
   // given key code and menu visibility (e.g. to move the cursor or to select an item). Caller sets

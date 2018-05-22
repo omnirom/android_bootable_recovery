@@ -67,6 +67,8 @@ class StubRecoveryUI : public RecoveryUI {
                   const std::function<int(int, bool)>& /* key_handler */) override {
     return initial_selection;
   }
+
+  void SetTitle(const std::vector<std::string>& /* lines */) override {}
 };
 
 #endif  // RECOVERY_STUB_UI_H
