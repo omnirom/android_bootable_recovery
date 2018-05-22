@@ -51,6 +51,11 @@ class RecoveryUI {
     IGNORE
   };
 
+  enum class KeyError : int {
+    TIMED_OUT = -1,
+    INTERRUPTED = -2,
+  };
+
   RecoveryUI();
 
   virtual ~RecoveryUI();
@@ -99,8 +104,12 @@ class RecoveryUI {
 
   // --- key handling ---
 
-  // Waits for a key and return it. May return -1 after timeout.
+  // Waits for a key and return it. May return TIMED_OUT after timeout and
+  // KeyError::INTERRUPTED on a key interrupt.
   virtual int WaitKey();
+
+  // Wakes up the UI if it is waiting on key input, causing WaitKey to return KeyError::INTERRUPTED.
+  virtual void InterruptKey();
 
   virtual bool IsKeyPressed(int key);
   virtual bool IsLongPress();
@@ -147,10 +156,21 @@ class RecoveryUI {
   // device-specific action, even without that being listed in the menu. Caller needs to handle
   // such a case accordingly (e.g. by calling Device::InvokeMenuItem() to process the action).
   // Returns a non-negative value (the chosen item number or device-specific action code), or
-  // static_cast<size_t>(-1) if timed out waiting for input.
+  // static_cast<size_t>(TIMED_OUT) if timed out waiting for input or
+  // static_cast<size_t>(ERR_KEY_INTERTUPT) if interrupted, such as by InterruptKey().
   virtual size_t ShowMenu(const std::vector<std::string>& headers,
                           const std::vector<std::string>& items, size_t initial_selection,
                           bool menu_only, const std::function<int(int, bool)>& key_handler) = 0;
+
+  // Resets the key interrupt status.
+  void ResetKeyInterruptStatus() {
+    key_interrupted_ = false;
+  }
+
+  // Returns the key interrupt status.
+  bool IsKeyInterrupted() const {
+    return key_interrupted_;
+  }
 
  protected:
   void EnqueueKey(int key_code);
@@ -187,10 +207,11 @@ class RecoveryUI {
   bool IsUsbConnected();
 
   bool InitScreensaver();
-
+  void SetScreensaverState(ScreensaverState state);
   // Key event input queue
   std::mutex key_queue_mutex;
   std::condition_variable key_queue_cond;
+  bool key_interrupted_;
   int key_queue[256], key_queue_len;
   char key_pressed[KEY_MAX + 1];  // under key_queue_mutex
   int key_last_down;              // under key_queue_mutex
