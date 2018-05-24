@@ -23,9 +23,9 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_JAVA_LIBRARIES := \
     android.test.base.stubs \
     android.test.runner.stubs \
-    guava \
+    guava
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test \
     mockito-target-minus-junit4
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 LOCAL_INSTRUMENTATION_FOR := SystemUpdaterSample
 LOCAL_PROGUARD_ENABLED := disabled
 
