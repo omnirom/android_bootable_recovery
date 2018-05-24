@@ -1,0 +1,92 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.example.android.systemupdatersample;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import android.os.UpdateEngine;
+import android.os.UpdateEngineCallback;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+
+import com.example.android.systemupdatersample.util.PayloadSpecs;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+
+import java.util.function.IntConsumer;
+
+/**
+ * Tests for {@link UpdateManager}
+ */
+@RunWith(AndroidJUnit4.class)
+@SmallTest
+public class UpdateManagerTest {
+
+    @Rule
+    public MockitoRule mockito = MockitoJUnit.rule();
+
+    @Mock
+    private UpdateEngine mUpdateEngine;
+    @Mock
+    private PayloadSpecs mPayloadSpecs;
+    private UpdateManager mUpdateManager;
+
+    @Before
+    public void setUp() {
+        mUpdateManager = new UpdateManager(mUpdateEngine, mPayloadSpecs);
+    }
+
+    @Test
+    public void storesProgressThenInvokesCallbacks() {
+        IntConsumer statusUpdateCallback = mock(IntConsumer.class);
+
+        // When UpdateManager is bound to update_engine, it passes
+        // UpdateManager.UpdateEngineCallbackImpl as a callback to update_engine.
+        when(mUpdateEngine.bind(any(UpdateEngineCallback.class))).thenAnswer(answer -> {
+            UpdateEngineCallback callback = answer.getArgument(0);
+            callback.onStatusUpdate(/*engineStatus*/ 4, /*engineProgress*/ 0.2f);
+            return null;
+        });
+
+        mUpdateManager.setOnEngineStatusUpdateCallback(statusUpdateCallback);
+
+        // Making sure that manager.getProgress() returns correct progress
+        // in "onEngineStatusUpdate" callback.
+        doAnswer(answer -> {
+            assertEquals(0.2f, mUpdateManager.getProgress(), 1E-5);
+            return null;
+        }).when(statusUpdateCallback).accept(anyInt());
+
+        mUpdateManager.bind();
+
+        verify(statusUpdateCallback, times(1)).accept(4);
+    }
+
+}

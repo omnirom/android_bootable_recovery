@@ -32,7 +32,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /** The helper class that creates {@link PayloadSpec}. */
-public final class PayloadSpecs {
+public class PayloadSpecs {
+
+    public PayloadSpecs() {}
 
     /**
      * The payload PAYLOAD_ENTRY is stored in the zip package to comply with the Android OTA package

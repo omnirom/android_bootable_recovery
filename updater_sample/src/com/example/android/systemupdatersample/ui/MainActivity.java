@@ -22,7 +22,6 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.UpdateEngine;
-import android.os.UpdateEngineCallback;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -32,21 +31,15 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.android.systemupdatersample.PayloadSpec;
 import com.example.android.systemupdatersample.R;
 import com.example.android.systemupdatersample.UpdateConfig;
-import com.example.android.systemupdatersample.services.PrepareStreamingService;
+import com.example.android.systemupdatersample.UpdateManager;
 import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateConfigs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
-import com.example.android.systemupdatersample.util.UpdateEngineProperties;
 import com.example.android.systemupdatersample.util.UpdateEngineStatuses;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * UI for SystemUpdaterSample app.
@@ -54,10 +47,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
-
-    /** HTTP Header: User-Agent; it will be sent to the server when streaming the payload. */
-    private static final String HTTP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36";
 
     private TextView mTextViewBuild;
     private Spinner mSpinnerConfigs;
@@ -73,18 +62,9 @@ public class MainActivity extends Activity {
     private Button mButtonSwitchSlot;
 
     private List<UpdateConfig> mConfigs;
-    private AtomicInteger mUpdateEngineStatus =
-            new AtomicInteger(UpdateEngine.UpdateStatusConstants.IDLE);
-    private PayloadSpec mLastPayloadSpec;
-    private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
-    private final PayloadSpecs mPayloadSpecs = new PayloadSpecs();
 
-    /**
-     * Listen to {@code update_engine} events.
-     */
-    private UpdateEngineCallbackImpl mUpdateEngineCallback = new UpdateEngineCallbackImpl();
-
-    private final UpdateEngine mUpdateEngine = new UpdateEngine();
+    private final UpdateManager mUpdateManager =
+            new UpdateManager(new UpdateEngine(), new PayloadSpecs());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,13 +89,29 @@ public class MainActivity extends Activity {
         uiReset();
         loadUpdateConfigs();
 
-        this.mUpdateEngine.bind(mUpdateEngineCallback);
+        this.mUpdateManager.setOnEngineStatusUpdateCallback(this::onStatusUpdate);
+        this.mUpdateManager.setOnProgressUpdateCallback(this::onProgressUpdate);
+        this.mUpdateManager.setOnEngineCompleteCallback(this::onPayloadApplicationComplete);
     }
 
     @Override
     protected void onDestroy() {
-        this.mUpdateEngine.unbind();
+        this.mUpdateManager.setOnEngineStatusUpdateCallback(null);
+        this.mUpdateManager.setOnProgressUpdateCallback(null);
+        this.mUpdateManager.setOnEngineCompleteCallback(null);
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        this.mUpdateManager.bind();
+    }
+
+    @Override
+    protected void onPause() {
+        this.mUpdateManager.unbind();
+        super.onPause();
     }
 
     /**
@@ -147,7 +143,7 @@ public class MainActivity extends Activity {
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
                     uiSetUpdating();
-                    applyUpdate(getSelectedConfig());
+                    mUpdateManager.applyUpdate(this, getSelectedConfig());
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
@@ -162,7 +158,7 @@ public class MainActivity extends Activity {
                 .setMessage("Do you really want to cancel running update?")
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
-                    stopRunningUpdate();
+                    mUpdateManager.cancelRunningUpdate();
                 })
                 .setNegativeButton(android.R.string.cancel, null).show();
     }
@@ -177,7 +173,7 @@ public class MainActivity extends Activity {
                         + " and restore old version?")
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
-                    resetUpdate();
+                    mUpdateManager.resetUpdate();
                 })
                 .setNegativeButton(android.R.string.cancel, null).show();
     }
@@ -186,7 +182,7 @@ public class MainActivity extends Activity {
      * switch slot button clicked
      */
     public void onSwitchSlotClick(View view) {
-        setSwitchSlotOnReboot();
+        mUpdateManager.setSwitchSlotOnReboot();
     }
 
     /**
@@ -194,26 +190,26 @@ public class MainActivity extends Activity {
      * be one of the values from {@link UpdateEngine.UpdateStatusConstants},
      * and {@code percent} will be from {@code 0.0} to {@code 1.0}.
      */
-    private void onStatusUpdate(int status, float percent) {
-        mProgressBar.setProgress((int) (100 * percent));
-        if (mUpdateEngineStatus.get() != status) {
-            mUpdateEngineStatus.set(status);
-            runOnUiThread(() -> {
-                Log.e("UpdateEngine", "StatusUpdate - status="
-                        + UpdateEngineStatuses.getStatusText(status)
-                        + "/" + status);
-                Toast.makeText(this, "Update Status changed", Toast.LENGTH_LONG)
-                        .show();
-                if (status == UpdateEngine.UpdateStatusConstants.IDLE) {
-                    Log.d(TAG, "status changed, resetting ui");
-                    uiReset();
-                } else {
-                    Log.d(TAG, "status changed, setting ui to updating mode");
-                    uiSetUpdating();
-                }
-                setUiStatus(status);
-            });
-        }
+    private void onStatusUpdate(int status) {
+        runOnUiThread(() -> {
+            Log.e("UpdateEngine", "StatusUpdate - status="
+                    + UpdateEngineStatuses.getStatusText(status)
+                    + "/" + status);
+            Toast.makeText(this, "Update Status changed", Toast.LENGTH_LONG)
+                    .show();
+            if (status == UpdateEngine.UpdateStatusConstants.IDLE) {
+                Log.d(TAG, "status changed, resetting ui");
+                uiReset();
+            } else {
+                Log.d(TAG, "status changed, setting ui to updating mode");
+                uiSetUpdating();
+            }
+            setUiStatus(status);
+        });
+    }
+
+    private void onProgressUpdate(double progress) {
+        mProgressBar.setProgress((int) (100 * progress));
     }
 
     /**
@@ -234,7 +230,7 @@ public class MainActivity extends Activity {
             setUiCompletion(errorCode);
             if (errorCode == UpdateEngineErrorCodes.UPDATED_BUT_NOT_ACTIVE) {
                 // if update was successfully applied.
-                if (mManualSwitchSlotRequired.get()) {
+                if (mUpdateManager.manualSwitchSlotRequired()) {
                     // Show "Switch Slot" button.
                     uiShowSwitchSlotInfo();
                 }
@@ -319,145 +315,6 @@ public class MainActivity extends Activity {
 
     private UpdateConfig getSelectedConfig() {
         return mConfigs.get(mSpinnerConfigs.getSelectedItemPosition());
-    }
-
-    /**
-     * Applies the given update
-     */
-    private void applyUpdate(final UpdateConfig config) {
-        List<String> extraProperties = new ArrayList<>();
-
-        if (!config.getAbConfig().getForceSwitchSlot()) {
-            // Disable switch slot on reboot, which is enabled by default.
-            // User will enable it manually by clicking "Switch Slot" button on the screen.
-            extraProperties.add(UpdateEngineProperties.PROPERTY_DISABLE_SWITCH_SLOT_ON_REBOOT);
-            mManualSwitchSlotRequired.set(true);
-        } else {
-            mManualSwitchSlotRequired.set(false);
-        }
-
-        if (config.getInstallType() == UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING) {
-            PayloadSpec payload;
-            try {
-                payload = mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile());
-            } catch (IOException e) {
-                Log.e(TAG, "Error creating payload spec", e);
-                Toast.makeText(this, "Error creating payload spec", Toast.LENGTH_LONG)
-                        .show();
-                return;
-            }
-            updateEngineApplyPayload(payload, extraProperties);
-        } else {
-            Log.d(TAG, "Starting PrepareStreamingService");
-            PrepareStreamingService.startService(this, config, (code, payloadSpec) -> {
-                if (code == PrepareStreamingService.RESULT_CODE_SUCCESS) {
-                    extraProperties.add("USER_AGENT=" + HTTP_USER_AGENT);
-                    config.getStreamingMetadata()
-                            .getAuthorization()
-                            .ifPresent(s -> extraProperties.add("AUTHORIZATION=" + s));
-                    updateEngineApplyPayload(payloadSpec, extraProperties);
-                } else {
-                    Log.e(TAG, "PrepareStreamingService failed, result code is " + code);
-                    Toast.makeText(
-                            MainActivity.this,
-                            "PrepareStreamingService failed, result code is " + code,
-                            Toast.LENGTH_LONG).show();
-                }
-            });
-        }
-    }
-
-    /**
-     * Applies given payload.
-     *
-     * UpdateEngine works asynchronously. This method doesn't wait until
-     * end of the update.
-     *
-     * @param payloadSpec contains url, offset and size to {@code PAYLOAD_BINARY_FILE_NAME}
-     * @param extraProperties additional properties to pass to {@link UpdateEngine#applyPayload}
-     */
-    private void updateEngineApplyPayload(PayloadSpec payloadSpec, List<String> extraProperties) {
-        mLastPayloadSpec = payloadSpec;
-
-        ArrayList<String> properties = new ArrayList<>(payloadSpec.getProperties());
-        if (extraProperties != null) {
-            properties.addAll(extraProperties);
-        }
-        try {
-            mUpdateEngine.applyPayload(
-                    payloadSpec.getUrl(),
-                    payloadSpec.getOffset(),
-                    payloadSpec.getSize(),
-                    properties.toArray(new String[0]));
-        } catch (Exception e) {
-            Log.e(TAG, "UpdateEngine failed to apply the update", e);
-            Toast.makeText(
-                    this,
-                    "UpdateEngine failed to apply the update",
-                    Toast.LENGTH_LONG).show();
-        }
-    }
-
-    /**
-     * Sets the new slot that has the updated partitions as the active slot,
-     * which device will boot into next time.
-     * This method is only supposed to be called after the payload is applied.
-     *
-     * Invoking {@link UpdateEngine#applyPayload} with the same payload url, offset, size
-     * and payload metadata headers doesn't trigger new update. It can be used to just switch
-     * active A/B slot.
-     *
-     * {@link UpdateEngine#applyPayload} might take several seconds to finish, and it will
-     * invoke callbacks {@link this#onStatusUpdate} and {@link this#onPayloadApplicationComplete)}.
-     */
-    private void setSwitchSlotOnReboot() {
-        Log.d(TAG, "setSwitchSlotOnReboot invoked");
-        List<String> extraProperties = new ArrayList<>();
-        // PROPERTY_SKIP_POST_INSTALL should be passed on to skip post-installation hooks.
-        extraProperties.add(UpdateEngineProperties.PROPERTY_SKIP_POST_INSTALL);
-        // It sets property SWITCH_SLOT_ON_REBOOT=1 by default.
-        // HTTP headers are not required, UpdateEngine is not expected to stream payload.
-        updateEngineApplyPayload(mLastPayloadSpec, extraProperties);
-        uiHideSwitchSlotInfo();
-    }
-
-    /**
-     * Requests update engine to stop any ongoing update. If an update has been applied,
-     * leave it as is.
-     */
-    private void stopRunningUpdate() {
-        try {
-            mUpdateEngine.cancel();
-        } catch (Exception e) {
-            Log.w(TAG, "UpdateEngine failed to stop the ongoing update", e);
-        }
-    }
-
-    /**
-     * Resets update engine to IDLE state. Requests to cancel any onging update, or to revert if an
-     * update has been applied.
-     */
-    private void resetUpdate() {
-        try {
-            mUpdateEngine.resetStatus();
-        } catch (Exception e) {
-            Log.w(TAG, "UpdateEngine failed to reset the update", e);
-        }
-    }
-
-    /**
-     * Helper class to delegate {@code update_engine} callbacks to MainActivity
-     */
-    class UpdateEngineCallbackImpl extends UpdateEngineCallback {
-        @Override
-        public void onStatusUpdate(int status, float percent) {
-            MainActivity.this.onStatusUpdate(status, percent);
-        }
-
-        @Override
-        public void onPayloadApplicationComplete(int errorCode) {
-            MainActivity.this.onPayloadApplicationComplete(errorCode);
-        }
     }
 
 }
