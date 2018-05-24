@@ -18,8 +18,8 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := SystemUpdaterSample
-LOCAL_SDK_VERSION := system_current
 LOCAL_MODULE_TAGS := samples
+LOCAL_SDK_VERSION := system_current
 
 # TODO: enable proguard and use proguard.flags file
 LOCAL_PROGUARD_ENABLED := disabled
