@@ -16,6 +16,7 @@
 
 cc_library_static {
     name: "libbootloader_message",
+    recovery_available: true,
     srcs: ["bootloader_message.cpp"],
     cflags: [
         "-Wall",
