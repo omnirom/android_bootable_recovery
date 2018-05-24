@@ -65,6 +65,32 @@ purpose only.
 6. Push OTA packages to the device.
 
 
+## Sample App State vs UpdateEngine Status
+
+UpdateEngine provides status for different stages of update application
+process. But it lacks of proper status codes when update fails.
+
+This creates two problems:
+
+1. If sample app is unbound from update_engine (MainActivity is paused, destroyed),
+   app doesn't receive onStatusUpdate and onPayloadApplicationCompleted notifications.
+   If app binds to update_engine after update is completed,
+   only onStatusUpdate is called, but status becomes IDLE in most cases.
+   And there is no way to know if update was successful or not.
+
+2. This sample app demostrates suspend/resume using update_engins's
+   `cancel` and `applyPayload` (which picks up from where it left).
+   When `cancel` is called, status is set to `IDLE`, which doesn't allow
+   tracking suspended state properly.
+
+To solve these problems sample app implements its own separate update
+state - `UpdaterState`. To solve the first problem, sample app persists
+`UpdaterState` on a device. When app is resumed, it checks if `UpdaterState`
+matches the update_engine's status (as onStatusUpdate is guaranteed to be called).
+If they doesn't match, sample app calls `applyPayload` again with the same
+parameters, and handles update completion properly using `onPayloadApplicationCompleted`
+callback. The second problem is solved by adding `PAUSED` updater state.
+
 ## Sending HTTP headers from UpdateEngine
 
 Sometimes OTA package server might require some HTTP headers to be present,
@@ -74,6 +100,44 @@ as of writing this sample app, these headers are `Authorization` and `User-Agent
 
 `android.os.UpdateEngine#applyPayload` contains information on
 which HTTP headers are supported.
+
+
+## Used update_engine APIs
+
+### UpdateEngine#bind
+
+Binds given callbacks to update_engine. When update_engine successfully
+initialized, it's guaranteed to invoke callback onStatusUpdate.
+
+### UpdateEngine#applyPayload
+
+Start an update attempt to download an apply the provided `payload_url` if
+no other update is running. The extra `key_value_pair_headers` will be
+included when fetching the payload.
+
+### UpdateEngine#cancel
+
+Cancel the ongoing update. The update could be running or suspended, but it
+can't be canceled after it was done.
+
+### UpdateEngine#resetStatus
+
+Reset the already applied update back to an idle state. This method can
+only be called when no update attempt is going on, and it will reset the
+status back to idle, deleting the currently applied update if any.
+
+### Callback: onStatusUpdate
+
+Called whenever the value of `status` or `progress` changes. For
+`progress` values changes, this method will be called only if it changes significantly.
+At this time of writing this doc, delta for `progress` is `0.005`.
+
+`onStatusUpdate` is always called when app binds to update_engine,
+except when update_engine fails to initialize.
+
+### Callback: onPayloadApplicationComplete
+
+Called whenever an update attempt is completed.
 
 
 ## Development
@@ -90,6 +154,10 @@ which HTTP headers are supported.
 - [x] Add demo for passing HTTP headers to `UpdateEngine#applyPayload`
 - [x] [Package compatibility check](https://source.android.com/devices/architecture/vintf/match-rules)
 - [x] Deferred switch slot demo
+- [x] Add UpdateManager; extract update logic from MainActivity
+- [x] Add Sample app update state (separate from update_engine status)
+- [-] Add smart update completion detection using onStatusUpdate
+- [ ] Add pause/resume demo
 - [ ] Add demo for passing NETWORK_ID to `UpdateEngine#applyPayload`
 - [ ] Verify system partition checksum for package
 - [?] Add non-A/B updates demo
