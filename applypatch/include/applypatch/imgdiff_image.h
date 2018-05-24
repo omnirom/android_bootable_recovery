@@ -44,6 +44,8 @@ class ImageChunk {
   int GetType() const {
     return type_;
   }
+
+  const uint8_t* GetRawData() const;
   size_t GetRawDataLength() const {
     return raw_data_len_;
   }
@@ -99,7 +101,6 @@ class ImageChunk {
                         bsdiff::SuffixArrayIndexInterface** bsdiff_cache);
 
  private:
-  const uint8_t* GetRawData() const;
   bool TryReconstruction(int level);
 
   int type_;                                    // CHUNK_NORMAL, CHUNK_DEFLATE, CHUNK_RAW
