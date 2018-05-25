@@ -34,6 +34,7 @@ public final class UpdateEngineErrorCodes {
     * Error code from the update engine. Values must agree with the ones in
     * system/update_engine/common/error_code.h.
     */
+    public static final int UNKNOWN = -1;
     public static final int UPDATED_BUT_NOT_ACTIVE = 52;
 
     private static final SparseArray<String> CODE_TO_NAME_MAP = new SparseArray<>();
