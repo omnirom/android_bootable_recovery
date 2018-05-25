@@ -143,13 +143,20 @@ class UpdaterTest : public ::testing::Test {
     RegisterInstallFunctions();
     RegisterBlockImageFunctions();
 
+    // Each test is run in a separate process (isolated mode). Shared temporary files won't cause
+    // conflicts.
     Paths::Get().set_cache_temp_source(temp_saved_source_.path);
+    Paths::Get().set_last_command_file(temp_last_command_.path);
     Paths::Get().set_stash_directory_base(temp_stash_base_.path);
 
+    last_command_file_ = temp_last_command_.path;
     image_file_ = image_temp_file_.path;
   }
 
   void TearDown() override {
+    // Clean up the last_command_file if any.
+    ASSERT_TRUE(android::base::RemoveFileIfExists(last_command_file_));
+
     // Clear partition updated marker if any.
     std::string updated_marker{ temp_stash_base_.path };
     updated_marker += "/" + get_sha1(image_temp_file_.path) + ".UPDATED";
@@ -158,9 +165,11 @@ class UpdaterTest : public ::testing::Test {
 
   TemporaryFile temp_saved_source_;
   TemporaryDir temp_stash_base_;
+  std::string last_command_file_;
   std::string image_file_;
 
  private:
+  TemporaryFile temp_last_command_;
   TemporaryFile image_temp_file_;
 };
 
@@ -714,14 +723,12 @@ TEST_F(UpdaterTest, last_command_update) {
 
   // "2\nstash " + block3_hash + " 2,2,3"
   std::string last_command_content = "2\n" + transfer_list_fail[kTransferListHeaderLines + 2];
-  TemporaryFile last_command_file;
-  Paths::Get().set_last_command_file(last_command_file.path);
 
   RunBlockImageUpdate(false, entries, image_file_, "");
 
   // Expect last_command to contain the last stash command.
   std::string last_command_actual;
-  ASSERT_TRUE(android::base::ReadFileToString(last_command_file.path, &last_command_actual));
+  ASSERT_TRUE(android::base::ReadFileToString(last_command_file_, &last_command_actual));
   EXPECT_EQ(last_command_content, last_command_actual);
 
   std::string updated_contents;
@@ -764,16 +771,13 @@ TEST_F(UpdaterTest, last_command_update_unresumable) {
 
   ASSERT_TRUE(android::base::WriteStringToFile(block1 + block1, image_file_));
 
-  // Set up the last_command_file.
-  TemporaryFile last_command_file;
-  Paths::Get().set_last_command_file(last_command_file.path);
   std::string last_command_content = "0\n" + transfer_list_unresumable[kTransferListHeaderLines];
-  ASSERT_TRUE(android::base::WriteStringToFile(last_command_content, last_command_file.path));
+  ASSERT_TRUE(android::base::WriteStringToFile(last_command_content, last_command_file_));
 
   RunBlockImageUpdate(false, entries, image_file_, "");
 
   // The last_command_file will be deleted if the update encounters an unresumable failure later.
-  ASSERT_EQ(-1, access(last_command_file.path, R_OK));
+  ASSERT_EQ(-1, access(last_command_file_.c_str(), R_OK));
 }
 
 TEST_F(UpdaterTest, last_command_verify) {
@@ -805,18 +809,16 @@ TEST_F(UpdaterTest, last_command_verify) {
 
   ASSERT_TRUE(android::base::WriteStringToFile(block1 + block1 + block3, image_file_));
 
-  TemporaryFile last_command_file;
-  Paths::Get().set_last_command_file(last_command_file.path);
   // Last command: "move " + block1_hash + " 2,1,2 1 2,0,1"
   std::string last_command_content = "2\n" + transfer_list_verify[kTransferListHeaderLines + 2];
 
   // First run: expect the verification to succeed and the last_command_file is intact.
-  ASSERT_TRUE(android::base::WriteStringToFile(last_command_content, last_command_file.path));
+  ASSERT_TRUE(android::base::WriteStringToFile(last_command_content, last_command_file_));
 
   RunBlockImageUpdate(true, entries, image_file_, "t");
 
   std::string last_command_actual;
-  ASSERT_TRUE(android::base::ReadFileToString(last_command_file.path, &last_command_actual));
+  ASSERT_TRUE(android::base::ReadFileToString(last_command_file_, &last_command_actual));
   EXPECT_EQ(last_command_content, last_command_actual);
 
   // Second run with a mismatching block image: expect the verification to succeed but
@@ -824,5 +826,5 @@ TEST_F(UpdaterTest, last_command_verify) {
   // expected contents for the second move command.
   ASSERT_TRUE(android::base::WriteStringToFile(block1 + block2 + block3, image_file_));
   RunBlockImageUpdate(true, entries, image_file_, "t");
-  ASSERT_EQ(-1, access(last_command_file.path, R_OK));
+  ASSERT_EQ(-1, access(last_command_file_.c_str(), R_OK));
 }
