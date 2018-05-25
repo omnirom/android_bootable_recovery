@@ -16,6 +16,24 @@
       "revId": "cc46293b6daa14ad85e0ca59f9557f21842298a8",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b0a8e793_e1d4de7a",
+        "filename": "Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 369,
+      "author": {
+        "id": 1001989
+      },
+      "writtenOn": "2018-05-25T17:12:27Z",
+      "side": 1,
+      "message": "seems more like he rebased the patch https://github.com/omnirom/android_bootable_recovery/blob/android-8.1/Android.mk#L369",
+      "parentUuid": "373df1c5_1ee6f6e1",
+      "revId": "cc46293b6daa14ad85e0ca59f9557f21842298a8",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
