@@ -36,6 +36,7 @@ public final class UpdateEngineErrorCodes {
     */
     public static final int UNKNOWN = -1;
     public static final int UPDATED_BUT_NOT_ACTIVE = 52;
+    public static final int USER_CANCELLED = 48;
 
     private static final SparseArray<String> CODE_TO_NAME_MAP = new SparseArray<>();
 
@@ -61,7 +62,7 @@ public final class UpdateEngineErrorCodes {
      * Completion codes returned by update engine indicating that the update
      * was successfully applied.
      */
-    private static final Set<Integer> SUCCEEDED_COMPLETION_CODES = new HashSet<Integer>(
+    private static final Set<Integer> SUCCEEDED_COMPLETION_CODES = new HashSet<>(
             Arrays.asList(UpdateEngine.ErrorCodeConstants.SUCCESS,
                     // UPDATED_BUT_NOT_ACTIVE is returned when the payload is
                     // successfully applied but the
