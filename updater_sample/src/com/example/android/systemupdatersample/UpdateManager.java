@@ -26,10 +26,13 @@ import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineProperties;
 import com.example.android.systemupdatersample.util.UpdaterStates;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AtomicDouble;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,14 +59,11 @@ public class UpdateManager {
             new AtomicInteger(UpdateEngine.UpdateStatusConstants.IDLE);
     private AtomicInteger mEngineErrorCode = new AtomicInteger(UpdateEngineErrorCodes.UNKNOWN);
     private AtomicDouble mProgress = new AtomicDouble(0);
-
     private AtomicInteger mState = new AtomicInteger(UpdaterStates.IDLE);
 
-    private final UpdateManager.UpdateEngineCallbackImpl
-            mUpdateEngineCallback = new UpdateManager.UpdateEngineCallbackImpl();
-
-    private PayloadSpec mLastPayloadSpec;
     private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
+
+    private UpdateData mLastUpdateData = null;
 
     private IntConsumer mOnStateChangeCallback = null;
     private IntConsumer mOnEngineStatusUpdateCallback = null;
@@ -71,6 +71,9 @@ public class UpdateManager {
     private IntConsumer mOnEngineCompleteCallback = null;
 
     private final Object mLock = new Object();
+
+    private final UpdateManager.UpdateEngineCallbackImpl
+            mUpdateEngineCallback = new UpdateManager.UpdateEngineCallbackImpl();
 
     public UpdateManager(UpdateEngine updateEngine, PayloadSpecs payloadSpecs) {
         this.mUpdateEngine = updateEngine;
@@ -240,6 +243,11 @@ public class UpdateManager {
         mEngineErrorCode.set(UpdateEngineErrorCodes.UNKNOWN);
         setUpdaterState(UpdaterStates.RUNNING);
 
+        synchronized (mLock) {
+            // Cleaning up previous update data.
+            mLastUpdateData = null;
+        }
+
         if (!config.getAbConfig().getForceSwitchSlot()) {
             mManualSwitchSlotRequired.set(true);
         } else {
@@ -254,30 +262,32 @@ public class UpdateManager {
     }
 
     private void applyAbNonStreamingUpdate(UpdateConfig config) {
-        List<String> extraProperties = prepareExtraProperties(config);
+        UpdateData.Builder builder = UpdateData.builder()
+                .setExtraProperties(prepareExtraProperties(config));
 
-        PayloadSpec payload;
         try {
-            payload = mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile());
+            builder.setPayload(mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile()));
         } catch (IOException e) {
             Log.e(TAG, "Error creating payload spec", e);
             setUpdaterState(UpdaterStates.ERROR);
             return;
         }
-        updateEngineApplyPayload(payload, extraProperties);
+        updateEngineApplyPayload(builder.build());
     }
 
     private void applyAbStreamingUpdate(Context context, UpdateConfig config) {
-        List<String> extraProperties = prepareExtraProperties(config);
+        UpdateData.Builder builder = UpdateData.builder()
+                .setExtraProperties(prepareExtraProperties(config));
 
         Log.d(TAG, "Starting PrepareStreamingService");
         PrepareStreamingService.startService(context, config, (code, payloadSpec) -> {
             if (code == PrepareStreamingService.RESULT_CODE_SUCCESS) {
-                extraProperties.add("USER_AGENT=" + HTTP_USER_AGENT);
+                builder.setPayload(payloadSpec);
+                builder.addExtraProperty("USER_AGENT=" + HTTP_USER_AGENT);
                 config.getStreamingMetadata()
                         .getAuthorization()
-                        .ifPresent(s -> extraProperties.add("AUTHORIZATION=" + s));
-                updateEngineApplyPayload(payloadSpec, extraProperties);
+                        .ifPresent(s -> builder.addExtraProperty("AUTHORIZATION=" + s));
+                updateEngineApplyPayload(builder.build());
             } else {
                 Log.e(TAG, "PrepareStreamingService failed, result code is " + code);
                 setUpdaterState(UpdaterStates.ERROR);
@@ -305,27 +315,38 @@ public class UpdateManager {
      * <p>It's possible that the update engine throws a generic error, such as upon seeing invalid
      * payload properties (which come from OTA packages), or failing to set up the network
      * with the given id.</p>
-     *
-     * @param payloadSpec contains url, offset and size to {@code PAYLOAD_BINARY_FILE_NAME}
-     * @param extraProperties additional properties to pass to {@link UpdateEngine#applyPayload}
      */
-    private void updateEngineApplyPayload(PayloadSpec payloadSpec, List<String> extraProperties) {
-        mLastPayloadSpec = payloadSpec;
-
-        ArrayList<String> properties = new ArrayList<>(payloadSpec.getProperties());
-        if (extraProperties != null) {
-            properties.addAll(extraProperties);
+    private void updateEngineApplyPayload(UpdateData update) {
+        synchronized (mLock) {
+            mLastUpdateData = update;
         }
+
+        ArrayList<String> properties = new ArrayList<>(update.getPayload().getProperties());
+        properties.addAll(update.getExtraProperties());
+
         try {
             mUpdateEngine.applyPayload(
-                    payloadSpec.getUrl(),
-                    payloadSpec.getOffset(),
-                    payloadSpec.getSize(),
+                    update.getPayload().getUrl(),
+                    update.getPayload().getOffset(),
+                    update.getPayload().getSize(),
                     properties.toArray(new String[0]));
         } catch (Exception e) {
             Log.e(TAG, "UpdateEngine failed to apply the update", e);
             setUpdaterState(UpdaterStates.ERROR);
         }
+    }
+
+    private void updateEngineReApplyPayload() {
+        UpdateData lastUpdate;
+        synchronized (mLock) {
+            // mLastPayloadSpec might be empty in some cases.
+            // But to make this sample app simple, we will not handle it.
+            Preconditions.checkArgument(
+                    mLastUpdateData != null,
+                    "mLastUpdateData must be present.");
+            lastUpdate = mLastUpdateData;
+        }
+        updateEngineApplyPayload(lastUpdate);
     }
 
     /**
@@ -342,12 +363,20 @@ public class UpdateManager {
      */
     public void setSwitchSlotOnReboot() {
         Log.d(TAG, "setSwitchSlotOnReboot invoked");
-        List<String> extraProperties = new ArrayList<>();
+        UpdateData.Builder builder;
+        synchronized (mLock) {
+            // To make sample app simple, we don't handle it.
+            Preconditions.checkArgument(
+                    mLastUpdateData != null,
+                    "mLastUpdateData must be present.");
+            builder = mLastUpdateData.toBuilder();
+        }
         // PROPERTY_SKIP_POST_INSTALL should be passed on to skip post-installation hooks.
-        extraProperties.add(UpdateEngineProperties.PROPERTY_SKIP_POST_INSTALL);
-        // It sets property SWITCH_SLOT_ON_REBOOT=1 by default.
+        builder.setExtraProperties(
+                Collections.singletonList(UpdateEngineProperties.PROPERTY_SKIP_POST_INSTALL));
+        // UpdateEngine sets property SWITCH_SLOT_ON_REBOOT=1 by default.
         // HTTP headers are not required, UpdateEngine is not expected to stream payload.
-        updateEngineApplyPayload(mLastPayloadSpec, extraProperties);
+        updateEngineApplyPayload(builder.build());
     }
 
     private void onStatusUpdate(int status, float progress) {
@@ -388,6 +417,69 @@ public class UpdateManager {
         @Override
         public void onPayloadApplicationComplete(int errorCode) {
             UpdateManager.this.onPayloadApplicationComplete(errorCode);
+        }
+    }
+
+    /**
+     *
+     * Contains update data - PayloadSpec and extra properties list.
+     *
+     * <p>{@code mPayload} contains url, offset and size to {@code PAYLOAD_BINARY_FILE_NAME}.
+     * {@code mExtraProperties} is a list of additional properties to pass to
+     * {@link UpdateEngine#applyPayload}.</p>
+     */
+    private static class UpdateData {
+        private final PayloadSpec mPayload;
+        private final ImmutableList<String> mExtraProperties;
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        UpdateData(Builder builder) {
+            this.mPayload = builder.mPayload;
+            this.mExtraProperties = ImmutableList.copyOf(builder.mExtraProperties);
+        }
+
+        public PayloadSpec getPayload() {
+            return mPayload;
+        }
+
+        public ImmutableList<String> getExtraProperties() {
+            return mExtraProperties;
+        }
+
+        public Builder toBuilder() {
+            return builder()
+                    .setPayload(mPayload)
+                    .setExtraProperties(mExtraProperties);
+        }
+
+        static class Builder {
+            private PayloadSpec mPayload;
+            private List<String> mExtraProperties;
+
+            public Builder setPayload(PayloadSpec payload) {
+                this.mPayload = payload;
+                return this;
+            }
+
+            public Builder setExtraProperties(List<String> extraProperties) {
+                this.mExtraProperties = new ArrayList<>(extraProperties);
+                return this;
+            }
+
+            public Builder addExtraProperty(String property) {
+                if (this.mExtraProperties == null) {
+                    this.mExtraProperties = new ArrayList<>();
+                }
+                this.mExtraProperties.add(property);
+                return this;
+            }
+
+            public UpdateData build() {
+                return new UpdateData(this);
+            }
         }
     }
 
