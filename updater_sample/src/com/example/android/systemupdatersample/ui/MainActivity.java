@@ -29,7 +29,6 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.android.systemupdatersample.R;
 import com.example.android.systemupdatersample.UpdateConfig;
@@ -38,6 +37,7 @@ import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateConfigs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineStatuses;
+import com.example.android.systemupdatersample.util.UpdaterStates;
 
 import java.util.List;
 
@@ -56,8 +56,9 @@ public class MainActivity extends Activity {
     private Button mButtonStop;
     private Button mButtonReset;
     private ProgressBar mProgressBar;
-    private TextView mTextViewStatus;
-    private TextView mTextViewCompletion;
+    private TextView mTextViewUpdaterState;
+    private TextView mTextViewEngineStatus;
+    private TextView mTextViewEngineErrorCode;
     private TextView mTextViewUpdateInfo;
     private Button mButtonSwitchSlot;
 
@@ -79,8 +80,9 @@ public class MainActivity extends Activity {
         this.mButtonStop = findViewById(R.id.buttonStop);
         this.mButtonReset = findViewById(R.id.buttonReset);
         this.mProgressBar = findViewById(R.id.progressBar);
-        this.mTextViewStatus = findViewById(R.id.textViewStatus);
-        this.mTextViewCompletion = findViewById(R.id.textViewCompletion);
+        this.mTextViewUpdaterState = findViewById(R.id.textViewUpdaterState);
+        this.mTextViewEngineStatus = findViewById(R.id.textViewEngineStatus);
+        this.mTextViewEngineErrorCode = findViewById(R.id.textViewEngineErrorCode);
         this.mTextViewUpdateInfo = findViewById(R.id.textViewUpdateInfo);
         this.mButtonSwitchSlot = findViewById(R.id.buttonSwitchSlot);
 
@@ -89,9 +91,10 @@ public class MainActivity extends Activity {
         uiReset();
         loadUpdateConfigs();
 
-        this.mUpdateManager.setOnEngineStatusUpdateCallback(this::onStatusUpdate);
+        this.mUpdateManager.setOnStateChangeCallback(this::onUpdaterStateChange);
+        this.mUpdateManager.setOnEngineStatusUpdateCallback(this::onEngineStatusUpdate);
+        this.mUpdateManager.setOnEngineCompleteCallback(this::onEnginePayloadApplicationComplete);
         this.mUpdateManager.setOnProgressUpdateCallback(this::onProgressUpdate);
-        this.mUpdateManager.setOnEngineCompleteCallback(this::onPayloadApplicationComplete);
     }
 
     @Override
@@ -143,6 +146,7 @@ public class MainActivity extends Activity {
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
                     uiSetUpdating();
+                    uiResetEngineText();
                     mUpdateManager.applyUpdate(this, getSelectedConfig());
                 })
                 .setNegativeButton(android.R.string.cancel, null)
@@ -186,17 +190,26 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Invoked when anything changes. The value of {@code status} will
-     * be one of the values from {@link UpdateEngine.UpdateStatusConstants},
-     * and {@code percent} will be from {@code 0.0} to {@code 1.0}.
+     * Invoked when SystemUpdaterSample app state changes.
+     * Value of {@code state} will be one of the
+     * values from {@link UpdaterStates}.
      */
-    private void onStatusUpdate(int status) {
+    private void onUpdaterStateChange(int state) {
+        Log.i(TAG, "onUpdaterStateChange invoked state=" + state);
         runOnUiThread(() -> {
-            Log.e("UpdateEngine", "StatusUpdate - status="
+            setUiUpdaterState(state);
+        });
+    }
+
+    /**
+     * Invoked when {@link UpdateEngine} status changes. Value of {@code status} will
+     * be one of the values from {@link UpdateEngine.UpdateStatusConstants}.
+     */
+    private void onEngineStatusUpdate(int status) {
+        runOnUiThread(() -> {
+            Log.e(TAG, "StatusUpdate - status="
                     + UpdateEngineStatuses.getStatusText(status)
                     + "/" + status);
-            Toast.makeText(this, "Update Status changed", Toast.LENGTH_LONG)
-                    .show();
             if (status == UpdateEngine.UpdateStatusConstants.IDLE) {
                 Log.d(TAG, "status changed, resetting ui");
                 uiReset();
@@ -204,12 +217,8 @@ public class MainActivity extends Activity {
                 Log.d(TAG, "status changed, setting ui to updating mode");
                 uiSetUpdating();
             }
-            setUiStatus(status);
+            setUiEngineStatus(status);
         });
-    }
-
-    private void onProgressUpdate(double progress) {
-        mProgressBar.setProgress((int) (100 * progress));
     }
 
     /**
@@ -217,25 +226,31 @@ public class MainActivity extends Activity {
      * unsuccessfully. The value of {@code errorCode} will be one of the
      * values from {@link UpdateEngine.ErrorCodeConstants}.
      */
-    private void onPayloadApplicationComplete(int errorCode) {
-        final String state = UpdateEngineErrorCodes.isUpdateSucceeded(errorCode)
+    private void onEnginePayloadApplicationComplete(int errorCode) {
+        final String completionState = UpdateEngineErrorCodes.isUpdateSucceeded(errorCode)
                 ? "SUCCESS"
                 : "FAILURE";
         runOnUiThread(() -> {
-            Log.i("UpdateEngine",
+            Log.i(TAG,
                     "Completed - errorCode="
                     + UpdateEngineErrorCodes.getCodeName(errorCode) + "/" + errorCode
-                    + " " + state);
-            Toast.makeText(this, "Update completed", Toast.LENGTH_LONG).show();
-            setUiCompletion(errorCode);
+                    + " " + completionState);
+            setUiEngineErrorCode(errorCode);
             if (errorCode == UpdateEngineErrorCodes.UPDATED_BUT_NOT_ACTIVE) {
                 // if update was successfully applied.
-                if (mUpdateManager.manualSwitchSlotRequired()) {
+                if (mUpdateManager.isManualSwitchSlotRequired()) {
                     // Show "Switch Slot" button.
                     uiShowSwitchSlotInfo();
                 }
             }
         });
+    }
+
+    /**
+     * Invoked when update progress changes.
+     */
+    private void onProgressUpdate(double progress) {
+        mProgressBar.setProgress((int) (100 * progress));
     }
 
     /** resets ui */
@@ -249,9 +264,13 @@ public class MainActivity extends Activity {
         mProgressBar.setProgress(0);
         mProgressBar.setEnabled(false);
         mProgressBar.setVisibility(ProgressBar.INVISIBLE);
-        mTextViewStatus.setText(R.string.unknown);
-        mTextViewCompletion.setText(R.string.unknown);
         uiHideSwitchSlotInfo();
+    }
+
+    private void uiResetEngineText() {
+        mTextViewEngineStatus.setText(R.string.unknown);
+        mTextViewEngineErrorCode.setText(R.string.unknown);
+        // Note: Do not reset mTextViewUpdaterState; UpdateManager notifies properly.
     }
 
     /** sets ui updating mode */
@@ -287,20 +306,25 @@ public class MainActivity extends Activity {
     /**
      * @param status update engine status code
      */
-    private void setUiStatus(int status) {
+    private void setUiEngineStatus(int status) {
         String statusText = UpdateEngineStatuses.getStatusText(status);
-        mTextViewStatus.setText(statusText + "/" + status);
+        mTextViewEngineStatus.setText(statusText + "/" + status);
     }
 
     /**
      * @param errorCode update engine error code
      */
-    private void setUiCompletion(int errorCode) {
-        final String state = UpdateEngineErrorCodes.isUpdateSucceeded(errorCode)
-                ? "SUCCESS"
-                : "FAILURE";
+    private void setUiEngineErrorCode(int errorCode) {
         String errorText = UpdateEngineErrorCodes.getCodeName(errorCode);
-        mTextViewCompletion.setText(state + " " + errorText + "/" + errorCode);
+        mTextViewEngineErrorCode.setText(errorText + "/" + errorCode);
+    }
+
+    /**
+     * @param state updater sample state
+     */
+    private void setUiUpdaterState(int state) {
+        String stateText = UpdaterStates.getStateText(state);
+        mTextViewUpdaterState.setText(stateText + "/" + state);
     }
 
     private void loadConfigsToSpinner(List<UpdateConfig> configs) {
