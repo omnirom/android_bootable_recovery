@@ -37,6 +37,7 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_SRC_FILES := \
     unit/asn1_decoder_test.cpp \
+    unit/commands_test.cpp \
     unit/dirutil_test.cpp \
     unit/locale_test.cpp \
     unit/rangeset_test.cpp \
