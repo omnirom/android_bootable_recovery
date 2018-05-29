@@ -17,12 +17,13 @@
 #ifndef RECOVERY_UI_H
 #define RECOVERY_UI_H
 
-#include <linux/input.h>
+#include <linux/input.h>  // KEY_MAX
 #include <pthread.h>
-#include <time.h>
 
+#include <atomic>
 #include <functional>
 #include <string>
+#include <thread>
 #include <vector>
 
 // Abstract class for controlling the user interface during recovery.
@@ -51,7 +52,7 @@ class RecoveryUI {
 
   RecoveryUI();
 
-  virtual ~RecoveryUI() {}
+  virtual ~RecoveryUI();
 
   // Initializes the object; called before anything else. UI texts will be initialized according to
   // the given locale. Returns true on success.
@@ -172,12 +173,6 @@ class RecoveryUI {
     OFF
   };
 
-  struct key_timer_t {
-    RecoveryUI* ui;
-    int key_code;
-    int count;
-  };
-
   // The sensitivity when detecting a swipe.
   const int kTouchLowThreshold;
   const int kTouchHighThreshold;
@@ -186,11 +181,9 @@ class RecoveryUI {
   void OnTouchDetected(int dx, int dy);
   int OnInputEvent(int fd, uint32_t epevents);
   void ProcessKey(int key_code, int updown);
+  void TimeKey(int key_code, int count);
 
   bool IsUsbConnected();
-
-  static void* time_key_helper(void* cookie);
-  void time_key(int key_code, int count);
 
   bool InitScreensaver();
 
@@ -223,7 +216,8 @@ class RecoveryUI {
   bool touch_swiping_;
   bool is_bootreason_recovery_ui_;
 
-  pthread_t input_thread_;
+  std::thread input_thread_;
+  std::atomic<bool> input_thread_stopped_{ false };
 
   ScreensaverState screensaver_state_;
 
