@@ -20,28 +20,29 @@
 #include <fcntl.h>
 #include <linux/input.h>
 #include <pthread.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <chrono>
 #include <functional>
 #include <string>
+#include <thread>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
-#include <minui/minui.h>
 
-#include "device.h"
+#include "minui/minui.h"
 #include "otautil/sysutil.h"
 #include "roots.h"
+
+using namespace std::chrono_literals;
 
 static constexpr int UI_WAIT_KEY_TIMEOUT_SEC = 120;
 static constexpr const char* BRIGHTNESS_FILE = "/sys/class/leds/lcd-backlight/brightness";
@@ -78,6 +79,12 @@ RecoveryUI::RecoveryUI()
   memset(key_pressed, 0, sizeof(key_pressed));
 }
 
+RecoveryUI::~RecoveryUI() {
+  ev_exit();
+  input_thread_stopped_ = true;
+  input_thread_.join();
+}
+
 void RecoveryUI::OnKeyDetected(int key_code) {
   if (key_code == KEY_POWER) {
     has_power_key = true;
@@ -88,16 +95,6 @@ void RecoveryUI::OnKeyDetected(int key_code) {
   } else if (key_code == ABS_MT_POSITION_X || key_code == ABS_MT_POSITION_Y) {
     has_touch_screen = true;
   }
-}
-
-// Reads input events, handles special hot keys, and adds to the key queue.
-static void* InputThreadLoop(void*) {
-  while (true) {
-    if (!ev_wait(-1)) {
-      ev_dispatch();
-    }
-  }
-  return nullptr;
 }
 
 bool RecoveryUI::InitScreensaver() {
@@ -166,7 +163,15 @@ bool RecoveryUI::Init(const std::string& /* locale */) {
     LOG(INFO) << "Screensaver disabled";
   }
 
-  pthread_create(&input_thread_, nullptr, InputThreadLoop, nullptr);
+  // Create a separate thread that handles input events.
+  input_thread_ = std::thread([this]() {
+    while (!this->input_thread_stopped_) {
+      if (!ev_wait(500)) {
+        ev_dispatch();
+      }
+    }
+  });
+
   return true;
 }
 
@@ -323,22 +328,18 @@ int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
   return 0;
 }
 
-// Process a key-up or -down event.  A key is "registered" when it is
-// pressed and then released, with no other keypresses or releases in
-// between.  Registered keys are passed to CheckKey() to see if it
-// should trigger a visibility toggle, an immediate reboot, or be
-// queued to be processed next time the foreground thread wants a key
-// (eg, for the menu).
+// Processes a key-up or -down event. A key is "registered" when it is pressed and then released,
+// with no other keypresses or releases in between. Registered keys are passed to CheckKey() to
+// see if it should trigger a visibility toggle, an immediate reboot, or be queued to be processed
+// next time the foreground thread wants a key (eg, for the menu).
 //
-// We also keep track of which keys are currently down so that
-// CheckKey can call IsKeyPressed to see what other keys are held when
-// a key is registered.
+// We also keep track of which keys are currently down so that CheckKey() can call IsKeyPressed()
+// to see what other keys are held when a key is registered.
 //
 // updown == 1 for key down events; 0 for key up events
 void RecoveryUI::ProcessKey(int key_code, int updown) {
   bool register_key = false;
   bool long_press = false;
-  bool reboot_enabled;
 
   pthread_mutex_lock(&key_queue_mutex);
   key_pressed[key_code] = updown;
@@ -346,13 +347,9 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
     ++key_down_count;
     key_last_down = key_code;
     key_long_press = false;
-    key_timer_t* info = new key_timer_t;
-    info->ui = this;
-    info->key_code = key_code;
-    info->count = key_down_count;
-    pthread_t thread;
-    pthread_create(&thread, nullptr, &RecoveryUI::time_key_helper, info);
-    pthread_detach(thread);
+
+    std::thread time_key_thread(&RecoveryUI::TimeKey, this, key_code, key_down_count);
+    time_key_thread.detach();
   } else {
     if (key_last_down == key_code) {
       long_press = key_long_press;
@@ -360,7 +357,7 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
     }
     key_last_down = -1;
   }
-  reboot_enabled = enable_reboot;
+  bool reboot_enabled = enable_reboot;
   pthread_mutex_unlock(&key_queue_mutex);
 
   if (register_key) {
@@ -388,15 +385,8 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
   }
 }
 
-void* RecoveryUI::time_key_helper(void* cookie) {
-  key_timer_t* info = static_cast<key_timer_t*>(cookie);
-  info->ui->time_key(info->key_code, info->count);
-  delete info;
-  return nullptr;
-}
-
-void RecoveryUI::time_key(int key_code, int count) {
-  usleep(750000);  // 750 ms == "long"
+void RecoveryUI::TimeKey(int key_code, int count) {
+  std::this_thread::sleep_for(750ms);  // 750 ms == "long"
   bool long_press = false;
   pthread_mutex_lock(&key_queue_mutex);
   if (key_last_down == key_code && key_down_count == count) {

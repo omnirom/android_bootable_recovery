@@ -20,9 +20,11 @@
 #include <pthread.h>
 #include <stdio.h>
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "ui.h"
@@ -112,6 +114,7 @@ class ScreenRecoveryUI : public RecoveryUI {
 
   ScreenRecoveryUI();
   explicit ScreenRecoveryUI(bool scrollable_menu);
+  ~ScreenRecoveryUI() override;
 
   bool Init(const std::string& locale) override;
   std::string GetLocale() const override;
@@ -275,7 +278,8 @@ class ScreenRecoveryUI : public RecoveryUI {
   // An alternate text screen, swapped with 'text_' when we're viewing a log file.
   char** file_viewer_text_;
 
-  pthread_t progress_thread_;
+  std::thread progress_thread_;
+  std::atomic<bool> progress_thread_stopped_{ false };
 
   // Number of intro frames and loop frames in the animation.
   size_t intro_frames;

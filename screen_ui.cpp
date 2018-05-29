@@ -32,8 +32,10 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <chrono>
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -171,6 +173,11 @@ ScreenRecoveryUI::ScreenRecoveryUI(bool scrollable_menu)
       locale_(""),
       rtl_locale_(false),
       updateMutex(PTHREAD_MUTEX_INITIALIZER) {}
+
+ScreenRecoveryUI::~ScreenRecoveryUI() {
+  progress_thread_stopped_ = true;
+  progress_thread_.join();
+}
 
 GRSurface* ScreenRecoveryUI::GetCurrentFrame() const {
   if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
@@ -613,15 +620,9 @@ void ScreenRecoveryUI::update_progress_locked() {
   gr_flip();
 }
 
-// Keeps the progress bar updated, even when the process is otherwise busy.
-void* ScreenRecoveryUI::ProgressThreadStartRoutine(void* data) {
-  reinterpret_cast<ScreenRecoveryUI*>(data)->ProgressThreadLoop();
-  return nullptr;
-}
-
 void ScreenRecoveryUI::ProgressThreadLoop() {
   double interval = 1.0 / kAnimationFps;
-  while (true) {
+  while (!progress_thread_stopped_) {
     double start = now();
     pthread_mutex_lock(&updateMutex);
 
@@ -749,7 +750,8 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
 
   LoadAnimation();
 
-  pthread_create(&progress_thread_, nullptr, ProgressThreadStartRoutine, this);
+  // Keep the progress bar updated, even when the process is otherwise busy.
+  progress_thread_ = std::thread(&ScreenRecoveryUI::ProgressThreadLoop, this);
 
   return true;
 }
