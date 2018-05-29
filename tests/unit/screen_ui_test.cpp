@@ -279,8 +279,6 @@ class ScreenRecoveryUITest : public ::testing::Test {
     testdata_dir_ = from_testdata_base("");
     Paths::Get().set_resource_dir(testdata_dir_);
     res_set_resource_dir(testdata_dir_);
-
-    ASSERT_TRUE(ui_->Init(kTestLocale));
   }
 
   std::unique_ptr<TestableScreenRecoveryUI> ui_;
@@ -288,6 +286,7 @@ class ScreenRecoveryUITest : public ::testing::Test {
 };
 
 TEST_F(ScreenRecoveryUITest, Init) {
+  ASSERT_TRUE(ui_->Init(kTestLocale));
   ASSERT_EQ(kTestLocale, ui_->GetLocale());
   ASSERT_FALSE(ui_->GetRtlLocale());
   ASSERT_FALSE(ui_->IsTextVisible());
@@ -295,6 +294,7 @@ TEST_F(ScreenRecoveryUITest, Init) {
 }
 
 TEST_F(ScreenRecoveryUITest, ShowText) {
+  ASSERT_TRUE(ui_->Init(kTestLocale));
   ASSERT_FALSE(ui_->IsTextVisible());
   ui_->ShowText(true);
   ASSERT_TRUE(ui_->IsTextVisible());
@@ -308,12 +308,15 @@ TEST_F(ScreenRecoveryUITest, ShowText) {
 TEST_F(ScreenRecoveryUITest, RtlLocale) {
   ASSERT_TRUE(ui_->Init(kTestRtlLocale));
   ASSERT_TRUE(ui_->GetRtlLocale());
+}
 
+TEST_F(ScreenRecoveryUITest, RtlLocaleWithSuffix) {
   ASSERT_TRUE(ui_->Init(kTestRtlLocaleWithSuffix));
   ASSERT_TRUE(ui_->GetRtlLocale());
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu) {
+  ASSERT_TRUE(ui_->Init(kTestLocale));
   ui_->SetKeyBuffer({
       KeyCode::UP,
       KeyCode::DOWN,
@@ -339,6 +342,7 @@ TEST_F(ScreenRecoveryUITest, ShowMenu) {
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu_NotMenuOnly) {
+  ASSERT_TRUE(ui_->Init(kTestLocale));
   ui_->SetKeyBuffer({
       KeyCode::MAGIC,
   });
@@ -349,6 +353,7 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_NotMenuOnly) {
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut) {
+  ASSERT_TRUE(ui_->Init(kTestLocale));
   ui_->SetKeyBuffer({
       KeyCode::TIMEOUT,
   });
@@ -356,6 +361,7 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut) {
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
+  ASSERT_TRUE(ui_->Init(kTestLocale));
   ui_->ShowText(true);
   ui_->ShowText(false);
   ASSERT_TRUE(ui_->WasTextEverVisible());
@@ -371,6 +377,7 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
 }
 
 TEST_F(ScreenRecoveryUITest, LoadAnimation) {
+  ASSERT_TRUE(ui_->Init(kTestLocale));
   // Make a few copies of loop00000.png from testdata.
   std::string image_data;
   ASSERT_TRUE(android::base::ReadFileToString(testdata_dir_ + "/loop00000.png", &image_data));
@@ -398,6 +405,7 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation) {
 }
 
 TEST_F(ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
+  ASSERT_TRUE(ui_->Init(kTestLocale));
   TemporaryDir resource_dir;
   Paths::Get().set_resource_dir(resource_dir.path);
   ASSERT_EXIT(ui_->RunLoadAnimation(), ::testing::KilledBySignal(SIGABRT), "");
