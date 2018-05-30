@@ -18,10 +18,11 @@
 #define RECOVERY_UI_H
 
 #include <linux/input.h>  // KEY_MAX
-#include <pthread.h>
 
 #include <atomic>
+#include <condition_variable>
 #include <functional>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -188,8 +189,8 @@ class RecoveryUI {
   bool InitScreensaver();
 
   // Key event input queue
-  pthread_mutex_t key_queue_mutex;
-  pthread_cond_t key_queue_cond;
+  std::mutex key_queue_mutex;
+  std::condition_variable key_queue_cond;
   int key_queue[256], key_queue_len;
   char key_pressed[KEY_MAX + 1];  // under key_queue_mutex
   int key_last_down;              // under key_queue_mutex

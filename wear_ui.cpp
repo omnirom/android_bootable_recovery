@@ -16,7 +16,6 @@
 
 #include "wear_ui.h"
 
-#include <pthread.h>
 #include <string.h>
 
 #include <string>
@@ -86,11 +85,10 @@ void WearRecoveryUI::SetStage(int /* current */, int /* max */) {}
 
 void WearRecoveryUI::StartMenu(const std::vector<std::string>& headers,
                                const std::vector<std::string>& items, size_t initial_selection) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   if (text_rows_ > 0 && text_cols_ > 0) {
     menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_ - kMenuUnusableRows - 1,
                                    text_cols_ - 1, headers, items, initial_selection);
     update_screen_locked();
   }
-  pthread_mutex_unlock(&updateMutex);
 }
