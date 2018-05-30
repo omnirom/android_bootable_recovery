@@ -25,7 +25,6 @@ import com.example.android.systemupdatersample.services.PrepareStreamingService;
 import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineProperties;
-import com.example.android.systemupdatersample.util.UpdaterStates;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -59,7 +58,7 @@ public class UpdateManager {
             new AtomicInteger(UpdateEngine.UpdateStatusConstants.IDLE);
     private AtomicInteger mEngineErrorCode = new AtomicInteger(UpdateEngineErrorCodes.UNKNOWN);
     private AtomicDouble mProgress = new AtomicDouble(0);
-    private AtomicInteger mState = new AtomicInteger(UpdaterStates.IDLE);
+    private UpdaterState mUpdaterState = new UpdaterState(UpdaterState.IDLE);
 
     private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
 
@@ -111,7 +110,7 @@ public class UpdateManager {
 
     /**
      * Sets SystemUpdaterSample app state change callback. Value of {@code state} will be one
-     * of the values from {@link UpdaterStates}.
+     * of the values from {@link UpdaterState}.
      *
      * @param onStateChangeCallback a callback with parameter {@code state}.
      */
@@ -193,8 +192,14 @@ public class UpdateManager {
      * it also notifies {@link this.mOnStateChangeCallback}.
      */
     private void setUpdaterState(int updaterState) {
-        int previousState = mState.get();
-        mState.set(updaterState);
+        int previousState = mUpdaterState.get();
+        try {
+            mUpdaterState.set(updaterState);
+        } catch (UpdaterState.InvalidTransitionException e) {
+            // Note: invalid state transitions should be handled properly,
+            //       but to make sample app simple, we just throw runtime exception.
+            throw new RuntimeException("Can't set state " + updaterState, e);
+        }
         if (previousState != updaterState) {
             getOnStateChangeCallback().ifPresent(callback -> callback.accept(updaterState));
         }
@@ -211,7 +216,7 @@ public class UpdateManager {
     public void cancelRunningUpdate() {
         try {
             mUpdateEngine.cancel();
-            setUpdaterState(UpdaterStates.IDLE);
+            setUpdaterState(UpdaterState.IDLE);
         } catch (Exception e) {
             Log.w(TAG, "UpdateEngine failed to stop the ongoing update", e);
         }
@@ -227,7 +232,7 @@ public class UpdateManager {
     public void resetUpdate() {
         try {
             mUpdateEngine.resetStatus();
-            setUpdaterState(UpdaterStates.IDLE);
+            setUpdaterState(UpdaterState.IDLE);
         } catch (Exception e) {
             Log.w(TAG, "UpdateEngine failed to reset the update", e);
         }
@@ -241,7 +246,7 @@ public class UpdateManager {
      */
     public void applyUpdate(Context context, UpdateConfig config) {
         mEngineErrorCode.set(UpdateEngineErrorCodes.UNKNOWN);
-        setUpdaterState(UpdaterStates.RUNNING);
+        setUpdaterState(UpdaterState.RUNNING);
 
         synchronized (mLock) {
             // Cleaning up previous update data.
@@ -269,7 +274,7 @@ public class UpdateManager {
             builder.setPayload(mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile()));
         } catch (IOException e) {
             Log.e(TAG, "Error creating payload spec", e);
-            setUpdaterState(UpdaterStates.ERROR);
+            setUpdaterState(UpdaterState.ERROR);
             return;
         }
         updateEngineApplyPayload(builder.build());
@@ -290,7 +295,7 @@ public class UpdateManager {
                 updateEngineApplyPayload(builder.build());
             } else {
                 Log.e(TAG, "PrepareStreamingService failed, result code is " + code);
-                setUpdaterState(UpdaterStates.ERROR);
+                setUpdaterState(UpdaterState.ERROR);
             }
         });
     }
@@ -332,7 +337,7 @@ public class UpdateManager {
                     properties.toArray(new String[0]));
         } catch (Exception e) {
             Log.e(TAG, "UpdateEngine failed to apply the update", e);
-            setUpdaterState(UpdaterStates.ERROR);
+            setUpdaterState(UpdaterState.ERROR);
         }
     }
 
@@ -396,9 +401,11 @@ public class UpdateManager {
         mEngineErrorCode.set(errorCode);
         if (errorCode == UpdateEngine.ErrorCodeConstants.SUCCESS
                 || errorCode == UpdateEngineErrorCodes.UPDATED_BUT_NOT_ACTIVE) {
-            setUpdaterState(UpdaterStates.FINISHED);
+            setUpdaterState(isManualSwitchSlotRequired()
+                    ? UpdaterState.SLOT_SWITCH_REQUIRED
+                    : UpdaterState.REBOOT_REQUIRED);
         } else if (errorCode != UpdateEngineErrorCodes.USER_CANCELLED) {
-            setUpdaterState(UpdaterStates.ERROR);
+            setUpdaterState(UpdaterState.ERROR);
         }
 
         getOnEngineCompleteCallback()
