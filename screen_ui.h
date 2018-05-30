@@ -17,7 +17,6 @@
 #ifndef RECOVERY_SCREEN_UI_H
 #define RECOVERY_SCREEN_UI_H
 
-#include <pthread.h>
 #include <stdio.h>
 
 #include <atomic>
@@ -192,7 +191,6 @@ class ScreenRecoveryUI : public RecoveryUI {
   GRSurface* GetCurrentFrame() const;
   GRSurface* GetCurrentText() const;
 
-  static void* ProgressThreadStartRoutine(void* data);
   void ProgressThreadLoop();
 
   virtual void ShowFile(FILE*);
@@ -297,7 +295,7 @@ class ScreenRecoveryUI : public RecoveryUI {
   std::string locale_;
   bool rtl_locale_;
 
-  pthread_mutex_t updateMutex;
+  std::mutex updateMutex;
 
  private:
   void SetLocale(const std::string&);

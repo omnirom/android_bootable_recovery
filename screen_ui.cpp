@@ -19,8 +19,6 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/input.h>
-#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,8 +169,7 @@ ScreenRecoveryUI::ScreenRecoveryUI(bool scrollable_menu)
       stage(-1),
       max_stage(-1),
       locale_(""),
-      rtl_locale_(false),
-      updateMutex(PTHREAD_MUTEX_INITIALIZER) {}
+      rtl_locale_(false) {}
 
 ScreenRecoveryUI::~ScreenRecoveryUI() {
   progress_thread_stopped_ = true;
@@ -368,7 +365,7 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
     surfaces.emplace(name, std::unique_ptr<GRSurface, decltype(&free)>(text_image, &free));
   }
 
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   gr_color(0, 0, 0, 255);
   gr_clear();
 
@@ -400,7 +397,6 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   }
   // Update the whole screen.
   gr_flip();
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::CheckBackgroundTextImages() {
@@ -624,42 +620,42 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
   double interval = 1.0 / kAnimationFps;
   while (!progress_thread_stopped_) {
     double start = now();
-    pthread_mutex_lock(&updateMutex);
-
     bool redraw = false;
+    {
+      std::lock_guard<std::mutex> lg(updateMutex);
 
-    // update the installation animation, if active
-    // skip this if we have a text overlay (too expensive to update)
-    if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) && !show_text) {
-      if (!intro_done) {
-        if (current_frame == intro_frames - 1) {
-          intro_done = true;
-          current_frame = 0;
+      // update the installation animation, if active
+      // skip this if we have a text overlay (too expensive to update)
+      if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) && !show_text) {
+        if (!intro_done) {
+          if (current_frame == intro_frames - 1) {
+            intro_done = true;
+            current_frame = 0;
+          } else {
+            ++current_frame;
+          }
         } else {
-          ++current_frame;
+          current_frame = (current_frame + 1) % loop_frames;
         }
-      } else {
-        current_frame = (current_frame + 1) % loop_frames;
-      }
 
-      redraw = true;
-    }
-
-    // move the progress bar forward on timed intervals, if configured
-    int duration = progressScopeDuration;
-    if (progressBarType == DETERMINATE && duration > 0) {
-      double elapsed = now() - progressScopeTime;
-      float p = 1.0 * elapsed / duration;
-      if (p > 1.0) p = 1.0;
-      if (p > progress) {
-        progress = p;
         redraw = true;
       }
+
+      // move the progress bar forward on timed intervals, if configured
+      int duration = progressScopeDuration;
+      if (progressBarType == DETERMINATE && duration > 0) {
+        double elapsed = now() - progressScopeTime;
+        float p = 1.0 * elapsed / duration;
+        if (p > 1.0) p = 1.0;
+        if (p > progress) {
+          progress = p;
+          redraw = true;
+        }
+      }
+
+      if (redraw) update_progress_locked();
     }
 
-    if (redraw) update_progress_locked();
-
-    pthread_mutex_unlock(&updateMutex);
     double end = now();
     // minimum of 20ms delay between frames
     double delay = interval - (end - start);
@@ -799,16 +795,14 @@ void ScreenRecoveryUI::LoadAnimation() {
 }
 
 void ScreenRecoveryUI::SetBackground(Icon icon) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
 
   currentIcon = icon;
   update_screen_locked();
-
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::SetProgressType(ProgressType type) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   if (progressBarType != type) {
     progressBarType = type;
   }
@@ -816,11 +810,10 @@ void ScreenRecoveryUI::SetProgressType(ProgressType type) {
   progressScopeSize = 0;
   progress = 0;
   update_progress_locked();
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::ShowProgress(float portion, float seconds) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   progressBarType = DETERMINATE;
   progressScopeStart += progressScopeSize;
   progressScopeSize = portion;
@@ -828,11 +821,10 @@ void ScreenRecoveryUI::ShowProgress(float portion, float seconds) {
   progressScopeDuration = seconds;
   progress = 0;
   update_progress_locked();
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::SetProgress(float fraction) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   if (fraction < 0.0) fraction = 0.0;
   if (fraction > 1.0) fraction = 1.0;
   if (progressBarType == DETERMINATE && fraction > progress) {
@@ -844,14 +836,12 @@ void ScreenRecoveryUI::SetProgress(float fraction) {
       update_progress_locked();
     }
   }
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::SetStage(int current, int max) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   stage = current;
   max_stage = max;
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) {
@@ -862,7 +852,7 @@ void ScreenRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) 
     fputs(str.c_str(), stdout);
   }
 
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   if (text_rows_ > 0 && text_cols_ > 0) {
     for (const char* ptr = str.c_str(); *ptr != '\0'; ++ptr) {
       if (*ptr == '\n' || text_col_ >= text_cols_) {
@@ -875,7 +865,6 @@ void ScreenRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) 
     text_[text_row_][text_col_] = '\0';
     update_screen_locked();
   }
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::Print(const char* fmt, ...) {
@@ -893,23 +882,21 @@ void ScreenRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
 }
 
 void ScreenRecoveryUI::PutChar(char ch) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   if (ch != '\n') text_[text_row_][text_col_++] = ch;
   if (ch == '\n' || text_col_ >= text_cols_) {
     text_col_ = 0;
     ++text_row_;
   }
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::ClearText() {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   text_col_ = 0;
   text_row_ = 0;
   for (size_t i = 0; i < text_rows_; ++i) {
     memset(text_[i], 0, text_cols_ + 1);
   }
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::ShowFile(FILE* fp) {
@@ -986,17 +973,16 @@ void ScreenRecoveryUI::ShowFile(const std::string& filename) {
 
 void ScreenRecoveryUI::StartMenu(const std::vector<std::string>& headers,
                                  const std::vector<std::string>& items, size_t initial_selection) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   if (text_rows_ > 0 && text_cols_ > 1) {
     menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_, text_cols_ - 1, headers, items,
                                    initial_selection);
     update_screen_locked();
   }
-  pthread_mutex_unlock(&updateMutex);
 }
 
 int ScreenRecoveryUI::SelectMenu(int sel) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   if (menu_) {
     int old_sel = menu_->selection();
     sel = menu_->Select(sel);
@@ -1005,17 +991,15 @@ int ScreenRecoveryUI::SelectMenu(int sel) {
       update_screen_locked();
     }
   }
-  pthread_mutex_unlock(&updateMutex);
   return sel;
 }
 
 void ScreenRecoveryUI::EndMenu() {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   if (menu_) {
     menu_.reset();
     update_screen_locked();
   }
-  pthread_mutex_unlock(&updateMutex);
 }
 
 size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
@@ -1067,31 +1051,27 @@ size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
 }
 
 bool ScreenRecoveryUI::IsTextVisible() {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   int visible = show_text;
-  pthread_mutex_unlock(&updateMutex);
   return visible;
 }
 
 bool ScreenRecoveryUI::WasTextEverVisible() {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   int ever_visible = show_text_ever;
-  pthread_mutex_unlock(&updateMutex);
   return ever_visible;
 }
 
 void ScreenRecoveryUI::ShowText(bool visible) {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   show_text = visible;
   if (show_text) show_text_ever = true;
   update_screen_locked();
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::Redraw() {
-  pthread_mutex_lock(&updateMutex);
+  std::lock_guard<std::mutex> lg(updateMutex);
   update_screen_locked();
-  pthread_mutex_unlock(&updateMutex);
 }
 
 void ScreenRecoveryUI::KeyLongPress(int) {
