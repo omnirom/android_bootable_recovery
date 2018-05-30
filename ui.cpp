@@ -18,8 +18,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/input.h>
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,8 +72,6 @@ RecoveryUI::RecoveryUI()
       touch_slot_(0),
       is_bootreason_recovery_ui_(false),
       screensaver_state_(ScreensaverState::DISABLED) {
-  pthread_mutex_init(&key_queue_mutex, nullptr);
-  pthread_cond_init(&key_queue_cond, nullptr);
   memset(key_pressed, 0, sizeof(key_pressed));
 }
 
@@ -341,25 +337,25 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
   bool register_key = false;
   bool long_press = false;
 
-  pthread_mutex_lock(&key_queue_mutex);
-  key_pressed[key_code] = updown;
-  if (updown) {
-    ++key_down_count;
-    key_last_down = key_code;
-    key_long_press = false;
-
-    std::thread time_key_thread(&RecoveryUI::TimeKey, this, key_code, key_down_count);
-    time_key_thread.detach();
-  } else {
-    if (key_last_down == key_code) {
-      long_press = key_long_press;
-      register_key = true;
+  {
+    std::lock_guard<std::mutex> lg(key_queue_mutex);
+    key_pressed[key_code] = updown;
+    if (updown) {
+      ++key_down_count;
+      key_last_down = key_code;
+      key_long_press = false;
+      std::thread time_key_thread(&RecoveryUI::TimeKey, this, key_code, key_down_count);
+      time_key_thread.detach();
+    } else {
+      if (key_last_down == key_code) {
+        long_press = key_long_press;
+        register_key = true;
+      }
+      key_last_down = -1;
     }
-    key_last_down = -1;
   }
-  bool reboot_enabled = enable_reboot;
-  pthread_mutex_unlock(&key_queue_mutex);
 
+  bool reboot_enabled = enable_reboot;
   if (register_key) {
     switch (CheckKey(key_code, long_press)) {
       case RecoveryUI::IGNORE:
@@ -388,44 +384,37 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
 void RecoveryUI::TimeKey(int key_code, int count) {
   std::this_thread::sleep_for(750ms);  // 750 ms == "long"
   bool long_press = false;
-  pthread_mutex_lock(&key_queue_mutex);
-  if (key_last_down == key_code && key_down_count == count) {
-    long_press = key_long_press = true;
+  {
+    std::lock_guard<std::mutex> lg(key_queue_mutex);
+    if (key_last_down == key_code && key_down_count == count) {
+      long_press = key_long_press = true;
+    }
   }
-  pthread_mutex_unlock(&key_queue_mutex);
   if (long_press) KeyLongPress(key_code);
 }
 
 void RecoveryUI::EnqueueKey(int key_code) {
-  pthread_mutex_lock(&key_queue_mutex);
+  std::lock_guard<std::mutex> lg(key_queue_mutex);
   const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
   if (key_queue_len < queue_max) {
     key_queue[key_queue_len++] = key_code;
-    pthread_cond_signal(&key_queue_cond);
+    key_queue_cond.notify_one();
   }
-  pthread_mutex_unlock(&key_queue_mutex);
 }
 
 int RecoveryUI::WaitKey() {
-  pthread_mutex_lock(&key_queue_mutex);
+  std::unique_lock<std::mutex> lk(key_queue_mutex);
 
   // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is
   // plugged in.
   do {
-    struct timeval now;
-    struct timespec timeout;
-    gettimeofday(&now, nullptr);
-    timeout.tv_sec = now.tv_sec;
-    timeout.tv_nsec = now.tv_usec * 1000;
-    timeout.tv_sec += UI_WAIT_KEY_TIMEOUT_SEC;
-
-    int rc = 0;
-    while (key_queue_len == 0 && rc != ETIMEDOUT) {
-      rc = pthread_cond_timedwait(&key_queue_cond, &key_queue_mutex, &timeout);
+    std::cv_status rc = std::cv_status::no_timeout;
+    while (key_queue_len == 0 && rc != std::cv_status::timeout) {
+      rc = key_queue_cond.wait_for(lk, std::chrono::seconds(UI_WAIT_KEY_TIMEOUT_SEC));
     }
 
     if (screensaver_state_ != ScreensaverState::DISABLED) {
-      if (rc == ETIMEDOUT) {
+      if (rc == std::cv_status::timeout) {
         // Lower the brightness level: NORMAL -> DIMMED; DIMMED -> OFF.
         if (screensaver_state_ == ScreensaverState::NORMAL) {
           if (android::base::WriteStringToFile(std::to_string(brightness_dimmed_value_),
@@ -464,7 +453,6 @@ int RecoveryUI::WaitKey() {
     key = key_queue[0];
     memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
   }
-  pthread_mutex_unlock(&key_queue_mutex);
   return key;
 }
 
@@ -485,16 +473,14 @@ bool RecoveryUI::IsUsbConnected() {
 }
 
 bool RecoveryUI::IsKeyPressed(int key) {
-  pthread_mutex_lock(&key_queue_mutex);
+  std::lock_guard<std::mutex> lg(key_queue_mutex);
   int pressed = key_pressed[key];
-  pthread_mutex_unlock(&key_queue_mutex);
   return pressed;
 }
 
 bool RecoveryUI::IsLongPress() {
-  pthread_mutex_lock(&key_queue_mutex);
+  std::lock_guard<std::mutex> lg(key_queue_mutex);
   bool result = key_long_press;
-  pthread_mutex_unlock(&key_queue_mutex);
   return result;
 }
 
@@ -511,15 +497,15 @@ bool RecoveryUI::HasTouchScreen() const {
 }
 
 void RecoveryUI::FlushKeys() {
-  pthread_mutex_lock(&key_queue_mutex);
+  std::lock_guard<std::mutex> lg(key_queue_mutex);
   key_queue_len = 0;
-  pthread_mutex_unlock(&key_queue_mutex);
 }
 
 RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
-  pthread_mutex_lock(&key_queue_mutex);
-  key_long_press = false;
-  pthread_mutex_unlock(&key_queue_mutex);
+  {
+    std::lock_guard<std::mutex> lg(key_queue_mutex);
+    key_long_press = false;
+  }
 
   // If we have power and volume up keys, that chord is the signal to toggle the text display.
   if (HasThreeButtons() || (HasPowerKey() && HasTouchScreen() && touch_screen_allowed_)) {
@@ -542,9 +528,7 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
 
   // Press power seven times in a row to reboot.
   if (key == KEY_POWER) {
-    pthread_mutex_lock(&key_queue_mutex);
     bool reboot_enabled = enable_reboot;
-    pthread_mutex_unlock(&key_queue_mutex);
 
     if (reboot_enabled) {
       ++consecutive_power_keys;
@@ -564,7 +548,6 @@ void RecoveryUI::KeyLongPress(int) {
 }
 
 void RecoveryUI::SetEnableReboot(bool enabled) {
-  pthread_mutex_lock(&key_queue_mutex);
+  std::lock_guard<std::mutex> lg(key_queue_mutex);
   enable_reboot = enabled;
-  pthread_mutex_unlock(&key_queue_mutex);
 }
