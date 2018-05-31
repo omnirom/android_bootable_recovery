@@ -52,12 +52,12 @@ public class UpdaterState {
      */
     private static final ImmutableMap<Integer, ImmutableSet<Integer>> TRANSITIONS =
             ImmutableMap.<Integer, ImmutableSet<Integer>>builder()
-                    .put(IDLE, ImmutableSet.of(ERROR, RUNNING))
-                    .put(RUNNING, ImmutableSet.of(
-                            ERROR, PAUSED, REBOOT_REQUIRED, SLOT_SWITCH_REQUIRED))
-                    .put(PAUSED, ImmutableSet.of(ERROR, RUNNING, IDLE))
-                    .put(SLOT_SWITCH_REQUIRED, ImmutableSet.of(ERROR, IDLE))
+                    .put(IDLE, ImmutableSet.of(IDLE, ERROR, RUNNING))
                     .put(ERROR, ImmutableSet.of(IDLE))
+                    .put(RUNNING, ImmutableSet.of(
+                            IDLE, ERROR, PAUSED, REBOOT_REQUIRED, SLOT_SWITCH_REQUIRED))
+                    .put(PAUSED, ImmutableSet.of(ERROR, RUNNING, IDLE))
+                    .put(SLOT_SWITCH_REQUIRED, ImmutableSet.of(ERROR, REBOOT_REQUIRED, IDLE))
                     .put(REBOOT_REQUIRED, ImmutableSet.of(IDLE))
                     .build();
 
