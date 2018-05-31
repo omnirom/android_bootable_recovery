@@ -64,6 +64,9 @@ public class UpdateManager {
 
     private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
 
+    /** Validate state only once when app binds to UpdateEngine. */
+    private AtomicBoolean mStateValidityEnsured = new AtomicBoolean(false);
+
     @GuardedBy("mLock")
     private UpdateData mLastUpdateData = null;
 
@@ -90,6 +93,7 @@ public class UpdateManager {
      * Binds to {@link UpdateEngine}.
      */
     public void bind() {
+        mStateValidityEnsured.set(false);
         this.mUpdateEngine.bind(mUpdateEngineCallback);
     }
 
@@ -468,7 +472,10 @@ public class UpdateManager {
         mUpdateEngineStatus.set(status);
         mProgress.set(progress);
 
-        ensureCorrectUpdaterState();
+        if (!mStateValidityEnsured.getAndSet(true)) {
+            // We ensure correct state once only when sample app is bound to UpdateEngine.
+            ensureCorrectUpdaterState();
+        }
 
         getOnProgressUpdateCallback().ifPresent(callback -> callback.accept(progress));
 
