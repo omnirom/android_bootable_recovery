@@ -39,6 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
 
+import javax.annotation.concurrent.GuardedBy;
+
 /**
  * Manages the update flow. It has its own state (in memory), separate from
  * {@link UpdateEngine}'s state. Asynchronously interacts with the {@link UpdateEngine}.
@@ -62,11 +64,16 @@ public class UpdateManager {
 
     private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
 
+    @GuardedBy("mLock")
     private UpdateData mLastUpdateData = null;
 
+    @GuardedBy("mLock")
     private IntConsumer mOnStateChangeCallback = null;
+    @GuardedBy("mLock")
     private IntConsumer mOnEngineStatusUpdateCallback = null;
+    @GuardedBy("mLock")
     private DoubleConsumer mOnProgressUpdateCallback = null;
+    @GuardedBy("mLock")
     private IntConsumer mOnEngineCompleteCallback = null;
 
     private final Object mLock = new Object();
