@@ -384,10 +384,84 @@ public class UpdateManager {
         updateEngineApplyPayload(builder.build());
     }
 
+    /**
+     * Verifies if mUpdaterState matches mUpdateEngineStatus.
+     * If they don't match, runs applyPayload to trigger onPayloadApplicationComplete
+     * callback, which updates mUpdaterState.
+     */
+    private void ensureCorrectUpdaterState() {
+        // When mUpdaterState is one of IDLE, PAUSED, ERROR, SLOT_SWITCH_REQUIRED
+        //    then mUpdateEngineStatus must be IDLE.
+        // When mUpdaterState is RUNNING,
+        //    then mUpdateEngineStatus must not be IDLE or UPDATED_NEED_REBOOT.
+        // When mUpdaterState is REBOOT_REQUIRED,
+        //    then mUpdateEngineStatus must be UPDATED_NEED_REBOOT.
+        int state = mUpdaterState.get();
+        int updateEngineStatus = mUpdateEngineStatus.get();
+        if (state == UpdaterState.IDLE
+                || state == UpdaterState.ERROR
+                || state == UpdaterState.PAUSED
+                || state == UpdaterState.SLOT_SWITCH_REQUIRED) {
+            ensureUpdateEngineStatusIdle(state, updateEngineStatus);
+        } else if (state == UpdaterState.RUNNING) {
+            ensureUpdateEngineStatusRunning(state, updateEngineStatus);
+        } else if (state == UpdaterState.REBOOT_REQUIRED) {
+            ensureUpdateEngineStatusReboot(state, updateEngineStatus);
+        }
+    }
+
+    private void ensureUpdateEngineStatusIdle(int state, int updateEngineStatus) {
+        if (updateEngineStatus == UpdateEngine.UpdateStatusConstants.IDLE) {
+            return;
+        }
+        // It might happen when update is started not from the sample app.
+        // To make the sample app simple, we won't handle this case.
+        throw new RuntimeException("When mUpdaterState is " + state
+                + " mUpdateEngineStatus expected to be "
+                + UpdateEngine.UpdateStatusConstants.IDLE
+                + ", but it is " + updateEngineStatus);
+    }
+
+    private void ensureUpdateEngineStatusRunning(int state, int updateEngineStatus) {
+        if (updateEngineStatus != UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT
+                && updateEngineStatus != UpdateEngine.UpdateStatusConstants.IDLE) {
+            return;
+        }
+        // Re-apply latest update. It makes update_engine to invoke
+        // onPayloadApplicationComplete callback. The callback notifies
+        // if update was successful or not.
+        updateEngineReApplyPayload();
+    }
+
+    private void ensureUpdateEngineStatusReboot(int state, int updateEngineStatus) {
+        if (updateEngineStatus == UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT) {
+            return;
+        }
+        // This might happen when update is installed by other means,
+        // and sample app is not aware of it. To make the sample app simple,
+        // we won't handle this case.
+        throw new RuntimeException("When mUpdaterState is " + state
+                + " mUpdateEngineStatus expected to be "
+                + UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT
+                + ", but it is " + updateEngineStatus);
+    }
+
+    /**
+     * Invoked by update_engine whenever update status or progress changes.
+     * It's also guaranteed to be invoked when app binds to the update_engine, except
+     * when update_engine fails to initialize (as defined in
+     * system/update_engine/binder_service_android.cc in
+     * function BinderUpdateEngineAndroidService::bind).
+     *
+     * @param status one of {@link UpdateEngine.UpdateStatusConstants}.
+     * @param progress a number from 0.0 to 1.0.
+     */
     private void onStatusUpdate(int status, float progress) {
         int previousStatus = mUpdateEngineStatus.get();
         mUpdateEngineStatus.set(status);
         mProgress.set(progress);
+
+        ensureCorrectUpdaterState();
 
         getOnProgressUpdateCallback().ifPresent(callback -> callback.accept(progress));
 
@@ -413,7 +487,7 @@ public class UpdateManager {
     }
 
     /**
-     * Helper class to delegate {@code update_engine} callbacks to UpdateManager
+     * Helper class to delegate {@code update_engine} callback invocations to UpdateManager.
      */
     class UpdateEngineCallbackImpl extends UpdateEngineCallback {
         @Override

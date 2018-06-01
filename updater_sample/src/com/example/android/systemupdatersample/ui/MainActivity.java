@@ -108,12 +108,16 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        // TODO(zhomart) load saved states
+        // Binding to UpdateEngine invokes onStatusUpdate callback,
+        // persisted updater state has to be loaded and prepared beforehand.
         this.mUpdateManager.bind();
     }
 
     @Override
     protected void onPause() {
         this.mUpdateManager.unbind();
+        // TODO(zhomart) save state
         super.onPause();
     }
 
