@@ -820,15 +820,13 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         break;
       }
       case Device::MOUNT_SYSTEM:
-        // For a system image built with the root directory (i.e. system_root_image == "true"), we
-        // mount it to /system_root, and symlink /system to /system_root/system to make adb shell
-        // work (the symlink is created through the build system). (Bug: 22855115)
+        // the system partition is mounted at /mnt/system
         if (android::base::GetBoolProperty("ro.build.system_root_image", false)) {
-          if (ensure_path_mounted_at("/", "/system_root") != -1) {
+          if (ensure_path_mounted_at("/", "/mnt/system") != -1) {
             ui->Print("Mounted /system.\n");
           }
         } else {
-          if (ensure_path_mounted("/system") != -1) {
+          if (ensure_path_mounted_at("/system", "/mnt/system") != -1) {
             ui->Print("Mounted /system.\n");
           }
         }
