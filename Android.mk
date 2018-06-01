@@ -145,6 +145,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
     adb_install.cpp \
+    fsck_unshare_blocks.cpp \
     fuse_sdcard_provider.cpp \
     install.cpp \
     recovery.cpp \
@@ -205,6 +206,13 @@ LOCAL_REQUIRED_MODULES += \
 endif
 endif
 
+# e2fsck is needed for adb remount -R.
+ifeq ($(BOARD_EXT4_SHARE_DUP_BLOCKS),true)
+ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
+LOCAL_REQUIRED_MODULES += e2fsck_static
+endif
+endif
+
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
 LOCAL_REQUIRED_MODULES += \
     recovery-persist \
@@ -217,6 +225,5 @@ include \
     $(LOCAL_PATH)/boot_control/Android.mk \
     $(LOCAL_PATH)/minui/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
-    $(LOCAL_PATH)/tools/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
     $(LOCAL_PATH)/updater_sample/Android.mk \

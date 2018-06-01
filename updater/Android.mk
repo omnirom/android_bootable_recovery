@@ -56,6 +56,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libupdater
 
 LOCAL_SRC_FILES := \
+    commands.cpp \
     install.cpp \
     blockimg.cpp
 

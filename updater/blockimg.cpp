@@ -57,6 +57,7 @@
 #include "otautil/paths.h"
 #include "otautil/print_sha1.h"
 #include "otautil/rangeset.h"
+#include "private/commands.h"
 #include "updater/install.h"
 #include "updater/updater.h"
 
@@ -546,8 +547,8 @@ static int WriteBlocks(const RangeSet& tgt, const std::vector<uint8_t>& buffer, 
 struct CommandParameters {
     std::vector<std::string> tokens;
     size_t cpos;
-    const char* cmdname;
-    const char* cmdline;
+    std::string cmdname;
+    std::string cmdline;
     std::string freestash;
     std::string stashbase;
     bool canwrite;
@@ -750,7 +751,7 @@ static void DeleteStash(const std::string& base) {
   }
 }
 
-static int LoadStash(CommandParameters& params, const std::string& id, bool verify, size_t* blocks,
+static int LoadStash(CommandParameters& params, const std::string& id, bool verify,
                      std::vector<uint8_t>& buffer, bool printnoent) {
   // In verify mode, if source range_set was saved for the given hash, check contents in the source
   // blocks first. If the check fails, search for the stashed files on /cache as usual.
@@ -770,11 +771,6 @@ static int LoadStash(CommandParameters& params, const std::string& id, bool veri
       }
       return 0;
     }
-  }
-
-  size_t blockcount = 0;
-  if (!blocks) {
-    blocks = &blockcount;
   }
 
   std::string fn = GetStashFileName(params.stashbase, id, "");
@@ -807,9 +803,8 @@ static int LoadStash(CommandParameters& params, const std::string& id, bool veri
     return -1;
   }
 
-  *blocks = sb.st_size / BLOCKSIZE;
-
-  if (verify && VerifyBlocks(id, buffer, *blocks, true) != 0) {
+  size_t blocks = sb.st_size / BLOCKSIZE;
+  if (verify && VerifyBlocks(id, buffer, blocks, true) != 0) {
     LOG(ERROR) << "unexpected contents in " << fn;
     if (stash_map.find(id) == stash_map.end()) {
       LOG(ERROR) << "failed to find source blocks number for stash " << id
@@ -1055,7 +1050,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
     }
 
     std::vector<uint8_t> stash;
-    if (LoadStash(params, tokens[0], false, nullptr, stash, true) == -1) {
+    if (LoadStash(params, tokens[0], false, stash, true) == -1) {
       // These source blocks will fail verification if used later, but we
       // will let the caller decide if this is a fatal failure
       LOG(ERROR) << "failed to load stash " << tokens[0];
@@ -1170,7 +1165,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* 
     return 0;
   }
 
-  if (*overlap && LoadStash(params, srchash, true, nullptr, params.buffer, true) == 0) {
+  if (*overlap && LoadStash(params, srchash, true, params.buffer, true) == 0) {
     // Overlapping source blocks were previously stashed, command can proceed. We are recovering
     // from an interrupted command, so we don't know if the stash can safely be deleted after this
     // command.
@@ -1236,8 +1231,7 @@ static int PerformCommandStash(CommandParameters& params) {
   }
 
   const std::string& id = params.tokens[params.cpos++];
-  size_t blocks = 0;
-  if (LoadStash(params, id, true, &blocks, params.buffer, false) == 0) {
+  if (LoadStash(params, id, true, params.buffer, false) == 0) {
     // Stash file already exists and has expected contents. Do not read from source again, as the
     // source may have been already overwritten during a previous attempt.
     return 0;
@@ -1246,11 +1240,11 @@ static int PerformCommandStash(CommandParameters& params) {
   RangeSet src = RangeSet::Parse(params.tokens[params.cpos++]);
   CHECK(static_cast<bool>(src));
 
-  allocate(src.blocks() * BLOCKSIZE, params.buffer);
+  size_t blocks = src.blocks();
+  allocate(blocks * BLOCKSIZE, params.buffer);
   if (ReadBlocks(src, params.buffer, params.fd) == -1) {
     return -1;
   }
-  blocks = src.blocks();
   stash_map[id] = src;
 
   if (VerifyBlocks(id, params.buffer, blocks, true) != 0) {
@@ -1496,23 +1490,13 @@ static int PerformCommandErase(CommandParameters& params) {
   return 0;
 }
 
-// Definitions for transfer list command functions
-typedef int (*CommandFunction)(CommandParameters&);
+using CommandFunction = std::function<int(CommandParameters&)>;
 
-struct Command {
-    const char* name;
-    CommandFunction f;
-};
-
-// args:
-//    - block device (or file) to modify in-place
-//    - transfer list (blob)
-//    - new data stream (filename within package.zip)
-//    - patch stream (filename within package.zip, must be uncompressed)
+using CommandMap = std::unordered_map<Command::Type, CommandFunction>;
 
 static Value* PerformBlockImageUpdate(const char* name, State* state,
                                       const std::vector<std::unique_ptr<Expr>>& argv,
-                                      const Command* commands, size_t cmdcount, bool dryrun) {
+                                      const CommandMap& command_map, bool dryrun) {
   CommandParameters params = {};
   params.canwrite = !dryrun;
 
@@ -1532,6 +1516,11 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     return nullptr;
   }
 
+  // args:
+  //   - block device (or file) to modify in-place
+  //   - transfer list (blob)
+  //   - new data stream (filename within package.zip)
+  //   - patch stream (filename within package.zip, must be uncompressed)
   const std::unique_ptr<Value>& blockdev_filename = args[0];
   const std::unique_ptr<Value>& transfer_list_value = args[1];
   const std::unique_ptr<Value>& new_data_fn = args[2];
@@ -1707,16 +1696,6 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     skip_executed_command = false;
   }
 
-  // Build a map of the available commands
-  std::unordered_map<std::string, const Command*> cmd_map;
-  for (size_t i = 0; i < cmdcount; ++i) {
-    if (cmd_map.find(commands[i].name) != cmd_map.end()) {
-      LOG(ERROR) << "Error: command [" << commands[i].name << "] already exists in the cmd map.";
-      return StringValue("");
-    }
-    cmd_map[commands[i].name] = &commands[i];
-  }
-
   int rc = -1;
 
   static constexpr size_t kTransferListHeaderLines = 4;
@@ -1728,36 +1707,35 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     size_t cmdindex = i - kTransferListHeaderLines;
     params.tokens = android::base::Split(line, " ");
     params.cpos = 0;
-    params.cmdname = params.tokens[params.cpos++].c_str();
-    params.cmdline = line.c_str();
+    params.cmdname = params.tokens[params.cpos++];
+    params.cmdline = line;
     params.target_verified = false;
 
-    if (cmd_map.find(params.cmdname) == cmd_map.end()) {
+    Command::Type cmd_type = Command::ParseType(params.cmdname);
+    if (cmd_type == Command::Type::LAST) {
       LOG(ERROR) << "unexpected command [" << params.cmdname << "]";
       goto pbiudone;
     }
 
-    const Command* cmd = cmd_map[params.cmdname];
+    const CommandFunction& performer = command_map.at(cmd_type);
 
     // Skip the command if we explicitly set the corresponding function pointer to nullptr, e.g.
     // "erase" during block_image_verify.
-    if (cmd->f == nullptr) {
+    if (performer == nullptr) {
       LOG(DEBUG) << "skip executing command [" << line << "]";
       continue;
     }
 
-    std::string cmdname = std::string(params.cmdname);
-
     // Skip all commands before the saved last command index when resuming an update, except for
     // "new" command. Because new commands read in the data sequentially.
     if (params.canwrite && skip_executed_command && cmdindex <= saved_last_command_index &&
-        cmdname != "new") {
+        cmd_type != Command::Type::NEW) {
       LOG(INFO) << "Skipping already executed command: " << cmdindex
                 << ", last executed command for previous update: " << saved_last_command_index;
       continue;
     }
 
-    if (cmd->f(params) == -1) {
+    if (performer(params) == -1) {
       LOG(ERROR) << "failed to execute command [" << line << "]";
       goto pbiudone;
     }
@@ -1767,7 +1745,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     // that we will resume the update from the first command in the transfer list.
     if (!params.canwrite && skip_executed_command && cmdindex <= saved_last_command_index) {
       // TODO(xunchang) check that the cmdline of the saved index is correct.
-      if ((cmdname == "move" || cmdname == "bsdiff" || cmdname == "imgdiff") &&
+      if ((cmd_type == Command::Type::MOVE || cmd_type == Command::Type::BSDIFF ||
+           cmd_type == Command::Type::IMGDIFF) &&
           !params.target_verified) {
         LOG(WARNING) << "Previously executed command " << saved_last_command_index << ": "
                      << params.cmdline << " doesn't produce expected target blocks.";
@@ -1775,6 +1754,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
         DeleteLastCommandFile();
       }
     }
+
     if (params.canwrite) {
       if (ota_fsync(params.fd) == -1) {
         failure_type = kFsyncFailure;
@@ -1911,38 +1891,42 @@ pbiudone:
  */
 Value* BlockImageVerifyFn(const char* name, State* state,
                           const std::vector<std::unique_ptr<Expr>>& argv) {
-    // Commands which are not tested are set to nullptr to skip them completely
-    const Command commands[] = {
-        { "bsdiff",     PerformCommandDiff  },
-        { "erase",      nullptr             },
-        { "free",       PerformCommandFree  },
-        { "imgdiff",    PerformCommandDiff  },
-        { "move",       PerformCommandMove  },
-        { "new",        nullptr             },
-        { "stash",      PerformCommandStash },
-        { "zero",       nullptr             }
-    };
+  // Commands which are not allowed are set to nullptr to skip them completely.
+  const CommandMap command_map{
+    // clang-format off
+    { Command::Type::BSDIFF,  PerformCommandDiff },
+    { Command::Type::ERASE,   nullptr },
+    { Command::Type::FREE,    PerformCommandFree },
+    { Command::Type::IMGDIFF, PerformCommandDiff },
+    { Command::Type::MOVE,    PerformCommandMove },
+    { Command::Type::NEW,     nullptr },
+    { Command::Type::STASH,   PerformCommandStash },
+    { Command::Type::ZERO,    nullptr },
+    // clang-format on
+  };
+  CHECK_EQ(static_cast<size_t>(Command::Type::LAST), command_map.size());
 
-    // Perform a dry run without writing to test if an update can proceed
-    return PerformBlockImageUpdate(name, state, argv, commands,
-                sizeof(commands) / sizeof(commands[0]), true);
+  // Perform a dry run without writing to test if an update can proceed.
+  return PerformBlockImageUpdate(name, state, argv, command_map, true);
 }
 
 Value* BlockImageUpdateFn(const char* name, State* state,
                           const std::vector<std::unique_ptr<Expr>>& argv) {
-    const Command commands[] = {
-        { "bsdiff",     PerformCommandDiff  },
-        { "erase",      PerformCommandErase },
-        { "free",       PerformCommandFree  },
-        { "imgdiff",    PerformCommandDiff  },
-        { "move",       PerformCommandMove  },
-        { "new",        PerformCommandNew   },
-        { "stash",      PerformCommandStash },
-        { "zero",       PerformCommandZero  }
-    };
+  const CommandMap command_map{
+    // clang-format off
+    { Command::Type::BSDIFF,  PerformCommandDiff },
+    { Command::Type::ERASE,   PerformCommandErase },
+    { Command::Type::FREE,    PerformCommandFree },
+    { Command::Type::IMGDIFF, PerformCommandDiff },
+    { Command::Type::MOVE,    PerformCommandMove },
+    { Command::Type::NEW,     PerformCommandNew },
+    { Command::Type::STASH,   PerformCommandStash },
+    { Command::Type::ZERO,    PerformCommandZero },
+    // clang-format on
+  };
+  CHECK_EQ(static_cast<size_t>(Command::Type::LAST), command_map.size());
 
-    return PerformBlockImageUpdate(name, state, argv, commands,
-                sizeof(commands) / sizeof(commands[0]), false);
+  return PerformBlockImageUpdate(name, state, argv, command_map, false);
 }
 
 Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {

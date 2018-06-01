@@ -25,17 +25,21 @@ import com.example.android.systemupdatersample.services.PrepareStreamingService;
 import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineProperties;
-import com.example.android.systemupdatersample.util.UpdaterStates;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AtomicDouble;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
+
+import javax.annotation.concurrent.GuardedBy;
 
 /**
  * Manages the update flow. It has its own state (in memory), separate from
@@ -56,21 +60,26 @@ public class UpdateManager {
             new AtomicInteger(UpdateEngine.UpdateStatusConstants.IDLE);
     private AtomicInteger mEngineErrorCode = new AtomicInteger(UpdateEngineErrorCodes.UNKNOWN);
     private AtomicDouble mProgress = new AtomicDouble(0);
+    private UpdaterState mUpdaterState = new UpdaterState(UpdaterState.IDLE);
 
-    private AtomicInteger mState = new AtomicInteger(UpdaterStates.IDLE);
-
-    private final UpdateManager.UpdateEngineCallbackImpl
-            mUpdateEngineCallback = new UpdateManager.UpdateEngineCallbackImpl();
-
-    private PayloadSpec mLastPayloadSpec;
     private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
 
+    @GuardedBy("mLock")
+    private UpdateData mLastUpdateData = null;
+
+    @GuardedBy("mLock")
     private IntConsumer mOnStateChangeCallback = null;
+    @GuardedBy("mLock")
     private IntConsumer mOnEngineStatusUpdateCallback = null;
+    @GuardedBy("mLock")
     private DoubleConsumer mOnProgressUpdateCallback = null;
+    @GuardedBy("mLock")
     private IntConsumer mOnEngineCompleteCallback = null;
 
     private final Object mLock = new Object();
+
+    private final UpdateManager.UpdateEngineCallbackImpl
+            mUpdateEngineCallback = new UpdateManager.UpdateEngineCallbackImpl();
 
     public UpdateManager(UpdateEngine updateEngine, PayloadSpecs payloadSpecs) {
         this.mUpdateEngine = updateEngine;
@@ -108,7 +117,7 @@ public class UpdateManager {
 
     /**
      * Sets SystemUpdaterSample app state change callback. Value of {@code state} will be one
-     * of the values from {@link UpdaterStates}.
+     * of the values from {@link UpdaterState}.
      *
      * @param onStateChangeCallback a callback with parameter {@code state}.
      */
@@ -190,8 +199,14 @@ public class UpdateManager {
      * it also notifies {@link this.mOnStateChangeCallback}.
      */
     private void setUpdaterState(int updaterState) {
-        int previousState = mState.get();
-        mState.set(updaterState);
+        int previousState = mUpdaterState.get();
+        try {
+            mUpdaterState.set(updaterState);
+        } catch (UpdaterState.InvalidTransitionException e) {
+            // Note: invalid state transitions should be handled properly,
+            //       but to make sample app simple, we just throw runtime exception.
+            throw new RuntimeException("Can't set state " + updaterState, e);
+        }
         if (previousState != updaterState) {
             getOnStateChangeCallback().ifPresent(callback -> callback.accept(updaterState));
         }
@@ -208,7 +223,7 @@ public class UpdateManager {
     public void cancelRunningUpdate() {
         try {
             mUpdateEngine.cancel();
-            setUpdaterState(UpdaterStates.IDLE);
+            setUpdaterState(UpdaterState.IDLE);
         } catch (Exception e) {
             Log.w(TAG, "UpdateEngine failed to stop the ongoing update", e);
         }
@@ -224,7 +239,7 @@ public class UpdateManager {
     public void resetUpdate() {
         try {
             mUpdateEngine.resetStatus();
-            setUpdaterState(UpdaterStates.IDLE);
+            setUpdaterState(UpdaterState.IDLE);
         } catch (Exception e) {
             Log.w(TAG, "UpdateEngine failed to reset the update", e);
         }
@@ -238,7 +253,12 @@ public class UpdateManager {
      */
     public void applyUpdate(Context context, UpdateConfig config) {
         mEngineErrorCode.set(UpdateEngineErrorCodes.UNKNOWN);
-        setUpdaterState(UpdaterStates.RUNNING);
+        setUpdaterState(UpdaterState.RUNNING);
+
+        synchronized (mLock) {
+            // Cleaning up previous update data.
+            mLastUpdateData = null;
+        }
 
         if (!config.getAbConfig().getForceSwitchSlot()) {
             mManualSwitchSlotRequired.set(true);
@@ -254,33 +274,35 @@ public class UpdateManager {
     }
 
     private void applyAbNonStreamingUpdate(UpdateConfig config) {
-        List<String> extraProperties = prepareExtraProperties(config);
+        UpdateData.Builder builder = UpdateData.builder()
+                .setExtraProperties(prepareExtraProperties(config));
 
-        PayloadSpec payload;
         try {
-            payload = mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile());
+            builder.setPayload(mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile()));
         } catch (IOException e) {
             Log.e(TAG, "Error creating payload spec", e);
-            setUpdaterState(UpdaterStates.ERROR);
+            setUpdaterState(UpdaterState.ERROR);
             return;
         }
-        updateEngineApplyPayload(payload, extraProperties);
+        updateEngineApplyPayload(builder.build());
     }
 
     private void applyAbStreamingUpdate(Context context, UpdateConfig config) {
-        List<String> extraProperties = prepareExtraProperties(config);
+        UpdateData.Builder builder = UpdateData.builder()
+                .setExtraProperties(prepareExtraProperties(config));
 
         Log.d(TAG, "Starting PrepareStreamingService");
         PrepareStreamingService.startService(context, config, (code, payloadSpec) -> {
             if (code == PrepareStreamingService.RESULT_CODE_SUCCESS) {
-                extraProperties.add("USER_AGENT=" + HTTP_USER_AGENT);
+                builder.setPayload(payloadSpec);
+                builder.addExtraProperty("USER_AGENT=" + HTTP_USER_AGENT);
                 config.getStreamingMetadata()
                         .getAuthorization()
-                        .ifPresent(s -> extraProperties.add("AUTHORIZATION=" + s));
-                updateEngineApplyPayload(payloadSpec, extraProperties);
+                        .ifPresent(s -> builder.addExtraProperty("AUTHORIZATION=" + s));
+                updateEngineApplyPayload(builder.build());
             } else {
                 Log.e(TAG, "PrepareStreamingService failed, result code is " + code);
-                setUpdaterState(UpdaterStates.ERROR);
+                setUpdaterState(UpdaterState.ERROR);
             }
         });
     }
@@ -305,27 +327,38 @@ public class UpdateManager {
      * <p>It's possible that the update engine throws a generic error, such as upon seeing invalid
      * payload properties (which come from OTA packages), or failing to set up the network
      * with the given id.</p>
-     *
-     * @param payloadSpec contains url, offset and size to {@code PAYLOAD_BINARY_FILE_NAME}
-     * @param extraProperties additional properties to pass to {@link UpdateEngine#applyPayload}
      */
-    private void updateEngineApplyPayload(PayloadSpec payloadSpec, List<String> extraProperties) {
-        mLastPayloadSpec = payloadSpec;
-
-        ArrayList<String> properties = new ArrayList<>(payloadSpec.getProperties());
-        if (extraProperties != null) {
-            properties.addAll(extraProperties);
+    private void updateEngineApplyPayload(UpdateData update) {
+        synchronized (mLock) {
+            mLastUpdateData = update;
         }
+
+        ArrayList<String> properties = new ArrayList<>(update.getPayload().getProperties());
+        properties.addAll(update.getExtraProperties());
+
         try {
             mUpdateEngine.applyPayload(
-                    payloadSpec.getUrl(),
-                    payloadSpec.getOffset(),
-                    payloadSpec.getSize(),
+                    update.getPayload().getUrl(),
+                    update.getPayload().getOffset(),
+                    update.getPayload().getSize(),
                     properties.toArray(new String[0]));
         } catch (Exception e) {
             Log.e(TAG, "UpdateEngine failed to apply the update", e);
-            setUpdaterState(UpdaterStates.ERROR);
+            setUpdaterState(UpdaterState.ERROR);
         }
+    }
+
+    private void updateEngineReApplyPayload() {
+        UpdateData lastUpdate;
+        synchronized (mLock) {
+            // mLastPayloadSpec might be empty in some cases.
+            // But to make this sample app simple, we will not handle it.
+            Preconditions.checkArgument(
+                    mLastUpdateData != null,
+                    "mLastUpdateData must be present.");
+            lastUpdate = mLastUpdateData;
+        }
+        updateEngineApplyPayload(lastUpdate);
     }
 
     /**
@@ -342,18 +375,100 @@ public class UpdateManager {
      */
     public void setSwitchSlotOnReboot() {
         Log.d(TAG, "setSwitchSlotOnReboot invoked");
-        List<String> extraProperties = new ArrayList<>();
+        UpdateData.Builder builder;
+        synchronized (mLock) {
+            // To make sample app simple, we don't handle it.
+            Preconditions.checkArgument(
+                    mLastUpdateData != null,
+                    "mLastUpdateData must be present.");
+            builder = mLastUpdateData.toBuilder();
+        }
         // PROPERTY_SKIP_POST_INSTALL should be passed on to skip post-installation hooks.
-        extraProperties.add(UpdateEngineProperties.PROPERTY_SKIP_POST_INSTALL);
-        // It sets property SWITCH_SLOT_ON_REBOOT=1 by default.
+        builder.setExtraProperties(
+                Collections.singletonList(UpdateEngineProperties.PROPERTY_SKIP_POST_INSTALL));
+        // UpdateEngine sets property SWITCH_SLOT_ON_REBOOT=1 by default.
         // HTTP headers are not required, UpdateEngine is not expected to stream payload.
-        updateEngineApplyPayload(mLastPayloadSpec, extraProperties);
+        updateEngineApplyPayload(builder.build());
     }
 
+    /**
+     * Verifies if mUpdaterState matches mUpdateEngineStatus.
+     * If they don't match, runs applyPayload to trigger onPayloadApplicationComplete
+     * callback, which updates mUpdaterState.
+     */
+    private void ensureCorrectUpdaterState() {
+        // When mUpdaterState is one of IDLE, PAUSED, ERROR, SLOT_SWITCH_REQUIRED
+        //    then mUpdateEngineStatus must be IDLE.
+        // When mUpdaterState is RUNNING,
+        //    then mUpdateEngineStatus must not be IDLE or UPDATED_NEED_REBOOT.
+        // When mUpdaterState is REBOOT_REQUIRED,
+        //    then mUpdateEngineStatus must be UPDATED_NEED_REBOOT.
+        int state = mUpdaterState.get();
+        int updateEngineStatus = mUpdateEngineStatus.get();
+        if (state == UpdaterState.IDLE
+                || state == UpdaterState.ERROR
+                || state == UpdaterState.PAUSED
+                || state == UpdaterState.SLOT_SWITCH_REQUIRED) {
+            ensureUpdateEngineStatusIdle(state, updateEngineStatus);
+        } else if (state == UpdaterState.RUNNING) {
+            ensureUpdateEngineStatusRunning(state, updateEngineStatus);
+        } else if (state == UpdaterState.REBOOT_REQUIRED) {
+            ensureUpdateEngineStatusReboot(state, updateEngineStatus);
+        }
+    }
+
+    private void ensureUpdateEngineStatusIdle(int state, int updateEngineStatus) {
+        if (updateEngineStatus == UpdateEngine.UpdateStatusConstants.IDLE) {
+            return;
+        }
+        // It might happen when update is started not from the sample app.
+        // To make the sample app simple, we won't handle this case.
+        throw new RuntimeException("When mUpdaterState is " + state
+                + " mUpdateEngineStatus expected to be "
+                + UpdateEngine.UpdateStatusConstants.IDLE
+                + ", but it is " + updateEngineStatus);
+    }
+
+    private void ensureUpdateEngineStatusRunning(int state, int updateEngineStatus) {
+        if (updateEngineStatus != UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT
+                && updateEngineStatus != UpdateEngine.UpdateStatusConstants.IDLE) {
+            return;
+        }
+        // Re-apply latest update. It makes update_engine to invoke
+        // onPayloadApplicationComplete callback. The callback notifies
+        // if update was successful or not.
+        updateEngineReApplyPayload();
+    }
+
+    private void ensureUpdateEngineStatusReboot(int state, int updateEngineStatus) {
+        if (updateEngineStatus == UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT) {
+            return;
+        }
+        // This might happen when update is installed by other means,
+        // and sample app is not aware of it. To make the sample app simple,
+        // we won't handle this case.
+        throw new RuntimeException("When mUpdaterState is " + state
+                + " mUpdateEngineStatus expected to be "
+                + UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT
+                + ", but it is " + updateEngineStatus);
+    }
+
+    /**
+     * Invoked by update_engine whenever update status or progress changes.
+     * It's also guaranteed to be invoked when app binds to the update_engine, except
+     * when update_engine fails to initialize (as defined in
+     * system/update_engine/binder_service_android.cc in
+     * function BinderUpdateEngineAndroidService::bind).
+     *
+     * @param status one of {@link UpdateEngine.UpdateStatusConstants}.
+     * @param progress a number from 0.0 to 1.0.
+     */
     private void onStatusUpdate(int status, float progress) {
         int previousStatus = mUpdateEngineStatus.get();
         mUpdateEngineStatus.set(status);
         mProgress.set(progress);
+
+        ensureCorrectUpdaterState();
 
         getOnProgressUpdateCallback().ifPresent(callback -> callback.accept(progress));
 
@@ -367,9 +482,11 @@ public class UpdateManager {
         mEngineErrorCode.set(errorCode);
         if (errorCode == UpdateEngine.ErrorCodeConstants.SUCCESS
                 || errorCode == UpdateEngineErrorCodes.UPDATED_BUT_NOT_ACTIVE) {
-            setUpdaterState(UpdaterStates.FINISHED);
+            setUpdaterState(isManualSwitchSlotRequired()
+                    ? UpdaterState.SLOT_SWITCH_REQUIRED
+                    : UpdaterState.REBOOT_REQUIRED);
         } else if (errorCode != UpdateEngineErrorCodes.USER_CANCELLED) {
-            setUpdaterState(UpdaterStates.ERROR);
+            setUpdaterState(UpdaterState.ERROR);
         }
 
         getOnEngineCompleteCallback()
@@ -377,7 +494,7 @@ public class UpdateManager {
     }
 
     /**
-     * Helper class to delegate {@code update_engine} callbacks to UpdateManager
+     * Helper class to delegate {@code update_engine} callback invocations to UpdateManager.
      */
     class UpdateEngineCallbackImpl extends UpdateEngineCallback {
         @Override
@@ -388,6 +505,69 @@ public class UpdateManager {
         @Override
         public void onPayloadApplicationComplete(int errorCode) {
             UpdateManager.this.onPayloadApplicationComplete(errorCode);
+        }
+    }
+
+    /**
+     *
+     * Contains update data - PayloadSpec and extra properties list.
+     *
+     * <p>{@code mPayload} contains url, offset and size to {@code PAYLOAD_BINARY_FILE_NAME}.
+     * {@code mExtraProperties} is a list of additional properties to pass to
+     * {@link UpdateEngine#applyPayload}.</p>
+     */
+    private static class UpdateData {
+        private final PayloadSpec mPayload;
+        private final ImmutableList<String> mExtraProperties;
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        UpdateData(Builder builder) {
+            this.mPayload = builder.mPayload;
+            this.mExtraProperties = ImmutableList.copyOf(builder.mExtraProperties);
+        }
+
+        public PayloadSpec getPayload() {
+            return mPayload;
+        }
+
+        public ImmutableList<String> getExtraProperties() {
+            return mExtraProperties;
+        }
+
+        public Builder toBuilder() {
+            return builder()
+                    .setPayload(mPayload)
+                    .setExtraProperties(mExtraProperties);
+        }
+
+        static class Builder {
+            private PayloadSpec mPayload;
+            private List<String> mExtraProperties;
+
+            public Builder setPayload(PayloadSpec payload) {
+                this.mPayload = payload;
+                return this;
+            }
+
+            public Builder setExtraProperties(List<String> extraProperties) {
+                this.mExtraProperties = new ArrayList<>(extraProperties);
+                return this;
+            }
+
+            public Builder addExtraProperty(String property) {
+                if (this.mExtraProperties == null) {
+                    this.mExtraProperties = new ArrayList<>();
+                }
+                this.mExtraProperties.add(property);
+                return this;
+            }
+
+            public UpdateData build() {
+                return new UpdateData(this);
+            }
         }
     }
 

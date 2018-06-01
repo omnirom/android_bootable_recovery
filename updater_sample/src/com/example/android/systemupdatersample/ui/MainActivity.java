@@ -33,11 +33,11 @@ import android.widget.TextView;
 import com.example.android.systemupdatersample.R;
 import com.example.android.systemupdatersample.UpdateConfig;
 import com.example.android.systemupdatersample.UpdateManager;
+import com.example.android.systemupdatersample.UpdaterState;
 import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateConfigs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineStatuses;
-import com.example.android.systemupdatersample.util.UpdaterStates;
 
 import java.util.List;
 
@@ -108,12 +108,16 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        // TODO(zhomart) load saved states
+        // Binding to UpdateEngine invokes onStatusUpdate callback,
+        // persisted updater state has to be loaded and prepared beforehand.
         this.mUpdateManager.bind();
     }
 
     @Override
     protected void onPause() {
         this.mUpdateManager.unbind();
+        // TODO(zhomart) save state
         super.onPause();
     }
 
@@ -192,7 +196,7 @@ public class MainActivity extends Activity {
     /**
      * Invoked when SystemUpdaterSample app state changes.
      * Value of {@code state} will be one of the
-     * values from {@link UpdaterStates}.
+     * values from {@link UpdaterState}.
      */
     private void onUpdaterStateChange(int state) {
         Log.i(TAG, "onUpdaterStateChange invoked state=" + state);
@@ -233,8 +237,8 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> {
             Log.i(TAG,
                     "Completed - errorCode="
-                    + UpdateEngineErrorCodes.getCodeName(errorCode) + "/" + errorCode
-                    + " " + completionState);
+                            + UpdateEngineErrorCodes.getCodeName(errorCode) + "/" + errorCode
+                            + " " + completionState);
             setUiEngineErrorCode(errorCode);
             if (errorCode == UpdateEngineErrorCodes.UPDATED_BUT_NOT_ACTIVE) {
                 // if update was successfully applied.
@@ -323,7 +327,7 @@ public class MainActivity extends Activity {
      * @param state updater sample state
      */
     private void setUiUpdaterState(int state) {
-        String stateText = UpdaterStates.getStateText(state);
+        String stateText = UpdaterState.getStateText(state);
         mTextViewUpdaterState.setText(stateText + "/" + state);
     }
 
