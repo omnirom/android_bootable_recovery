@@ -751,7 +751,7 @@ static void DeleteStash(const std::string& base) {
   }
 }
 
-static int LoadStash(CommandParameters& params, const std::string& id, bool verify, size_t* blocks,
+static int LoadStash(CommandParameters& params, const std::string& id, bool verify,
                      std::vector<uint8_t>& buffer, bool printnoent) {
   // In verify mode, if source range_set was saved for the given hash, check contents in the source
   // blocks first. If the check fails, search for the stashed files on /cache as usual.
@@ -771,11 +771,6 @@ static int LoadStash(CommandParameters& params, const std::string& id, bool veri
       }
       return 0;
     }
-  }
-
-  size_t blockcount = 0;
-  if (!blocks) {
-    blocks = &blockcount;
   }
 
   std::string fn = GetStashFileName(params.stashbase, id, "");
@@ -808,9 +803,8 @@ static int LoadStash(CommandParameters& params, const std::string& id, bool veri
     return -1;
   }
 
-  *blocks = sb.st_size / BLOCKSIZE;
-
-  if (verify && VerifyBlocks(id, buffer, *blocks, true) != 0) {
+  size_t blocks = sb.st_size / BLOCKSIZE;
+  if (verify && VerifyBlocks(id, buffer, blocks, true) != 0) {
     LOG(ERROR) << "unexpected contents in " << fn;
     if (stash_map.find(id) == stash_map.end()) {
       LOG(ERROR) << "failed to find source blocks number for stash " << id
@@ -1056,7 +1050,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
     }
 
     std::vector<uint8_t> stash;
-    if (LoadStash(params, tokens[0], false, nullptr, stash, true) == -1) {
+    if (LoadStash(params, tokens[0], false, stash, true) == -1) {
       // These source blocks will fail verification if used later, but we
       // will let the caller decide if this is a fatal failure
       LOG(ERROR) << "failed to load stash " << tokens[0];
@@ -1171,7 +1165,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* 
     return 0;
   }
 
-  if (*overlap && LoadStash(params, srchash, true, nullptr, params.buffer, true) == 0) {
+  if (*overlap && LoadStash(params, srchash, true, params.buffer, true) == 0) {
     // Overlapping source blocks were previously stashed, command can proceed. We are recovering
     // from an interrupted command, so we don't know if the stash can safely be deleted after this
     // command.
@@ -1237,8 +1231,7 @@ static int PerformCommandStash(CommandParameters& params) {
   }
 
   const std::string& id = params.tokens[params.cpos++];
-  size_t blocks = 0;
-  if (LoadStash(params, id, true, &blocks, params.buffer, false) == 0) {
+  if (LoadStash(params, id, true, params.buffer, false) == 0) {
     // Stash file already exists and has expected contents. Do not read from source again, as the
     // source may have been already overwritten during a previous attempt.
     return 0;
@@ -1247,11 +1240,11 @@ static int PerformCommandStash(CommandParameters& params) {
   RangeSet src = RangeSet::Parse(params.tokens[params.cpos++]);
   CHECK(static_cast<bool>(src));
 
-  allocate(src.blocks() * BLOCKSIZE, params.buffer);
+  size_t blocks = src.blocks();
+  allocate(blocks * BLOCKSIZE, params.buffer);
   if (ReadBlocks(src, params.buffer, params.fd) == -1) {
     return -1;
   }
-  blocks = src.blocks();
   stash_map[id] = src;
 
   if (VerifyBlocks(id, params.buffer, blocks, true) != 0) {
