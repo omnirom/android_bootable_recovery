@@ -145,6 +145,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
     adb_install.cpp \
+    fsck_unshare_blocks.cpp \
     fuse_sdcard_provider.cpp \
     install.cpp \
     recovery.cpp \
@@ -202,6 +203,13 @@ ifeq ($(HOST_OS),linux)
 LOCAL_REQUIRED_MODULES += \
     sload.f2fs \
     mkfs.f2fs
+endif
+endif
+
+# e2fsck is needed for adb remount -R.
+ifeq ($(BOARD_EXT4_SHARE_DUP_BLOCKS),true)
+ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
+LOCAL_REQUIRED_MODULES += e2fsck_static
 endif
 endif
 
