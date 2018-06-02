@@ -51,12 +51,21 @@ const GRFont* gr_sys_font() {
 }
 
 int gr_measure(const GRFont* font, const char* s) {
+  if (font == nullptr) {
+    return -1;
+  }
+
   return font->char_width * strlen(s);
 }
 
-void gr_font_size(const GRFont* font, int* x, int* y) {
+int gr_font_size(const GRFont* font, int* x, int* y) {
+  if (font == nullptr) {
+    return -1;
+  }
+
   *x = font->char_width;
   *y = font->char_height;
+  return 0;
 }
 
 // Blends gr_current onto pix value, assumes alpha as most significant byte.
@@ -319,8 +328,8 @@ void gr_flip() {
 int gr_init() {
   int ret = gr_init_font("font", &gr_font);
   if (ret != 0) {
-    printf("Failed to init font: %d\n", ret);
-    return -1;
+    printf("Failed to init font: %d, continuing graphic backend initialization without font file\n",
+           ret);
   }
 
   auto backend = std::unique_ptr<MinuiBackend>{ std::make_unique<MinuiBackendAdf>() };
