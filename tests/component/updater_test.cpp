@@ -828,3 +828,230 @@ TEST_F(UpdaterTest, last_command_verify) {
   RunBlockImageUpdate(true, entries, image_file_, "t");
   ASSERT_EQ(-1, access(last_command_file_.c_str(), R_OK));
 }
+
+class ResumableUpdaterTest : public testing::TestWithParam<size_t> {
+ protected:
+  void SetUp() override {
+    RegisterBuiltins();
+    RegisterInstallFunctions();
+    RegisterBlockImageFunctions();
+
+    Paths::Get().set_cache_temp_source(temp_saved_source_.path);
+    Paths::Get().set_last_command_file(temp_last_command_.path);
+    Paths::Get().set_stash_directory_base(temp_stash_base_.path);
+
+    index_ = GetParam();
+    image_file_ = image_temp_file_.path;
+    last_command_file_ = temp_last_command_.path;
+  }
+
+  void TearDown() override {
+    // Clean up the last_command_file if any.
+    ASSERT_TRUE(android::base::RemoveFileIfExists(last_command_file_));
+
+    // Clear partition updated marker if any.
+    std::string updated_marker{ temp_stash_base_.path };
+    updated_marker += "/" + get_sha1(image_temp_file_.path) + ".UPDATED";
+    ASSERT_TRUE(android::base::RemoveFileIfExists(updated_marker));
+  }
+
+  TemporaryFile temp_saved_source_;
+  TemporaryDir temp_stash_base_;
+  std::string last_command_file_;
+  std::string image_file_;
+  size_t index_;
+
+ private:
+  TemporaryFile temp_last_command_;
+  TemporaryFile image_temp_file_;
+};
+
+static std::string g_source_image;
+static std::string g_target_image;
+static PackageEntries g_entries;
+
+static std::vector<std::string> GenerateTransferList() {
+  std::string a(4096, 'a');
+  std::string b(4096, 'b');
+  std::string c(4096, 'c');
+  std::string d(4096, 'd');
+  std::string e(4096, 'e');
+  std::string f(4096, 'f');
+  std::string g(4096, 'g');
+  std::string h(4096, 'h');
+  std::string i(4096, 'i');
+  std::string zero(4096, '\0');
+
+  std::string a_hash = get_sha1(a);
+  std::string b_hash = get_sha1(b);
+  std::string c_hash = get_sha1(c);
+  std::string e_hash = get_sha1(e);
+
+  auto loc = [](const std::string& range_text) {
+    std::vector<std::string> pieces = android::base::Split(range_text, "-");
+    size_t left;
+    size_t right;
+    if (pieces.size() == 1) {
+      CHECK(android::base::ParseUint(pieces[0], &left));
+      right = left + 1;
+    } else {
+      CHECK_EQ(2u, pieces.size());
+      CHECK(android::base::ParseUint(pieces[0], &left));
+      CHECK(android::base::ParseUint(pieces[1], &right));
+      right++;
+    }
+    return android::base::StringPrintf("2,%zu,%zu", left, right);
+  };
+
+  // patch 1: "b d c" -> "g"
+  TemporaryFile patch_file_bdc_g;
+  std::string bdc = b + d + c;
+  std::string bdc_hash = get_sha1(bdc);
+  std::string g_hash = get_sha1(g);
+  CHECK_EQ(0, bsdiff::bsdiff(reinterpret_cast<const uint8_t*>(bdc.data()), bdc.size(),
+                             reinterpret_cast<const uint8_t*>(g.data()), g.size(),
+                             patch_file_bdc_g.path, nullptr));
+  std::string patch_bdc_g;
+  CHECK(android::base::ReadFileToString(patch_file_bdc_g.path, &patch_bdc_g));
+
+  // patch 2: "a b c d" -> "d c b"
+  TemporaryFile patch_file_abcd_dcb;
+  std::string abcd = a + b + c + d;
+  std::string abcd_hash = get_sha1(abcd);
+  std::string dcb = d + c + b;
+  std::string dcb_hash = get_sha1(dcb);
+  CHECK_EQ(0, bsdiff::bsdiff(reinterpret_cast<const uint8_t*>(abcd.data()), abcd.size(),
+                             reinterpret_cast<const uint8_t*>(dcb.data()), dcb.size(),
+                             patch_file_abcd_dcb.path, nullptr));
+  std::string patch_abcd_dcb;
+  CHECK(android::base::ReadFileToString(patch_file_abcd_dcb.path, &patch_abcd_dcb));
+
+  std::vector<std::string> transfer_list{
+    "4",
+    "10",  // total blocks written
+    "2",   // maximum stash entries
+    "2",   // maximum number of stashed blocks
+
+    // a b c d e a b c d e
+    "stash " + b_hash + " " + loc("1"),
+    // a b c d e a b c d e    [b(1)]
+    "stash " + c_hash + " " + loc("2"),
+    // a b c d e a b c d e    [b(1)][c(2)]
+    "new " + loc("1-2"),
+    // a i h d e a b c d e    [b(1)][c(2)]
+    "zero " + loc("0"),
+    // 0 i h d e a b c d e    [b(1)][c(2)]
+
+    // bsdiff "b d c" (from stash, 3, stash) to get g(3)
+    android::base::StringPrintf(
+        "bsdiff 0 %zu %s %s %s 3 %s %s %s:%s %s:%s",
+        patch_bdc_g.size(),                  // patch start (0), patch length
+        bdc_hash.c_str(),                    // source hash
+        g_hash.c_str(),                      // target hash
+        loc("3").c_str(),                    // target range
+        loc("3").c_str(), loc("1").c_str(),  // load "d" from block 3, into buffer at offset 1
+        b_hash.c_str(), loc("0").c_str(),    // load "b" from stash, into buffer at offset 0
+        c_hash.c_str(), loc("2").c_str()),   // load "c" from stash, into buffer at offset 2
+
+    // 0 i h g e a b c d e    [b(1)][c(2)]
+    "free " + b_hash,
+    // 0 i h g e a b c d e    [c(2)]
+    "free " + a_hash,
+    // 0 i h g e a b c d e
+    "stash " + a_hash + " " + loc("5"),
+    // 0 i h g e a b c d e    [a(5)]
+    "move " + e_hash + " " + loc("5") + " 1 " + loc("4"),
+    // 0 i h g e e b c d e    [a(5)]
+
+    // bsdiff "a b c d" (from stash, 6-8) to "d c b" (6-8)
+    android::base::StringPrintf(  //
+        "bsdiff %zu %zu %s %s %s 4 %s %s %s:%s",
+        patch_bdc_g.size(),                          // patch start
+        patch_bdc_g.size() + patch_abcd_dcb.size(),  // patch length
+        abcd_hash.c_str(),                           // source hash
+        dcb_hash.c_str(),                            // target hash
+        loc("6-8").c_str(),                          // target range
+        loc("6-8").c_str(),                          // load "b c d" from blocks 6-8
+        loc("1-3").c_str(),                          //   into buffer at offset 1-3
+        a_hash.c_str(),                              // load "a" from stash
+        loc("0").c_str()),                           //   into buffer at offset 0
+
+    // 0 i h g e e d c b e    [a(5)]
+    "new " + loc("4"),
+    // 0 i h g f e d c b e    [a(5)]
+    "move " + a_hash + " " + loc("9") + " 1 - " + a_hash + ":" + loc("0"),
+    // 0 i h g f e d c b a    [a(5)]
+    "free " + a_hash,
+    // 0 i h g f e d c b a
+  };
+
+  std::string new_data = i + h + f;
+  std::string patch_data = patch_bdc_g + patch_abcd_dcb;
+
+  g_entries = {
+    { "new_data", new_data },
+    { "patch_data", patch_data },
+  };
+  g_source_image = a + b + c + d + e + a + b + c + d + e;
+  g_target_image = zero + i + h + g + f + e + d + c + b + a;
+
+  return transfer_list;
+}
+
+static const std::vector<std::string> g_transfer_list = GenerateTransferList();
+
+INSTANTIATE_TEST_CASE_P(InterruptAfterEachCommand, ResumableUpdaterTest,
+                        ::testing::Range(static_cast<size_t>(0),
+                                         g_transfer_list.size() - kTransferListHeaderLines));
+
+TEST_P(ResumableUpdaterTest, InterruptVerifyResume) {
+  ASSERT_TRUE(android::base::WriteStringToFile(g_source_image, image_file_));
+
+  LOG(INFO) << "Interrupting at line " << index_ << " ("
+            << g_transfer_list[kTransferListHeaderLines + index_] << ")";
+
+  std::vector<std::string> transfer_list_copy{ g_transfer_list };
+  transfer_list_copy[kTransferListHeaderLines + index_] = "fail";
+
+  g_entries["transfer_list"] = android::base::Join(transfer_list_copy, '\n');
+
+  // Run update that's expected to fail.
+  RunBlockImageUpdate(false, g_entries, image_file_, "");
+
+  std::string last_command_expected;
+
+  // Assert the last_command_file.
+  if (index_ == 0) {
+    ASSERT_EQ(-1, access(last_command_file_.c_str(), R_OK));
+  } else {
+    last_command_expected =
+        std::to_string(index_ - 1) + "\n" + g_transfer_list[kTransferListHeaderLines + index_ - 1];
+    std::string last_command_actual;
+    ASSERT_TRUE(android::base::ReadFileToString(last_command_file_, &last_command_actual));
+    ASSERT_EQ(last_command_expected, last_command_actual);
+  }
+
+  g_entries["transfer_list"] = android::base::Join(g_transfer_list, '\n');
+
+  // Resume the interrupted update, by doing verification first.
+  RunBlockImageUpdate(true, g_entries, image_file_, "t");
+
+  // last_command_file should remain intact.
+  if (index_ == 0) {
+    ASSERT_EQ(-1, access(last_command_file_.c_str(), R_OK));
+  } else {
+    std::string last_command_actual;
+    ASSERT_TRUE(android::base::ReadFileToString(last_command_file_, &last_command_actual));
+    ASSERT_EQ(last_command_expected, last_command_actual);
+  }
+
+  // Resume the update.
+  RunBlockImageUpdate(false, g_entries, image_file_, "t");
+
+  // last_command_file should be gone after successful update.
+  ASSERT_EQ(-1, access(last_command_file_.c_str(), R_OK));
+
+  std::string updated_image_actual;
+  ASSERT_TRUE(android::base::ReadFileToString(image_file_, &updated_image_actual));
+  ASSERT_EQ(g_target_image, updated_image_actual);
+}
