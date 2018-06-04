@@ -30,6 +30,7 @@
 
 #include "common/test_constants.h"
 #include "device.h"
+#include "minui/minui.h"
 #include "otautil/paths.h"
 #include "private/resources.h"
 #include "screen_ui.h"
@@ -274,18 +275,34 @@ class ScreenRecoveryUITest : public ::testing::Test {
   const std::string kTestRtlLocaleWithSuffix = "ar-EG";
 
   void SetUp() override {
-    ui_ = std::make_unique<TestableScreenRecoveryUI>();
+    has_graphics_ = gr_init() == 0;
+    gr_exit();
+
+    if (has_graphics_) {
+      ui_ = std::make_unique<TestableScreenRecoveryUI>();
+    }
 
     testdata_dir_ = from_testdata_base("");
     Paths::Get().set_resource_dir(testdata_dir_);
     res_set_resource_dir(testdata_dir_);
   }
 
+  bool has_graphics_;
   std::unique_ptr<TestableScreenRecoveryUI> ui_;
   std::string testdata_dir_;
 };
 
+#define RETURN_IF_NO_GRAPHICS                                                 \
+  do {                                                                        \
+    if (!has_graphics_) {                                                     \
+      GTEST_LOG_(INFO) << "Test skipped due to no available graphics device"; \
+      return;                                                                 \
+    }                                                                         \
+  } while (false)
+
 TEST_F(ScreenRecoveryUITest, Init) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ASSERT_EQ(kTestLocale, ui_->GetLocale());
   ASSERT_FALSE(ui_->GetRtlLocale());
@@ -299,6 +316,8 @@ TEST_F(ScreenRecoveryUITest, dtor_NotCallingInit) {
 }
 
 TEST_F(ScreenRecoveryUITest, ShowText) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ASSERT_FALSE(ui_->IsTextVisible());
   ui_->ShowText(true);
@@ -311,16 +330,22 @@ TEST_F(ScreenRecoveryUITest, ShowText) {
 }
 
 TEST_F(ScreenRecoveryUITest, RtlLocale) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestRtlLocale));
   ASSERT_TRUE(ui_->GetRtlLocale());
 }
 
 TEST_F(ScreenRecoveryUITest, RtlLocaleWithSuffix) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestRtlLocaleWithSuffix));
   ASSERT_TRUE(ui_->GetRtlLocale());
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ui_->SetKeyBuffer({
       KeyCode::UP,
@@ -347,6 +372,8 @@ TEST_F(ScreenRecoveryUITest, ShowMenu) {
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu_NotMenuOnly) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ui_->SetKeyBuffer({
       KeyCode::MAGIC,
@@ -358,6 +385,8 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_NotMenuOnly) {
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ui_->SetKeyBuffer({
       KeyCode::TIMEOUT,
@@ -366,6 +395,8 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut) {
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ui_->ShowText(true);
   ui_->ShowText(false);
@@ -382,6 +413,8 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
 }
 
 TEST_F(ScreenRecoveryUITest, LoadAnimation) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestLocale));
   // Make a few copies of loop00000.png from testdata.
   std::string image_data;
@@ -410,6 +443,8 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation) {
 }
 
 TEST_F(ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
+  RETURN_IF_NO_GRAPHICS;
+
   ASSERT_TRUE(ui_->Init(kTestLocale));
   TemporaryDir resource_dir;
   Paths::Get().set_resource_dir(resource_dir.path);
@@ -417,3 +452,5 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(ui_->RunLoadAnimation(), ::testing::KilledBySignal(SIGABRT), "");
 }
+
+#undef RETURN_IF_NO_GRAPHICS
