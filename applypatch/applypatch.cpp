@@ -49,8 +49,6 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
                           const std::string& target_filename,
                           const uint8_t target_sha1[SHA_DIGEST_LENGTH], const Value* bonus_data);
 
-// Read a file into memory; store the file contents and associated metadata in *file.
-// Return 0 on success.
 int LoadFileContents(const char* filename, FileContents* file) {
   // A special 'filename' beginning with "EMMC:" means to load the contents of a partition.
   if (strncmp(filename, "EMMC:", 5) == 0) {
@@ -80,20 +78,16 @@ int LoadFileContents(const char* filename, FileContents* file) {
   return 0;
 }
 
-// Load the contents of an EMMC partition into the provided
-// FileContents.  filename should be a string of the form
-// "EMMC:<partition_device>:...".  The smallest size_n bytes for
-// which that prefix of the partition contents has the corresponding
-// sha1 hash will be loaded.  It is acceptable for a size value to be
-// repeated with different sha1s.  Will return 0 on success.
+// Loads the contents of an EMMC partition into the provided FileContents. filename should be a
+// string of the form "EMMC:<partition_device>:...". The smallest size_n bytes for which that prefix
+// of the partition contents has the corresponding sha1 hash will be loaded. It is acceptable for a
+// size value to be repeated with different sha1s. Returns 0 on success.
 //
-// This complexity is needed because if an OTA installation is
-// interrupted, the partition might contain either the source or the
-// target data, which might be of different lengths.  We need to know
-// the length in order to read from a partition (there is no
-// "end-of-file" marker), so the caller must specify the possible
-// lengths and the hash of the data, and we'll do the load expecting
-// to find one of those hashes.
+// This complexity is needed because if an OTA installation is interrupted, the partition might
+// contain either the source or the target data, which might be of different lengths. We need to
+// know the length in order to read from a partition (there is no "end-of-file" marker), so the
+// caller must specify the possible lengths and the hash of the data, and we'll do the load
+// expecting to find one of those hashes.
 static int LoadPartitionContents(const std::string& filename, FileContents* file) {
   std::vector<std::string> pieces = android::base::Split(filename, ":");
   if (pieces.size() < 4 || pieces.size() % 2 != 0 || pieces[0] != "EMMC") {
@@ -184,8 +178,6 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
   return 0;
 }
 
-// Save the contents of the given FileContents object under the given
-// filename.  Return 0 on success.
 int SaveFileContents(const char* filename, const FileContents* file) {
   unique_fd fd(ota_open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
   if (fd == -1) {
@@ -211,11 +203,10 @@ int SaveFileContents(const char* filename, const FileContents* file) {
   return 0;
 }
 
-// Write a memory buffer to 'target' partition, a string of the form
-// "EMMC:<partition_device>[:...]". The target name
-// might contain multiple colons, but WriteToPartition() only uses the first
-// two and ignores the rest. Return 0 on success.
-int WriteToPartition(const unsigned char* data, size_t len, const std::string& target) {
+// Writes a memory buffer to 'target' partition, a string of the form
+// "EMMC:<partition_device>[:...]". The target name might contain multiple colons, but
+// WriteToPartition() only uses the first two and ignores the rest. Returns 0 on success.
+static int WriteToPartition(const unsigned char* data, size_t len, const std::string& target) {
   std::vector<std::string> pieces = android::base::Split(target, ":");
   if (pieces.size() < 2 || pieces[0] != "EMMC") {
     printf("WriteToPartition called with bad target (%s)\n", target.c_str());
@@ -343,42 +334,37 @@ int WriteToPartition(const unsigned char* data, size_t len, const std::string& t
   return 0;
 }
 
-// Take a string 'str' of 40 hex digits and parse it into the 20
-// byte array 'digest'.  'str' may contain only the digest or be of
-// the form "<digest>:<anything>".  Return 0 on success, -1 on any
-// error.
 int ParseSha1(const char* str, uint8_t* digest) {
-    const char* ps = str;
-    uint8_t* pd = digest;
-    for (int i = 0; i < SHA_DIGEST_LENGTH * 2; ++i, ++ps) {
-        int digit;
-        if (*ps >= '0' && *ps <= '9') {
-            digit = *ps - '0';
-        } else if (*ps >= 'a' && *ps <= 'f') {
-            digit = *ps - 'a' + 10;
-        } else if (*ps >= 'A' && *ps <= 'F') {
-            digit = *ps - 'A' + 10;
-        } else {
-            return -1;
-        }
-        if (i % 2 == 0) {
-            *pd = digit << 4;
-        } else {
-            *pd |= digit;
-            ++pd;
-        }
+  const char* ps = str;
+  uint8_t* pd = digest;
+  for (int i = 0; i < SHA_DIGEST_LENGTH * 2; ++i, ++ps) {
+    int digit;
+    if (*ps >= '0' && *ps <= '9') {
+      digit = *ps - '0';
+    } else if (*ps >= 'a' && *ps <= 'f') {
+      digit = *ps - 'a' + 10;
+    } else if (*ps >= 'A' && *ps <= 'F') {
+      digit = *ps - 'A' + 10;
+    } else {
+      return -1;
     }
-    if (*ps != '\0') return -1;
-    return 0;
+    if (i % 2 == 0) {
+      *pd = digit << 4;
+    } else {
+      *pd |= digit;
+      ++pd;
+    }
+  }
+  if (*ps != '\0') return -1;
+  return 0;
 }
 
-// Search an array of sha1 strings for one matching the given sha1.
-// Return the index of the match on success, or -1 if no match is
-// found.
-static int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patch_sha1_str) {
-  for (size_t i = 0; i < patch_sha1_str.size(); ++i) {
+// Searches a vector of SHA-1 strings for one matching the given SHA-1. Returns the index of the
+// match on success, or -1 if no match is found.
+static int FindMatchingPatch(const uint8_t* sha1, const std::vector<std::string>& patch_sha1s) {
+  for (size_t i = 0; i < patch_sha1s.size(); ++i) {
     uint8_t patch_sha1[SHA_DIGEST_LENGTH];
-    if (ParseSha1(patch_sha1_str[i].c_str(), patch_sha1) == 0 &&
+    if (ParseSha1(patch_sha1s[i].c_str(), patch_sha1) == 0 &&
         memcmp(patch_sha1, sha1, SHA_DIGEST_LENGTH) == 0) {
       return i;
     }
@@ -386,29 +372,24 @@ static int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patc
   return -1;
 }
 
-// Returns 0 if the contents of the file (argv[2]) or the cached file
-// match any of the sha1's on the command line (argv[3:]).  Returns
-// nonzero otherwise.
-int applypatch_check(const char* filename, const std::vector<std::string>& patch_sha1_str) {
+int applypatch_check(const char* filename, const std::vector<std::string>& patch_sha1s) {
+  // It's okay to specify no SHA-1s; the check will pass if the LoadFileContents is successful.
+  // (Useful for reading partitions, where the filename encodes the SHA-1s; no need to check them
+  // twice.)
   FileContents file;
-
-  // It's okay to specify no sha1s; the check will pass if the
-  // LoadFileContents is successful.  (Useful for reading
-  // partitions, where the filename encodes the sha1s; no need to
-  // check them twice.)
   if (LoadFileContents(filename, &file) != 0 ||
-      (!patch_sha1_str.empty() && FindMatchingPatch(file.sha1, patch_sha1_str) < 0)) {
+      (!patch_sha1s.empty() && FindMatchingPatch(file.sha1, patch_sha1s) < 0)) {
     printf("file \"%s\" doesn't have any of expected sha1 sums; checking cache\n", filename);
 
     // If the source file is missing or corrupted, it might be because we were killed in the middle
-    // of patching it.  A copy of it should have been made in cache_temp_source.  If that file
-    // exists and matches the sha1 we're looking for, the check still passes.
+    // of patching it. A copy should have been made in cache_temp_source. If that file exists and
+    // matches the SHA-1 we're looking for, the check still passes.
     if (LoadFileContents(Paths::Get().cache_temp_source().c_str(), &file) != 0) {
       printf("failed to load cache file\n");
       return 1;
     }
 
-    if (FindMatchingPatch(file.sha1, patch_sha1_str) < 0) {
+    if (FindMatchingPatch(file.sha1, patch_sha1s) < 0) {
       printf("cache bits don't match any sha1 for \"%s\"\n", filename);
       return 1;
     }
@@ -417,8 +398,8 @@ int applypatch_check(const char* filename, const std::vector<std::string>& patch
 }
 
 int ShowLicenses() {
-    ShowBSDiffLicense();
-    return 0;
+  ShowBSDiffLicense();
+  return 0;
 }
 
 static size_t FileSink(const unsigned char* data, size_t len, int fd) {
@@ -434,8 +415,6 @@ static size_t FileSink(const unsigned char* data, size_t len, int fd) {
   return done;
 }
 
-// Return the amount of free space (in bytes) on the filesystem
-// containing filename.  filename must exist.  Return -1 on error.
 size_t FreeSpaceForFile(const std::string& filename) {
   struct statfs sf;
   if (statfs(filename.c_str(), &sf) != 0) {
@@ -446,37 +425,16 @@ size_t FreeSpaceForFile(const std::string& filename) {
 }
 
 int CacheSizeCheck(size_t bytes) {
-    if (MakeFreeSpaceOnCache(bytes) < 0) {
-        printf("unable to make %zu bytes available on /cache\n", bytes);
-        return 1;
-    }
-    return 0;
+  if (MakeFreeSpaceOnCache(bytes) < 0) {
+    printf("unable to make %zu bytes available on /cache\n", bytes);
+    return 1;
+  }
+  return 0;
 }
 
-// This function applies binary patches to EMMC target files in a way that is safe (the original
-// file is not touched until we have the desired replacement for it) and idempotent (it's okay to
-// run this program multiple times).
-//
-// - If the SHA-1 hash of <target_filename> is <target_sha1_string>, does nothing and exits
-//   successfully.
-//
-// - Otherwise, if the SHA-1 hash of <source_filename> is one of the entries in <patch_sha1_str>,
-//   the corresponding patch from <patch_data> (which must be a VAL_BLOB) is applied to produce a
-//   new file (the type of patch is automatically detected from the blob data). If that new file
-//   has SHA-1 hash <target_sha1_str>, moves it to replace <target_filename>, and exits
-//   successfully. Note that if <source_filename> and <target_filename> are not the same,
-//   <source_filename> is NOT deleted on success. <target_filename> may be the string "-" to mean
-//   "the same as <source_filename>".
-//
-// - Otherwise, or if any error is encountered, exits with non-zero status.
-//
-// <source_filename> must refer to an EMMC partition to read the source data. See the comments for
-// the LoadPartitionContents() function above for the format of such a filename. <target_size> has
-// become obsolete since we have dropped the support for patching non-EMMC targets (EMMC targets
-// have the size embedded in the filename).
 int applypatch(const char* source_filename, const char* target_filename,
                const char* target_sha1_str, size_t /* target_size */,
-               const std::vector<std::string>& patch_sha1_str,
+               const std::vector<std::string>& patch_sha1s,
                const std::vector<std::unique_ptr<Value>>& patch_data, const Value* bonus_data) {
   printf("patch %s: ", source_filename);
 
@@ -515,7 +473,7 @@ int applypatch(const char* source_filename, const char* target_filename,
   }
 
   if (!source_file.data.empty()) {
-    int to_use = FindMatchingPatch(source_file.sha1, patch_sha1_str);
+    int to_use = FindMatchingPatch(source_file.sha1, patch_sha1s);
     if (to_use != -1) {
       return GenerateTarget(source_file, patch_data[to_use], target_filename, target_sha1,
                             bonus_data);
@@ -530,7 +488,7 @@ int applypatch(const char* source_filename, const char* target_filename,
     return 1;
   }
 
-  int to_use = FindMatchingPatch(copy_file.sha1, patch_sha1_str);
+  int to_use = FindMatchingPatch(copy_file.sha1, patch_sha1s);
   if (to_use == -1) {
     printf("copy file doesn't match source SHA-1s either\n");
     return 1;
@@ -539,13 +497,6 @@ int applypatch(const char* source_filename, const char* target_filename,
   return GenerateTarget(copy_file, patch_data[to_use], target_filename, target_sha1, bonus_data);
 }
 
-/*
- * This function flashes a given image to the target partition. It verifies
- * the target cheksum first, and will return if target has the desired hash.
- * It checks the checksum of the given source image before flashing, and
- * verifies the target partition afterwards. The function is idempotent.
- * Returns zero on success.
- */
 int applypatch_flash(const char* source_filename, const char* target_filename,
                      const char* target_sha1_str, size_t target_size) {
   printf("flash %s: ", target_filename);
