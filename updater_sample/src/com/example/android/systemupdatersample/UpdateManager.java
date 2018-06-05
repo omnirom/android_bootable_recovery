@@ -64,8 +64,8 @@ public class UpdateManager {
 
     private AtomicBoolean mManualSwitchSlotRequired = new AtomicBoolean(true);
 
-    /** Validate state only once when app binds to UpdateEngine. */
-    private AtomicBoolean mStateValidityEnsured = new AtomicBoolean(false);
+    /** Synchronize state with engine status only once when app binds to UpdateEngine. */
+    private AtomicBoolean mStateSynchronized = new AtomicBoolean(false);
 
     @GuardedBy("mLock")
     private UpdateData mLastUpdateData = null;
@@ -90,10 +90,12 @@ public class UpdateManager {
     }
 
     /**
-     * Binds to {@link UpdateEngine}.
+     * Binds to {@link UpdateEngine}. Invokes onStateChangeCallback if present.
      */
     public void bind() {
-        mStateValidityEnsured.set(false);
+        getOnStateChangeCallback().ifPresent(callback -> callback.accept(mUpdaterState.get()));
+
+        mStateSynchronized.set(false);
         this.mUpdateEngine.bind(mUpdateEngineCallback);
     }
 
@@ -104,11 +106,8 @@ public class UpdateManager {
         this.mUpdateEngine.unbind();
     }
 
-    /**
-     * @return a number from {@code 0.0} to {@code 1.0}.
-     */
-    public float getProgress() {
-        return (float) this.mProgress.get();
+    public int getUpdaterState() {
+        return mUpdaterState.get();
     }
 
     /**
@@ -202,18 +201,37 @@ public class UpdateManager {
      * Updates {@link this.mState} and if state is changed,
      * it also notifies {@link this.mOnStateChangeCallback}.
      */
-    private void setUpdaterState(int updaterState) {
+    private void setUpdaterState(int newUpdaterState)
+            throws UpdaterState.InvalidTransitionException {
+        Log.d(TAG, "setUpdaterState invoked newState=" + newUpdaterState);
         int previousState = mUpdaterState.get();
+        mUpdaterState.set(newUpdaterState);
+        if (previousState != newUpdaterState) {
+            getOnStateChangeCallback().ifPresent(callback -> callback.accept(newUpdaterState));
+        }
+    }
+
+    /**
+     * Same as {@link this.setUpdaterState}. Logs the error if new state
+     * cannot be set.
+     */
+    private void setUpdaterStateSilent(int newUpdaterState) {
         try {
-            mUpdaterState.set(updaterState);
+            setUpdaterState(newUpdaterState);
         } catch (UpdaterState.InvalidTransitionException e) {
-            // Note: invalid state transitions should be handled properly,
-            //       but to make sample app simple, we just throw runtime exception.
-            throw new RuntimeException("Can't set state " + updaterState, e);
+            // Most likely UpdateEngine status and UpdaterSample state got de-synchronized.
+            // To make sample app simple, we don't handle it properly.
+            Log.e(TAG, "Failed to set updater state", e);
         }
-        if (previousState != updaterState) {
-            getOnStateChangeCallback().ifPresent(callback -> callback.accept(updaterState));
-        }
+    }
+
+    /**
+     * Creates new UpdaterState, assigns it to {@link this.mUpdaterState},
+     * and notifies callbacks.
+     */
+    private void initializeUpdateState(int state) {
+        this.mUpdaterState = new UpdaterState(state);
+        getOnStateChangeCallback().ifPresent(callback -> callback.accept(state));
     }
 
     /**
@@ -224,13 +242,10 @@ public class UpdateManager {
      * update engine would throw an error when the method is called, and the only way to
      * handle it is to catch the exception.</p>
      */
-    public void cancelRunningUpdate() {
-        try {
-            mUpdateEngine.cancel();
-            setUpdaterState(UpdaterState.IDLE);
-        } catch (Exception e) {
-            Log.w(TAG, "UpdateEngine failed to stop the ongoing update", e);
-        }
+    public synchronized void cancelRunningUpdate() throws UpdaterState.InvalidTransitionException {
+        Log.d(TAG, "cancelRunningUpdate invoked");
+        setUpdaterState(UpdaterState.IDLE);
+        mUpdateEngine.cancel();
     }
 
     /**
@@ -240,13 +255,10 @@ public class UpdateManager {
      * update engine would throw an error when the method is called, and the only way to
      * handle it is to catch the exception.</p>
      */
-    public void resetUpdate() {
-        try {
-            mUpdateEngine.resetStatus();
-            setUpdaterState(UpdaterState.IDLE);
-        } catch (Exception e) {
-            Log.w(TAG, "UpdateEngine failed to reset the update", e);
-        }
+    public synchronized void resetUpdate() throws UpdaterState.InvalidTransitionException {
+        Log.d(TAG, "resetUpdate invoked");
+        setUpdaterState(UpdaterState.IDLE);
+        mUpdateEngine.resetStatus();
     }
 
     /**
@@ -255,7 +267,8 @@ public class UpdateManager {
      * <p>UpdateEngine works asynchronously. This method doesn't wait until
      * end of the update.</p>
      */
-    public void applyUpdate(Context context, UpdateConfig config) {
+    public synchronized void applyUpdate(Context context, UpdateConfig config)
+            throws UpdaterState.InvalidTransitionException {
         mEngineErrorCode.set(UpdateEngineErrorCodes.UNKNOWN);
         setUpdaterState(UpdaterState.RUNNING);
 
@@ -277,7 +290,8 @@ public class UpdateManager {
         }
     }
 
-    private void applyAbNonStreamingUpdate(UpdateConfig config) {
+    private void applyAbNonStreamingUpdate(UpdateConfig config)
+            throws UpdaterState.InvalidTransitionException {
         UpdateData.Builder builder = UpdateData.builder()
                 .setExtraProperties(prepareExtraProperties(config));
 
@@ -306,7 +320,7 @@ public class UpdateManager {
                 updateEngineApplyPayload(builder.build());
             } else {
                 Log.e(TAG, "PrepareStreamingService failed, result code is " + code);
-                setUpdaterState(UpdaterState.ERROR);
+                setUpdaterStateSilent(UpdaterState.ERROR);
             }
         });
     }
@@ -333,6 +347,8 @@ public class UpdateManager {
      * with the given id.</p>
      */
     private void updateEngineApplyPayload(UpdateData update) {
+        Log.d(TAG, "updateEngineApplyPayload invoked with url " + update.mPayload.getUrl());
+
         synchronized (mLock) {
             mLastUpdateData = update;
         }
@@ -348,11 +364,15 @@ public class UpdateManager {
                     properties.toArray(new String[0]));
         } catch (Exception e) {
             Log.e(TAG, "UpdateEngine failed to apply the update", e);
-            setUpdaterState(UpdaterState.ERROR);
+            setUpdaterStateSilent(UpdaterState.ERROR);
         }
     }
 
+    /**
+     * Re-applies {@link this.mLastUpdateData} to update_engine.
+     */
     private void updateEngineReApplyPayload() {
+        Log.d(TAG, "updateEngineReApplyPayload invoked");
         UpdateData lastUpdate;
         synchronized (mLock) {
             // mLastPayloadSpec might be empty in some cases.
@@ -377,8 +397,14 @@ public class UpdateManager {
      * {@link UpdateEngine#applyPayload} might take several seconds to finish, and it will
      * invoke callbacks {@link this#onStatusUpdate} and {@link this#onPayloadApplicationComplete)}.
      */
-    public void setSwitchSlotOnReboot() {
+    public synchronized void setSwitchSlotOnReboot() {
         Log.d(TAG, "setSwitchSlotOnReboot invoked");
+
+        // When mManualSwitchSlotRequired set false, next time
+        // onApplicationPayloadComplete is called,
+        // it will set updater state to REBOOT_REQUIRED.
+        mManualSwitchSlotRequired.set(false);
+
         UpdateData.Builder builder;
         synchronized (mLock) {
             // To make sample app simple, we don't handle it.
@@ -396,65 +422,62 @@ public class UpdateManager {
     }
 
     /**
-     * Verifies if mUpdaterState matches mUpdateEngineStatus.
-     * If they don't match, runs applyPayload to trigger onPayloadApplicationComplete
-     * callback, which updates mUpdaterState.
+     * Synchronize UpdaterState with UpdateEngine status.
+     * Apply necessary UpdateEngine operation if status are out of sync.
+     *
+     * It's expected to be called once when sample app binds itself to UpdateEngine.
      */
-    private void ensureCorrectUpdaterState() {
-        // When mUpdaterState is one of IDLE, PAUSED, ERROR, SLOT_SWITCH_REQUIRED
-        //    then mUpdateEngineStatus must be IDLE.
-        // When mUpdaterState is RUNNING,
-        //    then mUpdateEngineStatus must not be IDLE or UPDATED_NEED_REBOOT.
-        // When mUpdaterState is REBOOT_REQUIRED,
-        //    then mUpdateEngineStatus must be UPDATED_NEED_REBOOT.
+    private void synchronizeUpdaterStateWithUpdateEngineStatus() {
+        Log.d(TAG, "synchronizeUpdaterStateWithUpdateEngineStatus is invoked.");
+
         int state = mUpdaterState.get();
-        int updateEngineStatus = mUpdateEngineStatus.get();
-        if (state == UpdaterState.IDLE
-                || state == UpdaterState.ERROR
-                || state == UpdaterState.PAUSED
-                || state == UpdaterState.SLOT_SWITCH_REQUIRED) {
-            ensureUpdateEngineStatusIdle(state, updateEngineStatus);
-        } else if (state == UpdaterState.RUNNING) {
-            ensureUpdateEngineStatusRunning(state, updateEngineStatus);
-        } else if (state == UpdaterState.REBOOT_REQUIRED) {
-            ensureUpdateEngineStatusReboot(state, updateEngineStatus);
-        }
-    }
+        int engineStatus = mUpdateEngineStatus.get();
 
-    private void ensureUpdateEngineStatusIdle(int state, int updateEngineStatus) {
-        if (updateEngineStatus == UpdateEngine.UpdateStatusConstants.IDLE) {
+        if (engineStatus == UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT) {
+            // If update has been installed before running the sample app,
+            // set state to REBOOT_REQUIRED.
+            initializeUpdateState(UpdaterState.REBOOT_REQUIRED);
             return;
         }
-        // It might happen when update is started not from the sample app.
-        // To make the sample app simple, we won't handle this case.
-        throw new RuntimeException("When mUpdaterState is " + state
-                + " mUpdateEngineStatus expected to be "
-                + UpdateEngine.UpdateStatusConstants.IDLE
-                + ", but it is " + updateEngineStatus);
-    }
 
-    private void ensureUpdateEngineStatusRunning(int state, int updateEngineStatus) {
-        if (updateEngineStatus != UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT
-                && updateEngineStatus != UpdateEngine.UpdateStatusConstants.IDLE) {
-            return;
+        switch (state) {
+            case UpdaterState.IDLE:
+            case UpdaterState.ERROR:
+            case UpdaterState.PAUSED:
+            case UpdaterState.SLOT_SWITCH_REQUIRED:
+                // It might happen when update is started not from the sample app.
+                // To make the sample app simple, we won't handle this case.
+                Preconditions.checkState(
+                        engineStatus == UpdateEngine.UpdateStatusConstants.IDLE,
+                        "When mUpdaterState is %s, mUpdateEngineStatus "
+                                + "must be 0/IDLE, but it is %s",
+                        state,
+                        engineStatus);
+                break;
+            case UpdaterState.RUNNING:
+                if (engineStatus == UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT
+                        || engineStatus == UpdateEngine.UpdateStatusConstants.IDLE) {
+                    Log.i(TAG, "ensureUpdateEngineStatusIsRunning - re-applying last payload");
+                    // Re-apply latest update. It makes update_engine to invoke
+                    // onPayloadApplicationComplete callback. The callback notifies
+                    // if update was successful or not.
+                    updateEngineReApplyPayload();
+                }
+                break;
+            case UpdaterState.REBOOT_REQUIRED:
+                // This might happen when update is installed by other means,
+                // and sample app is not aware of it.
+                // To make the sample app simple, we won't handle this case.
+                Preconditions.checkState(
+                        engineStatus == UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT,
+                        "When mUpdaterState is %s, mUpdateEngineStatus "
+                                + "must be 6/UPDATED_NEED_REBOOT, but it is %s",
+                        state,
+                        engineStatus);
+                break;
+            default:
+                throw new IllegalStateException("This block should not be reached.");
         }
-        // Re-apply latest update. It makes update_engine to invoke
-        // onPayloadApplicationComplete callback. The callback notifies
-        // if update was successful or not.
-        updateEngineReApplyPayload();
-    }
-
-    private void ensureUpdateEngineStatusReboot(int state, int updateEngineStatus) {
-        if (updateEngineStatus == UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT) {
-            return;
-        }
-        // This might happen when update is installed by other means,
-        // and sample app is not aware of it. To make the sample app simple,
-        // we won't handle this case.
-        throw new RuntimeException("When mUpdaterState is " + state
-                + " mUpdateEngineStatus expected to be "
-                + UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT
-                + ", but it is " + updateEngineStatus);
     }
 
     /**
@@ -468,13 +491,19 @@ public class UpdateManager {
      * @param progress a number from 0.0 to 1.0.
      */
     private void onStatusUpdate(int status, float progress) {
+        Log.d(TAG, String.format(
+                        "onStatusUpdate invoked, status=%s, progress=%.2f",
+                        status,
+                        progress));
+
         int previousStatus = mUpdateEngineStatus.get();
         mUpdateEngineStatus.set(status);
         mProgress.set(progress);
 
-        if (!mStateValidityEnsured.getAndSet(true)) {
-            // We ensure correct state once only when sample app is bound to UpdateEngine.
-            ensureCorrectUpdaterState();
+        if (!mStateSynchronized.getAndSet(true)) {
+            // We synchronize state with engine status once
+            // only when sample app is bound to UpdateEngine.
+            synchronizeUpdaterStateWithUpdateEngineStatus();
         }
 
         getOnProgressUpdateCallback().ifPresent(callback -> callback.accept(progress));
@@ -489,11 +518,11 @@ public class UpdateManager {
         mEngineErrorCode.set(errorCode);
         if (errorCode == UpdateEngine.ErrorCodeConstants.SUCCESS
                 || errorCode == UpdateEngineErrorCodes.UPDATED_BUT_NOT_ACTIVE) {
-            setUpdaterState(isManualSwitchSlotRequired()
+            setUpdaterStateSilent(isManualSwitchSlotRequired()
                     ? UpdaterState.SLOT_SWITCH_REQUIRED
                     : UpdaterState.REBOOT_REQUIRED);
         } else if (errorCode != UpdateEngineErrorCodes.USER_CANCELLED) {
-            setUpdaterState(UpdaterState.ERROR);
+            setUpdaterStateSilent(UpdaterState.ERROR);
         }
 
         getOnEngineCompleteCallback()
