@@ -51,12 +51,15 @@ public class UpdaterState {
      * are allowed to transition to from key.
      */
     private static final ImmutableMap<Integer, ImmutableSet<Integer>> TRANSITIONS =
-            ImmutableMap.of(
-                    IDLE, ImmutableSet.of(RUNNING),
-                    RUNNING, ImmutableSet.of(ERROR, PAUSED, REBOOT_REQUIRED, SLOT_SWITCH_REQUIRED),
-                    PAUSED, ImmutableSet.of(RUNNING),
-                    SLOT_SWITCH_REQUIRED, ImmutableSet.of(ERROR)
-            );
+            ImmutableMap.<Integer, ImmutableSet<Integer>>builder()
+                    .put(IDLE, ImmutableSet.of(ERROR, RUNNING))
+                    .put(RUNNING, ImmutableSet.of(
+                            ERROR, PAUSED, REBOOT_REQUIRED, SLOT_SWITCH_REQUIRED))
+                    .put(PAUSED, ImmutableSet.of(ERROR, RUNNING, IDLE))
+                    .put(SLOT_SWITCH_REQUIRED, ImmutableSet.of(ERROR, IDLE))
+                    .put(ERROR, ImmutableSet.of(IDLE))
+                    .put(REBOOT_REQUIRED, ImmutableSet.of(IDLE))
+                    .build();
 
     private AtomicInteger mState;
 
