@@ -1,0 +1,9 @@
+{
+    "__": "*** Generated using tools/gen_update_config.py ***",
+    "ab_config": {
+        "force_switch_slot": false
+    },
+    "ab_install_type": "NON_STREAMING",
+    "name": "S ota_002_package",
+    "url": "file:///data/sample-ota-packages/ota_003_package.zip"
+}

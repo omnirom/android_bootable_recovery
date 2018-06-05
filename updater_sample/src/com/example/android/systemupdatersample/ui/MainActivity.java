@@ -88,7 +88,7 @@ public class MainActivity extends Activity {
 
         this.mTextViewConfigsDirHint.setText(UpdateConfigs.getConfigsRoot(this));
 
-        uiReset();
+        uiResetWidgets();
         loadUpdateConfigs();
 
         this.mUpdateManager.setOnStateChangeCallback(this::onUpdaterStateChange);
@@ -108,7 +108,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        // TODO(zhomart) load saved states
         // Binding to UpdateEngine invokes onStatusUpdate callback,
         // persisted updater state has to be loaded and prepared beforehand.
         this.mUpdateManager.bind();
@@ -117,7 +116,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         this.mUpdateManager.unbind();
-        // TODO(zhomart) save state
         super.onPause();
     }
 
@@ -149,12 +147,20 @@ public class MainActivity extends Activity {
                 .setMessage("Do you really want to apply this update?")
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
-                    uiSetUpdating();
+                    uiResetWidgets();
                     uiResetEngineText();
-                    mUpdateManager.applyUpdate(this, getSelectedConfig());
+                    applyUpdate(getSelectedConfig());
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    private void applyUpdate(UpdateConfig config) {
+        try {
+            mUpdateManager.applyUpdate(this, config);
+        } catch (UpdaterState.InvalidTransitionException e) {
+            Log.e(TAG, "Failed to apply update " + config.getName(), e);
+        }
     }
 
     /**
@@ -166,9 +172,17 @@ public class MainActivity extends Activity {
                 .setMessage("Do you really want to cancel running update?")
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
-                    mUpdateManager.cancelRunningUpdate();
+                    cancelRunningUpdate();
                 })
                 .setNegativeButton(android.R.string.cancel, null).show();
+    }
+
+    private void cancelRunningUpdate() {
+        try {
+            mUpdateManager.cancelRunningUpdate();
+        } catch (UpdaterState.InvalidTransitionException e) {
+            Log.e(TAG, "Failed to cancel running update", e);
+        }
     }
 
     /**
@@ -181,9 +195,17 @@ public class MainActivity extends Activity {
                         + " and restore old version?")
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
-                    mUpdateManager.resetUpdate();
+                    resetUpdate();
                 })
                 .setNegativeButton(android.R.string.cancel, null).show();
+    }
+
+    private void resetUpdate() {
+        try {
+            mUpdateManager.resetUpdate();
+        } catch (UpdaterState.InvalidTransitionException e) {
+            Log.e(TAG, "Failed to reset update", e);
+        }
     }
 
     /**
@@ -199,9 +221,25 @@ public class MainActivity extends Activity {
      * values from {@link UpdaterState}.
      */
     private void onUpdaterStateChange(int state) {
-        Log.i(TAG, "onUpdaterStateChange invoked state=" + state);
+        Log.i(TAG, "UpdaterStateChange state="
+                + UpdaterState.getStateText(state)
+                + "/" + state);
         runOnUiThread(() -> {
             setUiUpdaterState(state);
+
+            if (state == UpdaterState.IDLE) {
+                uiStateIdle();
+            } else if (state == UpdaterState.RUNNING) {
+                uiStateRunning();
+            } else if (state == UpdaterState.PAUSED) {
+                uiStatePaused();
+            } else if (state == UpdaterState.ERROR) {
+                uiStateError();
+            } else if (state == UpdaterState.SLOT_SWITCH_REQUIRED) {
+                uiStateSlotSwitchRequired();
+            } else if (state == UpdaterState.REBOOT_REQUIRED) {
+                uiStateRebootRequired();
+            }
         });
     }
 
@@ -210,17 +248,10 @@ public class MainActivity extends Activity {
      * be one of the values from {@link UpdateEngine.UpdateStatusConstants}.
      */
     private void onEngineStatusUpdate(int status) {
+        Log.i(TAG, "StatusUpdate - status="
+                + UpdateEngineStatuses.getStatusText(status)
+                + "/" + status);
         runOnUiThread(() -> {
-            Log.e(TAG, "StatusUpdate - status="
-                    + UpdateEngineStatuses.getStatusText(status)
-                    + "/" + status);
-            if (status == UpdateEngine.UpdateStatusConstants.IDLE) {
-                Log.d(TAG, "status changed, resetting ui");
-                uiReset();
-            } else {
-                Log.d(TAG, "status changed, setting ui to updating mode");
-                uiSetUpdating();
-            }
             setUiEngineStatus(status);
         });
     }
@@ -234,19 +265,12 @@ public class MainActivity extends Activity {
         final String completionState = UpdateEngineErrorCodes.isUpdateSucceeded(errorCode)
                 ? "SUCCESS"
                 : "FAILURE";
+        Log.i(TAG,
+                "PayloadApplicationCompleted - errorCode="
+                        + UpdateEngineErrorCodes.getCodeName(errorCode) + "/" + errorCode
+                        + " " + completionState);
         runOnUiThread(() -> {
-            Log.i(TAG,
-                    "Completed - errorCode="
-                            + UpdateEngineErrorCodes.getCodeName(errorCode) + "/" + errorCode
-                            + " " + completionState);
             setUiEngineErrorCode(errorCode);
-            if (errorCode == UpdateEngineErrorCodes.UPDATED_BUT_NOT_ACTIVE) {
-                // if update was successfully applied.
-                if (mUpdateManager.isManualSwitchSlotRequired()) {
-                    // Show "Switch Slot" button.
-                    uiShowSwitchSlotInfo();
-                }
-            }
         });
     }
 
@@ -258,45 +282,66 @@ public class MainActivity extends Activity {
     }
 
     /** resets ui */
-    private void uiReset() {
+    private void uiResetWidgets() {
         mTextViewBuild.setText(Build.DISPLAY);
-        mSpinnerConfigs.setEnabled(true);
-        mButtonReload.setEnabled(true);
-        mButtonApplyConfig.setEnabled(true);
+        mSpinnerConfigs.setEnabled(false);
+        mButtonReload.setEnabled(false);
+        mButtonApplyConfig.setEnabled(false);
         mButtonStop.setEnabled(false);
         mButtonReset.setEnabled(false);
-        mProgressBar.setProgress(0);
         mProgressBar.setEnabled(false);
         mProgressBar.setVisibility(ProgressBar.INVISIBLE);
-        uiHideSwitchSlotInfo();
+        mButtonSwitchSlot.setEnabled(false);
+        mTextViewUpdateInfo.setTextColor(Color.parseColor("#aaaaaa"));
     }
 
     private void uiResetEngineText() {
         mTextViewEngineStatus.setText(R.string.unknown);
         mTextViewEngineErrorCode.setText(R.string.unknown);
-        // Note: Do not reset mTextViewUpdaterState; UpdateManager notifies properly.
+        // Note: Do not reset mTextViewUpdaterState; UpdateManager notifies updater state properly.
     }
 
-    /** sets ui updating mode */
-    private void uiSetUpdating() {
-        mTextViewBuild.setText(Build.DISPLAY);
-        mSpinnerConfigs.setEnabled(false);
-        mButtonReload.setEnabled(false);
-        mButtonApplyConfig.setEnabled(false);
-        mButtonStop.setEnabled(true);
+    private void uiStateIdle() {
+        uiResetWidgets();
+        mSpinnerConfigs.setEnabled(true);
+        mButtonReload.setEnabled(true);
+        mButtonApplyConfig.setEnabled(true);
+        mProgressBar.setProgress(0);
+    }
+
+    private void uiStateRunning() {
+        uiResetWidgets();
         mProgressBar.setEnabled(true);
+        mProgressBar.setVisibility(ProgressBar.VISIBLE);
+        mButtonStop.setEnabled(true);
+    }
+
+    private void uiStatePaused() {
+        uiResetWidgets();
         mButtonReset.setEnabled(true);
+        mProgressBar.setEnabled(true);
         mProgressBar.setVisibility(ProgressBar.VISIBLE);
     }
 
-    private void uiShowSwitchSlotInfo() {
+    private void uiStateSlotSwitchRequired() {
+        uiResetWidgets();
+        mButtonReset.setEnabled(true);
+        mProgressBar.setEnabled(true);
+        mProgressBar.setVisibility(ProgressBar.VISIBLE);
         mButtonSwitchSlot.setEnabled(true);
         mTextViewUpdateInfo.setTextColor(Color.parseColor("#777777"));
     }
 
-    private void uiHideSwitchSlotInfo() {
-        mTextViewUpdateInfo.setTextColor(Color.parseColor("#AAAAAA"));
-        mButtonSwitchSlot.setEnabled(false);
+    private void uiStateError() {
+        uiResetWidgets();
+        mButtonReset.setEnabled(true);
+        mProgressBar.setEnabled(true);
+        mProgressBar.setVisibility(ProgressBar.VISIBLE);
+    }
+
+    private void uiStateRebootRequired() {
+        uiResetWidgets();
+        mButtonReset.setEnabled(true);
     }
 
     /**

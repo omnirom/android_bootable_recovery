@@ -60,7 +60,7 @@ public class UpdateConfigTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mTargetContext = InstrumentationRegistry.getTargetContext();
-        mJsonStreaming001 = readResource(R.raw.update_config_stream_001);
+        mJsonStreaming001 = readResource(R.raw.update_config_001_stream);
     }
 
     @Test
