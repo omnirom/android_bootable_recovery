@@ -1498,6 +1498,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
                                       const std::vector<std::unique_ptr<Expr>>& argv,
                                       const CommandMap& command_map, bool dryrun) {
   CommandParameters params = {};
+  stash_map.clear();
   params.canwrite = !dryrun;
 
   LOG(INFO) << "performing " << (dryrun ? "verification" : "update");
