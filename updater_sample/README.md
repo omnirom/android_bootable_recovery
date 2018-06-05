@@ -91,6 +91,31 @@ If they doesn't match, sample app calls `applyPayload` again with the same
 parameters, and handles update completion properly using `onPayloadApplicationCompleted`
 callback. The second problem is solved by adding `PAUSED` updater state.
 
+
+## Sample App UI
+
+### Text fields
+
+- `Current Build:` - shows current active build.
+- `Updater state:` - SystemUpdaterSample app state.
+- `Engine status:` - last reported update_engine status.
+- `Engine error:` - last reported payload application error.
+
+### Buttons
+
+- `Reload` - reloads update configs from device storage.
+- `View config` - shows selected update config.
+- `Apply` - applies selected update config.
+- `Stop` - cancel running update, calls `UpdateEngine#cancel`.
+- `Reset` - reset update, calls `UpdateEngine#resetStatus`, can be called
+            only when update is not running.
+- `Suspend` - suspend running update, uses `UpdateEngine#cancel`.
+- `Resume` - resumes suspended update, uses `UpdateEngine#applyPayload`.
+- `Switch Slot` - if `ab_config.force_switch_slot` config set true,
+            this button will be enabled after payload is applied,
+            to switch A/B slot on next reboot.
+
+
 ## Sending HTTP headers from UpdateEngine
 
 Sometimes OTA package server might require some HTTP headers to be present,
