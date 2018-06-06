@@ -27,6 +27,7 @@
 #include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
 #include <gtest/gtest.h>
+#include <gtest/gtest_prod.h>
 
 #include "common/test_constants.h"
 #include "device.h"
@@ -306,24 +307,13 @@ class TestableScreenRecoveryUI : public ScreenRecoveryUI {
 
   int KeyHandler(int key, bool visible) const;
 
-  // The following functions expose the protected members for test purpose.
-  void RunLoadAnimation() {
-    LoadAnimation();
-  }
-
-  size_t GetLoopFrames() const {
-    return loop_frames;
-  }
-
-  size_t GetIntroFrames() const {
-    return intro_frames;
-  }
-
-  bool GetRtlLocale() const {
-    return rtl_locale_;
-  }
-
  private:
+  FRIEND_TEST(ScreenRecoveryUITest, Init);
+  FRIEND_TEST(ScreenRecoveryUITest, RtlLocale);
+  FRIEND_TEST(ScreenRecoveryUITest, RtlLocaleWithSuffix);
+  FRIEND_TEST(ScreenRecoveryUITest, LoadAnimation);
+  FRIEND_TEST(ScreenRecoveryUITest, LoadAnimation_MissingAnimation);
+
   std::vector<KeyCode> key_buffer_;
   size_t key_buffer_index_;
 };
@@ -387,7 +377,7 @@ TEST_F(ScreenRecoveryUITest, Init) {
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ASSERT_EQ(kTestLocale, ui_->GetLocale());
-  ASSERT_FALSE(ui_->GetRtlLocale());
+  ASSERT_FALSE(ui_->rtl_locale_);
   ASSERT_FALSE(ui_->IsTextVisible());
   ASSERT_FALSE(ui_->WasTextEverVisible());
 }
@@ -415,14 +405,14 @@ TEST_F(ScreenRecoveryUITest, RtlLocale) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestRtlLocale));
-  ASSERT_TRUE(ui_->GetRtlLocale());
+  ASSERT_TRUE(ui_->rtl_locale_);
 }
 
 TEST_F(ScreenRecoveryUITest, RtlLocaleWithSuffix) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestRtlLocaleWithSuffix));
-  ASSERT_TRUE(ui_->GetRtlLocale());
+  ASSERT_TRUE(ui_->rtl_locale_);
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu) {
@@ -547,10 +537,10 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation) {
   }
   Paths::Get().set_resource_dir(resource_dir.path);
 
-  ui_->RunLoadAnimation();
+  ui_->LoadAnimation();
 
-  ASSERT_EQ(2u, ui_->GetIntroFrames());
-  ASSERT_EQ(3u, ui_->GetLoopFrames());
+  ASSERT_EQ(2u, ui_->intro_frames);
+  ASSERT_EQ(3u, ui_->loop_frames);
 
   for (const auto& name : tempfiles) {
     ASSERT_EQ(0, unlink(name.c_str()));
@@ -566,7 +556,7 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
   Paths::Get().set_resource_dir("/proc/self");
 
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(ui_->RunLoadAnimation(), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_EXIT(ui_->LoadAnimation(), ::testing::KilledBySignal(SIGABRT), "");
 }
 
 #undef RETURN_IF_NO_GRAPHICS
