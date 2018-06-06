@@ -173,7 +173,9 @@ ScreenRecoveryUI::ScreenRecoveryUI(bool scrollable_menu)
 
 ScreenRecoveryUI::~ScreenRecoveryUI() {
   progress_thread_stopped_ = true;
-  progress_thread_.join();
+  if (progress_thread_.joinable()) {
+    progress_thread_.join();
+  }
 }
 
 GRSurface* ScreenRecoveryUI::GetCurrentFrame() const {

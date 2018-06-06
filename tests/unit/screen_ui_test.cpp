@@ -293,6 +293,11 @@ TEST_F(ScreenRecoveryUITest, Init) {
   ASSERT_FALSE(ui_->WasTextEverVisible());
 }
 
+TEST_F(ScreenRecoveryUITest, dtor_NotCallingInit) {
+  ui_.reset();
+  ASSERT_FALSE(ui_);
+}
+
 TEST_F(ScreenRecoveryUITest, ShowText) {
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ASSERT_FALSE(ui_->IsTextVisible());
