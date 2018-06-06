@@ -169,6 +169,10 @@ ifneq ($(TW_WHITELIST_INPUT),)
   LOCAL_CFLAGS += -DWHITELIST_INPUT=$(TW_WHITELIST_INPUT)
 endif
 
+ifneq ($(TW_USE_QCOM_HAPTICS_VIBRATOR),)
+  LOCAL_CFLAGS += -DTW_USE_QCOM_HAPTICS_VIBRATOR
+endif
+
 ifeq ($(TW_DISABLE_TTF), true)
     $(warning ****************************************************************************)
     $(warning * TW_DISABLE_TTF support has been deprecated in TWRP.                      *)
