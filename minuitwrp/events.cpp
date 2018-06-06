@@ -39,6 +39,9 @@
 #define VIBRATOR_TIMEOUT_FILE	"/sys/class/timed_output/vibrator/enable"
 #define VIBRATOR_TIME_MS    50
 
+#define LEDS_HAPTICS_DURATION_FILE  "/sys/class/leds/vibrator/duration"
+#define LEDS_HAPTICS_ACTIVATE_FILE  "/sys/class/leds/vibrator/activate"
+
 #ifndef SYN_REPORT
 #define SYN_REPORT          0x00
 #endif
@@ -116,6 +119,29 @@ int vibrate(int timeout_ms)
 
     if (timeout_ms > 10000) timeout_ms = 1000;
 
+#ifdef TW_USE_LEDS_HAPTICS
+    fd = open(LEDS_HAPTICS_DURATION_FILE, O_WRONLY);
+    if (fd < 0)
+        return -1;
+
+    ret = snprintf(str, sizeof(str), "%d", timeout_ms);
+    ret = write(fd, str, ret);
+    close(fd);
+
+    if (ret < 0)
+       return -1;
+
+    fd = open(LEDS_HAPTICS_ACTIVATE_FILE, O_WRONLY);
+    if (fd < 0)
+        return -1;
+
+    ret = snprintf(str, sizeof(str), "%d", 1);
+    ret = write(fd, str, ret);
+    close(fd);
+
+    if (ret < 0)
+       return -1;
+#else
     fd = open(VIBRATOR_TIMEOUT_FILE, O_WRONLY);
     if (fd < 0)
         return -1;
@@ -126,6 +152,7 @@ int vibrate(int timeout_ms)
 
     if (ret < 0)
        return -1;
+#endif /* TW_USE_QCOM_HAPTIC_VIBRATOR */
 
     return 0;
 }
