@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <fstream>
 
 #include "../common.h"
 
@@ -38,6 +38,9 @@
 
 #define VIBRATOR_TIMEOUT_FILE	"/sys/class/timed_output/vibrator/enable"
 #define VIBRATOR_TIME_MS    50
+
+#define LEDS_HAPTICS_DURATION_FILE	"/sys/class/leds/vibrator/duration"
+#define LEDS_HAPTICS_ACTIVATE_FILE	"/sys/class/leds/vibrator/activate"
 
 #ifndef SYN_REPORT
 #define SYN_REPORT          0x00
@@ -108,24 +111,27 @@ static inline int ABS(int x) {
     return x<0?-x:x;
 }
 
+int write_to_file(const std::string& fn, const std::string& line) {
+	FILE *file;
+	file = fopen(fn.c_str(), "w");
+	if (file != NULL) {
+		fwrite(line.c_str(), line.size(), 1, file);
+		fclose(file);
+		return 0;
+	}
+	LOGI("Cannot find file %s\n", fn.c_str());
+	return -1;
+}
+
 int vibrate(int timeout_ms)
 {
-    char str[20];
-    int fd;
-    int ret;
-
     if (timeout_ms > 10000) timeout_ms = 1000;
 
-    fd = open(VIBRATOR_TIMEOUT_FILE, O_WRONLY);
-    if (fd < 0)
-        return -1;
-
-    ret = snprintf(str, sizeof(str), "%d", timeout_ms);
-    ret = write(fd, str, ret);
-    close(fd);
-
-    if (ret < 0)
-       return -1;
+    if (std::ifstream(LEDS_HAPTICS_ACTIVATE_FILE).good()) {
+        write_to_file(LEDS_HAPTICS_DURATION_FILE, std::to_string(timeout_ms));
+        write_to_file(LEDS_HAPTICS_ACTIVATE_FILE, "1");
+    } else
+        write_to_file(VIBRATOR_TIMEOUT_FILE, std::to_string(timeout_ms));
 
     return 0;
 }
