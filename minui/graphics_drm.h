@@ -42,7 +42,7 @@ class MinuiBackendDrm : public MinuiBackend {
 
  private:
   void DrmDisableCrtc(int drm_fd, drmModeCrtc* crtc);
-  void DrmEnableCrtc(int drm_fd, drmModeCrtc* crtc, GRSurfaceDrm* surface);
+  int DrmEnableCrtc(int drm_fd, drmModeCrtc* crtc, GRSurfaceDrm* surface);
   GRSurfaceDrm* DrmCreateSurface(int width, int height);
   void DrmDestroySurface(GRSurfaceDrm* surface);
   void DisableNonMainCrtcs(int fd, drmModeRes* resources, drmModeCrtc* main_crtc);

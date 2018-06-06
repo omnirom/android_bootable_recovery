@@ -356,6 +356,10 @@ int gr_init() {
 
   gr_flip();
   gr_flip();
+  if (!gr_draw) {
+    printf("gr_init: gr_draw becomes nullptr after gr_flip\n");
+    return -1;
+  }
 
   gr_rotate(DEFAULT_ROTATION);
 
