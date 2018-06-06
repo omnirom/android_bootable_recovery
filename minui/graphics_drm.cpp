@@ -45,15 +45,17 @@ void MinuiBackendDrm::DrmDisableCrtc(int drm_fd, drmModeCrtc* crtc) {
   }
 }
 
-void MinuiBackendDrm::DrmEnableCrtc(int drm_fd, drmModeCrtc* crtc, GRSurfaceDrm* surface) {
-  int32_t ret = drmModeSetCrtc(drm_fd, crtc->crtc_id, surface->fb_id, 0, 0,  // x,y
-                               &main_monitor_connector->connector_id,
-                               1,  // connector_count
-                               &main_monitor_crtc->mode);
+int MinuiBackendDrm::DrmEnableCrtc(int drm_fd, drmModeCrtc* crtc, GRSurfaceDrm* surface) {
+  int ret = drmModeSetCrtc(drm_fd, crtc->crtc_id, surface->fb_id, 0, 0,  // x,y
+                           &main_monitor_connector->connector_id,
+                           1,  // connector_count
+                           &main_monitor_crtc->mode);
 
   if (ret) {
     printf("drmModeSetCrtc failed ret=%d\n", ret);
   }
+
+  return ret;
 }
 
 void MinuiBackendDrm::Blank(bool blank) {
@@ -368,7 +370,10 @@ GRSurface* MinuiBackendDrm::Init() {
 
   current_buffer = 0;
 
-  DrmEnableCrtc(drm_fd, main_monitor_crtc, GRSurfaceDrms[1]);
+  // We will likely encounter errors in the backend functions (i.e. Flip) if EnableCrtc fails.
+  if (DrmEnableCrtc(drm_fd, main_monitor_crtc, GRSurfaceDrms[1]) != 0) {
+    return nullptr;
+  }
 
   return GRSurfaceDrms[0];
 }
