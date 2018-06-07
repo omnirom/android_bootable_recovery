@@ -65,7 +65,7 @@ public class PayloadSpecsTest {
         mTargetContext = InstrumentationRegistry.getTargetContext();
         mTestContext = InstrumentationRegistry.getContext();
 
-        mTestDir = mTargetContext.getFilesDir();
+        mTestDir = mTargetContext.getCacheDir();
         mPayloadSpecs = new PayloadSpecs();
     }
 
