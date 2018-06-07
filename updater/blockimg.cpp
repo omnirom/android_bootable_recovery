@@ -197,8 +197,8 @@ static int read_all(int fd, uint8_t* data, size_t size) {
     return 0;
 }
 
-static int read_all(int fd, std::vector<uint8_t>& buffer, size_t size) {
-    return read_all(fd, buffer.data(), size);
+static int read_all(int fd, std::vector<uint8_t>* buffer, size_t size) {
+  return read_all(fd, buffer->data(), size);
 }
 
 static int write_all(int fd, const uint8_t* data, size_t size) {
@@ -244,11 +244,10 @@ static bool check_lseek(int fd, off64_t offset, int whence) {
     return true;
 }
 
-static void allocate(size_t size, std::vector<uint8_t>& buffer) {
-    // if the buffer's big enough, reuse it.
-    if (size <= buffer.size()) return;
-
-    buffer.resize(size);
+static void allocate(size_t size, std::vector<uint8_t>* buffer) {
+  // If the buffer's big enough, reuse it.
+  if (size <= buffer->size()) return;
+  buffer->resize(size);
 }
 
 /**
@@ -502,7 +501,7 @@ static void* unzip_new_data(void* cookie) {
   return nullptr;
 }
 
-static int ReadBlocks(const RangeSet& src, std::vector<uint8_t>& buffer, int fd) {
+static int ReadBlocks(const RangeSet& src, std::vector<uint8_t>* buffer, int fd) {
   size_t p = 0;
   for (const auto& range : src) {
     if (!check_lseek(fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
@@ -510,7 +509,7 @@ static int ReadBlocks(const RangeSet& src, std::vector<uint8_t>& buffer, int fd)
     }
 
     size_t size = (range.second - range.first) * BLOCKSIZE;
-    if (read_all(fd, buffer.data() + p, size) == -1) {
+    if (read_all(fd, buffer->data() + p, size) == -1) {
       return -1;
     }
 
@@ -662,31 +661,31 @@ static void PrintHashForMissingStashedBlocks(const std::string& id, int fd) {
   LOG(INFO) << "print hash in hex for source blocks in missing stash: " << id;
   const RangeSet& src = stash_map[id];
   std::vector<uint8_t> buffer(src.blocks() * BLOCKSIZE);
-  if (ReadBlocks(src, buffer, fd) == -1) {
-      LOG(ERROR) << "failed to read source blocks for stash: " << id;
-      return;
+  if (ReadBlocks(src, &buffer, fd) == -1) {
+    LOG(ERROR) << "failed to read source blocks for stash: " << id;
+    return;
   }
   PrintHashForCorruptedStashedBlocks(id, buffer, src);
 }
 
 static int VerifyBlocks(const std::string& expected, const std::vector<uint8_t>& buffer,
-        const size_t blocks, bool printerror) {
-    uint8_t digest[SHA_DIGEST_LENGTH];
-    const uint8_t* data = buffer.data();
+                        const size_t blocks, bool printerror) {
+  uint8_t digest[SHA_DIGEST_LENGTH];
+  const uint8_t* data = buffer.data();
 
-    SHA1(data, blocks * BLOCKSIZE, digest);
+  SHA1(data, blocks * BLOCKSIZE, digest);
 
-    std::string hexdigest = print_sha1(digest);
+  std::string hexdigest = print_sha1(digest);
 
-    if (hexdigest != expected) {
-        if (printerror) {
-            LOG(ERROR) << "failed to verify blocks (expected " << expected << ", read "
-                       << hexdigest << ")";
-        }
-        return -1;
+  if (hexdigest != expected) {
+    if (printerror) {
+      LOG(ERROR) << "failed to verify blocks (expected " << expected << ", read " << hexdigest
+                 << ")";
     }
+    return -1;
+  }
 
-    return 0;
+  return 0;
 }
 
 static std::string GetStashFileName(const std::string& base, const std::string& id,
@@ -751,8 +750,8 @@ static void DeleteStash(const std::string& base) {
   }
 }
 
-static int LoadStash(CommandParameters& params, const std::string& id, bool verify,
-                     std::vector<uint8_t>& buffer, bool printnoent) {
+static int LoadStash(const CommandParameters& params, const std::string& id, bool verify,
+                     std::vector<uint8_t>* buffer, bool printnoent) {
   // In verify mode, if source range_set was saved for the given hash, check contents in the source
   // blocks first. If the check fails, search for the stashed files on /cache as usual.
   if (!params.canwrite) {
@@ -764,9 +763,9 @@ static int LoadStash(CommandParameters& params, const std::string& id, bool veri
         LOG(ERROR) << "failed to read source blocks in stash map.";
         return -1;
       }
-      if (VerifyBlocks(id, buffer, src.blocks(), true) != 0) {
+      if (VerifyBlocks(id, *buffer, src.blocks(), true) != 0) {
         LOG(ERROR) << "failed to verify loaded source blocks in stash map.";
-        PrintHashForCorruptedStashedBlocks(id, buffer, src);
+        PrintHashForCorruptedStashedBlocks(id, *buffer, src);
         return -1;
       }
       return 0;
@@ -804,14 +803,14 @@ static int LoadStash(CommandParameters& params, const std::string& id, bool veri
   }
 
   size_t blocks = sb.st_size / BLOCKSIZE;
-  if (verify && VerifyBlocks(id, buffer, blocks, true) != 0) {
+  if (verify && VerifyBlocks(id, *buffer, blocks, true) != 0) {
     LOG(ERROR) << "unexpected contents in " << fn;
     if (stash_map.find(id) == stash_map.end()) {
       LOG(ERROR) << "failed to find source blocks number for stash " << id
                  << " when executing command: " << params.cmdname;
     } else {
       const RangeSet& src = stash_map[id];
-      PrintHashForCorruptedStashedBlocks(id, buffer, src);
+      PrintHashForCorruptedStashedBlocks(id, *buffer, src);
     }
     DeleteFile(fn);
     return -1;
@@ -821,71 +820,71 @@ static int LoadStash(CommandParameters& params, const std::string& id, bool veri
 }
 
 static int WriteStash(const std::string& base, const std::string& id, int blocks,
-                      std::vector<uint8_t>& buffer, bool checkspace, bool* exists) {
-    if (base.empty()) {
-        return -1;
+                      const std::vector<uint8_t>& buffer, bool checkspace, bool* exists) {
+  if (base.empty()) {
+    return -1;
+  }
+
+  if (checkspace && CacheSizeCheck(blocks * BLOCKSIZE) != 0) {
+    LOG(ERROR) << "not enough space to write stash";
+    return -1;
+  }
+
+  std::string fn = GetStashFileName(base, id, ".partial");
+  std::string cn = GetStashFileName(base, id, "");
+
+  if (exists) {
+    struct stat sb;
+    int res = stat(cn.c_str(), &sb);
+
+    if (res == 0) {
+      // The file already exists and since the name is the hash of the contents,
+      // it's safe to assume the contents are identical (accidental hash collisions
+      // are unlikely)
+      LOG(INFO) << " skipping " << blocks << " existing blocks in " << cn;
+      *exists = true;
+      return 0;
     }
 
-    if (checkspace && CacheSizeCheck(blocks * BLOCKSIZE) != 0) {
-        LOG(ERROR) << "not enough space to write stash";
-        return -1;
-    }
+    *exists = false;
+  }
 
-    std::string fn = GetStashFileName(base, id, ".partial");
-    std::string cn = GetStashFileName(base, id, "");
+  LOG(INFO) << " writing " << blocks << " blocks to " << cn;
 
-    if (exists) {
-        struct stat sb;
-        int res = stat(cn.c_str(), &sb);
+  android::base::unique_fd fd(
+      TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE)));
+  if (fd == -1) {
+    PLOG(ERROR) << "failed to create \"" << fn << "\"";
+    return -1;
+  }
 
-        if (res == 0) {
-            // The file already exists and since the name is the hash of the contents,
-            // it's safe to assume the contents are identical (accidental hash collisions
-            // are unlikely)
-            LOG(INFO) << " skipping " << blocks << " existing blocks in " << cn;
-            *exists = true;
-            return 0;
-        }
+  if (fchown(fd, AID_SYSTEM, AID_SYSTEM) != 0) {  // system user
+    PLOG(ERROR) << "failed to chown \"" << fn << "\"";
+    return -1;
+  }
 
-        *exists = false;
-    }
+  if (write_all(fd, buffer, blocks * BLOCKSIZE) == -1) {
+    return -1;
+  }
 
-    LOG(INFO) << " writing " << blocks << " blocks to " << cn;
+  if (ota_fsync(fd) == -1) {
+    failure_type = kFsyncFailure;
+    PLOG(ERROR) << "fsync \"" << fn << "\" failed";
+    return -1;
+  }
 
-    android::base::unique_fd fd(
-        TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE)));
-    if (fd == -1) {
-        PLOG(ERROR) << "failed to create \"" << fn << "\"";
-        return -1;
-    }
+  if (rename(fn.c_str(), cn.c_str()) == -1) {
+    PLOG(ERROR) << "rename(\"" << fn << "\", \"" << cn << "\") failed";
+    return -1;
+  }
 
-    if (fchown(fd, AID_SYSTEM, AID_SYSTEM) != 0) {  // system user
-        PLOG(ERROR) << "failed to chown \"" << fn << "\"";
-        return -1;
-    }
+  std::string dname = GetStashFileName(base, "", "");
+  if (!FsyncDir(dname)) {
+    failure_type = kFsyncFailure;
+    return -1;
+  }
 
-    if (write_all(fd, buffer, blocks * BLOCKSIZE) == -1) {
-        return -1;
-    }
-
-    if (ota_fsync(fd) == -1) {
-        failure_type = kFsyncFailure;
-        PLOG(ERROR) << "fsync \"" << fn << "\" failed";
-        return -1;
-    }
-
-    if (rename(fn.c_str(), cn.c_str()) == -1) {
-        PLOG(ERROR) << "rename(\"" << fn << "\", \"" << cn << "\") failed";
-        return -1;
-    }
-
-    std::string dname = GetStashFileName(base, "", "");
-    if (!FsyncDir(dname)) {
-      failure_type = kFsyncFailure;
-      return -1;
-    }
-
-    return 0;
+  return 0;
 }
 
 // Creates a directory for storing stash files and checks if the /cache partition
@@ -1014,7 +1013,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
     return -1;
   }
 
-  allocate(*src_blocks * BLOCKSIZE, params.buffer);
+  allocate(*src_blocks * BLOCKSIZE, &params.buffer);
 
   // "-" or <src_range> [<src_loc>]
   if (params.tokens[params.cpos] == "-") {
@@ -1025,7 +1024,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
     CHECK(static_cast<bool>(src));
     *overlap = src.Overlaps(tgt);
 
-    if (ReadBlocks(src, params.buffer, params.fd) == -1) {
+    if (ReadBlocks(src, &params.buffer, params.fd) == -1) {
       return -1;
     }
 
@@ -1050,7 +1049,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
     }
 
     std::vector<uint8_t> stash;
-    if (LoadStash(params, tokens[0], false, stash, true) == -1) {
+    if (LoadStash(params, tokens[0], false, &stash, true) == -1) {
       // These source blocks will fail verification if used later, but we
       // will let the caller decide if this is a fatal failure
       LOG(ERROR) << "failed to load stash " << tokens[0];
@@ -1091,7 +1090,7 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
  *
  * If the return value is 0, source blocks have expected content and the command can be performed.
  */
-static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* src_blocks,
+static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet* tgt, size_t* src_blocks,
                               bool onehash, bool* overlap) {
   CHECK(src_blocks != nullptr);
   CHECK(overlap != nullptr);
@@ -1122,21 +1121,21 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* 
   }
 
   // <tgt_range>
-  tgt = RangeSet::Parse(params.tokens[params.cpos++]);
-  CHECK(static_cast<bool>(tgt));
+  *tgt = RangeSet::Parse(params.tokens[params.cpos++]);
+  CHECK(static_cast<bool>(*tgt));
 
-  std::vector<uint8_t> tgtbuffer(tgt.blocks() * BLOCKSIZE);
-  if (ReadBlocks(tgt, tgtbuffer, params.fd) == -1) {
+  std::vector<uint8_t> tgtbuffer(tgt->blocks() * BLOCKSIZE);
+  if (ReadBlocks(*tgt, &tgtbuffer, params.fd) == -1) {
     return -1;
   }
 
   // Return now if target blocks already have expected content.
-  if (VerifyBlocks(tgthash, tgtbuffer, tgt.blocks(), false) == 0) {
+  if (VerifyBlocks(tgthash, tgtbuffer, tgt->blocks(), false) == 0) {
     return 1;
   }
 
   // Load source blocks.
-  if (LoadSourceBlocks(params, tgt, src_blocks, overlap) == -1) {
+  if (LoadSourceBlocks(params, *tgt, src_blocks, overlap) == -1) {
     return -1;
   }
 
@@ -1165,7 +1164,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet& tgt, size_t* 
     return 0;
   }
 
-  if (*overlap && LoadStash(params, srchash, true, params.buffer, true) == 0) {
+  if (*overlap && LoadStash(params, srchash, true, &params.buffer, true) == 0) {
     // Overlapping source blocks were previously stashed, command can proceed. We are recovering
     // from an interrupted command, so we don't know if the stash can safely be deleted after this
     // command.
@@ -1185,7 +1184,7 @@ static int PerformCommandMove(CommandParameters& params) {
   size_t blocks = 0;
   bool overlap = false;
   RangeSet tgt;
-  int status = LoadSrcTgtVersion3(params, tgt, &blocks, true, &overlap);
+  int status = LoadSrcTgtVersion3(params, &tgt, &blocks, true, &overlap);
 
   if (status == -1) {
     LOG(ERROR) << "failed to read blocks for move";
@@ -1231,7 +1230,7 @@ static int PerformCommandStash(CommandParameters& params) {
   }
 
   const std::string& id = params.tokens[params.cpos++];
-  if (LoadStash(params, id, true, params.buffer, false) == 0) {
+  if (LoadStash(params, id, true, &params.buffer, false) == 0) {
     // Stash file already exists and has expected contents. Do not read from source again, as the
     // source may have been already overwritten during a previous attempt.
     return 0;
@@ -1241,8 +1240,8 @@ static int PerformCommandStash(CommandParameters& params) {
   CHECK(static_cast<bool>(src));
 
   size_t blocks = src.blocks();
-  allocate(blocks * BLOCKSIZE, params.buffer);
-  if (ReadBlocks(src, params.buffer, params.fd) == -1) {
+  allocate(blocks * BLOCKSIZE, &params.buffer);
+  if (ReadBlocks(src, &params.buffer, params.fd) == -1) {
     return -1;
   }
   stash_map[id] = src;
@@ -1296,7 +1295,7 @@ static int PerformCommandZero(CommandParameters& params) {
 
   LOG(INFO) << "  zeroing " << tgt.blocks() << " blocks";
 
-  allocate(BLOCKSIZE, params.buffer);
+  allocate(BLOCKSIZE, &params.buffer);
   memset(params.buffer.data(), 0, BLOCKSIZE);
 
   if (params.canwrite) {
@@ -1384,7 +1383,7 @@ static int PerformCommandDiff(CommandParameters& params) {
   RangeSet tgt;
   size_t blocks = 0;
   bool overlap = false;
-  int status = LoadSrcTgtVersion3(params, tgt, &blocks, false, &overlap);
+  int status = LoadSrcTgtVersion3(params, &tgt, &blocks, false, &overlap);
 
   if (status == -1) {
     LOG(ERROR) << "failed to read blocks for diff";
@@ -1975,7 +1974,7 @@ Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique
     }
 
     for (size_t j = range.first; j < range.second; ++j) {
-      if (read_all(fd, buffer, BLOCKSIZE) == -1) {
+      if (read_all(fd, &buffer, BLOCKSIZE) == -1) {
         ErrorAbort(state, kFreadFailure, "failed to read %s: %s", blockdev_filename->data.c_str(),
                    strerror(errno));
         return StringValue("");
@@ -2025,7 +2024,7 @@ Value* CheckFirstBlockFn(const char* name, State* state,
   RangeSet blk0(std::vector<Range>{ Range{ 0, 1 } });
   std::vector<uint8_t> block0_buffer(BLOCKSIZE);
 
-  if (ReadBlocks(blk0, block0_buffer, fd) == -1) {
+  if (ReadBlocks(blk0, &block0_buffer, fd) == -1) {
     ErrorAbort(state, kFreadFailure, "failed to read %s: %s", arg_filename->data.c_str(),
                strerror(errno));
     return StringValue("");
