@@ -131,10 +131,10 @@ def main():  # pylint: disable=missing-docstring
                         choices=ab_install_type_choices,
                         help='A/B update installation type')
     parser.add_argument('--ab_force_switch_slot',
-                        type=bool,
                         default=False,
-                        help='if set true device will boot to a new slot, otherwise user manually '
-                             'switches slot on the screen')
+                        action='store_true',
+                        help='if set device will boot to a new slot, otherwise user '
+                              'manually switches slot on the screen')
     parser.add_argument('package',
                         type=str,
                         help='OTA package zip file')
