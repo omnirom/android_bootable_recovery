@@ -55,6 +55,8 @@ public class MainActivity extends Activity {
     private Button mButtonApplyConfig;
     private Button mButtonStop;
     private Button mButtonReset;
+    private Button mButtonSuspend;
+    private Button mButtonResume;
     private ProgressBar mProgressBar;
     private TextView mTextViewUpdaterState;
     private TextView mTextViewEngineStatus;
@@ -79,6 +81,8 @@ public class MainActivity extends Activity {
         this.mButtonApplyConfig = findViewById(R.id.buttonApplyConfig);
         this.mButtonStop = findViewById(R.id.buttonStop);
         this.mButtonReset = findViewById(R.id.buttonReset);
+        this.mButtonSuspend = findViewById(R.id.buttonSuspend);
+        this.mButtonResume = findViewById(R.id.buttonResume);
         this.mProgressBar = findViewById(R.id.progressBar);
         this.mTextViewUpdaterState = findViewById(R.id.textViewUpdaterState);
         this.mTextViewEngineStatus = findViewById(R.id.textViewEngineStatus);
@@ -209,9 +213,34 @@ public class MainActivity extends Activity {
     }
 
     /**
+     * suspend button clicked
+     */
+    public void onSuspendClick(View view) {
+        try {
+            mUpdateManager.suspend();
+        } catch (UpdaterState.InvalidTransitionException e) {
+            Log.e(TAG, "Failed to suspend running update", e);
+        }
+    }
+
+    /**
+     * resume button clicked
+     */
+    public void onResumeClick(View view) {
+        try {
+            uiResetWidgets();
+            uiResetEngineText();
+            mUpdateManager.resume();
+        } catch (UpdaterState.InvalidTransitionException e) {
+            Log.e(TAG, "Failed to resume running update", e);
+        }
+    }
+
+    /**
      * switch slot button clicked
      */
     public void onSwitchSlotClick(View view) {
+        uiResetWidgets();
         mUpdateManager.setSwitchSlotOnReboot();
     }
 
@@ -289,6 +318,8 @@ public class MainActivity extends Activity {
         mButtonApplyConfig.setEnabled(false);
         mButtonStop.setEnabled(false);
         mButtonReset.setEnabled(false);
+        mButtonSuspend.setEnabled(false);
+        mButtonResume.setEnabled(false);
         mProgressBar.setEnabled(false);
         mProgressBar.setVisibility(ProgressBar.INVISIBLE);
         mButtonSwitchSlot.setEnabled(false);
@@ -303,6 +334,7 @@ public class MainActivity extends Activity {
 
     private void uiStateIdle() {
         uiResetWidgets();
+        mButtonReset.setEnabled(true);
         mSpinnerConfigs.setEnabled(true);
         mButtonReload.setEnabled(true);
         mButtonApplyConfig.setEnabled(true);
@@ -314,6 +346,7 @@ public class MainActivity extends Activity {
         mProgressBar.setEnabled(true);
         mProgressBar.setVisibility(ProgressBar.VISIBLE);
         mButtonStop.setEnabled(true);
+        mButtonSuspend.setEnabled(true);
     }
 
     private void uiStatePaused() {
@@ -321,6 +354,7 @@ public class MainActivity extends Activity {
         mButtonReset.setEnabled(true);
         mProgressBar.setEnabled(true);
         mProgressBar.setVisibility(ProgressBar.VISIBLE);
+        mButtonResume.setEnabled(true);
     }
 
     private void uiStateSlotSwitchRequired() {

@@ -197,6 +197,29 @@
                     android:text="Reset" />
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/buttonSuspend"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="onSuspendClick"
+                    android:text="Suspend" />
+
+                <Button
+                    android:id="@+id/buttonResume"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="onResumeClick"
+                    android:text="Resume" />
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/textViewUpdateInfo"
                 android:layout_width="wrap_content"

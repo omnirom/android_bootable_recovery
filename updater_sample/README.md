@@ -140,6 +140,9 @@ Start an update attempt to download an apply the provided `payload_url` if
 no other update is running. The extra `key_value_pair_headers` will be
 included when fetching the payload.
 
+`key_value_pair_headers` argument also accepts properties other than HTTP Headers.
+List of allowed properties can be found in `system/update_engine/common/constants.cc`.
+
 ### UpdateEngine#cancel
 
 Cancel the ongoing update. The update could be running or suspended, but it
@@ -181,9 +184,8 @@ Called whenever an update attempt is completed.
 - [x] Deferred switch slot demo
 - [x] Add UpdateManager; extract update logic from MainActivity
 - [x] Add Sample app update state (separate from update_engine status)
-- [-] Add smart update completion detection using onStatusUpdate
-- [ ] Add pause/resume demo
-- [ ] Add demo for passing NETWORK_ID to `UpdateEngine#applyPayload`
+- [x] Add smart update completion detection using onStatusUpdate
+- [x] Add pause/resume demo
 - [ ] Verify system partition checksum for package
 - [?] Add non-A/B updates demo
 

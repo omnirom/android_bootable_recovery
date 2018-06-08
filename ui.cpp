@@ -78,7 +78,9 @@ RecoveryUI::RecoveryUI()
 RecoveryUI::~RecoveryUI() {
   ev_exit();
   input_thread_stopped_ = true;
-  input_thread_.join();
+  if (input_thread_.joinable()) {
+    input_thread_.join();
+  }
 }
 
 void RecoveryUI::OnKeyDetected(int key_code) {

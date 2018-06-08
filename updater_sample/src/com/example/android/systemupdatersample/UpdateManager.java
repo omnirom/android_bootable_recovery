@@ -198,6 +198,24 @@ public class UpdateManager {
     }
 
     /**
+     * Suspend running update.
+     */
+    public synchronized void suspend() throws UpdaterState.InvalidTransitionException {
+        Log.d(TAG, "suspend invoked");
+        setUpdaterState(UpdaterState.PAUSED);
+        mUpdateEngine.cancel();
+    }
+
+    /**
+     * Resume suspended update.
+     */
+    public synchronized void resume() throws UpdaterState.InvalidTransitionException {
+        Log.d(TAG, "resume invoked");
+        setUpdaterState(UpdaterState.RUNNING);
+        updateEngineReApplyPayload();
+    }
+
+    /**
      * Updates {@link this.mState} and if state is changed,
      * it also notifies {@link this.mOnStateChangeCallback}.
      */
@@ -237,10 +255,6 @@ public class UpdateManager {
     /**
      * Requests update engine to stop any ongoing update. If an update has been applied,
      * leave it as is.
-     *
-     * <p>Sometimes it's possible that the
-     * update engine would throw an error when the method is called, and the only way to
-     * handle it is to catch the exception.</p>
      */
     public synchronized void cancelRunningUpdate() throws UpdaterState.InvalidTransitionException {
         Log.d(TAG, "cancelRunningUpdate invoked");
@@ -250,10 +264,6 @@ public class UpdateManager {
 
     /**
      * Resets update engine to IDLE state. If an update has been applied it reverts it.
-     *
-     * <p>Sometimes it's possible that the
-     * update engine would throw an error when the method is called, and the only way to
-     * handle it is to catch the exception.</p>
      */
     public synchronized void resetUpdate() throws UpdaterState.InvalidTransitionException {
         Log.d(TAG, "resetUpdate invoked");
@@ -506,7 +516,7 @@ public class UpdateManager {
             synchronizeUpdaterStateWithUpdateEngineStatus();
         }
 
-        getOnProgressUpdateCallback().ifPresent(callback -> callback.accept(progress));
+        getOnProgressUpdateCallback().ifPresent(callback -> callback.accept(mProgress.get()));
 
         if (previousStatus != status) {
             getOnEngineStatusUpdateCallback().ifPresent(callback -> callback.accept(status));

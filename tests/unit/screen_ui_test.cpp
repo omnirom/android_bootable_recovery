@@ -293,6 +293,11 @@ TEST_F(ScreenRecoveryUITest, Init) {
   ASSERT_FALSE(ui_->WasTextEverVisible());
 }
 
+TEST_F(ScreenRecoveryUITest, dtor_NotCallingInit) {
+  ui_.reset();
+  ASSERT_FALSE(ui_);
+}
+
 TEST_F(ScreenRecoveryUITest, ShowText) {
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ASSERT_FALSE(ui_->IsTextVisible());
@@ -408,5 +413,7 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
   ASSERT_TRUE(ui_->Init(kTestLocale));
   TemporaryDir resource_dir;
   Paths::Get().set_resource_dir(resource_dir.path);
+
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(ui_->RunLoadAnimation(), ::testing::KilledBySignal(SIGABRT), "");
 }
