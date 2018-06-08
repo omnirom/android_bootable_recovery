@@ -100,7 +100,8 @@ static void BuildUpdatePackage(const PackageEntries& entries, int fd) {
 }
 
 static void RunBlockImageUpdate(bool is_verify, const PackageEntries& entries,
-                                const std::string& image_file, const std::string& result) {
+                                const std::string& image_file, const std::string& result,
+                                CauseCode cause_code = kNoCause) {
   CHECK(entries.find("transfer_list") != entries.end());
 
   // Build the update package.
@@ -124,7 +125,7 @@ static void RunBlockImageUpdate(bool is_verify, const PackageEntries& entries,
   std::string script = is_verify ? "block_image_verify" : "block_image_update";
   script += R"((")" + image_file + R"(", package_extract_file("transfer_list"), ")" + new_data +
             R"(", "patch_data"))";
-  expect(result.c_str(), script.c_str(), kNoCause, &updater_info);
+  expect(result.c_str(), script.c_str(), cause_code, &updater_info);
 
   ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
   CloseArchive(handle);
@@ -502,6 +503,24 @@ TEST_F(UpdaterTest, show_progress) {
   // recovery-updater protocol expects 3 tokens ("progress <frac> <secs>").
   ASSERT_EQ(3U, android::base::Split(cmd, " ").size());
   ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
+}
+
+TEST_F(UpdaterTest, block_image_update_parsing_error) {
+  std::vector<std::string> transfer_list{
+    // clang-format off
+    "4",
+    "2",
+    "0",
+    // clang-format on
+  };
+
+  PackageEntries entries{
+    { "new_data", "" },
+    { "patch_data", "" },
+    { "transfer_list", android::base::Join(transfer_list, '\n') },
+  };
+
+  RunBlockImageUpdate(false, entries, image_file_, "", kArgsParsingFailure);
 }
 
 TEST_F(UpdaterTest, block_image_update_patch_data) {
