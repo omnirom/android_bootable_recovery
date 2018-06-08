@@ -97,6 +97,19 @@ endif
 
 include $(BUILD_STATIC_LIBRARY)
 
+# Health HAL dependency
+health_hal_static_libraries := \
+    android.hardware.health@2.0-impl \
+    android.hardware.health@2.0 \
+    android.hardware.health@1.0 \
+    android.hardware.health@1.0-convert \
+    libhealthstoragedefault \
+    libhidltransport \
+    libhidlbase \
+    libhwbinder_noltopgo \
+    libvndksupport \
+    libbatterymonitor
+
 librecovery_static_libraries := \
     $(TARGET_RECOVERY_UI_LIB) \
     libbootloader_message \
@@ -106,8 +119,8 @@ librecovery_static_libraries := \
     libminui \
     libverifier \
     libotautil \
+    $(health_hal_static_libraries) \
     libasyncio \
-    libbatterymonitor \
     libcrypto_utils \
     libcrypto \
     libext4_utils \
