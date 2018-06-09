@@ -52,7 +52,12 @@ int gr_save_screenshot(const char *dest)
     surface.height = gr_mem_surface.height;
     surface.stride = gr_mem_surface.stride;
     surface.data = img_data;
+
+#if defined(RECOVERY_BGRA)
+    surface.format = GGL_PIXEL_FORMAT_BGRA_8888;
+#else
     surface.format = GGL_PIXEL_FORMAT_RGBA_8888;
+#endif
 
     gglInit(&gl);
     gl->colorBuffer(gl, &surface);
