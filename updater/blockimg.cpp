@@ -1091,9 +1091,8 @@ static int LoadSourceBlocks(CommandParameters& params, const RangeSet& tgt, size
  * If the return value is 0, source blocks have expected content and the command can be performed.
  */
 static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet* tgt, size_t* src_blocks,
-                              bool onehash, bool* overlap) {
+                              bool onehash) {
   CHECK(src_blocks != nullptr);
-  CHECK(overlap != nullptr);
 
   if (params.cpos >= params.tokens.size()) {
     LOG(ERROR) << "missing source hash";
@@ -1135,15 +1134,16 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet* tgt, size_t* 
   }
 
   // Load source blocks.
-  if (LoadSourceBlocks(params, *tgt, src_blocks, overlap) == -1) {
+  bool overlap = false;
+  if (LoadSourceBlocks(params, *tgt, src_blocks, &overlap) == -1) {
     return -1;
   }
 
   if (VerifyBlocks(srchash, params.buffer, *src_blocks, true) == 0) {
-    // If source and target blocks overlap, stash the source blocks so we can
-    // resume from possible write errors. In verify mode, we can skip stashing
-    // because the source blocks won't be overwritten.
-    if (*overlap && params.canwrite) {
+    // If source and target blocks overlap, stash the source blocks so we can resume from possible
+    // write errors. In verify mode, we can skip stashing because the source blocks won't be
+    // overwritten.
+    if (overlap && params.canwrite) {
       LOG(INFO) << "stashing " << *src_blocks << " overlapping blocks to " << srchash;
 
       bool stash_exists = false;
@@ -1164,7 +1164,7 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet* tgt, size_t* 
     return 0;
   }
 
-  if (*overlap && LoadStash(params, srchash, true, &params.buffer, true) == 0) {
+  if (overlap && LoadStash(params, srchash, true, &params.buffer, true) == 0) {
     // Overlapping source blocks were previously stashed, command can proceed. We are recovering
     // from an interrupted command, so we don't know if the stash can safely be deleted after this
     // command.
@@ -1182,9 +1182,8 @@ static int LoadSrcTgtVersion3(CommandParameters& params, RangeSet* tgt, size_t* 
 
 static int PerformCommandMove(CommandParameters& params) {
   size_t blocks = 0;
-  bool overlap = false;
   RangeSet tgt;
-  int status = LoadSrcTgtVersion3(params, &tgt, &blocks, true, &overlap);
+  int status = LoadSrcTgtVersion3(params, &tgt, &blocks, true);
 
   if (status == -1) {
     LOG(ERROR) << "failed to read blocks for move";
@@ -1382,8 +1381,7 @@ static int PerformCommandDiff(CommandParameters& params) {
 
   RangeSet tgt;
   size_t blocks = 0;
-  bool overlap = false;
-  int status = LoadSrcTgtVersion3(params, &tgt, &blocks, false, &overlap);
+  int status = LoadSrcTgtVersion3(params, &tgt, &blocks, false);
 
   if (status == -1) {
     LOG(ERROR) << "failed to read blocks for diff";
