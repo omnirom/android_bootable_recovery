@@ -1628,9 +1628,10 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     }
   }
 
+  static constexpr size_t kTransferListHeaderLines = 4;
   std::vector<std::string> lines = android::base::Split(transfer_list_value->data, "\n");
-  if (lines.size() < 2) {
-    ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zd]",
+  if (lines.size() < kTransferListHeaderLines) {
+    ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]",
                lines.size());
     return StringValue("");
   }
@@ -1652,12 +1653,6 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
 
   if (total_blocks == 0) {
     return StringValue("t");
-  }
-
-  if (lines.size() < 4) {
-    ErrorAbort(state, kArgsParsingFailure, "too few lines in the transfer list [%zu]",
-               lines.size());
-    return StringValue("");
   }
 
   // Third line is how many stash entries are needed simultaneously.
@@ -1698,7 +1693,6 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
 
   int rc = -1;
 
-  static constexpr size_t kTransferListHeaderLines = 4;
   // Subsequent lines are all individual transfer commands
   for (size_t i = kTransferListHeaderLines; i < lines.size(); i++) {
     const std::string& line = lines[i];
