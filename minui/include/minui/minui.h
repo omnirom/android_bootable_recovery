@@ -48,7 +48,13 @@ enum GRRotation {
   ROTATION_LEFT = 3,
 };
 
+// Initializes the graphics backend and loads font file. Returns 0 on success, or -1 on error. Note
+// that the font initialization failure would be non-fatal, as caller may not need to draw any text
+// at all. Caller can check the font initialization result via gr_sys_font() as needed.
 int gr_init();
+
+// Frees the allocated resources. The function is idempotent, and safe to be called if gr_init()
+// didn't finish successfully.
 void gr_exit();
 
 int gr_fb_width();
@@ -57,7 +63,8 @@ int gr_fb_height();
 void gr_flip();
 void gr_fb_blank(bool blank);
 
-void gr_clear();  // clear entire surface to current color
+// Clears entire surface to current color.
+void gr_clear();
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 void gr_fill(int x1, int y1, int x2, int y2);
 
@@ -66,16 +73,16 @@ void gr_texticon(int x, int y, GRSurface* icon);
 const GRFont* gr_sys_font();
 int gr_init_font(const char* name, GRFont** dest);
 void gr_text(const GRFont* font, int x, int y, const char* s, bool bold);
-// Return -1 if font is nullptr.
+// Returns -1 if font is nullptr.
 int gr_measure(const GRFont* font, const char* s);
-// Return -1 if font is nullptr.
+// Returns -1 if font is nullptr.
 int gr_font_size(const GRFont* font, int* x, int* y);
 
 void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
-unsigned int gr_get_width(GRSurface* surface);
-unsigned int gr_get_height(GRSurface* surface);
+unsigned int gr_get_width(const GRSurface* surface);
+unsigned int gr_get_height(const GRSurface* surface);
 
-// Set rotation, flips gr_fb_width/height if 90 degree rotation difference
+// Sets rotation, flips gr_fb_width/height if 90 degree rotation difference
 void gr_rotate(GRRotation rotation);
 
 //
