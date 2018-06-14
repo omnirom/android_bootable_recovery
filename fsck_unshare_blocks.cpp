@@ -115,14 +115,6 @@ static bool run_e2fsck(const std::string& partition) {
   return true;
 }
 
-static const char* get_system_root() {
-  if (android::base::GetBoolProperty("ro.build.system_root_image", false)) {
-    return "/system_root";
-  } else {
-    return "/system";
-  }
-}
-
 bool do_fsck_unshare_blocks() {
   // List of partitions we will try to e2fsck -E unshare_blocks.
   std::vector<std::string> partitions = { "/odm", "/oem", "/product", "/vendor" };
@@ -130,10 +122,10 @@ bool do_fsck_unshare_blocks() {
   // Temporarily mount system so we can copy e2fsck_static.
   bool mounted = false;
   if (android::base::GetBoolProperty("ro.build.system_root_image", false)) {
-    mounted = ensure_path_mounted_at("/", "/system_root") != -1;
+    mounted = ensure_path_mounted_at("/", "/mnt/system") != -1;
     partitions.push_back("/");
   } else {
-    mounted = ensure_path_mounted("/system") != -1;
+    mounted = ensure_path_mounted_at("/system", "/mnt/system") != -1;
     partitions.push_back("/system");
   }
   if (!mounted) {
@@ -144,7 +136,7 @@ bool do_fsck_unshare_blocks() {
     LOG(ERROR) << "Could not copy e2fsck to /tmp.";
     return false;
   }
-  if (umount(get_system_root()) < 0) {
+  if (umount("/mnt/system") < 0) {
     PLOG(ERROR) << "umount failed";
     return false;
   }
