@@ -176,6 +176,8 @@ ScreenRecoveryUI::~ScreenRecoveryUI() {
   if (progress_thread_.joinable()) {
     progress_thread_.join();
   }
+  // No-op if gr_init() (via Init()) was not called or had failed.
+  gr_exit();
 }
 
 GRSurface* ScreenRecoveryUI::GetCurrentFrame() const {
