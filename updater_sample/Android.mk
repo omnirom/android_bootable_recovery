@@ -18,8 +18,8 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := SystemUpdaterSample
-LOCAL_MODULE_TAGS := samples
 LOCAL_SDK_VERSION := system_current
+LOCAL_PRIVILEGED_MODULE := true
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
