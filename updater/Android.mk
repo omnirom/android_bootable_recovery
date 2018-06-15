@@ -35,6 +35,7 @@ updater_common_static_libraries := \
     libfec \
     libfec_rs \
     libfs_mgr \
+    libgtest_prod \
     liblog \
     libselinux \
     libsparse \
