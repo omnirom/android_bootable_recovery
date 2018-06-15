@@ -176,6 +176,8 @@ ScreenRecoveryUI::~ScreenRecoveryUI() {
   if (progress_thread_.joinable()) {
     progress_thread_.join();
   }
+  // No-op if gr_init() (via Init()) was not called or had failed.
+  gr_exit();
 }
 
 GRSurface* ScreenRecoveryUI::GetCurrentFrame() const {
@@ -700,10 +702,10 @@ void ScreenRecoveryUI::SetSystemUpdateText(bool security_update) {
 }
 
 bool ScreenRecoveryUI::InitTextParams() {
-  if (gr_init() < 0) {
+  // gr_init() would return successfully on font initialization failure.
+  if (gr_sys_font() == nullptr) {
     return false;
   }
-
   gr_font_size(gr_sys_font(), &char_width_, &char_height_);
   text_rows_ = (ScreenHeight() - kMarginHeight * 2) / char_height_;
   text_cols_ = (ScreenWidth() - kMarginWidth * 2) / char_width_;
@@ -712,6 +714,10 @@ bool ScreenRecoveryUI::InitTextParams() {
 
 bool ScreenRecoveryUI::Init(const std::string& locale) {
   RecoveryUI::Init(locale);
+
+  if (gr_init() == -1) {
+    return false;
+  }
 
   if (!InitTextParams()) {
     return false;

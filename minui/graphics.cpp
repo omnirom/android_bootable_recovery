@@ -28,7 +28,7 @@
 #include "graphics_fbdev.h"
 #include "minui/minui.h"
 
-static GRFont* gr_font = NULL;
+static GRFont* gr_font = nullptr;
 static MinuiBackend* gr_backend = nullptr;
 
 static int overscan_percent = OVERSCAN_PERCENT;
@@ -38,7 +38,8 @@ static int overscan_offset_y = 0;
 static uint32_t gr_current = ~0;
 static constexpr uint32_t alpha_mask = 0xff000000;
 
-static GRSurface* gr_draw = NULL;
+// gr_draw is owned by backends.
+static const GRSurface* gr_draw = nullptr;
 static GRRotation rotation = ROTATION_NONE;
 
 static bool outside(int x, int y) {
@@ -86,7 +87,7 @@ static inline uint32_t pixel_blend(uint8_t alpha, uint32_t pix) {
   return (out_r & 0xff) | (out_g & 0xff00) | (out_b & 0xff0000) | (gr_current & 0xff000000);
 }
 
-// increments pixel pointer right, with current rotation.
+// Increments pixel pointer right, with current rotation.
 static void incr_x(uint32_t** p, int row_pixels) {
   if (rotation % 2) {
     *p = *p + (rotation == 1 ? 1 : -1) * row_pixels;
@@ -95,7 +96,7 @@ static void incr_x(uint32_t** p, int row_pixels) {
   }
 }
 
-// increments pixel pointer down, with current rotation.
+// Increments pixel pointer down, with current rotation.
 static void incr_y(uint32_t** p, int row_pixels) {
   if (rotation % 2) {
     *p = *p + (rotation == 1 ? -1 : 1);
@@ -104,8 +105,8 @@ static void incr_y(uint32_t** p, int row_pixels) {
   }
 }
 
-// returns pixel pointer at given coordinates with rotation adjustment.
-static uint32_t* pixel_at(GRSurface* surf, int x, int y, int row_pixels) {
+// Returns pixel pointer at given coordinates with rotation adjustment.
+static uint32_t* pixel_at(const GRSurface* surf, int x, int y, int row_pixels) {
   switch (rotation) {
     case ROTATION_NONE:
       return reinterpret_cast<uint32_t*>(surf->data) + y * row_pixels + x;
@@ -172,7 +173,7 @@ void gr_text(const GRFont* font, int x, int y, const char* s, bool bold) {
 }
 
 void gr_texticon(int x, int y, GRSurface* icon) {
-  if (icon == NULL) return;
+  if (icon == nullptr) return;
 
   if (icon->pixel_bytes != 1) {
     printf("gr_texticon: source has wrong format\n");
@@ -243,7 +244,7 @@ void gr_fill(int x1, int y1, int x2, int y2) {
 }
 
 void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
-  if (source == NULL) return;
+  if (source == nullptr) return;
 
   if (gr_draw->pixel_bytes != source->pixel_bytes) {
     printf("gr_blit: source has wrong format\n");
@@ -275,8 +276,7 @@ void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
     unsigned char* src_p = source->data + sy * source->row_bytes + sx * source->pixel_bytes;
     unsigned char* dst_p = gr_draw->data + dy * gr_draw->row_bytes + dx * gr_draw->pixel_bytes;
 
-    int i;
-    for (i = 0; i < h; ++i) {
+    for (int i = 0; i < h; ++i) {
       memcpy(dst_p, src_p, w * source->pixel_bytes);
       src_p += source->row_bytes;
       dst_p += gr_draw->row_bytes;
@@ -284,15 +284,15 @@ void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
   }
 }
 
-unsigned int gr_get_width(GRSurface* surface) {
-  if (surface == NULL) {
+unsigned int gr_get_width(const GRSurface* surface) {
+  if (surface == nullptr) {
     return 0;
   }
   return surface->width;
 }
 
-unsigned int gr_get_height(GRSurface* surface) {
-  if (surface == NULL) {
+unsigned int gr_get_height(const GRSurface* surface) {
+  if (surface == nullptr) {
     return 0;
   }
   return surface->height;
@@ -372,6 +372,10 @@ int gr_init() {
 
 void gr_exit() {
   delete gr_backend;
+  gr_backend = nullptr;
+
+  delete gr_font;
+  gr_font = nullptr;
 }
 
 int gr_fb_width() {
