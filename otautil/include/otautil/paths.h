@@ -76,6 +76,13 @@ class Paths {
     temporary_log_file_ = log_file;
   }
 
+  std::string temporary_update_binary() const {
+    return temporary_update_binary_;
+  }
+  void set_temporary_update_binary(const std::string& update_binary) {
+    temporary_update_binary_ = update_binary;
+  }
+
  private:
   Paths();
   DISALLOW_COPY_AND_ASSIGN(Paths);
@@ -103,6 +110,9 @@ class Paths {
 
   // Path to the temporary log file while under recovery.
   std::string temporary_log_file_;
+
+  // Path to the temporary update binary while installing a non-A/B package.
+  std::string temporary_update_binary_;
 };
 
 #endif  // _OTAUTIL_PATHS_H_
