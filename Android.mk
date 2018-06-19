@@ -156,10 +156,6 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_CFLAGS := $(recovery_common_cflags)
 
-ifeq ($(AB_OTA_UPDATER),true)
-    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
-endif
-
 LOCAL_MODULE := librecovery
 
 LOCAL_STATIC_LIBRARIES := \
