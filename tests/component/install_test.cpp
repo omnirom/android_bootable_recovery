@@ -33,6 +33,7 @@
 #include <ziparchive/zip_writer.h>
 
 #include "install.h"
+#include "otautil/paths.h"
 #include "private/install.h"
 
 TEST(InstallTest, verify_package_compatibility_no_entry) {
@@ -199,8 +200,73 @@ TEST(InstallTest, verify_package_compatibility_with_libvintf_system_manifest_xml
   CloseArchive(zip);
 }
 
-#ifdef AB_OTA_UPDATER
-static void VerifyAbUpdateBinaryCommand(const std::string& serialno, bool success = true) {
+TEST(InstallTest, SetUpNonAbUpdateCommands) {
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.release(), "w");
+  ZipWriter writer(zip_file);
+  static constexpr const char* UPDATE_BINARY_NAME = "META-INF/com/google/android/update-binary";
+  ASSERT_EQ(0, writer.StartEntry(UPDATE_BINARY_NAME, kCompressStored));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  int status_fd = 10;
+  std::string package = "/path/to/update.zip";
+  TemporaryDir td;
+  std::string binary_path = std::string(td.path) + "/update_binary";
+  Paths::Get().set_temporary_update_binary(binary_path);
+  std::vector<std::string> cmd;
+  ASSERT_EQ(0, SetUpNonAbUpdateCommands(package, zip, 0, status_fd, &cmd));
+  ASSERT_EQ(4U, cmd.size());
+  ASSERT_EQ(binary_path, cmd[0]);
+  ASSERT_EQ("3", cmd[1]);  // RECOVERY_API_VERSION
+  ASSERT_EQ(std::to_string(status_fd), cmd[2]);
+  ASSERT_EQ(package, cmd[3]);
+  struct stat sb;
+  ASSERT_EQ(0, stat(binary_path.c_str(), &sb));
+  ASSERT_EQ(static_cast<mode_t>(0755), sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+
+  // With non-zero retry count. update_binary will be removed automatically.
+  cmd.clear();
+  ASSERT_EQ(0, SetUpNonAbUpdateCommands(package, zip, 2, status_fd, &cmd));
+  ASSERT_EQ(5U, cmd.size());
+  ASSERT_EQ(binary_path, cmd[0]);
+  ASSERT_EQ("3", cmd[1]);  // RECOVERY_API_VERSION
+  ASSERT_EQ(std::to_string(status_fd), cmd[2]);
+  ASSERT_EQ(package, cmd[3]);
+  ASSERT_EQ("retry", cmd[4]);
+  sb = {};
+  ASSERT_EQ(0, stat(binary_path.c_str(), &sb));
+  ASSERT_EQ(static_cast<mode_t>(0755), sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+
+  CloseArchive(zip);
+}
+
+TEST(InstallTest, SetUpNonAbUpdateCommands_MissingUpdateBinary) {
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.release(), "w");
+  ZipWriter writer(zip_file);
+  // The archive must have something to be opened correctly.
+  ASSERT_EQ(0, writer.StartEntry("dummy_entry", 0));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  // Missing update binary.
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  int status_fd = 10;
+  std::string package = "/path/to/update.zip";
+  TemporaryDir td;
+  Paths::Get().set_temporary_update_binary(std::string(td.path) + "/update_binary");
+  std::vector<std::string> cmd;
+  ASSERT_EQ(INSTALL_CORRUPT, SetUpNonAbUpdateCommands(package, zip, 0, status_fd, &cmd));
+  CloseArchive(zip);
+}
+
+static void VerifyAbUpdateCommands(const std::string& serialno, bool success = true) {
   TemporaryFile temp_file;
   FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
@@ -235,73 +301,27 @@ static void VerifyAbUpdateBinaryCommand(const std::string& serialno, bool succes
   ASSERT_EQ(0, FindEntry(zip, payload_name, &payload_entry));
   int status_fd = 10;
   std::string package = "/path/to/update.zip";
-  std::string binary_path = "/sbin/update_engine_sideload";
   std::vector<std::string> cmd;
   if (success) {
-    ASSERT_EQ(0, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
+    ASSERT_EQ(0, SetUpAbUpdateCommands(package, zip, status_fd, &cmd));
     ASSERT_EQ(5U, cmd.size());
-    ASSERT_EQ(binary_path, cmd[0]);
+    ASSERT_EQ("/sbin/update_engine_sideload", cmd[0]);
     ASSERT_EQ("--payload=file://" + package, cmd[1]);
     ASSERT_EQ("--offset=" + std::to_string(payload_entry.offset), cmd[2]);
     ASSERT_EQ("--headers=" + properties, cmd[3]);
     ASSERT_EQ("--status_fd=" + std::to_string(status_fd), cmd[4]);
   } else {
-    ASSERT_EQ(INSTALL_ERROR, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
+    ASSERT_EQ(INSTALL_ERROR, SetUpAbUpdateCommands(package, zip, status_fd, &cmd));
   }
   CloseArchive(zip);
 }
-#endif  // AB_OTA_UPDATER
 
-TEST(InstallTest, update_binary_command_smoke) {
-#ifdef AB_OTA_UPDATER
+TEST(InstallTest, SetUpAbUpdateCommands) {
   // Empty serialno will pass the verification.
-  VerifyAbUpdateBinaryCommand({});
-#else
-  TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
-  static constexpr const char* UPDATE_BINARY_NAME = "META-INF/com/google/android/update-binary";
-  ASSERT_EQ(0, writer.StartEntry(UPDATE_BINARY_NAME, kCompressStored));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
-
-  ZipArchiveHandle zip;
-  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
-  int status_fd = 10;
-  std::string package = "/path/to/update.zip";
-  TemporaryDir td;
-  std::string binary_path = std::string(td.path) + "/update_binary";
-  std::vector<std::string> cmd;
-  ASSERT_EQ(0, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
-  ASSERT_EQ(4U, cmd.size());
-  ASSERT_EQ(binary_path, cmd[0]);
-  ASSERT_EQ("3", cmd[1]);  // RECOVERY_API_VERSION
-  ASSERT_EQ(std::to_string(status_fd), cmd[2]);
-  ASSERT_EQ(package, cmd[3]);
-  struct stat sb;
-  ASSERT_EQ(0, stat(binary_path.c_str(), &sb));
-  ASSERT_EQ(static_cast<mode_t>(0755), sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
-
-  // With non-zero retry count. update_binary will be removed automatically.
-  cmd.clear();
-  ASSERT_EQ(0, update_binary_command(package, zip, binary_path, 2, status_fd, &cmd));
-  ASSERT_EQ(5U, cmd.size());
-  ASSERT_EQ(binary_path, cmd[0]);
-  ASSERT_EQ("3", cmd[1]);  // RECOVERY_API_VERSION
-  ASSERT_EQ(std::to_string(status_fd), cmd[2]);
-  ASSERT_EQ(package, cmd[3]);
-  ASSERT_EQ("retry", cmd[4]);
-  sb = {};
-  ASSERT_EQ(0, stat(binary_path.c_str(), &sb));
-  ASSERT_EQ(static_cast<mode_t>(0755), sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
-
-  CloseArchive(zip);
-#endif  // AB_OTA_UPDATER
+  VerifyAbUpdateCommands({});
 }
 
-TEST(InstallTest, update_binary_command_invalid) {
-#ifdef AB_OTA_UPDATER
+TEST(InstallTest, SetUpAbUpdateCommands_MissingPayloadPropertiesTxt) {
   TemporaryFile temp_file;
   FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
@@ -328,60 +348,36 @@ TEST(InstallTest, update_binary_command_invalid) {
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
   int status_fd = 10;
   std::string package = "/path/to/update.zip";
-  std::string binary_path = "/sbin/update_engine_sideload";
   std::vector<std::string> cmd;
-  ASSERT_EQ(INSTALL_CORRUPT, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
+  ASSERT_EQ(INSTALL_CORRUPT, SetUpAbUpdateCommands(package, zip, status_fd, &cmd));
   CloseArchive(zip);
-#else
-  TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
-  // The archive must have something to be opened correctly.
-  ASSERT_EQ(0, writer.StartEntry("dummy_entry", 0));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
-
-  // Missing update binary.
-  ZipArchiveHandle zip;
-  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
-  int status_fd = 10;
-  std::string package = "/path/to/update.zip";
-  TemporaryDir td;
-  std::string binary_path = std::string(td.path) + "/update_binary";
-  std::vector<std::string> cmd;
-  ASSERT_EQ(INSTALL_CORRUPT, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
-  CloseArchive(zip);
-#endif  // AB_OTA_UPDATER
 }
 
-#ifdef AB_OTA_UPDATER
-TEST(InstallTest, update_binary_command_multiple_serialno) {
+TEST(InstallTest, SetUpAbUpdateCommands_MultipleSerialnos) {
   std::string serialno = android::base::GetProperty("ro.serialno", "");
   ASSERT_NE("", serialno);
 
   // Single matching serialno will pass the verification.
-  VerifyAbUpdateBinaryCommand(serialno);
+  VerifyAbUpdateCommands(serialno);
 
   static constexpr char alphabet[] =
       "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
   auto generator = []() { return alphabet[rand() % (sizeof(alphabet) - 1)]; };
 
   // Generate 900 random serial numbers.
-  std::string random_serial;
+  std::string random_serialno;
   for (size_t i = 0; i < 900; i++) {
-    generate_n(back_inserter(random_serial), serialno.size(), generator);
-    random_serial.append("|");
+    generate_n(back_inserter(random_serialno), serialno.size(), generator);
+    random_serialno.append("|");
   }
   // Random serialnos should fail the verification.
-  VerifyAbUpdateBinaryCommand(random_serial, false);
+  VerifyAbUpdateCommands(random_serialno, false);
 
-  std::string long_serial = random_serial + serialno + "|";
+  std::string long_serialno = random_serialno + serialno + "|";
   for (size_t i = 0; i < 99; i++) {
-    generate_n(back_inserter(long_serial), serialno.size(), generator);
-    long_serial.append("|");
+    generate_n(back_inserter(long_serialno), serialno.size(), generator);
+    long_serialno.append("|");
   }
   // String with the matching serialno should pass the verification.
-  VerifyAbUpdateBinaryCommand(long_serial);
+  VerifyAbUpdateCommands(long_serialno);
 }
-#endif  // AB_OTA_UPDATER

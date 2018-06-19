@@ -23,6 +23,7 @@ constexpr const char kDefaultResourceDirectory[] = "/res/images";
 constexpr const char kDefaultStashDirectoryBase[] = "/cache/recovery";
 constexpr const char kDefaultTemporaryInstallFile[] = "/tmp/last_install";
 constexpr const char kDefaultTemporaryLogFile[] = "/tmp/recovery.log";
+constexpr const char kDefaultTemporaryUpdateBinary[] = "/tmp/update-binary";
 
 Paths& Paths::Get() {
   static Paths paths;
@@ -36,4 +37,5 @@ Paths::Paths()
       resource_dir_(kDefaultResourceDirectory),
       stash_directory_base_(kDefaultStashDirectoryBase),
       temporary_install_file_(kDefaultTemporaryInstallFile),
-      temporary_log_file_(kDefaultTemporaryLogFile) {}
+      temporary_log_file_(kDefaultTemporaryLogFile),
+      temporary_update_binary_(kDefaultTemporaryUpdateBinary) {}
