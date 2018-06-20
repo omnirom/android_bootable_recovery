@@ -283,7 +283,7 @@ int format_volume(const char* volume, const char* directory) {
   if (strcmp(v->fs_type, "ext4") == 0) {
     static constexpr int kBlockSize = 4096;
     std::vector<std::string> mke2fs_args = {
-      "/sbin/mke2fs_static", "-F", "-t", "ext4", "-b", std::to_string(kBlockSize),
+      "/system/bin/mke2fs", "-F", "-t", "ext4", "-b", std::to_string(kBlockSize),
     };
 
     int raid_stride = v->logical_blk_size / kBlockSize;
@@ -305,13 +305,7 @@ int format_volume(const char* volume, const char* directory) {
     int result = exec_cmd(mke2fs_args);
     if (result == 0 && directory != nullptr) {
       std::vector<std::string> e2fsdroid_args = {
-        "/sbin/e2fsdroid_static",
-        "-e",
-        "-f",
-        directory,
-        "-a",
-        volume,
-        v->blk_device,
+        "/system/bin/e2fsdroid", "-e", "-f", directory, "-a", volume, v->blk_device,
       };
       result = exec_cmd(e2fsdroid_args);
     }
