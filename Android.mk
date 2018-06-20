@@ -190,8 +190,8 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
 LOCAL_REQUIRED_MODULES := \
-    e2fsdroid_static \
-    mke2fs_static \
+    e2fsdroid.recovery \
+    mke2fs.recovery \
     mke2fs.conf
 
 ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
