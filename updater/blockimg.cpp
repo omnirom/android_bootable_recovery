@@ -1603,29 +1603,6 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     }
   }
 
-  if (params.canwrite) {
-    params.nti.za = za;
-    params.nti.entry = new_entry;
-    params.nti.brotli_compressed = android::base::EndsWith(new_data_fn->data, ".br");
-    if (params.nti.brotli_compressed) {
-      // Initialize brotli decoder state.
-      params.nti.brotli_decoder_state = BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
-    }
-    params.nti.receiver_available = true;
-
-    pthread_mutex_init(&params.nti.mu, nullptr);
-    pthread_cond_init(&params.nti.cv, nullptr);
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-    int error = pthread_create(&params.thread, &attr, unzip_new_data, &params.nti);
-    if (error != 0) {
-      PLOG(ERROR) << "pthread_create failed";
-      return StringValue("");
-    }
-  }
-
   static constexpr size_t kTransferListHeaderLines = 4;
   std::vector<std::string> lines = android::base::Split(transfer_list_value->data, "\n");
   if (lines.size() < kTransferListHeaderLines) {
@@ -1668,8 +1645,31 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   if (res == -1) {
     return StringValue("");
   }
-
   params.createdstash = res;
+
+  // Set up the new data writer.
+  if (params.canwrite) {
+    params.nti.za = za;
+    params.nti.entry = new_entry;
+    params.nti.brotli_compressed = android::base::EndsWith(new_data_fn->data, ".br");
+    if (params.nti.brotli_compressed) {
+      // Initialize brotli decoder state.
+      params.nti.brotli_decoder_state = BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
+    }
+    params.nti.receiver_available = true;
+
+    pthread_mutex_init(&params.nti.mu, nullptr);
+    pthread_cond_init(&params.nti.cv, nullptr);
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    int error = pthread_create(&params.thread, &attr, unzip_new_data, &params.nti);
+    if (error != 0) {
+      LOG(ERROR) << "pthread_create failed: " << strerror(error);
+      return StringValue("");
+    }
+  }
 
   // When performing an update, save the index and cmdline of the current command into the
   // last_command_file.
