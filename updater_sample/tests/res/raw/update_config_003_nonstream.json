@@ -5,5 +5,5 @@
     },
     "ab_install_type": "NON_STREAMING",
     "name": "S ota_002_package",
-    "url": "file:///data/sample-ota-packages/ota_003_package.zip"
+    "url": "file:///data/my-sample-ota-builds-dir/ota_003_package.zip"
 }
