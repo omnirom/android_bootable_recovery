@@ -16,7 +16,10 @@
 
 #include "applypatch_modes.h"
 
+#include <android-base/logging.h>
+
 // See the comments for applypatch() function.
 int main(int argc, char** argv) {
+  android::base::InitLogging(argv);
   return applypatch_modes(argc, argv);
 }
