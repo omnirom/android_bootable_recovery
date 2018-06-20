@@ -39,23 +39,61 @@ using SinkFn = std::function<size_t(const unsigned char*, size_t)>;
 // applypatch.cpp
 
 int ShowLicenses();
+
+// Returns the amount of free space (in bytes) on the filesystem containing filename, or -1 on
+// error. filename must exist.
 size_t FreeSpaceForFile(const std::string& filename);
+
+// Checks whether /cache partition has at least 'bytes'-byte free space. Returns 0 on having
+// sufficient space.
 int CacheSizeCheck(size_t bytes);
+
+// Parses a given string of 40 hex digits into 20-byte array 'digest'. 'str' may contain only the
+// digest or be of the form "<digest>:<anything>". Returns 0 on success, or -1 on any error.
 int ParseSha1(const char* str, uint8_t* digest);
 
-int applypatch(const char* source_filename,
-               const char* target_filename,
-               const char* target_sha1_str,
-               size_t target_size,
-               const std::vector<std::string>& patch_sha1_str,
-               const std::vector<std::unique_ptr<Value>>& patch_data,
-               const Value* bonus_data);
-int applypatch_check(const char* filename,
-                     const std::vector<std::string>& patch_sha1_str);
+// Applies binary patches to eMMC target files in a way that is safe (the original file is not
+// touched until we have the desired replacement for it) and idempotent (it's okay to run this
+// program multiple times).
+//
+// - If the SHA-1 hash of 'target_filename' is 'target_sha1_string', does nothing and returns
+//   successfully.
+//
+// - Otherwise, if the SHA-1 hash of 'source_filename' is one of the entries in 'patch_sha1s', the
+//   corresponding patch from 'patch_data' (which must be a VAL_BLOB) is applied to produce a new
+//   file (the type of patch is automatically detected from the blob data). If that new file has
+//   SHA-1 hash 'target_sha1_str', moves it to replace 'target_filename', and exits successfully.
+//   Note that if 'source_filename' and 'target_filename' are not the same, 'source_filename' is
+//   NOT deleted on success. 'target_filename' may be the string "-" to mean
+//   "the same as 'source_filename'".
+//
+// - Otherwise, or if any error is encountered, exits with non-zero status.
+//
+// 'source_filename' must refer to an eMMC partition to read the source data. See the comments for
+// the LoadPartitionContents() function for the format of such a filename. 'target_size' has become
+// obsolete since we have dropped the support for patching non-eMMC targets (eMMC targets have the
+// size embedded in the filename).
+int applypatch(const char* source_filename, const char* target_filename,
+               const char* target_sha1_str, size_t target_size,
+               const std::vector<std::string>& patch_sha1s,
+               const std::vector<std::unique_ptr<Value>>& patch_data, const Value* bonus_data);
+
+// Returns 0 if the contents of the file or the cached file match any of the given SHA-1's. Returns
+// nonzero otherwise.
+int applypatch_check(const char* filename, const std::vector<std::string>& patch_sha1s);
+
+// Flashes a given image to the target partition. It verifies the target cheksum first, and will
+// return if target already has the desired hash. Otherwise it checks the checksum of the given
+// source image before flashing, and verifies the target partition afterwards. The function is
+// idempotent. Returns zero on success.
 int applypatch_flash(const char* source_filename, const char* target_filename,
                      const char* target_sha1_str, size_t target_size);
 
+// Reads a file into memory; stores the file contents and associated metadata in *file. Returns 0
+// on success, or -1 on error.
 int LoadFileContents(const char* filename, FileContents* file);
+
+// Saves the given FileContents object to the given filename. Returns 0 on success, or -1 on error.
 int SaveFileContents(const char* filename, const FileContents* file);
 
 // bspatch.cpp
@@ -79,9 +117,9 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
 // freecache.cpp
 
 int MakeFreeSpaceOnCache(size_t bytes_needed);
+
 // Removes the files in |dirname| until we have at least |bytes_needed| bytes of free space on
 // the partition. The size of the free space is returned by calling |space_checker|.
 bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
                             const std::function<size_t(const std::string&)>& space_checker);
-
 #endif
