@@ -31,7 +31,7 @@ The directory can be found in logs or on the UI. In most cases it should be loca
 `/data/user/0/com.example.android.systemupdatersample/files/configs/`.
 
 SystemUpdaterSample app downloads OTA package from `url`. In this sample app
-`url` is expected to point to file system, e.g. `file:///data/sample-builds/ota-002.zip`.
+`url` is expected to point to file system, e.g. `file:///data/my-sample-ota-builds-dir/ota-002.zip`.
 
 If `ab_install_type` is `NON_STREAMING` then app checks if `url` starts
 with `file://` and passes `url` to the `update_engine`.
@@ -50,19 +50,6 @@ become active, and user can manually set updated partition as the active slot.
 
 Config files can be generated using `tools/gen_update_config.py`.
 Running `./tools/gen_update_config.py --help` shows usage of the script.
-
-
-## Running on a device
-
-The commands expected to be run from `$ANDROID_BUILD_TOP` and for demo
-purpose only.
-
-1. Compile the app `$ mmma bootable/recovery/updater_sample`.
-2. Install the app to the device using `$ adb install <APK_PATH>`.
-3. Change permissions on `/data/ota_package/` to `0777` on the device.
-4. Set SELinux mode to permissive. See instructions below.
-5. Add update config files.
-6. Push OTA packages to the device.
 
 
 ## Sample App State vs UpdateEngine Status
@@ -165,7 +152,54 @@ except when update_engine fails to initialize.
 
 ### Callback: onPayloadApplicationComplete
 
-Called whenever an update attempt is completed.
+Called whenever an update attempt is completed or failed.
+
+
+## Running on a device
+
+The commands are expected to be run from `$ANDROID_BUILD_TOP` and for demo
+purpose only.
+
+### Without the privileged system permissions
+
+1. Compile the app `mmma -j bootable/recovery/updater_sample`.
+2. Install the app to the device using `adb install <APK_PATH>`.
+3. Change permissions on `/data/ota_package/` to `0777` on the device.
+4. Set SELinux mode to permissive. See instructions below.
+5. Add update config files; look above at [Update Config file](#Update-Config-file).
+6. Push OTA packages to the device.
+7. Run the sample app.
+
+### With the privileged system permissions
+
+To run sample app as a privileged system app, it needs to be installed in `/system/priv-app/`.
+This directory is expected to be read-only, unless explicitly remounted.
+
+The recommended way to run the app is to build and install it as a
+privileged system app, so it's granted the required permissions to access
+`update_engine` service as well as OTA package files. Detailed steps are as follows:
+
+1. [Prepare to build](https://source.android.com/setup/build/building)
+2. Add the module (SystemUpdaterSample) to the `PRODUCT_PACKAGES` list for the lunch target.
+   e.g. add a line containing `PRODUCT_PACKAGES += SystemUpdaterSample`
+   to `device/google/marlin/device-common.mk`.
+3. [Whitelist the sample app](https://source.android.com/devices/tech/config/perms-whitelist)
+   * Add
+   ```
+    <privapp-permissions package="com.example.android.systemupdatersample">
+        <permission name="android.permission.ACCESS_CACHE_FILESYSTEM"/>
+    </privapp-permissions>
+   ```
+   to `frameworks/base/data/etc/privapp-permissions-platform.xml`
+5. Build sample app `mmma -j bootable/recovery/updater_sample`.
+6. Build Android `make -j`
+7. [Flash the device](https://source.android.com/setup/build/running)
+8. Add update config files; look above at `## Update Config file`;
+   `adb root` might be required.
+9. Push OTA packages to the device if there is no server to stream packages from;
+   changing of SELinux labels of OTA packages directory might be required
+   `chcon -R u:object_r:ota_package_file:s0 /data/my-sample-ota-builds-dir`
+10. Run the sample app.
 
 
 ## Development
@@ -192,16 +226,16 @@ Called whenever an update attempt is completed.
 
 ## Running tests
 
-1. Build `$ mmma bootable/recovery/updater_sample/`
+1. Build `mmma bootable/recovery/updater_sample/`
 2. Install app
-   `$ adb install $OUT/system/app/SystemUpdaterSample/SystemUpdaterSample.apk`
+   `adb install $OUT/system/app/SystemUpdaterSample/SystemUpdaterSample.apk`
 3. Install tests
-   `$ adb install $OUT/testcases/SystemUpdaterSampleTests/SystemUpdaterSampleTests.apk`
+   `adb install $OUT/testcases/SystemUpdaterSampleTests/SystemUpdaterSampleTests.apk`
 4. Run tests
-   `$ adb shell am instrument -w com.example.android.systemupdatersample.tests/android.support.test.runner.AndroidJUnitRunner`
+   `adb shell am instrument -w com.example.android.systemupdatersample.tests/android.support.test.runner.AndroidJUnitRunner`
 5. Run a test file
    ```
-   $ adb shell am instrument \
+   adb shell am instrument \
      -w com.example.android.systemupdatersample.tests/android.support.test.runner.AndroidJUnitRunner \
      -c com.example.android.systemupdatersample.util.PayloadSpecsTest
    ```
@@ -214,13 +248,7 @@ Called whenever an update attempt is completed.
 
 ## Getting read/write access to `/data/ota_package/`
 
-Following must be included in `AndroidManifest.xml`:
-
-```xml
-    <uses-permission android:name="android.permission.ACCESS_CACHE_FILESYSTEM" />
-```
-
-Note: access to cache filesystem is granted only to system apps.
+Access to cache filesystem is granted only to system apps.
 
 
 ## Setting SELinux mode to permissive (0)

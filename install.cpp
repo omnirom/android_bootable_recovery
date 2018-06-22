@@ -45,6 +45,7 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <android-base/unique_fd.h>
 #include <vintf/VintfObjectRecovery.h>
 #include <ziparchive/zip_archive.h>
 
@@ -124,11 +125,9 @@ static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::stri
   }
 }
 
-#ifdef AB_OTA_UPDATER
-
-// Parses the metadata of the OTA package in |zip| and checks whether we are
-// allowed to accept this A/B package. Downgrading is not allowed unless
-// explicitly enabled in the package and only for incremental packages.
+// Parses the metadata of the OTA package in |zip| and checks whether we are allowed to accept this
+// A/B package. Downgrading is not allowed unless explicitly enabled in the package and only for
+// incremental packages.
 static int check_newer_ab_build(ZipArchiveHandle zip) {
   std::string metadata_str;
   if (!read_metadata_from_package(zip, &metadata_str)) {
@@ -214,8 +213,7 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
   return 0;
 }
 
-int update_binary_command(const std::string& package, ZipArchiveHandle zip,
-                          const std::string& binary_path, int /* retry_count */, int status_fd,
+int SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int status_fd,
                           std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
   int ret = check_newer_ab_build(zip);
@@ -250,7 +248,7 @@ int update_binary_command(const std::string& package, ZipArchiveHandle zip,
   }
   long payload_offset = payload_entry.offset;
   *cmd = {
-    binary_path,
+    "/sbin/update_engine_sideload",
     "--payload=file://" + package,
     android::base::StringPrintf("--offset=%ld", payload_offset),
     "--headers=" + std::string(payload_properties.begin(), payload_properties.end()),
@@ -259,14 +257,11 @@ int update_binary_command(const std::string& package, ZipArchiveHandle zip,
   return 0;
 }
 
-#else  // !AB_OTA_UPDATER
-
-int update_binary_command(const std::string& package, ZipArchiveHandle zip,
-                          const std::string& binary_path, int retry_count, int status_fd,
-                          std::vector<std::string>* cmd) {
+int SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int retry_count,
+                             int status_fd, std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
 
-  // On traditional updates we extract the update binary from the package.
+  // In non-A/B updates we extract the update binary from the package.
   static constexpr const char* UPDATE_BINARY_NAME = "META-INF/com/google/android/update-binary";
   ZipString binary_name(UPDATE_BINARY_NAME);
   ZipEntry binary_entry;
@@ -275,15 +270,16 @@ int update_binary_command(const std::string& package, ZipArchiveHandle zip,
     return INSTALL_CORRUPT;
   }
 
+  const std::string binary_path = Paths::Get().temporary_update_binary();
   unlink(binary_path.c_str());
-  int fd = open(binary_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0755);
+  android::base::unique_fd fd(
+      open(binary_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0755));
   if (fd == -1) {
     PLOG(ERROR) << "Failed to create " << binary_path;
     return INSTALL_ERROR;
   }
 
   int32_t error = ExtractEntryToFile(zip, &binary_entry, fd);
-  close(fd);
   if (error != 0) {
     LOG(ERROR) << "Failed to extract " << UPDATE_BINARY_NAME << ": " << ErrorCodeString(error);
     return INSTALL_ERROR;
@@ -300,7 +296,6 @@ int update_binary_command(const std::string& package, ZipArchiveHandle zip,
   }
   return 0;
 }
-#endif  // !AB_OTA_UPDATER
 
 static void log_max_temperature(int* max_temperature, const std::atomic<bool>& logger_finished) {
   CHECK(max_temperature != nullptr);
@@ -321,14 +316,10 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   int pipefd[2];
   pipe(pipefd);
 
+  bool is_ab = android::base::GetBoolProperty("ro.build.ab_update", false);
   std::vector<std::string> args;
-#ifdef AB_OTA_UPDATER
-  int ret = update_binary_command(package, zip, "/sbin/update_engine_sideload", retry_count,
-                                  pipefd[1], &args);
-#else
-  int ret = update_binary_command(package, zip, "/tmp/update-binary", retry_count, pipefd[1],
-                                  &args);
-#endif
+  int ret = is_ab ? SetUpAbUpdateCommands(package, zip, pipefd[1], &args)
+                  : SetUpNonAbUpdateCommands(package, zip, retry_count, pipefd[1], &args);
   if (ret) {
     close(pipefd[0]);
     close(pipefd[1]);

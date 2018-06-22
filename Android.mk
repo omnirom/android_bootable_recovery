@@ -156,10 +156,6 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_CFLAGS := $(recovery_common_cflags)
 
-ifeq ($(AB_OTA_UPDATER),true)
-    LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
-endif
-
 LOCAL_MODULE := librecovery
 
 LOCAL_STATIC_LIBRARIES := \
@@ -194,8 +190,8 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
 LOCAL_REQUIRED_MODULES := \
-    e2fsdroid_static \
-    mke2fs_static \
+    e2fsdroid.recovery \
+    mke2fs.recovery \
     mke2fs.conf
 
 ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
