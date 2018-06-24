@@ -57,20 +57,21 @@ int LoadFileContents(const char* filename, FileContents* file) {
 
   struct stat sb;
   if (stat(filename, &sb) == -1) {
-    printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
+    PLOG(ERROR) << "Failed to stat \"" << filename << "\"";
     return -1;
   }
 
   std::vector<unsigned char> data(sb.st_size);
   unique_file f(ota_fopen(filename, "rb"));
   if (!f) {
-    printf("failed to open \"%s\": %s\n", filename, strerror(errno));
+    PLOG(ERROR) << "Failed to open \"" << filename << "\"";
     return -1;
   }
 
   size_t bytes_read = ota_fread(data.data(), 1, data.size(), f.get());
   if (bytes_read != data.size()) {
-    printf("short read of \"%s\" (%zu bytes of %zu)\n", filename, bytes_read, data.size());
+    LOG(ERROR) << "Short read of \"" << filename << "\" (" << bytes_read << " bytes of "
+               << data.size() << ")";
     return -1;
   }
   file->data = std::move(data);
@@ -91,7 +92,7 @@ int LoadFileContents(const char* filename, FileContents* file) {
 static int LoadPartitionContents(const std::string& filename, FileContents* file) {
   std::vector<std::string> pieces = android::base::Split(filename, ":");
   if (pieces.size() < 4 || pieces.size() % 2 != 0 || pieces[0] != "EMMC") {
-    printf("LoadPartitionContents called with bad filename \"%s\"\n", filename.c_str());
+    LOG(ERROR) << "LoadPartitionContents called with bad filename \"" << filename << "\"";
     return -1;
   }
 
@@ -100,7 +101,7 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
   for (size_t i = 0; i < pair_count; ++i) {
     size_t size;
     if (!android::base::ParseUint(pieces[i * 2 + 2], &size) || size == 0) {
-      printf("LoadPartitionContents called with bad size \"%s\"\n", pieces[i * 2 + 2].c_str());
+      LOG(ERROR) << "LoadPartitionContents called with bad size \"" << pieces[i * 2 + 2] << "\"";
       return -1;
     }
     pairs.push_back({ size, pieces[i * 2 + 3] });
@@ -112,7 +113,7 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
   const char* partition = pieces[1].c_str();
   unique_file dev(ota_fopen(partition, "rb"));
   if (!dev) {
-    printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
+    PLOG(ERROR) << "Failed to open eMMC partition \"" << partition << "\"";
     return -1;
   }
 
@@ -135,7 +136,8 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
     if (next > 0) {
       size_t read = ota_fread(buffer_ptr, 1, next, dev.get());
       if (next != read) {
-        printf("short read (%zu bytes of %zu) for partition \"%s\"\n", read, next, partition);
+        LOG(ERROR) << "Short read (" << read << " bytes of " << next << ") for partition \""
+                   << partition << "\"";
         return -1;
       }
       SHA1_Update(&sha_ctx, buffer_ptr, read);
@@ -152,13 +154,13 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
 
     uint8_t parsed_sha[SHA_DIGEST_LENGTH];
     if (ParseSha1(current_sha1.c_str(), parsed_sha) != 0) {
-      printf("failed to parse SHA-1 %s in %s\n", current_sha1.c_str(), filename.c_str());
+      LOG(ERROR) << "Failed to parse SHA-1 \"" << current_sha1 << "\" in " << filename;
       return -1;
     }
 
     if (memcmp(sha_so_far, parsed_sha, SHA_DIGEST_LENGTH) == 0) {
       // We have a match. Stop reading the partition; we'll return the data we've read so far.
-      printf("partition read matched size %zu SHA-1 %s\n", current_size, current_sha1.c_str());
+      LOG(INFO) << "Partition read matched size " << current_size << " SHA-1 " << current_sha1;
       found = true;
       break;
     }
@@ -166,7 +168,7 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
 
   if (!found) {
     // Ran off the end of the list of (size, sha1) pairs without finding a match.
-    printf("contents of partition \"%s\" didn't match %s\n", partition, filename.c_str());
+    LOG(ERROR) << "Contents of partition \"" << partition << "\" didn't match " << filename;
     return -1;
   }
 
@@ -181,22 +183,22 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
 int SaveFileContents(const char* filename, const FileContents* file) {
   unique_fd fd(ota_open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
   if (fd == -1) {
-    printf("failed to open \"%s\" for write: %s\n", filename, strerror(errno));
+    PLOG(ERROR) << "Failed to open \"" << filename << "\" for write";
     return -1;
   }
 
   size_t bytes_written = FileSink(file->data.data(), file->data.size(), fd);
   if (bytes_written != file->data.size()) {
-    printf("short write of \"%s\" (%zd bytes of %zu): %s\n", filename, bytes_written,
-           file->data.size(), strerror(errno));
+    PLOG(ERROR) << "Short write of \"" << filename << "\" (" << bytes_written << " bytes of "
+                << file->data.size();
     return -1;
   }
   if (ota_fsync(fd) != 0) {
-    printf("fsync of \"%s\" failed: %s\n", filename, strerror(errno));
+    PLOG(ERROR) << "Failed to fsync \"" << filename << "\"";
     return -1;
   }
   if (ota_close(fd) != 0) {
-    printf("close of \"%s\" failed: %s\n", filename, strerror(errno));
+    PLOG(ERROR) << "Failed to close \"" << filename << "\"";
     return -1;
   }
 
@@ -209,14 +211,14 @@ int SaveFileContents(const char* filename, const FileContents* file) {
 static int WriteToPartition(const unsigned char* data, size_t len, const std::string& target) {
   std::vector<std::string> pieces = android::base::Split(target, ":");
   if (pieces.size() < 2 || pieces[0] != "EMMC") {
-    printf("WriteToPartition called with bad target (%s)\n", target.c_str());
+    LOG(ERROR) << "WriteToPartition called with bad target \"" << target << "\"";
     return -1;
   }
 
   const char* partition = pieces[1].c_str();
   unique_fd fd(ota_open(partition, O_RDWR));
   if (fd == -1) {
-    printf("failed to open %s: %s\n", partition, strerror(errno));
+    PLOG(ERROR) << "Failed to open \"" << partition << "\"";
     return -1;
   }
 
@@ -224,7 +226,7 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
   bool success = false;
   for (size_t attempt = 0; attempt < 2; ++attempt) {
     if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
-      printf("failed seek on %s: %s\n", partition, strerror(errno));
+      PLOG(ERROR) << "Failed to seek to " << start << " on \"" << partition << "\"";
       return -1;
     }
     while (start < len) {
@@ -233,24 +235,24 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
 
       ssize_t written = TEMP_FAILURE_RETRY(ota_write(fd, data + start, to_write));
       if (written == -1) {
-        printf("failed write writing to %s: %s\n", partition, strerror(errno));
+        PLOG(ERROR) << "Failed to write to \"" << partition << "\"";
         return -1;
       }
       start += written;
     }
 
     if (ota_fsync(fd) != 0) {
-      printf("failed to sync to %s: %s\n", partition, strerror(errno));
+      PLOG(ERROR) << "Failed to sync \"" << partition << "\"";
       return -1;
     }
     if (ota_close(fd) != 0) {
-      printf("failed to close %s: %s\n", partition, strerror(errno));
+      PLOG(ERROR) << "Failed to close \"" << partition << "\"";
       return -1;
     }
 
     fd.reset(ota_open(partition, O_RDONLY));
     if (fd == -1) {
-      printf("failed to reopen %s for verify: %s\n", partition, strerror(errno));
+      PLOG(ERROR) << "Failed to reopen \"" << partition << "\" for verification";
       return -1;
     }
 
@@ -258,16 +260,16 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
     sync();
     unique_fd dc(ota_open("/proc/sys/vm/drop_caches", O_WRONLY));
     if (TEMP_FAILURE_RETRY(ota_write(dc, "3\n", 2)) == -1) {
-      printf("write to /proc/sys/vm/drop_caches failed: %s\n", strerror(errno));
+      PLOG(ERROR) << "Failed to write to /proc/sys/vm/drop_caches";
     } else {
-      printf("  caches dropped\n");
+      LOG(INFO) << "  caches dropped";
     }
     ota_close(dc);
     sleep(1);
 
     // Verify.
     if (TEMP_FAILURE_RETRY(lseek(fd, 0, SEEK_SET)) == -1) {
-      printf("failed to seek back to beginning of %s: %s\n", partition, strerror(errno));
+      PLOG(ERROR) << "Failed to seek to 0 on " << partition;
       return -1;
     }
 
@@ -283,50 +285,51 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
       while (so_far < to_read) {
         ssize_t read_count = TEMP_FAILURE_RETRY(ota_read(fd, buffer + so_far, to_read - so_far));
         if (read_count == -1) {
-          printf("verify read error %s at %zu: %s\n", partition, p, strerror(errno));
+          PLOG(ERROR) << "Failed to verify-read " << partition << " at " << p;
           return -1;
         } else if (read_count == 0) {
-          printf("verify read reached unexpected EOF, %s at %zu\n", partition, p);
+          LOG(ERROR) << "Verify-reading " << partition << " reached unexpected EOF at " << p;
           return -1;
         }
         if (static_cast<size_t>(read_count) < to_read) {
-          printf("short verify read %s at %zu: %zd %zu\n", partition, p, read_count, to_read);
+          LOG(INFO) << "Short verify-read " << partition << " at " << p << ": expected " << to_read
+                    << " actual " << read_count;
         }
         so_far += read_count;
       }
 
       if (memcmp(buffer, data + p, to_read) != 0) {
-        printf("verification failed starting at %zu\n", p);
+        LOG(ERROR) << "Verification failed starting at " << p;
         start = p;
         break;
       }
     }
 
     if (start == len) {
-      printf("verification read succeeded (attempt %zu)\n", attempt + 1);
+      LOG(INFO) << "Verification read succeeded (attempt " << attempt + 1 << ")";
       success = true;
       break;
     }
 
     if (ota_close(fd) != 0) {
-      printf("failed to close %s: %s\n", partition, strerror(errno));
+      PLOG(ERROR) << "Failed to close " << partition;
       return -1;
     }
 
     fd.reset(ota_open(partition, O_RDWR));
     if (fd == -1) {
-      printf("failed to reopen %s for retry write && verify: %s\n", partition, strerror(errno));
+      PLOG(ERROR) << "Failed to reopen " << partition << " for next attempt";
       return -1;
     }
   }
 
   if (!success) {
-    printf("failed to verify after all attempts\n");
+    LOG(ERROR) << "Failed to verify after all attempts";
     return -1;
   }
 
   if (ota_close(fd) == -1) {
-    printf("error closing %s: %s\n", partition, strerror(errno));
+    PLOG(ERROR) << "Failed to close " << partition;
     return -1;
   }
   sync();
@@ -379,18 +382,18 @@ int applypatch_check(const char* filename, const std::vector<std::string>& patch
   FileContents file;
   if (LoadFileContents(filename, &file) != 0 ||
       (!patch_sha1s.empty() && FindMatchingPatch(file.sha1, patch_sha1s) < 0)) {
-    printf("file \"%s\" doesn't have any of expected sha1 sums; checking cache\n", filename);
+    LOG(INFO) << "\"" << filename << "\" doesn't have any of expected SHA-1 sums; checking cache";
 
     // If the source file is missing or corrupted, it might be because we were killed in the middle
     // of patching it. A copy should have been made in cache_temp_source. If that file exists and
     // matches the SHA-1 we're looking for, the check still passes.
     if (LoadFileContents(Paths::Get().cache_temp_source().c_str(), &file) != 0) {
-      printf("failed to load cache file\n");
+      LOG(ERROR) << "Failed to load cache file";
       return 1;
     }
 
     if (FindMatchingPatch(file.sha1, patch_sha1s) < 0) {
-      printf("cache bits don't match any sha1 for \"%s\"\n", filename);
+      LOG(ERROR) << "The cache bits don't match any SHA-1 for \"" << filename << "\"";
       return 1;
     }
   }
@@ -407,7 +410,7 @@ static size_t FileSink(const unsigned char* data, size_t len, int fd) {
   while (done < len) {
     ssize_t wrote = TEMP_FAILURE_RETRY(ota_write(fd, data + done, len - done));
     if (wrote == -1) {
-      printf("error writing %zd bytes: %s\n", (len - done), strerror(errno));
+      PLOG(ERROR) << "Failed to write " << len - done << " bytes";
       return done;
     }
     done += wrote;
@@ -418,7 +421,7 @@ static size_t FileSink(const unsigned char* data, size_t len, int fd) {
 size_t FreeSpaceForFile(const std::string& filename) {
   struct statfs sf;
   if (statfs(filename.c_str(), &sf) != 0) {
-    printf("failed to statfs %s: %s\n", filename.c_str(), strerror(errno));
+    PLOG(ERROR) << "Failed to statfs " << filename;
     return -1;
   }
   return sf.f_bsize * sf.f_bavail;
@@ -426,7 +429,7 @@ size_t FreeSpaceForFile(const std::string& filename) {
 
 int CacheSizeCheck(size_t bytes) {
   if (MakeFreeSpaceOnCache(bytes) < 0) {
-    printf("unable to make %zu bytes available on /cache\n", bytes);
+    LOG(ERROR) << "Failed to make " << bytes << " bytes available on /cache";
     return 1;
   }
   return 0;
@@ -436,20 +439,20 @@ int applypatch(const char* source_filename, const char* target_filename,
                const char* target_sha1_str, size_t /* target_size */,
                const std::vector<std::string>& patch_sha1s,
                const std::vector<std::unique_ptr<Value>>& patch_data, const Value* bonus_data) {
-  printf("patch %s: ", source_filename);
+  LOG(INFO) << "Patching " << source_filename;
 
   if (target_filename[0] == '-' && target_filename[1] == '\0') {
     target_filename = source_filename;
   }
 
   if (strncmp(target_filename, "EMMC:", 5) != 0) {
-    printf("Supporting patching EMMC targets only.\n");
+    LOG(ERROR) << "Supporting patching EMMC targets only";
     return 1;
   }
 
   uint8_t target_sha1[SHA_DIGEST_LENGTH];
   if (ParseSha1(target_sha1_str, target_sha1) != 0) {
-    printf("failed to parse tgt-sha1 \"%s\"\n", target_sha1_str);
+    LOG(ERROR) << "Failed to parse target SHA-1 \"" << target_sha1_str << "\"";
     return 1;
   }
 
@@ -459,7 +462,7 @@ int applypatch(const char* source_filename, const char* target_filename,
     if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
       // The early-exit case: the patch was already applied, this file has the desired hash, nothing
       // for us to do.
-      printf("already %s\n", short_sha1(target_sha1).c_str());
+      LOG(INFO) << "  already " << short_sha1(target_sha1);
       return 0;
     }
   }
@@ -480,17 +483,17 @@ int applypatch(const char* source_filename, const char* target_filename,
     }
   }
 
-  printf("source file is bad; trying copy\n");
+  LOG(INFO) << "Source file is bad; trying copy";
 
   FileContents copy_file;
   if (LoadFileContents(Paths::Get().cache_temp_source().c_str(), &copy_file) < 0) {
-    printf("failed to read copy file\n");
+    LOG(ERROR) << "Failed to read copy file";
     return 1;
   }
 
   int to_use = FindMatchingPatch(copy_file.sha1, patch_sha1s);
   if (to_use == -1) {
-    printf("copy file doesn't match source SHA-1s either\n");
+    LOG(ERROR) << "The copy on /cache doesn't match source SHA-1s either";
     return 1;
   }
 
@@ -499,18 +502,18 @@ int applypatch(const char* source_filename, const char* target_filename,
 
 int applypatch_flash(const char* source_filename, const char* target_filename,
                      const char* target_sha1_str, size_t target_size) {
-  printf("flash %s: ", target_filename);
+  LOG(INFO) << "Flashing " << target_filename;
 
   uint8_t target_sha1[SHA_DIGEST_LENGTH];
   if (ParseSha1(target_sha1_str, target_sha1) != 0) {
-    printf("failed to parse tgt-sha1 \"%s\"\n", target_sha1_str);
+    LOG(ERROR) << "Failed to parse target SHA-1 \"" << target_sha1_str << "\"";
     return 1;
   }
 
   std::string target_str(target_filename);
   std::vector<std::string> pieces = android::base::Split(target_str, ":");
   if (pieces.size() != 2 || pieces[0] != "EMMC") {
-    printf("invalid target name \"%s\"", target_filename);
+    LOG(ERROR) << "Invalid target name \"" << target_filename << "\"";
     return 1;
   }
 
@@ -521,24 +524,24 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
   FileContents source_file;
   if (LoadPartitionContents(fullname, &source_file) == 0 &&
       memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
-    // The early-exit case: the image was already applied, this partition
-    // has the desired hash, nothing for us to do.
-    printf("already %s\n", short_sha1(target_sha1).c_str());
+    // The early-exit case: the image was already applied, this partition has the desired hash,
+    // nothing for us to do.
+    LOG(INFO) << "  already " << short_sha1(target_sha1);
     return 0;
   }
 
   if (LoadFileContents(source_filename, &source_file) == 0) {
     if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
       // The source doesn't have desired checksum.
-      printf("source \"%s\" doesn't have expected sha1 sum\n", source_filename);
-      printf("expected: %s, found: %s\n", short_sha1(target_sha1).c_str(),
-             short_sha1(source_file.sha1).c_str());
+      LOG(ERROR) << "source \"" << source_filename << "\" doesn't have expected SHA-1 sum";
+      LOG(ERROR) << "expected: " << short_sha1(target_sha1)
+                 << ", found: " << short_sha1(source_file.sha1);
       return 1;
     }
   }
 
   if (WriteToPartition(source_file.data.data(), target_size, target_filename) != 0) {
-    printf("write of copied data to %s failed\n", target_filename);
+    LOG(ERROR) << "Failed to write copied data to " << target_filename;
     return 1;
   }
   return 0;
@@ -548,7 +551,7 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
                           const std::string& target_filename,
                           const uint8_t target_sha1[SHA_DIGEST_LENGTH], const Value* bonus_data) {
   if (patch->type != VAL_BLOB) {
-    printf("patch is not a blob\n");
+    LOG(ERROR) << "patch is not a blob";
     return 1;
   }
 
@@ -560,7 +563,7 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
   } else if (header_bytes_read >= 8 && memcmp(header, "IMGDIFF2", 8) == 0) {
     use_bsdiff = false;
   } else {
-    printf("Unknown patch file format\n");
+    LOG(ERROR) << "Unknown patch file format";
     return 1;
   }
 
@@ -568,11 +571,11 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
 
   // We still write the original source to cache, in case the partition write is interrupted.
   if (MakeFreeSpaceOnCache(source_file.data.size()) < 0) {
-    printf("not enough free space on /cache\n");
+    LOG(ERROR) << "Not enough free space on /cache";
     return 1;
   }
   if (SaveFileContents(Paths::Get().cache_temp_source().c_str(), &source_file) < 0) {
-    printf("failed to back up source file\n");
+    LOG(ERROR) << "Failed to back up source file";
     return 1;
   }
 
@@ -584,7 +587,7 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
     if (len != 0) {
       uint8_t digest[SHA_DIGEST_LENGTH];
       SHA1(data, len, digest);
-      LOG(DEBUG) << "Appending " << len << " bytes data, sha1: " << short_sha1(digest);
+      LOG(DEBUG) << "Appending " << len << " bytes data, SHA-1: " << short_sha1(digest);
     }
     SHA1_Update(&ctx, data, len);
     memory_sink_str.append(reinterpret_cast<const char*>(data), len);
@@ -600,28 +603,28 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
   }
 
   if (result != 0) {
-    printf("applying patch failed\n");
+    LOG(ERROR) << "Failed to apply the patch: " << result;
     return 1;
   }
 
   uint8_t current_target_sha1[SHA_DIGEST_LENGTH];
   SHA1_Final(current_target_sha1, &ctx);
   if (memcmp(current_target_sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
-    printf("patch did not produce expected sha1 of %s\n", short_sha1(target_sha1).c_str());
+    LOG(ERROR) << "Patching did not produce the expected SHA-1 of " << short_sha1(target_sha1);
 
-    printf("target size %zu sha1 %s\n", memory_sink_str.size(),
-           short_sha1(current_target_sha1).c_str());
-    printf("source size %zu sha1 %s\n", source_file.data.size(),
-           short_sha1(source_file.sha1).c_str());
+    LOG(ERROR) << "target size " << memory_sink_str.size() << " SHA-1 "
+               << short_sha1(current_target_sha1);
+    LOG(ERROR) << "source size " << source_file.data.size() << " SHA-1 "
+               << short_sha1(source_file.sha1);
 
     uint8_t patch_digest[SHA_DIGEST_LENGTH];
     SHA1(reinterpret_cast<const uint8_t*>(patch->data.data()), patch->data.size(), patch_digest);
-    printf("patch size %zu sha1 %s\n", patch->data.size(), short_sha1(patch_digest).c_str());
+    LOG(ERROR) << "patch size " << patch->data.size() << " SHA-1 " << short_sha1(patch_digest);
 
     uint8_t bonus_digest[SHA_DIGEST_LENGTH];
     SHA1(reinterpret_cast<const uint8_t*>(bonus_data->data.data()), bonus_data->data.size(),
          bonus_digest);
-    printf("bonus size %zu sha1 %s\n", bonus_data->data.size(), short_sha1(bonus_digest).c_str());
+    LOG(ERROR) << "bonus size " << bonus_data->data.size() << " SHA-1 " << short_sha1(bonus_digest);
 
     // TODO(b/67849209) Remove after debugging the unit test flakiness.
     if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
@@ -633,13 +636,13 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
 
     return 1;
   } else {
-    printf("now %s\n", short_sha1(target_sha1).c_str());
+    LOG(INFO) << "  now " << short_sha1(target_sha1);
   }
 
   // Write back the temp file to the partition.
   if (WriteToPartition(reinterpret_cast<const unsigned char*>(memory_sink_str.c_str()),
                        memory_sink_str.size(), target_filename) != 0) {
-    printf("write of patched data to %s failed\n", target_filename.c_str());
+    LOG(ERROR) << "Failed to write patched data to " << target_filename;
     return 1;
   }
 
