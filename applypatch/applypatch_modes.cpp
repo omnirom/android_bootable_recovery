@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <openssl/sha.h>
@@ -54,14 +55,14 @@ static bool ParsePatchArgs(int argc, const char** argv, std::vector<std::string>
     for (int i = 0; i < argc; ++i) {
         std::vector<std::string> pieces = android::base::Split(argv[i], ":");
         if (pieces.size() != 2) {
-            printf("failed to parse patch argument \"%s\"\n", argv[i]);
-            return false;
+          LOG(ERROR) << "Failed to parse patch argument \"" << argv[i] << "\"";
+          return false;
         }
 
         uint8_t digest[SHA_DIGEST_LENGTH];
         if (ParseSha1(pieces[0].c_str(), digest) != 0) {
-            printf("failed to parse sha1 \"%s\"\n", argv[i]);
-            return false;
+          LOG(ERROR) << "Failed to parse SHA-1 \"" << argv[i] << "\"";
+          return false;
         }
 
         sha1s->push_back(pieces[0]);
@@ -85,8 +86,8 @@ static int PatchMode(int argc, const char** argv) {
 
     if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
         if (LoadFileContents(argv[2], &bonusFc) != 0) {
-            printf("failed to load bonus file %s\n", argv[2]);
-            return 1;
+          LOG(ERROR) << "Failed to load bonus file " << argv[2];
+          return 1;
         }
         bonus.type = VAL_BLOB;
         bonus.data = std::string(bonusFc.data.cbegin(), bonusFc.data.cend());
@@ -100,15 +101,15 @@ static int PatchMode(int argc, const char** argv) {
 
     size_t target_size;
     if (!android::base::ParseUint(argv[4], &target_size) || target_size == 0) {
-        printf("can't parse \"%s\" as byte count\n\n", argv[4]);
-        return 1;
+      LOG(ERROR) << "Failed to parse \"" << argv[4] << "\" as byte count";
+      return 1;
     }
 
     // If no <src-sha1>:<patch> is provided, it is in flash mode.
     if (argc == 5) {
         if (bonus.type != VAL_INVALID) {
-            printf("bonus file not supported in flash mode\n");
-            return 1;
+          LOG(ERROR) << "bonus file not supported in flash mode";
+          return 1;
         }
         return FlashMode(argv[1], argv[2], argv[3], target_size);
     }
@@ -116,8 +117,8 @@ static int PatchMode(int argc, const char** argv) {
     std::vector<std::string> sha1s;
     std::vector<FileContents> files;
     if (!ParsePatchArgs(argc-5, argv+5, &sha1s, &files)) {
-        printf("failed to parse patch args\n");
-        return 1;
+      LOG(ERROR) << "Failed to parse patch args";
+      return 1;
     }
 
     std::vector<std::unique_ptr<Value>> patches;
@@ -156,33 +157,34 @@ static int PatchMode(int argc, const char** argv) {
 // LoadPartitionContents() function for the format of such a filename.
 
 int applypatch_modes(int argc, const char** argv) {
-    if (argc < 2) {
-      usage:
-        printf(
-            "usage: %s [-b <bonus-file>] <src-file> <tgt-file> <tgt-sha1> <tgt-size> "
-            "[<src-sha1>:<patch> ...]\n"
-            "   or  %s -c <file> [<sha1> ...]\n"
-            "   or  %s -l\n"
-            "\n"
-            "Filenames may be of the form\n"
-            "  EMMC:<partition>:<len_1>:<sha1_1>:<len_2>:<sha1_2>:...\n"
-            "to specify reading from or writing to an EMMC partition.\n\n",
-            argv[0], argv[0], argv[0]);
-        return 2;
-    }
+  if (argc < 2) {
+  usage:
+    // clang-format off
+    LOG(INFO) << "Usage: \n"
+              << "  " << argv[0] << " [-b <bonus-file>] <src-file> <tgt-file> <tgt-sha1> "
+                 "<tgt-size> [<src-sha1>:<patch> ...]\n"
+              << "  " << argv[0] << " -c <file> [<sha1> ...]\n"
+              << "  " << argv[0] << " -l\n"
+              << "\n"
+              << "Filenames may be of the form\n"
+              << "  EMMC:<partition>:<len_1>:<sha1_1>:<len_2>:<sha1_2>:...\n"
+              << "to specify reading from or writing to an EMMC partition.\n\n";
+    // clang-format on
+    return 2;
+  }
 
-    int result;
+  int result;
 
-    if (strncmp(argv[1], "-l", 3) == 0) {
-        result = ShowLicenses();
-    } else if (strncmp(argv[1], "-c", 3) == 0) {
-        result = CheckMode(argc, argv);
-    } else {
-        result = PatchMode(argc, argv);
-    }
+  if (strncmp(argv[1], "-l", 3) == 0) {
+    result = ShowLicenses();
+  } else if (strncmp(argv[1], "-c", 3) == 0) {
+    result = CheckMode(argc, argv);
+  } else {
+    result = PatchMode(argc, argv);
+  }
 
-    if (result == 2) {
-        goto usage;
-    }
-    return result;
+  if (result == 2) {
+    goto usage;
+  }
+  return result;
 }
