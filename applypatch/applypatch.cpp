@@ -49,20 +49,20 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
                           const std::string& target_filename,
                           const uint8_t target_sha1[SHA_DIGEST_LENGTH], const Value* bonus_data);
 
-int LoadFileContents(const char* filename, FileContents* file) {
+int LoadFileContents(const std::string& filename, FileContents* file) {
   // A special 'filename' beginning with "EMMC:" means to load the contents of a partition.
-  if (strncmp(filename, "EMMC:", 5) == 0) {
+  if (android::base::StartsWith(filename, "EMMC:")) {
     return LoadPartitionContents(filename, file);
   }
 
   struct stat sb;
-  if (stat(filename, &sb) == -1) {
+  if (stat(filename.c_str(), &sb) == -1) {
     PLOG(ERROR) << "Failed to stat \"" << filename << "\"";
     return -1;
   }
 
   std::vector<unsigned char> data(sb.st_size);
-  unique_file f(ota_fopen(filename, "rb"));
+  unique_file f(ota_fopen(filename.c_str(), "rb"));
   if (!f) {
     PLOG(ERROR) << "Failed to open \"" << filename << "\"";
     return -1;
@@ -153,7 +153,7 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
     SHA1_Final(sha_so_far, &temp_ctx);
 
     uint8_t parsed_sha[SHA_DIGEST_LENGTH];
-    if (ParseSha1(current_sha1.c_str(), parsed_sha) != 0) {
+    if (ParseSha1(current_sha1, parsed_sha) != 0) {
       LOG(ERROR) << "Failed to parse SHA-1 \"" << current_sha1 << "\" in " << filename;
       return -1;
     }
@@ -180,8 +180,9 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
   return 0;
 }
 
-int SaveFileContents(const char* filename, const FileContents* file) {
-  unique_fd fd(ota_open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
+int SaveFileContents(const std::string& filename, const FileContents* file) {
+  unique_fd fd(
+      ota_open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
   if (fd == -1) {
     PLOG(ERROR) << "Failed to open \"" << filename << "\" for write";
     return -1;
@@ -337,8 +338,8 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
   return 0;
 }
 
-int ParseSha1(const char* str, uint8_t* digest) {
-  const char* ps = str;
+int ParseSha1(const std::string& str, uint8_t* digest) {
+  const char* ps = str.c_str();
   uint8_t* pd = digest;
   for (int i = 0; i < SHA_DIGEST_LENGTH * 2; ++i, ++ps) {
     int digit;
@@ -367,7 +368,7 @@ int ParseSha1(const char* str, uint8_t* digest) {
 static int FindMatchingPatch(const uint8_t* sha1, const std::vector<std::string>& patch_sha1s) {
   for (size_t i = 0; i < patch_sha1s.size(); ++i) {
     uint8_t patch_sha1[SHA_DIGEST_LENGTH];
-    if (ParseSha1(patch_sha1s[i].c_str(), patch_sha1) == 0 &&
+    if (ParseSha1(patch_sha1s[i], patch_sha1) == 0 &&
         memcmp(patch_sha1, sha1, SHA_DIGEST_LENGTH) == 0) {
       return i;
     }
@@ -387,7 +388,7 @@ int applypatch_check(const char* filename, const std::vector<std::string>& patch
     // If the source file is missing or corrupted, it might be because we were killed in the middle
     // of patching it. A copy should have been made in cache_temp_source. If that file exists and
     // matches the SHA-1 we're looking for, the check still passes.
-    if (LoadFileContents(Paths::Get().cache_temp_source().c_str(), &file) != 0) {
+    if (LoadFileContents(Paths::Get().cache_temp_source(), &file) != 0) {
       LOG(ERROR) << "Failed to load cache file";
       return 1;
     }
@@ -486,7 +487,7 @@ int applypatch(const char* source_filename, const char* target_filename,
   LOG(INFO) << "Source file is bad; trying copy";
 
   FileContents copy_file;
-  if (LoadFileContents(Paths::Get().cache_temp_source().c_str(), &copy_file) < 0) {
+  if (LoadFileContents(Paths::Get().cache_temp_source(), &copy_file) < 0) {
     LOG(ERROR) << "Failed to read copy file";
     return 1;
   }
@@ -574,7 +575,7 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
     LOG(ERROR) << "Not enough free space on /cache";
     return 1;
   }
-  if (SaveFileContents(Paths::Get().cache_temp_source().c_str(), &source_file) < 0) {
+  if (SaveFileContents(Paths::Get().cache_temp_source(), &source_file) < 0) {
     LOG(ERROR) << "Failed to back up source file";
     return 1;
   }

@@ -50,7 +50,7 @@ int CacheSizeCheck(size_t bytes);
 
 // Parses a given string of 40 hex digits into 20-byte array 'digest'. 'str' may contain only the
 // digest or be of the form "<digest>:<anything>". Returns 0 on success, or -1 on any error.
-int ParseSha1(const char* str, uint8_t* digest);
+int ParseSha1(const std::string& str, uint8_t* digest);
 
 // Applies binary patches to eMMC target files in a way that is safe (the original file is not
 // touched until we have the desired replacement for it) and idempotent (it's okay to run this
@@ -91,10 +91,10 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
 
 // Reads a file into memory; stores the file contents and associated metadata in *file. Returns 0
 // on success, or -1 on error.
-int LoadFileContents(const char* filename, FileContents* file);
+int LoadFileContents(const std::string& filename, FileContents* file);
 
 // Saves the given FileContents object to the given filename. Returns 0 on success, or -1 on error.
-int SaveFileContents(const char* filename, const FileContents* file);
+int SaveFileContents(const std::string& filename, const FileContents* file);
 
 // bspatch.cpp
 
