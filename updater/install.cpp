@@ -319,7 +319,7 @@ Value* Sha1CheckFn(const char* name, State* state, const std::vector<std::unique
     uint8_t arg_digest[SHA_DIGEST_LENGTH];
     if (args[i]->type != VAL_STRING) {
       LOG(ERROR) << name << "(): arg " << i << " is not a string; skipping";
-    } else if (ParseSha1(args[i]->data.c_str(), arg_digest) != 0) {
+    } else if (ParseSha1(args[i]->data, arg_digest) != 0) {
       // Warn about bad args and skip them.
       LOG(ERROR) << name << "(): error parsing \"" << args[i]->data << "\" as sha-1; skipping";
     } else if (memcmp(digest, arg_digest, SHA_DIGEST_LENGTH) == 0) {
