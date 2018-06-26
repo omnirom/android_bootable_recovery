@@ -310,3 +310,28 @@ TEST(CommandsTest, Parse_ZERO) {
   ASSERT_EQ(StashInfo(), command.stash());
   ASSERT_EQ(PatchInfo(), command.patch());
 }
+
+TEST(CommandsTest, Parse_InvalidNumberOfArgs) {
+  // Note that the case of having excess args in BSDIFF, IMGDIFF and MOVE is covered by
+  // ParseTargetInfoAndSourceInfo_InvalidInput.
+  std::vector<std::string> inputs{
+    "bsdiff",
+    "erase",
+    "erase 4,3,5,10,12 hash1",
+    "free",
+    "free id1 id2",
+    "imgdiff",
+    "move",
+    "new",
+    "new 4,3,5,10,12 hash1",
+    "stash",
+    "stash id1",
+    "stash id1 4,3,5,10,12 id2",
+    "zero",
+    "zero 4,3,5,10,12 hash2",
+  };
+  for (const auto& input : inputs) {
+    std::string err;
+    ASSERT_FALSE(Command::Parse(input, 0, &err));
+  }
+}
