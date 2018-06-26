@@ -54,7 +54,7 @@ bool Command::ParseTargetInfoAndSourceInfo(const std::vector<std::string>& token
                                            const std::string& tgt_hash, TargetInfo* target,
                                            const std::string& src_hash, SourceInfo* source,
                                            std::string* err) {
-  // We expect the given tokens parameter in one of the following formats.
+  // We expect the given args (in 'tokens' vector) in one of the following formats.
   //
   //    <tgt_ranges> <src_block_count> - <[stash_id:location] ...>
   //        (loads data from stashes only)
@@ -65,10 +65,9 @@ bool Command::ParseTargetInfoAndSourceInfo(const std::vector<std::string>& token
   //    <tgt_ranges> <src_block_count> <src_ranges> <src_ranges_location> <[stash_id:location] ...>
   //        (loads data from both of source image and stashes)
 
-  // At least it needs to provide three parameters: <tgt_ranges>, <src_block_count> and
-  // "-"/<src_ranges>.
+  // At least it needs to provide three args: <tgt_ranges>, <src_block_count> and "-"/<src_ranges>.
   if (tokens.size() < 3) {
-    *err = "invalid number of parameters";
+    *err = "invalid number of args";
     return false;
   }
 
@@ -170,6 +169,11 @@ Command Command::Parse(const std::string& line, size_t index, std::string* err) 
 
   if (op == Type::ZERO || op == Type::NEW || op == Type::ERASE) {
     // zero/new/erase <rangeset>
+    if (pos + 1 != tokens.size()) {
+      *err = android::base::StringPrintf("invalid number of args: %zu (expected 1)",
+                                         tokens.size() - pos);
+      return {};
+    }
     RangeSet tgt_ranges = RangeSet::Parse(tokens[pos++]);
     if (!tgt_ranges) {
       return {};
@@ -178,8 +182,9 @@ Command Command::Parse(const std::string& line, size_t index, std::string* err) 
     target_info = TargetInfo(kUnknownHash, tgt_ranges);
   } else if (op == Type::STASH) {
     // stash <stash_id> <src_ranges>
-    if (pos + 2 > tokens.size()) {
-      *err = "missing stash id and/or source ranges";
+    if (pos + 2 != tokens.size()) {
+      *err = android::base::StringPrintf("invalid number of args: %zu (expected 2)",
+                                         tokens.size() - pos);
       return {};
     }
     const std::string& id = tokens[pos++];
@@ -191,8 +196,9 @@ Command Command::Parse(const std::string& line, size_t index, std::string* err) 
     stash_info = StashInfo(id, src_ranges);
   } else if (op == Type::FREE) {
     // free <stash_id>
-    if (pos + 1 > tokens.size()) {
-      *err = "missing stash id in free command";
+    if (pos + 1 != tokens.size()) {
+      *err = android::base::StringPrintf("invalid number of args: %zu (expected 1)",
+                                         tokens.size() - pos);
       return {};
     }
     stash_info = StashInfo(tokens[pos++], {});
@@ -211,7 +217,8 @@ Command Command::Parse(const std::string& line, size_t index, std::string* err) 
   } else if (op == Type::BSDIFF || op == Type::IMGDIFF) {
     // <offset> <length> <srchash> <dsthash>
     if (pos + 4 > tokens.size()) {
-      *err = "invalid number of tokens";
+      *err = android::base::StringPrintf("invalid number of args: %zu (expected 4+)",
+                                         tokens.size() - pos);
       return {};
     }
     size_t offset;
