@@ -60,7 +60,7 @@ static bool ParsePatchArgs(int argc, const char** argv, std::vector<std::string>
         }
 
         uint8_t digest[SHA_DIGEST_LENGTH];
-        if (ParseSha1(pieces[0].c_str(), digest) != 0) {
+        if (ParseSha1(pieces[0], digest) != 0) {
           LOG(ERROR) << "Failed to parse SHA-1 \"" << argv[i] << "\"";
           return false;
         }
