@@ -27,6 +27,7 @@ LOCAL_STATIC_LIBRARIES := \
     libminui \
     libotautil \
     libupdater \
+    libgtest_prod \
     libpng \
     libziparchive \
     libutils \
@@ -133,6 +134,7 @@ libupdater_static_libraries := \
     libfec \
     libfec_rs \
     libfs_mgr \
+    libgtest_prod \
     liblog \
     libselinux \
     libsparse \
