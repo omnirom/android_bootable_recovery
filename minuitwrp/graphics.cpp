@@ -31,6 +31,7 @@
 
 #include <time.h>
 
+#include <cutils/properties.h>
 #include <pixelflinger/pixelflinger.h>
 #include "../gui/placement.h"
 #include "minui.h"
@@ -63,6 +64,8 @@ GRSurface* gr_draw = NULL;
 static GGLContext *gr_context = 0;
 GGLSurface gr_mem_surface;
 static int gr_is_curr_clr_opaque = 0;
+
+bool flipped_screen = false;
 
 static bool outside(int x, int y)
 {
@@ -295,6 +298,16 @@ static void get_memory_surface(GGLSurface* ms) {
 int gr_init(void)
 {
     gr_draw = NULL;
+
+    char flippedscreen[PROPERTY_VALUE_MAX];
+    property_get("ro.twrp.flipped_screen", flippedscreen, "");
+    if (flippedscreen[0] != '\0') {
+        flipped_screen = (!strcmp(flippedscreen, "1"));
+#ifdef BOARD_HAS_FLIPPED_SCREEN
+    } else {
+        flipped_screen = true;
+#endif
+    }
 
 #ifdef MSM_BSP
     gr_backend = open_overlay();

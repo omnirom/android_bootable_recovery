@@ -61,6 +61,8 @@ static int rightSplit = 0;
 
 static size_t frame_size = 0;
 
+extern bool flipped_screen;
+
 #ifdef MSM_BSP
 typedef struct {
     unsigned char *mem_buf;
@@ -325,9 +327,8 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.w = gr_fb.width;
             overlayL.dst_rect.h = gr_fb.height;
             overlayL.alpha = 0xFF;
-#ifdef BOARD_HAS_FLIPPED_SCREEN
-            overlayL.flags = MDP_ROT_180;
-#endif
+            if (flipped_screen)
+                overlayL.flags = MDP_ROT_180;
             overlayL.transp_mask = MDP_TRANSP_NOP;
             overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
@@ -365,9 +366,8 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.w = lWidth;
             overlayL.dst_rect.h = height;
             overlayL.alpha = 0xFF;
-#ifdef BOARD_HAS_FLIPPED_SCREEN
-            overlayL.flags = MDP_ROT_180;
-#endif
+            if (flipped_screen)
+                overlayL.flags = MDP_ROT_180;
             overlayL.transp_mask = MDP_TRANSP_NOP;
             overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
@@ -395,11 +395,9 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayR.dst_rect.w = rWidth;
             overlayR.dst_rect.h = height;
             overlayR.alpha = 0xFF;
-#ifdef BOARD_HAS_FLIPPED_SCREEN
-            overlayR.flags = MDSS_MDP_RIGHT_MIXER | MDP_ROT_180;
-#else
             overlayR.flags = MDSS_MDP_RIGHT_MIXER;
-#endif
+            if (flipped_screen)
+                overlayR.flags |= MDP_ROT_180;
             overlayR.transp_mask = MDP_TRANSP_NOP;
             overlayR.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayR);
