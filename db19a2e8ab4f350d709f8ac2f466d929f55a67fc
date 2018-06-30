@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e10b3942_bc21bf21",
+        "filename": "minuitwrp/graphics_utils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1001490
+      },
+      "writtenOn": "2018-06-30T13:25:24Z",
+      "side": 1,
+      "message": "If you\u0027re using GGL_PIXEL_FORMAT_RGBA_8888 in all cases, except when RECOVERY_BGRA is set, this would be more simple:\n\n#if defined(RECOVERY_BGRA)\n    surface.format \u003d GGL_PIXEL_FORMAT_BGRA_8888;\n#else\n    surface.format \u003d GGL_PIXEL_FORMAT_RGBA_8888;\n#endif",
+      "range": {
+        "startLine": 56,
+        "startChar": 0,
+        "endLine": 66,
+        "endChar": 6
+      },
+      "revId": "db19a2e8ab4f350d709f8ac2f466d929f55a67fc",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
