@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "adc82fd4_6d0f460a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1001490
+      },
+      "writtenOn": "2018-06-30T13:46:33Z",
+      "side": 1,
+      "message": "Add support for haptics driver registered with LED class framework",
+      "range": {
+        "startLine": 7,
+        "startChar": 11,
+        "endLine": 7,
+        "endChar": 48
+      },
+      "revId": "3da3de18a139858b55e309a5e3c8f5effa22b87f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a9a737c3_82751fab",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1001490
+      },
+      "writtenOn": "2018-06-30T13:46:33Z",
+      "side": 1,
+      "message": "This type of vibrator is found on newer kernel versions (4.14+)\nand registers with LED class framework (located at /sys/class/leds/vibrator).",
+      "range": {
+        "startLine": 9,
+        "startChar": 0,
+        "endLine": 10,
+        "endChar": 35
+      },
+      "revId": "3da3de18a139858b55e309a5e3c8f5effa22b87f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "145ffa38_d803dce2",
+        "filename": "minuitwrp/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 1001490
+      },
+      "writtenOn": "2018-06-30T13:46:33Z",
+      "side": 1,
+      "message": "Give that timed_output class driver had been dropped in newer kernel versions (reference: https://github.com/MiCode/Xiaomi_Kernel_OpenSource/commit/0b5fbf3768ca623adad41ad4516e1721fada8a40), I think we should turn this into a more generic flag. Maybe TW_USE_LEDS_HAPTICS?",
+      "range": {
+        "startLine": 172,
+        "startChar": 9,
+        "endLine": 172,
+        "endChar": 37
+      },
+      "revId": "3da3de18a139858b55e309a5e3c8f5effa22b87f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "099ba88c_fca78316",
+        "filename": "minuitwrp/events.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1001490
+      },
+      "writtenOn": "2018-06-30T13:46:33Z",
+      "side": 1,
+      "message": "Same here, make it generic. \n\nLED_HAPTICS_DURATION_FILE and LED_HAPTICS_DURATION_FILE",
+      "range": {
+        "startLine": 42,
+        "startChar": 0,
+        "endLine": 43,
+        "endChar": 71
+      },
+      "revId": "3da3de18a139858b55e309a5e3c8f5effa22b87f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
