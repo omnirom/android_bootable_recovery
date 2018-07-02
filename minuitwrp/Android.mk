@@ -145,8 +145,18 @@ ifeq ($(TW_FBIOPAN), true)
     LOCAL_CFLAGS += -DTW_FBIOPAN
 endif
 
-ifeq ($(BOARD_HAS_FLIPPED_SCREEN), true)
-LOCAL_CFLAGS += -DBOARD_HAS_FLIPPED_SCREEN
+ifneq ($(TW_HWROTATION),)
+  ifeq (,$(filter 0 90 180 270, $(TW_HWROTATION)))
+    $(error TW_HWROTATION must be set to 0, 90, 180 or 270. Currently set to $(TW_HWROTATION))
+  endif
+  LOCAL_CFLAGS += -DTW_HWROTATION=$(TW_HWROTATION)
+else
+  # Support for old flag
+  ifeq ($(BOARD_HAS_FLIPPED_SCREEN), true)
+    LOCAL_CFLAGS += -DTW_HWROTATION=180
+  else
+    LOCAL_CFLAGS += -DTW_HWROTATION=0
+  endif
 endif
 
 ifeq ($(TW_IGNORE_MAJOR_AXIS_0), true)
