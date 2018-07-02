@@ -14,6 +14,8 @@
 
 #include <pixelflinger/pixelflinger.h>
 #include <pthread.h>
+// For std::min and std::max
+#include <algorithm>
 
 #define STRING_CACHE_MAX_ENTRIES 400
 #define STRING_CACHE_TRUNCATE_ENTRIES 150
@@ -697,10 +699,14 @@ int gr_ttf_maxExW(const char *s, void *font, int max_width)
     return max_bytes;
 }
 
-int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int max_width, int max_height)
+int gr_ttf_textExWH(void *context, int x, int y,
+                    const char *s, void *pFont,
+                    int max_width, int max_height,
+                    const gr_surface gr_draw_surface)
 {
     GGLContext *gl = (GGLContext *)context;
     TrueTypeFont *font = (TrueTypeFont *)pFont;
+    const GRSurface *gr_draw = (const GRSurface*) gr_draw_surface;
 
     // not actualy max width, but max_width + x
     if(max_width != -1)
@@ -719,6 +725,21 @@ int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int
         return -1;
     }
 
+#if TW_ROTATION != 0
+    // Do not perform relatively expensive operation if not needed
+    GGLSurface string_surface_rotated;
+    string_surface_rotated.version = sizeof(string_surface_rotated);
+    // Skip the **(TW_ROTATION == 0)** || (TW_ROTATION == 180) check
+    // because we are under a TW_ROTATION != 0 conditional compilation statement
+    string_surface_rotated.width   = (TW_ROTATION == 180) ? e->surface.width  : e->surface.height;
+    string_surface_rotated.height  = (TW_ROTATION == 180) ? e->surface.height : e->surface.width;
+    string_surface_rotated.stride  = string_surface_rotated.width;
+    string_surface_rotated.format  = e->surface.format;
+    // e->surface.format is GGL_PIXEL_FORMAT_A_8 (grayscale)
+    string_surface_rotated.data    = (GGLubyte*) malloc(string_surface_rotated.stride * string_surface_rotated.height * 1);
+    surface_ROTATION_transform((gr_surface) &string_surface_rotated, (const gr_surface) &e->surface, 1);
+#endif
+
     int y_bottom = y + e->surface.height;
     int res = e->rendered_bytes;
 
@@ -732,15 +753,38 @@ int gr_ttf_textExWH(void *context, int x, int y, const char *s, void *pFont, int
         }
     }
 
+    // Figuring out display coordinates works for TW_ROTATION == 0 too,
+    // and isn't as expensive as allocating and rotating another surface,
+    // so we do this anyway.
+    int x0_disp, y0_disp, x1_disp, y1_disp;
+    int l_disp, r_disp, t_disp, b_disp;
+
+    x0_disp = ROTATION_X_DISP(x, y, gr_draw);
+    y0_disp = ROTATION_Y_DISP(x, y, gr_draw);
+    x1_disp = ROTATION_X_DISP(x + e->surface.width, y_bottom, gr_draw);
+    y1_disp = ROTATION_Y_DISP(x + e->surface.width, y_bottom, gr_draw);
+    l_disp = std::min(x0_disp, x1_disp);
+    r_disp = std::max(x0_disp, x1_disp);
+    t_disp = std::min(y0_disp, y1_disp);
+    b_disp = std::max(y0_disp, y1_disp);
+
+#if TW_ROTATION != 0
+    gl->bindTexture(gl, &string_surface_rotated);
+#else
     gl->bindTexture(gl, &e->surface);
+#endif
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
     gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
     gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
 
     gl->enable(gl, GGL_TEXTURE_2D);
-    gl->texCoord2i(gl, -x, -y);
-    gl->recti(gl, x, y, x + e->surface.width, y_bottom);
+    gl->texCoord2i(gl, -l_disp, -t_disp);
+    gl->recti(gl, l_disp, t_disp, r_disp, b_disp);
     gl->disable(gl, GGL_TEXTURE_2D);
+
+#if TW_ROTATION != 0
+    free(string_surface_rotated.data);
+#endif
 
     pthread_mutex_unlock(&font->mutex);
     return res;

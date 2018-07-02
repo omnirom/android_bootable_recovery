@@ -19,6 +19,7 @@
 #include <png.h>
 #include <pixelflinger/pixelflinger.h>
 #include <linux/fb.h>
+#include <string.h>
 
 #include "minui.h"
 
@@ -120,4 +121,48 @@ exit:
     if(fp)
         fclose(fp);
     return res;
+}
+
+#define MATRIX_ELEMENT(matrix, row, col, row_size, elem_size) \
+    (((uint8_t*) (matrix)) + (((row) * (elem_size)) * (row_size)) + ((col) * (elem_size)))
+
+#define DO_MATRIX_ROTATION(bits_per_pixel, bytes_per_pixel)                   \
+{                                                                             \
+    for (size_t y = 0; y < src->height; y++) {                                \
+        for (size_t x = 0; x < src->width; x++) {                             \
+            /* output pointer in dst->data */                                 \
+            uint##bits_per_pixel##_t       *op;                               \
+            /* input pointer from src->data */                                \
+            const uint##bits_per_pixel##_t *ip;                               \
+            /* Display coordinates (in dst) corresponding to (x, y) in src */ \
+            size_t x_disp = ROTATION_X_DISP(x, y, dst);                     \
+            size_t y_disp = ROTATION_Y_DISP(x, y, dst);                     \
+                                                                              \
+            ip = (const uint##bits_per_pixel##_t*)                            \
+                 MATRIX_ELEMENT(src->data, y, x,                              \
+                                src->stride, bytes_per_pixel);                \
+            op = (uint##bits_per_pixel##_t*)                                  \
+                 MATRIX_ELEMENT(dst->data, y_disp, x_disp,                    \
+                                dst->stride, bytes_per_pixel);                \
+            *op = *ip;                                                        \
+        }                                                                     \
+    }                                                                         \
+}
+
+void surface_ROTATION_transform(gr_surface dst_ptr, const gr_surface src_ptr,
+                                  size_t num_bytes_per_pixel)
+{
+    GGLSurface *dst = (GGLSurface*) dst_ptr;
+    const GGLSurface *src = (GGLSurface*) src_ptr;
+
+    /* Handle duplicated code via a macro.
+     * This is currently used for rotating surfaces of graphical resources
+     * (32-bit pixel format) and of font glyphs (8-bit pixel format).
+     * If you need to add handling of other pixel formats feel free to do so.
+     */
+    if (num_bytes_per_pixel == 4) {
+        DO_MATRIX_ROTATION(32, 4);
+    } else if (num_bytes_per_pixel == 1) {
+        DO_MATRIX_ROTATION(8, 1);
+    }
 }

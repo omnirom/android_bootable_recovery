@@ -323,9 +323,13 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.w = gr_fb.width;
             overlayL.dst_rect.h = gr_fb.height;
             overlayL.alpha = 0xFF;
-#ifdef BOARD_HAS_FLIPPED_SCREEN
-            overlayL.flags = MDP_ROT_180;
-#endif
+            // If this worked, life would have been so much easier
+            //switch (TW_ROTATION) {
+                //case   0:  overlayL.flags = MDP_ROT_NOP; break;
+                //case  90:  overlayL.flags = MDP_ROT_90;  break;
+                //case 180:  overlayL.flags = MDP_ROT_180; break;
+                //case 270:  overlayL.flags = MDP_ROT_270; break;
+            //}
             overlayL.transp_mask = MDP_TRANSP_NOP;
             overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
@@ -363,9 +367,13 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.w = lWidth;
             overlayL.dst_rect.h = height;
             overlayL.alpha = 0xFF;
-#ifdef BOARD_HAS_FLIPPED_SCREEN
-            overlayL.flags = MDP_ROT_180;
-#endif
+            // If this worked, life would have been so much easier
+            //switch (TW_ROTATION) {
+                //case   0:  overlayL.flags = MDP_ROT_NOP; break;
+                //case  90:  overlayL.flags = MDP_ROT_90;  break;
+                //case 180:  overlayL.flags = MDP_ROT_180; break;
+                //case 270:  overlayL.flags = MDP_ROT_270; break;
+            //}
             overlayL.transp_mask = MDP_TRANSP_NOP;
             overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
@@ -393,11 +401,14 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayR.dst_rect.w = rWidth;
             overlayR.dst_rect.h = height;
             overlayR.alpha = 0xFF;
-#ifdef BOARD_HAS_FLIPPED_SCREEN
-            overlayR.flags = MDSS_MDP_RIGHT_MIXER | MDP_ROT_180;
-#else
             overlayR.flags = MDSS_MDP_RIGHT_MIXER;
-#endif
+            // If this worked, life would have been so much easier
+            //switch (TW_ROTATION) {
+                //case   0:  overlayR.flags |= MDP_ROT_NOP; break;
+                //case  90:  overlayR.flags |= MDP_ROT_90;  break;
+                //case 180:  overlayR.flags |= MDP_ROT_180; break;
+                //case 270:  overlayR.flags |= MDP_ROT_270; break;
+            //}
             overlayR.transp_mask = MDP_TRANSP_NOP;
             overlayR.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayR);
