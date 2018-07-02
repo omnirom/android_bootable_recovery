@@ -293,7 +293,6 @@ static GRSurface* fbdev_flip(minui_backend* backend __unused) {
         ucfb_vaddr[idx + 2] = tmp;
     }
 #endif
-#ifndef BOARD_HAS_FLIPPED_SCREEN
     if (double_buffered) {
         // Copy from the in-memory surface to the framebuffer.
         memcpy(gr_framebuffer[1-displayed_buffer].data, gr_draw->data,
@@ -304,32 +303,6 @@ static GRSurface* fbdev_flip(minui_backend* backend __unused) {
         memcpy(gr_framebuffer[0].data, gr_draw->data,
                gr_draw->height * gr_draw->row_bytes);
     }
-#else
-    int gr_active_fb = 0;
-    if (double_buffered)
-        gr_active_fb = 1-displayed_buffer;
-
-    /* flip buffer 180 degrees for devices with physically inverted screens */
-    unsigned int row_pixels = gr_draw->row_bytes / gr_framebuffer[0].pixel_bytes;
-    if (gr_framebuffer[0].pixel_bytes == 4) {
-        for (unsigned int y = 0; y < gr_draw->height; ++y) {
-            uint32_t* dst = reinterpret_cast<uint32_t*>(gr_framebuffer[gr_active_fb].data) + y * row_pixels;
-            uint32_t* src = reinterpret_cast<uint32_t*>(gr_draw->data) + (gr_draw->height - y - 1) * row_pixels + gr_draw->width;
-            for (unsigned int x = 0; x < gr_draw->width; ++x)
-                *(dst++) = *(--src);
-        }
-    } else {
-        for (unsigned int y = 0; y < gr_draw->height; ++y) {
-            uint16_t* dst = reinterpret_cast<uint16_t*>(gr_framebuffer[gr_active_fb].data) + y * row_pixels;
-            uint16_t* src = reinterpret_cast<uint16_t*>(gr_draw->data) + (gr_draw->height - y - 1) * row_pixels + gr_draw->width;
-            for (unsigned int x = 0; x < gr_draw->width; ++x)
-                 *(dst++) = *(--src);
-        }
-    }
-
-    if (double_buffered)
-        set_displayed_framebuffer(1-displayed_buffer);
-#endif
     return gr_draw;
 }
 
