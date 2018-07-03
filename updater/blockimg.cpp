@@ -765,7 +765,9 @@ static int LoadStash(const CommandParameters& params, const std::string& id, boo
       }
       if (VerifyBlocks(id, *buffer, src.blocks(), true) != 0) {
         LOG(ERROR) << "failed to verify loaded source blocks in stash map.";
-        PrintHashForCorruptedStashedBlocks(id, *buffer, src);
+        if (!is_retry) {
+          PrintHashForCorruptedStashedBlocks(id, *buffer, src);
+        }
         return -1;
       }
       return 0;
