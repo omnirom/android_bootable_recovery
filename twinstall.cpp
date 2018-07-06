@@ -327,7 +327,14 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 		string digest_str;
 		string Full_Filename = path;
 		string digest_file = path;
-		digest_file += ".md5";
+		string defmd5file = digest_file + ".md5sum";
+
+		if (TWFunc::Path_Exists(defmd5file)) {
+			digest_file += ".md5sum";
+		}
+		else {
+			digest_file += ".md5";
+		}
 
 		gui_msg("check_for_digest=Checking for Digest file...");
 		if (!TWFunc::Path_Exists(digest_file)) {
