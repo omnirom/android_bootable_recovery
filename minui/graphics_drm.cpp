@@ -17,6 +17,7 @@
 #include "graphics_drm.h"
 
 #include <fcntl.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -378,13 +379,49 @@ GRSurface* MinuiBackendDrm::Init() {
   return GRSurfaceDrms[0];
 }
 
+static void page_flip_complete(__unused int fd,
+                               __unused unsigned int sequence,
+                               __unused unsigned int tv_sec,
+                               __unused unsigned int tv_usec,
+                               void *user_data) {
+  *static_cast<bool*>(user_data) = false;
+}
+
 GRSurface* MinuiBackendDrm::Flip() {
+  bool ongoing_flip = true;
+
   int ret = drmModePageFlip(drm_fd, main_monitor_crtc->crtc_id,
-                            GRSurfaceDrms[current_buffer]->fb_id, 0, nullptr);
+                            GRSurfaceDrms[current_buffer]->fb_id,
+                            DRM_MODE_PAGE_FLIP_EVENT, &ongoing_flip);
   if (ret < 0) {
     printf("drmModePageFlip failed ret=%d\n", ret);
     return nullptr;
   }
+
+  while (ongoing_flip) {
+    struct pollfd fds = {
+      .fd = drm_fd,
+      .events = POLLIN
+    };
+
+    ret = poll(&fds, 1, -1);
+    if (ret == -1 || !(fds.revents & POLLIN)) {
+      printf("poll() failed on drm fd\n");
+      break;
+    }
+
+    drmEventContext evctx = {
+      .version = DRM_EVENT_CONTEXT_VERSION,
+      .page_flip_handler = page_flip_complete
+    };
+
+    ret = drmHandleEvent(drm_fd, &evctx);
+    if (ret != 0) {
+      printf("drmHandleEvent failed ret=%d\n", ret);
+      break;
+    }
+  }
+
   current_buffer = 1 - current_buffer;
   return GRSurfaceDrms[current_buffer];
 }
