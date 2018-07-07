@@ -376,24 +376,26 @@ static int FindMatchingPatch(const uint8_t* sha1, const std::vector<std::string>
   return -1;
 }
 
-int applypatch_check(const char* filename, const std::vector<std::string>& patch_sha1s) {
-  // It's okay to specify no SHA-1s; the check will pass if the LoadFileContents is successful.
-  // (Useful for reading partitions, where the filename encodes the SHA-1s; no need to check them
-  // twice.)
+int applypatch_check(const std::string& filename, const std::vector<std::string>& sha1s) {
+  if (!android::base::StartsWith(filename, "EMMC:")) {
+    return 1;
+  }
+
+  // The check will pass if LoadPartitionContents is successful, because the filename already
+  // encodes the desired SHA-1s.
   FileContents file;
-  if (LoadFileContents(filename, &file) != 0 ||
-      (!patch_sha1s.empty() && FindMatchingPatch(file.sha1, patch_sha1s) < 0)) {
+  if (LoadPartitionContents(filename, &file) != 0) {
     LOG(INFO) << "\"" << filename << "\" doesn't have any of expected SHA-1 sums; checking cache";
 
-    // If the source file is missing or corrupted, it might be because we were killed in the middle
-    // of patching it. A copy should have been made in cache_temp_source. If that file exists and
-    // matches the SHA-1 we're looking for, the check still passes.
+    // If the partition is corrupted, it might be because we were killed in the middle of patching
+    // it. A copy should have been made in cache_temp_source. If that file exists and matches the
+    // SHA-1 we're looking for, the check still passes.
     if (LoadFileContents(Paths::Get().cache_temp_source(), &file) != 0) {
       LOG(ERROR) << "Failed to load cache file";
       return 1;
     }
 
-    if (FindMatchingPatch(file.sha1, patch_sha1s) < 0) {
+    if (FindMatchingPatch(file.sha1, sha1s) < 0) {
       LOG(ERROR) << "The cache bits don't match any SHA-1 for \"" << filename << "\"";
       return 1;
     }
