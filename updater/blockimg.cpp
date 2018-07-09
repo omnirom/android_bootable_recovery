@@ -1489,6 +1489,11 @@ static int PerformCommandErase(CommandParameters& params) {
   return 0;
 }
 
+static int PerformCommandAbort(CommandParameters&) {
+  LOG(INFO) << "Aborting as instructed";
+  return -1;
+}
+
 using CommandFunction = std::function<int(CommandParameters&)>;
 
 using CommandMap = std::unordered_map<Command::Type, CommandFunction>;
@@ -1888,6 +1893,7 @@ Value* BlockImageVerifyFn(const char* name, State* state,
   // Commands which are not allowed are set to nullptr to skip them completely.
   const CommandMap command_map{
     // clang-format off
+    { Command::Type::ABORT,   PerformCommandAbort },
     { Command::Type::BSDIFF,  PerformCommandDiff },
     { Command::Type::ERASE,   nullptr },
     { Command::Type::FREE,    PerformCommandFree },
@@ -1908,6 +1914,7 @@ Value* BlockImageUpdateFn(const char* name, State* state,
                           const std::vector<std::unique_ptr<Expr>>& argv) {
   const CommandMap command_map{
     // clang-format off
+    { Command::Type::ABORT,   PerformCommandAbort },
     { Command::Type::BSDIFF,  PerformCommandDiff },
     { Command::Type::ERASE,   PerformCommandErase },
     { Command::Type::FREE,    PerformCommandFree },

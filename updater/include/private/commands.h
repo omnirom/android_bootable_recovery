@@ -213,9 +213,13 @@ class PatchInfo {
 //      - Free the given stash data.
 //      - Meaningful args: StashInfo
 //
+//    abort
+//      - Abort the current update. Allowed for testing code only.
+//
 class Command {
  public:
   enum class Type {
+    ABORT,
     BSDIFF,
     ERASE,
     FREE,
@@ -280,6 +284,11 @@ class Command {
   }
 
  private:
+  friend class ResumableUpdaterTest;
+  friend class UpdaterTest;
+
+  FRIEND_TEST(CommandsTest, Parse_ABORT_Allowed);
+  FRIEND_TEST(CommandsTest, Parse_InvalidNumberOfArgs);
   FRIEND_TEST(CommandsTest, ParseTargetInfoAndSourceInfo_InvalidInput);
   FRIEND_TEST(CommandsTest, ParseTargetInfoAndSourceInfo_StashesOnly);
   FRIEND_TEST(CommandsTest, ParseTargetInfoAndSourceInfo_SourceBlocksAndStashes);
@@ -292,6 +301,9 @@ class Command {
                                            const std::string& tgt_hash, TargetInfo* target,
                                            const std::string& src_hash, SourceInfo* source,
                                            std::string* err);
+
+  // Allows parsing ABORT command, which should be used for testing purpose only.
+  static bool abort_allowed_;
 
   // The type of the command.
   Type type_{ Type::LAST };
