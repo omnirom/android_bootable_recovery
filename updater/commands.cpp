@@ -29,8 +29,16 @@
 
 using namespace std::string_literals;
 
+bool Command::abort_allowed_ = false;
+
 Command::Type Command::ParseType(const std::string& type_str) {
-  if (type_str == "bsdiff") {
+  if (type_str == "abort") {
+    if (!abort_allowed_) {
+      LOG(ERROR) << "ABORT disallowed";
+      return Type::LAST;
+    }
+    return Type::ABORT;
+  } else if (type_str == "bsdiff") {
     return Type::BSDIFF;
   } else if (type_str == "erase") {
     return Type::ERASE;
@@ -235,6 +243,13 @@ Command Command::Parse(const std::string& line, size_t index, std::string* err) 
     if (!ParseTargetInfoAndSourceInfo(
             std::vector<std::string>(tokens.cbegin() + pos, tokens.cend()), dst_hash, &target_info,
             src_hash, &source_info, err)) {
+      return {};
+    }
+  } else if (op == Type::ABORT) {
+    // No-op, other than sanity checking the input args.
+    if (pos != tokens.size()) {
+      *err = android::base::StringPrintf("invalid number of args: %zu (expected 0)",
+                                         tokens.size() - pos);
       return {};
     }
   } else {
