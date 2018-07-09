@@ -46,6 +46,7 @@
 #include "otautil/paths.h"
 #include "otautil/print_sha1.h"
 #include "otautil/sysutil.h"
+#include "private/commands.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
 #include "updater/updater.h"
@@ -149,6 +150,9 @@ class UpdaterTest : public ::testing::Test {
     Paths::Get().set_cache_temp_source(temp_saved_source_.path);
     Paths::Get().set_last_command_file(temp_last_command_.path);
     Paths::Get().set_stash_directory_base(temp_stash_base_.path);
+
+    // Enable a special command "abort" to simulate interruption.
+    Command::abort_allowed_ = true;
 
     last_command_file_ = temp_last_command_.path;
     image_file_ = image_temp_file_.path;
@@ -580,7 +584,7 @@ TEST_F(UpdaterTest, block_image_update_fail) {
     "2",
     "stash " + src_hash + " 2,0,2",
     "free " + src_hash,
-    "fail",
+    "abort",
     // clang-format on
   };
 
@@ -714,7 +718,7 @@ TEST_F(UpdaterTest, last_command_update) {
     "stash " + block1_hash + " 2,0,1",
     "move " + block1_hash + " 2,1,2 1 2,0,1",
     "stash " + block3_hash + " 2,2,3",
-    "fail",
+    "abort",
     // clang-format on
   };
 
@@ -858,6 +862,9 @@ class ResumableUpdaterTest : public testing::TestWithParam<size_t> {
     Paths::Get().set_cache_temp_source(temp_saved_source_.path);
     Paths::Get().set_last_command_file(temp_last_command_.path);
     Paths::Get().set_stash_directory_base(temp_stash_base_.path);
+
+    // Enable a special command "abort" to simulate interruption.
+    Command::abort_allowed_ = true;
 
     index_ = GetParam();
     image_file_ = image_temp_file_.path;
@@ -1030,7 +1037,7 @@ TEST_P(ResumableUpdaterTest, InterruptVerifyResume) {
             << g_transfer_list[kTransferListHeaderLines + index_] << ")";
 
   std::vector<std::string> transfer_list_copy{ g_transfer_list };
-  transfer_list_copy[kTransferListHeaderLines + index_] = "fail";
+  transfer_list_copy[kTransferListHeaderLines + index_] = "abort";
 
   g_entries["transfer_list"] = android::base::Join(transfer_list_copy, '\n');
 
