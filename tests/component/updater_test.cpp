@@ -250,8 +250,10 @@ TEST_F(UpdaterTest, apply_patch_check) {
   expect("t", cmd.c_str(), kNoCause);
 
   // Multiple arguments.
+  // As long as it successfully loads the partition specified in filename, it won't check against
+  // any given SHAs.
   cmd = "apply_patch_check(\"" + filename + "\", \"wrong_sha1\", \"wrong_sha2\")";
-  expect("", cmd.c_str(), kNoCause);
+  expect("t", cmd.c_str(), kNoCause);
 
   cmd = "apply_patch_check(\"" + filename + "\", \"wrong_sha1\", \"" + src_hash +
         "\", \"wrong_sha2\")";
