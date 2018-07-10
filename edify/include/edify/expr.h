@@ -153,6 +153,6 @@ Value* StringValue(const char* str);
 
 Value* StringValue(const std::string& str);
 
-int parse_string(const char* str, std::unique_ptr<Expr>* root, int* error_count);
+int ParseString(const std::string& str, std::unique_ptr<Expr>* root, int* error_count);
 
 #endif  // _EXPRESSION_H
