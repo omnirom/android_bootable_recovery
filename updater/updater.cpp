@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
 
   std::unique_ptr<Expr> root;
   int error_count = 0;
-  int error = parse_string(script.c_str(), &root, &error_count);
+  int error = ParseString(script, &root, &error_count);
   if (error != 0 || error_count > 0) {
     LOG(ERROR) << error_count << " parse errors";
     CloseArchive(za);
