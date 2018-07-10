@@ -151,7 +151,8 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
 
 int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const unsigned char* patch_data,
                     size_t patch_size, SinkFn sink) {
-  Value patch(VAL_BLOB, std::string(reinterpret_cast<const char*>(patch_data), patch_size));
+  Value patch(Value::Type::BLOB,
+              std::string(reinterpret_cast<const char*>(patch_data), patch_size));
   return ApplyImagePatch(old_data, old_size, patch, sink, nullptr);
 }
 
@@ -246,11 +247,10 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
       // Decompress the source data; the chunk header tells us exactly
       // how big we expect it to be when decompressed.
 
-      // Note: expanded_len will include the bonus data size if
-      // the patch was constructed with bonus data.  The
-      // deflation will come up 'bonus_size' bytes short; these
-      // must be appended from the bonus_data value.
-      size_t bonus_size = (i == 1 && bonus_data != NULL) ? bonus_data->data.size() : 0;
+      // Note: expanded_len will include the bonus data size if the patch was constructed with
+      // bonus data. The deflation will come up 'bonus_size' bytes short; these must be appended
+      // from the bonus_data value.
+      size_t bonus_size = (i == 1 && bonus_data != nullptr) ? bonus_data->data.size() : 0;
 
       std::vector<unsigned char> expanded_source(expanded_len);
 
@@ -288,7 +288,7 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
         inflateEnd(&strm);
 
         if (bonus_size) {
-          memcpy(expanded_source.data() + (expanded_len - bonus_size), &bonus_data->data[0],
+          memcpy(expanded_source.data() + (expanded_len - bonus_size), bonus_data->data.data(),
                  bonus_size);
         }
       }

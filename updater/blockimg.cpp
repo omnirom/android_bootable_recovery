@@ -1403,7 +1403,8 @@ static int PerformCommandDiff(CommandParameters& params) {
     if (status == 0) {
       LOG(INFO) << "patching " << blocks << " blocks to " << tgt.blocks();
       Value patch_value(
-          VAL_BLOB, std::string(reinterpret_cast<const char*>(params.patch_start + offset), len));
+          Value::Type::BLOB,
+          std::string(reinterpret_cast<const char*>(params.patch_start + offset), len));
 
       RangeSinkWriter writer(params.fd, tgt);
       if (params.cmdname[0] == 'i') {  // imgdiff
@@ -1531,19 +1532,19 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   const std::unique_ptr<Value>& new_data_fn = args[2];
   const std::unique_ptr<Value>& patch_data_fn = args[3];
 
-  if (blockdev_filename->type != VAL_STRING) {
+  if (blockdev_filename->type != Value::Type::STRING) {
     ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string", name);
     return StringValue("");
   }
-  if (transfer_list_value->type != VAL_BLOB) {
+  if (transfer_list_value->type != Value::Type::BLOB) {
     ErrorAbort(state, kArgsParsingFailure, "transfer_list argument to %s must be blob", name);
     return StringValue("");
   }
-  if (new_data_fn->type != VAL_STRING) {
+  if (new_data_fn->type != Value::Type::STRING) {
     ErrorAbort(state, kArgsParsingFailure, "new_data_fn argument to %s must be string", name);
     return StringValue("");
   }
-  if (patch_data_fn->type != VAL_STRING) {
+  if (patch_data_fn->type != Value::Type::STRING) {
     ErrorAbort(state, kArgsParsingFailure, "patch_data_fn argument to %s must be string", name);
     return StringValue("");
   }
@@ -1944,11 +1945,11 @@ Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique
   const std::unique_ptr<Value>& blockdev_filename = args[0];
   const std::unique_ptr<Value>& ranges = args[1];
 
-  if (blockdev_filename->type != VAL_STRING) {
+  if (blockdev_filename->type != Value::Type::STRING) {
     ErrorAbort(state, kArgsParsingFailure, "blockdev_filename argument to %s must be string", name);
     return StringValue("");
   }
-  if (ranges->type != VAL_STRING) {
+  if (ranges->type != Value::Type::STRING) {
     ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
     return StringValue("");
   }
@@ -2010,7 +2011,7 @@ Value* CheckFirstBlockFn(const char* name, State* state,
 
   const std::unique_ptr<Value>& arg_filename = args[0];
 
-  if (arg_filename->type != VAL_STRING) {
+  if (arg_filename->type != Value::Type::STRING) {
     ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
     return StringValue("");
   }
@@ -2065,11 +2066,11 @@ Value* BlockImageRecoverFn(const char* name, State* state,
   const std::unique_ptr<Value>& filename = args[0];
   const std::unique_ptr<Value>& ranges = args[1];
 
-  if (filename->type != VAL_STRING) {
+  if (filename->type != Value::Type::STRING) {
     ErrorAbort(state, kArgsParsingFailure, "filename argument to %s must be string", name);
     return StringValue("");
   }
-  if (ranges->type != VAL_STRING) {
+  if (ranges->type != Value::Type::STRING) {
     ErrorAbort(state, kArgsParsingFailure, "ranges argument to %s must be string", name);
     return StringValue("");
   }
