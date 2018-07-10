@@ -622,10 +622,13 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
     SHA1(reinterpret_cast<const uint8_t*>(patch->data.data()), patch->data.size(), patch_digest);
     LOG(ERROR) << "patch size " << patch->data.size() << " SHA-1 " << short_sha1(patch_digest);
 
-    uint8_t bonus_digest[SHA_DIGEST_LENGTH];
-    SHA1(reinterpret_cast<const uint8_t*>(bonus_data->data.data()), bonus_data->data.size(),
-         bonus_digest);
-    LOG(ERROR) << "bonus size " << bonus_data->data.size() << " SHA-1 " << short_sha1(bonus_digest);
+    if (bonus_data != nullptr) {
+      uint8_t bonus_digest[SHA_DIGEST_LENGTH];
+      SHA1(reinterpret_cast<const uint8_t*>(bonus_data->data.data()), bonus_data->data.size(),
+           bonus_digest);
+      LOG(ERROR) << "bonus size " << bonus_data->data.size() << " SHA-1 "
+                 << short_sha1(bonus_digest);
+    }
 
     // TODO(b/67849209) Remove after debugging the unit test flakiness.
     if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
