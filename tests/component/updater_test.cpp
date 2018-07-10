@@ -149,11 +149,11 @@ static Value* BlobToString(const char* name, State* state,
     return nullptr;
   }
 
-  if (args[0]->type != VAL_BLOB) {
+  if (args[0]->type != Value::Type::BLOB) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects a BLOB argument", name);
   }
 
-  args[0]->type = VAL_STRING;
+  args[0]->type = Value::Type::STRING;
   return args[0].release();
 }
 

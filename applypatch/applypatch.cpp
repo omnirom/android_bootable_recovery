@@ -553,7 +553,7 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
 static int GenerateTarget(const FileContents& source_file, const std::unique_ptr<Value>& patch,
                           const std::string& target_filename,
                           const uint8_t target_sha1[SHA_DIGEST_LENGTH], const Value* bonus_data) {
-  if (patch->type != VAL_BLOB) {
+  if (patch->type != Value::Type::BLOB) {
     LOG(ERROR) << "patch is not a blob";
     return 1;
   }
