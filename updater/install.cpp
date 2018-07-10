@@ -740,7 +740,7 @@ Value* RunProgramFn(const char* name, State* state, const std::vector<std::uniqu
 }
 
 // read_file(filename)
-//   Reads a local file 'filename' and returns its contents as a Value string.
+//   Reads a local file 'filename' and returns its contents as a string Value.
 Value* ReadFileFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
   if (argv.size() != 1) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
@@ -752,13 +752,13 @@ Value* ReadFileFn(const char* name, State* state, const std::vector<std::unique_
   }
   const std::string& filename = args[0];
 
-  FileContents fc;
-  if (LoadFileContents(filename.c_str(), &fc) == 0) {
-    return new Value(Value::Type::BLOB, std::string(fc.data.cbegin(), fc.data.cend()));
+  std::string contents;
+  if (android::base::ReadFileToString(filename, &contents)) {
+    return new Value(Value::Type::STRING, std::move(contents));
   }
 
   // Leave it to caller to handle the failure.
-  LOG(ERROR) << name << ": Failed to read " << filename;
+  PLOG(ERROR) << name << ": Failed to read " << filename;
   return StringValue("");
 }
 
