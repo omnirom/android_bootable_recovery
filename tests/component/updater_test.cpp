@@ -72,7 +72,7 @@ static void expect(const char* expected, const char* expr_str, CauseCode cause_c
   if (expected == nullptr) {
     ASSERT_FALSE(status);
   } else {
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status) << "Evaluate() finished with error message: " << state.errmsg;
     ASSERT_STREQ(expected, result.c_str());
   }
 
@@ -138,12 +138,33 @@ static std::string get_sha1(const std::string& content) {
   return print_sha1(digest);
 }
 
+static Value* BlobToString(const char* name, State* state,
+                           const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
+  }
+
+  std::vector<std::unique_ptr<Value>> args;
+  if (!ReadValueArgs(state, argv, &args)) {
+    return nullptr;
+  }
+
+  if (args[0]->type != VAL_BLOB) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects a BLOB argument", name);
+  }
+
+  args[0]->type = VAL_STRING;
+  return args[0].release();
+}
+
 class UpdaterTest : public ::testing::Test {
  protected:
   void SetUp() override {
     RegisterBuiltins();
     RegisterInstallFunctions();
     RegisterBlockImageFunctions();
+
+    RegisterFunction("blob_to_string", BlobToString);
 
     // Each test is run in a separate process (isolated mode). Shared temporary files won't cause
     // conflicts.
@@ -190,33 +211,6 @@ TEST_F(UpdaterTest, getprop) {
     // getprop() accepts only one parameter.
     expect(nullptr, "getprop()", kArgsParsingFailure);
     expect(nullptr, "getprop(\"arg1\", \"arg2\")", kArgsParsingFailure);
-}
-
-TEST_F(UpdaterTest, sha1_check) {
-    // sha1_check(data) returns the SHA-1 of the data.
-    expect("81fe8bfe87576c3ecb22426f8e57847382917acf", "sha1_check(\"abcd\")", kNoCause);
-    expect("da39a3ee5e6b4b0d3255bfef95601890afd80709", "sha1_check(\"\")", kNoCause);
-
-    // sha1_check(data, sha1_hex, [sha1_hex, ...]) returns the matched SHA-1.
-    expect("81fe8bfe87576c3ecb22426f8e57847382917acf",
-           "sha1_check(\"abcd\", \"81fe8bfe87576c3ecb22426f8e57847382917acf\")",
-           kNoCause);
-
-    expect("81fe8bfe87576c3ecb22426f8e57847382917acf",
-           "sha1_check(\"abcd\", \"wrong_sha1\", \"81fe8bfe87576c3ecb22426f8e57847382917acf\")",
-           kNoCause);
-
-    // Or "" if there's no match.
-    expect("",
-           "sha1_check(\"abcd\", \"wrong_sha1\")",
-           kNoCause);
-
-    expect("",
-           "sha1_check(\"abcd\", \"wrong_sha1\", \"wrong_sha2\")",
-           kNoCause);
-
-    // sha1_check() expects at least one argument.
-    expect(nullptr, "sha1_check()", kArgsParsingFailure);
 }
 
 TEST_F(UpdaterTest, apply_patch_check) {
@@ -355,12 +349,13 @@ TEST_F(UpdaterTest, package_extract_file) {
   script = "package_extract_file(\"a.txt\", \"/dev/full\")";
   expect("", script.c_str(), kNoCause, &updater_info);
 
-  // One-argument version.
-  script = "sha1_check(package_extract_file(\"a.txt\"))";
-  expect(kATxtSha1Sum.c_str(), script.c_str(), kNoCause, &updater_info);
+  // One-argument version. package_extract_file() gives a VAL_BLOB, which needs to be converted to
+  // VAL_STRING for equality test.
+  script = "blob_to_string(package_extract_file(\"a.txt\")) == \"" + kATxtContents + "\"";
+  expect("t", script.c_str(), kNoCause, &updater_info);
 
-  script = "sha1_check(package_extract_file(\"b.txt\"))";
-  expect(kBTxtSha1Sum.c_str(), script.c_str(), kNoCause, &updater_info);
+  script = "blob_to_string(package_extract_file(\"b.txt\")) == \"" + kBTxtContents + "\"";
+  expect("t", script.c_str(), kNoCause, &updater_info);
 
   // Missing entry. The one-argument version aborts the evaluation.
   script = "package_extract_file(\"doesntexist\")";
