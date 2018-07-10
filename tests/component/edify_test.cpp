@@ -21,30 +21,29 @@
 
 #include "edify/expr.h"
 
-static void expect(const char* expr_str, const char* expected) {
-    std::unique_ptr<Expr> e;
-    int error_count = 0;
-    EXPECT_EQ(0, parse_string(expr_str, &e, &error_count));
-    EXPECT_EQ(0, error_count);
+static void expect(const std::string& expr_str, const char* expected) {
+  std::unique_ptr<Expr> e;
+  int error_count = 0;
+  EXPECT_EQ(0, ParseString(expr_str, &e, &error_count));
+  EXPECT_EQ(0, error_count);
 
-    State state(expr_str, nullptr);
+  State state(expr_str, nullptr);
 
-    std::string result;
-    bool status = Evaluate(&state, e, &result);
+  std::string result;
+  bool status = Evaluate(&state, e, &result);
 
-    if (expected == nullptr) {
-        EXPECT_FALSE(status);
-    } else {
-        EXPECT_STREQ(expected, result.c_str());
-    }
-
+  if (expected == nullptr) {
+    EXPECT_FALSE(status);
+  } else {
+    EXPECT_STREQ(expected, result.c_str());
+  }
 }
 
 class EdifyTest : public ::testing::Test {
-  protected:
-    virtual void SetUp() {
-        RegisterBuiltins();
-    }
+ protected:
+  void SetUp() {
+    RegisterBuiltins();
+  }
 };
 
 TEST_F(EdifyTest, parsing) {
@@ -146,25 +145,23 @@ TEST_F(EdifyTest, comparison) {
 }
 
 TEST_F(EdifyTest, big_string) {
-    // big string
-    expect(std::string(8192, 's').c_str(), std::string(8192, 's').c_str());
+  expect(std::string(8192, 's'), std::string(8192, 's').c_str());
 }
 
 TEST_F(EdifyTest, unknown_function) {
-    // unknown function
-    const char* script1 = "unknown_function()";
-    std::unique_ptr<Expr> expr;
-    int error_count = 0;
-    EXPECT_EQ(1, parse_string(script1, &expr, &error_count));
-    EXPECT_EQ(1, error_count);
+  const char* script1 = "unknown_function()";
+  std::unique_ptr<Expr> expr;
+  int error_count = 0;
+  EXPECT_EQ(1, ParseString(script1, &expr, &error_count));
+  EXPECT_EQ(1, error_count);
 
-    const char* script2 = "abc; unknown_function()";
-    error_count = 0;
-    EXPECT_EQ(1, parse_string(script2, &expr, &error_count));
-    EXPECT_EQ(1, error_count);
+  const char* script2 = "abc; unknown_function()";
+  error_count = 0;
+  EXPECT_EQ(1, ParseString(script2, &expr, &error_count));
+  EXPECT_EQ(1, error_count);
 
-    const char* script3 = "unknown_function1() || yes";
-    error_count = 0;
-    EXPECT_EQ(1, parse_string(script3, &expr, &error_count));
-    EXPECT_EQ(1, error_count);
+  const char* script3 = "unknown_function1() || yes";
+  error_count = 0;
+  EXPECT_EQ(1, ParseString(script3, &expr, &error_count));
+  EXPECT_EQ(1, error_count);
 }
