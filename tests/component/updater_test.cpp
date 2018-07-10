@@ -51,6 +51,8 @@
 #include "updater/install.h"
 #include "updater/updater.h"
 
+using namespace std::string_literals;
+
 using PackageEntries = std::unordered_map<std::string, std::string>;
 
 static constexpr size_t kTransferListHeaderLines = 4;
@@ -364,6 +366,27 @@ TEST_F(UpdaterTest, package_extract_file) {
   expect(nullptr, script, kPackageExtractFileFailure, &updater_info);
 
   CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, read_file) {
+  // read_file() expects one argument.
+  expect(nullptr, "read_file()", kArgsParsingFailure);
+  expect(nullptr, "read_file(\"arg1\", \"arg2\")", kArgsParsingFailure);
+
+  // Write some value to file and read back.
+  TemporaryFile temp_file;
+  std::string script("write_value(\"foo\", \""s + temp_file.path + "\");");
+  expect("t", script, kNoCause);
+
+  script = "read_file(\""s + temp_file.path + "\") == \"foo\"";
+  expect("t", script, kNoCause);
+
+  script = "read_file(\""s + temp_file.path + "\") == \"bar\"";
+  expect("", script, kNoCause);
+
+  // It should fail gracefully when read fails.
+  script = "read_file(\"/doesntexist\")";
+  expect("", script, kNoCause);
 }
 
 TEST_F(UpdaterTest, write_value) {
