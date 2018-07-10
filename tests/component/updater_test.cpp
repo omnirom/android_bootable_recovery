@@ -46,6 +46,7 @@
 #include "otautil/paths.h"
 #include "otautil/print_sha1.h"
 #include "otautil/sysutil.h"
+#include "private/commands.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
 #include "updater/updater.h"
@@ -71,7 +72,7 @@ static void expect(const char* expected, const char* expr_str, CauseCode cause_c
   if (expected == nullptr) {
     ASSERT_FALSE(status);
   } else {
-    ASSERT_TRUE(status);
+    ASSERT_TRUE(status) << "Evaluate() finished with error message: " << state.errmsg;
     ASSERT_STREQ(expected, result.c_str());
   }
 
@@ -137,6 +138,25 @@ static std::string get_sha1(const std::string& content) {
   return print_sha1(digest);
 }
 
+static Value* BlobToString(const char* name, State* state,
+                           const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
+  }
+
+  std::vector<std::unique_ptr<Value>> args;
+  if (!ReadValueArgs(state, argv, &args)) {
+    return nullptr;
+  }
+
+  if (args[0]->type != VAL_BLOB) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects a BLOB argument", name);
+  }
+
+  args[0]->type = VAL_STRING;
+  return args[0].release();
+}
+
 class UpdaterTest : public ::testing::Test {
  protected:
   void SetUp() override {
@@ -144,11 +164,16 @@ class UpdaterTest : public ::testing::Test {
     RegisterInstallFunctions();
     RegisterBlockImageFunctions();
 
+    RegisterFunction("blob_to_string", BlobToString);
+
     // Each test is run in a separate process (isolated mode). Shared temporary files won't cause
     // conflicts.
     Paths::Get().set_cache_temp_source(temp_saved_source_.path);
     Paths::Get().set_last_command_file(temp_last_command_.path);
     Paths::Get().set_stash_directory_base(temp_stash_base_.path);
+
+    // Enable a special command "abort" to simulate interruption.
+    Command::abort_allowed_ = true;
 
     last_command_file_ = temp_last_command_.path;
     image_file_ = image_temp_file_.path;
@@ -186,33 +211,6 @@ TEST_F(UpdaterTest, getprop) {
     // getprop() accepts only one parameter.
     expect(nullptr, "getprop()", kArgsParsingFailure);
     expect(nullptr, "getprop(\"arg1\", \"arg2\")", kArgsParsingFailure);
-}
-
-TEST_F(UpdaterTest, sha1_check) {
-    // sha1_check(data) returns the SHA-1 of the data.
-    expect("81fe8bfe87576c3ecb22426f8e57847382917acf", "sha1_check(\"abcd\")", kNoCause);
-    expect("da39a3ee5e6b4b0d3255bfef95601890afd80709", "sha1_check(\"\")", kNoCause);
-
-    // sha1_check(data, sha1_hex, [sha1_hex, ...]) returns the matched SHA-1.
-    expect("81fe8bfe87576c3ecb22426f8e57847382917acf",
-           "sha1_check(\"abcd\", \"81fe8bfe87576c3ecb22426f8e57847382917acf\")",
-           kNoCause);
-
-    expect("81fe8bfe87576c3ecb22426f8e57847382917acf",
-           "sha1_check(\"abcd\", \"wrong_sha1\", \"81fe8bfe87576c3ecb22426f8e57847382917acf\")",
-           kNoCause);
-
-    // Or "" if there's no match.
-    expect("",
-           "sha1_check(\"abcd\", \"wrong_sha1\")",
-           kNoCause);
-
-    expect("",
-           "sha1_check(\"abcd\", \"wrong_sha1\", \"wrong_sha2\")",
-           kNoCause);
-
-    // sha1_check() expects at least one argument.
-    expect(nullptr, "sha1_check()", kArgsParsingFailure);
 }
 
 TEST_F(UpdaterTest, apply_patch_check) {
@@ -351,12 +349,13 @@ TEST_F(UpdaterTest, package_extract_file) {
   script = "package_extract_file(\"a.txt\", \"/dev/full\")";
   expect("", script.c_str(), kNoCause, &updater_info);
 
-  // One-argument version.
-  script = "sha1_check(package_extract_file(\"a.txt\"))";
-  expect(kATxtSha1Sum.c_str(), script.c_str(), kNoCause, &updater_info);
+  // One-argument version. package_extract_file() gives a VAL_BLOB, which needs to be converted to
+  // VAL_STRING for equality test.
+  script = "blob_to_string(package_extract_file(\"a.txt\")) == \"" + kATxtContents + "\"";
+  expect("t", script.c_str(), kNoCause, &updater_info);
 
-  script = "sha1_check(package_extract_file(\"b.txt\"))";
-  expect(kBTxtSha1Sum.c_str(), script.c_str(), kNoCause, &updater_info);
+  script = "blob_to_string(package_extract_file(\"b.txt\")) == \"" + kBTxtContents + "\"";
+  expect("t", script.c_str(), kNoCause, &updater_info);
 
   // Missing entry. The one-argument version aborts the evaluation.
   script = "package_extract_file(\"doesntexist\")";
@@ -580,7 +579,7 @@ TEST_F(UpdaterTest, block_image_update_fail) {
     "2",
     "stash " + src_hash + " 2,0,2",
     "free " + src_hash,
-    "fail",
+    "abort",
     // clang-format on
   };
 
@@ -714,7 +713,7 @@ TEST_F(UpdaterTest, last_command_update) {
     "stash " + block1_hash + " 2,0,1",
     "move " + block1_hash + " 2,1,2 1 2,0,1",
     "stash " + block3_hash + " 2,2,3",
-    "fail",
+    "abort",
     // clang-format on
   };
 
@@ -858,6 +857,9 @@ class ResumableUpdaterTest : public testing::TestWithParam<size_t> {
     Paths::Get().set_cache_temp_source(temp_saved_source_.path);
     Paths::Get().set_last_command_file(temp_last_command_.path);
     Paths::Get().set_stash_directory_base(temp_stash_base_.path);
+
+    // Enable a special command "abort" to simulate interruption.
+    Command::abort_allowed_ = true;
 
     index_ = GetParam();
     image_file_ = image_temp_file_.path;
@@ -1030,7 +1032,7 @@ TEST_P(ResumableUpdaterTest, InterruptVerifyResume) {
             << g_transfer_list[kTransferListHeaderLines + index_] << ")";
 
   std::vector<std::string> transfer_list_copy{ g_transfer_list };
-  transfer_list_copy[kTransferListHeaderLines + index_] = "fail";
+  transfer_list_copy[kTransferListHeaderLines + index_] = "abort";
 
   g_entries["transfer_list"] = android::base::Join(transfer_list_copy, '\n');
 
