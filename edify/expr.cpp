@@ -51,9 +51,9 @@ bool Evaluate(State* state, const std::unique_ptr<Expr>& expr, std::string* resu
     if (!v) {
         return false;
     }
-    if (v->type != VAL_STRING) {
-        ErrorAbort(state, kArgsParsingFailure, "expecting string, got value type %d", v->type);
-        return false;
+    if (v->type != Value::Type::STRING) {
+      ErrorAbort(state, kArgsParsingFailure, "expecting string, got value type %d", v->type);
+      return false;
     }
 
     *result = v->data;
@@ -68,7 +68,7 @@ Value* StringValue(const char* str) {
     if (str == nullptr) {
         return nullptr;
     }
-    return new Value(VAL_STRING, str);
+    return new Value(Value::Type::STRING, str);
 }
 
 Value* StringValue(const std::string& str) {

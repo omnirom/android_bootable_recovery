@@ -81,52 +81,51 @@ static int FlashMode(const char* src_filename, const char* tgt_filename,
 }
 
 static int PatchMode(int argc, const char** argv) {
-    FileContents bonusFc;
-    Value bonus(VAL_INVALID, "");
-
-    if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
-        if (LoadFileContents(argv[2], &bonusFc) != 0) {
-          LOG(ERROR) << "Failed to load bonus file " << argv[2];
-          return 1;
-        }
-        bonus.type = VAL_BLOB;
-        bonus.data = std::string(bonusFc.data.cbegin(), bonusFc.data.cend());
-        argc -= 2;
-        argv += 2;
-    }
-
-    if (argc < 4) {
-        return 2;
-    }
-
-    size_t target_size;
-    if (!android::base::ParseUint(argv[4], &target_size) || target_size == 0) {
-      LOG(ERROR) << "Failed to parse \"" << argv[4] << "\" as byte count";
+  std::unique_ptr<Value> bonus;
+  if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
+    FileContents bonus_fc;
+    if (LoadFileContents(argv[2], &bonus_fc) != 0) {
+      LOG(ERROR) << "Failed to load bonus file " << argv[2];
       return 1;
     }
+    bonus = std::make_unique<Value>(Value::Type::BLOB,
+                                    std::string(bonus_fc.data.cbegin(), bonus_fc.data.cend()));
+    argc -= 2;
+    argv += 2;
+  }
 
-    // If no <src-sha1>:<patch> is provided, it is in flash mode.
-    if (argc == 5) {
-        if (bonus.type != VAL_INVALID) {
-          LOG(ERROR) << "bonus file not supported in flash mode";
-          return 1;
-        }
-        return FlashMode(argv[1], argv[2], argv[3], target_size);
-    }
+  if (argc < 4) {
+    return 2;
+  }
 
-    std::vector<std::string> sha1s;
-    std::vector<FileContents> files;
-    if (!ParsePatchArgs(argc-5, argv+5, &sha1s, &files)) {
-      LOG(ERROR) << "Failed to parse patch args";
+  size_t target_size;
+  if (!android::base::ParseUint(argv[4], &target_size) || target_size == 0) {
+    LOG(ERROR) << "Failed to parse \"" << argv[4] << "\" as byte count";
+    return 1;
+  }
+
+  // If no <src-sha1>:<patch> is provided, it is in flash mode.
+  if (argc == 5) {
+    if (bonus) {
+      LOG(ERROR) << "bonus file not supported in flash mode";
       return 1;
     }
+    return FlashMode(argv[1], argv[2], argv[3], target_size);
+  }
 
-    std::vector<std::unique_ptr<Value>> patches;
-    for (size_t i = 0; i < files.size(); ++i) {
-        patches.push_back(std::make_unique<Value>(
-                VAL_BLOB, std::string(files[i].data.cbegin(), files[i].data.cend())));
-    }
-    return applypatch(argv[1], argv[2], argv[3], target_size, sha1s, patches, &bonus);
+  std::vector<std::string> sha1s;
+  std::vector<FileContents> files;
+  if (!ParsePatchArgs(argc - 5, argv + 5, &sha1s, &files)) {
+    LOG(ERROR) << "Failed to parse patch args";
+    return 1;
+  }
+
+  std::vector<std::unique_ptr<Value>> patches;
+  for (const auto& file : files) {
+    patches.push_back(std::make_unique<Value>(Value::Type::BLOB,
+                                              std::string(file.data.cbegin(), file.data.cend())));
+  }
+  return applypatch(argv[1], argv[2], argv[3], target_size, sha1s, patches, bonus.get());
 }
 
 // This program (applypatch) applies binary patches to files in a way that
