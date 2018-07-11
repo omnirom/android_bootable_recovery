@@ -33,7 +33,6 @@
 #include <android-base/test_utils.h>
 #include <android-base/unique_fd.h>
 #include <gtest/gtest.h>
-#include <openssl/sha.h>
 
 #include "applypatch/applypatch.h"
 #include "common/test_constants.h"
@@ -42,139 +41,102 @@
 
 using namespace std::string_literals;
 
-static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize = nullptr) {
-  ASSERT_TRUE(sha1 != nullptr);
-
-  std::string data;
-  ASSERT_TRUE(android::base::ReadFileToString(fname, &data));
-
-  if (fsize != nullptr) {
-    *fsize = data.size();
-  }
-
-  uint8_t digest[SHA_DIGEST_LENGTH];
-  SHA1(reinterpret_cast<const uint8_t*>(data.c_str()), data.size(), digest);
-  *sha1 = print_sha1(digest);
-}
-
-static void mangle_file(const std::string& fname) {
-  std::string content(1024, '\0');
-  for (size_t i = 0; i < 1024; i++) {
-    content[i] = rand() % 256;
-  }
-  ASSERT_TRUE(android::base::WriteStringToFile(content, fname));
-}
-
 class ApplyPatchTest : public ::testing::Test {
- public:
+ protected:
   void SetUp() override {
-    // set up files
     old_file = from_testdata_base("old.file");
-    new_file = from_testdata_base("new.file");
-    nonexistent_file = from_testdata_base("nonexistent.file");
+    FileContents old_fc;
+    ASSERT_EQ(0, LoadFileContents(old_file, &old_fc));
+    old_sha1 = print_sha1(old_fc.sha1);
+    old_size = old_fc.data.size();
 
-    // set up SHA constants
-    sha1sum(old_file, &old_sha1, &old_size);
-    sha1sum(new_file, &new_sha1, &new_size);
+    new_file = from_testdata_base("new.file");
+    FileContents new_fc;
+    ASSERT_EQ(0, LoadFileContents(new_file, &new_fc));
+    new_sha1 = print_sha1(new_fc.sha1);
+    new_size = new_fc.data.size();
+
     srand(time(nullptr));
     bad_sha1_a = android::base::StringPrintf("%040x", rand());
     bad_sha1_b = android::base::StringPrintf("%040x", rand());
+
+    // Reset the cache backup file.
+    Paths::Get().set_cache_temp_source("/cache/saved.file");
   }
 
   std::string old_file;
-  std::string new_file;
-  std::string nonexistent_file;
-
   std::string old_sha1;
+  size_t old_size;
+
+  std::string new_file;
   std::string new_sha1;
+  size_t new_size;
+
   std::string bad_sha1_a;
   std::string bad_sha1_b;
-
-  size_t old_size;
-  size_t new_size;
 };
 
-TEST_F(ApplyPatchTest, CheckModeSkip) {
-  std::vector<std::string> sha1s;
-  ASSERT_EQ(0, applypatch_check(&old_file[0], sha1s));
+TEST_F(ApplyPatchTest, CheckMode) {
+  std::string partition = "EMMC:" + old_file + ":" + std::to_string(old_size) + ":" + old_sha1;
+  ASSERT_EQ(0, applypatch_check(partition, {}));
+  ASSERT_EQ(0, applypatch_check(partition, { old_sha1 }));
+  ASSERT_EQ(0, applypatch_check(partition, { bad_sha1_a, bad_sha1_b }));
+  ASSERT_EQ(0, applypatch_check(partition, { bad_sha1_a, old_sha1, bad_sha1_b }));
 }
 
-TEST_F(ApplyPatchTest, CheckModeSingle) {
-  std::vector<std::string> sha1s = { old_sha1 };
-  ASSERT_EQ(0, applypatch_check(&old_file[0], sha1s));
+TEST_F(ApplyPatchTest, CheckMode_NonEmmcTarget) {
+  ASSERT_NE(0, applypatch_check(old_file, {}));
+  ASSERT_NE(0, applypatch_check(old_file, { old_sha1 }));
+  ASSERT_NE(0, applypatch_check(old_file, { bad_sha1_a, bad_sha1_b }));
+  ASSERT_NE(0, applypatch_check(old_file, { bad_sha1_a, old_sha1, bad_sha1_b }));
 }
 
-TEST_F(ApplyPatchTest, CheckModeMultiple) {
-  std::vector<std::string> sha1s = { bad_sha1_a, old_sha1, bad_sha1_b };
-  ASSERT_EQ(0, applypatch_check(&old_file[0], sha1s));
-}
-
-TEST_F(ApplyPatchTest, CheckModeFailure) {
-  std::vector<std::string> sha1s = { bad_sha1_a, bad_sha1_b };
-  ASSERT_NE(0, applypatch_check(&old_file[0], sha1s));
-}
-
-TEST_F(ApplyPatchTest, CheckModeEmmcTarget) {
+TEST_F(ApplyPatchTest, CheckMode_EmmcTarget) {
   // EMMC:old_file:size:sha1 should pass the check.
   std::string src_file = "EMMC:" + old_file + ":" + std::to_string(old_size) + ":" + old_sha1;
-  std::vector<std::string> sha1s;
-  ASSERT_EQ(0, applypatch_check(src_file.c_str(), sha1s));
+  ASSERT_EQ(0, applypatch_check(src_file, {}));
 
   // EMMC:old_file:(size-1):sha1:(size+1):sha1 should fail the check.
   src_file = "EMMC:" + old_file + ":" + std::to_string(old_size - 1) + ":" + old_sha1 + ":" +
              std::to_string(old_size + 1) + ":" + old_sha1;
-  ASSERT_EQ(1, applypatch_check(src_file.c_str(), sha1s));
+  ASSERT_NE(0, applypatch_check(src_file, {}));
 
   // EMMC:old_file:(size-1):sha1:size:sha1:(size+1):sha1 should pass the check.
   src_file = "EMMC:" + old_file + ":" + std::to_string(old_size - 1) + ":" + old_sha1 + ":" +
              std::to_string(old_size) + ":" + old_sha1 + ":" + std::to_string(old_size + 1) + ":" +
              old_sha1;
-  ASSERT_EQ(0, applypatch_check(src_file.c_str(), sha1s));
+  ASSERT_EQ(0, applypatch_check(src_file, {}));
 
   // EMMC:old_file:(size+1):sha1:(size-1):sha1:size:sha1 should pass the check.
   src_file = "EMMC:" + old_file + ":" + std::to_string(old_size + 1) + ":" + old_sha1 + ":" +
              std::to_string(old_size - 1) + ":" + old_sha1 + ":" + std::to_string(old_size) + ":" +
              old_sha1;
-  ASSERT_EQ(0, applypatch_check(src_file.c_str(), sha1s));
+  ASSERT_EQ(0, applypatch_check(src_file, {}));
 
   // EMMC:new_file:(size+1):old_sha1:(size-1):old_sha1:size:old_sha1:size:new_sha1
   // should pass the check.
   src_file = "EMMC:" + new_file + ":" + std::to_string(old_size + 1) + ":" + old_sha1 + ":" +
              std::to_string(old_size - 1) + ":" + old_sha1 + ":" + std::to_string(old_size) + ":" +
              old_sha1 + ":" + std::to_string(new_size) + ":" + new_sha1;
-  ASSERT_EQ(0, applypatch_check(src_file.c_str(), sha1s));
+  ASSERT_EQ(0, applypatch_check(src_file, {}));
 }
 
-class ApplyPatchCacheTest : public ApplyPatchTest {
- protected:
-  void SetUp() override {
-    ApplyPatchTest::SetUp();
-    Paths::Get().set_cache_temp_source(old_file);
-  }
-};
+TEST_F(ApplyPatchTest, CheckMode_UseBackup) {
+  std::string corrupted = "EMMC:" + old_file + ":" + std::to_string(old_size) + ":" + bad_sha1_a;
+  ASSERT_NE(0, applypatch_check(corrupted, { old_sha1 }));
 
-TEST_F(ApplyPatchCacheTest, CheckCacheCorruptedSourceSingle) {
-  TemporaryFile temp_file;
-  mangle_file(temp_file.path);
-  std::vector<std::string> sha1s_single = { old_sha1 };
-  ASSERT_EQ(0, applypatch_check(temp_file.path, sha1s_single));
-  ASSERT_EQ(0, applypatch_check(nonexistent_file.c_str(), sha1s_single));
+  Paths::Get().set_cache_temp_source(old_file);
+  ASSERT_EQ(0, applypatch_check(corrupted, { old_sha1 }));
+  ASSERT_EQ(0, applypatch_check(corrupted, { bad_sha1_a, old_sha1, bad_sha1_b }));
 }
 
-TEST_F(ApplyPatchCacheTest, CheckCacheCorruptedSourceMultiple) {
-  TemporaryFile temp_file;
-  mangle_file(temp_file.path);
-  std::vector<std::string> sha1s_multiple = { bad_sha1_a, old_sha1, bad_sha1_b };
-  ASSERT_EQ(0, applypatch_check(temp_file.path, sha1s_multiple));
-  ASSERT_EQ(0, applypatch_check(nonexistent_file.c_str(), sha1s_multiple));
-}
+TEST_F(ApplyPatchTest, CheckMode_UseBackup_BothCorrupted) {
+  std::string corrupted = "EMMC:" + old_file + ":" + std::to_string(old_size) + ":" + bad_sha1_a;
+  ASSERT_NE(0, applypatch_check(corrupted, {}));
+  ASSERT_NE(0, applypatch_check(corrupted, { old_sha1 }));
 
-TEST_F(ApplyPatchCacheTest, CheckCacheCorruptedSourceFailure) {
-  TemporaryFile temp_file;
-  mangle_file(temp_file.path);
-  std::vector<std::string> sha1s_failure = { bad_sha1_a, bad_sha1_b };
-  ASSERT_NE(0, applypatch_check(temp_file.path, sha1s_failure));
-  ASSERT_NE(0, applypatch_check(nonexistent_file.c_str(), sha1s_failure));
+  Paths::Get().set_cache_temp_source(old_file);
+  ASSERT_NE(0, applypatch_check(corrupted, { bad_sha1_a, bad_sha1_b }));
 }
 
 class FreeCacheTest : public ::testing::Test {

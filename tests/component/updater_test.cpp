@@ -51,17 +51,19 @@
 #include "updater/install.h"
 #include "updater/updater.h"
 
+using namespace std::string_literals;
+
 using PackageEntries = std::unordered_map<std::string, std::string>;
 
 static constexpr size_t kTransferListHeaderLines = 4;
 
 struct selabel_handle* sehandle = nullptr;
 
-static void expect(const char* expected, const char* expr_str, CauseCode cause_code,
+static void expect(const char* expected, const std::string& expr_str, CauseCode cause_code,
                    UpdaterInfo* info = nullptr) {
   std::unique_ptr<Expr> e;
   int error_count = 0;
-  ASSERT_EQ(0, parse_string(expr_str, &e, &error_count));
+  ASSERT_EQ(0, ParseString(expr_str, &e, &error_count));
   ASSERT_EQ(0, error_count);
 
   State state(expr_str, info);
@@ -126,7 +128,7 @@ static void RunBlockImageUpdate(bool is_verify, const PackageEntries& entries,
   std::string script = is_verify ? "block_image_verify" : "block_image_update";
   script += R"((")" + image_file + R"(", package_extract_file("transfer_list"), ")" + new_data +
             R"(", "patch_data"))";
-  expect(result.c_str(), script.c_str(), cause_code, &updater_info);
+  expect(result.c_str(), script, cause_code, &updater_info);
 
   ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
   CloseArchive(handle);
@@ -149,11 +151,11 @@ static Value* BlobToString(const char* name, State* state,
     return nullptr;
   }
 
-  if (args[0]->type != VAL_BLOB) {
+  if (args[0]->type != Value::Type::BLOB) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects a BLOB argument", name);
   }
 
-  args[0]->type = VAL_STRING;
+  args[0]->type = Value::Type::STRING;
   return args[0].release();
 }
 
@@ -230,7 +232,7 @@ TEST_F(UpdaterTest, apply_patch_check) {
   std::string filename = android::base::Join(
       std::vector<std::string>{ "EMMC", src_file, std::to_string(src_size), src_hash }, ":");
   std::string cmd = "apply_patch_check(\"" + filename + "\")";
-  expect("t", cmd.c_str(), kNoCause);
+  expect("t", cmd, kNoCause);
 
   // EMMC:file:(size-1):sha1:(size+1):sha1 should fail the check.
   std::string filename_bad = android::base::Join(
@@ -238,7 +240,7 @@ TEST_F(UpdaterTest, apply_patch_check) {
                                 std::to_string(src_size + 1), src_hash },
       ":");
   cmd = "apply_patch_check(\"" + filename_bad + "\")";
-  expect("", cmd.c_str(), kNoCause);
+  expect("", cmd, kNoCause);
 
   // EMMC:file:(size-1):sha1:size:sha1:(size+1):sha1 should pass the check.
   filename_bad =
@@ -247,19 +249,21 @@ TEST_F(UpdaterTest, apply_patch_check) {
                                                     std::to_string(src_size + 1), src_hash },
                           ":");
   cmd = "apply_patch_check(\"" + filename_bad + "\")";
-  expect("t", cmd.c_str(), kNoCause);
+  expect("t", cmd, kNoCause);
 
   // Multiple arguments.
+  // As long as it successfully loads the partition specified in filename, it won't check against
+  // any given SHAs.
   cmd = "apply_patch_check(\"" + filename + "\", \"wrong_sha1\", \"wrong_sha2\")";
-  expect("", cmd.c_str(), kNoCause);
+  expect("t", cmd, kNoCause);
 
   cmd = "apply_patch_check(\"" + filename + "\", \"wrong_sha1\", \"" + src_hash +
         "\", \"wrong_sha2\")";
-  expect("t", cmd.c_str(), kNoCause);
+  expect("t", cmd, kNoCause);
 
   cmd = "apply_patch_check(\"" + filename_bad + "\", \"wrong_sha1\", \"" + src_hash +
         "\", \"wrong_sha2\")";
-  expect("t", cmd.c_str(), kNoCause);
+  expect("t", cmd, kNoCause);
 }
 
 TEST_F(UpdaterTest, file_getprop) {
@@ -286,28 +290,28 @@ TEST_F(UpdaterTest, file_getprop) {
 
     std::string script1("file_getprop(\"" + std::string(temp_file2.path) +
                        "\", \"ro.product.name\")");
-    expect("tardis", script1.c_str(), kNoCause);
+    expect("tardis", script1, kNoCause);
 
     std::string script2("file_getprop(\"" + std::string(temp_file2.path) +
                        "\", \"ro.product.board\")");
-    expect("magic", script2.c_str(), kNoCause);
+    expect("magic", script2, kNoCause);
 
     // No match.
     std::string script3("file_getprop(\"" + std::string(temp_file2.path) +
                        "\", \"ro.product.wrong\")");
-    expect("", script3.c_str(), kNoCause);
+    expect("", script3, kNoCause);
 
     std::string script4("file_getprop(\"" + std::string(temp_file2.path) +
                        "\", \"ro.product.name=\")");
-    expect("", script4.c_str(), kNoCause);
+    expect("", script4, kNoCause);
 
     std::string script5("file_getprop(\"" + std::string(temp_file2.path) +
                        "\", \"ro.product.nam\")");
-    expect("", script5.c_str(), kNoCause);
+    expect("", script5, kNoCause);
 
     std::string script6("file_getprop(\"" + std::string(temp_file2.path) +
                        "\", \"ro.product.model\")");
-    expect("", script6.c_str(), kNoCause);
+    expect("", script6, kNoCause);
 }
 
 // TODO: Test extracting to block device.
@@ -327,7 +331,7 @@ TEST_F(UpdaterTest, package_extract_file) {
   // Two-argument version.
   TemporaryFile temp_file1;
   std::string script("package_extract_file(\"a.txt\", \"" + std::string(temp_file1.path) + "\")");
-  expect("t", script.c_str(), kNoCause, &updater_info);
+  expect("t", script, kNoCause, &updater_info);
 
   // Verify the extracted entry.
   std::string data;
@@ -336,32 +340,53 @@ TEST_F(UpdaterTest, package_extract_file) {
 
   // Now extract another entry to the same location, which should overwrite.
   script = "package_extract_file(\"b.txt\", \"" + std::string(temp_file1.path) + "\")";
-  expect("t", script.c_str(), kNoCause, &updater_info);
+  expect("t", script, kNoCause, &updater_info);
 
   ASSERT_TRUE(android::base::ReadFileToString(temp_file1.path, &data));
   ASSERT_EQ(kBTxtContents, data);
 
   // Missing zip entry. The two-argument version doesn't abort.
   script = "package_extract_file(\"doesntexist\", \"" + std::string(temp_file1.path) + "\")";
-  expect("", script.c_str(), kNoCause, &updater_info);
+  expect("", script, kNoCause, &updater_info);
 
   // Extract to /dev/full should fail.
   script = "package_extract_file(\"a.txt\", \"/dev/full\")";
-  expect("", script.c_str(), kNoCause, &updater_info);
+  expect("", script, kNoCause, &updater_info);
 
   // One-argument version. package_extract_file() gives a VAL_BLOB, which needs to be converted to
   // VAL_STRING for equality test.
   script = "blob_to_string(package_extract_file(\"a.txt\")) == \"" + kATxtContents + "\"";
-  expect("t", script.c_str(), kNoCause, &updater_info);
+  expect("t", script, kNoCause, &updater_info);
 
   script = "blob_to_string(package_extract_file(\"b.txt\")) == \"" + kBTxtContents + "\"";
-  expect("t", script.c_str(), kNoCause, &updater_info);
+  expect("t", script, kNoCause, &updater_info);
 
   // Missing entry. The one-argument version aborts the evaluation.
   script = "package_extract_file(\"doesntexist\")";
-  expect(nullptr, script.c_str(), kPackageExtractFileFailure, &updater_info);
+  expect(nullptr, script, kPackageExtractFileFailure, &updater_info);
 
   CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, read_file) {
+  // read_file() expects one argument.
+  expect(nullptr, "read_file()", kArgsParsingFailure);
+  expect(nullptr, "read_file(\"arg1\", \"arg2\")", kArgsParsingFailure);
+
+  // Write some value to file and read back.
+  TemporaryFile temp_file;
+  std::string script("write_value(\"foo\", \""s + temp_file.path + "\");");
+  expect("t", script, kNoCause);
+
+  script = "read_file(\""s + temp_file.path + "\") == \"foo\"";
+  expect("t", script, kNoCause);
+
+  script = "read_file(\""s + temp_file.path + "\") == \"bar\"";
+  expect("", script, kNoCause);
+
+  // It should fail gracefully when read fails.
+  script = "read_file(\"/doesntexist\")";
+  expect("", script, kNoCause);
 }
 
 TEST_F(UpdaterTest, write_value) {
@@ -377,7 +402,7 @@ TEST_F(UpdaterTest, write_value) {
   TemporaryFile temp_file;
   std::string value = "magicvalue";
   std::string script("write_value(\"" + value + "\", \"" + std::string(temp_file.path) + "\")");
-  expect("t", script.c_str(), kNoCause);
+  expect("t", script, kNoCause);
 
   // Verify the content.
   std::string content;
@@ -386,7 +411,7 @@ TEST_F(UpdaterTest, write_value) {
 
   // Allow writing empty string.
   script = "write_value(\"\", \"" + std::string(temp_file.path) + "\")";
-  expect("t", script.c_str(), kNoCause);
+  expect("t", script, kNoCause);
 
   // Verify the content.
   ASSERT_TRUE(android::base::ReadFileToString(temp_file.path, &content));
@@ -394,7 +419,7 @@ TEST_F(UpdaterTest, write_value) {
 
   // It should fail gracefully when write fails.
   script = "write_value(\"value\", \"/proc/0/file1\")";
-  expect("", script.c_str(), kNoCause);
+  expect("", script, kNoCause);
 }
 
 TEST_F(UpdaterTest, get_stage) {
@@ -413,11 +438,11 @@ TEST_F(UpdaterTest, get_stage) {
 
   // Can read the stage value.
   std::string script("get_stage(\"" + temp_file + "\")");
-  expect("2/3", script.c_str(), kNoCause);
+  expect("2/3", script, kNoCause);
 
   // Bad BCB path.
   script = "get_stage(\"doesntexist\")";
-  expect("", script.c_str(), kNoCause);
+  expect("", script, kNoCause);
 }
 
 TEST_F(UpdaterTest, set_stage) {
@@ -437,7 +462,7 @@ TEST_F(UpdaterTest, set_stage) {
 
   // Write with set_stage().
   std::string script("set_stage(\"" + temp_file + "\", \"1/3\")");
-  expect(tf.path, script.c_str(), kNoCause);
+  expect(tf.path, script, kNoCause);
 
   // Verify.
   bootloader_message boot_verify;
@@ -449,10 +474,10 @@ TEST_F(UpdaterTest, set_stage) {
 
   // Bad BCB path.
   script = "set_stage(\"doesntexist\", \"1/3\")";
-  expect("", script.c_str(), kNoCause);
+  expect("", script, kNoCause);
 
   script = "set_stage(\"/dev/full\", \"1/3\")";
-  expect("", script.c_str(), kNoCause);
+  expect("", script, kNoCause);
 }
 
 TEST_F(UpdaterTest, set_progress) {

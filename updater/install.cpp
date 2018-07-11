@@ -191,7 +191,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
                         zip_path.c_str(), buffer.size(), ErrorCodeString(ret));
     }
 
-    return new Value(VAL_BLOB, buffer);
+    return new Value(Value::Type::BLOB, buffer);
   }
 }
 
@@ -238,10 +238,10 @@ Value* ApplyPatchFn(const char* name, State* state,
   }
 
   for (int i = 0; i < patchcount; ++i) {
-    if (arg_values[i * 2]->type != VAL_STRING) {
+    if (arg_values[i * 2]->type != Value::Type::STRING) {
       return ErrorAbort(state, kArgsParsingFailure, "%s(): sha-1 #%d is not string", name, i * 2);
     }
-    if (arg_values[i * 2 + 1]->type != VAL_BLOB) {
+    if (arg_values[i * 2 + 1]->type != Value::Type::BLOB) {
       return ErrorAbort(state, kArgsParsingFailure, "%s(): patch #%d is not blob", name, i * 2 + 1);
     }
   }
@@ -739,8 +739,8 @@ Value* RunProgramFn(const char* name, State* state, const std::vector<std::uniqu
   return StringValue(std::to_string(status));
 }
 
-// Read a local file and return its contents (the Value* returned
-// is actually a FileContents*).
+// read_file(filename)
+//   Reads a local file 'filename' and returns its contents as a string Value.
 Value* ReadFileFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
   if (argv.size() != 1) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
@@ -748,18 +748,18 @@ Value* ReadFileFn(const char* name, State* state, const std::vector<std::unique_
 
   std::vector<std::string> args;
   if (!ReadArgs(state, argv, &args)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
   const std::string& filename = args[0];
 
-  Value* v = new Value(VAL_INVALID, "");
-
-  FileContents fc;
-  if (LoadFileContents(filename.c_str(), &fc) == 0) {
-    v->type = VAL_BLOB;
-    v->data = std::string(fc.data.begin(), fc.data.end());
+  std::string contents;
+  if (android::base::ReadFileToString(filename, &contents)) {
+    return new Value(Value::Type::STRING, std::move(contents));
   }
-  return v;
+
+  // Leave it to caller to handle the failure.
+  PLOG(ERROR) << name << ": Failed to read " << filename;
+  return StringValue("");
 }
 
 // write_value(value, filename)
