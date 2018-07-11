@@ -61,11 +61,6 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   int mem_level = Read4(deflate_header + 52);
   int strategy = Read4(deflate_header + 56);
 
-  // TODO(b/67849209) Remove after debugging the unit test flakiness.
-  if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
-    LOG(DEBUG) << "zlib version " << zlibVersion();
-  }
-
   z_stream strm;
   strm.zalloc = Z_NULL;
   strm.zfree = Z_NULL;
@@ -83,10 +78,8 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   size_t actual_target_length = 0;
   size_t total_written = 0;
   static constexpr size_t buffer_size = 32768;
-  SHA_CTX sha_ctx;
-  SHA1_Init(&sha_ctx);
   auto compression_sink = [&strm, &actual_target_length, &expected_target_length, &total_written,
-                           &ret, &sink, &sha_ctx](const uint8_t* data, size_t len) -> size_t {
+                           &ret, &sink](const uint8_t* data, size_t len) -> size_t {
     // The input patch length for an update never exceeds INT_MAX.
     strm.avail_in = len;
     strm.next_in = data;
@@ -113,11 +106,6 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
       }
     } while ((strm.avail_in != 0 || strm.avail_out == 0) && ret != Z_STREAM_END);
 
-    // TODO(b/67849209) Remove after debugging the unit test flakiness.
-    if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
-      SHA1_Update(&sha_ctx, data, len);
-    }
-
     actual_target_length += len;
     return len;
   };
@@ -125,11 +113,6 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   int bspatch_result = ApplyBSDiffPatch(src_data, src_len, patch, patch_offset, compression_sink);
   deflateEnd(&strm);
 
-  if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
-    uint8_t digest[SHA_DIGEST_LENGTH];
-    SHA1_Final(digest, &sha_ctx);
-    LOG(DEBUG) << "sha1 of " << actual_target_length << " bytes input data: " << short_sha1(digest);
-  }
   if (bspatch_result != 0) {
     return false;
   }
@@ -144,7 +127,7 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
                << actual_target_length;
     return false;
   }
-  LOG(DEBUG) << "bspatch writes " << total_written << " bytes in total to streaming output.";
+  LOG(DEBUG) << "bspatch wrote " << total_written << " bytes in total to streaming output.";
 
   return true;
 }

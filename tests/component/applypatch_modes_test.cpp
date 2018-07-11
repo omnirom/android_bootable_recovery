@@ -21,13 +21,11 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
 #include <bsdiff/bsdiff.h>
 #include <gtest/gtest.h>
 #include <openssl/sha.h>
-#include <zlib.h>
 
 #include "applypatch/applypatch_modes.h"
 #include "common/test_constants.h"
@@ -35,47 +33,6 @@
 #include "otautil/print_sha1.h"
 
 using namespace std::string_literals;
-
-// TODO(b/67849209) Remove after debug the flakiness.
-static void DecompressAndDumpRecoveryImage(const std::string& image_path) {
-  // Expected recovery_image structure
-  // chunk normal:  45066 bytes
-  // chunk deflate: 479442 bytes
-  // chunk normal:  5199 bytes
-  std::string recovery_content;
-  ASSERT_TRUE(android::base::ReadFileToString(image_path, &recovery_content));
-  ASSERT_GT(recovery_content.size(), 45066 + 5199);
-
-  z_stream strm = {};
-  strm.avail_in = recovery_content.size() - 45066 - 5199;
-  strm.next_in =
-      const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(recovery_content.data())) + 45066;
-
-  ASSERT_EQ(Z_OK, inflateInit2(&strm, -15));
-
-  constexpr unsigned int BUFFER_SIZE = 32768;
-  std::vector<uint8_t> uncompressed_data(BUFFER_SIZE);
-  size_t uncompressed_length = 0;
-  SHA_CTX ctx;
-  SHA1_Init(&ctx);
-  int ret;
-  do {
-    strm.avail_out = BUFFER_SIZE;
-    strm.next_out = uncompressed_data.data();
-
-    ret = inflate(&strm, Z_NO_FLUSH);
-    ASSERT_GE(ret, 0);
-
-    SHA1_Update(&ctx, uncompressed_data.data(), BUFFER_SIZE - strm.avail_out);
-    uncompressed_length += BUFFER_SIZE - strm.avail_out;
-  } while (ret != Z_STREAM_END);
-  inflateEnd(&strm);
-
-  uint8_t digest[SHA_DIGEST_LENGTH];
-  SHA1_Final(digest, &ctx);
-  GTEST_LOG_(INFO) << "uncompressed length " << uncompressed_length
-                   << " sha1: " << short_sha1(digest);
-}
 
 static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize = nullptr) {
   ASSERT_TRUE(sha1 != nullptr);
@@ -92,20 +49,10 @@ static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize =
   *sha1 = print_sha1(digest);
 }
 
-static void test_logger(android::base::LogId /* id */, android::base::LogSeverity severity,
-                        const char* /* tag */, const char* /* file */, unsigned int /* line */,
-                        const char* message) {
-  if (severity >= android::base::GetMinimumLogSeverity()) {
-    fprintf(stdout, "%s\n", message);
-  }
-}
-
 class ApplyPatchModesTest : public ::testing::Test {
  protected:
   void SetUp() override {
     Paths::Get().set_cache_temp_source(cache_source.path);
-    android::base::InitLogging(nullptr, &test_logger);
-    android::base::SetMinimumLogSeverity(android::base::LogSeverity::DEBUG);
   }
 
   TemporaryFile cache_source;
@@ -178,10 +125,7 @@ TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithoutBonusFile) {
                                     recovery_img_size_arg.c_str(),
                                     patch_arg.c_str() };
 
-  if (applypatch_modes(args.size(), args.data()) != 0) {
-    DecompressAndDumpRecoveryImage(tgt_file.path);
-    FAIL();
-  }
+  ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
 }
 
 TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithMultiplePatches) {
@@ -219,16 +163,8 @@ TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithMultiplePatches) {
                                     patch1.c_str(),
                                     patch2.c_str(),
                                     patch3.c_str() };
-  // TODO(b/67849209): Remove after addressing the flakiness.
-  printf("Calling applypatch_modes with the following args:\n");
-  for (const auto& arg : args) {
-    printf("  %s\n", arg);
-  }
 
-  if (applypatch_modes(args.size(), args.data()) != 0) {
-    DecompressAndDumpRecoveryImage(tgt_file.path);
-    FAIL();
-  }
+  ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
 }
 
 // Ensures that applypatch works with a bsdiff based recovery-from-boot.p.
