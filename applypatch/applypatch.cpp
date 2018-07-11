@@ -587,11 +587,6 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
   SHA_CTX ctx;
   SHA1_Init(&ctx);
   SinkFn sink = [&memory_sink_str, &ctx](const unsigned char* data, size_t len) {
-    if (len != 0) {
-      uint8_t digest[SHA_DIGEST_LENGTH];
-      SHA1(data, len, digest);
-      LOG(DEBUG) << "Appending " << len << " bytes data, SHA-1: " << short_sha1(digest);
-    }
     SHA1_Update(&ctx, data, len);
     memory_sink_str.append(reinterpret_cast<const char*>(data), len);
     return len;
@@ -630,14 +625,6 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
            bonus_digest);
       LOG(ERROR) << "bonus size " << bonus_data->data.size() << " SHA-1 "
                  << short_sha1(bonus_digest);
-    }
-
-    // TODO(b/67849209) Remove after debugging the unit test flakiness.
-    if (android::base::GetMinimumLogSeverity() <= android::base::LogSeverity::DEBUG) {
-      if (WriteToPartition(reinterpret_cast<const unsigned char*>(memory_sink_str.c_str()),
-                           memory_sink_str.size(), target_filename) != 0) {
-        LOG(DEBUG) << "Failed to write patched data " << target_filename;
-      }
     }
 
     return 1;
