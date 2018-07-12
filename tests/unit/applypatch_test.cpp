@@ -164,27 +164,37 @@ class FreeCacheTest : public ::testing::Test {
     return file_list;
   }
 
-  static void AddFilesToDir(const std::string& dir, const std::vector<std::string>& files) {
+  void AddFilesToDir(const std::string& dir, const std::vector<std::string>& files) {
     std::string zeros(4096, 0);
     for (const auto& file : files) {
-      std::string path = dir + "/" + file;
-      ASSERT_TRUE(android::base::WriteStringToFile(zeros, path));
+      temporary_files_.push_back(dir + "/" + file);
+      ASSERT_TRUE(android::base::WriteStringToFile(zeros, temporary_files_.back()));
     }
   }
 
   void SetUp() override {
     Paths::Get().set_cache_log_directory(mock_log_dir.path);
+    temporary_files_.clear();
+  }
+
+  void TearDown() override {
+    for (const auto& file : temporary_files_) {
+      ASSERT_TRUE(android::base::RemoveFileIfExists(file));
+    }
   }
 
   // A mock method to calculate the free space. It assumes the partition has a total size of 40960
   // bytes and all files are 4096 bytes in size.
-  int64_t MockFreeSpaceChecker(const std::string& dirname) {
+  static size_t MockFreeSpaceChecker(const std::string& dirname) {
     std::vector<std::string> files = FindFilesInDir(dirname);
     return PARTITION_SIZE - 4096 * files.size();
   }
 
   TemporaryDir mock_cache;
   TemporaryDir mock_log_dir;
+
+ private:
+  std::vector<std::string> temporary_files_;
 };
 
 TEST_F(FreeCacheTest, FreeCacheSmoke) {
@@ -193,9 +203,7 @@ TEST_F(FreeCacheTest, FreeCacheSmoke) {
   ASSERT_EQ(files, FindFilesInDir(mock_cache.path));
   ASSERT_EQ(4096 * 7, MockFreeSpaceChecker(mock_cache.path));
 
-  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_cache.path, [this](const std::string& dir) {
-    return this->MockFreeSpaceChecker(dir);
-  }));
+  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_cache.path, MockFreeSpaceChecker));
 
   ASSERT_EQ(std::vector<std::string>{ "file3" }, FindFilesInDir(mock_cache.path));
   ASSERT_EQ(4096 * 9, MockFreeSpaceChecker(mock_cache.path));
@@ -221,9 +229,7 @@ TEST_F(FreeCacheTest, FreeCacheOpenFile) {
   android::base::unique_fd fd(open(file1_path.c_str(), O_RDONLY));
 
   // file1 can't be deleted as it's opened by us.
-  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 10, mock_cache.path, [this](const std::string& dir) {
-    return this->MockFreeSpaceChecker(dir);
-  }));
+  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 10, mock_cache.path, MockFreeSpaceChecker));
 
   ASSERT_EQ(std::vector<std::string>{ "file1" }, FindFilesInDir(mock_cache.path));
 }
@@ -234,9 +240,7 @@ TEST_F(FreeCacheTest, FreeCacheLogsSmoke) {
   AddFilesToDir(mock_log_dir.path, log_files);
   ASSERT_EQ(4096 * 5, MockFreeSpaceChecker(mock_log_dir.path));
 
-  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, [this](const std::string& dir) {
-    return this->MockFreeSpaceChecker(dir);
-  }));
+  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, MockFreeSpaceChecker));
 
   // Logs with a higher index will be deleted first
   std::vector<std::string> expected = { "last_log", "last_log.1" };
@@ -250,9 +254,7 @@ TEST_F(FreeCacheTest, FreeCacheLogsStringComparison) {
   AddFilesToDir(mock_log_dir.path, log_files);
   ASSERT_EQ(4096 * 6, MockFreeSpaceChecker(mock_log_dir.path));
 
-  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_log_dir.path, [this](const std::string& dir) {
-    return this->MockFreeSpaceChecker(dir);
-  }));
+  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_log_dir.path, MockFreeSpaceChecker));
 
   // Logs with incorrect format will be deleted first; and the last_kmsg with the same index is
   // deleted before last_log.
@@ -267,9 +269,7 @@ TEST_F(FreeCacheTest, FreeCacheLogsOtherFiles) {
   AddFilesToDir(mock_log_dir.path, log_files);
   ASSERT_EQ(4096 * 5, MockFreeSpaceChecker(mock_log_dir.path));
 
-  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, [this](const std::string& dir) {
-    return this->MockFreeSpaceChecker(dir);
-  }));
+  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, MockFreeSpaceChecker));
 
   // Non log files in /cache/recovery won't be deleted.
   std::vector<std::string> expected = { "block.map", "command", "last_install" };
