@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b9e894d2_f4adb04a",
+        "filename": "minuitwrp/minui.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1001478
+      },
+      "writtenOn": "2018-07-12T13:36:25Z",
+      "side": 1,
+      "message": "try std::min \u0026 std::max instead using \u003calgorithm\u003e library\nor \n#define MIN(X,Y) ((X) \u003c (Y) ? (X) : (Y))\n#define MAX(X,Y) ((X) \u003e (Y) ? (X) : (Y))\nas defined in truetype.cpp\nthis fix compile error in 5.1 tree",
+      "range": {
+        "startLine": 90,
+        "startChar": 0,
+        "endLine": 91,
+        "endChar": 43
+      },
+      "revId": "c100b7ce73ebf223f6972a4995a11e5eb5f595cf",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
