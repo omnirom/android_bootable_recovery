@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
-#include <error.h>
-#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/statfs.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -33,6 +29,7 @@
 #include <string>
 
 #include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
@@ -43,7 +40,7 @@
 static int EliminateOpenFiles(const std::string& dirname, std::set<std::string>* files) {
   std::unique_ptr<DIR, decltype(&closedir)> d(opendir("/proc"), closedir);
   if (!d) {
-    printf("error opening /proc: %s\n", strerror(errno));
+    PLOG(ERROR) << "Failed to open /proc";
     return -1;
   }
   struct dirent* de;
@@ -57,7 +54,7 @@ static int EliminateOpenFiles(const std::string& dirname, std::set<std::string>*
     struct dirent* fdde;
     std::unique_ptr<DIR, decltype(&closedir)> fdd(opendir(path.c_str()), closedir);
     if (!fdd) {
-      printf("error opening %s: %s\n", path.c_str(), strerror(errno));
+      PLOG(ERROR) << "Failed to open " << path;
       continue;
     }
     while ((fdde = readdir(fdd.get())) != 0) {
@@ -69,7 +66,7 @@ static int EliminateOpenFiles(const std::string& dirname, std::set<std::string>*
         link[count] = '\0';
         if (android::base::StartsWith(link, dirname)) {
           if (files->erase(link) > 0) {
-            printf("%s is open by %s\n", link, de->d_name);
+            LOG(INFO) << link << " is open by " << de->d_name;
           }
         }
       }
@@ -80,15 +77,14 @@ static int EliminateOpenFiles(const std::string& dirname, std::set<std::string>*
 
 static std::vector<std::string> FindExpendableFiles(
     const std::string& dirname, const std::function<bool(const std::string&)>& name_filter) {
-  std::set<std::string> files;
-
   std::unique_ptr<DIR, decltype(&closedir)> d(opendir(dirname.c_str()), closedir);
   if (!d) {
-    printf("error opening %s: %s\n", dirname.c_str(), strerror(errno));
+    PLOG(ERROR) << "Failed to open " << dirname;
     return {};
   }
 
   // Look for regular files in the directory (not in any subdirectories).
+  std::set<std::string> files;
   struct dirent* de;
   while ((de = readdir(d.get())) != 0) {
     std::string path = dirname + "/" + de->d_name;
@@ -110,7 +106,7 @@ static std::vector<std::string> FindExpendableFiles(
     }
   }
 
-  printf("%zu regular files in deletable directory\n", files.size());
+  LOG(INFO) << files.size() << " regular files in deletable directory";
   if (EliminateOpenFiles(dirname, &files) < 0) {
     return {};
   }
@@ -136,13 +132,13 @@ static unsigned int GetLogIndex(const std::string& log_name) {
 
 int MakeFreeSpaceOnCache(size_t bytes_needed) {
 #ifndef __ANDROID__
-  // TODO (xunchang) implement a heuristic cache size check during host simulation.
-  printf("Skip making (%zu) bytes free space on /cache; program is running on host\n",
-         bytes_needed);
+  // TODO(xunchang): Implement a heuristic cache size check during host simulation.
+  LOG(WARNING) << "Skipped making (" << bytes_needed
+               << ") bytes free space on /cache; program is running on host";
   return 0;
 #endif
 
-  std::vector<std::string> dirs = { "/cache", Paths::Get().cache_log_directory() };
+  std::vector<std::string> dirs{ "/cache", Paths::Get().cache_log_directory() };
   for (const auto& dirname : dirs) {
     if (RemoveFilesInDirectory(bytes_needed, dirname, FreeSpaceForFile)) {
       return 0;
@@ -155,17 +151,17 @@ int MakeFreeSpaceOnCache(size_t bytes_needed) {
 bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
                             const std::function<size_t(const std::string&)>& space_checker) {
   struct stat st;
-  if (stat(dirname.c_str(), &st) != 0) {
-    error(0, errno, "Unable to free space on %s", dirname.c_str());
+  if (stat(dirname.c_str(), &st) == -1) {
+    PLOG(ERROR) << "Failed to stat " << dirname;
     return false;
   }
   if (!S_ISDIR(st.st_mode)) {
-    printf("%s is not a directory\n", dirname.c_str());
+    LOG(ERROR) << dirname << " is not a directory";
     return false;
   }
 
   size_t free_now = space_checker(dirname);
-  printf("%zu bytes free on %s (%zu needed)\n", free_now, dirname.c_str(), bytes_needed);
+  LOG(INFO) << free_now << " bytes free on " << dirname << " (" << bytes_needed << " needed)";
 
   if (free_now >= bytes_needed) {
     return true;
@@ -200,12 +196,12 @@ bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
 
   for (const auto& file : files) {
     if (unlink(file.c_str()) == -1) {
-      error(0, errno, "Failed to delete %s", file.c_str());
+      PLOG(ERROR) << "Failed to delete " << file;
       continue;
     }
 
     free_now = space_checker(dirname);
-    printf("deleted %s; now %zu bytes free\n", file.c_str(), free_now);
+    LOG(INFO) << "Deleted " << file << "; now " << free_now << " bytes free";
     if (free_now >= bytes_needed) {
       return true;
     }
