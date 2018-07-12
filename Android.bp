@@ -104,6 +104,7 @@ cc_defaults {
     ],
 
     shared_libs: [
+        "android.hardware.health@2.0",
         "libbase",
         "libbootloader_message",
         "libcrypto",
@@ -113,6 +114,8 @@ cc_defaults {
         "libfs_mgr",
         "libfusesideload",
         "libhidl-gen-utils",
+        "libhidlbase",
+        "libhidltransport",
         "liblog",
         "libpng",
         "libselinux",
@@ -127,20 +130,11 @@ cc_defaults {
         "libminui",
         "libverifier",
         "libotautil",
+
+        // external dependencies
+        "libhealthhalutils",
         "libvintf_recovery",
         "libvintf",
-
-        // TODO(b/80132328): Remove the dependency on static health HAL.
-        "libhealthd.default",
-        "android.hardware.health@2.0-impl",
-        "android.hardware.health@2.0",
-        "android.hardware.health@1.0",
-        "android.hardware.health@1.0-convert",
-        "libhealthstoragedefault",
-        "libhidltransport",
-        "libhidlbase",
-        "libhwbinder_noltopgo",
-        "libbatterymonitor",
     ],
 }
 

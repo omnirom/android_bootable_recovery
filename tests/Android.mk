@@ -154,18 +154,6 @@ libupdater_static_libraries := \
     libbrotli \
     $(tune2fs_static_libraries)
 
-health_hal_static_libraries := \
-    android.hardware.health@2.0-impl \
-    android.hardware.health@2.0 \
-    android.hardware.health@1.0 \
-    android.hardware.health@1.0-convert \
-    libhealthstoragedefault \
-    libhidltransport \
-    libhidlbase \
-    libhwbinder_noltopgo \
-    libvndksupport \
-    libbatterymonitor
-
 librecovery_static_libraries := \
     librecovery \
     libbootloader_message \
@@ -175,7 +163,6 @@ librecovery_static_libraries := \
     libminui \
     libverifier \
     libotautil \
-    $(health_hal_static_libraries) \
     libcrypto_utils \
     libcrypto \
     libext4_utils \
