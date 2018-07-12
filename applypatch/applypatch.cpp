@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/statfs.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -419,15 +418,6 @@ static size_t FileSink(const unsigned char* data, size_t len, int fd) {
     done += wrote;
   }
   return done;
-}
-
-size_t FreeSpaceForFile(const std::string& filename) {
-  struct statfs sf;
-  if (statfs(filename.c_str(), &sf) != 0) {
-    PLOG(ERROR) << "Failed to statfs " << filename;
-    return -1;
-  }
-  return sf.f_bsize * sf.f_bavail;
 }
 
 int CacheSizeCheck(size_t bytes) {
