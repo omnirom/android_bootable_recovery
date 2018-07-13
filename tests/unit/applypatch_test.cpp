@@ -16,6 +16,7 @@
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -29,6 +30,7 @@
 #include <vector>
 
 #include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
 #include <android-base/unique_fd.h>
@@ -176,7 +178,7 @@ class FreeCacheTest : public ::testing::Test {
 
   // A mock method to calculate the free space. It assumes the partition has a total size of 40960
   // bytes and all files are 4096 bytes in size.
-  size_t MockFreeSpaceChecker(const std::string& dirname) {
+  int64_t MockFreeSpaceChecker(const std::string& dirname) {
     std::vector<std::string> files = FindFilesInDir(dirname);
     return PARTITION_SIZE - 4096 * files.size();
   }
@@ -191,12 +193,22 @@ TEST_F(FreeCacheTest, FreeCacheSmoke) {
   ASSERT_EQ(files, FindFilesInDir(mock_cache.path));
   ASSERT_EQ(4096 * 7, MockFreeSpaceChecker(mock_cache.path));
 
-  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_cache.path, [&](const std::string& dir) {
+  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_cache.path, [this](const std::string& dir) {
     return this->MockFreeSpaceChecker(dir);
   }));
 
   ASSERT_EQ(std::vector<std::string>{ "file3" }, FindFilesInDir(mock_cache.path));
   ASSERT_EQ(4096 * 9, MockFreeSpaceChecker(mock_cache.path));
+}
+
+TEST_F(FreeCacheTest, FreeCacheFreeSpaceCheckerError) {
+  std::vector<std::string> files{ "file1", "file2", "file3" };
+  AddFilesToDir(mock_cache.path, files);
+  ASSERT_EQ(files, FindFilesInDir(mock_cache.path));
+  ASSERT_EQ(4096 * 7, MockFreeSpaceChecker(mock_cache.path));
+
+  ASSERT_FALSE(
+      RemoveFilesInDirectory(4096 * 9, mock_cache.path, [](const std::string&) { return -1; }));
 }
 
 TEST_F(FreeCacheTest, FreeCacheOpenFile) {
@@ -209,7 +221,7 @@ TEST_F(FreeCacheTest, FreeCacheOpenFile) {
   android::base::unique_fd fd(open(file1_path.c_str(), O_RDONLY));
 
   // file1 can't be deleted as it's opened by us.
-  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 10, mock_cache.path, [&](const std::string& dir) {
+  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 10, mock_cache.path, [this](const std::string& dir) {
     return this->MockFreeSpaceChecker(dir);
   }));
 
@@ -222,7 +234,7 @@ TEST_F(FreeCacheTest, FreeCacheLogsSmoke) {
   AddFilesToDir(mock_log_dir.path, log_files);
   ASSERT_EQ(4096 * 5, MockFreeSpaceChecker(mock_log_dir.path));
 
-  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, [&](const std::string& dir) {
+  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, [this](const std::string& dir) {
     return this->MockFreeSpaceChecker(dir);
   }));
 
@@ -238,7 +250,7 @@ TEST_F(FreeCacheTest, FreeCacheLogsStringComparison) {
   AddFilesToDir(mock_log_dir.path, log_files);
   ASSERT_EQ(4096 * 6, MockFreeSpaceChecker(mock_log_dir.path));
 
-  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_log_dir.path, [&](const std::string& dir) {
+  ASSERT_TRUE(RemoveFilesInDirectory(4096 * 9, mock_log_dir.path, [this](const std::string& dir) {
     return this->MockFreeSpaceChecker(dir);
   }));
 
@@ -255,7 +267,7 @@ TEST_F(FreeCacheTest, FreeCacheLogsOtherFiles) {
   AddFilesToDir(mock_log_dir.path, log_files);
   ASSERT_EQ(4096 * 5, MockFreeSpaceChecker(mock_log_dir.path));
 
-  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, [&](const std::string& dir) {
+  ASSERT_FALSE(RemoveFilesInDirectory(4096 * 8, mock_log_dir.path, [this](const std::string& dir) {
     return this->MockFreeSpaceChecker(dir);
   }));
 
