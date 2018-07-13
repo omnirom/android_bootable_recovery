@@ -420,14 +420,6 @@ static size_t FileSink(const unsigned char* data, size_t len, int fd) {
   return done;
 }
 
-int CacheSizeCheck(size_t bytes) {
-  if (MakeFreeSpaceOnCache(bytes) < 0) {
-    LOG(ERROR) << "Failed to make " << bytes << " bytes available on /cache";
-    return 1;
-  }
-  return 0;
-}
-
 int applypatch(const char* source_filename, const char* target_filename,
                const char* target_sha1_str, size_t /* target_size */,
                const std::vector<std::string>& patch_sha1s,
@@ -562,8 +554,8 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
 
   CHECK(android::base::StartsWith(target_filename, "EMMC:"));
 
-  // We still write the original source to cache, in case the partition write is interrupted.
-  if (MakeFreeSpaceOnCache(source_file.data.size()) < 0) {
+  // We write the original source to cache, in case the partition write is interrupted.
+  if (!CheckAndFreeSpaceOnCache(source_file.data.size())) {
     LOG(ERROR) << "Not enough free space on /cache";
     return 1;
   }

@@ -688,7 +688,7 @@ Value* ApplyPatchSpaceFn(const char* name, State* state,
   }
 
   // Skip the cache size check if the update is a retry.
-  if (state->is_retry || CacheSizeCheck(bytes) == 0) {
+  if (state->is_retry || CheckAndFreeSpaceOnCache(bytes)) {
     return StringValue("t");
   }
   return StringValue("");
