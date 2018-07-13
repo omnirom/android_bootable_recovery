@@ -40,10 +40,6 @@ using SinkFn = std::function<size_t(const unsigned char*, size_t)>;
 
 int ShowLicenses();
 
-// Checks whether /cache partition has at least 'bytes'-byte free space. Returns 0 on having
-// sufficient space.
-int CacheSizeCheck(size_t bytes);
-
 // Parses a given string of 40 hex digits into 20-byte array 'digest'. 'str' may contain only the
 // digest or be of the form "<digest>:<anything>". Returns 0 on success, or -1 on any error.
 int ParseSha1(const std::string& str, uint8_t* digest);
@@ -113,7 +109,10 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
 
 // freecache.cpp
 
-int MakeFreeSpaceOnCache(size_t bytes_needed);
+// Checks whether /cache partition has at least 'bytes'-byte free space. Returns true immediately
+// if so. Otherwise, it will try to free some space by removing older logs, checks again and
+// returns the checking result.
+bool CheckAndFreeSpaceOnCache(size_t bytes);
 
 // Removes the files in |dirname| until we have at least |bytes_needed| bytes of free space on the
 // partition. |space_checker| should return the size of the free space, or -1 on error.

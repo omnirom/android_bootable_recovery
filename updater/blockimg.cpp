@@ -827,7 +827,7 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
     return -1;
   }
 
-  if (checkspace && CacheSizeCheck(blocks * BLOCKSIZE) != 0) {
+  if (checkspace && !CheckAndFreeSpaceOnCache(blocks * BLOCKSIZE)) {
     LOG(ERROR) << "not enough space to write stash";
     return -1;
   }
@@ -919,7 +919,7 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& base) 
       return -1;
     }
 
-    if (CacheSizeCheck(max_stash_size) != 0) {
+    if (!CheckAndFreeSpaceOnCache(max_stash_size)) {
       ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%zu needed)",
                  max_stash_size);
       return -1;
@@ -951,7 +951,7 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& base) 
 
   if (max_stash_size > existing) {
     size_t needed = max_stash_size - existing;
-    if (CacheSizeCheck(needed) != 0) {
+    if (!CheckAndFreeSpaceOnCache(needed)) {
       ErrorAbort(state, kStashCreationFailure, "not enough space for stash (%zu more needed)",
                  needed);
       return -1;

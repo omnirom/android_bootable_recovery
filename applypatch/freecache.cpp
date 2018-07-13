@@ -150,22 +150,22 @@ static int64_t FreeSpaceForFile(const std::string& filename) {
   return free_space;
 }
 
-int MakeFreeSpaceOnCache(size_t bytes_needed) {
+bool CheckAndFreeSpaceOnCache(size_t bytes) {
 #ifndef __ANDROID__
   // TODO(xunchang): Implement a heuristic cache size check during host simulation.
-  LOG(WARNING) << "Skipped making (" << bytes_needed
+  LOG(WARNING) << "Skipped making (" << bytes
                << ") bytes free space on /cache; program is running on host";
-  return 0;
+  return true;
 #endif
 
   std::vector<std::string> dirs{ "/cache", Paths::Get().cache_log_directory() };
   for (const auto& dirname : dirs) {
-    if (RemoveFilesInDirectory(bytes_needed, dirname, FreeSpaceForFile)) {
-      return 0;
+    if (RemoveFilesInDirectory(bytes, dirname, FreeSpaceForFile)) {
+      return true;
     }
   }
 
-  return -1;
+  return false;
 }
 
 bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
