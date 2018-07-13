@@ -495,19 +495,15 @@ int applypatch_flash(const char* source_filename, const char* target_filename,
     return 1;
   }
 
-  std::string target_str(target_filename);
-  std::vector<std::string> pieces = android::base::Split(target_str, ":");
-  if (pieces.size() != 2 || pieces[0] != "EMMC") {
+  std::vector<std::string> pieces = android::base::Split(target_filename, ":");
+  if (pieces.size() != 4 || pieces[0] != "EMMC") {
     LOG(ERROR) << "Invalid target name \"" << target_filename << "\"";
     return 1;
   }
 
   // Load the target into the source_file object to see if already applied.
-  pieces.push_back(std::to_string(target_size));
-  pieces.push_back(target_sha1_str);
-  std::string fullname = android::base::Join(pieces, ':');
   FileContents source_file;
-  if (LoadPartitionContents(fullname, &source_file) == 0 &&
+  if (LoadPartitionContents(target_filename, &source_file) == 0 &&
       memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
     // The early-exit case: the image was already applied, this partition has the desired hash,
     // nothing for us to do.
