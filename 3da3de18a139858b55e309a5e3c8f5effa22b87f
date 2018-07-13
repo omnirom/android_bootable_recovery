@@ -48,6 +48,30 @@
     },
     {
       "key": {
+        "uuid": "92eef7f7_80dc9fa9",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1002288
+      },
+      "writtenOn": "2018-07-13T11:56:51Z",
+      "side": 1,
+      "message": "Also exist on kernel 4.9 seems( Xiaomi MI 8SE )",
+      "parentUuid": "a9a737c3_82751fab",
+      "range": {
+        "startLine": 9,
+        "startChar": 0,
+        "endLine": 10,
+        "endChar": 35
+      },
+      "revId": "3da3de18a139858b55e309a5e3c8f5effa22b87f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "145ffa38_d803dce2",
         "filename": "minuitwrp/Android.mk",
         "patchSetId": 1
