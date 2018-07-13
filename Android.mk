@@ -33,6 +33,10 @@ ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22))
     BOARD_SEPOLICY_UNION += twrp.te
 endif
 
+ifeq ($(CM_PLATFORM_SDK_VERSION),)
+    CM_PLATFORM_SDK_VERSION := 0
+endif
+
 include $(CLEAR_VARS)
 
 TWRES_PATH := /twres/
