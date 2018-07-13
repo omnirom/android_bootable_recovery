@@ -446,8 +446,9 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
-  TemporaryDir resource_dir;
-  Paths::Get().set_resource_dir(resource_dir.path);
+  // We need a dir that doesn't contain any animation. However, using TemporaryDir will give
+  // leftovers since this is a death test where TemporaryDir::~TemporaryDir() won't be called.
+  Paths::Get().set_resource_dir("/proc/self");
 
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(ui_->RunLoadAnimation(), ::testing::KilledBySignal(SIGABRT), "");
