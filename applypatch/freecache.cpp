@@ -16,10 +16,12 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/statfs.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -130,6 +132,24 @@ static unsigned int GetLogIndex(const std::string& log_name) {
   return std::numeric_limits<unsigned int>::max();
 }
 
+// Returns the amount of free space (in bytes) on the filesystem containing filename, or -1 on
+// error.
+static int64_t FreeSpaceForFile(const std::string& filename) {
+  struct statfs sf;
+  if (statfs(filename.c_str(), &sf) == -1) {
+    PLOG(ERROR) << "Failed to statfs " << filename;
+    return -1;
+  }
+
+  int64_t free_space = static_cast<int64_t>(sf.f_bsize) * sf.f_bavail;
+  if (sf.f_bsize == 0 || free_space / sf.f_bsize != sf.f_bavail) {
+    LOG(ERROR) << "Invalid block size or overflow (sf.f_bsize " << sf.f_bsize << ", sf.f_bavail "
+               << sf.f_bavail << ")";
+    return -1;
+  }
+  return free_space;
+}
+
 int MakeFreeSpaceOnCache(size_t bytes_needed) {
 #ifndef __ANDROID__
   // TODO(xunchang): Implement a heuristic cache size check during host simulation.
@@ -149,7 +169,7 @@ int MakeFreeSpaceOnCache(size_t bytes_needed) {
 }
 
 bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
-                            const std::function<size_t(const std::string&)>& space_checker) {
+                            const std::function<int64_t(const std::string&)>& space_checker) {
   struct stat st;
   if (stat(dirname.c_str(), &st) == -1) {
     PLOG(ERROR) << "Failed to stat " << dirname;
@@ -160,7 +180,11 @@ bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
     return false;
   }
 
-  size_t free_now = space_checker(dirname);
+  int64_t free_now = space_checker(dirname);
+  if (free_now == -1) {
+    LOG(ERROR) << "Failed to check free space for " << dirname;
+    return false;
+  }
   LOG(INFO) << free_now << " bytes free on " << dirname << " (" << bytes_needed << " needed)";
 
   if (free_now >= bytes_needed) {
@@ -201,6 +225,10 @@ bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
     }
 
     free_now = space_checker(dirname);
+    if (free_now == -1) {
+      LOG(ERROR) << "Failed to check free space for " << dirname;
+      return false;
+    }
     LOG(INFO) << "Deleted " << file << "; now " << free_now << " bytes free";
     if (free_now >= bytes_needed) {
       return true;

@@ -40,10 +40,6 @@ using SinkFn = std::function<size_t(const unsigned char*, size_t)>;
 
 int ShowLicenses();
 
-// Returns the amount of free space (in bytes) on the filesystem containing filename, or -1 on
-// error. filename must exist.
-size_t FreeSpaceForFile(const std::string& filename);
-
 // Checks whether /cache partition has at least 'bytes'-byte free space. Returns 0 on having
 // sufficient space.
 int CacheSizeCheck(size_t bytes);
@@ -119,8 +115,8 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value&
 
 int MakeFreeSpaceOnCache(size_t bytes_needed);
 
-// Removes the files in |dirname| until we have at least |bytes_needed| bytes of free space on
-// the partition. The size of the free space is returned by calling |space_checker|.
+// Removes the files in |dirname| until we have at least |bytes_needed| bytes of free space on the
+// partition. |space_checker| should return the size of the free space, or -1 on error.
 bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
-                            const std::function<size_t(const std::string&)>& space_checker);
+                            const std::function<int64_t(const std::string&)>& space_checker);
 #endif
