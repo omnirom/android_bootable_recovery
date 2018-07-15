@@ -89,6 +89,9 @@ endif
 ifeq ($(TW_ROUND_SCREEN), true)
     LOCAL_CFLAGS += -DTW_ROUND_SCREEN
 endif
+ifeq ($(TW_SCREEN_BLANK_ON_BOOT), true)
+    LOCAL_CFLAGS += -DTW_SCREEN_BLANK_ON_BOOT
+endif
 
 LOCAL_C_INCLUDES += \
     bionic \
