@@ -755,6 +755,12 @@ extern "C" int gui_init(void)
 	gr_init();
 	TWFunc::Set_Brightness(DataManager::GetStrValue("tw_brightness"));
 
+#ifdef TW_SCREEN_BLANK_ON_BOOT
+        printf("TW_SCREEN_BLANK_ON_BOOT := true\n");
+        blankTimer.blank();
+        blankTimer.resetTimerAndUnblank();
+#endif
+
 	// load and show splash screen
 	if (PageManager::LoadPackage("splash", TWRES "splash.xml", "splash")) {
 		LOGERR("Failed to load splash screen XML.\n");
