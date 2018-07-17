@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -210,4 +211,12 @@ bool reboot(const std::string& command) {
     cmd += ",quiescent";
   }
   return android::base::SetProperty(ANDROID_RB_PROPERTY, cmd);
+}
+
+std::vector<char*> StringVectorToNullTerminatedArray(const std::vector<std::string>& args) {
+  std::vector<char*> result(args.size());
+  std::transform(args.cbegin(), args.cend(), result.begin(),
+                 [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
+  result.push_back(nullptr);
+  return result;
 }
