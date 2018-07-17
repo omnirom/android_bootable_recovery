@@ -983,10 +983,6 @@ static void log_failure_code(ErrorCode code, const std::string& update_package) 
 }
 
 Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args) {
-  std::vector<char*> args_to_parse(args.size());
-  std::transform(args.cbegin(), args.cend(), args_to_parse.begin(),
-                 [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
-
   static constexpr struct option OPTIONS[] = {
     { "fsck_unshare_blocks", no_argument, nullptr, 0 },
     { "just_exit", no_argument, nullptr, 'x' },
@@ -1022,9 +1018,14 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   bool security_update = false;
   std::string locale;
 
+  auto args_to_parse = StringVectorToNullTerminatedArray(args);
+
   int arg;
   int option_index;
-  while ((arg = getopt_long(args_to_parse.size(), args_to_parse.data(), "", OPTIONS,
+  // Parse everything before the last element (which must be a nullptr). getopt_long(3) expects a
+  // null-terminated char* array, but without counting null as an arg (i.e. argv[argc] should be
+  // nullptr).
+  while ((arg = getopt_long(args_to_parse.size() - 1, args_to_parse.data(), "", OPTIONS,
                             &option_index)) != -1) {
     switch (arg) {
       case 't':
