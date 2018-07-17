@@ -176,10 +176,17 @@ librecovery_static_libraries := \
     libotautil \
     $(health_hal_static_libraries) \
     libasyncio \
+    libadbd \
+    libavb_user \
+    libdiagnose_usb \
     libcrypto_utils \
     libcrypto \
     libext4_utils \
     libfs_mgr \
+    libfec \
+    libfec_rs \
+    libsquashfs_utils \
+    liblogwrap \
     libpng \
     libsparse \
     libvintf_recovery \
