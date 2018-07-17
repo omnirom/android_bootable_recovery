@@ -29,7 +29,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -287,9 +286,7 @@ int main(int argc, char** argv) {
   has_cache = volume_for_mount_point(CACHE_ROOT) != nullptr;
 
   std::vector<std::string> args = get_args(argc, argv);
-  std::vector<char*> args_to_parse(args.size());
-  std::transform(args.cbegin(), args.cend(), args_to_parse.begin(),
-                 [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
+  auto args_to_parse = StringVectorToNullTerminatedArray(args);
 
   static constexpr struct option OPTIONS[] = {
     { "locale", required_argument, nullptr, 0 },
@@ -302,7 +299,7 @@ int main(int argc, char** argv) {
 
   int arg;
   int option_index;
-  while ((arg = getopt_long(args_to_parse.size(), args_to_parse.data(), "", OPTIONS,
+  while ((arg = getopt_long(args_to_parse.size() - 1, args_to_parse.data(), "", OPTIONS,
                             &option_index)) != -1) {
     switch (arg) {
       case 't':
