@@ -54,4 +54,9 @@ class MemMapping {
 // command should start with "reboot," (e.g. "reboot,bootloader" or "reboot,").
 bool reboot(const std::string& command);
 
+// Returns a null-terminated char* array, where the elements point to the C-strings in the given
+// vector, plus an additional nullptr at the end. This is a helper function that facilitates
+// calling C functions (such as getopt(3)) that expect an array of C-strings.
+std::vector<char*> StringVectorToNullTerminatedArray(const std::vector<std::string>& args);
+
 #endif  // _OTAUTIL_SYSUTIL
