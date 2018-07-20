@@ -475,14 +475,7 @@
 		<string name="fixing_contexts">Ripristino dei contesti in corso...</string>
 		<string name="fix_contexts_complete">Ripristino dei contesti completato</string>
 		<string name="reboot_hdr">Riavvio</string>
-		<string name="su_hdr">Verifica SuperSU</string>
-		<string name="su_note1">Il tuo dispositivo non sembra disporre di accesso root.</string>
-		<string name="su_note2">Installare SuperSU ora?</string>
-		<string name="su_note3">Ciò ti garantirà privilegi di root.</string>
-		<string name="su_cancel">Non installare</string>
-		<string name="swipe_su_to_install">Scorri per installare</string>
-		<string name="swipe_su_install">   Installa</string>
-		<string name="su_installing">Installazione di SuperSU in corso...</string>
+		<string name="install_cancel">Non installare</string>
 		<string name="sel_storage_list">Scegli archivio</string>
 		<string name="ok_btn">OK</string>
 

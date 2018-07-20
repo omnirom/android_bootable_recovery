@@ -477,14 +477,7 @@
 		<string name="fixing_contexts">A corrigir contextos...</string>
 		<string name="fix_contexts_complete">Correção de contextos concluída</string>
 		<string name="reboot_hdr">Reiniciar</string>
-		<string name="su_hdr">Permissão ROOT</string>
-		<string name="su_note1">O seu dispositivo parece não ter ROOT</string>
-		<string name="su_note2">Pretende instalar o binário su?</string>
-		<string name="su_note3">O mesmo permitirá dar ROOT ao dispositivo.</string>
-		<string name="su_cancel">Não instalar</string>
-		<string name="swipe_su_to_install">      Deslize para dar ROOT</string>
-		<string name="swipe_su_install">   Dar ROOT</string>
-		<string name="su_installing">A instalar SuperSU</string>
+		<string name="install_cancel">Não instalar</string>
 		<string name="sel_storage_list">Selecionar armazenamento</string>
 		<string name="ok_btn">OK</string>
 
