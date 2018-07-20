@@ -453,14 +453,7 @@
 		<string name="fixing_contexts">Fijando Contextos...</string>
 		<string name="fix_contexts_complete">Fijar Contextos Completado</string>
 		<string name="reboot_hdr">Reiniciar</string>
-		<string name="su_hdr">Comprobar SuperSU</string>
-		<string name="su_note1">Parece que tú dispositivo no esta rooteado.</string>
-		<string name="su_note2">Instalar SuperSU ahora?</string>
-		<string name="su_note3">Esto rooteara su dispositivo.</string>
-		<string name="su_cancel">No instalar</string>
-		<string name="swipe_su_to_install">Desliza para instalar</string>
-		<string name="swipe_su_install">   Instalar</string>
-		<string name="su_installing">Instalado SuperSU</string>
+		<string name="install_cancel">No instalar</string>
 		<string name="sel_storage_list">Seleccionar Almacenamiento</string>
 		<string name="ok_btn">OK</string>
 		<string name="no_kernel_selinux">Kernel no tiene soporte para la lectura de los contextos de SELinux.</string>

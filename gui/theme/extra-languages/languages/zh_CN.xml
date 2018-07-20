@@ -476,14 +476,7 @@
 		<string name="fixing_contexts">正在修复 Context…</string>
 		<string name="fix_contexts_complete">修复 Context 完成</string>
 		<string name="reboot_hdr">重启选项</string>
-		<string name="su_hdr">SuperSU 检测</string>
-		<string name="su_note1">系统目前没有 Root。</string>
-		<string name="su_note2">是否现在安装 SuperSU？</string>
-		<string name="su_note3">这将会 Root 您的设备。</string>
-		<string name="su_cancel">不，以后再说</string>
-		<string name="swipe_su_to_install">滑动按钮确认安装</string>
-		<string name="swipe_su_install">   安装</string>
-		<string name="su_installing">正在安装 SuperSU</string>
+		<string name="install_cancel">不，以后再说</string>
 		<string name="sel_storage_list">选择存储位置</string>
 		<string name="ok_btn">确定</string>
 

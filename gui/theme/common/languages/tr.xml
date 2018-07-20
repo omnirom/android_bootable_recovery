@@ -477,14 +477,7 @@
 		<string name="fixing_contexts">Bağlamlar Düzeltiliyor...</string>
 		<string name="fix_contexts_complete">Bağlamları Düzeltme Tamamlandı</string>
 		<string name="reboot_hdr">Yeniden Başlat</string>
-		<string name="su_hdr">SuperSU Denetimi</string>
-		<string name="su_note1">Cihazınız rootlanmamış görünüyor.</string>
-		<string name="su_note2">SuperSU şimdi yüklensin mi?</string>
-		<string name="su_note3">Bu işlem cihazınızı rootlayacaktır.</string>
-		<string name="su_cancel">Yükleme</string>
-		<string name="swipe_su_to_install">Yüklemek için Kaydır</string>
-		<string name="swipe_su_install">   Yükle</string>
-		<string name="su_installing">SuperSU Yükleniyor</string>
+		<string name="install_cancel">Yükleme</string>
 		<string name="sel_storage_list">Depolama Seç</string>
 		<string name="ok_btn">Tamam</string>
 
