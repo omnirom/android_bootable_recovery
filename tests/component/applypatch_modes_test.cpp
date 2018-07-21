@@ -21,7 +21,8 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/stringprintf.h>
+#include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <android-base/test_utils.h>
 #include <bsdiff/bsdiff.h>
 #include <gtest/gtest.h>
@@ -31,160 +32,112 @@
 #include "common/test_constants.h"
 #include "otautil/paths.h"
 #include "otautil/print_sha1.h"
+#include "otautil/sysutil.h"
 
 using namespace std::string_literals;
 
-static void sha1sum(const std::string& fname, std::string* sha1, size_t* fsize = nullptr) {
-  ASSERT_TRUE(sha1 != nullptr);
-
+// Loads a given partition and returns a string of form "EMMC:name:size:hash".
+static std::string GetEmmcTargetString(const std::string& filename,
+                                       const std::string& display_name = "") {
   std::string data;
-  ASSERT_TRUE(android::base::ReadFileToString(fname, &data));
-
-  if (fsize != nullptr) {
-    *fsize = data.size();
+  if (!android::base::ReadFileToString(filename, &data)) {
+    PLOG(ERROR) << "Failed to read " << filename;
+    return {};
   }
 
   uint8_t digest[SHA_DIGEST_LENGTH];
   SHA1(reinterpret_cast<const uint8_t*>(data.c_str()), data.size(), digest);
-  *sha1 = print_sha1(digest);
+
+  return "EMMC:"s + (display_name.empty() ? filename : display_name) + ":" +
+         std::to_string(data.size()) + ":" + print_sha1(digest);
 }
 
 class ApplyPatchModesTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    Paths::Get().set_cache_temp_source(cache_source.path);
+    source = GetEmmcTargetString(from_testdata_base("boot.img"));
+    ASSERT_FALSE(source.empty());
+
+    std::string recovery_file = from_testdata_base("recovery.img");
+    recovery = GetEmmcTargetString(recovery_file);
+    ASSERT_FALSE(recovery.empty());
+
+    ASSERT_TRUE(android::base::WriteStringToFile("", patched_file_.path));
+    target = GetEmmcTargetString(recovery_file, patched_file_.path);
+    ASSERT_FALSE(target.empty());
+
+    Paths::Get().set_cache_temp_source(cache_source_.path);
   }
 
-  TemporaryFile cache_source;
+  std::string source;
+  std::string target;
+  std::string recovery;
+
+ private:
+  TemporaryFile cache_source_;
+  TemporaryFile patched_file_;
 };
+
+static int InvokeApplyPatchModes(const std::vector<std::string>& args) {
+  auto args_to_call = StringVectorToNullTerminatedArray(args);
+  return applypatch_modes(args_to_call.size() - 1, args_to_call.data());
+}
+
+static void VerifyPatchedTarget(const std::string& target) {
+  std::vector<std::string> pieces = android::base::Split(target, ":");
+  ASSERT_EQ(4, pieces.size());
+  ASSERT_EQ("EMMC", pieces[0]);
+
+  std::string patched_emmc = GetEmmcTargetString(pieces[1]);
+  ASSERT_FALSE(patched_emmc.empty());
+  ASSERT_EQ(target, patched_emmc);
+}
 
 TEST_F(ApplyPatchModesTest, InvalidArgs) {
   // At least two args (including the filename).
-  ASSERT_EQ(2, applypatch_modes(1, (const char* []){ "applypatch" }));
+  ASSERT_EQ(2, InvokeApplyPatchModes({ "applypatch" }));
 
   // Unrecognized args.
-  ASSERT_EQ(2, applypatch_modes(2, (const char* []){ "applypatch", "-x" }));
+  ASSERT_EQ(2, InvokeApplyPatchModes({ "applypatch", "-x" }));
 }
 
 TEST_F(ApplyPatchModesTest, PatchModeEmmcTarget) {
-  std::string boot_img = from_testdata_base("boot.img");
-  size_t boot_img_size;
-  std::string boot_img_sha1;
-  sha1sum(boot_img, &boot_img_sha1, &boot_img_size);
-
-  std::string recovery_img = from_testdata_base("recovery.img");
-  size_t recovery_img_size;
-  std::string recovery_img_sha1;
-  sha1sum(recovery_img, &recovery_img_sha1, &recovery_img_size);
-  std::string recovery_img_size_arg = std::to_string(recovery_img_size);
-
-  std::string bonus_file = from_testdata_base("bonus.file");
-
-  // applypatch -b <bonus-file> <src-file> <tgt-file> <tgt-sha1> <tgt-size> <src-sha1>:<patch>
-  std::string src_file_arg =
-      "EMMC:" + boot_img + ":" + std::to_string(boot_img_size) + ":" + boot_img_sha1;
-  TemporaryFile tgt_file;
-  std::string tgt_file_arg = "EMMC:"s + tgt_file.path;
-  std::string patch_arg = boot_img_sha1 + ":" + from_testdata_base("recovery-from-boot.p");
-  std::vector<const char*> args = { "applypatch",
-                                    "-b",
-                                    bonus_file.c_str(),
-                                    src_file_arg.c_str(),
-                                    tgt_file_arg.c_str(),
-                                    recovery_img_sha1.c_str(),
-                                    recovery_img_size_arg.c_str(),
-                                    patch_arg.c_str() };
-  ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
+  std::vector<std::string> args{
+    "applypatch",
+    "--bonus",
+    from_testdata_base("bonus.file"),
+    "--patch",
+    from_testdata_base("recovery-from-boot.p"),
+    "--target",
+    target,
+    "--source",
+    source,
+  };
+  ASSERT_EQ(0, InvokeApplyPatchModes(args));
+  VerifyPatchedTarget(target);
 }
 
-// Tests patching the EMMC target without a separate bonus file (i.e. recovery-from-boot patch has
+// Tests patching an eMMC target without a separate bonus file (i.e. recovery-from-boot patch has
 // everything).
 TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithoutBonusFile) {
-  std::string boot_img = from_testdata_base("boot.img");
-  size_t boot_img_size;
-  std::string boot_img_sha1;
-  sha1sum(boot_img, &boot_img_sha1, &boot_img_size);
+  std::vector<std::string> args{
+    "applypatch", "--patch", from_testdata_base("recovery-from-boot-with-bonus.p"),
+    "--target",   target,    "--source",
+    source,
+  };
 
-  std::string recovery_img = from_testdata_base("recovery.img");
-  size_t recovery_img_size;
-  std::string recovery_img_sha1;
-  sha1sum(recovery_img, &recovery_img_sha1, &recovery_img_size);
-  std::string recovery_img_size_arg = std::to_string(recovery_img_size);
-
-  // applypatch <src-file> <tgt-file> <tgt-sha1> <tgt-size> <src-sha1>:<patch>
-  std::string src_file_arg =
-      "EMMC:" + boot_img + ":" + std::to_string(boot_img_size) + ":" + boot_img_sha1;
-  TemporaryFile tgt_file;
-  std::string tgt_file_arg = "EMMC:"s + tgt_file.path;
-  std::string patch_arg =
-      boot_img_sha1 + ":" + from_testdata_base("recovery-from-boot-with-bonus.p");
-  std::vector<const char*> args = { "applypatch",
-                                    src_file_arg.c_str(),
-                                    tgt_file_arg.c_str(),
-                                    recovery_img_sha1.c_str(),
-                                    recovery_img_size_arg.c_str(),
-                                    patch_arg.c_str() };
-
-  ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
-}
-
-TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithMultiplePatches) {
-  std::string boot_img = from_testdata_base("boot.img");
-  size_t boot_img_size;
-  std::string boot_img_sha1;
-  sha1sum(boot_img, &boot_img_sha1, &boot_img_size);
-
-  std::string recovery_img = from_testdata_base("recovery.img");
-  size_t recovery_img_size;
-  std::string recovery_img_sha1;
-  sha1sum(recovery_img, &recovery_img_sha1, &recovery_img_size);
-  std::string recovery_img_size_arg = std::to_string(recovery_img_size);
-
-  std::string bonus_file = from_testdata_base("bonus.file");
-
-  // applypatch -b <bonus-file> <src-file> <tgt-file> <tgt-sha1> <tgt-size> \
-  //            <src-sha1-fake1>:<patch1> <src-sha1>:<patch2> <src-sha1-fake2>:<patch3>
-  std::string src_file_arg =
-      "EMMC:" + boot_img + ":" + std::to_string(boot_img_size) + ":" + boot_img_sha1;
-  TemporaryFile tgt_file;
-  std::string tgt_file_arg = "EMMC:"s + tgt_file.path;
-  std::string bad_sha1_a = android::base::StringPrintf("%040x", rand());
-  std::string bad_sha1_b = android::base::StringPrintf("%040x", rand());
-  std::string patch1 = bad_sha1_a + ":" + from_testdata_base("recovery-from-boot.p");
-  std::string patch2 = boot_img_sha1 + ":" + from_testdata_base("recovery-from-boot.p");
-  std::string patch3 = bad_sha1_b + ":" + from_testdata_base("recovery-from-boot.p");
-  std::vector<const char*> args = { "applypatch",
-                                    "-b",
-                                    bonus_file.c_str(),
-                                    src_file_arg.c_str(),
-                                    tgt_file_arg.c_str(),
-                                    recovery_img_sha1.c_str(),
-                                    recovery_img_size_arg.c_str(),
-                                    patch1.c_str(),
-                                    patch2.c_str(),
-                                    patch3.c_str() };
-
-  ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
+  ASSERT_EQ(0, InvokeApplyPatchModes(args));
+  VerifyPatchedTarget(target);
 }
 
 // Ensures that applypatch works with a bsdiff based recovery-from-boot.p.
 TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithBsdiffPatch) {
-  std::string boot_img_file = from_testdata_base("boot.img");
-  std::string boot_img_sha1;
-  size_t boot_img_size;
-  sha1sum(boot_img_file, &boot_img_sha1, &boot_img_size);
-
-  std::string recovery_img_file = from_testdata_base("recovery.img");
-  std::string recovery_img_sha1;
-  size_t recovery_img_size;
-  sha1sum(recovery_img_file, &recovery_img_sha1, &recovery_img_size);
-
   // Generate the bsdiff patch of recovery-from-boot.p.
   std::string src_content;
-  ASSERT_TRUE(android::base::ReadFileToString(boot_img_file, &src_content));
+  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("boot.img"), &src_content));
 
   std::string tgt_content;
-  ASSERT_TRUE(android::base::ReadFileToString(recovery_img_file, &tgt_content));
+  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("recovery.img"), &tgt_content));
 
   TemporaryFile patch_file;
   ASSERT_EQ(0,
@@ -192,92 +145,55 @@ TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithBsdiffPatch) {
                            reinterpret_cast<const uint8_t*>(tgt_content.data()), tgt_content.size(),
                            patch_file.path, nullptr));
 
-  // applypatch <src-file> <tgt-file> <tgt-sha1> <tgt-size> <src-sha1>:<patch>
-  std::string src_file_arg =
-      "EMMC:" + boot_img_file + ":" + std::to_string(boot_img_size) + ":" + boot_img_sha1;
-  TemporaryFile tgt_file;
-  std::string tgt_file_arg = "EMMC:"s + tgt_file.path;
-  std::string recovery_img_size_arg = std::to_string(recovery_img_size);
-  std::string patch_arg = boot_img_sha1 + ":" + patch_file.path;
-  std::vector<const char*> args = { "applypatch",
-                                    src_file_arg.c_str(),
-                                    tgt_file_arg.c_str(),
-                                    recovery_img_sha1.c_str(),
-                                    recovery_img_size_arg.c_str(),
-                                    patch_arg.c_str() };
-  ASSERT_EQ(0, applypatch_modes(args.size(), args.data()));
-
-  // Double check the patched recovery image.
-  std::string tgt_file_sha1;
-  size_t tgt_file_size;
-  sha1sum(tgt_file.path, &tgt_file_sha1, &tgt_file_size);
-  ASSERT_EQ(recovery_img_size, tgt_file_size);
-  ASSERT_EQ(recovery_img_sha1, tgt_file_sha1);
+  std::vector<std::string> args{
+    "applypatch", "--patch", patch_file.path, "--target", target, "--source", source,
+  };
+  ASSERT_EQ(0, InvokeApplyPatchModes(args));
+  VerifyPatchedTarget(target);
 }
 
 TEST_F(ApplyPatchModesTest, PatchModeInvalidArgs) {
   // Invalid bonus file.
-  ASSERT_NE(0, applypatch_modes(3, (const char* []){ "applypatch", "-b", "/doesntexist" }));
+  std::vector<std::string> args{
+    "applypatch", "--bonus", "/doesntexist", "--patch", from_testdata_base("recovery-from-boot.p"),
+    "--target",   target,    "--source",     source,
+  };
+  ASSERT_NE(0, InvokeApplyPatchModes(args));
 
-  std::string bonus_file = from_testdata_base("bonus.file");
   // With bonus file, but missing args.
-  ASSERT_EQ(2, applypatch_modes(3, (const char* []){ "applypatch", "-b", bonus_file.c_str() }));
+  ASSERT_NE(0,
+            InvokeApplyPatchModes({ "applypatch", "--bonus", from_testdata_base("bonus.file") }));
+}
 
-  std::string boot_img = from_testdata_base("boot.img");
-  size_t boot_img_size;
-  std::string boot_img_sha1;
-  sha1sum(boot_img, &boot_img_sha1, &boot_img_size);
-
-  std::string recovery_img = from_testdata_base("recovery.img");
-  size_t size;
-  std::string recovery_img_sha1;
-  sha1sum(recovery_img, &recovery_img_sha1, &size);
-  std::string recovery_img_size = std::to_string(size);
-
-  // Bonus file is not supported in flash mode.
-  // applypatch -b <bonus-file> <src-file> <tgt-file> <tgt-sha1> <tgt-size>
-  TemporaryFile tmp4;
-  std::vector<const char*> args4 = {
-    "applypatch",
-    "-b",
-    bonus_file.c_str(),
-    boot_img.c_str(),
-    tmp4.path,
-    recovery_img_sha1.c_str(),
-    recovery_img_size.c_str(),
+TEST_F(ApplyPatchModesTest, FlashMode) {
+  std::vector<std::string> args{
+    "applypatch", "--flash", from_testdata_base("recovery.img"), "--target", target,
   };
-  ASSERT_NE(0, applypatch_modes(args4.size(), args4.data()));
+  ASSERT_EQ(0, InvokeApplyPatchModes(args));
+  VerifyPatchedTarget(target);
+}
 
-  // Failed to parse patch args.
-  TemporaryFile tmp5;
-  std::string bad_arg1 =
-      "invalid-sha1:filename" + from_testdata_base("recovery-from-boot-with-bonus.p");
-  std::vector<const char*> args5 = {
-    "applypatch",
-    boot_img.c_str(),
-    tmp5.path,
-    recovery_img_sha1.c_str(),
-    recovery_img_size.c_str(),
-    bad_arg1.c_str(),
+TEST_F(ApplyPatchModesTest, FlashModeInvalidArgs) {
+  std::vector<std::string> args{
+    "applypatch", "--bonus", from_testdata_base("bonus.file"), "--flash", source,
+    "--target",   target,
   };
-  ASSERT_NE(0, applypatch_modes(args5.size(), args5.data()));
+  ASSERT_NE(0, InvokeApplyPatchModes(args));
+}
 
-  // Target size cannot be zero.
-  TemporaryFile tmp6;
-  std::string patch = boot_img_sha1 + ":" + from_testdata_base("recovery-from-boot-with-bonus.p");
-  std::vector<const char*> args6 = {
-    "applypatch",  boot_img.c_str(), tmp6.path, recovery_img_sha1.c_str(),
-    "0",  // target size
-    patch.c_str(),
-  };
-  ASSERT_NE(0, applypatch_modes(args6.size(), args6.data()));
+TEST_F(ApplyPatchModesTest, CheckMode) {
+  ASSERT_EQ(0, InvokeApplyPatchModes({ "applypatch", "--check", recovery }));
+  ASSERT_EQ(0, InvokeApplyPatchModes({ "applypatch", "--check", source }));
 }
 
 TEST_F(ApplyPatchModesTest, CheckModeInvalidArgs) {
-  // Insufficient args.
-  ASSERT_EQ(2, applypatch_modes(2, (const char* []){ "applypatch", "-c" }));
+  ASSERT_EQ(2, InvokeApplyPatchModes({ "applypatch", "--check" }));
+}
+
+TEST_F(ApplyPatchModesTest, CheckModeNonEmmcTarget) {
+  ASSERT_NE(0, InvokeApplyPatchModes({ "applypatch", "--check", from_testdata_base("boot.img") }));
 }
 
 TEST_F(ApplyPatchModesTest, ShowLicenses) {
-  ASSERT_EQ(0, applypatch_modes(2, (const char* []){ "applypatch", "-l" }));
+  ASSERT_EQ(0, InvokeApplyPatchModes({ "applypatch", "--license" }));
 }
