@@ -17,6 +17,6 @@
 #ifndef _APPLYPATCH_MODES_H
 #define _APPLYPATCH_MODES_H
 
-int applypatch_modes(int argc, const char** argv);
+int applypatch_modes(int argc, char* argv[]);
 
 #endif // _APPLYPATCH_MODES_H
