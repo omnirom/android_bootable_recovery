@@ -75,10 +75,11 @@ int applypatch(const char* source_filename, const char* target_filename,
 // 'sha1s' to find a match on /cache if the hashes embedded in the filename fail to match.
 int applypatch_check(const std::string& filename, const std::vector<std::string>& sha1s);
 
-// Flashes a given image to the target partition. It verifies the target cheksum first, and will
-// return if target already has the desired hash. Otherwise it checks the checksum of the given
-// source image before flashing, and verifies the target partition afterwards. The function is
-// idempotent. Returns zero on success.
+// Flashes a given image to the eMMC target partition. It verifies the target cheksum first, and
+// will return if target already has the desired hash. Otherwise it checks the checksum of the
+// given source image before flashing, and verifies the target partition afterwards.
+// 'target_filename' must refer to an eMMC partition, of the form "EMMC:<device>:<size>:<hash>".
+// The function is idempotent. Returns zero on success.
 int applypatch_flash(const char* source_filename, const char* target_filename,
                      const char* target_sha1_str, size_t target_size);
 

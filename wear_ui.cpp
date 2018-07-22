@@ -53,6 +53,13 @@ void WearRecoveryUI::draw_background_locked() {
     int frame_x = (gr_fb_width() - frame_width) / 2;
     int frame_y = (gr_fb_height() - frame_height) / 2;
     gr_blit(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
+
+    // Draw recovery text on screen above progress bar.
+    GRSurface* text = GetCurrentText();
+    int text_x = (ScreenWidth() - gr_get_width(text)) / 2;
+    int text_y = GetProgressBaseline() - gr_get_height(text) - 10;
+    gr_color(255, 255, 255, 255);
+    gr_texticon(text_x, text_y, text);
   }
 }
 

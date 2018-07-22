@@ -16,6 +16,7 @@
 
 #include "applypatch_modes.h"
 
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +26,7 @@
 #include <string>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
@@ -33,157 +35,162 @@
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
 
-static int CheckMode(int argc, const char** argv) {
-    if (argc < 3) {
-        return 2;
-    }
-    std::vector<std::string> sha1;
-    for (int i = 3; i < argc; i++) {
-        sha1.push_back(argv[i]);
-    }
-
-    return applypatch_check(argv[2], sha1);
+static int CheckMode(const std::string& target) {
+  return applypatch_check(target, {});
 }
 
-// Parse arguments (which should be of the form "<sha1>:<filename>" into the
-// new parallel arrays *sha1s and *files. Returns true on success.
-static bool ParsePatchArgs(int argc, const char** argv, std::vector<std::string>* sha1s,
-                           std::vector<FileContents>* files) {
-    if (sha1s == nullptr) {
-        return false;
-    }
-    for (int i = 0; i < argc; ++i) {
-        std::vector<std::string> pieces = android::base::Split(argv[i], ":");
-        if (pieces.size() != 2) {
-          LOG(ERROR) << "Failed to parse patch argument \"" << argv[i] << "\"";
-          return false;
-        }
-
-        uint8_t digest[SHA_DIGEST_LENGTH];
-        if (ParseSha1(pieces[0], digest) != 0) {
-          LOG(ERROR) << "Failed to parse SHA-1 \"" << argv[i] << "\"";
-          return false;
-        }
-
-        sha1s->push_back(pieces[0]);
-        FileContents fc;
-        if (LoadFileContents(pieces[1].c_str(), &fc) != 0) {
-            return false;
-        }
-        files->push_back(std::move(fc));
-    }
-    return true;
-}
-
-static int FlashMode(const char* src_filename, const char* tgt_filename,
-                     const char* tgt_sha1, size_t tgt_size) {
-    return applypatch_flash(src_filename, tgt_filename, tgt_sha1, tgt_size);
-}
-
-static int PatchMode(int argc, const char** argv) {
-  std::unique_ptr<Value> bonus;
-  if (argc >= 3 && strcmp(argv[1], "-b") == 0) {
-    FileContents bonus_fc;
-    if (LoadFileContents(argv[2], &bonus_fc) != 0) {
-      LOG(ERROR) << "Failed to load bonus file " << argv[2];
-      return 1;
-    }
-    bonus = std::make_unique<Value>(Value::Type::BLOB,
-                                    std::string(bonus_fc.data.cbegin(), bonus_fc.data.cend()));
-    argc -= 2;
-    argv += 2;
+static int FlashMode(const std::string& target_emmc, const std::string& source_file) {
+  std::vector<std::string> pieces = android::base::Split(target_emmc, ":");
+  if (pieces.size() != 4 || pieces[0] != "EMMC") {
+    return 2;
   }
+  size_t target_size;
+  if (!android::base::ParseUint(pieces[2], &target_size) || target_size == 0) {
+    LOG(ERROR) << "Failed to parse \"" << pieces[2] << "\" as byte count";
+    return 1;
+  }
+  return applypatch_flash(source_file.c_str(), target_emmc.c_str(), pieces[3].c_str(), target_size);
+}
 
-  if (argc < 4) {
+static int PatchMode(const std::string& target_emmc, const std::string& source_emmc,
+                     const std::string& patch_file, const std::string& bonus_file) {
+  std::vector<std::string> target_pieces = android::base::Split(target_emmc, ":");
+  if (target_pieces.size() != 4 || target_pieces[0] != "EMMC") {
     return 2;
   }
 
   size_t target_size;
-  if (!android::base::ParseUint(argv[4], &target_size) || target_size == 0) {
-    LOG(ERROR) << "Failed to parse \"" << argv[4] << "\" as byte count";
+  if (!android::base::ParseUint(target_pieces[2], &target_size) || target_size == 0) {
+    LOG(ERROR) << "Failed to parse \"" << target_pieces[2] << "\" as byte count";
     return 1;
   }
 
-  // If no <src-sha1>:<patch> is provided, it is in flash mode.
-  if (argc == 5) {
-    if (bonus) {
-      LOG(ERROR) << "bonus file not supported in flash mode";
-      return 1;
-    }
-    return FlashMode(argv[1], argv[2], argv[3], target_size);
-  }
-
-  std::vector<std::string> sha1s;
-  std::vector<FileContents> files;
-  if (!ParsePatchArgs(argc - 5, argv + 5, &sha1s, &files)) {
-    LOG(ERROR) << "Failed to parse patch args";
-    return 1;
-  }
-
-  std::vector<std::unique_ptr<Value>> patches;
-  for (const auto& file : files) {
-    patches.push_back(std::make_unique<Value>(Value::Type::BLOB,
-                                              std::string(file.data.cbegin(), file.data.cend())));
-  }
-  return applypatch(argv[1], argv[2], argv[3], target_size, sha1s, patches, bonus.get());
-}
-
-// This program (applypatch) applies binary patches to files in a way that
-// is safe (the original file is not touched until we have the desired
-// replacement for it) and idempotent (it's okay to run this program
-// multiple times).
-//
-// - if the sha1 hash of <tgt-file> is <tgt-sha1>, does nothing and exits
-//   successfully.
-//
-// - otherwise, if no <src-sha1>:<patch> is provided, flashes <tgt-file> with
-//   <src-file>. <tgt-file> must be a partition name, while <src-file> must
-//   be a regular image file. <src-file> will not be deleted on success.
-//
-// - otherwise, if the sha1 hash of <src-file> is <src-sha1>, applies the
-//   bsdiff <patch> to <src-file> to produce a new file (the type of patch
-//   is automatically detected from the file header).  If that new
-//   file has sha1 hash <tgt-sha1>, moves it to replace <tgt-file>, and
-//   exits successfully.  Note that if <src-file> and <tgt-file> are
-//   not the same, <src-file> is NOT deleted on success.  <tgt-file>
-//   may be the string "-" to mean "the same as src-file".
-//
-// - otherwise, or if any error is encountered, exits with non-zero
-//   status.
-//
-// <src-file> (or <file> in check mode) may refer to an EMMC partition
-// to read the source data.  See the comments for the
-// LoadPartitionContents() function for the format of such a filename.
-
-int applypatch_modes(int argc, const char** argv) {
-  if (argc < 2) {
-  usage:
-    // clang-format off
-    LOG(INFO) << "Usage: \n"
-              << "  " << argv[0] << " [-b <bonus-file>] <src-file> <tgt-file> <tgt-sha1> "
-                 "<tgt-size> [<src-sha1>:<patch> ...]\n"
-              << "  " << argv[0] << " -c <file> [<sha1> ...]\n"
-              << "  " << argv[0] << " -l\n"
-              << "\n"
-              << "Filenames may be of the form\n"
-              << "  EMMC:<partition>:<len_1>:<sha1_1>:<len_2>:<sha1_2>:...\n"
-              << "to specify reading from or writing to an EMMC partition.\n\n";
-    // clang-format on
+  std::vector<std::string> source_pieces = android::base::Split(source_emmc, ":");
+  if (source_pieces.size() != 4 || source_pieces[0] != "EMMC") {
     return 2;
   }
 
-  int result;
-
-  if (strncmp(argv[1], "-l", 3) == 0) {
-    result = ShowLicenses();
-  } else if (strncmp(argv[1], "-c", 3) == 0) {
-    result = CheckMode(argc, argv);
-  } else {
-    result = PatchMode(argc, argv);
+  size_t source_size;
+  if (!android::base::ParseUint(source_pieces[2], &source_size) || source_size == 0) {
+    LOG(ERROR) << "Failed to parse \"" << source_pieces[2] << "\" as byte count";
+    return 1;
   }
 
-  if (result == 2) {
-    goto usage;
+  std::string contents;
+  if (!android::base::ReadFileToString(patch_file, &contents)) {
+    PLOG(ERROR) << "Failed to read patch file \"" << patch_file << "\"";
+    return 1;
   }
-  return result;
+  std::vector<std::unique_ptr<Value>> patches;
+  patches.push_back(std::make_unique<Value>(Value::Type::BLOB, std::move(contents)));
+  std::vector<std::string> sha1s{ source_pieces[3] };
+
+  std::unique_ptr<Value> bonus;
+  if (!bonus_file.empty()) {
+    std::string bonus_contents;
+    if (!android::base::ReadFileToString(bonus_file, &bonus_contents)) {
+      PLOG(ERROR) << "Failed to read bonus file \"" << bonus_file << "\"";
+      return 1;
+    }
+    bonus = std::make_unique<Value>(Value::Type::BLOB, std::move(bonus_contents));
+  }
+
+  return applypatch(source_emmc.c_str(), target_emmc.c_str(), target_pieces[3].c_str(), target_size,
+                    sha1s, patches, bonus.get());
+}
+
+static void Usage() {
+  printf(
+      "Usage: \n"
+      "check mode\n"
+      "  applypatch --check EMMC:<target-file>:<target-size>:<target-sha1>\n\n"
+      "flash mode\n"
+      "  applypatch --flash <source-file>\n"
+      "             --target EMMC:<target-file>:<target-size>:<target-sha1>\n\n"
+      "patch mode\n"
+      "  applypatch [--bonus <bonus-file>]\n"
+      "             --patch <patch-file>\n"
+      "             --target EMMC:<target-file>:<target-size>:<target-sha1>\n"
+      "             --source EMMC:<source-file>:<source-size>:<source-sha1>\n\n"
+      "show license\n"
+      "  applypatch --license\n"
+      "\n\n");
+}
+
+int applypatch_modes(int argc, char* argv[]) {
+  static constexpr struct option OPTIONS[]{
+    // clang-format off
+    { "bonus", required_argument, nullptr, 0 },
+    { "check", required_argument, nullptr, 0 },
+    { "flash", required_argument, nullptr, 0 },
+    { "license", no_argument, nullptr, 0 },
+    { "patch", required_argument, nullptr, 0 },
+    { "source", required_argument, nullptr, 0 },
+    { "target", required_argument, nullptr, 0 },
+    { nullptr, 0, nullptr, 0 },
+    // clang-format on
+  };
+
+  std::string check_target;
+  std::string source;
+  std::string target;
+  std::string patch;
+  std::string bonus;
+
+  bool check_mode = false;
+  bool flash_mode = false;
+  bool patch_mode = false;
+
+  optind = 1;
+
+  int arg;
+  int option_index;
+  while ((arg = getopt_long(argc, argv, "", OPTIONS, &option_index)) != -1) {
+    switch (arg) {
+      case 0: {
+        std::string option = OPTIONS[option_index].name;
+        if (option == "bonus") {
+          bonus = optarg;
+        } else if (option == "check") {
+          check_target = optarg;
+          check_mode = true;
+        } else if (option == "flash") {
+          source = optarg;
+          flash_mode = true;
+        } else if (option == "license") {
+          return ShowLicenses();
+        } else if (option == "patch") {
+          patch = optarg;
+          patch_mode = true;
+        } else if (option == "source") {
+          source = optarg;
+        } else if (option == "target") {
+          target = optarg;
+        }
+        break;
+      }
+      case '?':
+      default:
+        LOG(ERROR) << "Invalid argument";
+        Usage();
+        return 2;
+    }
+  }
+
+  if (check_mode) {
+    return CheckMode(check_target);
+  }
+  if (flash_mode) {
+    if (!bonus.empty()) {
+      LOG(ERROR) << "bonus file not supported in flash mode";
+      return 1;
+    }
+    return FlashMode(target, source);
+  }
+  if (patch_mode) {
+    return PatchMode(target, source, patch, bonus);
+  }
+
+  Usage();
+  return 2;
 }
