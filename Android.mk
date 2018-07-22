@@ -494,7 +494,8 @@ LOCAL_MODULE := file_contexts_text
 LOCAL_MODULE_TAGS := optional
 LOCAL_REQUIRED_MODULES := file_contexts.bin
 LOCAL_POST_INSTALL_CMD := \
-    $(hide) cp -f $(OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
+    $(hide) cp -f $(OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts && \
+    rm $(TARGET_ROOT_OUT)/file_contexts.bin
 
 include $(BUILD_PHONY_PACKAGE)
 
