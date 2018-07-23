@@ -16,7 +16,6 @@ cc_library_static {
     name: "libotautil",
 
     host_supported: true,
-    recovery_available: true,
 
     // Minimal set of files to support host build.
     srcs: [
@@ -24,7 +23,7 @@ cc_library_static {
         "rangeset.cpp",
     ],
 
-    shared_libs: [
+    static_libs: [
         "libbase",
     ],
 
@@ -47,7 +46,7 @@ cc_library_static {
                 "thermalutil.cpp",
             ],
 
-            shared_libs: [
+            static_libs: [
                 "libselinux",
                 "libcutils",
             ],
