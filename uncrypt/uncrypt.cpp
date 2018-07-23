@@ -332,7 +332,8 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 #define F2FS_IOC_GET_PIN_FILE	_IOW(F2FS_IOCTL_MAGIC, 14, __u32)
 #endif
     if (f2fs_fs) {
-        int error = ioctl(fd, F2FS_IOC_SET_PIN_FILE);
+        __u32 set = 1;
+        int error = ioctl(fd, F2FS_IOC_SET_PIN_FILE, &set);
         // Don't break the old kernels which don't support it.
         if (error && errno != ENOTTY && errno != ENOTSUP) {
             PLOG(ERROR) << "Failed to set pin_file for f2fs: " << path << " on " << blk_dev;
