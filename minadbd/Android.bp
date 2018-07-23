@@ -28,7 +28,6 @@ cc_defaults {
 
 cc_library_static {
     name: "libminadbd",
-    recovery_available: true,
 
     defaults: [
         "minadbd_defaults",
@@ -42,12 +41,12 @@ cc_library_static {
 
     static_libs: [
         "libfusesideload",
-    ],
-
-    shared_libs: [
-        "libadbd",
         "libbase",
         "libcrypto",
+    ],
+
+    whole_static_libs: [
+        "libadbd",
     ],
 }
 
@@ -68,7 +67,6 @@ cc_test {
     ],
 
     shared_libs: [
-        "libadbd",
         "libbase",
         "libcutils",
         "liblog",
