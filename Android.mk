@@ -80,5 +80,4 @@ endif
 include $(BUILD_PHONY_PACKAGE)
 
 include \
-    $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
