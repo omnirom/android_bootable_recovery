@@ -77,7 +77,7 @@ on late-init
     trigger early-boot
     trigger boot
 
-service ueventd /sbin/ueventd
+service ueventd /system/bin/ueventd
     critical
     seclabel u:r:ueventd:s0
 
