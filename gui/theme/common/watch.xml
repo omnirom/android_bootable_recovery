@@ -166,6 +166,16 @@
 			<font resource="font_m" spacing="%partitionlist_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%"/>
 		</style>
 
+		<style name="advanced_listbox">
+			<highlight color="%fileselector_highlight_color%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
+			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
+			<icon selected="handle" unselected="handle"/>
+			<background color="%background_color%"/>
+			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%accent_color%"/>
+		</style>
+
 		<style name="slider">
 			<placement x="%center_x%" y="%slider_y%"/>
 			<font resource="font_l" color="%text_color%"/>
@@ -4104,42 +4114,69 @@
 				<action function="page">fixcontexts</action>
 			</button>
 
-			<button style="main_button">
-				<placement x="%col1_x_left%" y="%row6_y%"/>
-				<text>{@reload_theme_btn=Reload Theme}</text>
-				<action function="reload"/>
+			<button>
+				<placement x="%btn4_col4_x%" y="%row11_y%"/>
+				<highlight color="%highlight_color%"/>
+				<image resource="q_btn_arrow_right"/>
+				<action function="page">advanced2</action>
 			</button>
 
-			<button style="main_button">
-				<condition var1="tw_allow_partition_sdcard" var2="1"/>
-				<placement x="%col1_x_right%" y="%row6_y%"/>
-				<text>{@part_sd_s_btn=SD Card}</text>
-				<actions>
-					<action function="set">partitionlisterror=0</action>
-					<action function="page">partsdcardsel</action>
-				</actions>
-			</button>
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
 
-			<button style="main_button">
-				<condition var1="tw_show_dumlock" var2="1"/>
+			<action>
+				<touch key="back"/>
+				<action function="page">main3</action>
+			</action>
+		</page>
+
+		<page name="advanced2">
+			<template name="page"/>
+
+			<template name="statusbar"/>
+
+			<text style="text_m">
+				<placement x="%col1_x_left%" y="%row1_header_y%"/>
+				<text>{@advanced_hdr=Advanced}</text>
+			</text>
+
+			<listbox style="advanced_listbox">
+				<placement x="%indent%" y="%row2_header_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<listitem name="{@reload_theme_btn=Reload Theme}">
+					<action function="reload"/>
+				</listitem>
+				<listitem name="{@part_sd_btn=Partition SD Card}">
+					<condition var1="tw_allow_partition_sdcard" var2="1"/>
+					<actions>
+						<action function="set">partitionlisterror=0</action>
+						<action function="page">partsdcardsel</action>
+					</actions>
+				</listitem>
+				<listitem name="{@dumlock_btn=HTC Dumlock}">
+					<condition var1="tw_show_dumlock" var2="1"/>
+					<action function="page">htcdumlock</action>
+				</listitem>
+				<listitem name="{@inject_twrp_btn=Inject TWRP}">
+					<condition var1="tw_has_injecttwrp" var2="1"/>
+					<actions>
+						<action function="set">tw_back=advanced</action>
+						<action function="set">tw_action=reinjecttwrp</action>
+						<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
+						<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
+						<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
+						<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+						<action function="page">confirm_action</action>
+					</actions>
+				</listitem>
+			</listbox>
+
+			<button>
 				<placement x="%col1_x_left%" y="%row11_y%"/>
-				<text>{@dumlock_btn=HTC Dumlock}</text>
-				<action function="page">htcdumlock</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="tw_has_injecttwrp" var2="1"/>
-				<placement x="%col1_x_right%" y="%row11_y%"/>
-				<text>{@inject_twrp_btn=Inject TWRP}</text>
-				<actions>
-					<action function="set">tw_back=advanced</action>
-					<action function="set">tw_action=reinjecttwrp</action>
-					<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
-					<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
-					<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
-					<action function="set">tw_slider_text={@swipe_confirm=   Confirm}</action>
-					<action function="page">confirm_action</action>
-				</actions>
+				<highlight color="%highlight_color%"/>
+				<image resource="q_btn_arrow_left"/>
+				<action function="page">advanced</action>
 			</button>
 
 			<action>
