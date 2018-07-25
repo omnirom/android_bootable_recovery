@@ -165,6 +165,16 @@
 			<font resource="font_m" spacing="%partitionlist_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%"/>
 		</style>
 
+		<style name="advanced_listbox">
+			<highlight color="%fileselector_highlight_color%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
+			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
+			<icon selected="handle" unselected="handle"/>
+			<background color="%background_color%"/>
+			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%accent_color%"/>
+		</style>
+
 		<style name="slider">
 			<placement x="%col2_x_right%" y="%row17a_y%"/>
 			<font resource="font_m" color="%text_color%"/>
@@ -3339,24 +3349,7 @@
 			</button>
 
 			<button style="main_button">
-				<condition var1="tw_has_data_media" var2="1"/>
-				<placement x="%center_x%" y="%row2_y%"/>
-				<text>{@fix_context_btn=Fix Contexts}</text>
-				<action function="page">fixcontexts</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="tw_allow_partition_sdcard" var2="1"/>
 				<placement x="%col1_x_left%" y="%row6a_y%"/>
-				<text>{@part_sd_btn=Partition SD Card}</text>
-				<actions>
-					<action function="set">partitionlisterror=0</action>
-					<action function="page">partsdcardsel</action>
-				</actions>
-			</button>
-
-			<button style="main_button">
-				<placement x="%center_x%" y="%row6a_y%"/>
 				<text>{@file_manager_btn=File Manager}</text>
 				<action function="page">filemanagerlist</action>
 			</button>
@@ -3368,38 +3361,44 @@
 			</button>
 
 			<button style="main_button">
-				<placement x="%center_x%" y="%row11_y%"/>
-				<text>{@reload_theme_btn=Reload Theme}</text>
-				<action function="reload"/>
-			</button>
-
-			<button style="main_button">
 				<placement x="%col1_x_left%" y="%row15a_y%"/>
 				<text>{@adb_sideload_btn=ADB Sideload}</text>
 				<action function="page">sideload</action>
 			</button>
 
-			<button style="main_button">
-				<condition var1="tw_show_dumlock" var2="1"/>
-				<placement x="%center_x%" y="%row15a_y%"/>
-				<text>{@dumlock_btn=HTC Dumlock}</text>
-				<action function="page">htcdumlock</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="tw_has_injecttwrp" var2="1"/>
-				<placement x="%center_x%" y="%row15a_y%"/>
-				<text>{@inject_twrp_btn=Inject TWRP}</text>
-				<actions>
-					<action function="set">tw_back=advanced</action>
-					<action function="set">tw_action=reinjecttwrp</action>
-					<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
-					<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
-					<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
-					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
-					<action function="page">confirm_action</action>
-				</actions>
-			</button>
+			<listbox style="advanced_listbox">
+				<placement x="%center_x%" y="%row2_y%" w="%content_half_width%" h="%fileselector_install_height%"/>
+				<listitem name="{@reload_theme_btn=Reload Theme}">
+					<action function="reload"/>
+				</listitem>
+				<listitem name="{@part_sd_btn=Partition SD Card}">
+					<condition var1="tw_allow_partition_sdcard" var2="1"/>
+					<actions>
+						<action function="set">partitionlisterror=0</action>
+						<action function="page">partsdcardsel</action>
+					</actions>
+				</listitem>
+				<listitem name="{@fix_context_btn=Fix Contexts}">
+					<condition var1="tw_has_data_media" var2="1"/>
+					<action function="page">fixcontexts</action>
+				</listitem>
+				<listitem name="{@dumlock_btn=HTC Dumlock}">
+					<condition var1="tw_show_dumlock" var2="1"/>
+					<action function="page">htcdumlock</action>
+				</listitem>
+				<listitem name="{@inject_twrp_btn=Inject TWRP}">
+					<condition var1="tw_has_injecttwrp" var2="1"/>
+					<actions>
+						<action function="set">tw_back=advanced</action>
+						<action function="set">tw_action=reinjecttwrp</action>
+						<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
+						<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
+						<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
+						<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+						<action function="page">confirm_action</action>
+					</actions>
+				</listitem>
+			</listbox>
 
 			<action>
 				<touch key="home"/>
