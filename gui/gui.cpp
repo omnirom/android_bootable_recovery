@@ -474,6 +474,13 @@ static void ors_command_read()
 				gui_set_FILE(orsout);
 				PageManager::GetResources()->DumpStrings();
 				ors_command_done();
+			} else if (strlen(command) == 11 && strncmp(command, "reloadtheme", 11) == 0) {
+				PageManager::RequestReload();
+				ors_command_done();
+			} else if (strlen(command) > 11 && strncmp(command, "changepage=", 11) == 0) {
+				char* pg = &command[11];
+				gui_changePage(pg);
+				ors_command_done();
 			} else {
 				// mirror output messages
 				gui_set_FILE(orsout);
