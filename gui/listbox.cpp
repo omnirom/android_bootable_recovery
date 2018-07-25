@@ -102,8 +102,10 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		item.selected = (child->value() == currentValue);
 		item.action = NULL;
 		xml_node<>* action = child->first_node("action");
+		if (!action)
+			action = child->first_node("actions");
 		if (action) {
-			item.action = new GUIAction(action);
+			item.action = new GUIAction(child);
 			allowSelection = true;
 		}
 		xml_node<>* variable_name = child->first_node("data");
