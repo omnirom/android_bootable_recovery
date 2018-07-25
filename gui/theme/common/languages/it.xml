@@ -481,7 +481,7 @@
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Il kernel non supporta la lettura dei contesti SELinux.</string>
-		<string name="full_selinux">Supporto per SELinux completo non presente.</string>
+		<string name="full_selinux">Supporto per SELinux completo presente.</string>
 		<string name="no_selinux">Nessun supporto per SELinux (libselinux assente).</string>
 		<string name="mtp_enabled">MTP abilitato</string>
 		<string name="mtp_crash">MTP si è arrestato. Non sarà più inizializzato all'avvio.</string>
