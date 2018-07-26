@@ -33,6 +33,7 @@ cc_library_static {
     ],
 
     srcs: [
+        "care_map.proto",
         "update_verifier.cpp",
     ],
 
@@ -49,6 +50,11 @@ cc_library_static {
         "libbase",
         "libcutils",
     ],
+
+    proto: {
+        type: "lite",
+        export_proto_headers: true,
+    }
 }
 
 cc_binary {
@@ -74,6 +80,7 @@ cc_binary {
         "libhardware",
         "libhidlbase",
         "liblog",
+        "libprotobuf-cpp-lite",
         "libutils",
     ],
 

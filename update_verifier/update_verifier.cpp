@@ -60,6 +60,7 @@
 #include <android/hardware/boot/1.0/IBootControl.h>
 #include <cutils/android_reboot.h>
 
+#include "care_map.pb.h"
 #include "otautil/rangeset.h"
 
 using android::sp;
@@ -189,33 +190,12 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
   return ret;
 }
 
-// Returns true to indicate a passing verification (or the error should be ignored); Otherwise
-// returns false on fatal errors, where we should reject the current boot and trigger a fallback.
-// Note that update_verifier should be backward compatible to not reject care_map.txt from old
-// releases, which could otherwise fail to boot into the new release. For example, we've changed
-// the care_map format between N and O. An O update_verifier would fail to work with N
-// care_map.txt. This could be a result of sideloading an O OTA while the device having a pending N
-// update.
-bool verify_image(const std::string& care_map_name) {
-  android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
-  // If the device is flashed before the current boot, it may not have care_map.txt
-  // in /data/ota_package. To allow the device to continue booting in this situation,
-  // we should print a warning and skip the block verification.
-  if (care_map_fd.get() == -1) {
-    PLOG(WARNING) << "Failed to open " << care_map_name;
-    return true;
-  }
+static bool process_care_map_plain_text(const std::string& care_map_contents) {
   // care_map file has up to six lines, where every two lines make a pair. Within each pair, the
   // first line has the partition name (e.g. "system"), while the second line holds the ranges of
   // all the blocks to verify.
-  std::string file_content;
-  if (!android::base::ReadFdToString(care_map_fd.get(), &file_content)) {
-    LOG(ERROR) << "Error reading care map contents to string.";
-    return false;
-  }
-
-  std::vector<std::string> lines;
-  lines = android::base::Split(android::base::Trim(file_content), "\n");
+  std::vector<std::string> lines =
+      android::base::Split(android::base::Trim(care_map_contents), "\n");
   if (lines.size() != 2 && lines.size() != 4 && lines.size() != 6) {
     LOG(ERROR) << "Invalid lines in care_map: found " << lines.size()
                << " lines, expecting 2 or 4 or 6 lines.";
@@ -230,6 +210,50 @@ bool verify_image(const std::string& care_map_name) {
       return true;
     }
     if (!read_blocks(lines[i], lines[i+1])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool verify_image(const std::string& care_map_name) {
+  android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
+  // If the device is flashed before the current boot, it may not have care_map.txt in
+  // /data/ota_package. To allow the device to continue booting in this situation, we should
+  // print a warning and skip the block verification.
+  if (care_map_fd.get() == -1) {
+    PLOG(WARNING) << "Failed to open " << care_map_name;
+    return true;
+  }
+
+  std::string file_content;
+  if (!android::base::ReadFdToString(care_map_fd.get(), &file_content)) {
+    PLOG(ERROR) << "Failed to read " << care_map_name;
+    return false;
+  }
+
+  if (file_content.empty()) {
+    LOG(ERROR) << "Unexpected empty care map";
+    return false;
+  }
+
+  UpdateVerifier::CareMap care_map;
+  // Falls back to use the plain text version if we cannot parse the file as protobuf message.
+  if (!care_map.ParseFromString(file_content)) {
+    return process_care_map_plain_text(file_content);
+  }
+
+  for (const auto& partition : care_map.partitions()) {
+    if (partition.name().empty()) {
+      LOG(ERROR) << "Unexpected empty partition name.";
+      return false;
+    }
+    if (partition.ranges().empty()) {
+      LOG(ERROR) << "Unexpected block ranges for partition " << partition.name();
+      return false;
+    }
+    if (!read_blocks(partition.name(), partition.ranges())) {
       return false;
     }
   }
