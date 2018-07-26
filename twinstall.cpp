@@ -297,6 +297,9 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 
 	int waitrc = TWFunc::Wait_For_Child(pid, &status, "Updater");
 
+	if (WEXITSTATUS(status) == 7)
+		gui_err("assert_failed_hint=An assert failed. Please check the output above for more details.");
+
 #ifndef TW_NO_LEGACY_PROPS
 	/* Unset legacy properties */
 	if (legacy_props_path_modified) {
