@@ -113,7 +113,8 @@ LOCAL_SRC_FILES := \
     component/verifier_test.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-    libhidlbase
+    libhidlbase \
+    libprotobuf-cpp-lite
 
 tune2fs_static_libraries := \
     libext2_com_err \
