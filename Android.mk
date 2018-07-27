@@ -175,7 +175,7 @@ LOCAL_MODULE := recovery
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/system/bin
 
 # Cannot link with LLD: undefined symbol: UsbNoPermissionsLongHelpText
 # http://b/77543887, lld does not handle -Wl,--gc-sections as well as ld.
