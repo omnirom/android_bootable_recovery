@@ -1105,7 +1105,11 @@ int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 		}
 	}
 	TWFunc::GUI_Operation_Text(TW_UPDATE_SYSTEM_DETAILS_TEXT, gui_parse_text("{@updating_system_details}"));
-	UnMount_By_Path("/system", false);
+	const char* androidRoot;
+	androidRoot = getenv("ANDROID_ROOT");
+	if (androidRoot == NULL)
+		androidRoot = "/system";
+	UnMount_By_Path(androidRoot, false);
 	Update_System_Details();
 	UnMount_Main_Partitions();
 	time(&rStop);
@@ -1486,12 +1490,16 @@ int TWPartitionManager::Resize_By_Path(string Path, bool Display_Error) {
 void TWPartitionManager::Update_System_Details(void) {
 	std::vector<TWPartition*>::iterator iter;
 	int data_size = 0;
+	const char* androidRoot;
+	androidRoot = getenv("ANDROID_ROOT");
+	if (androidRoot == NULL)
+		androidRoot = "/system";
 
 	gui_msg("update_part_details=Updating partition details...");
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 		(*iter)->Update_Size(true);
 		if ((*iter)->Can_Be_Mounted) {
-			if ((*iter)->Mount_Point == "/system") {
+			if ((*iter)->Mount_Point == androidRoot) {
 				int backup_display_size = (int)((*iter)->Backup_Size / 1048576LLU);
 				DataManager::SetValue(TW_BACKUP_SYSTEM_SIZE, backup_display_size);
 			} else if ((*iter)->Mount_Point == "/data" || (*iter)->Mount_Point == "/datadata") {
@@ -1860,7 +1868,11 @@ void TWPartitionManager::UnMount_Main_Partitions(void) {
 
 	TWPartition* Boot_Partition = Find_Partition_By_Path("/boot");
 
-	UnMount_By_Path("/system", true);
+	const char* androidRoot;
+	androidRoot = getenv("ANDROID_ROOT");
+	if (androidRoot == NULL)
+		androidRoot = "/system";
+	UnMount_By_Path(androidRoot, true);
 	if (!datamedia)
 		UnMount_By_Path("/data", true);
 
