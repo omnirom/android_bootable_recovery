@@ -82,7 +82,7 @@ int apply_from_adb(bool* wipe_cache) {
 
   pid_t child;
   if ((child = fork()) == 0) {
-    execl("/sbin/recovery", "recovery", "--adbd", nullptr);
+    execl("/system/bin/recovery", "recovery", "--adbd", nullptr);
     _exit(EXIT_FAILURE);
   }
 
