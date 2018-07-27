@@ -332,6 +332,7 @@ public:
 	void Set_Active_Slot(const string& Slot);                                 // Sets the active slot to A or B
 	string Get_Active_Slot_Suffix();                                          // Returns active slot _a or _b
 	string Get_Active_Slot_Display();                                         // Returns active slot A or B for display purposes
+	string Get_Android_Root_Path();                                           // Returns path of ANDROID_ROOT environment variable
 	struct pollfd uevent_pfd;                                                 // Used for uevent code
 	void Remove_Uevent_Devices(const string& sysfs_path);                     // Removes subpartitions from the Partitions vector for a matched uevent device
 	void Handle_Uevent(const Uevent_Block_Data& uevent_data);                 // Handle uevent data
