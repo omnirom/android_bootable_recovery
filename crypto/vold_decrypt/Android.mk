@@ -33,7 +33,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
 
         include $(CLEAR_VARS)
         LOCAL_MODULE := init.recovery.vold_decrypt.rc
-        LOCAL_MODULE_TAGS := eng
+        LOCAL_MODULE_TAGS := eng optional
         LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 
         # Cannot send to TARGET_RECOVERY_ROOT_OUT since build system wipes init*.rc
@@ -71,6 +71,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         LOCAL_MODULE := libvolddecrypt
         LOCAL_MODULE_TAGS := eng optional
         LOCAL_CFLAGS := -Wall
+        LOCAL_ADDITIONAL_DEPENDENCIES += init.recovery.vold_decrypt.rc
         ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
             LOCAL_C_INCLUDES += external/stlport/stlport bionic bionic/libstdc++/include
         endif

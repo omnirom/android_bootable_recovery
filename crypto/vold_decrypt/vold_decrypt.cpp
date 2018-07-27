@@ -857,6 +857,8 @@ int Exec_vdc_cryptfs(const string& command, const string& argument, vdc_ReturnVa
 			pid_t retpid = waitpid(pid, &status, WNOHANG);
 			while (true) {
 				for (int i = 0; i < 2; ++i) {
+					// clear strout from leftovers of previous runs
+					strout[i].clear();
 					count = read(pipe_fd[i][0], buffer, sizeof(buffer));
 					if (count == -1) {
 						if (errno == EINTR)
