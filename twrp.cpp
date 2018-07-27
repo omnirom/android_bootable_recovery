@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
 		TWFunc::Fixup_Time_On_Boot();
 
 	// Run any outstanding OpenRecoveryScript
-	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
+	if ((DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 || SkipDecryption) && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
 	}
 
