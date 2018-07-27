@@ -311,7 +311,7 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					part_settings.Part->Set_Backup_FileName(Backup_FileName);
 					PartitionManager.Set_Restore_Files(path);
 
-					if (path.compare("/system") == 0) {
+					if (path.compare(PartitionManager.Get_Android_Root_Path()) == 0) {
 						if (part_settings.Part->Is_Read_Only()) {
 							if (!twadbbu::Write_TWERROR())
 								LOGERR("Unable to write to TWRP ADB Backup.\n");
