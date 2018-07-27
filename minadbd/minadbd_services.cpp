@@ -21,15 +21,18 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <functional>
 #include <string>
 #include <thread>
 
 #include "adb.h"
+#include "adb_unique_fd.h"
 #include "fdevent.h"
 #include "fuse_adb_provider.h"
+#include "services.h"
 #include "sysdeps.h"
 
-static void sideload_host_service(int sfd, const std::string& args) {
+static void sideload_host_service(unique_fd sfd, const std::string& args) {
     int file_size;
     int block_size;
     if (sscanf(args.c_str(), "%d:%d", &file_size, &block_size) != 2) {
@@ -45,22 +48,7 @@ static void sideload_host_service(int sfd, const std::string& args) {
     exit(result == 0 ? 0 : 1);
 }
 
-static int create_service_thread(void (*func)(int, const std::string&), const std::string& args) {
-    int s[2];
-    if (adb_socketpair(s)) {
-        printf("cannot create service socket pair\n");
-        return -1;
-    }
-
-    std::thread([s, func, args]() { func(s[1], args); }).detach();
-
-    VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
-    return s[0];
-}
-
-int service_to_fd(const char* name, atransport* /* transport */) {
-  int ret = -1;
-
+unique_fd daemon_service_to_fd(const char* name, atransport* /* transport */) {
   if (!strncmp(name, "sideload:", 9)) {
     // this exit status causes recovery to print a special error
     // message saying to use a newer adb (that supports
@@ -68,10 +56,8 @@ int service_to_fd(const char* name, atransport* /* transport */) {
     exit(3);
   } else if (!strncmp(name, "sideload-host:", 14)) {
     std::string arg(name + 14);
-    ret = create_service_thread(sideload_host_service, arg);
+    return create_service_thread("sideload-host",
+                                 std::bind(sideload_host_service, std::placeholders::_1, arg));
   }
-  if (ret >= 0) {
-    close_on_exec(ret);
-  }
-  return ret;
+  return unique_fd{};
 }
