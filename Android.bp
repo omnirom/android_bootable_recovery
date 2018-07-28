@@ -96,6 +96,29 @@ cc_library_static {
     ],
 }
 
+cc_library_static {
+    name: "librecovery_fastboot",
+    recovery_available: true,
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "fastboot/fastboot.cpp",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "libbootloader_message",
+        "libcutils",
+        "liblog",
+    ],
+
+    static_libs: [
+        "librecovery_ui_default",
+    ],
+}
+
 cc_defaults {
     name: "librecovery_defaults",
 
@@ -124,6 +147,7 @@ cc_defaults {
     ],
 
     static_libs: [
+        "librecovery_fastboot",
         "libminui",
         "libverifier",
         "libotautil",
