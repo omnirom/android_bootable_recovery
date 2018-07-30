@@ -47,6 +47,7 @@ class Device {
     MOUNT_SYSTEM = 10,
     RUN_GRAPHICS_TEST = 11,
     RUN_LOCALE_TEST = 12,
+    KEY_INTERRUPTED = 13,
   };
 
   explicit Device(RecoveryUI* ui);
