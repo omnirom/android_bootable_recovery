@@ -417,6 +417,7 @@ void ScreenRecoveryUI::CheckBackgroundTextImages() {
   FlushKeys();
   while (true) {
     int key = WaitKey();
+    if (key == static_cast<int>(KeyError::INTERRUPTED)) break;
     if (key == KEY_POWER || key == KEY_ENTER) {
       break;
     } else if (key == KEY_UP || key == KEY_VOLUMEUP) {
@@ -925,6 +926,7 @@ void ScreenRecoveryUI::ShowFile(FILE* fp) {
       while (show_prompt) {
         show_prompt = false;
         int key = WaitKey();
+        if (key == static_cast<int>(KeyError::INTERRUPTED)) return;
         if (key == KEY_POWER || key == KEY_ENTER) {
           return;
         } else if (key == KEY_UP || key == KEY_VOLUMEUP) {
@@ -1017,19 +1019,26 @@ size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
   // Throw away keys pressed previously, so user doesn't accidentally trigger menu items.
   FlushKeys();
 
+  // If there is a key interrupt in progress, return KeyError::INTERRUPTED without starting the
+  // menu.
+  if (IsKeyInterrupted()) return static_cast<size_t>(KeyError::INTERRUPTED);
+
   StartMenu(headers, items, initial_selection);
 
   int selected = initial_selection;
   int chosen_item = -1;
   while (chosen_item < 0) {
     int key = WaitKey();
-    if (key == -1) {  // WaitKey() timed out.
+    if (key == static_cast<int>(KeyError::INTERRUPTED)) {  // WaitKey() was interrupted.
+      return static_cast<size_t>(KeyError::INTERRUPTED);
+    }
+    if (key == static_cast<int>(KeyError::TIMED_OUT)) {  // WaitKey() timed out.
       if (WasTextEverVisible()) {
         continue;
       } else {
         LOG(INFO) << "Timed out waiting for key input; rebooting.";
         EndMenu();
-        return static_cast<size_t>(-1);
+        return static_cast<size_t>(KeyError::TIMED_OUT);
       }
     }
 
