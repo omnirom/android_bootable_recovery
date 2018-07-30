@@ -326,6 +326,11 @@ static std::string browse_directory(const std::string& path, Device* device) {
         headers, entries, chosen_item, true,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
+    // Return if WaitKey() was interrupted.
+    if (chosen_item == static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED)) {
+      return "";
+    }
+
     const std::string& item = entries[chosen_item];
     if (chosen_item == 0) {
       // Go up but continue browsing (if the caller is browse_directory).
@@ -401,6 +406,11 @@ static bool prompt_and_wipe_data(Device* device) {
     size_t chosen_item = ui->ShowMenu(
         headers, items, 0, true,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
+
+    // If ShowMenu() returned RecoveryUI::KeyError::INTERRUPTED, WaitKey() was interrupted.
+    if (chosen_item == static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED)) {
+      return false;
+    }
     if (chosen_item != 1) {
       return true;  // Just reboot, no wipe; not a failure, user asked for it
     }
@@ -597,6 +607,11 @@ static void choose_recovery_file(Device* device) {
     chosen_item = ui->ShowMenu(
         headers, entries, chosen_item, true,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
+
+    // Handle WaitKey() interrupt.
+    if (chosen_item == static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED)) {
+      break;
+    }
     if (entries[chosen_item] == "Back") break;
 
     ui->ShowFile(entries[chosen_item]);
@@ -745,12 +760,16 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
     size_t chosen_item = ui->ShowMenu(
         {}, device->GetMenuItems(), 0, false,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
-
+    // Handle Interrupt key
+    if (chosen_item == static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED)) {
+      return Device::KEY_INTERRUPTED;
+    }
     // Device-specific code may take some action here. It may return one of the core actions
     // handled in the switch statement below.
-    Device::BuiltinAction chosen_action = (chosen_item == static_cast<size_t>(-1))
-                                              ? Device::REBOOT
-                                              : device->InvokeMenuItem(chosen_item);
+    Device::BuiltinAction chosen_action =
+        (chosen_item == static_cast<size_t>(RecoveryUI::KeyError::TIMED_OUT))
+            ? Device::REBOOT
+            : device->InvokeMenuItem(chosen_item);
 
     bool should_wipe_cache = false;
     switch (chosen_action) {
@@ -831,6 +850,9 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
           }
         }
         break;
+
+      case Device::KEY_INTERRUPTED:
+        return Device::KEY_INTERRUPTED;
     }
   }
 }
@@ -1072,6 +1094,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   title_lines.insert(std::begin(title_lines), "Android Recovery");
   ui->SetTitle(title_lines);
 
+  ui->ResetKeyInterruptStatus();
   device->StartRecovery();
 
   printf("Command:");

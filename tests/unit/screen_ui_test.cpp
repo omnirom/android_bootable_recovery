@@ -264,6 +264,10 @@ int TestableScreenRecoveryUI::KeyHandler(int key, bool) const {
 }
 
 int TestableScreenRecoveryUI::WaitKey() {
+  if (IsKeyInterrupted()) {
+    return static_cast<int>(RecoveryUI::KeyError::INTERRUPTED);
+  }
+
   CHECK_LT(key_buffer_index_, key_buffer_.size());
   return static_cast<int>(key_buffer_[key_buffer_index_++]);
 }
@@ -391,7 +395,8 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut) {
   ui_->SetKeyBuffer({
       KeyCode::TIMEOUT,
   });
-  ASSERT_EQ(static_cast<size_t>(-1), ui_->ShowMenu(HEADERS, ITEMS, 3, true, nullptr));
+  ASSERT_EQ(static_cast<size_t>(RecoveryUI::KeyError::TIMED_OUT),
+            ui_->ShowMenu(HEADERS, ITEMS, 3, true, nullptr));
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
@@ -410,6 +415,38 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
   ASSERT_EQ(4u, ui_->ShowMenu(HEADERS, ITEMS, 3, true,
                               std::bind(&TestableScreenRecoveryUI::KeyHandler, ui_.get(),
                                         std::placeholders::_1, std::placeholders::_2)));
+}
+
+TEST_F(ScreenRecoveryUITest, ShowMenuWithInterrupt) {
+  RETURN_IF_NO_GRAPHICS;
+
+  ASSERT_TRUE(ui_->Init(kTestLocale));
+  ui_->SetKeyBuffer({
+      KeyCode::UP,
+      KeyCode::DOWN,
+      KeyCode::UP,
+      KeyCode::DOWN,
+      KeyCode::ENTER,
+  });
+
+  ui_->InterruptKey();
+  ASSERT_EQ(static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED),
+            ui_->ShowMenu(HEADERS, ITEMS, 3, true,
+                          std::bind(&TestableScreenRecoveryUI::KeyHandler, ui_.get(),
+                                    std::placeholders::_1, std::placeholders::_2)));
+
+  ui_->SetKeyBuffer({
+      KeyCode::UP,
+      KeyCode::UP,
+      KeyCode::NO_OP,
+      KeyCode::NO_OP,
+      KeyCode::UP,
+      KeyCode::ENTER,
+  });
+  ASSERT_EQ(static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED),
+            ui_->ShowMenu(HEADERS, ITEMS, 0, true,
+                          std::bind(&TestableScreenRecoveryUI::KeyHandler, ui_.get(),
+                                    std::placeholders::_1, std::placeholders::_2)));
 }
 
 TEST_F(ScreenRecoveryUITest, LoadAnimation) {
