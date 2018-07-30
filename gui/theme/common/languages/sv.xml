@@ -176,10 +176,7 @@
 		<string name="term_kill_btn">DÖDA</string>
 		<string name="swipe_sideload">   Start</string>
 		<string name="reboot_hdr">Starta om</string>
-		<string name="su_note2">Installera SuperSU nu?</string>
-		<string name="su_cancel">Installera inte</string>
-		<string name="swipe_su_install">   Installera</string>
-		<string name="su_installing">Installerar SuperSU</string>
+		<string name="install_cancel">Installera inte</string>
 		<string name="sel_storage_list">Välj lagring</string>
 		<string name="ok_btn">OK</string>
 		<string name="generating_digest1" version="2">Genererar Digest</string>

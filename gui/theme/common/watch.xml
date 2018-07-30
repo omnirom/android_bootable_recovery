@@ -3393,21 +3393,6 @@
 				<action function="reboot">%tw_reboot_param%</action>
 			</button>
 
-			<slider>
-				<text>{@swipe_su_install=   Install}</text>
-				<actions>
-					<action function="set">tw_back=reboot</action>
-					<action function="set">tw_action=installapp</action>
-					<action function="set">tw_action_text1={@reboot_installing_app=Installing App...}</action>
-					<action function="set">tw_action_text2=</action>
-					<action function="set">tw_has_action2=1</action>
-					<action function="set">tw_action2=reboot</action>
-					<action function="set">tw_action2_param=%tw_reboot_param%</action>
-					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
-					<action function="page">action_page</action>
-				</actions>
-			</slider>
-
 			<action>
 				<touch key="home"/>
 				<actions>
