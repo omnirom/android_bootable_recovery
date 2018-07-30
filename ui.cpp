@@ -58,6 +58,7 @@ RecoveryUI::RecoveryUI()
       touch_screen_allowed_(false),
       kTouchLowThreshold(RECOVERY_UI_TOUCH_LOW_THRESHOLD),
       kTouchHighThreshold(RECOVERY_UI_TOUCH_HIGH_THRESHOLD),
+      key_interrupted_(false),
       key_queue_len(0),
       key_last_down(-1),
       key_long_press(false),
@@ -404,34 +405,69 @@ void RecoveryUI::EnqueueKey(int key_code) {
   }
 }
 
+void RecoveryUI::SetScreensaverState(ScreensaverState state) {
+  switch (state) {
+    case ScreensaverState::NORMAL:
+      if (android::base::WriteStringToFile(std::to_string(brightness_normal_value_),
+                                           brightness_file_)) {
+        screensaver_state_ = ScreensaverState::NORMAL;
+        LOG(INFO) << "Brightness: " << brightness_normal_value_ << " (" << brightness_normal_
+                  << "%)";
+      } else {
+        LOG(ERROR) << "Unable to set brightness to normal";
+      }
+      break;
+    case ScreensaverState::DIMMED:
+      if (android::base::WriteStringToFile(std::to_string(brightness_dimmed_value_),
+                                           brightness_file_)) {
+        LOG(INFO) << "Brightness: " << brightness_dimmed_value_ << " (" << brightness_dimmed_
+                  << "%)";
+        screensaver_state_ = ScreensaverState::DIMMED;
+      } else {
+        LOG(ERROR) << "Unable to set brightness to dim";
+      }
+      break;
+    case ScreensaverState::OFF:
+      if (android::base::WriteStringToFile("0", brightness_file_)) {
+        LOG(INFO) << "Brightness: 0 (off)";
+        screensaver_state_ = ScreensaverState::OFF;
+      } else {
+        LOG(ERROR) << "Unable to set brightness to off";
+      }
+      break;
+    default:
+      LOG(ERROR) << "Invalid screensaver state";
+  }
+}
+
 int RecoveryUI::WaitKey() {
   std::unique_lock<std::mutex> lk(key_queue_mutex);
+
+  // Check for a saved key queue interruption.
+  if (key_interrupted_) {
+    SetScreensaverState(ScreensaverState::NORMAL);
+    return static_cast<int>(KeyError::INTERRUPTED);
+  }
 
   // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is
   // plugged in.
   do {
-    std::cv_status rc = std::cv_status::no_timeout;
-    while (key_queue_len == 0 && rc != std::cv_status::timeout) {
-      rc = key_queue_cond.wait_for(lk, std::chrono::seconds(UI_WAIT_KEY_TIMEOUT_SEC));
+    bool rc = key_queue_cond.wait_for(lk, std::chrono::seconds(UI_WAIT_KEY_TIMEOUT_SEC), [this] {
+      return this->key_queue_len != 0 || key_interrupted_;
+    });
+    if (key_interrupted_) {
+      SetScreensaverState(ScreensaverState::NORMAL);
+      return static_cast<int>(KeyError::INTERRUPTED);
     }
-
     if (screensaver_state_ != ScreensaverState::DISABLED) {
-      if (rc == std::cv_status::timeout) {
+      if (!rc) {
         // Lower the brightness level: NORMAL -> DIMMED; DIMMED -> OFF.
         if (screensaver_state_ == ScreensaverState::NORMAL) {
-          if (android::base::WriteStringToFile(std::to_string(brightness_dimmed_value_),
-                                               brightness_file_)) {
-            LOG(INFO) << "Brightness: " << brightness_dimmed_value_ << " (" << brightness_dimmed_
-                      << "%)";
-            screensaver_state_ = ScreensaverState::DIMMED;
-          }
+          SetScreensaverState(ScreensaverState::DIMMED);
         } else if (screensaver_state_ == ScreensaverState::DIMMED) {
-          if (android::base::WriteStringToFile("0", brightness_file_)) {
-            LOG(INFO) << "Brightness: 0 (off)";
-            screensaver_state_ = ScreensaverState::OFF;
-          }
+          SetScreensaverState(ScreensaverState::OFF);
         }
-      } else if (screensaver_state_ != ScreensaverState::NORMAL) {
+      } else {
         // Drop the first key if it's changing from OFF to NORMAL.
         if (screensaver_state_ == ScreensaverState::OFF) {
           if (key_queue_len > 0) {
@@ -440,22 +476,25 @@ int RecoveryUI::WaitKey() {
         }
 
         // Reset the brightness to normal.
-        if (android::base::WriteStringToFile(std::to_string(brightness_normal_value_),
-                                             brightness_file_)) {
-          screensaver_state_ = ScreensaverState::NORMAL;
-          LOG(INFO) << "Brightness: " << brightness_normal_value_ << " (" << brightness_normal_
-                    << "%)";
-        }
+        SetScreensaverState(ScreensaverState::NORMAL);
       }
     }
   } while (IsUsbConnected() && key_queue_len == 0);
 
-  int key = -1;
+  int key = static_cast<int>(KeyError::TIMED_OUT);
   if (key_queue_len > 0) {
     key = key_queue[0];
     memcpy(&key_queue[0], &key_queue[1], sizeof(int) * --key_queue_len);
   }
   return key;
+}
+
+void RecoveryUI::InterruptKey() {
+  {
+    std::lock_guard<std::mutex> lg(key_queue_mutex);
+    key_interrupted_ = true;
+  }
+  key_queue_cond.notify_one();
 }
 
 bool RecoveryUI::IsUsbConnected() {
