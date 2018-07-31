@@ -142,11 +142,18 @@ int Menu::Select(int sel) {
 
 ScreenRecoveryUI::ScreenRecoveryUI() : ScreenRecoveryUI(false) {}
 
+constexpr int kDefaultMarginHeight = 0;
+constexpr int kDefaultMarginWidth = 0;
+constexpr int kDefaultAnimationFps = 30;
+
 ScreenRecoveryUI::ScreenRecoveryUI(bool scrollable_menu)
-    : kMarginWidth(RECOVERY_UI_MARGIN_WIDTH),
-      kMarginHeight(RECOVERY_UI_MARGIN_HEIGHT),
-      kAnimationFps(RECOVERY_UI_ANIMATION_FPS),
-      kDensity(static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f),
+    : margin_width_(
+          android::base::GetIntProperty("ro.recovery.ui.margin_width", kDefaultMarginWidth)),
+      margin_height_(
+          android::base::GetIntProperty("ro.recovery.ui.margin_height", kDefaultMarginHeight)),
+      animation_fps_(
+          android::base::GetIntProperty("ro.recovery.ui.animation_fps", kDefaultAnimationFps)),
+      density_(static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f),
       currentIcon(NONE),
       progressBarType(EMPTY),
       progressScopeStart(0),
@@ -203,7 +210,7 @@ GRSurface* ScreenRecoveryUI::GetCurrentText() const {
 }
 
 int ScreenRecoveryUI::PixelsFromDp(int dp) const {
-  return dp * kDensity;
+  return dp * density_;
 }
 
 // Here's the intended layout:
@@ -258,7 +265,7 @@ void ScreenRecoveryUI::draw_background_locked() {
       int stage_height = gr_get_height(stageMarkerEmpty);
       int stage_width = gr_get_width(stageMarkerEmpty);
       int x = (ScreenWidth() - max_stage * gr_get_width(stageMarkerEmpty)) / 2;
-      int y = ScreenHeight() - stage_height - kMarginHeight;
+      int y = ScreenHeight() - stage_height - margin_height_;
       for (int i = 0; i < max_stage; ++i) {
         GRSurface* stage_surface = (i < stage) ? stageMarkerFill : stageMarkerEmpty;
         DrawSurface(stage_surface, 0, 0, stage_width, stage_height, x, y);
@@ -373,8 +380,8 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   gr_color(0, 0, 0, 255);
   gr_clear();
 
-  int text_y = kMarginHeight;
-  int text_x = kMarginWidth;
+  int text_y = margin_height_;
+  int text_x = margin_width_;
   int line_spacing = gr_sys_font()->char_height;  // Put some extra space between images.
   // Write the header and descriptive texts.
   SetColor(INFO);
@@ -535,10 +542,10 @@ void ScreenRecoveryUI::draw_screen_locked() {
 // Draws the menu and text buffer on the screen. Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
     const std::vector<std::string>& help_message) {
-  int y = kMarginHeight;
+  int y = margin_height_;
   if (menu_) {
     static constexpr int kMenuIndent = 4;
-    int x = kMarginWidth + kMenuIndent;
+    int x = margin_width_ + kMenuIndent;
 
     SetColor(INFO);
 
@@ -594,9 +601,9 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
   SetColor(LOG);
   int row = text_row_;
   size_t count = 0;
-  for (int ty = ScreenHeight() - kMarginHeight - char_height_; ty >= y && count < text_rows_;
+  for (int ty = ScreenHeight() - margin_height_ - char_height_; ty >= y && count < text_rows_;
        ty -= char_height_, ++count) {
-    DrawTextLine(kMarginWidth, ty, text_[row], false);
+    DrawTextLine(margin_width_, ty, text_[row], false);
     --row;
     if (row < 0) row = text_rows_ - 1;
   }
@@ -622,7 +629,7 @@ void ScreenRecoveryUI::update_progress_locked() {
 }
 
 void ScreenRecoveryUI::ProgressThreadLoop() {
-  double interval = 1.0 / kAnimationFps;
+  double interval = 1.0 / animation_fps_;
   while (!progress_thread_stopped_) {
     double start = now();
     bool redraw = false;
@@ -708,8 +715,8 @@ bool ScreenRecoveryUI::InitTextParams() {
     return false;
   }
   gr_font_size(gr_sys_font(), &char_width_, &char_height_);
-  text_rows_ = (ScreenHeight() - kMarginHeight * 2) / char_height_;
-  text_cols_ = (ScreenWidth() - kMarginWidth * 2) / char_width_;
+  text_rows_ = (ScreenHeight() - margin_height_ * 2) / char_height_;
+  text_cols_ = (ScreenWidth() - margin_width_ * 2) / char_width_;
   return true;
 }
 
