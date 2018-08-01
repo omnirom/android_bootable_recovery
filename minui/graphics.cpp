@@ -40,11 +40,12 @@ static constexpr uint32_t alpha_mask = 0xff000000;
 
 // gr_draw is owned by backends.
 static const GRSurface* gr_draw = nullptr;
-static GRRotation rotation = ROTATION_NONE;
+static GRRotation rotation = GRRotation::NONE;
 
 static bool outside(int x, int y) {
-  return x < 0 || x >= (rotation % 2 ? gr_draw->height : gr_draw->width) || y < 0 ||
-         y >= (rotation % 2 ? gr_draw->width : gr_draw->height);
+  auto swapped = (rotation == GRRotation::LEFT || rotation == GRRotation::RIGHT);
+  return x < 0 || x >= (swapped ? gr_draw->height : gr_draw->width) || y < 0 ||
+         y >= (swapped ? gr_draw->width : gr_draw->height);
 }
 
 const GRFont* gr_sys_font() {
@@ -89,36 +90,44 @@ static inline uint32_t pixel_blend(uint8_t alpha, uint32_t pix) {
 
 // Increments pixel pointer right, with current rotation.
 static void incr_x(uint32_t** p, int row_pixels) {
-  if (rotation % 2) {
-    *p = *p + (rotation == 1 ? 1 : -1) * row_pixels;
-  } else {
-    *p = *p + (rotation ? -1 : 1);
+  if (rotation == GRRotation::LEFT) {
+    *p = *p - row_pixels;
+  } else if (rotation == GRRotation::RIGHT) {
+    *p = *p + row_pixels;
+  } else if (rotation == GRRotation::DOWN) {
+    *p = *p - 1;
+  } else {  // GRRotation::NONE
+    *p = *p + 1;
   }
 }
 
 // Increments pixel pointer down, with current rotation.
 static void incr_y(uint32_t** p, int row_pixels) {
-  if (rotation % 2) {
-    *p = *p + (rotation == 1 ? -1 : 1);
-  } else {
-    *p = *p + (rotation ? -1 : 1) * row_pixels;
+  if (rotation == GRRotation::LEFT) {
+    *p = *p + 1;
+  } else if (rotation == GRRotation::RIGHT) {
+    *p = *p - 1;
+  } else if (rotation == GRRotation::DOWN) {
+    *p = *p - row_pixels;
+  } else {  // GRRotation::NONE
+    *p = *p + row_pixels;
   }
 }
 
 // Returns pixel pointer at given coordinates with rotation adjustment.
 static uint32_t* pixel_at(const GRSurface* surf, int x, int y, int row_pixels) {
   switch (rotation) {
-    case ROTATION_NONE:
+    case GRRotation::NONE:
       return reinterpret_cast<uint32_t*>(surf->data) + y * row_pixels + x;
-    case ROTATION_RIGHT:
+    case GRRotation::RIGHT:
       return reinterpret_cast<uint32_t*>(surf->data) + x * row_pixels + (surf->width - y);
-    case ROTATION_DOWN:
+    case GRRotation::DOWN:
       return reinterpret_cast<uint32_t*>(surf->data) + (surf->height - 1 - y) * row_pixels +
              (surf->width - 1 - x);
-    case ROTATION_LEFT:
+    case GRRotation::LEFT:
       return reinterpret_cast<uint32_t*>(surf->data) + (surf->height - 1 - x) * row_pixels + y;
     default:
-      printf("invalid rotation %d", rotation);
+      printf("invalid rotation %d", static_cast<int>(rotation));
   }
   return nullptr;
 }
@@ -256,7 +265,7 @@ void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
 
   if (outside(dx, dy) || outside(dx + w - 1, dy + h - 1)) return;
 
-  if (rotation) {
+  if (rotation != GRRotation::NONE) {
     int src_row_pixels = source->row_bytes / source->pixel_bytes;
     int row_pixels = gr_draw->row_bytes / gr_draw->pixel_bytes;
     uint32_t* src_py = reinterpret_cast<uint32_t*>(source->data) + sy * source->row_bytes / 4 + sx;
@@ -361,7 +370,19 @@ int gr_init() {
     return -1;
   }
 
-  gr_rotate(DEFAULT_ROTATION);
+#define __STRINGIFY(x) #x
+#define STRINGIFY(x) __STRINGIFY(x)
+
+  std::string rotation_str(STRINGIFY(DEFAULT_ROTATION));
+  if (rotation_str == "ROTATION_RIGHT") {
+    gr_rotate(GRRotation::RIGHT);
+  } else if (rotation_str == "ROTATION_DOWN") {
+    gr_rotate(GRRotation::DOWN);
+  } else if (rotation_str == "ROTATION_LEFT") {
+    gr_rotate(GRRotation::LEFT);
+  } else {  // "ROTATION_NONE"
+    gr_rotate(GRRotation::NONE);
+  }
 
   if (gr_draw->pixel_bytes != 4) {
     printf("gr_init: Only 4-byte pixel formats supported\n");
@@ -379,13 +400,15 @@ void gr_exit() {
 }
 
 int gr_fb_width() {
-  return rotation % 2 ? gr_draw->height - 2 * overscan_offset_y
-                      : gr_draw->width - 2 * overscan_offset_x;
+  return (rotation == GRRotation::LEFT || rotation == GRRotation::RIGHT)
+             ? gr_draw->height - 2 * overscan_offset_y
+             : gr_draw->width - 2 * overscan_offset_x;
 }
 
 int gr_fb_height() {
-  return rotation % 2 ? gr_draw->width - 2 * overscan_offset_x
-                      : gr_draw->height - 2 * overscan_offset_y;
+  return (rotation == GRRotation::LEFT || rotation == GRRotation::RIGHT)
+             ? gr_draw->width - 2 * overscan_offset_x
+             : gr_draw->height - 2 * overscan_offset_y;
 }
 
 void gr_fb_blank(bool blank) {
