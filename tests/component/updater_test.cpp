@@ -37,6 +37,7 @@
 #include <brotli/encode.h>
 #include <bsdiff/bsdiff.h>
 #include <gtest/gtest.h>
+#include <verity/hash_tree_builder.h>
 #include <ziparchive/zip_archive.h>
 #include <ziparchive/zip_writer.h>
 
@@ -387,6 +388,86 @@ TEST_F(UpdaterTest, read_file) {
   // It should fail gracefully when read fails.
   script = "read_file(\"/doesntexist\")";
   expect("", script, kNoCause);
+}
+
+TEST_F(UpdaterTest, compute_hash_tree_smoke) {
+  std::string data;
+  for (unsigned char i = 0; i < 128; i++) {
+    data += std::string(4096, i);
+  }
+  // Appends an additional block for verity data.
+  data += std::string(4096, 0);
+  ASSERT_EQ(129 * 4096, data.size());
+  ASSERT_TRUE(android::base::WriteStringToFile(data, image_file_));
+
+  std::string salt = "aee087a5be3b982978c923f566a94613496b417f2af592639bc80d141e34dfe7";
+  std::string expected_root_hash =
+      "7e0a8d8747f54384014ab996f5b2dc4eb7ff00c630eede7134c9e3f05c0dd8ca";
+  // hash_tree_ranges, source_ranges, hash_algorithm, salt_hex, root_hash
+  std::vector<std::string> tokens{ "compute_hash_tree", "2,128,129", "2,0,128", "sha256", salt,
+                                   expected_root_hash };
+  std::string hash_tree_command = android::base::Join(tokens, " ");
+
+  std::vector<std::string> transfer_list{
+    "4", "2", "0", "2", hash_tree_command,
+  };
+
+  PackageEntries entries{
+    { "new_data", "" },
+    { "patch_data", "" },
+    { "transfer_list", android::base::Join(transfer_list, "\n") },
+  };
+
+  RunBlockImageUpdate(false, entries, image_file_, "t");
+
+  std::string updated;
+  ASSERT_TRUE(android::base::ReadFileToString(image_file_, &updated));
+  ASSERT_EQ(129 * 4096, updated.size());
+  ASSERT_EQ(data.substr(0, 128 * 4096), updated.substr(0, 128 * 4096));
+
+  // Computes the SHA256 of the salt + hash_tree_data and expects the result to match with the
+  // root_hash.
+  std::vector<unsigned char> salt_bytes;
+  ASSERT_TRUE(HashTreeBuilder::ParseBytesArrayFromString(salt, &salt_bytes));
+  std::vector<unsigned char> hash_tree = std::move(salt_bytes);
+  hash_tree.insert(hash_tree.end(), updated.begin() + 128 * 4096, updated.end());
+
+  std::vector<unsigned char> digest(SHA256_DIGEST_LENGTH);
+  SHA256(hash_tree.data(), hash_tree.size(), digest.data());
+  ASSERT_EQ(expected_root_hash, HashTreeBuilder::BytesArrayToString(digest));
+}
+
+TEST_F(UpdaterTest, compute_hash_tree_root_mismatch) {
+  std::string data;
+  for (size_t i = 0; i < 128; i++) {
+    data += std::string(4096, i);
+  }
+  // Appends an additional block for verity data.
+  data += std::string(4096, 0);
+  ASSERT_EQ(129 * 4096, data.size());
+  // Corrupts one bit
+  data[4096] = 'A';
+  ASSERT_TRUE(android::base::WriteStringToFile(data, image_file_));
+
+  std::string salt = "aee087a5be3b982978c923f566a94613496b417f2af592639bc80d141e34dfe7";
+  std::string expected_root_hash =
+      "7e0a8d8747f54384014ab996f5b2dc4eb7ff00c630eede7134c9e3f05c0dd8ca";
+  // hash_tree_ranges, source_ranges, hash_algorithm, salt_hex, root_hash
+  std::vector<std::string> tokens{ "compute_hash_tree", "2,128,129", "2,0,128", "sha256", salt,
+                                   expected_root_hash };
+  std::string hash_tree_command = android::base::Join(tokens, " ");
+
+  std::vector<std::string> transfer_list{
+    "4", "2", "0", "2", hash_tree_command,
+  };
+
+  PackageEntries entries{
+    { "new_data", "" },
+    { "patch_data", "" },
+    { "transfer_list", android::base::Join(transfer_list, "\n") },
+  };
+
+  RunBlockImageUpdate(false, entries, image_file_, "", kHashTreeComputationFailure);
 }
 
 TEST_F(UpdaterTest, write_value) {

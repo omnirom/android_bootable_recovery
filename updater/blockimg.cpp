@@ -49,6 +49,7 @@
 #include <fec/io.h>
 #include <openssl/sha.h>
 #include <private/android_filesystem_config.h>
+#include <verity/hash_tree_builder.h>
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
@@ -1495,6 +1496,105 @@ static int PerformCommandAbort(CommandParameters&) {
   return -1;
 }
 
+// Computes the hash_tree bytes based on the parameters, checks if the root hash of the tree
+// matches the expected hash and writes the result to the specified range on the block_device.
+// Hash_tree computation arguments:
+//   hash_tree_ranges
+//   source_ranges
+//   hash_algorithm
+//   salt_hex
+//   root_hash
+static int PerformCommandComputeHashTree(CommandParameters& params) {
+  if (params.cpos + 5 != params.tokens.size()) {
+    LOG(ERROR) << "Invaild arguments count in hash computation " << params.cmdline;
+    return -1;
+  }
+
+  // Expects the hash_tree data to be contiguous.
+  RangeSet hash_tree_ranges = RangeSet::Parse(params.tokens[params.cpos++]);
+  if (!hash_tree_ranges || hash_tree_ranges.size() != 1) {
+    LOG(ERROR) << "Invalid hash tree ranges in " << params.cmdline;
+    return -1;
+  }
+
+  RangeSet source_ranges = RangeSet::Parse(params.tokens[params.cpos++]);
+  if (!source_ranges) {
+    LOG(ERROR) << "Invalid source ranges in " << params.cmdline;
+    return -1;
+  }
+
+  auto hash_function = HashTreeBuilder::HashFunction(params.tokens[params.cpos++]);
+  if (hash_function == nullptr) {
+    LOG(ERROR) << "Invalid hash algorithm in " << params.cmdline;
+    return -1;
+  }
+
+  std::vector<unsigned char> salt;
+  std::string salt_hex = params.tokens[params.cpos++];
+  if (salt_hex.empty() || !HashTreeBuilder::ParseBytesArrayFromString(salt_hex, &salt)) {
+    LOG(ERROR) << "Failed to parse salt in " << params.cmdline;
+    return -1;
+  }
+
+  std::string expected_root_hash = params.tokens[params.cpos++];
+  if (expected_root_hash.empty()) {
+    LOG(ERROR) << "Invalid root hash in " << params.cmdline;
+    return -1;
+  }
+
+  // Starts the hash_tree computation.
+  HashTreeBuilder builder(BLOCKSIZE, hash_function);
+  if (!builder.Initialize(source_ranges.blocks() * BLOCKSIZE, salt)) {
+    LOG(ERROR) << "Failed to initialize hash tree computation, source " << source_ranges.ToString()
+               << ", salt " << salt_hex;
+    return -1;
+  }
+
+  // Iterates through every block in the source_ranges and updates the hash tree structure
+  // accordingly.
+  for (const auto& range : source_ranges) {
+    uint8_t buffer[BLOCKSIZE];
+    if (!check_lseek(params.fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
+      PLOG(ERROR) << "Failed to seek to block: " << range.first;
+      return -1;
+    }
+
+    for (size_t i = range.first; i < range.second; i++) {
+      if (read_all(params.fd, buffer, BLOCKSIZE) == -1) {
+        LOG(ERROR) << "Failed to read data in " << range.first << ":" << range.second;
+        return -1;
+      }
+
+      if (!builder.Update(reinterpret_cast<unsigned char*>(buffer), BLOCKSIZE)) {
+        LOG(ERROR) << "Failed to update hash tree builder";
+        return -1;
+      }
+    }
+  }
+
+  if (!builder.BuildHashTree()) {
+    LOG(ERROR) << "Failed to build hash tree";
+    return -1;
+  }
+
+  std::string root_hash_hex = HashTreeBuilder::BytesArrayToString(builder.root_hash());
+  if (root_hash_hex != expected_root_hash) {
+    LOG(ERROR) << "Root hash of the verity hash tree doesn't match the expected value. Expected: "
+               << expected_root_hash << ", actual: " << root_hash_hex;
+    return -1;
+  }
+
+  uint64_t write_offset = static_cast<uint64_t>(hash_tree_ranges.GetBlockNumber(0)) * BLOCKSIZE;
+  if (params.canwrite && !builder.WriteHashTreeToFd(params.fd, write_offset)) {
+    LOG(ERROR) << "Failed to write hash tree to output";
+    return -1;
+  }
+
+  // TODO(xunchang) validates the written bytes
+
+  return 0;
+}
+
 using CommandFunction = std::function<int(CommandParameters&)>;
 
 using CommandMap = std::unordered_map<Command::Type, CommandFunction>;
@@ -1737,6 +1837,9 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
 
     if (performer(params) == -1) {
       LOG(ERROR) << "failed to execute command [" << line << "]";
+      if (cmd_type == Command::Type::COMPUTE_HASH_TREE && failure_type == kNoCause) {
+        failure_type = kHashTreeComputationFailure;
+      }
       goto pbiudone;
     }
 
@@ -1894,15 +1997,16 @@ Value* BlockImageVerifyFn(const char* name, State* state,
   // Commands which are not allowed are set to nullptr to skip them completely.
   const CommandMap command_map{
     // clang-format off
-    { Command::Type::ABORT,   PerformCommandAbort },
-    { Command::Type::BSDIFF,  PerformCommandDiff },
-    { Command::Type::ERASE,   nullptr },
-    { Command::Type::FREE,    PerformCommandFree },
-    { Command::Type::IMGDIFF, PerformCommandDiff },
-    { Command::Type::MOVE,    PerformCommandMove },
-    { Command::Type::NEW,     nullptr },
-    { Command::Type::STASH,   PerformCommandStash },
-    { Command::Type::ZERO,    nullptr },
+    { Command::Type::ABORT,             PerformCommandAbort },
+    { Command::Type::BSDIFF,            PerformCommandDiff },
+    { Command::Type::COMPUTE_HASH_TREE, PerformCommandComputeHashTree },
+    { Command::Type::ERASE,             nullptr },
+    { Command::Type::FREE,              PerformCommandFree },
+    { Command::Type::IMGDIFF,           PerformCommandDiff },
+    { Command::Type::MOVE,              PerformCommandMove },
+    { Command::Type::NEW,               nullptr },
+    { Command::Type::STASH,             PerformCommandStash },
+    { Command::Type::ZERO,              nullptr },
     // clang-format on
   };
   CHECK_EQ(static_cast<size_t>(Command::Type::LAST), command_map.size());
@@ -1915,15 +2019,16 @@ Value* BlockImageUpdateFn(const char* name, State* state,
                           const std::vector<std::unique_ptr<Expr>>& argv) {
   const CommandMap command_map{
     // clang-format off
-    { Command::Type::ABORT,   PerformCommandAbort },
-    { Command::Type::BSDIFF,  PerformCommandDiff },
-    { Command::Type::ERASE,   PerformCommandErase },
-    { Command::Type::FREE,    PerformCommandFree },
-    { Command::Type::IMGDIFF, PerformCommandDiff },
-    { Command::Type::MOVE,    PerformCommandMove },
-    { Command::Type::NEW,     PerformCommandNew },
-    { Command::Type::STASH,   PerformCommandStash },
-    { Command::Type::ZERO,    PerformCommandZero },
+    { Command::Type::ABORT,             PerformCommandAbort },
+    { Command::Type::BSDIFF,            PerformCommandDiff },
+    { Command::Type::COMPUTE_HASH_TREE, PerformCommandComputeHashTree },
+    { Command::Type::ERASE,             PerformCommandErase },
+    { Command::Type::FREE,              PerformCommandFree },
+    { Command::Type::IMGDIFF,           PerformCommandDiff },
+    { Command::Type::MOVE,              PerformCommandMove },
+    { Command::Type::NEW,               PerformCommandNew },
+    { Command::Type::STASH,             PerformCommandStash },
+    { Command::Type::ZERO,              PerformCommandZero },
     // clang-format on
   };
   CHECK_EQ(static_cast<size_t>(Command::Type::LAST), command_map.size());
