@@ -41,11 +41,11 @@ struct GRFont {
   int char_height;
 };
 
-enum GRRotation {
-  ROTATION_NONE = 0,
-  ROTATION_RIGHT = 1,
-  ROTATION_DOWN = 2,
-  ROTATION_LEFT = 3,
+enum class GRRotation : int {
+  NONE = 0,
+  RIGHT = 1,
+  DOWN = 2,
+  LEFT = 3,
 };
 
 // Initializes the graphics backend and loads font file. Returns 0 on success, or -1 on error. Note
