@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5daef21d_87760006",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1018,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2018-08-02T20:07:10Z",
+      "side": 1,
+      "message": "In C++, prefer declaring and initializing a variable in one line:\nconst char* x \u003d ...;",
+      "revId": "967e98743e2dfde28a78274dbb567a4e14a1f3c9",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
