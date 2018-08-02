@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "36da243c_2dfa1ce4",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1108,
+      "author": {
+        "id": 1000768
+      },
+      "writtenOn": "2018-08-02T20:11:48Z",
+      "side": 1,
+      "message": "Same as in the other patch: declare and initialize in one line.\nAlso, the code is copied three times so it should be in a separate method that\u0027s called wherever it\u0027s needed. You can return a std::string from it and use c_str() when you need the const char*.",
+      "revId": "697bdea377205ad6d5f9c9cdfb5655d39fbba6c9",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
