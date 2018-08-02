@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3898f2ce_0729e2f5",
+        "filename": "gui/theme/common/watch.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 3409,
+      "author": {
+        "id": 1000173
+      },
+      "writtenOn": "2018-08-02T16:31:02Z",
+      "side": 0,
+      "message": "Don\u0027t you still need this part but slightly adjusted to install the TWRP app?",
+      "revId": "840f04f7aae129b19797f970bb902cf23456e461",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
