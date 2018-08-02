@@ -1,9 +1,8 @@
 # SystemUpdaterSample
 
 This app demonstrates how to use Android system updates APIs to install
-[OTA updates](https://source.android.com/devices/tech/ota/). It contains a sample
-client for `update_engine` to install A/B (seamless) updates and a sample of
-applying non-A/B updates using `recovery`.
+[OTA updates](https://source.android.com/devices/tech/ota/). It contains a
+sample client for `update_engine` to install A/B (seamless) updates.
 
 A/B (seamless) update is available since Android Nougat (API 24), but this sample
 targets the latest android.
@@ -180,7 +179,8 @@ privileged system app, so it's granted the required permissions to access
 `update_engine` service as well as OTA package files. Detailed steps are as follows:
 
 1. [Prepare to build](https://source.android.com/setup/build/building)
-2. Add the module (SystemUpdaterSample) to the `PRODUCT_PACKAGES` list for the lunch target.
+2. Add the module (SystemUpdaterSample) to the `PRODUCT_PACKAGES` list for the
+   lunch target.
    e.g. add a line containing `PRODUCT_PACKAGES += SystemUpdaterSample`
    to `device/google/marlin/device-common.mk`.
 3. [Whitelist the sample app](https://source.android.com/devices/tech/config/perms-whitelist)
@@ -221,7 +221,6 @@ privileged system app, so it's granted the required permissions to access
 - [x] Add smart update completion detection using onStatusUpdate
 - [x] Add pause/resume demo
 - [ ] Verify system partition checksum for package
-- [?] Add non-A/B updates demo
 
 
 ## Running tests
@@ -243,7 +242,8 @@ privileged system app, so it's granted the required permissions to access
 
 ## Accessing `android.os.UpdateEngine` API
 
-`android.os.UpdateEngine`` APIs are marked as `@SystemApi`, meaning only system apps can access them.
+`android.os.UpdateEngine` APIs are marked as `@SystemApi`, meaning only system
+apps can access them.
 
 
 ## Getting read/write access to `/data/ota_package/`
