@@ -41,32 +41,6 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
 LOCAL_MODULE := libminui
 
-# This used to compare against values in double-quotes (which are just
-# ordinary characters in this context).  Strip double-quotes from the
-# value so that either will work.
-
-ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),ABGR_8888)
-  LOCAL_CFLAGS += -DRECOVERY_ABGR
-endif
-ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),RGBX_8888)
-  LOCAL_CFLAGS += -DRECOVERY_RGBX
-endif
-ifeq ($(subst ",,$(TARGET_RECOVERY_PIXEL_FORMAT)),BGRA_8888)
-  LOCAL_CFLAGS += -DRECOVERY_BGRA
-endif
-
-ifneq ($(TARGET_RECOVERY_OVERSCAN_PERCENT),)
-  LOCAL_CFLAGS += -DOVERSCAN_PERCENT=$(TARGET_RECOVERY_OVERSCAN_PERCENT)
-else
-  LOCAL_CFLAGS += -DOVERSCAN_PERCENT=0
-endif
-
-ifneq ($(TARGET_RECOVERY_DEFAULT_ROTATION),)
-  LOCAL_CFLAGS += -DDEFAULT_ROTATION=$(TARGET_RECOVERY_DEFAULT_ROTATION)
-else
-  LOCAL_CFLAGS += -DDEFAULT_ROTATION=ROTATION_NONE
-endif
-
 include $(BUILD_STATIC_LIBRARY)
 
 # libminui (shared library)
