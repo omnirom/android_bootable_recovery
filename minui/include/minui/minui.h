@@ -48,6 +48,13 @@ enum class GRRotation : int {
   LEFT = 3,
 };
 
+enum class PixelFormat : int {
+  UNKNOWN = 0,
+  ABGR = 1,
+  RGBX = 2,
+  BGRA = 3,
+};
+
 // Initializes the graphics backend and loads font file. Returns 0 on success, or -1 on error. Note
 // that the font initialization failure would be non-fatal, as caller may not need to draw any text
 // at all. Caller can check the font initialization result via gr_sys_font() as needed.
@@ -84,6 +91,9 @@ unsigned int gr_get_height(const GRSurface* surface);
 
 // Sets rotation, flips gr_fb_width/height if 90 degree rotation difference
 void gr_rotate(GRRotation rotation);
+
+// Returns the current PixelFormat being used.
+PixelFormat gr_pixel_format();
 
 //
 // Input events.

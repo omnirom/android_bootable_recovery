@@ -23,6 +23,8 @@
 
 #include <memory>
 
+#include <android-base/properties.h>
+
 #include "graphics_adf.h"
 #include "graphics_drm.h"
 #include "graphics_fbdev.h"
@@ -31,7 +33,6 @@
 static GRFont* gr_font = nullptr;
 static MinuiBackend* gr_backend = nullptr;
 
-static int overscan_percent = OVERSCAN_PERCENT;
 static int overscan_offset_x = 0;
 static int overscan_offset_y = 0;
 
@@ -41,6 +42,7 @@ static constexpr uint32_t alpha_mask = 0xff000000;
 // gr_draw is owned by backends.
 static const GRSurface* gr_draw = nullptr;
 static GRRotation rotation = GRRotation::NONE;
+static PixelFormat pixel_format = PixelFormat::UNKNOWN;
 
 static bool outside(int x, int y) {
   auto swapped = (rotation == GRRotation::LEFT || rotation == GRRotation::RIGHT);
@@ -50,6 +52,10 @@ static bool outside(int x, int y) {
 
 const GRFont* gr_sys_font() {
   return gr_font;
+}
+
+PixelFormat gr_pixel_format() {
+  return pixel_format;
 }
 
 int gr_measure(const GRFont* font, const char* s) {
@@ -203,11 +209,11 @@ void gr_texticon(int x, int y, GRSurface* icon) {
 
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
   uint32_t r32 = r, g32 = g, b32 = b, a32 = a;
-#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
-  gr_current = (a32 << 24) | (r32 << 16) | (g32 << 8) | b32;
-#else
-  gr_current = (a32 << 24) | (b32 << 16) | (g32 << 8) | r32;
-#endif
+  if (pixel_format == PixelFormat::ABGR || pixel_format == PixelFormat::BGRA) {
+    gr_current = (a32 << 24) | (r32 << 16) | (g32 << 8) | b32;
+  } else {
+    gr_current = (a32 << 24) | (b32 << 16) | (g32 << 8) | r32;
+  }
 }
 
 void gr_clear() {
@@ -335,6 +341,18 @@ void gr_flip() {
 }
 
 int gr_init() {
+  // pixel_format needs to be set before loading any resources or initializing backends.
+  std::string format = android::base::GetProperty("ro.recovery.ui.pixel_format", "");
+  if (format == "ABGR_8888") {
+    pixel_format = PixelFormat::ABGR;
+  } else if (format == "RGBX_8888") {
+    pixel_format = PixelFormat::RGBX;
+  } else if (format == "BGRA_8888") {
+    pixel_format = PixelFormat::BGRA;
+  } else {
+    pixel_format = PixelFormat::UNKNOWN;
+  }
+
   int ret = gr_init_font("font", &gr_font);
   if (ret != 0) {
     printf("Failed to init font: %d, continuing graphic backend initialization without font file\n",
@@ -360,6 +378,7 @@ int gr_init() {
 
   gr_backend = backend.release();
 
+  int overscan_percent = android::base::GetIntProperty("ro.recovery.ui.overscan_percent", 0);
   overscan_offset_x = gr_draw->width * overscan_percent / 100;
   overscan_offset_y = gr_draw->height * overscan_percent / 100;
 
@@ -370,17 +389,15 @@ int gr_init() {
     return -1;
   }
 
-#define __STRINGIFY(x) #x
-#define STRINGIFY(x) __STRINGIFY(x)
-
-  std::string rotation_str(STRINGIFY(DEFAULT_ROTATION));
+  std::string rotation_str =
+      android::base::GetProperty("ro.recovery.ui.default_rotation", "ROTATION_NONE");
   if (rotation_str == "ROTATION_RIGHT") {
     gr_rotate(GRRotation::RIGHT);
   } else if (rotation_str == "ROTATION_DOWN") {
     gr_rotate(GRRotation::DOWN);
   } else if (rotation_str == "ROTATION_LEFT") {
     gr_rotate(GRRotation::LEFT);
-  } else {  // "ROTATION_NONE"
+  } else {  // "ROTATION_NONE" or unknown string
     gr_rotate(GRRotation::NONE);
   }
 

@@ -207,9 +207,10 @@ int res_create_display_surface(const char* name, GRSurface** pSurface) {
     return -8;
   }
 
-#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
-  png_set_bgr(png_ptr);
-#endif
+  PixelFormat pixel_format = gr_pixel_format();
+  if (pixel_format == PixelFormat::ABGR || pixel_format == PixelFormat::BGRA) {
+    png_set_bgr(png_ptr);
+  }
 
   for (png_uint_32 y = 0; y < height; ++y) {
     std::vector<unsigned char> p_row(width * 4);
@@ -278,9 +279,9 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
     }
   }
 
-#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
-  png_set_bgr(png_ptr);
-#endif
+  if (gr_pixel_format() == PixelFormat::ABGR || gr_pixel_format() == PixelFormat::BGRA) {
+    png_set_bgr(png_ptr);
+  }
 
   for (png_uint_32 y = 0; y < height; ++y) {
     std::vector<unsigned char> p_row(width * 4);
@@ -327,9 +328,10 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
   surface->row_bytes = width;
   surface->pixel_bytes = 1;
 
-#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
-  png_set_bgr(png_ptr);
-#endif
+  PixelFormat pixel_format = gr_pixel_format();
+  if (pixel_format == PixelFormat::ABGR || pixel_format == PixelFormat::BGRA) {
+    png_set_bgr(png_ptr);
+  }
 
   for (png_uint_32 y = 0; y < height; ++y) {
     unsigned char* p_row = surface->data + y * surface->row_bytes;

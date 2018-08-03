@@ -116,15 +116,16 @@ GRSurfaceDrm* MinuiBackendDrm::DrmCreateSurface(int width, int height) {
   *surface = {};
 
   uint32_t format;
-#if defined(RECOVERY_ABGR)
-  format = DRM_FORMAT_RGBA8888;
-#elif defined(RECOVERY_BGRA)
-  format = DRM_FORMAT_ARGB8888;
-#elif defined(RECOVERY_RGBX)
-  format = DRM_FORMAT_XBGR8888;
-#else
-  format = DRM_FORMAT_RGB565;
-#endif
+  PixelFormat pixel_format = gr_pixel_format();
+  if (pixel_format == PixelFormat::ABGR) {
+    format = DRM_FORMAT_ABGR8888;
+  } else if (pixel_format == PixelFormat::BGRA) {
+    format = DRM_FORMAT_BGRA8888;
+  } else if (pixel_format == PixelFormat::RGBX) {
+    format = DRM_FORMAT_RGBX8888;
+  } else {
+    format = DRM_FORMAT_RGB565;
+  }
 
   drm_mode_create_dumb create_dumb = {};
   create_dumb.height = height;
