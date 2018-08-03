@@ -158,14 +158,14 @@ class ScreenRecoveryUI : public RecoveryUI {
  protected:
   // The margin that we don't want to use for showing texts (e.g. round screen, or screen with
   // rounded corners).
-  const int kMarginWidth;
-  const int kMarginHeight;
+  const int margin_width_;
+  const int margin_height_;
 
   // Number of frames per sec (default: 30) for both parts of the animation.
-  const int kAnimationFps;
+  const int animation_fps_;
 
   // The scale factor from dp to pixels. 1.0 for mdpi, 4.0 for xxxhdpi.
-  const float kDensity;
+  const float density_;
 
   virtual bool InitTextParams();
 
