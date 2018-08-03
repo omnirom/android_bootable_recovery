@@ -28,7 +28,7 @@ class VrRecoveryUI : public ScreenRecoveryUI {
  protected:
   // Pixel offsets to move drawing functions to visible range.
   // Can vary per device depending on screen size and lens distortion.
-  const int kStereoOffset;
+  const int stereo_offset_;
 
   int ScreenWidth() const override;
   int ScreenHeight() const override;

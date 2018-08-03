@@ -25,17 +25,22 @@
 #include <android-base/strings.h>
 #include <minui/minui.h>
 
+constexpr int kDefaultProgressBarBaseline = 259;
+constexpr int kDefaultMenuUnusableRows = 9;
+
 WearRecoveryUI::WearRecoveryUI()
     : ScreenRecoveryUI(true),
-      kProgressBarBaseline(RECOVERY_UI_PROGRESS_BAR_BASELINE),
-      kMenuUnusableRows(RECOVERY_UI_MENU_UNUSABLE_ROWS) {
-  // TODO: kMenuUnusableRows should be computed based on the lines in draw_screen_locked().
+      progress_bar_baseline_(android::base::GetIntProperty("ro.recovery.ui.progress_bar_baseline",
+                                                           kDefaultProgressBarBaseline)),
+      menu_unusable_rows_(android::base::GetIntProperty("ro.recovery.ui.menu_unusable_rows",
+                                                        kDefaultMenuUnusableRows)) {
+  // TODO: menu_unusable_rows_ should be computed based on the lines in draw_screen_locked().
 
   touch_screen_allowed_ = true;
 }
 
 int WearRecoveryUI::GetProgressBaseline() const {
-  return kProgressBarBaseline;
+  return progress_bar_baseline_;
 }
 
 // Draw background frame on the screen.  Does not flip pages.
@@ -94,7 +99,7 @@ void WearRecoveryUI::StartMenu(const std::vector<std::string>& headers,
                                const std::vector<std::string>& items, size_t initial_selection) {
   std::lock_guard<std::mutex> lg(updateMutex);
   if (text_rows_ > 0 && text_cols_ > 0) {
-    menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_ - kMenuUnusableRows - 1,
+    menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_ - menu_unusable_rows_ - 1,
                                    text_cols_ - 1, headers, items, initial_selection);
     update_screen_locked();
   }
