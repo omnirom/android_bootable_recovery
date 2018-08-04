@@ -25,12 +25,10 @@ tune2fs_static_libraries := \
 updater_common_static_libraries := \
     libapplypatch \
     libbootloader_message \
+    libbspatch \
     libedify \
     libotafault \
     libotautil \
-    libbspatch \
-    libziparchive \
-    libutils \
     libext4_utils \
     libfec \
     libfec_rs \
@@ -41,42 +39,17 @@ updater_common_static_libraries := \
     libselinux \
     libsparse \
     libsquashfs_utils \
+    libbrotli \
     libbz \
+    libziparchive \
     libz \
     libbase \
     libcrypto \
     libcrypto_utils \
     libcutils \
+    libutils \
     libtune2fs \
-    libbrotli \
     $(tune2fs_static_libraries)
-
-# libupdater (static library)
-# ===============================
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libupdater
-
-LOCAL_SRC_FILES := \
-    commands.cpp \
-    install.cpp \
-    blockimg.cpp
-
-LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include \
-    external/e2fsprogs/misc
-
-LOCAL_CFLAGS := \
-    -Wall \
-    -Werror
-
-LOCAL_EXPORT_C_INCLUDE_DIRS := \
-    $(LOCAL_PATH)/include
-
-LOCAL_STATIC_LIBRARIES := \
-    $(updater_common_static_libraries)
-
-include $(BUILD_STATIC_LIBRARY)
 
 # updater (static executable)
 # ===============================
