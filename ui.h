@@ -195,8 +195,8 @@ class RecoveryUI {
   };
 
   // The sensitivity when detecting a swipe.
-  const int kTouchLowThreshold;
-  const int kTouchHighThreshold;
+  const int touch_low_threshold_;
+  const int touch_high_threshold_;
 
   void OnKeyDetected(int key_code);
   void OnTouchDetected(int dx, int dy);
