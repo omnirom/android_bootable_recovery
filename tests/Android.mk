@@ -137,6 +137,7 @@ libupdater_static_libraries := \
     libext4_utils \
     libfec \
     libfec_rs \
+    libverity_tree \
     libfs_mgr \
     libgtest_prod \
     liblog \
