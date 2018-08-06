@@ -111,6 +111,19 @@ LOCAL_SHARED_LIBRARIES := \
 
 include $(BUILD_STATIC_LIBRARY)
 
+# Health HAL dependency
+health_hal_static_libraries := \
+    android.hardware.health@2.0-impl \
+    android.hardware.health@2.0 \
+    android.hardware.health@1.0 \
+    android.hardware.health@1.0-convert \
+    libhealthstoragedefault \
+    libhidltransport \
+    libhidlbase \
+    libhwbinder_noltopgo \
+    libvndksupport \
+    libbatterymonitor
+
 librecovery_static_libraries := \
     libbootloader_message \
     libfusesideload \
@@ -118,8 +131,8 @@ librecovery_static_libraries := \
     libminui \
     libverifier \
     libotautil \
+    $(health_hal_static_libraries) \
     libasyncio \
-    libbatterymonitor \
     libcrypto_utils \
     libcrypto \
     libext4_utils \
