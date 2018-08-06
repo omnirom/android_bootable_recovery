@@ -28,6 +28,64 @@ recovery_common_cflags := \
     -Werror \
     -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 
+# librecovery_ui_ext (shared library)
+# ===================================
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := librecovery_ui_ext
+
+# LOCAL_MODULE_PATH for shared libraries is unsupported in multiarch builds.
+LOCAL_MULTILIB := first
+
+ifeq ($(TARGET_IS_64_BIT),true)
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/system/lib64
+else
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/system/lib
+endif
+
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+    $(TARGET_RECOVERY_UI_LIB)
+
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    liblog \
+    librecovery_ui
+
+include $(BUILD_SHARED_LIBRARY)
+
+# librecovery_ui (shared library)
+# ===============================
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := \
+    device.cpp \
+    screen_ui.cpp \
+    ui.cpp \
+    vr_ui.cpp \
+    wear_ui.cpp
+
+LOCAL_MODULE := librecovery_ui
+
+LOCAL_CFLAGS := $(recovery_common_cflags)
+
+LOCAL_MULTILIB := first
+
+ifeq ($(TARGET_IS_64_BIT),true)
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/system/lib64
+else
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/system/lib
+endif
+
+LOCAL_STATIC_LIBRARIES := \
+    libminui \
+    libotautil \
+
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    libpng \
+    libz \
+
+include $(BUILD_SHARED_LIBRARY)
+
 # librecovery_ui (static library)
 # ===============================
 include $(CLEAR_VARS)
@@ -40,12 +98,16 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := librecovery_ui
 
+LOCAL_CFLAGS := $(recovery_common_cflags)
+
 LOCAL_STATIC_LIBRARIES := \
     libminui \
     libotautil \
-    libbase
 
-LOCAL_CFLAGS := $(recovery_common_cflags)
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    libpng \
+    libz \
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -63,11 +125,9 @@ health_hal_static_libraries := \
     libbatterymonitor
 
 librecovery_static_libraries := \
-    $(TARGET_RECOVERY_UI_LIB) \
     libbootloader_message \
     libfusesideload \
     libminadbd \
-    librecovery_ui \
     libminui \
     libverifier \
     libotautil \
@@ -125,8 +185,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := recovery
 
-LOCAL_FORCE_STATIC_EXECUTABLE := true
-
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/system/bin
 
 # Cannot link with LLD: undefined symbol: UsbNoPermissionsLongHelpText
@@ -137,7 +195,11 @@ LOCAL_CFLAGS := $(recovery_common_cflags)
 
 LOCAL_STATIC_LIBRARIES := \
     librecovery \
+    librecovery_ui_default \
     $(librecovery_static_libraries)
+
+LOCAL_SHARED_LIBRARIES := \
+    librecovery_ui \
 
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
@@ -166,6 +228,17 @@ LOCAL_REQUIRED_MODULES += \
     recovery-persist \
     recovery-refresh
 endif
+
+LOCAL_REQUIRED_MODULES += \
+    librecovery_ui_ext
+
+# TODO(b/110380063): Explicitly install the following shared libraries to recovery, until `recovery`
+# module is built with Soong (with `recovery: true` flag).
+LOCAL_REQUIRED_MODULES += \
+    libbase.recovery \
+    liblog.recovery \
+    libpng.recovery \
+    libz.recovery \
 
 include $(BUILD_EXECUTABLE)
 

@@ -119,8 +119,12 @@ class Device {
   std::unique_ptr<RecoveryUI> ui_;
 };
 
+// Disable name mangling, as this function will be loaded via dlsym(3).
+extern "C" {
+
 // The device-specific library must define this function (or the default one will be used, if there
 // is no device-specific library). It returns the Device object that recovery should use.
 Device* make_device();
+}
 
 #endif  // _DEVICE_H
