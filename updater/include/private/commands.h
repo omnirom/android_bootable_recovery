@@ -213,6 +213,10 @@ class PatchInfo {
 //      - Free the given stash data.
 //      - Meaningful args: StashInfo
 //
+//    compute_hash_tree <hash_tree_ranges> <source_ranges> <hash_algorithm> <salt_hex> <root_hash>
+//      - Computes the hash_tree bytes and writes the result to the specified range on the
+//        block_device.
+//
 //    abort
 //      - Abort the current update. Allowed for testing code only.
 //
@@ -221,6 +225,7 @@ class Command {
   enum class Type {
     ABORT,
     BSDIFF,
+    COMPUTE_HASH_TREE,
     ERASE,
     FREE,
     IMGDIFF,
