@@ -14,6 +14,7 @@
 
 cc_library {
     name: "libminui",
+    recovery_available: true,
 
     defaults: [
         "recovery_defaults",
