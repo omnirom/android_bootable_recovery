@@ -155,10 +155,10 @@ libupdater_static_libraries := \
 
 librecovery_static_libraries := \
     librecovery \
-    $(TARGET_RECOVERY_UI_LIB) \
     libbootloader_message \
     libfusesideload \
     libminadbd \
+    librecovery_ui_default \
     librecovery_ui \
     libminui \
     libverifier \
