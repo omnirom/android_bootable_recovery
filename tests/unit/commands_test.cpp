@@ -30,6 +30,7 @@ TEST(CommandsTest, ParseType) {
   ASSERT_EQ(Command::Type::IMGDIFF, Command::ParseType("imgdiff"));
   ASSERT_EQ(Command::Type::STASH, Command::ParseType("stash"));
   ASSERT_EQ(Command::Type::FREE, Command::ParseType("free"));
+  ASSERT_EQ(Command::Type::COMPUTE_HASH_TREE, Command::ParseType("compute_hash_tree"));
 }
 
 TEST(CommandsTest, ParseType_InvalidCommand) {
