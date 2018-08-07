@@ -49,7 +49,7 @@
 #include <android-base/unique_fd.h>
 #include <bootloader_message/bootloader_message.h>
 #include <cutils/properties.h> /* for property_list */
-#include <healthd/BatteryMonitor.h>
+#include <health2/Health.h>
 #include <ziparchive/zip_archive.h>
 
 #include "adb_install.h"
@@ -876,6 +876,11 @@ void ui_print(const char* format, ...) {
 }
 
 static bool is_battery_ok(int* required_battery_level) {
+  using android::hardware::health::V1_0::BatteryStatus;
+  using android::hardware::health::V2_0::Result;
+  using android::hardware::health::V2_0::toString;
+  using android::hardware::health::V2_0::implementation::Health;
+
   struct healthd_config healthd_config = {
     .batteryStatusPath = android::String8(android::String8::kEmptyString),
     .batteryHealthPath = android::String8(android::String8::kEmptyString),
@@ -893,37 +898,52 @@ static bool is_battery_ok(int* required_battery_level) {
     .boot_min_cap = 0,
     .screen_on = nullptr
   };
-  healthd_board_init(&healthd_config);
 
-  android::BatteryMonitor monitor;
-  monitor.init(&healthd_config);
+  auto health =
+      android::hardware::health::V2_0::implementation::Health::initInstance(&healthd_config);
 
   static constexpr int BATTERY_READ_TIMEOUT_IN_SEC = 10;
   int wait_second = 0;
   while (true) {
-    int charge_status = monitor.getChargeStatus();
+    auto charge_status = BatteryStatus::UNKNOWN;
+    health
+        ->getChargeStatus([&charge_status](auto res, auto out_status) {
+          if (res == Result::SUCCESS) {
+            charge_status = out_status;
+          }
+        })
+        .isOk();  // should not have transport error
+
     // Treat unknown status as charged.
-    bool charged = (charge_status != android::BATTERY_STATUS_DISCHARGING &&
-                    charge_status != android::BATTERY_STATUS_NOT_CHARGING);
-    android::BatteryProperty capacity;
-    android::status_t status = monitor.getProperty(android::BATTERY_PROP_CAPACITY, &capacity);
-    ui_print("charge_status %d, charged %d, status %d, capacity %" PRId64 "\n", charge_status,
-             charged, status, capacity.valueInt64);
+    bool charged = (charge_status != BatteryStatus::DISCHARGING &&
+                    charge_status != BatteryStatus::NOT_CHARGING);
+
+    Result res = Result::UNKNOWN;
+    int32_t capacity = INT32_MIN;
+    health
+        ->getCapacity([&res, &capacity](auto out_res, auto out_capacity) {
+          res = out_res;
+          capacity = out_capacity;
+        })
+        .isOk();  // should not have transport error
+
+    ui_print("charge_status %d, charged %d, status %s, capacity %" PRId32 "\n", charge_status,
+             charged, toString(res).c_str(), capacity);
     // At startup, the battery drivers in devices like N5X/N6P take some time to load
     // the battery profile. Before the load finishes, it reports value 50 as a fake
     // capacity. BATTERY_READ_TIMEOUT_IN_SEC is set that the battery drivers are expected
     // to finish loading the battery profile earlier than 10 seconds after kernel startup.
-    if (status == 0 && capacity.valueInt64 == 50) {
+    if (res == Result::SUCCESS && capacity == 50) {
       if (wait_second < BATTERY_READ_TIMEOUT_IN_SEC) {
         sleep(1);
         wait_second++;
         continue;
       }
     }
-    // If we can't read battery percentage, it may be a device without battery. In this situation,
-    // use 100 as a fake battery percentage.
-    if (status != 0) {
-      capacity.valueInt64 = 100;
+    // If we can't read battery percentage, it may be a device without battery. In this
+    // situation, use 100 as a fake battery percentage.
+    if (res != Result::SUCCESS) {
+      capacity = 100;
     }
 
     // GmsCore enters recovery mode to install package when having enough battery percentage.
@@ -932,7 +952,7 @@ static bool is_battery_ok(int* required_battery_level) {
     static constexpr int BATTERY_OK_PERCENTAGE = 20;
     static constexpr int BATTERY_WITH_CHARGER_OK_PERCENTAGE = 15;
     *required_battery_level = charged ? BATTERY_WITH_CHARGER_OK_PERCENTAGE : BATTERY_OK_PERCENTAGE;
-    return capacity.valueInt64 >= *required_battery_level;
+    return capacity >= *required_battery_level;
   }
 }
 
