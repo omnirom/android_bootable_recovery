@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -329,7 +330,32 @@ int main(int argc, char** argv) {
 
   printf("locale is [%s]\n", locale.c_str());
 
-  Device* device = make_device();
+  static constexpr const char* kDefaultLibRecoveryUIExt = "librecovery_ui_ext.so";
+  // Intentionally not calling dlclose(3) to avoid potential gotchas (e.g. `make_device` may have
+  // handed out pointers to code or static [or thread-local] data and doesn't collect them all back
+  // in on dlclose).
+  void* librecovery_ui_ext = dlopen(kDefaultLibRecoveryUIExt, RTLD_NOW);
+
+  using MakeDeviceType = decltype(&make_device);
+  MakeDeviceType make_device_func = nullptr;
+  if (librecovery_ui_ext == nullptr) {
+    printf("Failed to dlopen %s: %s\n", kDefaultLibRecoveryUIExt, dlerror());
+  } else {
+    reinterpret_cast<void*&>(make_device_func) = dlsym(librecovery_ui_ext, "make_device");
+    if (make_device_func == nullptr) {
+      printf("Failed to dlsym make_device: %s\n", dlerror());
+    }
+  }
+
+  Device* device;
+  if (make_device_func == nullptr) {
+    printf("Falling back to the default make_device() instead\n");
+    device = make_device();
+  } else {
+    printf("Loading make_device from %s\n", kDefaultLibRecoveryUIExt);
+    device = (*make_device_func)();
+  }
+
   if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
     printf("Quiescent recovery mode.\n");
     device->ResetUI(new StubRecoveryUI());
