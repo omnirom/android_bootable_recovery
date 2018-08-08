@@ -40,6 +40,8 @@ Command::Type Command::ParseType(const std::string& type_str) {
     return Type::ABORT;
   } else if (type_str == "bsdiff") {
     return Type::BSDIFF;
+  } else if (type_str == "compute_hash_tree") {
+    return Type::COMPUTE_HASH_TREE;
   } else if (type_str == "erase") {
     return Type::ERASE;
   } else if (type_str == "free") {
@@ -175,6 +177,7 @@ Command Command::Parse(const std::string& line, size_t index, std::string* err) 
   SourceInfo source_info;
   StashInfo stash_info;
 
+  // TODO(xunchang) add the parse code of compute_hash_tree
   if (op == Type::ZERO || op == Type::NEW || op == Type::ERASE) {
     // zero/new/erase <rangeset>
     if (pos + 1 != tokens.size()) {

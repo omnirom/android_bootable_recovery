@@ -137,6 +137,7 @@ libupdater_static_libraries := \
     libext4_utils \
     libfec \
     libfec_rs \
+    libverity_tree \
     libfs_mgr \
     libgtest_prod \
     liblog \
@@ -167,10 +168,10 @@ health_hal_static_libraries := \
 
 librecovery_static_libraries := \
     librecovery \
-    $(TARGET_RECOVERY_UI_LIB) \
     libbootloader_message \
     libfusesideload \
     libminadbd \
+    librecovery_ui_default \
     librecovery_ui \
     libminui \
     libverifier \
