@@ -127,7 +127,6 @@ health_hal_static_libraries := \
 librecovery_static_libraries := \
     libbootloader_message \
     libfusesideload \
-    libminadbd \
     libminui \
     libverifier \
     libotautil \
@@ -170,6 +169,9 @@ LOCAL_CFLAGS := $(recovery_common_cflags)
 
 LOCAL_MODULE := librecovery
 
+LOCAL_SHARED_LIBRARIES := \
+    libminadbd_services \
+
 LOCAL_STATIC_LIBRARIES := \
     $(librecovery_static_libraries)
 
@@ -199,6 +201,7 @@ LOCAL_STATIC_LIBRARIES := \
     $(librecovery_static_libraries)
 
 LOCAL_SHARED_LIBRARIES := \
+    libminadbd_services \
     librecovery_ui \
 
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
@@ -236,7 +239,9 @@ LOCAL_REQUIRED_MODULES += \
 # module is built with Soong (with `recovery: true` flag).
 LOCAL_REQUIRED_MODULES += \
     libbase.recovery \
+    libcrypto.recovery \
     liblog.recovery \
+    libminadbd_services.recovery \
     libpng.recovery \
     libz.recovery \
 
