@@ -26,9 +26,8 @@ cc_defaults {
     ],
 }
 
-cc_library {
-    name: "libminadbd_services",
-    recovery_available: true,
+cc_library_static {
+    name: "libminadbd",
 
     defaults: [
         "minadbd_defaults",
@@ -40,14 +39,14 @@ cc_library {
         "minadbd_services.cpp",
     ],
 
-    shared_libs: [
-        "libadbd",
+    static_libs: [
+        "libfusesideload",
         "libbase",
         "libcrypto",
     ],
 
-    static_libs: [
-        "libfusesideload",
+    whole_static_libs: [
+        "libadbd",
     ],
 }
 
@@ -63,9 +62,8 @@ cc_test {
     ],
 
     static_libs: [
-        "libminadbd_services",
-        "libadbd",
         "libBionicGtestMain",
+        "libminadbd",
     ],
 
     shared_libs: [

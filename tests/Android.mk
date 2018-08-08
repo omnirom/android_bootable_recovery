@@ -170,7 +170,7 @@ librecovery_static_libraries := \
     librecovery \
     libbootloader_message \
     libfusesideload \
-    libminadbd_services \
+    libminadbd \
     librecovery_ui_default \
     librecovery_ui \
     libminui \
