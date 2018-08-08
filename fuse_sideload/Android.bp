@@ -14,7 +14,6 @@
 
 cc_library_static {
     name: "libfusesideload",
-    recovery_available: true,
 
     cflags: [
         "-D_XOPEN_SOURCE",
@@ -31,7 +30,7 @@ cc_library_static {
         "include",
     ],
 
-    shared_libs: [
+    static_libs: [
         "libbase",
         "libcrypto",
     ],
