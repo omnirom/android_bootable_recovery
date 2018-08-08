@@ -117,12 +117,16 @@ GRSurfaceDrm* MinuiBackendDrm::DrmCreateSurface(int width, int height) {
 
   uint32_t format;
   PixelFormat pixel_format = gr_pixel_format();
+  // PixelFormat comes in byte order, whereas DRM_FORMAT_* uses little-endian
+  // (external/libdrm/include/drm/drm_fourcc.h). Note that although drm_fourcc.h also defines a
+  // macro of DRM_FORMAT_BIG_ENDIAN, it doesn't seem to be actually supported (see the discussion
+  // in https://lists.freedesktop.org/archives/amd-gfx/2017-May/008560.html).
   if (pixel_format == PixelFormat::ABGR) {
-    format = DRM_FORMAT_ABGR8888;
+    format = DRM_FORMAT_RGBA8888;
   } else if (pixel_format == PixelFormat::BGRA) {
-    format = DRM_FORMAT_BGRA8888;
+    format = DRM_FORMAT_ARGB8888;
   } else if (pixel_format == PixelFormat::RGBX) {
-    format = DRM_FORMAT_RGBX8888;
+    format = DRM_FORMAT_XBGR8888;
   } else {
     format = DRM_FORMAT_RGB565;
   }
