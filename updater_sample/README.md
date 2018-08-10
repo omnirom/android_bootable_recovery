@@ -227,7 +227,7 @@ privileged system app, so it's granted the required permissions to access
 
 1. Build `mmma bootable/recovery/updater_sample/`
 2. Install app
-   `adb install $OUT/system/app/SystemUpdaterSample/SystemUpdaterSample.apk`
+   `adb install $OUT/system/priv-app/SystemUpdaterSample/SystemUpdaterSample.apk`
 3. Install tests
    `adb install $OUT/testcases/SystemUpdaterSampleTests/SystemUpdaterSampleTests.apk`
 4. Run tests
