@@ -16,6 +16,11 @@ cc_defaults {
     name: "recovery_defaults",
 
     cflags: [
+        "-D_FILE_OFFSET_BITS=64",
+
+        // Must be the same as RECOVERY_API_VERSION.
+        "-DRECOVERY_API_VERSION=3",
+
         "-Wall",
         "-Werror",
     ],
@@ -24,6 +29,7 @@ cc_defaults {
 // Generic device that uses ScreenRecoveryUI.
 cc_library_static {
     name: "librecovery_ui_default",
+    recovery_available: true,
 
     defaults: [
         "recovery_defaults",
@@ -37,6 +43,7 @@ cc_library_static {
 // The default wear device that uses WearRecoveryUI.
 cc_library_static {
     name: "librecovery_ui_wear",
+    recovery_available: true,
 
     defaults: [
         "recovery_defaults",
@@ -50,6 +57,7 @@ cc_library_static {
 // The default VR device that uses VrRecoveryUI.
 cc_library_static {
     name: "librecovery_ui_vr",
+    recovery_available: true,
 
     defaults: [
         "recovery_defaults",
@@ -62,6 +70,7 @@ cc_library_static {
 
 cc_library_static {
     name: "libverifier",
+    recovery_available: true,
 
     defaults: [
         "recovery_defaults",
@@ -72,10 +81,13 @@ cc_library_static {
         "verifier.cpp",
     ],
 
-    static_libs: [
+    shared_libs: [
         "libbase",
         "libcrypto",
         "libcrypto_utils",
+    ],
+
+    static_libs: [
         "libotautil",
     ],
 }
