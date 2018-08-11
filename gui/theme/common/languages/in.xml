@@ -6,7 +6,6 @@
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource name="font_exl" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
 		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
 		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
 		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
