@@ -262,6 +262,5 @@ LOCAL_REQUIRED_MODULES += \
 include $(BUILD_EXECUTABLE)
 
 include \
-    $(LOCAL_PATH)/boot_control/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
