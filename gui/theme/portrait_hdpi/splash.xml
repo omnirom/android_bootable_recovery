@@ -25,26 +25,11 @@
 	<pages>
 		<page name="splash">
 			<background color="%background_color%"/>
-
-			<fill color="%header_color%">
-				<placement x="0" y="0" w="%screen_width%" h="456"/>
-			</fill>
-
+			
 			<image>
 				<image resource="splashlogo"/>
-				<placement x="540" y="456" placement="4"/>
+				<placement x="0" y="0"/>
 			</image>
-
-			<image>
-				<image resource="splashteamwin"/>
-				<placement x="540" y="1540" placement="4"/>
-			</image>
-
-			<text color="%header_color%">
-				<font resource="font_l"/>
-				<placement x="540" y="1590" placement="5"/>
-				<text>Recovery Project %tw_version%</text>
-			</text>
 		</page>
 	</pages>
 </recovery>
