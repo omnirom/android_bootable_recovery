@@ -18,6 +18,7 @@
 #define _VARIABLES_HEADER_
 
 #define TW_MAIN_VERSION_STR       "3.2.3"
+#define BR_MAIN_VERSION_STR       "B-v1.1"
 #define TW_VERSION_STR TW_MAIN_VERSION_STR TW_DEVICE_VERSION
 
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
@@ -64,6 +65,7 @@
 #define TW_UPDATE_SYSTEM_DETAILS_TEXT "tw_update_system_details_text"
 
 #define TW_VERSION_VAR              "tw_version"
+#define BR_VERSION_VAR              "br_version"
 #define TW_GUI_SORT_ORDER           "tw_gui_sort_order"
 #define TW_ZIP_LOCATION_VAR         "tw_zip_location"
 #define TW_ZIP_INTERNAL_VAR         "tw_zip_internal"
