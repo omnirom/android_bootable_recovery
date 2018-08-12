@@ -1,3 +1,4 @@
+//
 // Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,27 +12,26 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-cc_library {
-    name: "libfusesideload",
+cc_library_shared {
+    name: "bootctrl.default",
+    recovery_available: true,
+    relative_install_path: "hw",
+
+    srcs: ["boot_control.cpp"],
 
     cflags: [
-        "-D_XOPEN_SOURCE",
-        "-D_GNU_SOURCE",
-        "-Wall",
+        "-D_FILE_OFFSET_BITS=64",
         "-Werror",
+        "-Wall",
+        "-Wextra",
     ],
 
-    srcs: [
-        "fuse_sideload.cpp",
-    ],
-
-    export_include_dirs: [
-        "include",
-    ],
-
-    static_libs: [
+    shared_libs: [
         "libbase",
-        "libcrypto",
+        "libbootloader_message",
+        "libfs_mgr",
+        "liblog",
     ],
 }

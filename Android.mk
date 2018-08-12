@@ -125,31 +125,32 @@ health_hal_static_libraries := \
     libbatterymonitor
 
 librecovery_static_libraries := \
-    libbootloader_message \
     libfusesideload \
     libminadbd \
     libminui \
     libverifier \
     libotautil \
     $(health_hal_static_libraries) \
-    libasyncio \
-    libcrypto_utils \
-    libcrypto \
-    libext4_utils \
-    libfs_mgr \
-    libpng \
-    libsparse \
     libvintf_recovery \
     libvintf \
-    libhidl-gen-utils \
-    libtinyxml2 \
-    libziparchive \
+
+librecovery_shared_libraries := \
+    libasyncio \
     libbase \
-    libutils \
+    libbootloader_message \
+    libcrypto \
+    libcrypto_utils \
     libcutils \
+    libext4_utils \
+    libfs_mgr \
+    libhidl-gen-utils \
     liblog \
+    libpng \
     libselinux \
+    libtinyxml2 \
+    libutils \
     libz \
+    libziparchive \
 
 # librecovery (static library)
 # ===============================
@@ -172,6 +173,9 @@ LOCAL_MODULE := librecovery
 
 LOCAL_STATIC_LIBRARIES := \
     $(librecovery_static_libraries)
+
+LOCAL_SHARED_LIBRARIES := \
+    $(librecovery_shared_libraries)
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -200,6 +204,7 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES := \
     librecovery_ui \
+    $(librecovery_shared_libraries)
 
 LOCAL_HAL_STATIC_LIBRARIES := libhealthd
 
@@ -219,7 +224,8 @@ endif
 # e2fsck is needed for adb remount -R.
 ifeq ($(BOARD_EXT4_SHARE_DUP_BLOCKS),true)
 ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
-LOCAL_REQUIRED_MODULES += e2fsck_static
+LOCAL_REQUIRED_MODULES += \
+    e2fsck_static
 endif
 endif
 
@@ -235,15 +241,26 @@ LOCAL_REQUIRED_MODULES += \
 # TODO(b/110380063): Explicitly install the following shared libraries to recovery, until `recovery`
 # module is built with Soong (with `recovery: true` flag).
 LOCAL_REQUIRED_MODULES += \
+    libasyncio.recovery \
     libbase.recovery \
+    libbootloader_message.recovery \
+    libcrypto.recovery \
+    libcrypto_utils.recovery \
+    libcutils.recovery \
+    libext4_utils.recovery \
+    libfs_mgr.recovery \
+    libhidl-gen-utils.recovery \
     liblog.recovery \
     libpng.recovery \
+    libselinux.recovery \
+    libsparse.recovery \
+    libtinyxml2.recovery \
+    libutils.recovery \
     libz.recovery \
+    libziparchive.recovery \
 
 include $(BUILD_EXECUTABLE)
 
 include \
-    $(LOCAL_PATH)/boot_control/Android.mk \
     $(LOCAL_PATH)/tests/Android.mk \
     $(LOCAL_PATH)/updater/Android.mk \
-    $(LOCAL_PATH)/updater_sample/Android.mk \

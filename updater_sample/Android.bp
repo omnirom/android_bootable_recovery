@@ -12,26 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library {
-    name: "libfusesideload",
+android_app {
+    name: "SystemUpdaterSample",
+    sdk_version: "system_current",
+    privileged: true,
 
-    cflags: [
-        "-D_XOPEN_SOURCE",
-        "-D_GNU_SOURCE",
-        "-Wall",
-        "-Werror",
-    ],
-
-    srcs: [
-        "fuse_sideload.cpp",
-    ],
-
-    export_include_dirs: [
-        "include",
-    ],
+    srcs: ["src/**/*.java"],
 
     static_libs: [
-        "libbase",
-        "libcrypto",
+        "guava",
     ],
+
+    optimize: {
+        // TODO(b/112462307): proguard_flags_files is not picked up by Soong.
+        // proguard_flags_files: [
+        //     "proguard.flags",
+        // ],
+        enabled: false,
+    },
+
+    resource_dirs: ["res"],
 }
