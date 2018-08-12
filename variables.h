@@ -20,6 +20,7 @@
 #define TW_MAIN_VERSION_STR       "3.2.3"
 #define BR_MAIN_VERSION_STR       "B-v1.1"
 #define TW_VERSION_STR TW_MAIN_VERSION_STR TW_DEVICE_VERSION
+#define BR_VERSION_STR BR_MAIN_VERSION_STR BR_DEVICE_VERSION
 
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
 #define TW_FILENAME                 "tw_filename"
