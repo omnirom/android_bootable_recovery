@@ -393,7 +393,7 @@
 			<text color="%text_color%">
 				<font resource="font_m"/>
 				<placement x="900" y="%row18_y%"/>
-				<text>{@batik_v=B v1.1}</text>
+				<text>%br_version</text>
 			</text>	
 			
 			<text color="%text_color%">
