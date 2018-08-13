@@ -25,31 +25,31 @@
 		<font name="keylabel-longpress" filename="RobotoCondensed-Regular.ttf" size="32"/>
 
 		<image name="header" filename="header" retainaspect="1"/>
-		<image name="bg_batik" filename="bg_batik"/>
-		<image name="bg_batik2" filename="bg_batik2"/>
+		<image name="bg_batik" filename="bg_batik" retainaspect="1"/>
+		<image name="bg_batik2" filename="bg_batik2" retainaspect="1"/>
 		<image name="brand_name" filename="brand_name" retainaspect="1"/>
 		<image name="logo" filename="logo" retainaspect="1"/>
-		<image name="main_button" filename="main_button"/>
-		<image name="bn_install" filename="bn_install"/>
-		<image name="bn_wipe" filename="bn_wipe"/>
-		<image name="bn_backup" filename="bn_backup"/>
-		<image name="bn_restore" filename="bn_restore"/>
-		<image name="bn_mount" filename="bn_mount"/>
-		<image name="bn_advanced" filename="bn_advanced"/>
-		<image name="bn_setting" filename="bn_setting"/>
-		<image name="bn_reboot" filename="bn_reboot"/>
-		<image name="bn_about" filename="bn_about"/>
-		<image name="bn_copylog" filename="bn_copylog"/>
-		<image name="bn_fm" filename="bn_fm"/>
-		<image name="bn_fix" filename="bn_fix"/>
-		<image name="bn_partition" filename="bn_partition"/>
-		<image name="bn_tools" filename="bn_tools"/>
-		<image name="bn_terminal" filename="bn_terminal"/>
-		<image name="bn_adb" filename="bn_adb"/>
-		<image name="bn_system" filename="bn_system"/>
-		<image name="bn_recovey" filename="bn_recovery"/>
-		<image name="bn_poweroff" filename="bn_poweroff"/>
-		<image name="bn_bootloader" filename="bn_bootloader"/>
+		<image name="main_button" filename="main_button" retainaspect="1"/>
+		<image name="bn_install" filename="bn_install" retainaspect="1"/>
+		<image name="bn_wipe" filename="bn_wipe" retainaspect="1"/>
+		<image name="bn_backup" filename="bn_backup" retainaspect="1"/>
+		<image name="bn_restore" filename="bn_restore" retainaspect="1"/>
+		<image name="bn_mount" filename="bn_mount"retainaspect="1"/>
+		<image name="bn_advanced" filename="bn_advanced" retainaspect="1"/>
+		<image name="bn_setting" filename="bn_setting" retainaspect="1"/>
+		<image name="bn_reboot" filename="bn_reboot" retainaspect="1"/>
+		<image name="bn_about" filename="bn_about" retainaspect="1"/>
+		<image name="bn_copylog" filename="bn_copylog" retainaspect="1"/>
+		<image name="bn_fm" filename="bn_fm" retainaspect="1"/>
+		<image name="bn_fix" filename="bn_fix" retainaspect="1"/>
+		<image name="bn_partition" filename="bn_partition" retainaspect="1"/>
+		<image name="bn_tools" filename="bn_tools" retainaspect="1"/>
+		<image name="bn_terminal" filename="bn_terminal" retainaspect="1"/>
+		<image name="bn_adb" filename="bn_adb" retainaspect="1"/>
+		<image name="bn_system" filename="bn_system" retainaspect="1"/>
+		<image name="bn_recovey" filename="bn_recovery" retainaspect="1"/>
+		<image name="bn_poweroff" filename="bn_poweroff" retainaspect="1"/>
+		<image name="bn_bootloader" filename="bn_bootloader" retainaspect="1"/>
 		<image name="main_button_half_height" filename="main_button_half_height"/>
 		<image name="main_button_half_height_full_width" filename="main_button_half_height_full_width"/>
 		<image name="fab_selectfolder" filename="fab_selectfolder" retainaspect="1"/>
@@ -119,9 +119,9 @@
 		<variable name="center_x" value="540"/>
 		<variable name="menu_x1" value="75"/>
 		<variable name="menu_x2" value="565"/>
-		<variable name="bn_x1" value="130"/>
-		<variable name="bn_x2" value="447"/>
-		<variable name="bn_x3" value="764"/>
+		<variable name="bn_x1" value="135"/>
+		<variable name="bn_x2" value="452"/>
+		<variable name="bn_x3" value="769"/>
 		<variable name="tx_x1" value="110"/>
 		<variable name="tx_x2" value="427"/>
 		<variable name="tx_x3" value="744"/>
@@ -530,7 +530,7 @@
 		<template name="batik-navbar">
 			<image>
 				<image resource="brand_name"/>
-				<placement x="0" y="%row15_y%"/>
+				<placement x="0" y="%row15_y%" placement="4"/>
 			</image>
 		</template>
 
