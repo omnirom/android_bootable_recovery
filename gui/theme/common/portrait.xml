@@ -2973,7 +2973,6 @@
 		</page>
 
 		<page name="reboot">
-			<template name="batik"/>
 			<template name="page"/>
 
 			<text style="text_l">
@@ -3769,7 +3768,6 @@
 		
 		<page name="advanced2">
 			<template name="page"/>
-			<template name="batik"/>
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
@@ -3857,7 +3855,6 @@
 		</page>
 		
 		<page name="tools">
-			<template name="batik"/>
 			<template name="page"/>
 
 			<text style="text_l">
