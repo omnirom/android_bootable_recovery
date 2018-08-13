@@ -26,6 +26,34 @@ cc_defaults {
     ],
 }
 
+cc_library {
+    name: "librecovery_ui",
+    recovery_available: true,
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "device.cpp",
+        "screen_ui.cpp",
+        "ui.cpp",
+        "vr_ui.cpp",
+        "wear_ui.cpp"
+    ],
+
+    static_libs: [
+        "libminui",
+        "libotautil",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "libpng",
+        "libz",
+    ],
+}
+
 // Generic device that uses ScreenRecoveryUI.
 cc_library_static {
     name: "librecovery_ui_default",
@@ -68,6 +96,78 @@ cc_library_static {
     ],
 }
 
+cc_defaults {
+    name: "librecovery_defaults",
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    shared_libs: [
+        "libasyncio",
+        "libbase",
+        "libbootloader_message",
+        "libcrypto",
+        "libcrypto_utils",
+        "libcutils",
+        "libext4_utils",
+        "libfs_mgr",
+        "libfusesideload",
+        "libhidl-gen-utils",
+        "liblog",
+        "libpng",
+        "libselinux",
+        "libsparse",
+        "libtinyxml2",
+        "libutils",
+        "libz",
+        "libziparchive",
+    ],
+
+    static_libs: [
+        "libminadbd",
+        "libminui",
+        "libverifier",
+        "libotautil",
+        "libvintf_recovery",
+        "libvintf",
+
+        // TODO(b/80132328): Remove the dependency on static health HAL.
+        "libhealthd.default",
+        "android.hardware.health@2.0-impl",
+        "android.hardware.health@2.0",
+        "android.hardware.health@1.0",
+        "android.hardware.health@1.0-convert",
+        "libhealthstoragedefault",
+        "libhidltransport",
+        "libhidlbase",
+        "libhwbinder_noltopgo",
+        "libbatterymonitor",
+    ],
+}
+
+cc_library_static {
+    name: "librecovery",
+    recovery_available: true,
+
+    defaults: [
+        "librecovery_defaults",
+    ],
+
+    srcs: [
+        "adb_install.cpp",
+        "fsck_unshare_blocks.cpp",
+        "fuse_sdcard_provider.cpp",
+        "install.cpp",
+        "recovery.cpp",
+        "roots.cpp",
+    ],
+
+    include_dirs: [
+        "system/vold",
+    ],
+}
+
 cc_library_static {
     name: "libverifier",
     recovery_available: true,
@@ -89,6 +189,37 @@ cc_library_static {
 
     static_libs: [
         "libotautil",
+    ],
+}
+
+cc_binary {
+    name: "recovery",
+    recovery: true,
+
+    defaults: [
+        "librecovery_defaults",
+    ],
+
+    srcs: [
+        "logging.cpp",
+        "recovery_main.cpp",
+    ],
+
+    shared_libs: [
+        "librecovery_ui",
+    ],
+
+    static_libs: [
+        "librecovery",
+        "librecovery_ui_default",
+    ],
+
+    required: [
+        "e2fsdroid.recovery",
+        "librecovery_ui_ext",
+        "mke2fs.conf",
+        "mke2fs.recovery",
+        "recovery_deps",
     ],
 }
 

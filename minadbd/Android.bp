@@ -28,6 +28,7 @@ cc_defaults {
 
 cc_library_static {
     name: "libminadbd",
+    recovery_available: true,
 
     defaults: [
         "minadbd_defaults",
