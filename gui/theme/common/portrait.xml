@@ -21,7 +21,7 @@
 			<font resource="font_s" color="%text_color%"/>
 		</style>
 		
-		<style name="text_bn">
+		<style name="text_tx">
 			<font resource="font_s" color="%text_button_color%"/>
 			<image resource="button-bes" />
 		</style>		
@@ -336,57 +336,57 @@
 				<action function="page">about</action>
 			</button>
 			
-			<button style="text_bn">
+			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x1%" y="%row4a_y%"/>
+				<placement x="%tx_x1%" y="%row4a_y%"/>
 				<text>{@install_btn=Install}</text>
 			</button>
 			
-			<button style="text_bn">
+			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x2%" y="%row4a_y%"/>
+				<placement x="%tx_x2%" y="%row4a_y%"/>
 				<text>{@wipe_btn=Wipe}</text>
 			</button>
 			
-			<button style="text_bn">
+			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x3%" y="%row4a_y%"/>
+				<placement x="%tx_x3%" y="%row4a_y%"/>
 				<text>{@backup_btn=backup}</text>
 			</button>
 			
-			<button style="text_bn">
+			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x1%" y="%row9_y%"/>
+				<placement x="%tx_x1%" y="%row9_y%"/>
 				<text>{@restore_btn=Restore}</text>
 			</button>
 			
-			<button style="text_bn">
+			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x2%" y="%row9_y%"/>
+				<placement x="%tx_x2%" y="%row9_y%"/>
 				<text>{@mount_btn=Mount}</text>
 			</button>
 			
-			<button style="text_bn">
+			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x3%" y="%row9_y%"/>
+				<placement x="%tx_x3%" y="%row9_y%"/>
 				<text>{@settings_btn=Settings}</text>
 			</button>
 			
-			<button style="text_bn">
+			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x1%" y="%row13a_y%"/>
+				<placement x="%tx_x1%" y="%row13a_y%"/>
 				<text>{@advanced_btn=Advanced}</text>
 			</button>
 			
-			<button style="text_bn">
+			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x2%" y="%row13a_y%"/>
+				<placement x="%tx_x2%" y="%row13a_y%"/>
 				<text>{@reboot_btn=Reboot}</text>
 			</button>
 			
-			<button style="text_bn">
+			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x3%" y="%row13a_y%"/>
+				<placement x="%tx_x3%" y="%row13a_y%"/>
 				<text>{@about=About}</text>
 			</button>
 			
@@ -3712,33 +3712,33 @@
 				<action function="page">sideload</action>
 			</button>
 			
-			<button style="text_bn">
-				<placement x="%bn_x1%" y="%row4a_y%"/>
+			<button style="text_tx">
+				<placement x="%tx_x1%" y="%row4a_y%"/>
 				<text>{@copy_log_btn=Copy Log}</text>
 			</button>
 			
-			<button style="text_bn">
-				<placement x="%bn_x2%" y="%row4a_y%"/>
+			<button style="text_tx">
+				<placement x="%tx_x2%" y="%row4a_y%"/>
 				<text>{@fix_context_btn=Fix Contexts}</text>
 			</button>
 			
-			<button style="text_bn">
-				<placement x="%bn_x3%" y="%row4a_y%"/>
+			<button style="text_tx">
+				<placement x="%tx_x3%" y="%row4a_y%"/>
 				<text>{@part_sd_btn=Partition SD Card}</text>
 			</button>
 			
-			<button style="text_bn">
-				<placement x="%bn_x1%" y="%row9_y%"/>
+			<button style="text_tx">
+				<placement x="%tx_x1%" y="%row9_y%"/>
 				<text>{@terminal_btn=Terminal}</text>
 			</button>
 			
-			<button style="text_bn">
-				<placement x="%bn_x2%" y="%row9_y%"/>
+			<button style="text_tx">
+				<placement x="%tx_x2%" y="%row9_y%"/>
 				<text>{@tools=Tools}</text>
 			</button>
 			
-			<button style="text_bn">
-				<placement x="%bn_x3%" y="%row9_y%"/>
+			<button style="text_tx">
+				<placement x="%tx_x3%" y="%row9_y%"/>
 				<text>{@adb_sideload_btn=ADB Sideload}</text>
 			</button>
 
