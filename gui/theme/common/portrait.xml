@@ -3352,10 +3352,10 @@
 				<actions>
 					<action function="set">tw_samsung_navbar=0</action>
 					<action function="set">tw_tab_icons=0</action>
+					<action function="restoredefaultsettings"/>
 					<action function="set">aromafm=1</action>
 					<action function="set">iconstyle=1</action>
 					<action function="set">tw_military_time=1</action>
-					<action function="restoredefaultsettings"/>
 				</actions>
 			</button>
 
