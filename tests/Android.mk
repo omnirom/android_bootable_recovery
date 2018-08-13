@@ -170,14 +170,12 @@ librecovery_static_libraries := \
     librecovery \
     libbootloader_message \
     libfusesideload \
-    libminadbd \
     librecovery_ui_default \
     librecovery_ui \
     libminui \
     libverifier \
     libotautil \
     $(health_hal_static_libraries) \
-    libasyncio \
     libcrypto_utils \
     libcrypto \
     libext4_utils \

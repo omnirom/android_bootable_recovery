@@ -104,7 +104,6 @@ cc_defaults {
     ],
 
     shared_libs: [
-        "libasyncio",
         "libbase",
         "libbootloader_message",
         "libcrypto",
@@ -125,7 +124,6 @@ cc_defaults {
     ],
 
     static_libs: [
-        "libminadbd",
         "libminui",
         "libverifier",
         "libotautil",
@@ -206,6 +204,7 @@ cc_binary {
     ],
 
     shared_libs: [
+        "libminadbd_services",
         "librecovery_ui",
     ],
 
