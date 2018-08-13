@@ -290,7 +290,6 @@
 
 			<button style="bn_wipe">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%center_x%" y="%row1_y%" placement="5"/>
 				<placement x="%bn_x2%" y="%row1_y%"/>
 				<action function="page">wipe</action>
 			</button>
@@ -3348,9 +3347,13 @@
 			</listbox>
 			
 			<button style="main_button_half_height">
-				<placement x="%indent%" y="%row21a_y%"/>
-				<text>{@restore_defaults_btn=Restore Defaults}</text>
-				<action function="overlay">defaultsettings_page</action>
+				<placement x="%center_x%" y="%row21a_y%"/>
+				<text>Restore Defaults</text>
+				<action>
+					<action function="set">tw_samsung_navbar=0</action>
+					<action function="set">tw_tab_icons=0</action>
+					<action function="restoredefaultsettings"/>
+				</action>
 			</button>
 
 			<action>
@@ -3361,59 +3364,6 @@
 			<action>
 				<touch key="back"/>
 				<action function="page">main</action>
-			</action>
-		</page>
-		
-
-		<page name="defaultsettings_page">
-			<background color="%lightransparent%"/>
-
-			<fill color="%about_back%">
-				<placement x="101" y="635" w="869" h="673"/>
-			</fill>
-			
-			<fill color="%dialog_front%">
-				<placement x="112" y="645" w="849" h="653"/>
-			</fill>
-			
-			<fill color="%dialog_front%">
-				<placement x="112" y="645" w="849" h="653"/>
-			</fill>
-
-			<text style="text_m_fail">
-				<placement x="192" y="706"/>
-				<text>{@restore_defaults_btn=Restore Defaults}</text>
-			</text>
-
-			<text style="text_m_fail">
-				<placement x="192" y="832"/>
-				<text>{@restore_defaults_btn1=Restore your default settings}</text>
-			</text>
-
-			<text style="text_m">
-				<placement x="192" y="892"/>
-				<text>{@restore_action2=Confirm or Cancel the action.}</text>
-			</text>
-
-			<button style="button_dialog">
-				<placement x="380" y="1129"/>
-				<text>{@cancel=CANCEL}</text>
-				<action function="overlay"/>
-				<action function="page">settings</action>
-			</button>
-
-			<button style="button_dialog_hl">
-				<placement x="644" y="1129"/>
-				<text>{@restore=RESTORE}</text>
-				<action function="overlay"/>
-				<action function="set">tw_samsung_navbar=0</action>
-				<action function="set">tw_tab_icons=0</action>
-				<action function="restoredefaultsettings"/>
-			</button>
-
-			<action>
-				<touch key="power+voldown"/>
-				<action function="screenshot"/>
 			</action>
 		</page>
 		
