@@ -118,9 +118,12 @@
 		<variable name="center_x" value="540"/>
 		<variable name="menu_x1" value="75"/>
 		<variable name="menu_x2" value="565"/>
-		<variable name="bn_x1" value="120"/>
-		<variable name="bn_x2" value="437"/>
-		<variable name="bn_x3" value="754"/>
+		<variable name="bn_x1" value="130"/>
+		<variable name="bn_x2" value="447"/>
+		<variable name="bn_x3" value="764"/>
+		<variable name="tx_x1" value="110"/>
+		<variable name="tx_x2" value="427"/>
+		<variable name="tx_x3" value="744"/>
 		<variable name="unlock" value="900"/>
 		<variable name="info_x2" value="300"/>
 		<variable name="col1_x_right" value="576"/>
