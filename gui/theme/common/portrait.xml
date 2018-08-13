@@ -338,55 +338,55 @@
 			
 			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x1%" y="%row4a_y%"/>
+				<placement x="%tx_x1%" y="%row4_y%"/>
 				<text>{@install_btn=Install}</text>
 			</button>
 			
 			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x2%" y="%row4a_y%"/>
+				<placement x="%tx_x2%" y="%row4_y%"/>
 				<text>{@wipe_btn=Wipe}</text>
 			</button>
 			
 			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x3%" y="%row4a_y%"/>
+				<placement x="%tx_x3%" y="%row4_y%"/>
 				<text>{@backup_btn=backup}</text>
 			</button>
 			
 			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x1%" y="%row9_y%"/>
+				<placement x="%tx_x1%" y="%row8a_y%"/>
 				<text>{@restore_btn=Restore}</text>
 			</button>
 			
 			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x2%" y="%row9_y%"/>
+				<placement x="%tx_x2%" y="%row8a_y%"/>
 				<text>{@mount_btn=Mount}</text>
 			</button>
 			
 			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x3%" y="%row9_y%"/>
+				<placement x="%tx_x3%" y="%row8a_y%"/>
 				<text>{@settings_btn=Settings}</text>
 			</button>
 			
 			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x1%" y="%row13a_y%"/>
+				<placement x="%tx_x1%" y="%row13_y%"/>
 				<text>{@advanced_btn=Advanced}</text>
 			</button>
 			
 			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x2%" y="%row13a_y%"/>
+				<placement x="%tx_x2%" y="%row13_y%"/>
 				<text>{@reboot_btn=Reboot}</text>
 			</button>
 			
 			<button style="text_tx">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x3%" y="%row13a_y%"/>
+				<placement x="%tx_x3%" y="%row13_y%"/>
 				<text>{@about=About}</text>
 			</button>
 			
@@ -3713,32 +3713,32 @@
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x1%" y="%row4a_y%"/>
+				<placement x="%tx_x1%" y="%row4_y%"/>
 				<text>{@copy_log_btn=Copy Log}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x2%" y="%row4a_y%"/>
+				<placement x="%tx_x2%" y="%row4_y%"/>
 				<text>{@fix_context_btn=Fix Contexts}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x3%" y="%row4a_y%"/>
+				<placement x="%tx_x3%" y="%row4_y%"/>
 				<text>{@part_sd_btn=Partition SD Card}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x1%" y="%row9_y%"/>
+				<placement x="%tx_x1%" y="%row8a_y%"/>
 				<text>{@terminal_btn=Terminal}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x2%" y="%row9_y%"/>
+				<placement x="%tx_x2%" y="%row8a_y%"/>
 				<text>{@tools=Tools}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x3%" y="%row9_y%"/>
+				<placement x="%tx_x3%" y="%row8a_y%"/>
 				<text>{@adb_sideload_btn=ADB Sideload}</text>
 			</button>
 
