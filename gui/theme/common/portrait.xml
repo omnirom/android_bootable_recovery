@@ -3348,12 +3348,12 @@
 			
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21a_y%"/>
-				<text>Restore Defaults</text>
-				<action>
+				<text>{@restore_defaults_btn=Restore Defaults}</text>
+				<actions>
 					<action function="set">tw_samsung_navbar=0</action>
 					<action function="set">tw_tab_icons=0</action>
 					<action function="restoredefaultsettings"/>
-				</action>
+				</actions>
 			</button>
 
 			<action>
