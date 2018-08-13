@@ -3674,19 +3674,8 @@
 				<action function="page">main</action>
 			</action>
 
-			<button>
-				<condition var1="iconstyle" var2="1"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced</action>
-			</button>
+			<template name="advanced"/>
 			
-			<button>
-				<condition var1="iconstyle" var2="0"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced2</action>
-			</button>
 		</page>
 
 		<page name="advanced">
@@ -4081,19 +4070,7 @@
 				<action function="page">main</action>
 			</action>
 
-			<button>
-				<condition var1="iconstyle" var2="1"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced</action>
-			</button>
-			
-			<button>
-				<condition var1="iconstyle" var2="0"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced2</action>
-			</button>
+			<template name="advanced"/>
 			
 		</page>
 
@@ -4137,19 +4114,7 @@
 				<action function="page">main</action>
 			</action>
 
-			<button>
-				<condition var1="iconstyle" var2="1"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced</action>
-			</button>
-			
-			<button>
-				<condition var1="iconstyle" var2="0"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced2</action>
-			</button>
+			<template name="advanced"/>
 		</page>
 
 		<page name="partsdcardcheck">
@@ -4405,6 +4370,7 @@
 			
 			<button>
 				<condition var1="iconstyle" var2="1"/>
+				<condition var1="tw_samsung_navbar" var2="0"/>
 				<fill color="%transparent%"/>
 				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
 				<action function="page">main</action>
@@ -4412,8 +4378,25 @@
 			
 			<button>
 				<condition var1="iconstyle" var2="0"/>
+				<condition var1="tw_samsung_navbar" var2="0"/>
 				<fill color="%transparent%"/>
 				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">advanced2</action>
+			</button>
+	
+			<button>
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="tw_samsung_navbar" var2="1"/>
+				<fill color="%transparent%"/>
+				<placement x="%center_x%" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">main</action>
+			</button>
+			
+			<button>
+				<condition var1="iconstyle" var2="0"/>
+				<condition var1="tw_samsung_navbar" var2="1"/>
+				<fill color="%transparent%"/>
+				<placement x="%center_x%" y="%navbar_y1%" w="450" h="150" placement="4"/>
 				<action function="page">advanced2</action>
 			</button>
 			
@@ -5393,25 +5376,7 @@
 				</actions>
 			</action>
 			
-			<button>
-				<condition var1="iconstyle" var2="1"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<actions>
-					<action function="set">tw_hide_kb=0</action>
-					<action function="page">advanced</action>
-				</actions>
-			</button>
-			
-			<button>
-				<condition var1="iconstyle" var2="0"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<actions>
-					<action function="set">tw_hide_kb=0</action>
-					<action function="page">advanced2</action>
-				</actions>
-			</button>
+			<template name="advanced"/>		
 
 			<action>
 				<touch key="power+voldown" />
@@ -5464,19 +5429,8 @@
 				<action function="page">main</action>
 			</action>
 
-			<button>
-				<condition var1="iconstyle" var2="1"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced</action>
-			</button>
+			<template name="advanced"/>		
 			
-			<button>
-				<condition var1="iconstyle" var2="0"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced2</action>
-			</button>
 		</page>
 
 		<page name="fixcontexts">
@@ -5525,19 +5479,7 @@
 				<action function="page">main</action>
 			</action>
 
-			<button>
-				<condition var1="iconstyle" var2="1"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced</action>
-			</button>
-			
-			<button>
-				<condition var1="iconstyle" var2="0"/>
-				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
-				<action function="page">advanced2</action>
-			</button>
+			<template name="advanced"/>		
 		</page>
 		
 		<page name="slideout">
