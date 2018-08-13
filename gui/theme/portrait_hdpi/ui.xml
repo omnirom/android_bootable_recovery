@@ -285,11 +285,6 @@
 			<background color="%background_color%"/>
 			
 			<image>
-				<image resource="bg_batik"/>
-				<placement x="0" y="0"/>
-			</image>
-			
-			<image>
 				<condition var1="tw_busy" var2="1"/>
 				<image resource="header"/>
 				<placement x="0" y="%row1a_header_y%"/>
