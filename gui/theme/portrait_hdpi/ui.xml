@@ -26,7 +26,6 @@
 
 		<image name="header" filename="header" retainaspect="1"/>
 		<image name="bg_batik" filename="bg_batik" retainaspect="1"/>
-		<image name="bg_batik2" filename="bg_batik2" retainaspect="1"/>
 		<image name="brand_name" filename="brand_name" retainaspect="1"/>
 		<image name="logo" filename="logo" retainaspect="1"/>
 		<image name="main_button" filename="main_button" retainaspect="1"/>
@@ -409,11 +408,6 @@
 		
 		<template name="page">
 			<background color="%background_color%"/>
-			
-			<image>
-				<image resource="bg_batik2"/>
-				<placement x="0" y="0"/>
-			</image>
 
 			<fill color="%text_color%">
 				<placement x="0" y="%row1_y%" w="%screen_width%" h="10"/>
