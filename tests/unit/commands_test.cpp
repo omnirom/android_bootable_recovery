@@ -333,6 +333,25 @@ TEST(CommandsTest, Parse_ZERO) {
   ASSERT_EQ(PatchInfo(), command.patch());
 }
 
+TEST(CommandsTest, Parse_COMPUTE_HASH_TREE) {
+  const std::string input{ "compute_hash_tree 2,0,1 2,3,4 sha1 unknown-salt unknown-root-hash" };
+  std::string err;
+  Command command = Command::Parse(input, 9, &err);
+  ASSERT_TRUE(command);
+
+  ASSERT_EQ(Command::Type::COMPUTE_HASH_TREE, command.type());
+  ASSERT_EQ(9, command.index());
+  ASSERT_EQ(input, command.cmdline());
+
+  HashTreeInfo expected_info(RangeSet({ { 0, 1 } }), RangeSet({ { 3, 4 } }), "sha1", "unknown-salt",
+                             "unknown-root-hash");
+  ASSERT_EQ(expected_info, command.hash_tree_info());
+  ASSERT_EQ(TargetInfo(), command.target());
+  ASSERT_EQ(SourceInfo(), command.source());
+  ASSERT_EQ(StashInfo(), command.stash());
+  ASSERT_EQ(PatchInfo(), command.patch());
+}
+
 TEST(CommandsTest, Parse_InvalidNumberOfArgs) {
   Command::abort_allowed_ = true;
 
@@ -341,6 +360,7 @@ TEST(CommandsTest, Parse_InvalidNumberOfArgs) {
   std::vector<std::string> inputs{
     "abort foo",
     "bsdiff",
+    "compute_hash_tree, 2,0,1 2,0,1 unknown-algorithm unknown-salt",
     "erase",
     "erase 4,3,5,10,12 hash1",
     "free",
