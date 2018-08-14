@@ -166,6 +166,50 @@ class PatchInfo {
   size_t length_{ 0 };
 };
 
+// The arguments to build a hash tree from blocks on the block device.
+class HashTreeInfo {
+ public:
+  HashTreeInfo() = default;
+
+  HashTreeInfo(RangeSet hash_tree_ranges, RangeSet source_ranges, std::string hash_algorithm,
+               std::string salt_hex, std::string root_hash)
+      : hash_tree_ranges_(std::move(hash_tree_ranges)),
+        source_ranges_(std::move(source_ranges)),
+        hash_algorithm_(std::move(hash_algorithm)),
+        salt_hex_(std::move(salt_hex)),
+        root_hash_(std::move(root_hash)) {}
+
+  const RangeSet& hash_tree_ranges() const {
+    return hash_tree_ranges_;
+  }
+  const RangeSet& source_ranges() const {
+    return source_ranges_;
+  }
+
+  const std::string& hash_algorithm() const {
+    return hash_algorithm_;
+  }
+  const std::string& salt_hex() const {
+    return salt_hex_;
+  }
+  const std::string& root_hash() const {
+    return root_hash_;
+  }
+
+  bool operator==(const HashTreeInfo& other) const {
+    return hash_tree_ranges_ == other.hash_tree_ranges_ && source_ranges_ == other.source_ranges_ &&
+           hash_algorithm_ == other.hash_algorithm_ && salt_hex_ == other.salt_hex_ &&
+           root_hash_ == other.root_hash_;
+  }
+
+ private:
+  RangeSet hash_tree_ranges_;
+  RangeSet source_ranges_;
+  std::string hash_algorithm_;
+  std::string salt_hex_;
+  std::string root_hash_;
+};
+
 // Command class holds the info for an update command that performs block-based OTA (BBOTA). Each
 // command consists of one or several args, namely TargetInfo, SourceInfo, StashInfo and PatchInfo.
 // The currently used BBOTA version is v4.
@@ -248,6 +292,8 @@ class Command {
         source_(std::move(source)),
         stash_(std::move(stash)) {}
 
+  Command(Type type, size_t index, std::string cmdline, HashTreeInfo hash_tree_info);
+
   // Parses the given command 'line' into a Command object and returns it. The 'index' is specified
   // by the caller to index the object. On parsing error, it returns an empty Command object that
   // evaluates to false, and the specific error message will be set in 'err'.
@@ -282,6 +328,10 @@ class Command {
 
   const StashInfo& stash() const {
     return stash_;
+  }
+
+  const HashTreeInfo& hash_tree_info() const {
+    return hash_tree_info_;
   }
 
   constexpr explicit operator bool() const {
@@ -325,6 +375,8 @@ class Command {
   // The stash info. Only meaningful for STASH and FREE commands. Note that although SourceInfo may
   // also load data from stash, such info will be owned and managed by SourceInfo (i.e. in source_).
   StashInfo stash_;
+  // The hash_tree info. Only meaningful for COMPUTE_HASH_TREE.
+  HashTreeInfo hash_tree_info_;
 };
 
 std::ostream& operator<<(std::ostream& os, const Command& command);
