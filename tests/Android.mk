@@ -170,14 +170,12 @@ librecovery_static_libraries := \
     librecovery \
     libbootloader_message \
     libfusesideload \
-    libminadbd \
     librecovery_ui_default \
     librecovery_ui \
     libminui \
     libverifier \
     libotautil \
     $(health_hal_static_libraries) \
-    libasyncio \
     libcrypto_utils \
     libcrypto \
     libext4_utils \
@@ -208,7 +206,7 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_TEST_DATA := \
     $(call find-test-data-in-subdirs, $(LOCAL_PATH), "*", testdata) \
-    $(call find-test-data-in-subdirs, bootable/recovery, "*_text.png", res-*)
+    $(call find-test-data-in-subdirs, $(LOCAL_PATH), "*_text.png", res-testdata)
 include $(BUILD_NATIVE_TEST)
 
 # Host tests

@@ -26,8 +26,11 @@ cc_defaults {
     ],
 }
 
-cc_library_static {
-    name: "libminadbd",
+// `libminadbd_services` is analogous to the `libadbd_services` for regular `adbd`, but providing
+// the sideload service only.
+cc_library {
+    name: "libminadbd_services",
+    recovery_available: true,
 
     defaults: [
         "minadbd_defaults",
@@ -39,14 +42,11 @@ cc_library_static {
         "minadbd_services.cpp",
     ],
 
-    static_libs: [
-        "libfusesideload",
+    shared_libs: [
+        "libadbd",
         "libbase",
         "libcrypto",
-    ],
-
-    whole_static_libs: [
-        "libadbd",
+        "libfusesideload",
     ],
 }
 
@@ -62,8 +62,9 @@ cc_test {
     ],
 
     static_libs: [
+        "libminadbd_services",
+        "libadbd",
         "libBionicGtestMain",
-        "libminadbd",
     ],
 
     shared_libs: [
