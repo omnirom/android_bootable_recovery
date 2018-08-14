@@ -305,7 +305,7 @@ static void VerifyAbUpdateCommands(const std::string& serialno, bool success = t
   if (success) {
     ASSERT_EQ(0, SetUpAbUpdateCommands(package, zip, status_fd, &cmd));
     ASSERT_EQ(5U, cmd.size());
-    ASSERT_EQ("/sbin/update_engine_sideload", cmd[0]);
+    ASSERT_EQ("/system/bin/update_engine_sideload", cmd[0]);
     ASSERT_EQ("--payload=file://" + package, cmd[1]);
     ASSERT_EQ("--offset=" + std::to_string(payload_entry.offset), cmd[2]);
     ASSERT_EQ("--headers=" + properties, cmd[3]);
