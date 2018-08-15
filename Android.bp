@@ -291,3 +291,11 @@ cc_binary {
         "recovery-refresh.rc",
     ],
 }
+
+filegroup {
+    name: "res-testdata",
+
+    srcs: [
+        "res-*/images/*_text.png",
+    ],
+}

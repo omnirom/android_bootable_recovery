@@ -12,25 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_static {
-    name: "libupdater",
+cc_defaults {
+    name: "libupdater_defaults",
 
     defaults: [
         "recovery_defaults",
-    ],
-
-    srcs: [
-        "blockimg.cpp",
-        "commands.cpp",
-        "install.cpp",
-    ],
-
-    include_dirs: [
-        "external/e2fsprogs/misc",
-    ],
-
-    export_include_dirs: [
-        "include",
     ],
 
     static_libs: [
@@ -67,5 +53,28 @@ cc_library_static {
         "libext2_uuid",
         "libext2_e2p",
         "libext2fs",
+    ],
+}
+
+cc_library_static {
+    name: "libupdater",
+
+    defaults: [
+        "recovery_defaults",
+        "libupdater_defaults",
+    ],
+
+    srcs: [
+        "blockimg.cpp",
+        "commands.cpp",
+        "install.cpp",
+    ],
+
+    include_dirs: [
+        "external/e2fsprogs/misc",
+    ],
+
+    export_include_dirs: [
+        "include",
     ],
 }
