@@ -127,13 +127,11 @@ tune2fs_static_libraries := \
 libupdater_static_libraries := \
     libupdater \
     libapplypatch \
+    libbootloader_message \
     libbspatch \
     libedify \
-    libziparchive \
-    libotautil \
-    libbootloader_message \
-    libutils \
     libotafault \
+    libotautil \
     libext4_utils \
     libfec \
     libfec_rs \
@@ -144,27 +142,17 @@ libupdater_static_libraries := \
     libselinux \
     libsparse \
     libsquashfs_utils \
+    libbrotli \
     libbz \
+    libziparchive \
     libz \
     libbase \
     libcrypto \
     libcrypto_utils \
     libcutils \
+    libutils \
     libtune2fs \
-    libbrotli \
     $(tune2fs_static_libraries)
-
-health_hal_static_libraries := \
-    android.hardware.health@2.0-impl \
-    android.hardware.health@2.0 \
-    android.hardware.health@1.0 \
-    android.hardware.health@1.0-convert \
-    libhealthstoragedefault \
-    libhidltransport \
-    libhidlbase \
-    libhwbinder_noltopgo \
-    libvndksupport \
-    libbatterymonitor
 
 librecovery_static_libraries := \
     librecovery \
@@ -175,7 +163,6 @@ librecovery_static_libraries := \
     libminui \
     libverifier \
     libotautil \
-    $(health_hal_static_libraries) \
     libcrypto_utils \
     libcrypto \
     libext4_utils \

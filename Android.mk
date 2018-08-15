@@ -14,7 +14,7 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# Needed by build/make/core/Makefile.
+# Needed by build/make/core/Makefile. Must be consistent with the value in Android.bp.
 RECOVERY_API_VERSION := 3
 RECOVERY_FSTAB_VERSION := 2
 

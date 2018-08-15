@@ -31,6 +31,14 @@ using namespace std::string_literals;
 
 bool Command::abort_allowed_ = false;
 
+Command::Command(Type type, size_t index, std::string cmdline, HashTreeInfo hash_tree_info)
+    : type_(type),
+      index_(index),
+      cmdline_(std::move(cmdline)),
+      hash_tree_info_(std::move(hash_tree_info)) {
+  CHECK(type == Type::COMPUTE_HASH_TREE);
+}
+
 Command::Type Command::ParseType(const std::string& type_str) {
   if (type_str == "abort") {
     if (!abort_allowed_) {
@@ -177,7 +185,6 @@ Command Command::Parse(const std::string& line, size_t index, std::string* err) 
   SourceInfo source_info;
   StashInfo stash_info;
 
-  // TODO(xunchang) add the parse code of compute_hash_tree
   if (op == Type::ZERO || op == Type::NEW || op == Type::ERASE) {
     // zero/new/erase <rangeset>
     if (pos + 1 != tokens.size()) {
@@ -255,6 +262,39 @@ Command Command::Parse(const std::string& line, size_t index, std::string* err) 
                                          tokens.size() - pos);
       return {};
     }
+  } else if (op == Type::COMPUTE_HASH_TREE) {
+    // <hash_tree_ranges> <source_ranges> <hash_algorithm> <salt_hex> <root_hash>
+    if (pos + 5 != tokens.size()) {
+      *err = android::base::StringPrintf("invalid number of args: %zu (expected 5)",
+                                         tokens.size() - pos);
+      return {};
+    }
+
+    // Expects the hash_tree data to be contiguous.
+    RangeSet hash_tree_ranges = RangeSet::Parse(tokens[pos++]);
+    if (!hash_tree_ranges || hash_tree_ranges.size() != 1) {
+      *err = "invalid hash tree ranges in: " + line;
+      return {};
+    }
+
+    RangeSet source_ranges = RangeSet::Parse(tokens[pos++]);
+    if (!source_ranges) {
+      *err = "invalid source ranges in: " + line;
+      return {};
+    }
+
+    std::string hash_algorithm = tokens[pos++];
+    std::string salt_hex = tokens[pos++];
+    std::string root_hash = tokens[pos++];
+    if (hash_algorithm.empty() || salt_hex.empty() || root_hash.empty()) {
+      *err = "invalid hash tree arguments in " + line;
+      return {};
+    }
+
+    HashTreeInfo hash_tree_info(std::move(hash_tree_ranges), std::move(source_ranges),
+                                std::move(hash_algorithm), std::move(salt_hex),
+                                std::move(root_hash));
+    return Command(op, index, line, std::move(hash_tree_info));
   } else {
     *err = "invalid op";
     return {};
