@@ -33,9 +33,8 @@
 static const std::string kLocale = "zu";
 
 static const std::vector<std::string> kResourceImagesDirs{
-  "res-testdata/res-mdpi/images/",    "res-testdata/res-hdpi/images/",
-  "res-testdata/res-xhdpi/images/",   "res-testdata/res-xxhdpi/images/",
-  "res-testdata/res-xxxhdpi/images/",
+  "res-mdpi/images/",   "res-hdpi/images/",    "res-xhdpi/images/",
+  "res-xxhdpi/images/", "res-xxxhdpi/images/",
 };
 
 static int png_filter(const dirent* de) {
