@@ -779,6 +779,8 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
       case Device::REBOOT:
       case Device::SHUTDOWN:
       case Device::REBOOT_BOOTLOADER:
+      case Device::ENTER_FASTBOOT:
+      case Device::ENTER_RECOVERY:
         return chosen_action;
 
       case Device::WIPE_DATA:
@@ -995,6 +997,7 @@ static void log_failure_code(ErrorCode code, const std::string& update_package) 
 
 Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args) {
   static constexpr struct option OPTIONS[] = {
+    { "fastboot", no_argument, nullptr, 0 },
     { "fsck_unshare_blocks", no_argument, nullptr, 0 },
     { "just_exit", no_argument, nullptr, 'x' },
     { "locale", required_argument, nullptr, 0 },
@@ -1049,7 +1052,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         std::string option = OPTIONS[option_index].name;
         if (option == "fsck_unshare_blocks") {
           fsck_unshare_blocks = true;
-        } else if (option == "locale") {
+        } else if (option == "locale" || option == "fastboot") {
           // Handled in recovery_main.cpp
         } else if (option == "prompt_and_wipe_data") {
           should_prompt_and_wipe_data = true;

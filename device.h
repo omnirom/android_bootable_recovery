@@ -48,6 +48,8 @@ class Device {
     RUN_GRAPHICS_TEST = 11,
     RUN_LOCALE_TEST = 12,
     KEY_INTERRUPTED = 13,
+    ENTER_FASTBOOT = 14,
+    ENTER_RECOVERY = 15,
   };
 
   explicit Device(RecoveryUI* ui);
