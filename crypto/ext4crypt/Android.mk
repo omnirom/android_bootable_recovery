@@ -28,7 +28,9 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
         LOCAL_CFLAGS += -DHAVE_LIBKEYUTILS
         LOCAL_SHARED_LIBRARIES += libkeyutils
     endif
-    LOCAL_ADDITIONAL_DEPENDENCIES := keystore_auth
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+        LOCAL_ADDITIONAL_DEPENDENCIES := keystore_auth
+    endif
 else
     LOCAL_SRC_FILES += Keymaster.cpp KeyStorage.cpp
 endif

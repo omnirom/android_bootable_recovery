@@ -181,7 +181,9 @@ LOCAL_SHARED_LIBRARIES += libselinux
 ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
     LOCAL_SHARED_LIBRARIES += libhardware
-    LOCAL_ADDITIONAL_DEPENDENCIES += libhardware
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+        LOCAL_ADDITIONAL_DEPENDENCIES += libhardware
+    endif
 endif
 
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
@@ -362,23 +364,25 @@ endif
 ifneq ($(TW_CLOCK_OFFSET),)
 	LOCAL_CFLAGS += -DTW_CLOCK_OFFSET=$(TW_CLOCK_OFFSET)
 endif
-LOCAL_ADDITIONAL_DEPENDENCIES += \
-    dump_image \
-    erase_image \
-    flash_image \
-    mke2fs.conf \
-    pigz \
-    teamwin \
-    toolbox_symlinks \
-    twrp \
-    fsck.fat \
-    fatlabel \
-    mkfs.fat \
-    permissive.sh \
-    simg2img_twrp \
-    libbootloader_message_twrp \
-    init.recovery.hlthchrg.rc \
-    init.recovery.service.rc
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+    LOCAL_ADDITIONAL_DEPENDENCIES += \
+        dump_image \
+        erase_image \
+        flash_image \
+        mke2fs.conf \
+        pigz \
+        teamwin \
+        toolbox_symlinks \
+        twrp \
+        fsck.fat \
+        fatlabel \
+        mkfs.fat \
+        permissive.sh \
+        simg2img_twrp \
+        libbootloader_message_twrp \
+        init.recovery.hlthchrg.rc \
+        init.recovery.service.rc
+endif
 
 ifneq ($(TARGET_ARCH), arm64)
     ifneq ($(TARGET_ARCH), x86_64)
@@ -390,99 +394,105 @@ else
     LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
 endif
 ifneq ($(TW_USE_TOOLBOX), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += busybox_symlinks
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+        LOCAL_ADDITIONAL_DEPENDENCIES += busybox_symlinks
+    endif
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
         LOCAL_POST_INSTALL_CMD := \
             $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin && \
             ln -sf /sbin/busybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
     endif
 else
-    ifneq ($(wildcard external/toybox/Android.mk),)
-        LOCAL_ADDITIONAL_DEPENDENCIES += toybox_symlinks
-    endif
-    ifneq ($(wildcard external/zip/Android.mk),)
-        LOCAL_ADDITIONAL_DEPENDENCIES += zip
-    endif
-    ifneq ($(wildcard external/unzip/Android.mk),)
-        LOCAL_ADDITIONAL_DEPENDENCIES += unzip
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+        ifneq ($(wildcard external/toybox/Android.mk),)
+            LOCAL_ADDITIONAL_DEPENDENCIES += toybox_symlinks
+        endif
+        ifneq ($(wildcard external/zip/Android.mk),)
+            LOCAL_ADDITIONAL_DEPENDENCIES += zip
+        endif
+        ifneq ($(wildcard external/unzip/Android.mk),)
+            LOCAL_ADDITIONAL_DEPENDENCIES += unzip
+        endif
     endif
 endif
 
-ifneq ($(TW_NO_EXFAT), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += mkexfatfs fsckexfat
-    ifneq ($(TW_NO_EXFAT_FUSE), true)
-        LOCAL_ADDITIONAL_DEPENDENCIES += exfat-fuse
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+    ifneq ($(TW_NO_EXFAT), true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += mkexfatfs fsckexfat
+        ifneq ($(TW_NO_EXFAT_FUSE), true)
+            LOCAL_ADDITIONAL_DEPENDENCIES += exfat-fuse
+        endif
     endif
-endif
-ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
-        LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk
-    else
-        LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk_static
+    ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
+            LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk
+        else
+            LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk_static
+        endif
     endif
-endif
-ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += openaes openaes_license
-endif
-ifeq ($(TW_INCLUDE_DUMLOCK), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += \
-        htcdumlock htcdumlocksys flash_imagesys dump_imagesys libbmlutils.so \
-        libflashutils.so libmmcutils.so libmtdutils.so HTCDumlock.apk
-endif
-ifeq ($(TW_INCLUDE_FB2PNG), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += fb2png
-endif
-ifneq ($(TW_OEM_BUILD),true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += orscmd
-endif
-ifeq ($(BOARD_USES_BML_OVER_MTD),true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += bml_over_mtd
-endif
-ifeq ($(TW_INCLUDE_INJECTTWRP), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += injecttwrp
-endif
-ifneq ($(TW_EXCLUDE_DEFAULT_USB_INIT), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += init.recovery.usb.rc
-endif
-ifeq ($(TWRP_INCLUDE_LOGCAT), true)
-    LOCAL_ADDITIONAL_DEPENDENCIES += logcat
-    ifeq ($(TARGET_USES_LOGD), true)
-        LOCAL_ADDITIONAL_DEPENDENCIES += logd libsysutils libnl init.recovery.logd.rc
+    ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += openaes openaes_license
     endif
-endif
-# Allow devices to specify device-specific recovery dependencies
-ifneq ($(TARGET_RECOVERY_DEVICE_MODULES),)
-    LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_RECOVERY_DEVICE_MODULES)
-endif
-LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
-LOCAL_CFLAGS += -DTWHTCD_PATH=\"$(TWHTCD_PATH)\"
-ifeq ($(TW_INCLUDE_NTFS_3G),true)
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
-    LOCAL_ADDITIONAL_DEPENDENCIES += \
-        mount.ntfs \
-        fsck.ntfs \
-        mkfs.ntfs
-else
-    LOCAL_ADDITIONAL_DEPENDENCIES += \
-        ntfs-3g \
-        ntfsfix \
-        mkntfs
-endif
-endif
-ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
-ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 3; echo $$?),0)
-    LOCAL_ADDITIONAL_DEPENDENCIES += \
-        fsck.f2fs \
-        mkfs.f2fs
-endif
-endif
+    ifeq ($(TW_INCLUDE_DUMLOCK), true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += \
+            htcdumlock htcdumlocksys flash_imagesys dump_imagesys libbmlutils.so \
+            libflashutils.so libmmcutils.so libmtdutils.so HTCDumlock.apk
+    endif
+    ifeq ($(TW_INCLUDE_FB2PNG), true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += fb2png
+    endif
+    ifneq ($(TW_OEM_BUILD),true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += orscmd
+    endif
+    ifeq ($(BOARD_USES_BML_OVER_MTD),true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += bml_over_mtd
+    endif
+    ifeq ($(TW_INCLUDE_INJECTTWRP), true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += injecttwrp
+    endif
+    ifneq ($(TW_EXCLUDE_DEFAULT_USB_INIT), true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += init.recovery.usb.rc
+    endif
+    ifeq ($(TWRP_INCLUDE_LOGCAT), true)
+        LOCAL_ADDITIONAL_DEPENDENCIES += logcat
+        ifeq ($(TARGET_USES_LOGD), true)
+            LOCAL_ADDITIONAL_DEPENDENCIES += logd libsysutils libnl init.recovery.logd.rc
+        endif
+    endif
+    # Allow devices to specify device-specific recovery dependencies
+    ifneq ($(TARGET_RECOVERY_DEVICE_MODULES),)
+        LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_RECOVERY_DEVICE_MODULES)
+    endif
+    LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
+    LOCAL_CFLAGS += -DTWHTCD_PATH=\"$(TWHTCD_PATH)\"
+    ifeq ($(TW_INCLUDE_NTFS_3G),true)
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
+            LOCAL_ADDITIONAL_DEPENDENCIES += \
+                mount.ntfs \
+                fsck.ntfs \
+                mkfs.ntfs
+        else
+            LOCAL_ADDITIONAL_DEPENDENCIES += \
+                ntfs-3g \
+                ntfsfix \
+                mkntfs
+        endif
+    endif
+    ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
+        ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 3; echo $$?),0)
+            LOCAL_ADDITIONAL_DEPENDENCIES += \
+                fsck.f2fs \
+                mkfs.f2fs
+        endif
+    endif
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
-    LOCAL_ADDITIONAL_DEPENDENCIES += file_contexts_text
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
+        LOCAL_ADDITIONAL_DEPENDENCIES += file_contexts_text
+    endif
 endif
 
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
-LOCAL_REQUIRED_MODULES := recovery-persist recovery-refresh
+    LOCAL_REQUIRED_MODULES := recovery-persist recovery-refresh
 endif
 
 include $(BUILD_EXECUTABLE)
@@ -494,7 +504,7 @@ LOCAL_MODULE := file_contexts_text
 LOCAL_MODULE_TAGS := optional
 LOCAL_REQUIRED_MODULES := file_contexts.bin
 LOCAL_POST_INSTALL_CMD := \
-    $(hide) cp -f $(OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
+    $(hide) cp -f $(OUT_DIR)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
 
 include $(BUILD_PHONY_PACKAGE)
 
@@ -532,7 +542,9 @@ $(RECOVERY_BUSYBOX_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 include $(CLEAR_VARS)
 LOCAL_MODULE := busybox_symlinks
 LOCAL_MODULE_TAGS := optional
-LOCAL_ADDITIONAL_DEPENDENCIES := $(RECOVERY_BUSYBOX_SYMLINKS)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+    LOCAL_ADDITIONAL_DEPENDENCIES := $(RECOVERY_BUSYBOX_SYMLINKS)
+endif
 ifneq (,$(filter $(PLATFORM_SDK_VERSION),16 17 18))
 ALL_DEFAULT_INSTALLED_MODULES += $(RECOVERY_BUSYBOX_SYMLINKS)
 endif
