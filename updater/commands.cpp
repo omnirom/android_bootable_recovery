@@ -16,6 +16,10 @@
 
 #include "private/commands.h"
 
+#include <stdint.h>
+#include <string.h>
+
+#include <functional>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -24,7 +28,9 @@
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <openssl/sha.h>
 
+#include "otautil/print_sha1.h"
 #include "otautil/rangeset.h"
 
 using namespace std::string_literals;
@@ -301,6 +307,70 @@ Command Command::Parse(const std::string& line, size_t index, std::string* err) 
   }
 
   return Command(op, index, line, patch_info, target_info, source_info, stash_info);
+}
+
+bool SourceInfo::Overlaps(const TargetInfo& target) const {
+  return ranges_.Overlaps(target.ranges());
+}
+
+// Moves blocks in the 'source' vector to the specified locations (as in 'locs') in the 'dest'
+// vector. Note that source and dest may be the same buffer.
+static void MoveRange(std::vector<uint8_t>* dest, const RangeSet& locs,
+                      const std::vector<uint8_t>& source, size_t block_size) {
+  const uint8_t* from = source.data();
+  uint8_t* to = dest->data();
+  size_t start = locs.blocks();
+  // Must do the movement backward.
+  for (auto it = locs.crbegin(); it != locs.crend(); it++) {
+    size_t blocks = it->second - it->first;
+    start -= blocks;
+    memmove(to + (it->first * block_size), from + (start * block_size), blocks * block_size);
+  }
+}
+
+bool SourceInfo::ReadAll(
+    std::vector<uint8_t>* buffer, size_t block_size,
+    const std::function<int(const RangeSet&, std::vector<uint8_t>*)>& block_reader,
+    const std::function<int(const std::string&, std::vector<uint8_t>*)>& stash_reader) const {
+  if (buffer->size() < blocks() * block_size) {
+    return false;
+  }
+
+  // Read in the source ranges.
+  if (ranges_) {
+    if (block_reader(ranges_, buffer) != 0) {
+      return false;
+    }
+    if (location_) {
+      MoveRange(buffer, location_, *buffer, block_size);
+    }
+  }
+
+  // Read in the stashes.
+  for (const StashInfo& stash : stashes_) {
+    std::vector<uint8_t> stash_buffer(stash.blocks() * block_size);
+    if (stash_reader(stash.id(), &stash_buffer) != 0) {
+      return false;
+    }
+    MoveRange(buffer, stash.ranges(), stash_buffer, block_size);
+  }
+  return true;
+}
+
+void SourceInfo::DumpBuffer(const std::vector<uint8_t>& buffer, size_t block_size) const {
+  LOG(INFO) << "Dumping hashes in hex for " << ranges_.blocks() << " source blocks";
+
+  const RangeSet& location = location_ ? location_ : RangeSet({ Range{ 0, ranges_.blocks() } });
+  for (size_t i = 0; i < ranges_.blocks(); i++) {
+    size_t block_num = ranges_.GetBlockNumber(i);
+    size_t buffer_index = location.GetBlockNumber(i);
+    CHECK_LE((buffer_index + 1) * block_size, buffer.size());
+
+    uint8_t digest[SHA_DIGEST_LENGTH];
+    SHA1(buffer.data() + buffer_index * block_size, block_size, digest);
+    std::string hexdigest = print_sha1(digest);
+    LOG(INFO) << "  block number: " << block_num << ", SHA-1: " << hexdigest;
+  }
 }
 
 std::ostream& operator<<(std::ostream& os, const Command& command) {
