@@ -248,7 +248,7 @@ int SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int 
   }
   long payload_offset = payload_entry.offset;
   *cmd = {
-    "/sbin/update_engine_sideload",
+    "/system/bin/update_engine_sideload",
     "--payload=file://" + package,
     android::base::StringPrintf("--offset=%ld", payload_offset),
     "--headers=" + std::string(payload_properties.begin(), payload_properties.end()),
