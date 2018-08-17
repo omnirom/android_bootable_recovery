@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <stdint.h>
+
+#include <functional>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -110,6 +113,23 @@ class SourceInfo {
       blocks_ += stash.ranges().blocks();
     }
   }
+
+  // Reads all the data specified by this SourceInfo object into the given 'buffer', by calling the
+  // given readers. Caller needs to specify the block size for the represented blocks. The given
+  // buffer needs to be sufficiently large. Otherwise it returns false. 'block_reader' and
+  // 'stash_reader' read the specified data into the given buffer (guaranteed to be large enough)
+  // respectively. The readers should return 0 on success, or -1 on error.
+  bool ReadAll(
+      std::vector<uint8_t>* buffer, size_t block_size,
+      const std::function<int(const RangeSet&, std::vector<uint8_t>*)>& block_reader,
+      const std::function<int(const std::string&, std::vector<uint8_t>*)>& stash_reader) const;
+
+  // Whether this SourceInfo overlaps with the given TargetInfo object.
+  bool Overlaps(const TargetInfo& target) const;
+
+  // Dumps the hashes in hex for the given buffer that's loaded from this SourceInfo object
+  // (excluding the stashed blocks which are handled separately).
+  void DumpBuffer(const std::vector<uint8_t>& buffer, size_t block_size) const;
 
   const std::string& hash() const {
     return hash_;
@@ -334,6 +354,10 @@ class Command {
     return hash_tree_info_;
   }
 
+  size_t block_size() const {
+    return block_size_;
+  }
+
   constexpr explicit operator bool() const {
     return type_ != Type::LAST;
   }
@@ -377,6 +401,8 @@ class Command {
   StashInfo stash_;
   // The hash_tree info. Only meaningful for COMPUTE_HASH_TREE.
   HashTreeInfo hash_tree_info_;
+  // The unit size of each block to be used in this command.
+  size_t block_size_{ 4096 };
 };
 
 std::ostream& operator<<(std::ostream& os, const Command& command);
