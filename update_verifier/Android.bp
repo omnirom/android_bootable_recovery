@@ -54,7 +54,7 @@ cc_library_static {
     proto: {
         type: "lite",
         export_proto_headers: true,
-    }
+    },
 }
 
 cc_binary {
@@ -87,4 +87,33 @@ cc_binary {
     init_rc: [
         "update_verifier.rc",
     ],
+}
+
+python_binary_host {
+    name: "care_map_generator",
+
+    srcs: [
+        "care_map_generator.py",
+        "care_map.proto",
+    ],
+    libs: [
+        "python-symbol",
+        // Soong won't add "libprotobuf-python" to the dependencies if
+        // filegroup contains .proto files. So add it here explicitly.
+        "libprotobuf-python",
+    ],
+    proto: {
+        canonical_path_from_root: false,
+    },
+
+    version: {
+        py2: {
+            enabled: true,
+            embedded_launcher: true,
+        },
+        py3: {
+            enabled: false,
+            embedded_launcher: false,
+        },
+    },
 }
