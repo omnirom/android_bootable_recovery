@@ -454,8 +454,7 @@ int RecoveryUI::WaitKey() {
     return static_cast<int>(KeyError::INTERRUPTED);
   }
 
-  // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is
-  // plugged in.
+  // Time out after UI_WAIT_KEY_TIMEOUT_SEC, unless a USB cable is plugged in.
   do {
     bool rc = key_queue_cond.wait_for(lk, std::chrono::seconds(UI_WAIT_KEY_TIMEOUT_SEC), [this] {
       return this->key_queue_len != 0 || key_interrupted_;
@@ -466,13 +465,13 @@ int RecoveryUI::WaitKey() {
     }
     if (screensaver_state_ != ScreensaverState::DISABLED) {
       if (!rc) {
-        // Lower the brightness level: NORMAL -> DIMMED; DIMMED -> OFF.
+        // Must be after a timeout. Lower the brightness level: NORMAL -> DIMMED; DIMMED -> OFF.
         if (screensaver_state_ == ScreensaverState::NORMAL) {
           SetScreensaverState(ScreensaverState::DIMMED);
         } else if (screensaver_state_ == ScreensaverState::DIMMED) {
           SetScreensaverState(ScreensaverState::OFF);
         }
-      } else {
+      } else if (screensaver_state_ != ScreensaverState::NORMAL) {
         // Drop the first key if it's changing from OFF to NORMAL.
         if (screensaver_state_ == ScreensaverState::OFF) {
           if (key_queue_len > 0) {
