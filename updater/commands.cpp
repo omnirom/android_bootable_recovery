@@ -401,3 +401,54 @@ std::ostream& operator<<(std::ostream& os, const SourceInfo& source) {
   }
   return os;
 }
+
+TransferList TransferList::Parse(const std::string& transfer_list_str, std::string* err) {
+  TransferList result{};
+
+  std::vector<std::string> lines = android::base::Split(transfer_list_str, "\n");
+  if (lines.size() < kTransferListHeaderLines) {
+    *err = android::base::StringPrintf("too few lines in the transfer list [%zu]", lines.size());
+    return TransferList{};
+  }
+
+  // First line in transfer list is the version number.
+  if (!android::base::ParseInt(lines[0], &result.version_, 3, 4)) {
+    *err = "unexpected transfer list version ["s + lines[0] + "]";
+    return TransferList{};
+  }
+
+  // Second line in transfer list is the total number of blocks we expect to write.
+  if (!android::base::ParseUint(lines[1], &result.total_blocks_)) {
+    *err = "unexpected block count ["s + lines[1] + "]";
+    return TransferList{};
+  }
+
+  // Third line is how many stash entries are needed simultaneously.
+  if (!android::base::ParseUint(lines[2], &result.stash_max_entries_)) {
+    return TransferList{};
+  }
+
+  // Fourth line is the maximum number of blocks that will be stashed simultaneously.
+  if (!android::base::ParseUint(lines[3], &result.stash_max_blocks_)) {
+    *err = "unexpected maximum stash blocks ["s + lines[3] + "]";
+    return TransferList{};
+  }
+
+  // Subsequent lines are all individual transfer commands.
+  for (size_t i = kTransferListHeaderLines; i < lines.size(); i++) {
+    const std::string& line = lines[i];
+    if (line.empty()) continue;
+
+    size_t cmdindex = i - kTransferListHeaderLines;
+    std::string parsing_error;
+    Command command = Command::Parse(line, cmdindex, &parsing_error);
+    if (!command) {
+      *err = android::base::StringPrintf("Failed to parse command %zu [%s]: %s", cmdindex,
+                                         line.c_str(), parsing_error.c_str());
+      return TransferList{};
+    }
+    result.commands_.push_back(command);
+  }
+
+  return result;
+}
