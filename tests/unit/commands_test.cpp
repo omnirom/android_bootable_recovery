@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <string>
 
+#include <android-base/strings.h>
 #include <gtest/gtest.h>
 #include <openssl/sha.h>
 
@@ -495,4 +496,59 @@ TEST(SourceInfoTest, ReadAll_FailingReader) {
   auto block_reader = [](const RangeSet&, std::vector<uint8_t>*) -> int { return 0; };
   auto failing_stash_reader = [](const std::string&, std::vector<uint8_t>*) -> int { return -1; };
   ASSERT_FALSE(source.ReadAll(&buffer, kBlockSize, block_reader, failing_stash_reader));
+}
+
+TEST(TransferListTest, Parse) {
+  std::vector<std::string> input_lines{
+    "4",  // version
+    "2",  // total blocks
+    "1",  // max stashed entries
+    "1",  // max stashed blocks
+    "stash 1d74d1a60332fd38cf9405f1bae67917888da6cb 2,0,1",
+    "move 1d74d1a60332fd38cf9405f1bae67917888da6cb 2,0,1 1 2,0,1",
+  };
+
+  std::string err;
+  TransferList transfer_list = TransferList::Parse(android::base::Join(input_lines, '\n'), &err);
+  ASSERT_TRUE(static_cast<bool>(transfer_list));
+  ASSERT_EQ(4, transfer_list.version());
+  ASSERT_EQ(2, transfer_list.total_blocks());
+  ASSERT_EQ(1, transfer_list.stash_max_entries());
+  ASSERT_EQ(1, transfer_list.stash_max_blocks());
+  ASSERT_EQ(2U, transfer_list.commands().size());
+  ASSERT_EQ(Command::Type::STASH, transfer_list.commands()[0].type());
+  ASSERT_EQ(Command::Type::MOVE, transfer_list.commands()[1].type());
+}
+
+TEST(TransferListTest, Parse_InvalidCommand) {
+  std::vector<std::string> input_lines{
+    "4",  // version
+    "2",  // total blocks
+    "1",  // max stashed entries
+    "1",  // max stashed blocks
+    "stash 1d74d1a60332fd38cf9405f1bae67917888da6cb 2,0,1",
+    "move 1d74d1a60332fd38cf9405f1bae67917888da6cb 2,0,1 1",
+  };
+
+  std::string err;
+  TransferList transfer_list = TransferList::Parse(android::base::Join(input_lines, '\n'), &err);
+  ASSERT_FALSE(static_cast<bool>(transfer_list));
+}
+
+TEST(TransferListTest, Parse_ZeroTotalBlocks) {
+  std::vector<std::string> input_lines{
+    "4",  // version
+    "0",  // total blocks
+    "0",  // max stashed entries
+    "0",  // max stashed blocks
+  };
+
+  std::string err;
+  TransferList transfer_list = TransferList::Parse(android::base::Join(input_lines, '\n'), &err);
+  ASSERT_TRUE(static_cast<bool>(transfer_list));
+  ASSERT_EQ(4, transfer_list.version());
+  ASSERT_EQ(0, transfer_list.total_blocks());
+  ASSERT_EQ(0, transfer_list.stash_max_entries());
+  ASSERT_EQ(0, transfer_list.stash_max_blocks());
+  ASSERT_TRUE(transfer_list.commands().empty());
 }
