@@ -56,8 +56,6 @@ using namespace std::string_literals;
 
 using PackageEntries = std::unordered_map<std::string, std::string>;
 
-static constexpr size_t kTransferListHeaderLines = 4;
-
 struct selabel_handle* sehandle = nullptr;
 
 static void expect(const char* expected, const std::string& expr_str, CauseCode cause_code,
@@ -846,7 +844,8 @@ TEST_F(UpdaterTest, last_command_update) {
   };
 
   // "2\nstash " + block3_hash + " 2,2,3"
-  std::string last_command_content = "2\n" + transfer_list_fail[kTransferListHeaderLines + 2];
+  std::string last_command_content =
+      "2\n" + transfer_list_fail[TransferList::kTransferListHeaderLines + 2];
 
   RunBlockImageUpdate(false, entries, image_file_, "");
 
@@ -895,7 +894,8 @@ TEST_F(UpdaterTest, last_command_update_unresumable) {
 
   ASSERT_TRUE(android::base::WriteStringToFile(block1 + block1, image_file_));
 
-  std::string last_command_content = "0\n" + transfer_list_unresumable[kTransferListHeaderLines];
+  std::string last_command_content =
+      "0\n" + transfer_list_unresumable[TransferList::kTransferListHeaderLines];
   ASSERT_TRUE(android::base::WriteStringToFile(last_command_content, last_command_file_));
 
   RunBlockImageUpdate(false, entries, image_file_, "");
@@ -934,7 +934,8 @@ TEST_F(UpdaterTest, last_command_verify) {
   ASSERT_TRUE(android::base::WriteStringToFile(block1 + block1 + block3, image_file_));
 
   // Last command: "move " + block1_hash + " 2,1,2 1 2,0,1"
-  std::string last_command_content = "2\n" + transfer_list_verify[kTransferListHeaderLines + 2];
+  std::string last_command_content =
+      "2\n" + transfer_list_verify[TransferList::kTransferListHeaderLines + 2];
 
   // First run: expect the verification to succeed and the last_command_file is intact.
   ASSERT_TRUE(android::base::WriteStringToFile(last_command_content, last_command_file_));
@@ -1129,16 +1130,17 @@ static const std::vector<std::string> g_transfer_list = GenerateTransferList();
 
 INSTANTIATE_TEST_CASE_P(InterruptAfterEachCommand, ResumableUpdaterTest,
                         ::testing::Range(static_cast<size_t>(0),
-                                         g_transfer_list.size() - kTransferListHeaderLines));
+                                         g_transfer_list.size() -
+                                             TransferList::kTransferListHeaderLines));
 
 TEST_P(ResumableUpdaterTest, InterruptVerifyResume) {
   ASSERT_TRUE(android::base::WriteStringToFile(g_source_image, image_file_));
 
   LOG(INFO) << "Interrupting at line " << index_ << " ("
-            << g_transfer_list[kTransferListHeaderLines + index_] << ")";
+            << g_transfer_list[TransferList::kTransferListHeaderLines + index_] << ")";
 
   std::vector<std::string> transfer_list_copy{ g_transfer_list };
-  transfer_list_copy[kTransferListHeaderLines + index_] = "abort";
+  transfer_list_copy[TransferList::kTransferListHeaderLines + index_] = "abort";
 
   g_entries["transfer_list"] = android::base::Join(transfer_list_copy, '\n');
 
@@ -1151,8 +1153,8 @@ TEST_P(ResumableUpdaterTest, InterruptVerifyResume) {
   if (index_ == 0) {
     ASSERT_EQ(-1, access(last_command_file_.c_str(), R_OK));
   } else {
-    last_command_expected =
-        std::to_string(index_ - 1) + "\n" + g_transfer_list[kTransferListHeaderLines + index_ - 1];
+    last_command_expected = std::to_string(index_ - 1) + "\n" +
+                            g_transfer_list[TransferList::kTransferListHeaderLines + index_ - 1];
     std::string last_command_actual;
     ASSERT_TRUE(android::base::ReadFileToString(last_command_file_, &last_command_actual));
     ASSERT_EQ(last_command_expected, last_command_actual);
