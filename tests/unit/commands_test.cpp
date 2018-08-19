@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <string>
 
+#include <android-base/strings.h>
 #include <gtest/gtest.h>
+#include <openssl/sha.h>
 
+#include "otautil/print_sha1.h"
 #include "otautil/rangeset.h"
 #include "private/commands.h"
 
@@ -379,4 +383,172 @@ TEST(CommandsTest, Parse_InvalidNumberOfArgs) {
     std::string err;
     ASSERT_FALSE(Command::Parse(input, 0, &err));
   }
+}
+
+TEST(SourceInfoTest, Overlaps) {
+  ASSERT_TRUE(SourceInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb",
+                         RangeSet({ { 7, 9 }, { 16, 20 } }), {}, {})
+                  .Overlaps(TargetInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb",
+                                       RangeSet({ { 7, 9 }, { 16, 20 } }))));
+
+  ASSERT_TRUE(SourceInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb",
+                         RangeSet({ { 7, 9 }, { 16, 20 } }), {}, {})
+                  .Overlaps(TargetInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb",
+                                       RangeSet({ { 4, 7 }, { 16, 23 } }))));
+
+  ASSERT_FALSE(SourceInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb",
+                          RangeSet({ { 7, 9 }, { 16, 20 } }), {}, {})
+                   .Overlaps(TargetInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb",
+                                        RangeSet({ { 9, 16 } }))));
+}
+
+TEST(SourceInfoTest, Overlaps_EmptySourceOrTarget) {
+  ASSERT_FALSE(SourceInfo().Overlaps(TargetInfo()));
+
+  ASSERT_FALSE(SourceInfo().Overlaps(
+      TargetInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb", RangeSet({ { 7, 9 }, { 16, 20 } }))));
+
+  ASSERT_FALSE(SourceInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb",
+                          RangeSet({ { 7, 9 }, { 16, 20 } }), {}, {})
+                   .Overlaps(TargetInfo()));
+}
+
+TEST(SourceInfoTest, Overlaps_WithStashes) {
+  ASSERT_FALSE(SourceInfo("a6cbdf3f416960f02189d3a814ec7e9e95c44a0d",
+                          RangeSet({ { 81, 175 }, { 265, 266 } }),  // source ranges
+                          RangeSet({ { 0, 94 }, { 95, 96 } }),      // source location
+                          { StashInfo("9eedf00d11061549e32503cadf054ec6fbfa7a23",
+                                      RangeSet({ { 94, 95 } })) })
+                   .Overlaps(TargetInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb",
+                                        RangeSet({ { 175, 265 } }))));
+
+  ASSERT_TRUE(SourceInfo("a6cbdf3f416960f02189d3a814ec7e9e95c44a0d",
+                         RangeSet({ { 81, 175 }, { 265, 266 } }),  // source ranges
+                         RangeSet({ { 0, 94 }, { 95, 96 } }),      // source location
+                         { StashInfo("9eedf00d11061549e32503cadf054ec6fbfa7a23",
+                                     RangeSet({ { 94, 95 } })) })
+                  .Overlaps(TargetInfo("1d74d1a60332fd38cf9405f1bae67917888da6cb",
+                                       RangeSet({ { 265, 266 } }))));
+}
+
+// The block size should be specified by the caller of ReadAll (i.e. from Command instance during
+// normal run).
+constexpr size_t kBlockSize = 4096;
+
+TEST(SourceInfoTest, ReadAll) {
+  // "2727756cfee3fbfe24bf5650123fd7743d7b3465" is the SHA-1 hex digest of 8192 * 'a'.
+  const SourceInfo source("2727756cfee3fbfe24bf5650123fd7743d7b3465", RangeSet({ { 0, 2 } }), {},
+                          {});
+  auto block_reader = [](const RangeSet& src, std::vector<uint8_t>* block_buffer) -> int {
+    std::fill_n(block_buffer->begin(), src.blocks() * kBlockSize, 'a');
+    return 0;
+  };
+  auto stash_reader = [](const std::string&, std::vector<uint8_t>*) -> int { return 0; };
+  std::vector<uint8_t> buffer(source.blocks() * kBlockSize);
+  ASSERT_TRUE(source.ReadAll(&buffer, kBlockSize, block_reader, stash_reader));
+  ASSERT_EQ(source.blocks() * kBlockSize, buffer.size());
+
+  uint8_t digest[SHA_DIGEST_LENGTH];
+  SHA1(buffer.data(), buffer.size(), digest);
+  ASSERT_EQ(source.hash(), print_sha1(digest));
+}
+
+TEST(SourceInfoTest, ReadAll_WithStashes) {
+  const SourceInfo source(
+      // SHA-1 hex digest of 8192 * 'a' + 4096 * 'b'.
+      "ee3ebea26130769c10ad13604712100346d48660", RangeSet({ { 0, 2 } }), RangeSet({ { 0, 2 } }),
+      { StashInfo("1e41f7a59e80c6eb4dc043caae80d273f130bed8", RangeSet({ { 2, 3 } })) });
+  auto block_reader = [](const RangeSet& src, std::vector<uint8_t>* block_buffer) -> int {
+    std::fill_n(block_buffer->begin(), src.blocks() * kBlockSize, 'a');
+    return 0;
+  };
+  auto stash_reader = [](const std::string&, std::vector<uint8_t>* stash_buffer) -> int {
+    std::fill_n(stash_buffer->begin(), kBlockSize, 'b');
+    return 0;
+  };
+  std::vector<uint8_t> buffer(source.blocks() * kBlockSize);
+  ASSERT_TRUE(source.ReadAll(&buffer, kBlockSize, block_reader, stash_reader));
+  ASSERT_EQ(source.blocks() * kBlockSize, buffer.size());
+
+  uint8_t digest[SHA_DIGEST_LENGTH];
+  SHA1(buffer.data(), buffer.size(), digest);
+  ASSERT_EQ(source.hash(), print_sha1(digest));
+}
+
+TEST(SourceInfoTest, ReadAll_BufferTooSmall) {
+  const SourceInfo source("2727756cfee3fbfe24bf5650123fd7743d7b3465", RangeSet({ { 0, 2 } }), {},
+                          {});
+  auto block_reader = [](const RangeSet&, std::vector<uint8_t>*) -> int { return 0; };
+  auto stash_reader = [](const std::string&, std::vector<uint8_t>*) -> int { return 0; };
+  std::vector<uint8_t> buffer(source.blocks() * kBlockSize - 1);
+  ASSERT_FALSE(source.ReadAll(&buffer, kBlockSize, block_reader, stash_reader));
+}
+
+TEST(SourceInfoTest, ReadAll_FailingReader) {
+  const SourceInfo source(
+      "ee3ebea26130769c10ad13604712100346d48660", RangeSet({ { 0, 2 } }), RangeSet({ { 0, 2 } }),
+      { StashInfo("1e41f7a59e80c6eb4dc043caae80d273f130bed8", RangeSet({ { 2, 3 } })) });
+  std::vector<uint8_t> buffer(source.blocks() * kBlockSize);
+  auto failing_block_reader = [](const RangeSet&, std::vector<uint8_t>*) -> int { return -1; };
+  auto stash_reader = [](const std::string&, std::vector<uint8_t>*) -> int { return 0; };
+  ASSERT_FALSE(source.ReadAll(&buffer, kBlockSize, failing_block_reader, stash_reader));
+
+  auto block_reader = [](const RangeSet&, std::vector<uint8_t>*) -> int { return 0; };
+  auto failing_stash_reader = [](const std::string&, std::vector<uint8_t>*) -> int { return -1; };
+  ASSERT_FALSE(source.ReadAll(&buffer, kBlockSize, block_reader, failing_stash_reader));
+}
+
+TEST(TransferListTest, Parse) {
+  std::vector<std::string> input_lines{
+    "4",  // version
+    "2",  // total blocks
+    "1",  // max stashed entries
+    "1",  // max stashed blocks
+    "stash 1d74d1a60332fd38cf9405f1bae67917888da6cb 2,0,1",
+    "move 1d74d1a60332fd38cf9405f1bae67917888da6cb 2,0,1 1 2,0,1",
+  };
+
+  std::string err;
+  TransferList transfer_list = TransferList::Parse(android::base::Join(input_lines, '\n'), &err);
+  ASSERT_TRUE(static_cast<bool>(transfer_list));
+  ASSERT_EQ(4, transfer_list.version());
+  ASSERT_EQ(2, transfer_list.total_blocks());
+  ASSERT_EQ(1, transfer_list.stash_max_entries());
+  ASSERT_EQ(1, transfer_list.stash_max_blocks());
+  ASSERT_EQ(2U, transfer_list.commands().size());
+  ASSERT_EQ(Command::Type::STASH, transfer_list.commands()[0].type());
+  ASSERT_EQ(Command::Type::MOVE, transfer_list.commands()[1].type());
+}
+
+TEST(TransferListTest, Parse_InvalidCommand) {
+  std::vector<std::string> input_lines{
+    "4",  // version
+    "2",  // total blocks
+    "1",  // max stashed entries
+    "1",  // max stashed blocks
+    "stash 1d74d1a60332fd38cf9405f1bae67917888da6cb 2,0,1",
+    "move 1d74d1a60332fd38cf9405f1bae67917888da6cb 2,0,1 1",
+  };
+
+  std::string err;
+  TransferList transfer_list = TransferList::Parse(android::base::Join(input_lines, '\n'), &err);
+  ASSERT_FALSE(static_cast<bool>(transfer_list));
+}
+
+TEST(TransferListTest, Parse_ZeroTotalBlocks) {
+  std::vector<std::string> input_lines{
+    "4",  // version
+    "0",  // total blocks
+    "0",  // max stashed entries
+    "0",  // max stashed blocks
+  };
+
+  std::string err;
+  TransferList transfer_list = TransferList::Parse(android::base::Join(input_lines, '\n'), &err);
+  ASSERT_TRUE(static_cast<bool>(transfer_list));
+  ASSERT_EQ(4, transfer_list.version());
+  ASSERT_EQ(0, transfer_list.total_blocks());
+  ASSERT_EQ(0, transfer_list.stash_max_entries());
+  ASSERT_EQ(0, transfer_list.stash_max_blocks());
+  ASSERT_TRUE(transfer_list.commands().empty());
 }

@@ -108,15 +108,7 @@ cc_test {
     test_suites: ["device-tests"],
 
     srcs: [
-        "unit/asn1_decoder_test.cpp",
-        "unit/applypatch_test.cpp",
-        "unit/commands_test.cpp",
-        "unit/dirutil_test.cpp",
-        "unit/locale_test.cpp",
-        "unit/rangeset_test.cpp",
-        "unit/screen_ui_test.cpp",
-        "unit/sysutil_test.cpp",
-        "unit/zip_test.cpp",
+        "unit/*.cpp",
     ],
 
     static_libs: libapplypatch_static_libs + [
@@ -161,16 +153,7 @@ cc_test {
     test_suites: ["device-tests"],
 
     srcs: [
-        "component/bootloader_message_test.cpp",
-        "component/edify_test.cpp",
-        "component/imgdiff_test.cpp",
-        "component/install_test.cpp",
-        "component/resources_test.cpp",
-        "component/sideload_test.cpp",
-        "component/uncrypt_test.cpp",
-        "component/updater_test.cpp",
-        "component/update_verifier_test.cpp",
-        "component/verifier_test.cpp",
+        "component/*.cpp",
     ],
 
     static_libs: libapplypatch_static_libs + librecovery_static_libs + [
@@ -215,4 +198,11 @@ cc_test_host {
     ],
 
     data: ["testdata/*"],
+
+    target: {
+        darwin: {
+            // libimgdiff is not available on the Mac.
+            enabled: false,
+        },
+    },
 }

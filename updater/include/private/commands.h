@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <stdint.h>
+
+#include <functional>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -110,6 +113,23 @@ class SourceInfo {
       blocks_ += stash.ranges().blocks();
     }
   }
+
+  // Reads all the data specified by this SourceInfo object into the given 'buffer', by calling the
+  // given readers. Caller needs to specify the block size for the represented blocks. The given
+  // buffer needs to be sufficiently large. Otherwise it returns false. 'block_reader' and
+  // 'stash_reader' read the specified data into the given buffer (guaranteed to be large enough)
+  // respectively. The readers should return 0 on success, or -1 on error.
+  bool ReadAll(
+      std::vector<uint8_t>* buffer, size_t block_size,
+      const std::function<int(const RangeSet&, std::vector<uint8_t>*)>& block_reader,
+      const std::function<int(const std::string&, std::vector<uint8_t>*)>& stash_reader) const;
+
+  // Whether this SourceInfo overlaps with the given TargetInfo object.
+  bool Overlaps(const TargetInfo& target) const;
+
+  // Dumps the hashes in hex for the given buffer that's loaded from this SourceInfo object
+  // (excluding the stashed blocks which are handled separately).
+  void DumpBuffer(const std::vector<uint8_t>& buffer, size_t block_size) const;
 
   const std::string& hash() const {
     return hash_;
@@ -334,6 +354,10 @@ class Command {
     return hash_tree_info_;
   }
 
+  size_t block_size() const {
+    return block_size_;
+  }
+
   constexpr explicit operator bool() const {
     return type_ != Type::LAST;
   }
@@ -377,6 +401,75 @@ class Command {
   StashInfo stash_;
   // The hash_tree info. Only meaningful for COMPUTE_HASH_TREE.
   HashTreeInfo hash_tree_info_;
+  // The unit size of each block to be used in this command.
+  size_t block_size_{ 4096 };
 };
 
 std::ostream& operator<<(std::ostream& os, const Command& command);
+
+// TransferList represents the info for a transfer list, which is parsed from input text lines
+// containing commands to transfer data from one place to another on the target partition.
+//
+// The creator of the transfer list will guarantee that no block is read (i.e., used as the source
+// for a patch or move) after it has been written.
+//
+// The creator will guarantee that a given stash is loaded (with a stash command) before it's used
+// in a move/bsdiff/imgdiff command.
+//
+// Within one command the source and target ranges may overlap so in general we need to read the
+// entire source into memory before writing anything to the target blocks.
+//
+// All the patch data is concatenated into one patch_data file in the update package. It must be
+// stored uncompressed because we memory-map it in directly from the archive. (Since patches are
+// already compressed, we lose very little by not compressing their concatenation.)
+//
+// Commands that read data from the partition (i.e. move/bsdiff/imgdiff/stash) have one or more
+// additional hashes before the range parameters, which are used to check if the command has
+// already been completed and verify the integrity of the source data.
+class TransferList {
+ public:
+  // Number of header lines.
+  static constexpr size_t kTransferListHeaderLines = 4;
+
+  TransferList() = default;
+
+  // Parses the given input string and returns a TransferList object. Sets error message if any.
+  static TransferList Parse(const std::string& transfer_list_str, std::string* err);
+
+  int version() const {
+    return version_;
+  }
+
+  size_t total_blocks() const {
+    return total_blocks_;
+  }
+
+  size_t stash_max_entries() const {
+    return stash_max_entries_;
+  }
+
+  size_t stash_max_blocks() const {
+    return stash_max_blocks_;
+  }
+
+  const std::vector<Command>& commands() const {
+    return commands_;
+  }
+
+  // Returns whether the TransferList is valid.
+  constexpr explicit operator bool() const {
+    return version_ != 0;
+  }
+
+ private:
+  // BBOTA version.
+  int version_{ 0 };
+  // Total number of blocks to be written in this transfer.
+  size_t total_blocks_;
+  // Maximum number of stashes that exist at the same time.
+  size_t stash_max_entries_;
+  // Maximum number of blocks to be stashed.
+  size_t stash_max_blocks_;
+  // Commands in this transfer.
+  std::vector<Command> commands_;
+};
