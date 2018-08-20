@@ -35,20 +35,20 @@ class RecoveryUI {
     INSTALLING_UPDATE,
     ERASING,
     NO_COMMAND,
-    ERROR
+    ERROR,
   };
 
   enum ProgressType {
     EMPTY,
     INDETERMINATE,
-    DETERMINATE
+    DETERMINATE,
   };
 
   enum KeyAction {
     ENQUEUE,
     TOGGLE,
     REBOOT,
-    IGNORE
+    IGNORE,
   };
 
   enum class KeyError : int {
@@ -60,8 +60,8 @@ class RecoveryUI {
 
   virtual ~RecoveryUI();
 
-  // Initializes the object; called before anything else. UI texts will be initialized according to
-  // the given locale. Returns true on success.
+  // Initializes the object; called before anything else. UI texts will be initialized according
+  // to the given locale. Returns true on success.
   virtual bool Init(const std::string& locale);
 
   virtual std::string GetLocale() const = 0;
@@ -211,7 +211,7 @@ class RecoveryUI {
     DISABLED,
     NORMAL,
     DIMMED,
-    OFF
+    OFF,
   };
 
   // The sensitivity when detecting a swipe.
