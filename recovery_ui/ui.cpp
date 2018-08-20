@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ui.h"
+#include "recovery_ui/ui.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -39,7 +39,6 @@
 
 #include "minui/minui.h"
 #include "otautil/sysutil.h"
-#include "roots.h"
 
 using namespace std::chrono_literals;
 
@@ -590,8 +589,7 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
   return (IsTextVisible() || screensaver_state_ == ScreensaverState::OFF) ? ENQUEUE : IGNORE;
 }
 
-void RecoveryUI::KeyLongPress(int) {
-}
+void RecoveryUI::KeyLongPress(int) {}
 
 void RecoveryUI::SetEnableReboot(bool enabled) {
   std::lock_guard<std::mutex> lg(key_queue_mutex);
