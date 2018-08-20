@@ -221,7 +221,7 @@ TEST_F(UpdaterTest, apply_patch_check) {
   // File not found.
   expect("", "apply_patch_check(\"/doesntexist\")", kNoCause);
 
-  std::string src_file = from_testdata_base("old.file");
+  std::string src_file = from_testdata_base("boot.img");
   std::string src_content;
   ASSERT_TRUE(android::base::ReadFileToString(src_file, &src_content));
   size_t src_size = src_content.size();
