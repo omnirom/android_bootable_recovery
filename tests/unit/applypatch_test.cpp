@@ -46,17 +46,17 @@ using namespace std::string_literals;
 class ApplyPatchTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    old_file = from_testdata_base("old.file");
-    FileContents old_fc;
-    ASSERT_EQ(0, LoadFileContents(old_file, &old_fc));
-    old_sha1 = print_sha1(old_fc.sha1);
-    old_size = old_fc.data.size();
+    source_file = from_testdata_base("boot.img");
+    FileContents boot_fc;
+    ASSERT_EQ(0, LoadFileContents(source_file, &boot_fc));
+    source_size = boot_fc.data.size();
+    source_sha1 = print_sha1(boot_fc.sha1);
 
-    new_file = from_testdata_base("new.file");
-    FileContents new_fc;
-    ASSERT_EQ(0, LoadFileContents(new_file, &new_fc));
-    new_sha1 = print_sha1(new_fc.sha1);
-    new_size = new_fc.data.size();
+    target_file = from_testdata_base("recovery.img");
+    FileContents recovery_fc;
+    ASSERT_EQ(0, LoadFileContents(target_file, &recovery_fc));
+    target_size = recovery_fc.data.size();
+    target_sha1 = print_sha1(recovery_fc.sha1);
 
     srand(time(nullptr));
     bad_sha1_a = android::base::StringPrintf("%040x", rand());
@@ -66,78 +66,83 @@ class ApplyPatchTest : public ::testing::Test {
     Paths::Get().set_cache_temp_source("/cache/saved.file");
   }
 
-  std::string old_file;
-  std::string old_sha1;
-  size_t old_size;
+  std::string source_file;
+  std::string source_sha1;
+  size_t source_size;
 
-  std::string new_file;
-  std::string new_sha1;
-  size_t new_size;
+  std::string target_file;
+  std::string target_sha1;
+  size_t target_size;
 
   std::string bad_sha1_a;
   std::string bad_sha1_b;
 };
 
 TEST_F(ApplyPatchTest, CheckMode) {
-  std::string partition = "EMMC:" + old_file + ":" + std::to_string(old_size) + ":" + old_sha1;
+  std::string partition =
+      "EMMC:" + source_file + ":" + std::to_string(source_size) + ":" + source_sha1;
   ASSERT_EQ(0, applypatch_check(partition, {}));
-  ASSERT_EQ(0, applypatch_check(partition, { old_sha1 }));
+  ASSERT_EQ(0, applypatch_check(partition, { source_sha1 }));
   ASSERT_EQ(0, applypatch_check(partition, { bad_sha1_a, bad_sha1_b }));
-  ASSERT_EQ(0, applypatch_check(partition, { bad_sha1_a, old_sha1, bad_sha1_b }));
+  ASSERT_EQ(0, applypatch_check(partition, { bad_sha1_a, source_sha1, bad_sha1_b }));
 }
 
 TEST_F(ApplyPatchTest, CheckMode_NonEmmcTarget) {
-  ASSERT_NE(0, applypatch_check(old_file, {}));
-  ASSERT_NE(0, applypatch_check(old_file, { old_sha1 }));
-  ASSERT_NE(0, applypatch_check(old_file, { bad_sha1_a, bad_sha1_b }));
-  ASSERT_NE(0, applypatch_check(old_file, { bad_sha1_a, old_sha1, bad_sha1_b }));
+  ASSERT_NE(0, applypatch_check(source_file, {}));
+  ASSERT_NE(0, applypatch_check(source_file, { source_sha1 }));
+  ASSERT_NE(0, applypatch_check(source_file, { bad_sha1_a, bad_sha1_b }));
+  ASSERT_NE(0, applypatch_check(source_file, { bad_sha1_a, source_sha1, bad_sha1_b }));
 }
 
 TEST_F(ApplyPatchTest, CheckMode_EmmcTarget) {
-  // EMMC:old_file:size:sha1 should pass the check.
-  std::string src_file = "EMMC:" + old_file + ":" + std::to_string(old_size) + ":" + old_sha1;
+  // EMMC:source_file:size:sha1 should pass the check.
+  std::string src_file =
+      "EMMC:" + source_file + ":" + std::to_string(source_size) + ":" + source_sha1;
   ASSERT_EQ(0, applypatch_check(src_file, {}));
 
-  // EMMC:old_file:(size-1):sha1:(size+1):sha1 should fail the check.
-  src_file = "EMMC:" + old_file + ":" + std::to_string(old_size - 1) + ":" + old_sha1 + ":" +
-             std::to_string(old_size + 1) + ":" + old_sha1;
+  // EMMC:source_file:(size-1):sha1:(size+1):sha1 should fail the check.
+  src_file = "EMMC:" + source_file + ":" + std::to_string(source_size - 1) + ":" + source_sha1 +
+             ":" + std::to_string(source_size + 1) + ":" + source_sha1;
   ASSERT_NE(0, applypatch_check(src_file, {}));
 
-  // EMMC:old_file:(size-1):sha1:size:sha1:(size+1):sha1 should pass the check.
-  src_file = "EMMC:" + old_file + ":" + std::to_string(old_size - 1) + ":" + old_sha1 + ":" +
-             std::to_string(old_size) + ":" + old_sha1 + ":" + std::to_string(old_size + 1) + ":" +
-             old_sha1;
+  // EMMC:source_file:(size-1):sha1:size:sha1:(size+1):sha1 should pass the check.
+  src_file = "EMMC:" + source_file + ":" + std::to_string(source_size - 1) + ":" + source_sha1 +
+             ":" + std::to_string(source_size) + ":" + source_sha1 + ":" +
+             std::to_string(source_size + 1) + ":" + source_sha1;
   ASSERT_EQ(0, applypatch_check(src_file, {}));
 
-  // EMMC:old_file:(size+1):sha1:(size-1):sha1:size:sha1 should pass the check.
-  src_file = "EMMC:" + old_file + ":" + std::to_string(old_size + 1) + ":" + old_sha1 + ":" +
-             std::to_string(old_size - 1) + ":" + old_sha1 + ":" + std::to_string(old_size) + ":" +
-             old_sha1;
+  // EMMC:source_file:(size+1):sha1:(size-1):sha1:size:sha1 should pass the check.
+  src_file = "EMMC:" + source_file + ":" + std::to_string(source_size + 1) + ":" + source_sha1 +
+             ":" + std::to_string(source_size - 1) + ":" + source_sha1 + ":" +
+             std::to_string(source_size) + ":" + source_sha1;
   ASSERT_EQ(0, applypatch_check(src_file, {}));
 
-  // EMMC:new_file:(size+1):old_sha1:(size-1):old_sha1:size:old_sha1:size:new_sha1
+  // EMMC:target_file:(size+1):source_sha1:(size-1):source_sha1:size:source_sha1:size:target_sha1
   // should pass the check.
-  src_file = "EMMC:" + new_file + ":" + std::to_string(old_size + 1) + ":" + old_sha1 + ":" +
-             std::to_string(old_size - 1) + ":" + old_sha1 + ":" + std::to_string(old_size) + ":" +
-             old_sha1 + ":" + std::to_string(new_size) + ":" + new_sha1;
+  src_file = "EMMC:" + target_file + ":" + std::to_string(source_size + 1) + ":" + source_sha1 +
+             ":" + std::to_string(source_size - 1) + ":" + source_sha1 + ":" +
+             std::to_string(source_size) + ":" + source_sha1 + ":" + std::to_string(target_size) +
+             ":" + target_sha1;
   ASSERT_EQ(0, applypatch_check(src_file, {}));
 }
 
 TEST_F(ApplyPatchTest, CheckMode_UseBackup) {
-  std::string corrupted = "EMMC:" + old_file + ":" + std::to_string(old_size) + ":" + bad_sha1_a;
-  ASSERT_NE(0, applypatch_check(corrupted, { old_sha1 }));
+  std::string corrupted =
+      "EMMC:" + source_file + ":" + std::to_string(source_size) + ":" + bad_sha1_a;
+  ASSERT_NE(0, applypatch_check(corrupted, { source_sha1 }));
 
-  Paths::Get().set_cache_temp_source(old_file);
-  ASSERT_EQ(0, applypatch_check(corrupted, { old_sha1 }));
-  ASSERT_EQ(0, applypatch_check(corrupted, { bad_sha1_a, old_sha1, bad_sha1_b }));
+  Paths::Get().set_cache_temp_source(source_file);
+  ASSERT_EQ(0, applypatch_check(corrupted, { source_sha1 }));
+  ASSERT_EQ(0, applypatch_check(corrupted, { bad_sha1_a, source_sha1, bad_sha1_b }));
 }
 
 TEST_F(ApplyPatchTest, CheckMode_UseBackup_BothCorrupted) {
-  std::string corrupted = "EMMC:" + old_file + ":" + std::to_string(old_size) + ":" + bad_sha1_a;
+  std::string corrupted =
+      "EMMC:" + source_file + ":" + std::to_string(source_size) + ":" + bad_sha1_a;
   ASSERT_NE(0, applypatch_check(corrupted, {}));
-  ASSERT_NE(0, applypatch_check(corrupted, { old_sha1 }));
+  ASSERT_NE(0, applypatch_check(corrupted, { source_sha1 }));
 
-  Paths::Get().set_cache_temp_source(old_file);
+  Paths::Get().set_cache_temp_source(source_file);
   ASSERT_NE(0, applypatch_check(corrupted, { bad_sha1_a, bad_sha1_b }));
 }
 
