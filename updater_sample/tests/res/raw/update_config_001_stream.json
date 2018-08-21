@@ -2,7 +2,9 @@
     "name": "streaming-001",
     "url": "http://foo.bar/update.zip",
     "ab_install_type": "STREAMING",
-    "ab_streaming_metadata": {
+    "ab_config": {
+        "verify_payload_metadata": true,
+        "force_switch_slot": true,
         "property_files": [
             {
                 "filename": "payload.bin",
@@ -10,8 +12,5 @@
                 "size": 8
             }
         ]
-    },
-    "ab_config": {
-        "force_switch_slot": true
     }
 }
