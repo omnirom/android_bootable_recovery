@@ -25,6 +25,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Optional;
 
 /**
@@ -67,31 +68,28 @@ public class UpdateConfig implements Parcelable {
                 throw new JSONException("Invalid type, expected either "
                         + "NON_STREAMING or STREAMING, got " + o.getString("ab_install_type"));
         }
-        if (c.mAbInstallType == AB_INSTALL_TYPE_STREAMING) {
-            JSONObject meta = o.getJSONObject("ab_streaming_metadata");
-            JSONArray propertyFilesJson = meta.getJSONArray("property_files");
-            PackageFile[] propertyFiles =
-                    new PackageFile[propertyFilesJson.length()];
-            for (int i = 0; i < propertyFilesJson.length(); i++) {
-                JSONObject p = propertyFilesJson.getJSONObject(i);
-                propertyFiles[i] = new PackageFile(
-                        p.getString("filename"),
-                        p.getLong("offset"),
-                        p.getLong("size"));
-            }
-            String authorization = null;
-            if (meta.has("authorization")) {
-                authorization = meta.getString("authorization");
-            }
-            c.mAbStreamingMetadata = new StreamingMetadata(
-                    propertyFiles,
-                    authorization);
-        }
 
         // TODO: parse only for A/B updates when non-A/B is implemented
         JSONObject ab = o.getJSONObject("ab_config");
         boolean forceSwitchSlot = ab.getBoolean("force_switch_slot");
-        c.mAbConfig = new AbConfig(forceSwitchSlot);
+        boolean verifyPayloadMetadata = ab.getBoolean("verify_payload_metadata");
+        ArrayList<PackageFile> propertyFiles = new ArrayList<>();
+        if (ab.has("property_files")) {
+            JSONArray propertyFilesJson = ab.getJSONArray("property_files");
+            for (int i = 0; i < propertyFilesJson.length(); i++) {
+                JSONObject p = propertyFilesJson.getJSONObject(i);
+                propertyFiles.add(new PackageFile(
+                        p.getString("filename"),
+                        p.getLong("offset"),
+                        p.getLong("size")));
+            }
+        }
+        String authorization = ab.optString("authorization", null);
+        c.mAbConfig = new AbConfig(
+                forceSwitchSlot,
+                verifyPayloadMetadata,
+                propertyFiles.toArray(new PackageFile[0]),
+                authorization);
 
         c.mRawJson = json;
         return c;
@@ -112,9 +110,6 @@ public class UpdateConfig implements Parcelable {
     /** non-streaming (first saves locally) OR streaming (on the fly) */
     private int mAbInstallType;
 
-    /** metadata is required only for streaming update */
-    private StreamingMetadata mAbStreamingMetadata;
-
     /** A/B update configurations */
     private AbConfig mAbConfig;
 
@@ -127,7 +122,6 @@ public class UpdateConfig implements Parcelable {
         this.mName = in.readString();
         this.mUrl = in.readString();
         this.mAbInstallType = in.readInt();
-        this.mAbStreamingMetadata = (StreamingMetadata) in.readSerializable();
         this.mAbConfig = (AbConfig) in.readSerializable();
         this.mRawJson = in.readString();
     }
@@ -152,10 +146,6 @@ public class UpdateConfig implements Parcelable {
 
     public int getInstallType() {
         return mAbInstallType;
-    }
-
-    public StreamingMetadata getStreamingMetadata() {
-        return mAbStreamingMetadata;
     }
 
     public AbConfig getAbConfig() {
@@ -185,40 +175,8 @@ public class UpdateConfig implements Parcelable {
         dest.writeString(mName);
         dest.writeString(mUrl);
         dest.writeInt(mAbInstallType);
-        dest.writeSerializable(mAbStreamingMetadata);
         dest.writeSerializable(mAbConfig);
         dest.writeString(mRawJson);
-    }
-
-    /**
-     * Metadata for streaming A/B update.
-     */
-    public static class StreamingMetadata implements Serializable {
-
-        private static final long serialVersionUID = 31042L;
-
-        /** defines beginning of update data in archive */
-        private PackageFile[] mPropertyFiles;
-
-        /**
-         * SystemUpdaterSample receives the authorization token from the OTA server, in addition
-         * to the package URL. It passes on the info to update_engine, so that the latter can
-         * fetch the data from the package server directly with the token.
-         */
-        private String mAuthorization;
-
-        public StreamingMetadata(PackageFile[] propertyFiles, String authorization) {
-            this.mPropertyFiles = propertyFiles;
-            this.mAuthorization = authorization;
-        }
-
-        public PackageFile[] getPropertyFiles() {
-            return mPropertyFiles;
-        }
-
-        public Optional<String> getAuthorization() {
-            return mAuthorization == null ? Optional.empty() : Optional.of(mAuthorization);
-        }
     }
 
     /**
@@ -269,14 +227,48 @@ public class UpdateConfig implements Parcelable {
          */
         private boolean mForceSwitchSlot;
 
-        public AbConfig(boolean forceSwitchSlot) {
+        /**
+         * if set true device will boot to new slot, otherwise user manually
+         * switches slot on the screen.
+         */
+        private boolean mVerifyPayloadMetadata;
+
+        /** defines beginning of update data in archive */
+        private PackageFile[] mPropertyFiles;
+
+        /**
+         * SystemUpdaterSample receives the authorization token from the OTA server, in addition
+         * to the package URL. It passes on the info to update_engine, so that the latter can
+         * fetch the data from the package server directly with the token.
+         */
+        private String mAuthorization;
+
+        public AbConfig(
+                boolean forceSwitchSlot,
+                boolean verifyPayloadMetadata,
+                PackageFile[] propertyFiles,
+                String authorization) {
             this.mForceSwitchSlot = forceSwitchSlot;
+            this.mVerifyPayloadMetadata = verifyPayloadMetadata;
+            this.mPropertyFiles = propertyFiles;
+            this.mAuthorization = authorization;
         }
 
         public boolean getForceSwitchSlot() {
             return mForceSwitchSlot;
         }
 
+        public boolean getVerifyPayloadMetadata() {
+            return mVerifyPayloadMetadata;
+        }
+
+        public PackageFile[] getPropertyFiles() {
+            return mPropertyFiles;
+        }
+
+        public Optional<String> getAuthorization() {
+            return mAuthorization == null ? Optional.empty() : Optional.of(mAuthorization);
+        }
     }
 
 }

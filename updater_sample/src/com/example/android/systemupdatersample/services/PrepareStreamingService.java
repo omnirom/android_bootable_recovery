@@ -173,7 +173,7 @@ public class PrepareStreamingService extends IntentService {
     }
 
     /**
-     * Downloads files defined in {@link UpdateConfig#getStreamingMetadata()}
+     * Downloads files defined in {@link UpdateConfig#getAbConfig()}
      * and exists in {@code PRE_STREAMING_FILES_SET}, and put them
      * in directory {@code dir}.
      * @throws IOException when can't download a file
@@ -185,7 +185,7 @@ public class PrepareStreamingService extends IntentService {
             Files.deleteIfExists(Paths.get(OTA_PACKAGE_DIR, file));
         }
         Log.d(TAG, "Downloading files to " + dir);
-        for (UpdateConfig.PackageFile file : config.getStreamingMetadata().getPropertyFiles()) {
+        for (UpdateConfig.PackageFile file : config.getAbConfig().getPropertyFiles()) {
             if (PRE_STREAMING_FILES_SET.contains(file.getFilename())) {
                 Log.d(TAG, "Downloading file " + file.getFilename());
                 FileDownloader downloader = new FileDownloader(

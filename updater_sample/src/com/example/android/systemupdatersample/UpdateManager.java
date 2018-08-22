@@ -324,7 +324,7 @@ public class UpdateManager {
             if (code == PrepareStreamingService.RESULT_CODE_SUCCESS) {
                 builder.setPayload(payloadSpec);
                 builder.addExtraProperty("USER_AGENT=" + HTTP_USER_AGENT);
-                config.getStreamingMetadata()
+                config.getAbConfig()
                         .getAuthorization()
                         .ifPresent(s -> builder.addExtraProperty("AUTHORIZATION=" + s));
                 updateEngineApplyPayload(builder.build());
