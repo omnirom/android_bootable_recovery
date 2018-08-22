@@ -1,10 +1,8 @@
 {
     "__": "*** Generated using tools/gen_update_config.py ***",
     "ab_config": {
-        "force_switch_slot": false
-    },
-    "ab_install_type": "STREAMING",
-    "ab_streaming_metadata": {
+        "verify_payload_metadata": true,
+        "force_switch_slot": false,
         "property_files": [
             {
                 "filename": "payload_metadata.bin",
@@ -38,6 +36,7 @@
             }
         ]
     },
+    "ab_install_type": "STREAMING",
     "name": "S ota_002_package",
     "url": "file:///data/my-sample-ota-builds-dir/ota_002_package.zip"
 }

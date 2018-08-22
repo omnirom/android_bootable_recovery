@@ -46,11 +46,17 @@ class GenUpdateConfig(object):
     AB_INSTALL_TYPE_STREAMING = 'STREAMING'
     AB_INSTALL_TYPE_NON_STREAMING = 'NON_STREAMING'
 
-    def __init__(self, package, url, ab_install_type, ab_force_switch_slot):
+    def __init__(self,
+                 package,
+                 url,
+                 ab_install_type,
+                 ab_force_switch_slot,
+                 ab_verify_payload_metadata):
         self.package = package
         self.url = url
         self.ab_install_type = ab_install_type
         self.ab_force_switch_slot = ab_force_switch_slot
+        self.ab_verify_payload_metadata = ab_verify_payload_metadata
         self.streaming_required = (
             # payload.bin and payload_properties.txt must exist.
             'payload.bin',
@@ -71,29 +77,24 @@ class GenUpdateConfig(object):
 
     def run(self):
         """Generates config."""
-        streaming_metadata = None
-        if self.ab_install_type == GenUpdateConfig.AB_INSTALL_TYPE_STREAMING:
-            streaming_metadata = self._gen_ab_streaming_metadata()
-
         self._config = {
             '__': '*** Generated using tools/gen_update_config.py ***',
             'name': self.ab_install_type[0] + ' ' + os.path.basename(self.package)[:-4],
             'url': self.url,
-            'ab_streaming_metadata': streaming_metadata,
+            'ab_config': self._gen_ab_config(),
             'ab_install_type': self.ab_install_type,
-            'ab_config': {
-                'force_switch_slot': self.ab_force_switch_slot,
-            }
         }
 
-    def _gen_ab_streaming_metadata(self):
-        """Builds metadata for files required for streaming update."""
+    def _gen_ab_config(self):
+        """Builds config required for A/B update."""
         with zipfile.ZipFile(self.package, 'r') as package_zip:
-            metadata = {
-                'property_files': self._get_property_files(package_zip)
+            config = {
+                'property_files': self._get_property_files(package_zip),
+                'verify_payload_metadata': self.ab_verify_payload_metadata,
+                'force_switch_slot': self.ab_force_switch_slot,
             }
 
-        return metadata
+        return config
 
     @staticmethod
     def _get_property_files(package_zip):
@@ -135,6 +136,11 @@ def main():  # pylint: disable=missing-docstring
                         action='store_true',
                         help='if set device will boot to a new slot, otherwise user '
                               'manually switches slot on the screen')
+    parser.add_argument('--ab_verify_payload_metadata',
+                        default=False,
+                        action='store_true',
+                        help='if set the app will verify the update payload metadata using '
+                             'update_engine before downloading the whole package.')
     parser.add_argument('package',
                         type=str,
                         help='OTA package zip file')
@@ -154,7 +160,8 @@ def main():  # pylint: disable=missing-docstring
         package=args.package,
         url=args.url,
         ab_install_type=args.ab_install_type,
-        ab_force_switch_slot=args.ab_force_switch_slot)
+        ab_force_switch_slot=args.ab_force_switch_slot,
+        ab_verify_payload_metadata=args.ab_verify_payload_metadata)
     gen.run()
     gen.write(args.out)
     print('Config is written to ' + args.out)
