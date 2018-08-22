@@ -97,8 +97,13 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
   }
   stage = std::string(boot.stage);
 
+  std::string boot_command;
   if (boot.command[0] != 0) {
-    std::string boot_command = std::string(boot.command, sizeof(boot.command));
+    if (memchr(boot.command, '\0', sizeof(boot.command))) {
+      boot_command = std::string(boot.command);
+    } else {
+      boot_command = std::string(boot.command, sizeof(boot.command));
+    }
     LOG(INFO) << "Boot command: " << boot_command;
   }
 
@@ -147,6 +152,12 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
   std::vector<std::string> options(args.cbegin() + 1, args.cend());
   if (!update_bootloader_message(options, &err)) {
     LOG(ERROR) << "Failed to set BCB message: " << err;
+  }
+
+  // Finally, if no arguments were specified, check whether we should boot
+  // into fastboot.
+  if (args.size() == 1 && boot_command == "boot-fastboot") {
+    args.emplace_back("--fastboot");
   }
 
   return args;
