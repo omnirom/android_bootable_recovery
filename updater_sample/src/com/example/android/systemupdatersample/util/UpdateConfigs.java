@@ -83,7 +83,7 @@ public final class UpdateConfigs {
 
     /**
      * @param filename searches by given filename
-     * @param config searches in {@link UpdateConfig#getStreamingMetadata()}
+     * @param config searches in {@link UpdateConfig#getAbConfig()}
      * @return offset and size of {@code filename} in the package zip file
      *         stored as {@link UpdateConfig.PackageFile}.
      */
@@ -91,7 +91,7 @@ public final class UpdateConfigs {
             final String filename,
             UpdateConfig config) {
         return Arrays
-                .stream(config.getStreamingMetadata().getPropertyFiles())
+                .stream(config.getAbConfig().getPropertyFiles())
                 .filter(file -> filename.equals(file.getFilename()))
                 .findFirst();
     }
