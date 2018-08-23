@@ -13,6 +13,10 @@ on init
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /sdcard
 
+    symlink /proc/self/fd/0 /dev/stdin
+    symlink /proc/self/fd/1 /dev/stdout
+    symlink /proc/self/fd/2 /dev/stderr
+
     symlink /system/bin /bin
     symlink /system/etc /etc
 
