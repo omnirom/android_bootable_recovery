@@ -44,10 +44,12 @@ import java.io.InputStreamReader;
 @SmallTest
 public class UpdateConfigTest {
 
-    private static final String JSON_NON_STREAMING =
-            "{\"name\": \"vip update\", \"url\": \"file:///builds/a.zip\", "
-                    + " \"ab_install_type\": \"NON_STREAMING\","
-                    + " \"ab_config\": { \"force_switch_slot\": false } }";
+    private static final String JSON_NON_STREAMING = "{"
+            + " \"name\": \"vip update\", \"url\": \"file:///my-builds/a.zip\","
+            + " \"ab_install_type\": \"NON_STREAMING\","
+            + " \"ab_config\": {"
+            + "     \"force_switch_slot\": false,"
+            + "     \"verify_payload_metadata\": false } }";
 
     @Rule
     public final ExpectedException thrown = ExpectedException.none();
@@ -71,7 +73,7 @@ public class UpdateConfigTest {
         assertSame("type is parsed",
                 UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING,
                 config.getInstallType());
-        assertEquals("url is parsed", "file:///builds/a.zip", config.getUrl());
+        assertEquals("url is parsed", "file:///my-builds/a.zip", config.getUrl());
     }
 
     @Test
@@ -81,9 +83,9 @@ public class UpdateConfigTest {
         assertEquals("http://foo.bar/update.zip", config.getUrl());
         assertSame(UpdateConfig.AB_INSTALL_TYPE_STREAMING, config.getInstallType());
         assertEquals("payload.bin",
-                config.getStreamingMetadata().getPropertyFiles()[0].getFilename());
-        assertEquals(195, config.getStreamingMetadata().getPropertyFiles()[0].getOffset());
-        assertEquals(8, config.getStreamingMetadata().getPropertyFiles()[0].getSize());
+                config.getAbConfig().getPropertyFiles()[0].getFilename());
+        assertEquals(195, config.getAbConfig().getPropertyFiles()[0].getOffset());
+        assertEquals(8, config.getAbConfig().getPropertyFiles()[0].getSize());
         assertTrue(config.getAbConfig().getForceSwitchSlot());
     }
 
@@ -96,9 +98,12 @@ public class UpdateConfigTest {
 
     @Test
     public void getUpdatePackageFile_throwsErrorIfNotAFile() throws Exception {
-        String json = "{\"name\": \"upd\", \"url\": \"http://foo.bar\","
+        String json = "{"
+                + " \"name\": \"upd\", \"url\": \"http://foo.bar\","
                 + " \"ab_install_type\": \"NON_STREAMING\","
-                + " \"ab_config\": { \"force_switch_slot\": false } }";
+                + " \"ab_config\": {"
+                + "     \"force_switch_slot\": false,"
+                + "     \"verify_payload_metadata\": false } }";
         UpdateConfig config = UpdateConfig.fromJson(json);
         thrown.expect(RuntimeException.class);
         config.getUpdatePackageFile();
@@ -107,7 +112,7 @@ public class UpdateConfigTest {
     @Test
     public void getUpdatePackageFile_works() throws Exception {
         UpdateConfig c = UpdateConfig.fromJson(JSON_NON_STREAMING);
-        assertEquals("/builds/a.zip", c.getUpdatePackageFile().getAbsolutePath());
+        assertEquals("/my-builds/a.zip", c.getUpdatePackageFile().getAbsolutePath());
     }
 
     private String readResource(int id) throws IOException {

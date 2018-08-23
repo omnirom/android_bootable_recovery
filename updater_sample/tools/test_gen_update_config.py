@@ -32,7 +32,7 @@ class GenUpdateConfigTest(unittest.TestCase): # pylint: disable=missing-docstrin
     def test_ab_install_type_streaming(self):
         """tests if streaming property files' offset and size are generated properly"""
         config, package = self._generate_config()
-        property_files = config['ab_streaming_metadata']['property_files']
+        property_files = config['ab_config']['property_files']
         self.assertEqual(len(property_files), 6)
         with open(package, 'rb') as pkg_file:
             for prop in property_files:
@@ -56,6 +56,8 @@ class GenUpdateConfigTest(unittest.TestCase): # pylint: disable=missing-docstrin
                                    '../tests/res/raw/ota_002_package.zip')
         gen = GenUpdateConfig(ota_package,
                               'file:///foo.bar',
-                              GenUpdateConfig.AB_INSTALL_TYPE_STREAMING)
+                              GenUpdateConfig.AB_INSTALL_TYPE_STREAMING,
+                              True,  # ab_force_switch_slot
+                              True)  # ab_verify_payload_metadata
         gen.run()
         return gen.config, ota_package
