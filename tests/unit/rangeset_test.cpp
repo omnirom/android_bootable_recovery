@@ -17,11 +17,23 @@
 #include <signal.h>
 #include <sys/types.h>
 
+#include <limits>
 #include <vector>
 
 #include <gtest/gtest.h>
 
-#include "updater/rangeset.h"
+#include "otautil/rangeset.h"
+
+TEST(RangeSetTest, ctor) {
+  RangeSet rs(std::vector<Range>{ Range{ 8, 10 }, Range{ 1, 5 } });
+  ASSERT_TRUE(rs);
+
+  RangeSet rs2(std::vector<Range>{});
+  ASSERT_FALSE(rs2);
+
+  RangeSet rs3(std::vector<Range>{ Range{ 8, 10 }, Range{ 5, 1 } });
+  ASSERT_FALSE(rs3);
+}
 
 TEST(RangeSetTest, Parse_smoke) {
   RangeSet rs = RangeSet::Parse("2,1,10");
@@ -37,27 +49,64 @@ TEST(RangeSetTest, Parse_smoke) {
 
   // Leading zeros are fine. But android::base::ParseUint() doesn't like trailing zeros like "10 ".
   ASSERT_EQ(rs, RangeSet::Parse(" 2, 1,   10"));
-  ASSERT_EXIT(RangeSet::Parse("2,1,10 "), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse("2,1,10 "));
 }
 
 TEST(RangeSetTest, Parse_InvalidCases) {
   // Insufficient number of tokens.
-  ASSERT_EXIT(RangeSet::Parse(""), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("2,1"), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse(""));
+  ASSERT_FALSE(RangeSet::Parse("2,1"));
 
   // The first token (i.e. the number of following tokens) is invalid.
-  ASSERT_EXIT(RangeSet::Parse("a,1,1"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("3,1,1"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("-3,1,1"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("2,1,2,3"), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse("a,1,1"));
+  ASSERT_FALSE(RangeSet::Parse("3,1,1"));
+  ASSERT_FALSE(RangeSet::Parse("-3,1,1"));
+  ASSERT_FALSE(RangeSet::Parse("2,1,2,3"));
 
   // Invalid tokens.
-  ASSERT_EXIT(RangeSet::Parse("2,1,10a"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("2,,10"), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse("2,1,10a"));
+  ASSERT_FALSE(RangeSet::Parse("2,,10"));
 
   // Empty or negative range.
-  ASSERT_EXIT(RangeSet::Parse("2,2,2"), ::testing::KilledBySignal(SIGABRT), "");
-  ASSERT_EXIT(RangeSet::Parse("2,2,1"), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_FALSE(RangeSet::Parse("2,2,2"));
+  ASSERT_FALSE(RangeSet::Parse("2,2,1"));
+}
+
+TEST(RangeSetTest, Clear) {
+  RangeSet rs = RangeSet::Parse("2,1,6");
+  ASSERT_TRUE(rs);
+  rs.Clear();
+  ASSERT_FALSE(rs);
+
+  // No-op to clear an empty RangeSet.
+  rs.Clear();
+  ASSERT_FALSE(rs);
+}
+
+TEST(RangeSetTest, PushBack) {
+  RangeSet rs;
+  ASSERT_FALSE(rs);
+
+  ASSERT_TRUE(rs.PushBack({ 3, 5 }));
+  ASSERT_EQ(RangeSet::Parse("2,3,5"), rs);
+
+  ASSERT_TRUE(rs.PushBack({ 5, 15 }));
+  ASSERT_EQ(RangeSet::Parse("4,3,5,5,15"), rs);
+  ASSERT_EQ(static_cast<size_t>(2), rs.size());
+  ASSERT_EQ(static_cast<size_t>(12), rs.blocks());
+}
+
+TEST(RangeSetTest, PushBack_InvalidInput) {
+  RangeSet rs;
+  ASSERT_FALSE(rs);
+  ASSERT_FALSE(rs.PushBack({ 5, 3 }));
+  ASSERT_FALSE(rs);
+  ASSERT_FALSE(rs.PushBack({ 15, 15 }));
+  ASSERT_FALSE(rs);
+
+  ASSERT_TRUE(rs.PushBack({ 5, 15 }));
+  ASSERT_FALSE(rs.PushBack({ 5, std::numeric_limits<size_t>::max() - 2 }));
+  ASSERT_EQ(RangeSet::Parse("2,5,15"), rs);
 }
 
 TEST(RangeSetTest, Overlaps) {
@@ -72,6 +121,86 @@ TEST(RangeSetTest, Overlaps) {
 
   ASSERT_FALSE(RangeSet::Parse("2,3,5").Overlaps(RangeSet::Parse("2,5,7")));
   ASSERT_FALSE(RangeSet::Parse("2,5,7").Overlaps(RangeSet::Parse("2,3,5")));
+}
+
+TEST(RangeSetTest, Split) {
+  RangeSet rs1 = RangeSet::Parse("2,1,2");
+  ASSERT_TRUE(rs1);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,1,2") }), rs1.Split(1));
+
+  RangeSet rs2 = RangeSet::Parse("2,5,10");
+  ASSERT_TRUE(rs2);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,5,8"), RangeSet::Parse("2,8,10") }),
+            rs2.Split(2));
+
+  RangeSet rs3 = RangeSet::Parse("4,0,1,5,10");
+  ASSERT_TRUE(rs3);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("4,0,1,5,7"), RangeSet::Parse("2,7,10") }),
+            rs3.Split(2));
+
+  RangeSet rs4 = RangeSet::Parse("6,1,3,3,4,4,5");
+  ASSERT_TRUE(rs4);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,1,3"), RangeSet::Parse("2,3,4"),
+                                    RangeSet::Parse("2,4,5") }),
+            rs4.Split(3));
+
+  RangeSet rs5 = RangeSet::Parse("2,0,10");
+  ASSERT_TRUE(rs5);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,0,3"), RangeSet::Parse("2,3,6"),
+                                    RangeSet::Parse("2,6,8"), RangeSet::Parse("2,8,10") }),
+            rs5.Split(4));
+
+  RangeSet rs6 = RangeSet::Parse(
+      "20,0,268,269,271,286,447,8350,32770,33022,98306,98558,163842,164094,196609,204800,229378,"
+      "229630,294914,295166,457564");
+  ASSERT_TRUE(rs6);
+  size_t rs6_blocks = rs6.blocks();
+  auto splits = rs6.Split(4);
+  ASSERT_EQ(
+      (std::vector<RangeSet>{
+          RangeSet::Parse("12,0,268,269,271,286,447,8350,32770,33022,98306,98558,118472"),
+          RangeSet::Parse("8,118472,163842,164094,196609,204800,229378,229630,237216"),
+          RangeSet::Parse("4,237216,294914,295166,347516"), RangeSet::Parse("2,347516,457564") }),
+      splits);
+  size_t sum = 0;
+  for (const auto& element : splits) {
+    sum += element.blocks();
+  }
+  ASSERT_EQ(rs6_blocks, sum);
+}
+
+TEST(RangeSetTest, Split_EdgeCases) {
+  // Empty RangeSet.
+  RangeSet rs1;
+  ASSERT_FALSE(rs1);
+  ASSERT_EQ((std::vector<RangeSet>{}), rs1.Split(2));
+  ASSERT_FALSE(rs1);
+
+  // Zero group.
+  RangeSet rs2 = RangeSet::Parse("2,1,5");
+  ASSERT_TRUE(rs2);
+  ASSERT_EQ((std::vector<RangeSet>{}), rs2.Split(0));
+
+  // The number of blocks equals to the number of groups.
+  RangeSet rs3 = RangeSet::Parse("2,1,5");
+  ASSERT_TRUE(rs3);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,1,2"), RangeSet::Parse("2,2,3"),
+                                    RangeSet::Parse("2,3,4"), RangeSet::Parse("2,4,5") }),
+            rs3.Split(4));
+
+  // Less blocks than the number of groups.
+  RangeSet rs4 = RangeSet::Parse("2,1,5");
+  ASSERT_TRUE(rs4);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,1,2"), RangeSet::Parse("2,2,3"),
+                                    RangeSet::Parse("2,3,4"), RangeSet::Parse("2,4,5") }),
+            rs4.Split(8));
+
+  // Less blocks than the number of groups.
+  RangeSet rs5 = RangeSet::Parse("2,0,3");
+  ASSERT_TRUE(rs5);
+  ASSERT_EQ((std::vector<RangeSet>{ RangeSet::Parse("2,0,1"), RangeSet::Parse("2,1,2"),
+                                    RangeSet::Parse("2,2,3") }),
+            rs5.Split(4));
 }
 
 TEST(RangeSetTest, GetBlockNumber) {
@@ -90,7 +219,7 @@ TEST(RangeSetTest, equality) {
   ASSERT_NE(RangeSet::Parse("2,1,6"), RangeSet::Parse("2,1,7"));
   ASSERT_NE(RangeSet::Parse("2,1,6"), RangeSet::Parse("2,2,7"));
 
-  // The orders of Range's matter. "4,1,5,8,10" != "4,8,10,1,5".
+  // The orders of Range's matter, e.g. "4,1,5,8,10" != "4,8,10,1,5".
   ASSERT_NE(RangeSet::Parse("4,1,5,8,10"), RangeSet::Parse("4,8,10,1,5"));
 }
 
@@ -109,4 +238,52 @@ TEST(RangeSetTest, iterators) {
     ranges.push_back(*it);
   }
   ASSERT_EQ((std::vector<Range>{ Range{ 8, 10 }, Range{ 1, 5 } }), ranges);
+}
+
+TEST(RangeSetTest, ToString) {
+  ASSERT_EQ("", RangeSet::Parse("").ToString());
+  ASSERT_EQ("2,1,6", RangeSet::Parse("2,1,6").ToString());
+  ASSERT_EQ("4,1,5,8,10", RangeSet::Parse("4,1,5,8,10").ToString());
+  ASSERT_EQ("6,1,3,4,6,15,22", RangeSet::Parse("6,1,3,4,6,15,22").ToString());
+}
+
+TEST(SortedRangeSetTest, Insert) {
+  SortedRangeSet rs({ { 2, 3 }, { 4, 6 }, { 8, 14 } });
+  rs.Insert({ 1, 2 });
+  ASSERT_EQ(SortedRangeSet({ { 1, 3 }, { 4, 6 }, { 8, 14 } }), rs);
+  ASSERT_EQ(static_cast<size_t>(10), rs.blocks());
+  rs.Insert({ 3, 5 });
+  ASSERT_EQ(SortedRangeSet({ { 1, 6 }, { 8, 14 } }), rs);
+  ASSERT_EQ(static_cast<size_t>(11), rs.blocks());
+
+  SortedRangeSet r1({ { 20, 22 }, { 15, 18 } });
+  rs.Insert(r1);
+  ASSERT_EQ(SortedRangeSet({ { 1, 6 }, { 8, 14 }, { 15, 18 }, { 20, 22 } }), rs);
+  ASSERT_EQ(static_cast<size_t>(16), rs.blocks());
+
+  SortedRangeSet r2({ { 2, 7 }, { 15, 21 }, { 20, 25 } });
+  rs.Insert(r2);
+  ASSERT_EQ(SortedRangeSet({ { 1, 7 }, { 8, 14 }, { 15, 25 } }), rs);
+  ASSERT_EQ(static_cast<size_t>(22), rs.blocks());
+}
+
+TEST(SortedRangeSetTest, file_range) {
+  SortedRangeSet rs;
+  rs.Insert(4096, 4096);
+  ASSERT_EQ(SortedRangeSet({ { 1, 2 } }), rs);
+  // insert block 2-9
+  rs.Insert(4096 * 3 - 1, 4096 * 7);
+  ASSERT_EQ(SortedRangeSet({ { 1, 10 } }), rs);
+  // insert block 15-19
+  rs.Insert(4096 * 15 + 1, 4096 * 4);
+  ASSERT_EQ(SortedRangeSet({ { 1, 10 }, { 15, 20 } }), rs);
+
+  // rs overlaps block 2-2
+  ASSERT_TRUE(rs.Overlaps(4096 * 2 - 1, 10));
+  ASSERT_FALSE(rs.Overlaps(4096 * 10, 4096 * 5));
+
+  ASSERT_EQ(static_cast<size_t>(10), rs.GetOffsetInRangeSet(4106));
+  ASSERT_EQ(static_cast<size_t>(40970), rs.GetOffsetInRangeSet(4096 * 16 + 10));
+  // block#10 not in range.
+  ASSERT_EXIT(rs.GetOffsetInRangeSet(40970), ::testing::KilledBySignal(SIGABRT), "");
 }

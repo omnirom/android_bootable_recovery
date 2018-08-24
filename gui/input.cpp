@@ -122,7 +122,8 @@ GUIInput::GUIInput(xml_node<>* node)
 	if (child)
 	{
 		mFont = LoadAttrFont(child, "resource");
-		mFontHeight = mFont->GetHeight();
+		if (mFont && mFont->GetResource())
+			mFontHeight = mFont->GetHeight();
 	}
 
 	child = FindNode(node, "data");
@@ -299,9 +300,6 @@ int GUIInput::Render(void)
 		return 0;
 	}
 
-	void* fontResource = NULL;
-	if (mFont)  fontResource = mFont->GetResource();
-
 	// First step, fill background
 	gr_color(mBackgroundColor.red, mBackgroundColor.green, mBackgroundColor.blue, 255);
 	gr_fill(mRenderX, mRenderY, mRenderW, mRenderH);
@@ -359,9 +357,6 @@ int GUIInput::GetSelection(int x, int y)
 int GUIInput::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
 	static int startSelection = -1;
-	void* fontResource = NULL;
-
-	if (mFont)  fontResource = mFont->GetResource();
 
 	if (!isConditionTrue())
 		return -1;

@@ -160,6 +160,16 @@ ifeq ($(TW_USE_TOOLBOX), true)
     endif
 endif
 
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
+    # Special rules for 9.0
+    OUR_TOOLS += getevent
+    LOCAL_C_INCLUDES += $(TWRP_TOOLBOX_PATH)
+    LOCAL_WHOLE_STATIC_LIBRARIES += libtoolbox_dd
+    ifneq ($(TW_USE_TOOLBOX), true)
+        OUR_TOOLS += newfs_msdos
+    endif
+endif
+
 ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22))
     ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
         OUR_TOOLS += r
@@ -227,24 +237,39 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
     # including busybox.
 ifneq ($(TW_USE_TOOLBOX), true)
     LOCAL_SRC_FILES += \
-        ../../../$(TWRP_TOOLBOX_PATH)/getprop.c \
         ../../../$(TWRP_TOOLBOX_PATH)/setprop.c \
         ../../../$(TWRP_TOOLBOX_PATH)/ls.c
-    OUR_TOOLS += getprop setprop
+    OUR_TOOLS += setprop
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+        # Special rules for <= 8.1
+        LOCAL_SRC_FILES += \
+            ../../../$(TWRP_TOOLBOX_PATH)/getprop.c
+        OUR_TOOLS += getprop
+    endif
 endif
 endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
     # Rule for making start and stop in N trees
     LOCAL_SRC_FILES += \
         ../../../$(TWRP_TOOLBOX_PATH)/start.c \
         ../../../$(TWRP_TOOLBOX_PATH)/stop.c
     OUR_TOOLS += start stop
+    endif
+endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
+    LOCAL_SRC_FILES += getprop.cpp
+    LOCAL_SHARED_LIBRARIES += libbase
+    LOCAL_STATIC_LIBRARIES += libpropertyinfoparser
+    LOCAL_CPPFLAGS += -std=c++17
+    OUR_TOOLS += getprop
 endif
 
 LOCAL_MODULE := toolbox_recovery
 LOCAL_MODULE_STEM := toolbox
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS += -Wno-unused-parameter -Wno-unused-const-variable
 
 # Including this will define $(intermediates) below
 include $(BUILD_EXECUTABLE)
@@ -260,7 +285,6 @@ endif
 TOOLS_H := $(intermediates)/tools.h
 $(TOOLS_H): PRIVATE_TOOLS := $(ALL_TOOLS)
 $(TOOLS_H): PRIVATE_CUSTOM_TOOL = echo "/* file generated automatically */" > $@ ; for t in $(PRIVATE_TOOLS) ; do echo "TOOL($$t)" >> $@ ; done
-$(TOOLS_H): $(LOCAL_PATH)/Android.mk
 $(TOOLS_H):
 	$(transform-generated-source)
 
@@ -273,7 +297,7 @@ ALL_TOOLS := $(TEMP_TOOLS)
 # Make /sbin/toolbox launchers for each tool
 SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(ALL_TOOLS))
 $(SYMLINKS): TOOLBOX_BINARY := $(LOCAL_MODULE_STEM)
-$(SYMLINKS): $(LOCAL_INSTALLED_MODULE) $(LOCAL_PATH)/Android.mk
+$(SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "Symlink: $@ -> $(TOOLBOX_BINARY)"
 	@mkdir -p $(dir $@)
 	@rm -rf $@

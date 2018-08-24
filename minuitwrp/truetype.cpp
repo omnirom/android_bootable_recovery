@@ -461,7 +461,7 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
     int utf_bytes = 0;
     unsigned int unicode = 0;
     int i, x, diff, char_idx, prev_idx = 0;
-    int height, base;
+    int height;
     FT_Vector delta;
     uint8_t *data = NULL;
     const char *text_itr = text;
@@ -547,7 +547,6 @@ static int gr_ttf_render_text(TrueTypeFont *font, GGLSurface *surface, const cha
 
 static StringCacheEntry *gr_ttf_string_cache_peek(TrueTypeFont *font, const char *text, int max_width)
 {
-    StringCacheEntry *res;
     StringCacheKey k = {
         .text = (char*)text,
         .max_width = max_width
@@ -785,8 +784,8 @@ static bool gr_ttf_dump_stats_font(void *key, void *value, void *context)
             "    refcount: %d\n"
             "    max_height: %d\n"
             "    base: %d\n"
-            "    glyph_cache: %d entries\n"
-            "    string_cache: %d entries (%.2f kB)\n",
+            "    glyph_cache: %zu entries\n"
+            "    string_cache: %zu entries (%.2f kB)\n",
             k->path, k->size, k->dpi,
             f->refcount, f->max_height, f->base,
             hashmapSize(f->glyph_cache),
@@ -808,7 +807,7 @@ void gr_ttf_dump_stats(void)
     else
     {
         int total_string_cache_size = 0;
-        printf("%d fonts loaded.\n", hashmapSize(font_data.fonts));
+        printf("%zu fonts loaded.\n", hashmapSize(font_data.fonts));
         hashmapForEach(font_data.fonts, gr_ttf_dump_stats_font, &total_string_cache_size);
         printf("  Total string cache size: %.2f kB\n", ((double)total_string_cache_size)/1024);
     }

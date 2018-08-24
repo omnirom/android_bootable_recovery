@@ -231,7 +231,6 @@ ERROR2:
 int
 mmc_scan_partitions() {
     int i;
-    ssize_t nbytes;
 
     if (g_mmc_state.partitions == NULL) {
         const int nump = MAX_PARTITIONS;
@@ -321,7 +320,7 @@ mmc_find_partition_by_name(const char *name)
 #define E2FSCK_BIN      "/sbin/e2fsck"
 
 int
-run_exec_process ( char **argv) {
+run_exec_process ( char *const *argv) {
     pid_t pid;
     int status;
     pid = fork();
@@ -339,7 +338,7 @@ run_exec_process ( char **argv) {
 }
 
 int
-format_ext3_device (const char *device) {
+format_ext3_device (char *device) {
     char *const mke2fs[] = {MKE2FS_BIN, "-j", "-q", device, NULL};
     char *const tune2fs[] = {TUNE2FS_BIN, "-C", "1", device, NULL};
     // Run mke2fs
@@ -365,7 +364,7 @@ format_ext3_device (const char *device) {
 }
 
 int
-format_ext2_device (const char *device) {
+format_ext2_device (char *device) {
     // Run mke2fs
     char *const mke2fs[] = {MKE2FS_BIN, device, NULL};
     if(run_exec_process(mke2fs))
@@ -385,7 +384,7 @@ format_ext2_device (const char *device) {
 }
 
 int
-mmc_format_ext3 (MmcPartition *partition) {
+mmc_format_ext3 (const MmcPartition *partition) {
     char device[128];
     strcpy(device, partition->device_index);
     return format_ext3_device(device);
@@ -419,11 +418,10 @@ mmc_mount_partition(const MmcPartition *partition, const char *mount_point,
 }
 
 int
-mmc_raw_copy (const MmcPartition *partition, char *in_file) {
+mmc_raw_copy (const MmcPartition *partition, const char *in_file) {
     int ch;
     FILE *in;
     FILE *out;
-    int val = 0;
     char buf[512];
     unsigned sz = 0;
     unsigned i;
@@ -475,7 +473,6 @@ mmc_raw_dump_internal (const char* in_file, const char *out_file) {
     int ch;
     FILE *in;
     FILE *out;
-    int val = 0;
     char buf[512];
     unsigned sz = 0;
     unsigned i;
@@ -522,19 +519,15 @@ ERROR3:
 
 // TODO: refactor this to not be a giant copy paste mess
 int
-mmc_raw_dump (const MmcPartition *partition, char *out_file) {
+mmc_raw_dump (const MmcPartition *partition, const char *out_file) {
     return mmc_raw_dump_internal(partition->device_index, out_file);
 }
 
 
 int
 mmc_raw_read (const MmcPartition *partition, char *data, int data_size) {
-    int ch;
     FILE *in;
-    int val = 0;
-    char buf[512];
     unsigned sz = 0;
-    unsigned i;
     int ret = -1;
     char *in_file = partition->device_index;
 
@@ -549,8 +542,6 @@ mmc_raw_read (const MmcPartition *partition, char *data, int data_size) {
     fread(data, data_size, 1, in);
 
     ret = 0;
-ERROR1:
-ERROR2:
     fclose ( in );
 ERROR3:
     return ret;
@@ -559,12 +550,7 @@ ERROR3:
 
 int
 mmc_raw_write (const MmcPartition *partition, char *data, int data_size) {
-    int ch;
     FILE *out;
-    int val = 0;
-    char buf[512];
-    unsigned sz = 0;
-    unsigned i;
     int ret = -1;
     char *out_file = partition->device_index;
 
@@ -575,8 +561,6 @@ mmc_raw_write (const MmcPartition *partition, char *data, int data_size) {
     fwrite(data, data_size, 1, out);
 
     ret = 0;
-ERROR1:
-ERROR2:
     fclose ( out );
 ERROR3:
     return ret;
@@ -613,12 +597,12 @@ int cmd_mmc_backup_raw_partition(const char *partition, const char *filename)
     }
 }
 
-int cmd_mmc_erase_raw_partition(const char *partition)
+int cmd_mmc_erase_raw_partition(const char *partition __unused)
 {
     return 0;
 }
 
-int cmd_mmc_erase_partition(const char *partition, const char *filesystem)
+int cmd_mmc_erase_partition(const char *partition, const char *filesystem __unused)
 {
     mmc_scan_partitions();
     const MmcPartition *p;
@@ -628,7 +612,7 @@ int cmd_mmc_erase_partition(const char *partition, const char *filesystem)
     return mmc_format_ext3 (p);
 }
 
-int cmd_mmc_mount_partition(const char *partition, const char *mount_point, const char *filesystem, int read_only)
+int cmd_mmc_mount_partition(const char *partition, const char *mount_point, const char *filesystem __unused, int read_only)
 {
     mmc_scan_partitions();
     const MmcPartition *p;

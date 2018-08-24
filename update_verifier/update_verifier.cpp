@@ -58,6 +58,8 @@
 #include <android/hardware/boot/1.0/IBootControl.h>
 #include <cutils/android_reboot.h>
 
+#include "otautil/rangeset.h"
+
 using android::sp;
 using android::hardware::boot::V1_0::IBootControl;
 using android::hardware::boot::V1_0::BoolResult;
@@ -72,14 +74,13 @@ static int dm_name_filter(const dirent* de) {
 }
 
 static bool read_blocks(const std::string& partition, const std::string& range_str) {
-  if (partition != "system" && partition != "vendor") {
-    LOG(ERROR) << "partition name must be system or vendor: " << partition;
+  if (partition != "system" && partition != "vendor" && partition != "product") {
+    LOG(ERROR) << "Invalid partition name \"" << partition << "\"";
     return false;
   }
-  // Iterate the content of "/sys/block/dm-X/dm/name". If it matches "system"
-  // (or "vendor"), then dm-X is a dm-wrapped system/vendor partition.
-  // Afterwards, update_verifier will read every block on the care_map_file of
-  // "/dev/block/dm-X" to ensure the partition's integrity.
+  // Iterate the content of "/sys/block/dm-X/dm/name". If it matches one of "system", "vendor" or
+  // "product", then dm-X is a dm-wrapped device for that target. We will later read all the
+  // ("cared") blocks from "/dev/block/dm-X" to ensure the target partition's integrity.
   static constexpr auto DM_PATH_PREFIX = "/sys/block/";
   dirent** namelist;
   int n = scandir(DM_PATH_PREFIX, &namelist, dm_name_filter, alphasort);
@@ -129,42 +130,33 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
   // followed by 'count' number comma separated integers. Every two integers reprensent a
   // block range with the first number included in range but second number not included.
   // For example '4,64536,65343,74149,74150' represents: [64536,65343) and [74149,74150).
-  std::vector<std::string> ranges = android::base::Split(range_str, ",");
-  size_t range_count;
-  bool status = android::base::ParseUint(ranges[0], &range_count);
-  if (!status || (range_count == 0) || (range_count % 2 != 0) ||
-      (range_count != ranges.size() - 1)) {
-    LOG(ERROR) << "Error in parsing range string.";
+  RangeSet ranges = RangeSet::Parse(range_str);
+  if (!ranges) {
+    LOG(ERROR) << "Error parsing RangeSet string " << range_str;
     return false;
   }
-  range_count /= 2;
+
+  // RangeSet::Split() splits the ranges into multiple groups with same number of blocks (except for
+  // the last group).
+  size_t thread_num = std::thread::hardware_concurrency() ?: 4;
+  std::vector<RangeSet> groups = ranges.Split(thread_num);
 
   std::vector<std::future<bool>> threads;
-  size_t thread_num = std::thread::hardware_concurrency() ?: 4;
-  thread_num = std::min(thread_num, range_count);
-  size_t group_range_count = (range_count + thread_num - 1) / thread_num;
-
-  for (size_t t = 0; t < thread_num; t++) {
-    auto thread_func = [t, group_range_count, &dm_block_device, &ranges, &partition]() {
-      size_t blk_count = 0;
-      static constexpr size_t kBlockSize = 4096;
-      std::vector<uint8_t> buf(1024 * kBlockSize);
+  for (const auto& group : groups) {
+    auto thread_func = [&group, &dm_block_device, &partition]() {
       android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(dm_block_device.c_str(), O_RDONLY)));
       if (fd.get() == -1) {
         PLOG(ERROR) << "Error reading " << dm_block_device << " for partition " << partition;
         return false;
       }
 
-      for (size_t i = group_range_count * 2 * t + 1;
-           i < std::min(group_range_count * 2 * (t + 1) + 1, ranges.size()); i += 2) {
-        unsigned int range_start, range_end;
-        bool parse_status = android::base::ParseUint(ranges[i], &range_start);
-        parse_status = parse_status && android::base::ParseUint(ranges[i + 1], &range_end);
-        if (!parse_status || range_start >= range_end) {
-          LOG(ERROR) << "Invalid range pair " << ranges[i] << ", " << ranges[i + 1];
-          return false;
-        }
+      static constexpr size_t kBlockSize = 4096;
+      std::vector<uint8_t> buf(1024 * kBlockSize);
 
+      size_t block_count = 0;
+      for (const auto& range : group) {
+        size_t range_start = range.first;
+        size_t range_end = range.second;
         if (lseek64(fd.get(), static_cast<off64_t>(range_start) * kBlockSize, SEEK_SET) == -1) {
           PLOG(ERROR) << "lseek to " << range_start << " failed";
           return false;
@@ -179,9 +171,9 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
           }
           remain -= to_read;
         }
-        blk_count += (range_end - range_start);
+        block_count += (range_end - range_start);
       }
-      LOG(INFO) << "Finished reading " << blk_count << " blocks on " << dm_block_device;
+      LOG(INFO) << "Finished reading " << block_count << " blocks on " << dm_block_device;
       return true;
     };
 
@@ -213,10 +205,9 @@ bool verify_image(const std::string& care_map_name) {
     PLOG(WARNING) << "Failed to open " << care_map_name;
     return true;
   }
-  // Care map file has four lines (two lines if vendor partition is not present):
-  // First line has the block partition name (system/vendor).
-  // Second line holds all ranges of blocks to verify.
-  // The next two lines have the same format but for vendor partition.
+  // care_map file has up to six lines, where every two lines make a pair. Within each pair, the
+  // first line has the partition name (e.g. "system"), while the second line holds the ranges of
+  // all the blocks to verify.
   std::string file_content;
   if (!android::base::ReadFdToString(care_map_fd.get(), &file_content)) {
     LOG(ERROR) << "Error reading care map contents to string.";
@@ -225,9 +216,9 @@ bool verify_image(const std::string& care_map_name) {
 
   std::vector<std::string> lines;
   lines = android::base::Split(android::base::Trim(file_content), "\n");
-  if (lines.size() != 2 && lines.size() != 4) {
+  if (lines.size() != 2 && lines.size() != 4 && lines.size() != 6) {
     LOG(ERROR) << "Invalid lines in care_map: found " << lines.size()
-               << " lines, expecting 2 or 4 lines.";
+               << " lines, expecting 2 or 4 or 6 lines.";
     return false;
   }
 

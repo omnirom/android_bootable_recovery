@@ -42,7 +42,6 @@ struct GRFont {
     int cheight;
 };
 
-static GRFont* gr_font = NULL;
 static minui_backend* gr_backend = NULL;
 
 static int overscan_percent = OVERSCAN_PERCENT;
@@ -52,11 +51,6 @@ static int overscan_offset_y = 0;
 static unsigned char gr_current_r = 255;
 static unsigned char gr_current_g = 255;
 static unsigned char gr_current_b = 255;
-static unsigned char gr_current_a = 255;
-static unsigned char rgb_555[2];
-static unsigned char gr_current_r5 = 31;
-static unsigned char gr_current_g5 = 63;
-static unsigned char gr_current_b5 = 31;
 
 GRSurface* gr_draw = NULL;
 
@@ -64,19 +58,12 @@ static GGLContext *gr_context = 0;
 GGLSurface gr_mem_surface;
 static int gr_is_curr_clr_opaque = 0;
 
-static bool outside(int x, int y)
-{
-    return x < 0 || x >= gr_draw->width || y < 0 || y >= gr_draw->height;
-}
-
 int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width, int placement, int scale)
 {
     GGLContext *gl = gr_context;
     void* vfont = pFont;
     GRFont *font = (GRFont*) pFont;
-    unsigned off;
-    unsigned cwidth;
-    int y_scale = 0, measured_width, measured_height, ret, new_height;
+    int y_scale = 0, measured_width, measured_height, new_height;
 
     if (!s || strlen(s) == 0 || !font)
         return 0;

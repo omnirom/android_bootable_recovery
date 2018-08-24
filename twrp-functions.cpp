@@ -152,7 +152,6 @@ int TWFunc::Wait_For_Child_Timeout(pid_t pid, int *status, const string& Child_N
 	if (retpid == 0 && timeout == 0) {
 		LOGERR("%s took too long, killing process\n", Child_Name.c_str());
 		kill(pid, SIGKILL);
-		int died = 0;
 		for (timeout = 5; retpid == 0 && timeout; --timeout) {
 			sleep(1);
 			retpid = waitpid(pid, status, WNOHANG);

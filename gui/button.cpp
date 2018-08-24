@@ -45,9 +45,6 @@ extern "C" {
 GUIButton::GUIButton(xml_node<>* node)
 	: GUIObject(node)
 {
-	xml_attribute<>* attr;
-	xml_node<>* child;
-
 	mButtonImg = NULL;
 	mButtonIcon = NULL;
 	mButtonLabel = NULL;
@@ -201,9 +198,12 @@ int GUIButton::SetRenderPos(int x, int y, int w, int h)
 		mRenderW = w;
 		mRenderH = h;
 	}
+	mIconW = mIconH = 0;
 
-	mIconW = mButtonIcon->GetWidth();
-	mIconH = mButtonIcon->GetHeight();
+	if (mButtonIcon && mButtonIcon->GetResource()) {
+		mIconW = mButtonIcon->GetWidth();
+		mIconH = mButtonIcon->GetHeight();
+	}
 
 	mTextH = 0;
 	mTextW = 0;

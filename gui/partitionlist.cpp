@@ -58,8 +58,17 @@ GUIPartitionList::GUIPartitionList(xml_node<>* node) : GUIScrollList(node)
 			selectedList = attr->value();
 	}
 
-	int iconWidth = std::max(mIconSelected->GetWidth(), mIconUnselected->GetWidth());
-	int iconHeight = std::max(mIconSelected->GetHeight(), mIconUnselected->GetHeight());
+	int iconWidth = 0, iconHeight = 0;
+	if (mIconSelected && mIconSelected->GetResource() && mIconUnselected && mIconUnselected->GetResource()) {
+		iconWidth = std::max(mIconSelected->GetWidth(), mIconUnselected->GetWidth());
+		iconHeight = std::max(mIconSelected->GetHeight(), mIconUnselected->GetHeight());
+	} else if (mIconSelected && mIconSelected->GetResource()) {
+		iconWidth = mIconSelected->GetWidth();
+		iconHeight = mIconSelected->GetHeight();
+	} else if (mIconUnselected && mIconUnselected->GetResource()) {
+		iconWidth = mIconUnselected->GetWidth();
+		iconHeight = mIconUnselected->GetHeight();
+	}
 	SetMaxIconSize(iconWidth, iconHeight);
 
 	child = FindNode(node, "listtype");

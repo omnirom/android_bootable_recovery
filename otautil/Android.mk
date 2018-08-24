@@ -36,4 +36,6 @@ LOCAL_CFLAGS := \
     -Werror \
     -Wall
 
+LOCAL_C_INCLUDES := include
+
 include $(BUILD_STATIC_LIBRARY)

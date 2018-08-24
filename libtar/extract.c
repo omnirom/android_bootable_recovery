@@ -12,6 +12,7 @@
 
 #include <internal.h>
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/param.h>
@@ -227,7 +228,7 @@ tar_extract_regfile(TAR *t, const char *realname, const int *progress_fd)
 	if (mkdirhier(dirname(filename)) == -1)
 		return -1;
 
-	printf("  ==> extracting: %s (file size %lld bytes)\n",
+	printf("  ==> extracting: %s (file size %" PRId64 " bytes)\n",
 			filename, size);
 
 	fdout = open(filename, O_WRONLY | O_CREAT | O_TRUNC

@@ -144,7 +144,7 @@ bool twrpback::backup(std::string command) {
 	uint64_t md5fnsize = 0;
 	struct AdbBackupControlType endadb;
 
-	ADBSTRUCT_STATIC_ASSERT(sizeof(endadb) == MAX_ADB_READ);
+	//ADBSTRUCT_STATIC_ASSERT(sizeof(endadb) == MAX_ADB_READ);
 
 	bool writedata = true;
 	bool compressed = false;
@@ -177,7 +177,7 @@ bool twrpback::backup(std::string command) {
 	}
 
 	memset(operation, 0, sizeof(operation));
-	if (snprintf(operation, sizeof(operation), "adbbackup %s", command.c_str()) >= sizeof(operation)) {
+	if (snprintf(operation, sizeof(operation), "adbbackup %s", command.c_str()) >= (int)sizeof(operation)) {
 		adblogwrite("Operation too big to write to ORS_INPUT_FILE\n");
 		close_backup_fds();
 		return false;
@@ -278,7 +278,7 @@ bool twrpback::backup(std::string command) {
 				adblogwrite("writing TWFN\n");
 				digest.init();
 
-				ADBSTRUCT_STATIC_ASSERT(sizeof(twfilehdr) == MAX_ADB_READ);
+				//ADBSTRUCT_STATIC_ASSERT(sizeof(twfilehdr) == MAX_ADB_READ);
 
 				memset(&twfilehdr, 0, sizeof(twfilehdr));
 				memcpy(&twfilehdr, cmd, sizeof(cmd));
@@ -420,7 +420,7 @@ bool twrpback::backup(std::string command) {
 				fileBytes += bytes;
 				dataChunkBytes += bytes;
 
-				if (fwrite(writeAdbReadStream, 1, bytes, adbd_fp) != bytes) {
+				if (fwrite(writeAdbReadStream, 1, bytes, adbd_fp) != (unsigned long long)bytes) {
 					adblogwrite("Error writing backup data to adbd\n");
 					close_backup_fds();
 					return false;
@@ -508,8 +508,8 @@ bool twrpback::restore(void) {
 	int errctr = 0;
 	uint64_t totalbytes = 0, dataChunkBytes = 0;
 	uint64_t md5fnsize = 0, fileBytes = 0;
-	bool writedata, read_from_adb;
-	bool eofsent, md5trsent, md5sumdata;
+	bool read_from_adb;
+	bool md5sumdata;
 	bool compressed, tweofrcvd, extraData;
 
 	read_from_adb = true;
@@ -649,7 +649,7 @@ bool twrpback::restore(void) {
 					struct AdbBackupStreamHeader cnthdr;
 					uint32_t crc, cnthdrcrc;
 
-					ADBSTRUCT_STATIC_ASSERT(sizeof(cnthdr) == MAX_ADB_READ);
+					//ADBSTRUCT_STATIC_ASSERT(sizeof(cnthdr) == MAX_ADB_READ);
 
 					md5sumdata = false;
 					memset(&cnthdr, 0, sizeof(cnthdr));
@@ -884,7 +884,7 @@ bool twrpback::checkMD5Trailer(char readAdbStream[], uint64_t md5fnsize, twrpMD5
 	struct AdbBackupFileTrailer md5tr;
 	uint32_t crc, md5trcrc, md5ident, md5identmatch;
 
-	ADBSTRUCT_STATIC_ASSERT(sizeof(md5tr) == MAX_ADB_READ);
+	//ADBSTRUCT_STATIC_ASSERT(sizeof(md5tr) == MAX_ADB_READ);
 	memcpy(&md5tr, readAdbStream, MAX_ADB_READ);
 	md5ident = md5tr.ident;
 

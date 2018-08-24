@@ -29,8 +29,9 @@ on init
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /sdcard
 
-    mkdir /boot
-    mkdir /recovery
+    mount cgroup none /acct cpuacct
+    mkdir /acct/uid
+
     mkdir /system
     mkdir /data
     mkdir /cache

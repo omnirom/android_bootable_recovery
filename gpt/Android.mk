@@ -13,5 +13,7 @@ LOCAL_SRC_FILES = \
     gpt.c \
     gptcrc32.c
 
+LOCAL_CFLAGS := -Wno-format
+
 LOCAL_SHARED_LIBRARIES := libc
 include $(BUILD_SHARED_LIBRARY)

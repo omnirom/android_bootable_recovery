@@ -18,7 +18,7 @@
 #include <string.h>
 #include <string>
 
-#include "expr.h"
+#include "edify/expr.h"
 #include "yydefs.h"
 #include "parser.h"
 
@@ -35,6 +35,8 @@ std::string string_buffer;
 
 %x STR
 
+%option noinput
+%option nounput
 %option noyywrap
 
 %%

@@ -32,7 +32,7 @@ static tartype_t default_type = { open, close, read, write };
 
 static int
 tar_init(TAR **t, const char *pathname, tartype_t *type,
-	 int oflags, int mode, int options)
+	 int oflags, int mode __unused, int options)
 {
 	if ((oflags & O_ACCMODE) == O_RDWR)
 	{

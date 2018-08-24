@@ -24,6 +24,8 @@ ifneq ($(wildcard hardware/libhardware/include/hardware/keymaster0.h),)
     LOCAL_C_INCLUDES +=  external/boringssl/src/include
 endif
 
+LOCAL_CFLAGS += -Wno-unused-function
+
 LOCAL_WHOLE_STATIC_LIBRARIES += libscrypttwrp_static
 
 include $(BUILD_SHARED_LIBRARY)

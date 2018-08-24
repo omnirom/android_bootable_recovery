@@ -25,7 +25,7 @@
 
 #include <android-base/macros.h>
 
-#include "expr.h"
+#include "edify/expr.h"
 #include "yydefs.h"
 #include "parser.h"
 

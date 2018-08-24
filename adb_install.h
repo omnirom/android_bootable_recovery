@@ -21,8 +21,8 @@
 
 //class RecoveryUI;
 
-static void set_usb_driver(bool enabled);
-static void maybe_restart_adbd();
+//static void set_usb_driver(bool enabled);
+//static void maybe_restart_adbd();
 int apply_from_adb(const char* install_file, pid_t* child_pid);
 
 #endif

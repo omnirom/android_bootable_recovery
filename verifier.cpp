@@ -32,7 +32,7 @@
 #include <openssl/obj_mac.h>
 
 #include "asn1_decoder.h"
-#include "print_sha1.h"
+#include "otautil/print_sha1.h"
 
 static constexpr size_t MiB = 1024 * 1024;
 

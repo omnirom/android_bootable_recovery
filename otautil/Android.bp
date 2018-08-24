@@ -15,11 +15,15 @@
 cc_library_static {
     name: "libotautil",
 
+    host_supported: true,
+
     srcs: [
         "SysUtil.cpp",
         "DirUtil.cpp",
         "ZipUtil.cpp",
         "ThermalUtil.cpp",
+        "cache_location.cpp",
+        "rangeset.cpp",
     ],
 
     static_libs: [
@@ -28,7 +32,12 @@ cc_library_static {
     ],
 
     cflags: [
+        "-D_FILE_OFFSET_BITS=64",
         "-Werror",
         "-Wall",
+    ],
+
+    export_include_dirs: [
+        "include",
     ],
 }

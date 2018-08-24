@@ -40,10 +40,7 @@
 #define INT32_MAX	(2147483647)
 #endif
 
-static int persistent_properties_loaded = 0;
 static int property_area_inited = 0;
-
-static int property_set_fd = -1;
 
 typedef struct {
     void *data;
@@ -203,7 +200,7 @@ void legacy_get_property_workspace(int *fd, int *sz)
     *sz = pa_workspace.size;
 }
 
-static void copy_property_to_legacy(const char *key, const char *value, void *cookie)
+static void copy_property_to_legacy(const char *key, const char *value, void *cookie __unused)
 {
     legacy_property_set(key, value);
 }

@@ -6,7 +6,7 @@ LOCAL_MODULE := libe4crypt
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_CFLAGS :=
 LOCAL_SRC_FILES := Decrypt.cpp Ext4Crypt.cpp ScryptParameters.cpp Utils.cpp HashPassword.cpp ext4_crypt.cpp
-LOCAL_SHARED_LIBRARIES := libselinux libc libc++ libext4_utils libsoftkeymaster libbase libcrypto libcutils libkeymaster_messages libhardware libprotobuf-cpp-lite
+LOCAL_SHARED_LIBRARIES := libselinux libc libc++ libext4_utils libbase libcrypto libcutils libkeymaster_messages libhardware libprotobuf-cpp-lite
 LOCAL_STATIC_LIBRARIES := libscrypt_static
 LOCAL_C_INCLUDES := system/extras/ext4_utils system/extras/ext4_utils/include/ext4_utils external/scrypt/lib/crypto system/security/keystore hardware/libhardware/include/hardware system/security/softkeymaster/include/keymaster system/keymaster/include
 
@@ -28,9 +28,12 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
         LOCAL_CFLAGS += -DHAVE_LIBKEYUTILS
         LOCAL_SHARED_LIBRARIES += libkeyutils
     endif
-    LOCAL_ADDITIONAL_DEPENDENCIES := keystore_auth
+    LOCAL_REQUIRED_MODULES := keystore_auth
 else
     LOCAL_SRC_FILES += Keymaster.cpp KeyStorage.cpp
+endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+    LOCAL_SHARED_LIBRARIES += libsoftkeymaster
 endif
 
 include $(BUILD_SHARED_LIBRARY)

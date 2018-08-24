@@ -312,7 +312,7 @@ bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, userid_t use
     return true;
 }
 
-static bool ensure_policy(const std::string& raw_ref, const std::string& path) {
+static bool ensure_policy(const std::string& raw_ref __unused, const std::string& path) {
     LOG(INFO) << "ensure_policy '" << path << "'\n";
     return true;
     return access(path.c_str(), F_OK) == 0; // ensure policy will set a policy if one is not set on an empty folder - we don't want to do this in recovery
@@ -438,7 +438,7 @@ static bool parse_hex(const char* hex, std::string* result) {
 }
 
 // TODO: rename to 'install' for consistency, and take flags to know which keys to install
-bool e4crypt_unlock_user_key(userid_t user_id, int serial, const char* token_hex,
+bool e4crypt_unlock_user_key(userid_t user_id, int serial __unused, const char* token_hex,
                              const char* secret_hex) {
     if (e4crypt_is_native()) {
         if (s_ce_key_raw_refs.count(user_id) != 0) {
@@ -469,7 +469,7 @@ bool e4crypt_unlock_user_key(userid_t user_id, int serial, const char* token_hex
     return true;
 }
 
-bool e4crypt_prepare_user_storage(const char* volume_uuid, userid_t user_id, int serial,
+bool e4crypt_prepare_user_storage(const char* volume_uuid, userid_t user_id, int serial __unused,
         int flags) {
 
     if (flags & FLAG_STORAGE_DE) {

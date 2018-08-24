@@ -42,8 +42,9 @@
 #include "mtdutils/mtdutils.h"
 
 #include "edify/expr.h"
-#include "ota_io.h"
-#include "print_sha1.h"
+#include "otafault/ota_io.h"
+#include "otautil/cache_location.h"
+#include "otautil/print_sha1.h"
 
 static int LoadPartitionContents(const std::string& filename, FileContents* file);
 static size_t FileSink(const unsigned char* data, size_t len, int fd);
@@ -64,12 +65,13 @@ int LoadFileContents(const char* filename, FileContents* file) {
     return LoadPartitionContents(filename, file);
   }
 
-  if (stat(filename, &file->st) == -1) {
+  struct stat sb;
+  if (stat(filename, &sb) == -1) {
     printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
     return -1;
   }
 
-  std::vector<unsigned char> data(file->st.st_size);
+  std::vector<unsigned char> data(sb.st_size);
   unique_file f(ota_fopen(filename, "rb"));
   if (!f) {
     printf("failed to open \"%s\": %s\n", filename, strerror(errno));
@@ -208,10 +210,6 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
 
   buffer.resize(buffer_size);
   file->data = std::move(buffer);
-  // Fake some stat() info.
-  file->st.st_mode = 0644;
-  file->st.st_uid = 0;
-  file->st.st_gid = 0;
 
   return 0;
 }
@@ -237,15 +235,6 @@ int SaveFileContents(const char* filename, const FileContents* file) {
   }
   if (ota_close(fd) != 0) {
     printf("close of \"%s\" failed: %s\n", filename, strerror(errno));
-    return -1;
-  }
-
-  if (chmod(filename, file->st.st_mode) != 0) {
-    printf("chmod of \"%s\" failed: %s\n", filename, strerror(errno));
-    return -1;
-  }
-  if (chown(filename, file->st.st_uid, file->st.st_gid) != 0) {
-    printf("chown of \"%s\" failed: %s\n", filename, strerror(errno));
     return -1;
   }
 
@@ -509,12 +498,10 @@ int applypatch_check(const char* filename, const std::vector<std::string>& patch
       (!patch_sha1_str.empty() && FindMatchingPatch(file.sha1, patch_sha1_str) < 0)) {
     printf("file \"%s\" doesn't have any of expected sha1 sums; checking cache\n", filename);
 
-    // If the source file is missing or corrupted, it might be because
-    // we were killed in the middle of patching it.  A copy of it
-    // should have been made in CACHE_TEMP_SOURCE.  If that file
-    // exists and matches the sha1 we're looking for, the check still
-    // passes.
-    if (LoadFileContents(CACHE_TEMP_SOURCE, &file) != 0) {
+    // If the source file is missing or corrupted, it might be because we were killed in the middle
+    // of patching it.  A copy of it should have been made in cache_temp_source.  If that file
+    // exists and matches the sha1 we're looking for, the check still passes.
+    if (LoadFileContents(CacheLocation::location().cache_temp_source().c_str(), &file) != 0) {
       printf("failed to load cache file\n");
       return 1;
     }
@@ -560,9 +547,8 @@ int CacheSizeCheck(size_t bytes) {
     if (MakeFreeSpaceOnCache(bytes) < 0) {
         printf("unable to make %zu bytes available on /cache\n", bytes);
         return 1;
-    } else {
-        return 0;
     }
+    return 0;
 }
 
 // This function applies binary patches to EMMC target files in a way that is safe (the original
@@ -587,7 +573,7 @@ int CacheSizeCheck(size_t bytes) {
 // become obsolete since we have dropped the support for patching non-EMMC targets (EMMC targets
 // have the size embedded in the filename).
 int applypatch(const char* source_filename, const char* target_filename,
-               const char* target_sha1_str, size_t target_size __unused,
+               const char* target_sha1_str, size_t /* target_size */,
                const std::vector<std::string>& patch_sha1_str,
                const std::vector<std::unique_ptr<Value>>& patch_data, const Value* bonus_data) {
   printf("patch %s: ", source_filename);
@@ -637,7 +623,7 @@ int applypatch(const char* source_filename, const char* target_filename,
   printf("source file is bad; trying copy\n");
 
   FileContents copy_file;
-  if (LoadFileContents(CACHE_TEMP_SOURCE, &copy_file) < 0) {
+  if (LoadFileContents(CacheLocation::location().cache_temp_source().c_str(), &copy_file) < 0) {
     printf("failed to read copy file\n");
     return 1;
   }
@@ -732,7 +718,7 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
     printf("not enough free space on /cache\n");
     return 1;
   }
-  if (SaveFileContents(CACHE_TEMP_SOURCE, &source_file) < 0) {
+  if (SaveFileContents(CacheLocation::location().cache_temp_source().c_str(), &source_file) < 0) {
     printf("failed to back up source file\n");
     return 1;
   }
@@ -749,11 +735,11 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
 
   int result;
   if (use_bsdiff) {
-    result = ApplyBSDiffPatch(source_file.data.data(), source_file.data.size(), patch.get(), 0,
-                              sink, &ctx);
+    result =
+        ApplyBSDiffPatch(source_file.data.data(), source_file.data.size(), *patch, 0, sink, &ctx);
   } else {
-    result = ApplyImagePatch(source_file.data.data(), source_file.data.size(), patch.get(), sink,
-                             &ctx, bonus_data);
+    result = ApplyImagePatch(source_file.data.data(), source_file.data.size(), *patch, sink, &ctx,
+                             bonus_data);
   }
 
   if (result != 0) {
@@ -778,7 +764,7 @@ static int GenerateTarget(const FileContents& source_file, const std::unique_ptr
   }
 
   // Delete the backup copy of the source.
-  unlink(CACHE_TEMP_SOURCE);
+  unlink(CacheLocation::location().cache_temp_source().c_str());
 
   // Success!
   return 0;
