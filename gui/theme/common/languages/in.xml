@@ -713,9 +713,7 @@
 		<string name="Ramdisk_Cleaner_confirm">Coba untuk memasang?</string>
 		
 		<!--md about-->
-		<string name="about">About</string>
-		<string name="about_hdr">About</string>
-		<string name="batik_v">B v1.1</string>
+		<string name="about_hdr">Tentang</string>
 		<string name="about">Tentang</string>	
 		<string name="changelog">Perubahan</string>
 		<string name="tools">Alat-alat</string>
