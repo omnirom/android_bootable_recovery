@@ -272,7 +272,7 @@ TEST_F(UpdaterTest, file_getprop) {
     expect(nullptr, "file_getprop(\"arg1\", \"arg2\", \"arg3\")", kArgsParsingFailure);
 
     // File doesn't exist.
-    expect(nullptr, "file_getprop(\"/doesntexist\", \"key1\")", kFileGetPropFailure);
+    expect(nullptr, "file_getprop(\"/doesntexist\", \"key1\")", kFreadFailure);
 
     // Reject too large files (current limit = 65536).
     TemporaryFile temp_file1;
