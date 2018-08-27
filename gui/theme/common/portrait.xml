@@ -3351,7 +3351,7 @@
 				<touch key="back"/>
 				<actions>
 					<action function="set">tw_app_install_status=0</action>
-					<action function="page">reboot</action>
+					<action function="page">main</action>
 				</actions>
 			</action>
 		</page>
