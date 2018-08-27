@@ -695,7 +695,6 @@
 		<string name="sha2_chk">Gunakeun SHA2 kanggo hashing</string>
 		<string name="unable_set_boot_slot">Aya kalepatan waktos ngubah slot bootloader boot ka {1}</string>
 		<!-- New Included String -->
-		<string name="batik_v">B v1.1</string>
 		<string name="about">Tentang</string>	
 		<string name="changelog">Parubahan</string>
 		<string name="tools">Parabot</string>
