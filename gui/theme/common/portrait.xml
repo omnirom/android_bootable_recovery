@@ -3329,7 +3329,7 @@
 			<slider>
 				<text>{@swipe_to_install_app=Swipe to Install TWRP App}</text>
 				<actions>
-					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_back=main</action>
 					<action function="set">tw_action=installapp</action>
 					<action function="set">tw_action_text1={@reboot_installing_app=Installing App...}</action>
 					<action function="set">tw_action_text2=</action>
