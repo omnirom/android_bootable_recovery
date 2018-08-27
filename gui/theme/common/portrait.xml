@@ -3237,7 +3237,6 @@
 				<condition var1="tw_busy" var2="0"/>
 				<actions>
 					<action function="overlay"/>
-					<action function="key">%tw_back%</action>
 				</actions>
 			</button>
 
@@ -3273,8 +3272,7 @@
 				<image resource="back"/>
 				<condition var1="tw_busy" var2="0"/>
 				<actions>
-					<action function="overlay"/>
-					<action function="key">%tw_back%</action>
+					<action function="overlay"/
 				</actions>
 			</button>
 
