@@ -3351,9 +3351,18 @@
 				<touch key="back"/>
 				<actions>
 					<action function="set">tw_app_install_status=0</action>
-					<action function="page">main</action>
+					<action function="page">reboot</action>
 				</actions>
 			</action>
+			
+			<button>
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="tw_samsung_navbar" var2="0"/>
+				<fill color="%transparent%"/>
+				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">main</action>
+			</button>
+			
 		</page>
 
 		<page name="system_readonly">
