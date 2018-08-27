@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <recovery>
 	<styles>
+		<style name="text_xl">
+			<font resource="font_xl" color="%text_color%"/>
+		</style>
+		
 		<style name="text_l">
 			<font resource="font_l" color="%text_color%"/>
 		</style>
@@ -193,7 +197,7 @@
 
 		<style name="fileselector">
 			<highlight color="%fileselector_highlight_color%"/>
-			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<header background="%background_color%" textcolor="%accent_color%"/>
 			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
 			<sort name="tw_gui_sort_order"/>
@@ -204,7 +208,7 @@
 
 		<style name="listbox">
 			<highlight color="%fileselector_highlight_color%"/>
-			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<header background="%background_color%" textcolor="%accent_color%"/>
 			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
 			<icon selected="radio_true" unselected="radio_false"/>
@@ -226,7 +230,7 @@
 
 		<style name="partitionlist">
 			<highlight color="%fileselector_highlight_color%"/>
-			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<header background="%background_color%" textcolor="%accent_color%"/>
 			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
 			<icon selected="checkbox_true" unselected="checkbox_false"/>
@@ -238,7 +242,7 @@
 		<style name="partitionlist_storage">
 			<highlight color="%fileselector_highlight_color%"/>
 			<placement x="%col1_x_left%" y="%row5_y%" w="%content_overlay_width%" h="%partitionlist_storage_height%"/>
-			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<header background="%background_color%" textcolor="%accent_color%"/>
 			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
 			<icon selected="radio_true" unselected="radio_false"/>
@@ -256,7 +260,7 @@
 		<style name="slidervalue">
 			<resource handle="handle"/>
 			<font resource="font_m" color="%text_color%"/>
-			<colors line="%fileselector_linecolor%"/>
+			<colors line="%fileselector_linecolor2%"/>
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
 		</style>
 
@@ -327,7 +331,7 @@
 			<button style="bn_reboot">
 				<condition var1="iconstyle" var2="1"/>
 				<placement x="%bn_x2%" y="%row10_y%"/>
-				<action function="page">reboot</action>
+				<action function="overlay">reboot2</action>
 			</button>
 			
 			<button style="bn_about">
@@ -2825,7 +2829,7 @@
 
 			<button style="checkbox">
 				<condition var1="tw_mount_system_ro" op="=" var2="0"/>
-				<placement x="%indent%" y="%row15a_y%" textplacement="6"/>
+				<placement x="%indent%" y="%row17_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_false"/>
 				<action function="mountsystemtoggle">1</action>
@@ -2833,7 +2837,7 @@
 
 			<button style="checkbox">
 				<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
-				<placement x="%indent%" y="%row15a_y%" textplacement="6"/>
+				<placement x="%indent%" y="%row17_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_true"/>
 				<actions>
@@ -2976,11 +2980,13 @@
 			<template name="page"/>
 
 			<text style="text_l">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@reboot_hdr=Reboot}</text>
 			</text>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_reboot_system" var2="1"/>
 				<placement x="%menu_x1%" y="%row2a_y%"/>
 				<text>{@rb_system_btn=System}</text>
@@ -2991,6 +2997,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_reboot_poweroff" var2="1"/>
 				<placement x="%menu_x2%" y="%row2a_y%"/>
 				<text>{@rb_poweroff_btn=Power Off}</text>
@@ -3010,6 +3017,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_reboot_recovery" var2="1"/>
 				<placement x="%menu_x1%" y="%row6_y%"/>
 				<text>{@rb_recovery_btn=Recovery}</text>
@@ -3029,6 +3037,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_reboot_bootloader" var2="1"/>
 				<placement x="%menu_x2%" y="%row6_y%"/>
 				<text>{@rb_bootloader_btn=Bootloader}</text>
@@ -3048,6 +3057,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_download_mode" var2="1"/>
 				<placement x="%menu_x1%" y="%row6_y%"/>
 				<text>{@rb_download_btn=Download}</text>
@@ -3112,6 +3122,165 @@
 			<action>
 				<touch key="back"/>
 				<action function="page">main</action>
+			</action>
+		</page>
+		
+		<page name="reboot2">
+			<fill color="%semi_transparent%">
+				<placement x="0" y="0" w="%screen_width%" h="%screen_height%"/>
+			</fill>
+			
+			<image>
+				<image resource="overlay"/>
+				<placement x="100" y="row5_y"/>
+			</image>
+
+			<button style="bn_system">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1a%" y="%row6a_y%"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="set">tw_back=main</action>
+					<action function="page">reboot_system_routine</action>
+				</actions>
+			</button>
+			
+			<button style="bn_poweroff">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2a%" y="%row6a_y%"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="set">tw_back=main</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=poweroff</action>
+					<action function="set">tw_reboot_param=poweroff</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_ospo=sure you wish to power off?}</action>
+					<action function="set">tw_action_text1={@turning_off=Turning Off...}</action>
+					<action function="set">tw_complete_text1={@turning_off=Turning Off...}</action>
+					<action function="set">tw_slider_text={@swipe_power_off=Swipe to Power Off}</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</button>
+			
+			<button style="bn_recovery">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1a%" y="%row11_y%"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="set">tw_back=main</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=recovery</action>
+					<action function="set">tw_reboot_param=recovery</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</button>
+			
+			<button style="bn_bootloader">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2a%" y="%row11_y%"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="set">tw_back=main</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=bootloader</action>
+					<action function="set">tw_reboot_param=bootloader</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1a%" y="%row9a_y%"/>
+				<text>{@rb_system_btn=System}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2a%" y="%row9a_y%"/>
+				<text>{@rb_poweroff_btn=Power Off}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1a%" y="%row14_y%"/>
+				<text>{@rb_recovery_btn=Recovery}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2a%" y="%row14_y%"/>
+				<text>{@rb_bootloader_btn=Bootloader}</text>
+			</button>
+
+			<fill color="#000000">
+				<placement x="0" y="row25_y" w="%screen_width%" h="%navbar_height"/>
+			</fill>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="!=" var2="1"/>
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="back"/>
+				<condition var1="tw_busy" var2="0"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="=" var2="1"/>
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="console"/>
+				<condition var1="tw_busy" var2="0"/>
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="home"/>
+				<condition var1="tw_busy" var2="0"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="key">home</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="!=" var2="1"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="console"/>
+				<condition var1="tw_busy" var2="0"/>
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="=" var2="1"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="back"/>
+				<condition var1="tw_busy" var2="0"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<action>
+				<touch key="power+voldown"/>
+				<action function="screenshot"/>
 			</action>
 		</page>
 
@@ -4428,6 +4597,11 @@
 				<listitem name="Update Batik Theme v1.1"/>
 				<listitem name="Update Magisk 16.71"/>
 				<listitem name="Add Indonesia, Sunda Language"/>
+				<listitem name=""/>
+				<listitem name="~ B v1.2 ~"/>
+				<listitem name="Overlay Reboot Menu"/>
+				<listitem name="Update Magisk 16.71 Alpha"/>
+				<listitem name="Add Jowo Language"/>
 		</listbox>
 		
 			<text style="text_l">
