@@ -15,6 +15,7 @@
 
 	<resources>
 		<font name="font_b" filename="RobotoCondensed-Regular.ttf" size="400"/>
+		<font name="font_xl" filename="RobotoCondensed-Regular.ttf" size="90"/>
 		<font name="font_l" filename="RobotoCondensed-Regular.ttf" size="54"/>
 		<font name="font_m" filename="RobotoCondensed-Regular.ttf" size="42"/>
 		<font name="font_s" filename="RobotoCondensed-Regular.ttf" size="36"/>
@@ -25,6 +26,7 @@
 		<font name="keylabel-longpress" filename="RobotoCondensed-Regular.ttf" size="32"/>
 
 		<image name="header" filename="header" retainaspect="1"/>
+		<image name="overlay" filename="overlay" retainaspect="1"/>
 		<image name="bg_batik" filename="bg_batik" retainaspect="1"/>
 		<image name="brand_name" filename="brand_name" retainaspect="1"/>
 		<image name="logo" filename="logo" retainaspect="1"/>
@@ -46,7 +48,7 @@
 		<image name="bn_terminal" filename="bn_terminal" retainaspect="1"/>
 		<image name="bn_adb" filename="bn_adb" retainaspect="1"/>
 		<image name="bn_system" filename="bn_system" retainaspect="1"/>
-		<image name="bn_recovey" filename="bn_recovery" retainaspect="1"/>
+		<image name="bn_recovery" filename="bn_recovery" retainaspect="1"/>
 		<image name="bn_poweroff" filename="bn_poweroff" retainaspect="1"/>
 		<image name="bn_bootloader" filename="bn_bootloader" retainaspect="1"/>
 		<image name="main_button_half_height" filename="main_button_half_height"/>
@@ -119,10 +121,14 @@
 		<variable name="menu_x1" value="75"/>
 		<variable name="menu_x2" value="565"/>
 		<variable name="bn_x1" value="135"/>
+		<variable name="bn_x1a" value="300"/>
 		<variable name="bn_x2" value="452"/>
+		<variable name="bn_x2a" value="604"/>
 		<variable name="bn_x3" value="769"/>
 		<variable name="tx_x1" value="110"/>
+		<variable name="tx_x1a" value="275"/>
 		<variable name="tx_x2" value="427"/>
+		<variable name="tx_x2a" value="579"/>
 		<variable name="tx_x3" value="744"/>
 		<variable name="unlock" value="900"/>
 		<variable name="info_x2" value="300"/>
@@ -230,7 +236,8 @@
 		<variable name="warning" value="#F8F8A0"/>
 		<variable name="error" value="#FF0101"/>
 		<variable name="highlight" value="#0090CA"/>
-		<variable name="fileselector_linecolor" value="#555555"/>
+		<variable name="fileselector_linecolor" value="#000000"/>
+		<variable name="fileselector_linecolor2" value="#efefef"/>
 		<variable name="fileselector_highlight_color" value="#555555"/>
 		<variable name="fileselector_separatorheight" value="2"/>
 		<variable name="fileselector_spacing" value="0"/>
@@ -241,7 +248,7 @@
 		<variable name="infocreditlist_height" value="544"/>
 		<variable name="partitionlist_flashimage_height" value="1000"/>
 		<variable name="partitionlist_wipe_height" value="1088"/>
-		<variable name="partitionlist_mount_height" value="832"/>
+		<variable name="partitionlist_mount_height" value="1000"/>
 		<variable name="partitionlist_backup_height" value="768"/>
 		<variable name="listbox_timezone_height" value="756"/>
 		<variable name="listbox_settings_height" value="960"/>
@@ -391,7 +398,7 @@
 			<text color="%text_color%">
 				<font resource="font_m"/>
 				<placement x="900" y="%row18_y%"/>
-				<text>{@batik_v=B v1.1}</text>
+				<text>B v1.2</text>
 			</text>	
 			
 			<text color="%text_color%">
