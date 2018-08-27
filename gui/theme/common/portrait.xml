@@ -3237,6 +3237,7 @@
 				<condition var1="tw_busy" var2="0"/>
 				<actions>
 					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
 				</actions>
 			</button>
 
@@ -3272,7 +3273,8 @@
 				<image resource="back"/>
 				<condition var1="tw_busy" var2="0"/>
 				<actions>
-					<action function="overlay"/
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
 				</actions>
 			</button>
 
@@ -3369,7 +3371,7 @@
 				<fill color="%transparent%"/>
 				<placement x="%center_x%" y="%navbar_y1%" w="450" h="150" placement="4"/>
 				<action function="page">main</action>
-			</button>
+			</button>			
 			
 		</page>
 
@@ -4572,7 +4574,7 @@
 				<condition var1="iconstyle" var2="1"/>
 				<condition var1="tw_samsung_navbar" var2="1"/>
 				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<placement x="center_x" y="%navbar_y1%" w="450" h="150" placement="4"/>
 				<action function="page">main</action>
 			</button>
 			
@@ -4580,7 +4582,7 @@
 				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_samsung_navbar" var2="1"/>
 				<fill color="%transparent%"/>
-				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<placement x="center_x" y="%navbar_y1%" w="450" h="150" placement="4"/>
 				<action function="page">advanced2</action>
 			</button>
 			
