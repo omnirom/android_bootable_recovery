@@ -688,7 +688,6 @@
 		<string name="sha2_chk">Use SHA2 for hashing</string>
 		<string name="unable_set_boot_slot">Error changing bootloader boot slot to {1}</string>
 		<!-- New Included String -->
-		<string name="batik_v">B v1.1</string>
 		<string name="about">About</string>	
 		<string name="changelog">Changelog</string>
 		<string name="tools">Tools</string>
