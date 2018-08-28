@@ -26,24 +26,25 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include <android-base/unique_fd.h>
 #include <openssl/sha.h>
 
 #include "edify/expr.h"
-#include "otafault/ota_io.h"
 #include "otautil/paths.h"
 #include "otautil/print_sha1.h"
 
 static int LoadPartitionContents(const std::string& filename, FileContents* file);
-static size_t FileSink(const unsigned char* data, size_t len, int fd);
 static int GenerateTarget(const FileContents& source_file, const std::unique_ptr<Value>& patch,
                           const std::string& target_filename,
                           const uint8_t target_sha1[SHA_DIGEST_LENGTH], const Value* bonus_data);
@@ -54,26 +55,13 @@ int LoadFileContents(const std::string& filename, FileContents* file) {
     return LoadPartitionContents(filename, file);
   }
 
-  struct stat sb;
-  if (stat(filename.c_str(), &sb) == -1) {
-    PLOG(ERROR) << "Failed to stat \"" << filename << "\"";
+  std::string data;
+  if (!android::base::ReadFileToString(filename, &data)) {
+    PLOG(ERROR) << "Failed to read \"" << filename << "\"";
     return -1;
   }
 
-  std::vector<unsigned char> data(sb.st_size);
-  unique_file f(ota_fopen(filename.c_str(), "rb"));
-  if (!f) {
-    PLOG(ERROR) << "Failed to open \"" << filename << "\"";
-    return -1;
-  }
-
-  size_t bytes_read = ota_fread(data.data(), 1, data.size(), f.get());
-  if (bytes_read != data.size()) {
-    LOG(ERROR) << "Short read of \"" << filename << "\" (" << bytes_read << " bytes of "
-               << data.size() << ")";
-    return -1;
-  }
-  file->data = std::move(data);
+  file->data = std::vector<unsigned char>(data.begin(), data.end());
   SHA1(file->data.data(), file->data.size(), file->sha1);
   return 0;
 }
@@ -110,8 +98,8 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
   std::sort(pairs.begin(), pairs.end());
 
   const char* partition = pieces[1].c_str();
-  unique_file dev(ota_fopen(partition, "rb"));
-  if (!dev) {
+  android::base::unique_fd dev(open(partition, O_RDONLY));
+  if (dev == -1) {
     PLOG(ERROR) << "Failed to open eMMC partition \"" << partition << "\"";
     return -1;
   }
@@ -121,8 +109,7 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
 
   // Allocate enough memory to hold the largest size.
   std::vector<unsigned char> buffer(pairs[pair_count - 1].first);
-  unsigned char* buffer_ptr = buffer.data();
-  size_t buffer_size = 0;  // # bytes read so far
+  size_t offset = 0;  // # bytes read so far
   bool found = false;
 
   for (const auto& pair : pairs) {
@@ -131,19 +118,16 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
 
     // Read enough additional bytes to get us up to the next size. (Again,
     // we're trying the possibilities in order of increasing size).
-    size_t next = current_size - buffer_size;
-    if (next > 0) {
-      size_t read = ota_fread(buffer_ptr, 1, next, dev.get());
-      if (next != read) {
-        LOG(ERROR) << "Short read (" << read << " bytes of " << next << ") for partition \""
-                   << partition << "\"";
+    if (current_size - offset > 0) {
+      if (!android::base::ReadFully(dev, buffer.data() + offset, current_size - offset)) {
+        PLOG(ERROR) << "Failed to read " << current_size - offset << " bytes of data at offset "
+                    << offset << " for partition " << partition;
         return -1;
       }
-      SHA1_Update(&sha_ctx, buffer_ptr, read);
-      buffer_size += read;
-      buffer_ptr += read;
-    }
 
+      SHA1_Update(&sha_ctx, buffer.data() + offset, current_size - offset);
+      offset = current_size;
+    }
     // Duplicate the SHA context and finalize the duplicate so we can
     // check it against this pair's expected hash.
     SHA_CTX temp_ctx;
@@ -173,31 +157,31 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
 
   SHA1_Final(file->sha1, &sha_ctx);
 
-  buffer.resize(buffer_size);
+  buffer.resize(offset);
   file->data = std::move(buffer);
 
   return 0;
 }
 
 int SaveFileContents(const std::string& filename, const FileContents* file) {
-  unique_fd fd(
-      ota_open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
+  android::base::unique_fd fd(
+      open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
   if (fd == -1) {
     PLOG(ERROR) << "Failed to open \"" << filename << "\" for write";
     return -1;
   }
 
-  size_t bytes_written = FileSink(file->data.data(), file->data.size(), fd);
-  if (bytes_written != file->data.size()) {
-    PLOG(ERROR) << "Short write of \"" << filename << "\" (" << bytes_written << " bytes of "
-                << file->data.size();
+  if (!android::base::WriteFully(fd, file->data.data(), file->data.size())) {
+    PLOG(ERROR) << "Failed to write " << file->data.size() << " bytes of data to " << filename;
     return -1;
   }
-  if (ota_fsync(fd) != 0) {
+
+  if (fsync(fd) != 0) {
     PLOG(ERROR) << "Failed to fsync \"" << filename << "\"";
     return -1;
   }
-  if (ota_close(fd) != 0) {
+
+  if (close(fd.release()) != 0) {
     PLOG(ERROR) << "Failed to close \"" << filename << "\"";
     return -1;
   }
@@ -215,42 +199,36 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
     return -1;
   }
 
-  const char* partition = pieces[1].c_str();
-  unique_fd fd(ota_open(partition, O_RDWR));
-  if (fd == -1) {
-    PLOG(ERROR) << "Failed to open \"" << partition << "\"";
-    return -1;
-  }
-
   size_t start = 0;
   bool success = false;
   for (size_t attempt = 0; attempt < 2; ++attempt) {
+    std::string partition = pieces[1];
+    android::base::unique_fd fd(open(partition.c_str(), O_RDWR));
+    if (fd == -1) {
+      PLOG(ERROR) << "Failed to open \"" << partition << "\"";
+      return -1;
+    }
+
     if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
       PLOG(ERROR) << "Failed to seek to " << start << " on \"" << partition << "\"";
       return -1;
     }
-    while (start < len) {
-      size_t to_write = len - start;
-      if (to_write > 1 << 20) to_write = 1 << 20;
 
-      ssize_t written = TEMP_FAILURE_RETRY(ota_write(fd, data + start, to_write));
-      if (written == -1) {
-        PLOG(ERROR) << "Failed to write to \"" << partition << "\"";
-        return -1;
-      }
-      start += written;
+    if (!android::base::WriteFully(fd, data + start, len - start)) {
+      PLOG(ERROR) << "Failed to write " << len - start << " bytes to \"" << partition << "\"";
+      return -1;
     }
 
-    if (ota_fsync(fd) != 0) {
+    if (fsync(fd) != 0) {
       PLOG(ERROR) << "Failed to sync \"" << partition << "\"";
       return -1;
     }
-    if (ota_close(fd) != 0) {
+    if (close(fd.release()) != 0) {
       PLOG(ERROR) << "Failed to close \"" << partition << "\"";
       return -1;
     }
 
-    fd.reset(ota_open(partition, O_RDONLY));
+    fd.reset(open(partition.c_str(), O_RDONLY));
     if (fd == -1) {
       PLOG(ERROR) << "Failed to reopen \"" << partition << "\" for verification";
       return -1;
@@ -258,13 +236,12 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
 
     // Drop caches so our subsequent verification read won't just be reading the cache.
     sync();
-    unique_fd dc(ota_open("/proc/sys/vm/drop_caches", O_WRONLY));
-    if (TEMP_FAILURE_RETRY(ota_write(dc, "3\n", 2)) == -1) {
-      PLOG(ERROR) << "Failed to write to /proc/sys/vm/drop_caches";
+    std::string drop_cache = "/proc/sys/vm/drop_caches";
+    if (!android::base::WriteStringToFile("3\n", drop_cache)) {
+      PLOG(ERROR) << "Failed to write to " << drop_cache;
     } else {
       LOG(INFO) << "  caches dropped";
     }
-    ota_close(dc);
     sleep(1);
 
     // Verify.
@@ -281,21 +258,9 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
         to_read = sizeof(buffer);
       }
 
-      size_t so_far = 0;
-      while (so_far < to_read) {
-        ssize_t read_count = TEMP_FAILURE_RETRY(ota_read(fd, buffer + so_far, to_read - so_far));
-        if (read_count == -1) {
-          PLOG(ERROR) << "Failed to verify-read " << partition << " at " << p;
-          return -1;
-        } else if (read_count == 0) {
-          LOG(ERROR) << "Verify-reading " << partition << " reached unexpected EOF at " << p;
-          return -1;
-        }
-        if (static_cast<size_t>(read_count) < to_read) {
-          LOG(INFO) << "Short verify-read " << partition << " at " << p << ": expected " << to_read
-                    << " actual " << read_count;
-        }
-        so_far += read_count;
+      if (!android::base::ReadFully(fd, buffer, to_read)) {
+        PLOG(ERROR) << "Failed to verify-read " << partition << " at " << p;
+        return -1;
       }
 
       if (memcmp(buffer, data + p, to_read) != 0) {
@@ -311,14 +276,8 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
       break;
     }
 
-    if (ota_close(fd) != 0) {
+    if (close(fd.release()) != 0) {
       PLOG(ERROR) << "Failed to close " << partition;
-      return -1;
-    }
-
-    fd.reset(ota_open(partition, O_RDWR));
-    if (fd == -1) {
-      PLOG(ERROR) << "Failed to reopen " << partition << " for next attempt";
       return -1;
     }
   }
@@ -328,10 +287,6 @@ static int WriteToPartition(const unsigned char* data, size_t len, const std::st
     return -1;
   }
 
-  if (ota_close(fd) == -1) {
-    PLOG(ERROR) << "Failed to close " << partition;
-    return -1;
-  }
   sync();
 
   return 0;
@@ -405,19 +360,6 @@ int applypatch_check(const std::string& filename, const std::vector<std::string>
 int ShowLicenses() {
   ShowBSDiffLicense();
   return 0;
-}
-
-static size_t FileSink(const unsigned char* data, size_t len, int fd) {
-  size_t done = 0;
-  while (done < len) {
-    ssize_t wrote = TEMP_FAILURE_RETRY(ota_write(fd, data + done, len - done));
-    if (wrote == -1) {
-      PLOG(ERROR) << "Failed to write " << len - done << " bytes";
-      return done;
-    }
-    done += wrote;
-  }
-  return done;
 }
 
 int applypatch(const char* source_filename, const char* target_filename,

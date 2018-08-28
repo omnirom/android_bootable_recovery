@@ -56,7 +56,6 @@ libapplypatch_static_libs = [
     "libedify",
     "libimgdiff",
     "libimgpatch",
-    "libotafault",
     "libotautil",
     "libbsdiff",
     "libbspatch",

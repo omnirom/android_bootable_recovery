@@ -49,6 +49,7 @@ enum CauseCode : int {
   kPackageExtractFileFailure,
   kPatchApplicationFailure,
   kHashTreeComputationFailure,
+  kEioFailure,
   kVendorFailure = 200
 };
 

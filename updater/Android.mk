@@ -27,7 +27,6 @@ updater_common_static_libraries := \
     libbootloader_message \
     libbspatch \
     libedify \
-    libotafault \
     libotautil \
     libext4_utils \
     libfec \

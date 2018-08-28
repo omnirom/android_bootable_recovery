@@ -46,6 +46,7 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <android-base/unique_fd.h>
 #include <applypatch/applypatch.h>
 #include <bootloader_message/bootloader_message.h>
 #include <ext4_utils/wipe.h>
@@ -56,7 +57,6 @@
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
-#include "otafault/ota_io.h"
 #include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/mounts.h"
@@ -137,8 +137,8 @@ Value* PackageExtractFileFn(const char* name, State* state,
       return StringValue("");
     }
 
-    unique_fd fd(TEMP_FAILURE_RETRY(
-        ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
+    android::base::unique_fd fd(TEMP_FAILURE_RETRY(
+        open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
     if (fd == -1) {
       PLOG(ERROR) << name << ": can't open " << dest_path << " for write";
       return StringValue("");
@@ -152,11 +152,12 @@ Value* PackageExtractFileFn(const char* name, State* state,
                  << "\": " << ErrorCodeString(ret);
       success = false;
     }
-    if (ota_fsync(fd) == -1) {
+    if (fsync(fd) == -1) {
       PLOG(ERROR) << "fsync of \"" << dest_path << "\" failed";
       success = false;
     }
-    if (ota_close(fd) == -1) {
+
+    if (close(fd.release()) != 0) {
       PLOG(ERROR) << "close of \"" << dest_path << "\" failed";
       success = false;
     }
@@ -614,32 +615,11 @@ Value* FileGetPropFn(const char* name, State* state,
   const std::string& filename = args[0];
   const std::string& key = args[1];
 
-  struct stat st;
-  if (stat(filename.c_str(), &st) < 0) {
-    return ErrorAbort(state, kFileGetPropFailure, "%s: failed to stat \"%s\": %s", name,
-                      filename.c_str(), strerror(errno));
-  }
-
-  constexpr off_t MAX_FILE_GETPROP_SIZE = 65536;
-  if (st.st_size > MAX_FILE_GETPROP_SIZE) {
-    return ErrorAbort(state, kFileGetPropFailure, "%s too large for %s (max %lld)",
-                      filename.c_str(), name, static_cast<long long>(MAX_FILE_GETPROP_SIZE));
-  }
-
-  std::string buffer(st.st_size, '\0');
-  unique_file f(ota_fopen(filename.c_str(), "rb"));
-  if (f == nullptr) {
-    return ErrorAbort(state, kFileOpenFailure, "%s: failed to open %s: %s", name, filename.c_str(),
-                      strerror(errno));
-  }
-
-  if (ota_fread(&buffer[0], 1, st.st_size, f.get()) != static_cast<size_t>(st.st_size)) {
-    ErrorAbort(state, kFreadFailure, "%s: failed to read %zu bytes from %s", name,
-               static_cast<size_t>(st.st_size), filename.c_str());
+  std::string buffer;
+  if (!android::base::ReadFileToString(filename, &buffer)) {
+    ErrorAbort(state, kFreadFailure, "%s: failed to read %s", name, filename.c_str());
     return nullptr;
   }
-
-  ota_fclose(f);
 
   std::vector<std::string> lines = android::base::Split(buffer, "\n");
   for (size_t i = 0; i < lines.size(); i++) {
@@ -913,7 +893,12 @@ Value* WipeBlockDeviceFn(const char* name, State* state, const std::vector<std::
   if (!android::base::ParseUint(len_str.c_str(), &len)) {
     return nullptr;
   }
-  unique_fd fd(ota_open(filename.c_str(), O_WRONLY, 0644));
+  android::base::unique_fd fd(open(filename.c_str(), O_WRONLY));
+  if (fd == -1) {
+    PLOG(ERROR) << "Failed to open " << filename;
+    return StringValue("");
+  }
+
   // The wipe_block_device function in ext4_utils returns 0 on success and 1
   // for failure.
   int status = wipe_block_device(fd, len);
