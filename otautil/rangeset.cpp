@@ -148,8 +148,8 @@ std::string RangeSet::ToString() const {
     return "";
   }
   std::string result = std::to_string(ranges_.size() * 2);
-  for (const auto& r : ranges_) {
-    result += android::base::StringPrintf(",%zu,%zu", r.first, r.second);
+  for (const auto& [begin, end] : ranges_) {
+    result += android::base::StringPrintf(",%zu,%zu", begin, end);
   }
 
   return result;
@@ -159,11 +159,11 @@ std::string RangeSet::ToString() const {
 size_t RangeSet::GetBlockNumber(size_t idx) const {
   CHECK_LT(idx, blocks_) << "Out of bound index " << idx << " (total blocks: " << blocks_ << ")";
 
-  for (const auto& range : ranges_) {
-    if (idx < range.second - range.first) {
-      return range.first + idx;
+  for (const auto& [begin, end] : ranges_) {
+    if (idx < end - begin) {
+      return begin + idx;
     }
-    idx -= (range.second - range.first);
+    idx -= (end - begin);
   }
 
   CHECK(false) << "Failed to find block number for index " << idx;
@@ -173,14 +173,10 @@ size_t RangeSet::GetBlockNumber(size_t idx) const {
 // RangeSet has half-closed half-open bounds. For example, "3,5" contains blocks 3 and 4. So "3,5"
 // and "5,7" are not overlapped.
 bool RangeSet::Overlaps(const RangeSet& other) const {
-  for (const auto& range : ranges_) {
-    size_t start = range.first;
-    size_t end = range.second;
-    for (const auto& other_range : other.ranges_) {
-      size_t other_start = other_range.first;
-      size_t other_end = other_range.second;
-      // [start, end) vs [other_start, other_end)
-      if (!(other_start >= end || start >= other_end)) {
+  for (const auto& [begin, end] : ranges_) {
+    for (const auto& [other_begin, other_end] : other.ranges_) {
+      // [begin, end) vs [other_begin, other_end)
+      if (!(other_begin >= end || begin >= other_end)) {
         return true;
       }
     }
@@ -248,20 +244,20 @@ bool SortedRangeSet::Overlaps(size_t start, size_t len) const {
 size_t SortedRangeSet::GetOffsetInRangeSet(size_t old_offset) const {
   size_t old_block_start = old_offset / kBlockSize;
   size_t new_block_start = 0;
-  for (const auto& range : ranges_) {
+  for (const auto& [start, end] : ranges_) {
     // Find the index of old_block_start.
-    if (old_block_start >= range.second) {
-      new_block_start += (range.second - range.first);
-    } else if (old_block_start >= range.first) {
-      new_block_start += (old_block_start - range.first);
+    if (old_block_start >= end) {
+      new_block_start += (end - start);
+    } else if (old_block_start >= start) {
+      new_block_start += (old_block_start - start);
       return (new_block_start * kBlockSize + old_offset % kBlockSize);
     } else {
       CHECK(false) << "block_start " << old_block_start
-                   << " is missing between two ranges: " << this->ToString();
+                   << " is missing between two ranges: " << ToString();
       return 0;
     }
   }
   CHECK(false) << "block_start " << old_block_start
-               << " exceeds the limit of current RangeSet: " << this->ToString();
+               << " exceeds the limit of current RangeSet: " << ToString();
   return 0;
 }
