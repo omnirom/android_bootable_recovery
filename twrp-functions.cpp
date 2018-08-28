@@ -186,37 +186,6 @@ bool TWFunc::Path_Exists(string Path) {
 		return true;
 }
 
-void TWFunc::Set_Xposed_Vars() {
-	if (TWFunc::Path_Exists(XPOSED_DATA_DIR)) {
-		DataManager::SetValue(TW_XPOSED, 1);
-		if (TWFunc::Path_Exists(XPOSED_DISABLE_FILE))
-			DataManager::SetValue(TW_XPOSED_ENABLED, 0);
-		else
-			DataManager::SetValue(TW_XPOSED_ENABLED, 1);
-	} else {
-		DataManager::SetValue(TW_XPOSED, 0);
-		DataManager::SetValue(TW_XPOSED_ENABLED, 0);
-	}
-}
-
-int TWFunc::Set_Xposed_Enabled(bool enable) {
-        int value;
-        DataManager::GetValue(TW_XPOSED, value);
-        if (value != 1)
-                return 101;
-
-	if (enable) {
-	        value = remove (XPOSED_DISABLE_FILE);
-	} else {
-	        if (!TWFunc::Path_Exists(XPOSED_CONF_DIR))
-	                mkdir(XPOSED_CONF_DIR, 0771);
-	        string empty = "";
-	        value = TWFunc::write_to_file(XPOSED_DISABLE_FILE, empty);
-	}
-	TWFunc::Set_Xposed_Vars();
-	return value;
-}
-
 Archive_Type TWFunc::Get_File_Type(string fn) {
 	string::size_type i = 0;
 	int firstbyte = 0, secondbyte = 0;
@@ -1089,15 +1058,6 @@ int TWFunc::Set_Brightness(std::string brightness_value)
 			TWFunc::write_to_file(secondary_brightness_file, brightness_value);
 		}
 	}
-	return result;
-}
-
-int TWFunc::Set_Btn_Brightness(std::string btn_brightness_value)
-{
-	int result = -1;
-	std::string btn_brightness_file = "/sys/class/leds/button-backlight/brightness";
-	LOGINFO("TWFunc::Set_Btn_Brightness: Setting buttons brightness control to %s\n", btn_brightness_value.c_str());
-	result = TWFunc::write_to_file(btn_brightness_file, btn_brightness_value);
 	return result;
 }
 
