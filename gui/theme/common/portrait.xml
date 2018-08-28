@@ -146,6 +146,61 @@
 			<highlight color="%highlight_color%"/>
 			<image resource="bn_bootloader"/>
 		</style>
+		
+		<style name="bn_ramdisk">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_ramdisk"/>
+		</style>
+		
+		<style name="bn_appdelete">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_appdelete"/>
+		</style>
+		
+		<style name="bn_delsubs">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_delsubs"/>
+		</style>
+		
+		<style name="bn_lazyflasher">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_lazyflasher"/>
+		</style>
+		
+		<style name="bn_reset_pass">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_reset_pass"/>
+		</style>
+		
+		<style name="bn_d_hal3">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_d_hal3"/>
+		</style>
+		
+		<style name="bn_e_hal3">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_e_hal3"/>
+		</style>
+		
+		<style name="bn_d_navbar">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_d_navbar"/>
+		</style>
+		
+		<style name="bn_e_navbar">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_e_navbar"/>
+		</style>
+		
+		<style name="bn_i_magisk">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_i_magisk"/>
+		</style>
+		
+		<style name="bn_u_magisk">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_u_magisk"/>
+		</style>
 
 		<style name="main_button_half_height">
 			<highlight color="%highlight_color%"/>
@@ -4036,8 +4091,303 @@
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@tools=Tools}</text>
 			</text>
+			
+
+			<button style="bn_ramdisk">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/ramdiskcleaner.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Ramdisk_Cleaner_text=Ramdisk Cleaner will be installed.}</action>
+					<action function="set">tw_text2={@Ramdisk_Cleaner_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_e_hal3">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/enablehal3.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Enable_HAL3_text=Enable HAL3 will be installed.}</action>
+					<action function="set">tw_text2={@Enable_HAL3_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_d_hal3">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/disablehal3.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Disable HAL3 will be installed.</action>
+					<action function="set">tw_text2={@Enable_HAL3_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_appdelete">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/appdel.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@App_Delete_text=App Delete will be installed.}</action>
+					<action function="set">tw_text2={@App_Delete_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_e_navbar">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/nb.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Navbar will be installed.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_d_navbar">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/unnb.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Navbar will be uninstalled.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_delsubs">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row11_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/subs.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=subs overlay remover will be uninstalled.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_lazyflasher">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row11_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/lazyflasher.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Lazy_Flasher_text=Lazy Flasher will be installed.}</action>
+					<action function="set">tw_text2={@Lazy_Flasher_confirm=Try to Lazy Flasher Device?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="bn_reset_pass">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row11_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/rmpass.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Reset_Password_text=Reset Password will be installed.}</action>
+					<action function="set">tw_text2={@Reset_Password_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="bn_fm">
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="aromafm" var2="1"/>
+				<placement x="%bn_x1%" y="%row15a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/aroma.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Aroma will be installed.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="bn_fm">
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="aromafm" var2="0"/>
+				<placement x="%bn_x1%" y="%row15a_y%"/>
+				<action function="page">filemanagerlist</action>
+			</button>
+
+			<button style="bn_i_magisk">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row15a_y%"/>
+					<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/magisk.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Magisk_text=Magisk will be installed.}</action>
+					<action function="set">tw_text2={@Magisk_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="bn_u_magisk">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row15a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/unrootmagisk.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Unroot_Magisk_text=Unroot Magisk will be installed.}</action>
+					<action function="set">tw_text2={@Unroot_Magisk_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1%" y="%row5_y%"/>
+				<text>{@Ramdisk_Cleaner_btn=Ramdisk Cleaner}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row5_y%"/>
+				<text>{@Enable_HAL3_btn=Enabled HAL3}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row5_y%"/>
+				<text>Disable HAL3</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1%" y="%row9a_y%"/>
+				<text>{@App_Delete_btn=App Delete}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row9a_y%"/>
+				<text>Enable Navbar</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row9a_y%"/>
+				<text>Disable Navbar</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1%" y="%row14_y%"/>
+				<text>Del Subs Overlay</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row14_y%"/>
+				<text>{@Lazy_Flasher_btn=Lazy Flasher}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row14_y%"/>
+				<text>{@Reset_Password_btn=Reset Password}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="aromafm" var2="1"/>
+				<placement x="%tx_x1%" y="%row18a_y%"/>
+				<text>Aroma FM</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="aromafm" var2="0"/>
+				<placement x="%tx_x1%" y="%row18a_y%"/>
+				<text>File Manager</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row18a_y%"/>
+				<text>Root Magisk</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row18a_y%"/>
+				<text>{@Unroot_Magisk_btn=Unroot Magisk}</text>
+			</button>
+			
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%menu_x1%" y="%row2a_y%"/>
 				<text>{@Ramdisk_Cleaner_btn=Ramdisk Cleaner}</text>
 				<actions>
@@ -4055,6 +4405,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_has_data_media" var2="1"/>
 				<placement x="%menu_x2%" y="%row2a_y%"/>
 				<text>{@Enable_HAL3_btn=Enabled HAL3}</text>
@@ -4073,6 +4424,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_allow_partition_sdcard" var2="1"/>
 				<placement x="%menu_x1%" y="%row6_y%"/>
 				<text>Disable HAL3</text>
@@ -4091,6 +4443,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%menu_x2%" y="%row6_y%"/>
 				<text>{@App_Delete_btn=App Delete}</text>
 				<actions>
@@ -4108,6 +4461,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%menu_x1%" y="%row9a_y%"/>
 				<text>Enable Navbar</text>
 				<actions>
@@ -4119,12 +4473,13 @@
 					<action function="set">tw_action2_param=flash_zip</action>
 					<action function="set">tw_text1=Navbar will be installed.</action>
 					<action function="set">tw_text2=Try to install it?</action>
-										<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%menu_x2%" y="%row9a_y%"/>
 				<text>Disable Navbar</text>
 				<actions>
@@ -4142,6 +4497,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%menu_x1%" y="%row13_y%"/>
 				<text>Del Subs Overlay</text>
 				<actions>
@@ -4159,6 +4515,7 @@
 			</button>
 			
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%menu_x2%" y="%row13_y%"/>
 				<text>{@Lazy_Flasher_btn=Lazy Flasher}</text>
 				<actions>
@@ -4176,6 +4533,7 @@
 			</button>
 			
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%menu_x1%" y="%row16a_y%"/>
 				<text>{@Reset_Password_btn=Reset Password}</text>
 				<actions>
@@ -4193,6 +4551,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="aromafm" var2="1"/>
 				<placement x="%menu_x2%" y="%row16a_y%"/>
 				<text>Aroma FM</text>
@@ -4211,6 +4570,7 @@
 			</button>
 			
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="aromafm" var2="0"/>
 				<placement x="%menu_x2%" y="%row16a_y%"/>
 				<text>File Manager</text>
@@ -4218,6 +4578,7 @@
 			</button>
 			
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%menu_x1%" y="%row20_y%"/>
 				<text>Root Magisk</text>
 					<actions>
@@ -4235,6 +4596,7 @@
 			</button>
 			
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%menu_x2%" y="%row20_y%"/>
 				<text>{@Unroot_Magisk_btn=Unroot Magisk}</text>
 				<actions>
