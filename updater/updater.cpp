@@ -31,7 +31,6 @@
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
-#include "otafault/config.h"
 #include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/sysutil.h"
@@ -46,8 +45,6 @@
 // Where in the package we expect to find the edify script to execute.
 // (Note it's "updateR-script", not the older "update-script".)
 static constexpr const char* SCRIPT_NAME = "META-INF/com/google/android/updater-script";
-
-extern bool have_eio_error;
 
 struct selabel_handle *sehandle;
 
@@ -166,14 +163,9 @@ int main(int argc, char** argv) {
       printf("unexpected argument: %s", argv[4]);
     }
   }
-  ota_io_init(za, state.is_retry);
 
   std::string result;
   bool status = Evaluate(&state, root, &result);
-
-  if (have_eio_error) {
-    fprintf(cmd_pipe, "retry_update\n");
-  }
 
   if (!status) {
     if (state.errmsg.empty()) {
@@ -205,6 +197,9 @@ int main(int argc, char** argv) {
       fprintf(cmd_pipe, "log cause: %d\n", state.cause_code);
       if (state.cause_code == kPatchApplicationFailure) {
         LOG(INFO) << "Patch application failed, retry update.";
+        fprintf(cmd_pipe, "retry_update\n");
+      } else if (state.cause_code == kEioFailure) {
+        LOG(INFO) << "Update failed due to EIO, retry update.";
         fprintf(cmd_pipe, "retry_update\n");
       }
     }
