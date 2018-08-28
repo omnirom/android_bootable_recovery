@@ -24,6 +24,8 @@ cc_defaults {
         "-Wall",
         "-Werror",
     ],
+
+    cpp_std: "c++17",
 }
 
 cc_library {
