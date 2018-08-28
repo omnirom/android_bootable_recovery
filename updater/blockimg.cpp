@@ -463,12 +463,12 @@ static void* unzip_new_data(void* cookie) {
 
 static int ReadBlocks(const RangeSet& src, std::vector<uint8_t>* buffer, int fd) {
   size_t p = 0;
-  for (const auto& range : src) {
-    if (!check_lseek(fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
+  for (const auto& [begin, end] : src) {
+    if (!check_lseek(fd, static_cast<off64_t>(begin) * BLOCKSIZE, SEEK_SET)) {
       return -1;
     }
 
-    size_t size = (range.second - range.first) * BLOCKSIZE;
+    size_t size = (end - begin) * BLOCKSIZE;
     if (!android::base::ReadFully(fd, buffer->data() + p, size)) {
       failure_type = errno == EIO ? kEioFailure : kFreadFailure;
       PLOG(ERROR) << "Failed to read " << size << " bytes of data";
@@ -483,9 +483,9 @@ static int ReadBlocks(const RangeSet& src, std::vector<uint8_t>* buffer, int fd)
 
 static int WriteBlocks(const RangeSet& tgt, const std::vector<uint8_t>& buffer, int fd) {
   size_t written = 0;
-  for (const auto& range : tgt) {
-    off64_t offset = static_cast<off64_t>(range.first) * BLOCKSIZE;
-    size_t size = (range.second - range.first) * BLOCKSIZE;
+  for (const auto& [begin, end] : tgt) {
+    off64_t offset = static_cast<off64_t>(begin) * BLOCKSIZE;
+    size_t size = (end - begin) * BLOCKSIZE;
     if (!discard_blocks(fd, offset, size)) {
       return -1;
     }
@@ -1269,9 +1269,9 @@ static int PerformCommandZero(CommandParameters& params) {
   memset(params.buffer.data(), 0, BLOCKSIZE);
 
   if (params.canwrite) {
-    for (const auto& range : tgt) {
-      off64_t offset = static_cast<off64_t>(range.first) * BLOCKSIZE;
-      size_t size = (range.second - range.first) * BLOCKSIZE;
+    for (const auto& [begin, end] : tgt) {
+      off64_t offset = static_cast<off64_t>(begin) * BLOCKSIZE;
+      size_t size = (end - begin) * BLOCKSIZE;
       if (!discard_blocks(params.fd, offset, size)) {
         return -1;
       }
@@ -1280,7 +1280,7 @@ static int PerformCommandZero(CommandParameters& params) {
         return -1;
       }
 
-      for (size_t j = range.first; j < range.second; ++j) {
+      for (size_t j = begin; j < end; ++j) {
         if (!android::base::WriteFully(params.fd, params.buffer.data(), BLOCKSIZE)) {
           failure_type = errno == EIO ? kEioFailure : kFwriteFailure;
           PLOG(ERROR) << "Failed to write " << BLOCKSIZE << " bytes of data";
@@ -1444,12 +1444,12 @@ static int PerformCommandErase(CommandParameters& params) {
   if (params.canwrite) {
     LOG(INFO) << " erasing " << tgt.blocks() << " blocks";
 
-    for (const auto& range : tgt) {
+    for (const auto& [begin, end] : tgt) {
       uint64_t blocks[2];
       // offset in bytes
-      blocks[0] = range.first * static_cast<uint64_t>(BLOCKSIZE);
+      blocks[0] = begin * static_cast<uint64_t>(BLOCKSIZE);
       // length in bytes
-      blocks[1] = (range.second - range.first) * static_cast<uint64_t>(BLOCKSIZE);
+      blocks[1] = (end - begin) * static_cast<uint64_t>(BLOCKSIZE);
 
       if (ioctl(params.fd, BLKDISCARD, &blocks) == -1) {
         PLOG(ERROR) << "BLKDISCARD ioctl failed";
@@ -1522,17 +1522,17 @@ static int PerformCommandComputeHashTree(CommandParameters& params) {
 
   // Iterates through every block in the source_ranges and updates the hash tree structure
   // accordingly.
-  for (const auto& range : source_ranges) {
+  for (const auto& [begin, end] : source_ranges) {
     uint8_t buffer[BLOCKSIZE];
-    if (!check_lseek(params.fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
-      PLOG(ERROR) << "Failed to seek to block: " << range.first;
+    if (!check_lseek(params.fd, static_cast<off64_t>(begin) * BLOCKSIZE, SEEK_SET)) {
+      PLOG(ERROR) << "Failed to seek to block: " << begin;
       return -1;
     }
 
-    for (size_t i = range.first; i < range.second; i++) {
+    for (size_t i = begin; i < end; i++) {
       if (!android::base::ReadFully(params.fd, buffer, BLOCKSIZE)) {
         failure_type = errno == EIO ? kEioFailure : kFreadFailure;
-        LOG(ERROR) << "Failed to read data in " << range.first << ":" << range.second;
+        LOG(ERROR) << "Failed to read data in " << begin << ":" << end;
         return -1;
       }
 
@@ -2046,14 +2046,14 @@ Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique
   SHA1_Init(&ctx);
 
   std::vector<uint8_t> buffer(BLOCKSIZE);
-  for (const auto& range : rs) {
-    if (!check_lseek(fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
+  for (const auto& [begin, end] : rs) {
+    if (!check_lseek(fd, static_cast<off64_t>(begin) * BLOCKSIZE, SEEK_SET)) {
       ErrorAbort(state, kLseekFailure, "failed to seek %s: %s", blockdev_filename->data.c_str(),
                  strerror(errno));
       return StringValue("");
     }
 
-    for (size_t j = range.first; j < range.second; ++j) {
+    for (size_t j = begin; j < end; ++j) {
       if (!android::base::ReadFully(fd, buffer.data(), BLOCKSIZE)) {
         CauseCode cause_code = errno == EIO ? kEioFailure : kFreadFailure;
         ErrorAbort(state, cause_code, "failed to read %s: %s", blockdev_filename->data.c_str(),
@@ -2185,8 +2185,8 @@ Value* BlockImageRecoverFn(const char* name, State* state,
   }
 
   uint8_t buffer[BLOCKSIZE];
-  for (const auto& range : rs) {
-    for (size_t j = range.first; j < range.second; ++j) {
+  for (const auto& [begin, end] : rs) {
+    for (size_t j = begin; j < end; ++j) {
       // Stay within the data area, libfec validates and corrects metadata
       if (status.data_size <= static_cast<uint64_t>(j) * BLOCKSIZE) {
         continue;
