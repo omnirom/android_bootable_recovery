@@ -969,6 +969,7 @@
 				<action function="set">tw_action_text2=</action>
 				<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
 				<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+				<action function="page">rebootcheck</action>
 			</action>
 		</page>
 
@@ -1198,6 +1199,18 @@
 					<action function="set">tw_fileexists=0</action>
 					<action function="page">%tw_notexistpage%</action>
 				</actions>
+			</action>
+		</page>
+
+		<page name="rebootcheck">
+			<action>
+				<condition var1="tw_backup_system_size" op="&gt;=" var2="%tw_min_system%"/>
+				<action function="reboot">%tw_action_param%</action>
+			</action>
+
+			<action>
+				<condition var1="tw_backup_system_size" op="&lt;" var2="%tw_min_system%"/>
+				<action function="page">confirm_action</action>
 			</action>
 		</page>
 
@@ -2900,7 +2913,6 @@
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@enable_mtp_btn=Enable MTP}</text>
 				<action function="startmtp"/>
-				<action function="resetdm"/>
 			</button>
 
 			<button style="main_button_half_height">
@@ -3033,7 +3045,7 @@
 					<action function="set">tw_action_text1={@turning_off=Turning Off...}</action>
 					<action function="set">tw_complete_text1={@turning_off=Turning Off...}</action>
 					<action function="set">tw_slider_text={@swipe_power_off=Swipe to Power Off}</action>
-
+					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
 
@@ -3053,7 +3065,7 @@
 					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-
+					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
 
@@ -3073,7 +3085,7 @@
 					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-
+					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
 
@@ -3093,7 +3105,7 @@
 					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-
+					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
 
@@ -3181,6 +3193,7 @@
 					<action function="set">tw_action_text1={@turning_off=Turning Off...}</action>
 					<action function="set">tw_complete_text1={@turning_off=Turning Off...}</action>
 					<action function="set">tw_slider_text={@swipe_power_off=Swipe to Power Off}</action>
+					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
 			
@@ -3199,6 +3212,7 @@
 					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
 			
@@ -3217,6 +3231,7 @@
 					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
 					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
 			
