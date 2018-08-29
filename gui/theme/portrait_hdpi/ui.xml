@@ -111,8 +111,8 @@
 	<variables>
 		<variable name="tw_samsung_navbar" value="0" persist="1"/>
 		<variable name="tw_military_time" value="1" persist="0"/>
-		<variable name="iconstyle" value="1" persist="0"/>
-		<variable name="aromafm" value="1" persist="0"/>
+		<variable name="iconstyle" value="1" persist="1"/>
+		<variable name="aromafm" value="1" persist="1"/>
 		<variable name="tw_hide_kb" value="0"/>
 		<variable name="screen_width" value="1080"/>
 		<variable name="screen_height" value="1920"/>
