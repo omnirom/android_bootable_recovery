@@ -230,7 +230,6 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(flashimage);
 		ADD_ACTION(twcmd);
 		ADD_ACTION(setbootslot);
-		ADD_ACTION(installapp);
 	}
 
 	// First, get the action
