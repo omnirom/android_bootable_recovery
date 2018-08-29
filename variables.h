@@ -23,11 +23,11 @@
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
 #define TW_FILENAME                 "tw_filename"
 #define TW_ZIP_INDEX                "tw_zip_index"
-#define TW_ZIP_QUEUE_COUNT       "tw_zip_queue_count"
+#define TW_ZIP_QUEUE_COUNT          "tw_zip_queue_count"
 
 #define MAX_BACKUP_NAME_LEN 64
 #define TW_BACKUP_TEXT              "tw_backup_text"
-#define TW_BACKUP_NAME		        "tw_backup_name"
+#define TW_BACKUP_NAME		          "tw_backup_name"
 #define TW_BACKUP_SYSTEM_VAR        "tw_backup_system"
 #define TW_BACKUP_DATA_VAR          "tw_backup_data"
 #define TW_BACKUP_BOOT_VAR          "tw_backup_boot"
@@ -138,7 +138,8 @@
 #define TW_SDEXT_DISABLE_EXT4       "tw_sdext_disable_ext4"
 #define TW_MILITARY_TIME            "tw_military_time"
 #define TW_USE_SHA2                 "tw_use_sha2"
-#define TW_NO_SHA2                  "tw_no_sha2"
+#define ICONSTYLE                   "iconstyle"
+#define AROMAFM                     "aromafm"
 
 // Also used:
 //   tw_boot_is_mountable
