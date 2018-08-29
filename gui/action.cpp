@@ -197,7 +197,6 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(checkpartitionlifetimewrites);
 		ADD_ACTION(mountsystemtoggle);
 		ADD_ACTION(setlanguage);
-		ADD_ACTION(checkforapp);
 		ADD_ACTION(togglebacklight);
 
 		// remember actions that run in the caller thread
