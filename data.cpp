@@ -759,12 +759,10 @@ void DataManager::SetDefaultValues()
 #ifdef TW_INCLUDE_CRYPTO
 	mConst.SetValue(TW_USE_SHA2, "1");
 	mConst.SetValue(TW_NO_SHA2, "0");
-	mConst.SetValue(ICONSTYLE, "1");
-	mConst.SetValue(AROMAFM, "1");
+	mConst.SetValue(TW_MILITARY_TIME, "1");
 #else
 	mConst.SetValue(TW_NO_SHA2, "1");
-	mConst.SetValue(ICONSTYLE, "0");
-	mConst.SetValue(AROMAFM, "0");
+	mConst.SetValue(TW_MILITARY_TIME, "0");
 #endif
 
 #ifdef TW_NO_SCREEN_TIMEOUT
