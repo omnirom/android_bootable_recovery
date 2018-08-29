@@ -53,7 +53,6 @@
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
-#include "otafault/ota_io.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
 #include "otautil/print_sha1.h"
@@ -119,15 +118,14 @@ static bool ParseLastCommandFile(size_t* last_command_index) {
 }
 
 static bool FsyncDir(const std::string& dirname) {
-  android::base::unique_fd dfd(
-      TEMP_FAILURE_RETRY(ota_open(dirname.c_str(), O_RDONLY | O_DIRECTORY)));
+  android::base::unique_fd dfd(TEMP_FAILURE_RETRY(open(dirname.c_str(), O_RDONLY | O_DIRECTORY)));
   if (dfd == -1) {
-    failure_type = kFileOpenFailure;
+    failure_type = errno == EIO ? kEioFailure : kFileOpenFailure;
     PLOG(ERROR) << "Failed to open " << dirname;
     return false;
   }
   if (fsync(dfd) == -1) {
-    failure_type = kFsyncFailure;
+    failure_type = errno == EIO ? kEioFailure : kFsyncFailure;
     PLOG(ERROR) << "Failed to fsync " << dirname;
     return false;
   }
@@ -178,47 +176,6 @@ static bool SetPartitionUpdatedMarker(const std::string& marker) {
   }
   LOG(INFO) << "Wrote partition updated marker to " << marker;
   return true;
-}
-
-static int read_all(int fd, uint8_t* data, size_t size) {
-    size_t so_far = 0;
-    while (so_far < size) {
-        ssize_t r = TEMP_FAILURE_RETRY(ota_read(fd, data+so_far, size-so_far));
-        if (r == -1) {
-            failure_type = kFreadFailure;
-            PLOG(ERROR) << "read failed";
-            return -1;
-        } else if (r == 0) {
-            failure_type = kFreadFailure;
-            LOG(ERROR) << "read reached unexpected EOF.";
-            return -1;
-        }
-        so_far += r;
-    }
-    return 0;
-}
-
-static int read_all(int fd, std::vector<uint8_t>* buffer, size_t size) {
-  return read_all(fd, buffer->data(), size);
-}
-
-static int write_all(int fd, const uint8_t* data, size_t size) {
-    size_t written = 0;
-    while (written < size) {
-        ssize_t w = TEMP_FAILURE_RETRY(ota_write(fd, data+written, size-written));
-        if (w == -1) {
-            failure_type = kFwriteFailure;
-            PLOG(ERROR) << "write failed";
-            return -1;
-        }
-        written += w;
-    }
-
-    return 0;
-}
-
-static int write_all(int fd, const std::vector<uint8_t>& buffer, size_t size) {
-    return write_all(fd, buffer.data(), size);
 }
 
 static bool discard_blocks(int fd, off64_t offset, uint64_t size) {
@@ -293,7 +250,9 @@ class RangeSinkWriter {
         write_now = current_range_left_;
       }
 
-      if (write_all(fd_, data, write_now) == -1) {
+      if (!android::base::WriteFully(fd_, data, write_now)) {
+        failure_type = errno == EIO ? kEioFailure : kFwriteFailure;
+        PLOG(ERROR) << "Failed to write " << write_now << " bytes of data";
         break;
       }
 
@@ -504,13 +463,15 @@ static void* unzip_new_data(void* cookie) {
 
 static int ReadBlocks(const RangeSet& src, std::vector<uint8_t>* buffer, int fd) {
   size_t p = 0;
-  for (const auto& range : src) {
-    if (!check_lseek(fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
+  for (const auto& [begin, end] : src) {
+    if (!check_lseek(fd, static_cast<off64_t>(begin) * BLOCKSIZE, SEEK_SET)) {
       return -1;
     }
 
-    size_t size = (range.second - range.first) * BLOCKSIZE;
-    if (read_all(fd, buffer->data() + p, size) == -1) {
+    size_t size = (end - begin) * BLOCKSIZE;
+    if (!android::base::ReadFully(fd, buffer->data() + p, size)) {
+      failure_type = errno == EIO ? kEioFailure : kFreadFailure;
+      PLOG(ERROR) << "Failed to read " << size << " bytes of data";
       return -1;
     }
 
@@ -522,9 +483,9 @@ static int ReadBlocks(const RangeSet& src, std::vector<uint8_t>* buffer, int fd)
 
 static int WriteBlocks(const RangeSet& tgt, const std::vector<uint8_t>& buffer, int fd) {
   size_t written = 0;
-  for (const auto& range : tgt) {
-    off64_t offset = static_cast<off64_t>(range.first) * BLOCKSIZE;
-    size_t size = (range.second - range.first) * BLOCKSIZE;
+  for (const auto& [begin, end] : tgt) {
+    off64_t offset = static_cast<off64_t>(begin) * BLOCKSIZE;
+    size_t size = (end - begin) * BLOCKSIZE;
     if (!discard_blocks(fd, offset, size)) {
       return -1;
     }
@@ -533,7 +494,9 @@ static int WriteBlocks(const RangeSet& tgt, const std::vector<uint8_t>& buffer, 
       return -1;
     }
 
-    if (write_all(fd, buffer.data() + written, size) == -1) {
+    if (!android::base::WriteFully(fd, buffer.data() + written, size)) {
+      failure_type = errno == EIO ? kEioFailure : kFwriteFailure;
+      PLOG(ERROR) << "Failed to write " << size << " bytes of data";
       return -1;
     }
 
@@ -793,15 +756,18 @@ static int LoadStash(const CommandParameters& params, const std::string& id, boo
     return -1;
   }
 
-  android::base::unique_fd fd(TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_RDONLY)));
+  android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(fn.c_str(), O_RDONLY)));
   if (fd == -1) {
+    failure_type = errno == EIO ? kEioFailure : kFileOpenFailure;
     PLOG(ERROR) << "open \"" << fn << "\" failed";
     return -1;
   }
 
   allocate(sb.st_size, buffer);
 
-  if (read_all(fd, buffer, sb.st_size) == -1) {
+  if (!android::base::ReadFully(fd, buffer->data(), sb.st_size)) {
+    failure_type = errno == EIO ? kEioFailure : kFreadFailure;
+    PLOG(ERROR) << "Failed to read " << sb.st_size << " bytes of data";
     return -1;
   }
 
@@ -855,8 +821,9 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
   LOG(INFO) << " writing " << blocks << " blocks to " << cn;
 
   android::base::unique_fd fd(
-      TEMP_FAILURE_RETRY(ota_open(fn.c_str(), O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE)));
+      TEMP_FAILURE_RETRY(open(fn.c_str(), O_WRONLY | O_CREAT | O_TRUNC, STASH_FILE_MODE)));
   if (fd == -1) {
+    failure_type = errno == EIO ? kEioFailure : kFileOpenFailure;
     PLOG(ERROR) << "failed to create \"" << fn << "\"";
     return -1;
   }
@@ -866,12 +833,14 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
     return -1;
   }
 
-  if (write_all(fd, buffer, blocks * BLOCKSIZE) == -1) {
+  if (!android::base::WriteFully(fd, buffer.data(), blocks * BLOCKSIZE)) {
+    failure_type = errno == EIO ? kEioFailure : kFwriteFailure;
+    PLOG(ERROR) << "Failed to write " << blocks * BLOCKSIZE << " bytes of data";
     return -1;
   }
 
-  if (ota_fsync(fd) == -1) {
-    failure_type = kFsyncFailure;
+  if (fsync(fd) == -1) {
+    failure_type = errno == EIO ? kEioFailure : kFsyncFailure;
     PLOG(ERROR) << "fsync \"" << fn << "\" failed";
     return -1;
   }
@@ -883,7 +852,6 @@ static int WriteStash(const std::string& base, const std::string& id, int blocks
 
   std::string dname = GetStashFileName(base, "", "");
   if (!FsyncDir(dname)) {
-    failure_type = kFsyncFailure;
     return -1;
   }
 
@@ -1301,9 +1269,9 @@ static int PerformCommandZero(CommandParameters& params) {
   memset(params.buffer.data(), 0, BLOCKSIZE);
 
   if (params.canwrite) {
-    for (const auto& range : tgt) {
-      off64_t offset = static_cast<off64_t>(range.first) * BLOCKSIZE;
-      size_t size = (range.second - range.first) * BLOCKSIZE;
+    for (const auto& [begin, end] : tgt) {
+      off64_t offset = static_cast<off64_t>(begin) * BLOCKSIZE;
+      size_t size = (end - begin) * BLOCKSIZE;
       if (!discard_blocks(params.fd, offset, size)) {
         return -1;
       }
@@ -1312,8 +1280,10 @@ static int PerformCommandZero(CommandParameters& params) {
         return -1;
       }
 
-      for (size_t j = range.first; j < range.second; ++j) {
-        if (write_all(params.fd, params.buffer, BLOCKSIZE) == -1) {
+      for (size_t j = begin; j < end; ++j) {
+        if (!android::base::WriteFully(params.fd, params.buffer.data(), BLOCKSIZE)) {
+          failure_type = errno == EIO ? kEioFailure : kFwriteFailure;
+          PLOG(ERROR) << "Failed to write " << BLOCKSIZE << " bytes of data";
           return -1;
         }
       }
@@ -1474,12 +1444,12 @@ static int PerformCommandErase(CommandParameters& params) {
   if (params.canwrite) {
     LOG(INFO) << " erasing " << tgt.blocks() << " blocks";
 
-    for (const auto& range : tgt) {
+    for (const auto& [begin, end] : tgt) {
       uint64_t blocks[2];
       // offset in bytes
-      blocks[0] = range.first * static_cast<uint64_t>(BLOCKSIZE);
+      blocks[0] = begin * static_cast<uint64_t>(BLOCKSIZE);
       // length in bytes
-      blocks[1] = (range.second - range.first) * static_cast<uint64_t>(BLOCKSIZE);
+      blocks[1] = (end - begin) * static_cast<uint64_t>(BLOCKSIZE);
 
       if (ioctl(params.fd, BLKDISCARD, &blocks) == -1) {
         PLOG(ERROR) << "BLKDISCARD ioctl failed";
@@ -1552,16 +1522,17 @@ static int PerformCommandComputeHashTree(CommandParameters& params) {
 
   // Iterates through every block in the source_ranges and updates the hash tree structure
   // accordingly.
-  for (const auto& range : source_ranges) {
+  for (const auto& [begin, end] : source_ranges) {
     uint8_t buffer[BLOCKSIZE];
-    if (!check_lseek(params.fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
-      PLOG(ERROR) << "Failed to seek to block: " << range.first;
+    if (!check_lseek(params.fd, static_cast<off64_t>(begin) * BLOCKSIZE, SEEK_SET)) {
+      PLOG(ERROR) << "Failed to seek to block: " << begin;
       return -1;
     }
 
-    for (size_t i = range.first; i < range.second; i++) {
-      if (read_all(params.fd, buffer, BLOCKSIZE) == -1) {
-        LOG(ERROR) << "Failed to read data in " << range.first << ":" << range.second;
+    for (size_t i = begin; i < end; i++) {
+      if (!android::base::ReadFully(params.fd, buffer, BLOCKSIZE)) {
+        failure_type = errno == EIO ? kEioFailure : kFreadFailure;
+        LOG(ERROR) << "Failed to read data in " << begin << ":" << end;
         return -1;
       }
 
@@ -1676,8 +1647,9 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     return StringValue("");
   }
 
-  params.fd.reset(TEMP_FAILURE_RETRY(ota_open(blockdev_filename->data.c_str(), O_RDWR)));
+  params.fd.reset(TEMP_FAILURE_RETRY(open(blockdev_filename->data.c_str(), O_RDWR)));
   if (params.fd == -1) {
+    failure_type = errno == EIO ? kEioFailure : kFileOpenFailure;
     PLOG(ERROR) << "open \"" << blockdev_filename->data << "\" failed";
     return StringValue("");
   }
@@ -1859,8 +1831,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     }
 
     if (params.canwrite) {
-      if (ota_fsync(params.fd) == -1) {
-        failure_type = kFsyncFailure;
+      if (fsync(params.fd) == -1) {
+        failure_type = errno == EIO ? kEioFailure : kFsyncFailure;
         PLOG(ERROR) << "fsync failed";
         goto pbiudone;
       }
@@ -1920,8 +1892,8 @@ pbiudone:
     LOG(INFO) << "verified partition contents; update may be resumed";
   }
 
-  if (ota_fsync(params.fd) == -1) {
-    failure_type = kFsyncFailure;
+  if (fsync(params.fd) == -1) {
+    failure_type = errno == EIO ? kEioFailure : kFsyncFailure;
     PLOG(ERROR) << "fsync failed";
   }
   // params.fd will be automatically closed because it's a unique_fd.
@@ -2059,9 +2031,10 @@ Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique
     return StringValue("");
   }
 
-  android::base::unique_fd fd(ota_open(blockdev_filename->data.c_str(), O_RDWR));
+  android::base::unique_fd fd(open(blockdev_filename->data.c_str(), O_RDWR));
   if (fd == -1) {
-    ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", blockdev_filename->data.c_str(),
+    CauseCode cause_code = errno == EIO ? kEioFailure : kFileOpenFailure;
+    ErrorAbort(state, cause_code, "open \"%s\" failed: %s", blockdev_filename->data.c_str(),
                strerror(errno));
     return StringValue("");
   }
@@ -2073,16 +2046,17 @@ Value* RangeSha1Fn(const char* name, State* state, const std::vector<std::unique
   SHA1_Init(&ctx);
 
   std::vector<uint8_t> buffer(BLOCKSIZE);
-  for (const auto& range : rs) {
-    if (!check_lseek(fd, static_cast<off64_t>(range.first) * BLOCKSIZE, SEEK_SET)) {
+  for (const auto& [begin, end] : rs) {
+    if (!check_lseek(fd, static_cast<off64_t>(begin) * BLOCKSIZE, SEEK_SET)) {
       ErrorAbort(state, kLseekFailure, "failed to seek %s: %s", blockdev_filename->data.c_str(),
                  strerror(errno));
       return StringValue("");
     }
 
-    for (size_t j = range.first; j < range.second; ++j) {
-      if (read_all(fd, &buffer, BLOCKSIZE) == -1) {
-        ErrorAbort(state, kFreadFailure, "failed to read %s: %s", blockdev_filename->data.c_str(),
+    for (size_t j = begin; j < end; ++j) {
+      if (!android::base::ReadFully(fd, buffer.data(), BLOCKSIZE)) {
+        CauseCode cause_code = errno == EIO ? kEioFailure : kFreadFailure;
+        ErrorAbort(state, cause_code, "failed to read %s: %s", blockdev_filename->data.c_str(),
                    strerror(errno));
         return StringValue("");
       }
@@ -2121,9 +2095,10 @@ Value* CheckFirstBlockFn(const char* name, State* state,
     return StringValue("");
   }
 
-  android::base::unique_fd fd(ota_open(arg_filename->data.c_str(), O_RDONLY));
+  android::base::unique_fd fd(open(arg_filename->data.c_str(), O_RDONLY));
   if (fd == -1) {
-    ErrorAbort(state, kFileOpenFailure, "open \"%s\" failed: %s", arg_filename->data.c_str(),
+    CauseCode cause_code = errno == EIO ? kEioFailure : kFileOpenFailure;
+    ErrorAbort(state, cause_code, "open \"%s\" failed: %s", arg_filename->data.c_str(),
                strerror(errno));
     return StringValue("");
   }
@@ -2132,7 +2107,8 @@ Value* CheckFirstBlockFn(const char* name, State* state,
   std::vector<uint8_t> block0_buffer(BLOCKSIZE);
 
   if (ReadBlocks(blk0, &block0_buffer, fd) == -1) {
-    ErrorAbort(state, kFreadFailure, "failed to read %s: %s", arg_filename->data.c_str(),
+    CauseCode cause_code = errno == EIO ? kEioFailure : kFreadFailure;
+    ErrorAbort(state, cause_code, "failed to read %s: %s", arg_filename->data.c_str(),
                strerror(errno));
     return StringValue("");
   }
@@ -2209,8 +2185,8 @@ Value* BlockImageRecoverFn(const char* name, State* state,
   }
 
   uint8_t buffer[BLOCKSIZE];
-  for (const auto& range : rs) {
-    for (size_t j = range.first; j < range.second; ++j) {
+  for (const auto& [begin, end] : rs) {
+    for (size_t j = begin; j < end; ++j) {
       // Stay within the data area, libfec validates and corrects metadata
       if (status.data_size <= static_cast<uint64_t>(j) * BLOCKSIZE) {
         continue;
