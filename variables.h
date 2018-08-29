@@ -139,8 +139,11 @@
 #define TW_MILITARY_TIME            "tw_military_time"
 #define TW_USE_SHA2                 "tw_use_sha2"
 #define TW_NO_SHA2                  "tw_no_sha2"
+
+// BATIK RECOVERY
 #define ICONSTYLE                   "iconstyle"
 #define AROMAFM                     "aromafm"
+#define DISABLE_DM_VERITY           "dm_verity_check"
 
 // Also used:
 //   tw_boot_is_mountable
