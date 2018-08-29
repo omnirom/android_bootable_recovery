@@ -2935,6 +2935,7 @@
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@enable_mtp_btn=Enable MTP}</text>
 				<action function="startmtp"/>
+				<action function="resetdm"/>
 			</button>
 
 			<button style="main_button_half_height">
