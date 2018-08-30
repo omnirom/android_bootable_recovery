@@ -291,8 +291,8 @@ $(TOOLS_H):
 # toolbox setenforce is used during init in non-symlink form, so it was
 # required to be included as part of the suite above. if busybox already
 # provides setenforce, we can omit the toolbox symlink
-TEMP_TOOLS := $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(ALL_TOOLS))
-ALL_TOOLS := $(TEMP_TOOLS)
+#TEMP_TOOLS := $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(ALL_TOOLS))
+#ALL_TOOLS := $(TEMP_TOOLS)
 
 # Make /sbin/toolbox launchers for each tool
 SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(ALL_TOOLS))

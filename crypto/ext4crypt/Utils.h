@@ -47,6 +47,7 @@ status_t ForkExecvp(const std::vector<std::string>& args,
 pid_t ForkExecvpAsync(const std::vector<std::string>& args);
 
 status_t ReadRandomBytes(size_t bytes, std::string& out);
+status_t ReadRandomBytes(size_t bytes, char* buffer);
 
 /* Converts hex string to raw bytes, ignoring [ :-] */
 status_t HexToStr(const std::string& hex, std::string& str);
@@ -61,6 +62,8 @@ std::string BuildDataMiscCePath(userid_t userid);
 std::string BuildDataMiscDePath(userid_t userid);
 std::string BuildDataProfilesDePath(userid_t userid);
 std::string BuildDataProfilesForeignDexDePath(userid_t userid);
+std::string BuildDataVendorCePath(userid_t userid);
+std::string BuildDataVendorDePath(userid_t userid);
 
 std::string BuildDataPath(const char* volumeUuid);
 std::string BuildDataMediaCePath(const char* volumeUuid, userid_t userid);
