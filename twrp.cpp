@@ -167,11 +167,11 @@ int main(int argc, char **argv) {
 		
 	}
 	
-	gui_print("**************************");
+	gui_msg("**************************");
   	gui_msg("batik_msg2=[BATIK]: Welcome! ^_^");
   	gui_msg(Msg("batik_msg3=[VERSION]: '{1}'") (TW_VERSION_STR));
   	gui_msg(Msg("batik_msg4=[BUILD]: {1}") (BR_BUILD));
-  	gui_print("**************************");
+  	gui_msg("**************************");
 
 
 	PartitionManager.Mount_By_Path("/cache", false);
