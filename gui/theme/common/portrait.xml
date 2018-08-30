@@ -4070,6 +4070,10 @@
 				<text>{@tools=Tools}</text>
 			</text>
 			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@br=Batik Recovery}</text>
+			</text>
 
 			<button style="bn_ramdisk">
 				<condition var1="iconstyle" var2="1"/>
@@ -4788,6 +4792,11 @@
 				<text>{@about=about}</text>
 			</text>
 			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@br=Batik Recovery}</text>
+			</text>
+			
 			<text style="text_l">
 				<placement x="%menu_x1%" y="%row2_y%"/>
 				<text>* {@overview=Overview}</text>
@@ -4885,7 +4894,7 @@
 		
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21_y%"/>
-				<text>NEXT</text>
+				<text>{@br_next=NEXT}</text>
 				<action function="page">about2</action>
 			</button>
 			
@@ -4934,6 +4943,11 @@
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@about=about}</text>
+			</text>
+			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@br=Batik Recovery}</text>
 			</text>
 			
 			<text style="text_l">
@@ -4988,7 +5002,7 @@
 			
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21_y%"/>
-				<text>PREV</text>
+				<text>{@br_prev=PREV}</text>
 				<action function="page">about</action>
 			</button>			
 
@@ -6018,12 +6032,12 @@
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>Console</text>
+				<text>{@console=Console}</text>
 			</text>
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>Console on Batik Recovery</text>
+				<text>{@br=Batik Recovery}</text>
 			</text>
 
 			<console>
