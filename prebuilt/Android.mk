@@ -212,6 +212,17 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
             RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libsoftkeymaster.so
         endif
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.keymaster@4.0.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster4support.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeystore_aidl.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeystore_parcelables.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libutilscallstack.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libunwindstack.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdexfile.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libservices.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_portable.so
+         endif
     endif
 endif
 ifeq ($(AB_OTA_UPDATER), true)
@@ -329,7 +340,7 @@ endif
 
 TWRP_AUTOGEN := $(intermediates)/teamwin
 GEN := $(intermediates)/teamwin
-$(GEN): $(RELINK) $(TW_BB_SYMLINKS)
+$(GEN): $(RELINK) $(TW_BB_SYMLINKS) toolbox_symlinks
 $(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,init)/init
 	$(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
 

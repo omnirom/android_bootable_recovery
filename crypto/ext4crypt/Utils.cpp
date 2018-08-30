@@ -56,13 +56,13 @@ status_t ForkExecvp(const std::vector<std::string>& args, security_context_t con
     }
 
     if (setexeccon(context)) {
-        LOG(ERROR) << "Failed to setexeccon";
+        LOG(ERROR) << "Failed to setexeccon" << std::endl;
         abort();
     }
     abort();
     status_t res = 1;//android_fork_execvp(argc, argv, NULL, false, true);
     if (setexeccon(nullptr)) {
-        LOG(ERROR) << "Failed to setexeccon";
+        LOG(ERROR) << "Failed to setexeccon" << std::endl;
         abort();
     }
 
@@ -89,17 +89,17 @@ status_t ForkExecvp(const std::vector<std::string>& args,
     output.clear();
 
     if (setexeccon(context)) {
-        LOG(ERROR) << "Failed to setexeccon";
+        LOG(ERROR) << "Failed to setexeccon" << std::endl;
         abort();
     }
     FILE* fp = popen(cmd.c_str(), "r");
     if (setexeccon(nullptr)) {
-        LOG(ERROR) << "Failed to setexeccon";
+        LOG(ERROR) << "Failed to setexeccon" << std::endl;
         abort();
     }
 
     if (!fp) {
-        PLOG(ERROR) << "Failed to popen " << cmd;
+        PLOG(ERROR) << "Failed to popen " << cmd << std::endl;
         return -errno;
     }
     char line[1024];
@@ -108,7 +108,7 @@ status_t ForkExecvp(const std::vector<std::string>& args,
         output.push_back(std::string(line));
     }
     if (pclose(fp) != 0) {
-        PLOG(ERROR) << "Failed to pclose " << cmd;
+        PLOG(ERROR) << "Failed to pclose " << cmd << std::endl;
         return -errno;
     }
 
@@ -134,14 +134,14 @@ pid_t ForkExecvpAsync(const std::vector<std::string>& args) {
         close(STDERR_FILENO);
 
         if (execvp(argv[0], argv)) {
-            PLOG(ERROR) << "Failed to exec";
+            PLOG(ERROR) << "Failed to exec" << std::endl;
         }
 
         _exit(1);
     }
 
     if (pid == -1) {
-        PLOG(ERROR) << "Failed to exec";
+        PLOG(ERROR) << "Failed to exec" << std::endl;
     }
 
     free(argv);
@@ -149,18 +149,20 @@ pid_t ForkExecvpAsync(const std::vector<std::string>& args) {
 }
 
 status_t ReadRandomBytes(size_t bytes, std::string& out) {
-    out.clear();
+    out.resize(bytes);
+    return ReadRandomBytes(bytes, &out[0]);
+}
 
+status_t ReadRandomBytes(size_t bytes, char* buf) {
     int fd = TEMP_FAILURE_RETRY(open("/dev/urandom", O_RDONLY | O_CLOEXEC | O_NOFOLLOW));
     if (fd == -1) {
         return -errno;
     }
 
-    char buf[BUFSIZ];
     size_t n;
-    while ((n = TEMP_FAILURE_RETRY(read(fd, &buf[0], std::min(sizeof(buf), bytes)))) > 0) {
-        out.append(buf, n);
+    while ((n = TEMP_FAILURE_RETRY(read(fd, &buf[0], bytes))) > 0) {
         bytes -= n;
+        buf += n;
     }
     close(fd);
 
@@ -245,6 +247,14 @@ std::string BuildDataMiscCePath(userid_t userId) {
 
 std::string BuildDataMiscDePath(userid_t userId) {
     return StringPrintf("%s/misc_de/%u", BuildDataPath(nullptr).c_str(), userId);
+}
+
+std::string BuildDataVendorCePath(userid_t userId) {
+    return StringPrintf("%s/vendor_ce/%u", BuildDataPath(nullptr).c_str(), userId);
+}
+
+std::string BuildDataVendorDePath(userid_t userId) {
+    return StringPrintf("%s/vendor_de/%u", BuildDataPath(nullptr).c_str(), userId);
 }
 
 // Keep in sync with installd (frameworks/native/cmds/installd/utils.h)

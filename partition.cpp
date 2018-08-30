@@ -130,6 +130,7 @@ enum TW_FSTAB_FLAGS {
 	TWFLAG_CANENCRYPTBACKUP,
 	TWFLAG_DISPLAY,
 	TWFLAG_ENCRYPTABLE,
+	TWFLAG_FILEENCRYPTION,
 	TWFLAG_FLASHIMG,
 	TWFLAG_FORCEENCRYPT,
 	TWFLAG_FSFLAGS,
@@ -172,6 +173,7 @@ const struct flag_list tw_flags[] = {
 	{ "defaults",               TWFLAG_DEFAULTS },
 	{ "display=",               TWFLAG_DISPLAY },
 	{ "encryptable=",           TWFLAG_ENCRYPTABLE },
+	{ "fileencryption=",        TWFLAG_FILEENCRYPTION },
 	{ "flashimg",               TWFLAG_FLASHIMG },
 	{ "forceencrypt=",          TWFLAG_FORCEENCRYPT },
 	{ "fsflags=",               TWFLAG_FSFLAGS },
@@ -821,6 +823,24 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 		case TWFLAG_ENCRYPTABLE:
 		case TWFLAG_FORCEENCRYPT:
 			Crypto_Key_Location = str;
+			break;
+		case TWFLAG_FILEENCRYPTION:
+			// This flag isn't used by TWRP but is needed in 9.0 FBE decrypt
+			// fileencryption=ice:aes-256-heh
+			{
+				std::string FBE = str;
+				std::string FBE_contents, FBE_filenames;
+				size_t colon_loc = FBE.find(":");
+				if (colon_loc == std::string::npos) {
+					LOGINFO("Invalid fileencryption fstab flag: '%s'\n", str);
+					break;
+				}
+				FBE_contents = FBE.substr(0, colon_loc);
+				FBE_filenames = FBE.substr(colon_loc + 1);
+				property_set("fbe.contents", FBE_contents.c_str());
+				property_set("fbe.filenames", FBE_filenames.c_str());
+				LOGINFO("FBE contents '%s', filenames '%s'\n", FBE_contents.c_str(), FBE_filenames.c_str());
+			}
 			break;
 		case TWFLAG_FLASHIMG:
 			Can_Flash_Img = val;
