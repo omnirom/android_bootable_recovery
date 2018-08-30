@@ -744,8 +744,9 @@
 		
 		<!-- Welcome -->
 		<string name="batik_msg2">[BATIK]: Welcome!</string>
-		<string name="batik_msg3">[Version]: {1}</string>
-		<string name="batik_msg4">[Build]: {1}</string>
+		<string name="batik_msg3">[VERSION]: {1}</string>
+		<string name="batik_msg4">[BUILD]: {1}</string>
+		<string name="batik_msg5">[MAINTAINER]: {1}</string>
 		
 	</resources>
 </language>
