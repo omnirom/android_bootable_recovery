@@ -15,7 +15,11 @@
  */
 
 #include "Decrypt.h"
+#ifdef USE_KEYSTORAGE_4
+#include "Ext4CryptPie.h"
+#else
 #include "Ext4Crypt.h"
+#endif
 
 #include <map>
 #include <string>
@@ -50,12 +54,16 @@
 
 #include <ext4_utils/ext4_crypt.h>
 
+#ifdef USE_KEYSTORAGE_4
+#include <android/security/IKeystoreService.h>
+#else
 #include <keystore/IKeystoreService.h>
+#include <keystore/authorization_set.h>
+#endif
 #include <binder/IPCThreadState.h>
 #include <binder/IServiceManager.h>
 
 #include <keystore/keystore.h>
-#include <keystore/authorization_set.h>
 
 #include <algorithm>
 extern "C" {
@@ -437,6 +445,9 @@ namespace keystore {
 #define SYNTHETIC_PASSWORD_VERSION 2
 #define SYNTHETIC_PASSWORD_PASSWORD_BASED 0
 #define SYNTHETIC_PASSWORD_KEY_PREFIX "USRSKEY_synthetic_password_"
+#define USR_PRIVATE_KEY_PREFIX "USRPKEY_synthetic_password_"
+
+static std::string mKey_Prefix;
 
 /* The keystore alias subid is sometimes the same as the handle, but not always.
  * In the case of handle 0c5303fd2010fe29, the alias subid used c5303fd2010fe29
@@ -447,13 +458,19 @@ namespace keystore {
  * folder so that any key upgrades that might take place do not actually
  * upgrade the keys on the data partition. We rename all 1000 uid files to 0
  * to pass the keystore permission checks. */
-bool Find_Keystore_Alias_SubID_And_Prep_Files(const userid_t user_id, std::string& keystoreid) {
+bool Find_Keystore_Alias_SubID_And_Prep_Files(const userid_t user_id, std::string& keystoreid, const std::string& handle_str) {
 	char path_c[PATH_MAX];
 	sprintf(path_c, "/data/misc/keystore/user_%d", user_id);
 	char user_dir[PATH_MAX];
 	sprintf(user_dir, "user_%d", user_id);
 	std::string source_path = "/data/misc/keystore/";
 	source_path += user_dir;
+	std::string handle_sub = handle_str;
+	while (handle_sub.substr(0,1) == "0") {
+		std::string temp = handle_sub.substr(1);
+		handle_sub = temp;
+	}
+	mKey_Prefix = "";
 
 	mkdir("/tmp/misc", 0755);
 	mkdir("/tmp/misc/keystore", 0755);
@@ -475,6 +492,7 @@ bool Find_Keystore_Alias_SubID_And_Prep_Files(const userid_t user_id, std::strin
 	struct dirent* de = 0;
 	size_t prefix_len = strlen(SYNTHETIC_PASSWORD_KEY_PREFIX);
 	bool found_subid = false;
+	bool has_pkey = false; // PKEY has priority over SKEY
 
 	while ((de = readdir(dir)) != 0) {
 		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
@@ -483,14 +501,25 @@ bool Find_Keystore_Alias_SubID_And_Prep_Files(const userid_t user_id, std::strin
 			size_t len = strlen(de->d_name);
 			if (len <= prefix_len)
 				continue;
-			if (!strstr(de->d_name, SYNTHETIC_PASSWORD_KEY_PREFIX))
+			if (strstr(de->d_name, SYNTHETIC_PASSWORD_KEY_PREFIX) && !has_pkey)
+				mKey_Prefix = SYNTHETIC_PASSWORD_KEY_PREFIX;
+			else if (strstr(de->d_name, USR_PRIVATE_KEY_PREFIX)) {
+				mKey_Prefix = USR_PRIVATE_KEY_PREFIX;
+				has_pkey = true;
+			} else
 				continue;
-			std::string file = de->d_name;
-			std::size_t found = file.find_last_of("_");
-			if (found != std::string::npos) {
-				keystoreid = file.substr(found + 1);
-				printf("keystoreid: '%s'\n", keystoreid.c_str());
+			if (strstr(de->d_name, handle_sub.c_str())) {
+				keystoreid = handle_sub;
+				printf("keystoreid matched handle_sub: '%s'\n", keystoreid.c_str());
 				found_subid = true;
+			} else {
+				std::string file = de->d_name;
+				std::size_t found = file.find_last_of("_");
+				if (found != std::string::npos) {
+					keystoreid = file.substr(found + 1);
+					printf("possible keystoreid: '%s'\n", keystoreid.c_str());
+					//found_subid = true; // we'll keep going in hopes that we find a pkey or a match to the handle_sub
+				}
 			}
 		}
 		std::string src = source_path;
@@ -508,6 +537,8 @@ bool Find_Keystore_Alias_SubID_And_Prep_Files(const userid_t user_id, std::strin
 		dstof.close();
 	}
 	closedir(dir);
+	if (!found_subid && !mKey_Prefix.empty() && !keystoreid.empty())
+		found_subid = true;
 	return found_subid;
 }
 
@@ -518,14 +549,18 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 	std::string disk_decryption_secret_key = "";
 
 	std::string keystore_alias_subid;
-	if (!Find_Keystore_Alias_SubID_And_Prep_Files(user_id, keystore_alias_subid)) {
+	if (!Find_Keystore_Alias_SubID_And_Prep_Files(user_id, keystore_alias_subid, handle_str)) {
 		printf("failed to scan keystore alias subid and prep keystore files\n");
 		return disk_decryption_secret_key;
 	}
 
 	// First get the keystore service
     sp<IBinder> binder = getKeystoreBinderRetry();
+#ifdef USE_KEYSTORAGE_4
+	sp<security::IKeystoreService> service = interface_cast<security::IKeystoreService>(binder);
+#else
 	sp<IKeystoreService> service = interface_cast<IKeystoreService>(binder);
+#endif
 	if (service == NULL) {
 		printf("error: could not connect to keystore service\n");
 		return disk_decryption_secret_key;
@@ -682,13 +717,27 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 		//keymasterArgs.addUnsignedInt(KeymasterDefs.KM_TAG_MAC_LENGTH, mTagLengthBits);
 		::keystore::hidl_vec<uint8_t> entropy; // No entropy is needed for decrypt
 		entropy.resize(0);
-		std::string keystore_alias = SYNTHETIC_PASSWORD_KEY_PREFIX;
+		std::string keystore_alias = mKey_Prefix;
 		keystore_alias += keystore_alias_subid;
 		String16 keystore_alias16(keystore_alias.c_str());
+#ifdef USE_KEYSTORAGE_4
+		android::hardware::keymaster::V4_0::KeyPurpose purpose = android::hardware::keymaster::V4_0::KeyPurpose::DECRYPT;
+		security::keymaster::OperationResult begin_result;
+		security::keymaster::OperationResult update_result;
+		security::keymaster::OperationResult finish_result;
+		::android::security::keymaster::KeymasterArguments empty_params;
+		// These parameters are mostly driven by the cipher.init call https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordCrypto.java#63
+		service->begin(binder, keystore_alias16, (int32_t)purpose, true, android::security::keymaster::KeymasterArguments(begin_params.hidl_data()), entropy, -1, &begin_result);
+#else
 		::keystore::KeyPurpose purpose = ::keystore::KeyPurpose::DECRYPT;
 		OperationResult begin_result;
+		OperationResult update_result;
+		OperationResult finish_result;
+		::keystore::hidl_vec<::keystore::KeyParameter> empty_params;
+		empty_params.resize(0);
 		// These parameters are mostly driven by the cipher.init call https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordCrypto.java#63
 		service->begin(binder, keystore_alias16, purpose, true, begin_params.hidl_data(), entropy, -1, &begin_result);
+#endif
 		ret = begin_result.resultCode;
 		if (ret != 1 /*android::keystore::ResponseCode::NO_ERROR*/) {
 			printf("keystore begin error: (%d)\n", /*responses[ret],*/ ret);
@@ -696,9 +745,6 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 		} else {
 			//printf("keystore begin operation successful\n");
 		}
-		::keystore::hidl_vec<::keystore::KeyParameter> empty_params;
-		empty_params.resize(0);
-		OperationResult update_result;
 		// The cipher.doFinal call triggers an update to the keystore followed by a finish https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordCrypto.java#64
 		// See also https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/keystore/java/android/security/keystore/KeyStoreCryptoOperationChunkedStreamer.java#208
 		service->update(begin_result.token, empty_params, intermediate_key, &update_result);
@@ -716,7 +762,6 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 		disk_decryption_secret_key = PersonalizedHash(PERSONALIZATION_FBE_KEY, (const char*)&update_result.data[0], update_result.data.size());
 		//printf("disk_decryption_secret_key: '%s'\n", disk_decryption_secret_key.c_str());
 		::keystore::hidl_vec<uint8_t> signature;
-		OperationResult finish_result;
 		service->finish(begin_result.token, empty_params, signature, entropy, &finish_result);
 		ret = finish_result.resultCode;
 		if (ret != 1 /*android::keystore::ResponseCode::NO_ERROR*/) {
@@ -785,13 +830,27 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 		begin_params.Authorization(::keystore::TAG_MAC_LENGTH, maclen);
 		::keystore::hidl_vec<uint8_t> entropy; // No entropy is needed for decrypt
 		entropy.resize(0);
-		std::string keystore_alias = SYNTHETIC_PASSWORD_KEY_PREFIX;
+		std::string keystore_alias = mKey_Prefix;
 		keystore_alias += keystore_alias_subid;
 		String16 keystore_alias16(keystore_alias.c_str());
+#ifdef USE_KEYSTORAGE_4
+		android::hardware::keymaster::V4_0::KeyPurpose purpose = android::hardware::keymaster::V4_0::KeyPurpose::DECRYPT;
+		security::keymaster::OperationResult begin_result;
+		security::keymaster::OperationResult update_result;
+		security::keymaster::OperationResult finish_result;
+		::android::security::keymaster::KeymasterArguments empty_params;
+		// These parameters are mostly driven by the cipher.init call https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordCrypto.java#63
+		service->begin(binder, keystore_alias16, (int32_t)purpose, true, android::security::keymaster::KeymasterArguments(begin_params.hidl_data()), entropy, -1, &begin_result);
+#else
 		::keystore::KeyPurpose purpose = ::keystore::KeyPurpose::DECRYPT;
 		OperationResult begin_result;
+		OperationResult update_result;
+		OperationResult finish_result;
+		::keystore::hidl_vec<::keystore::KeyParameter> empty_params;
+		empty_params.resize(0);
 		// These parameters are mostly driven by the cipher.init call https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordCrypto.java#63
 		service->begin(binder, keystore_alias16, purpose, true, begin_params.hidl_data(), entropy, -1, &begin_result);
+#endif
 		ret = begin_result.resultCode;
 		if (ret != 1 /*android::keystore::ResponseCode::NO_ERROR*/) {
 			printf("keystore begin error: (%d)\n", /*responses[ret],*/ ret);
@@ -799,9 +858,6 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 		} /*else {
 			printf("keystore begin operation successful\n");
 		}*/
-		::keystore::hidl_vec<::keystore::KeyParameter> empty_params;
-		empty_params.resize(0);
-		OperationResult update_result;
 		// The cipher.doFinal call triggers an update to the keystore followed by a finish https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordCrypto.java#64
 		// See also https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/keystore/java/android/security/keystore/KeyStoreCryptoOperationChunkedStreamer.java#208
 		service->update(begin_result.token, empty_params, cipher_text_hidlvec, &update_result);
@@ -824,7 +880,6 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 		memcpy(keystore_result, &update_result.data[0], update_result.data.size());
 		//printf("keystore_result data: "); output_hex(keystore_result, keystore_result_size); printf("\n");
 		::keystore::hidl_vec<uint8_t> signature;
-		OperationResult finish_result;
 		service->finish(begin_result.token, empty_params, signature, entropy, &finish_result);
 		ret = finish_result.resultCode;
 		if (ret != 1 /*android::keystore::ResponseCode::NO_ERROR*/) {
@@ -1103,7 +1158,11 @@ bool Decrypt_User_Synth_Pass(const userid_t user_id, const std::string& Password
 		printf("e4crypt_unlock_user_key returned fail\n");
 		return Free_Return(retval, weaver_key, &pwd);
 	}
+#ifdef USE_KEYSTORAGE_4
+	if (!e4crypt_prepare_user_storage("", user_id, 0, flags)) {
+#else
 	if (!e4crypt_prepare_user_storage(nullptr, user_id, 0, flags)) {
+#endif
 		printf("failed to e4crypt_prepare_user_storage\n");
 		return Free_Return(retval, weaver_key, &pwd);
 	}
@@ -1189,7 +1248,11 @@ bool Decrypt_User(const userid_t user_id, const std::string& Password) {
 			printf("e4crypt_unlock_user_key returned fail\n");
 			return false;
 		}
+#ifdef USE_KEYSTORAGE_4
+		if (!e4crypt_prepare_user_storage("", user_id, 0, flags)) {
+#else
 		if (!e4crypt_prepare_user_storage(nullptr, user_id, 0, flags)) {
+#endif
 			printf("failed to e4crypt_prepare_user_storage\n");
 			return false;
 		}

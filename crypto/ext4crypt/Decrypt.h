@@ -26,6 +26,10 @@ __BEGIN_DECLS
 // NOTE: keep in sync with StorageManager
 static constexpr int FLAG_STORAGE_DE = 1 << 0;
 static constexpr int FLAG_STORAGE_CE = 1 << 1;
+// For 9.0 Ext4CryptPie.cpp
+static constexpr int STORAGE_FLAG_DE = 1 << 0;
+static constexpr int STORAGE_FLAG_CE = 1 << 1;
+
 
 int Get_Password_Type(const userid_t user_id, std::string& filename);
 bool Decrypt_DE();
