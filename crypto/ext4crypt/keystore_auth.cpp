@@ -26,14 +26,20 @@
 #include <stdio.h>
 #include <string>
 
+#ifdef USE_SECURITY_NAMESPACE
+#include <android/security/IKeystoreService.h>
+#else
 #include <keystore/IKeystoreService.h>
+#include <keystore/authorization_set.h>
+#endif
 #include <binder/IPCThreadState.h>
 #include <binder/IServiceManager.h>
 
 #include <keystore/keystore.h>
-#include <keystore/authorization_set.h>
 
+#ifndef LOG_TAG
 #define LOG_TAG "keystore_auth"
+#endif
 
 using namespace android;
 
@@ -49,7 +55,7 @@ void create_error_file() {
 	unlink("/auth_token");
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 	unlink("/auth_error");
 	FILE* auth_file = fopen("/auth_token", "rb");
 	if (auth_file == NULL) {
@@ -68,15 +74,26 @@ int main(int argc, char *argv[]) {
 	// First get the keystore service
 	sp<IServiceManager> sm = defaultServiceManager();
 	sp<IBinder> binder = sm->getService(String16("android.security.keystore"));
+#ifdef USE_SECURITY_NAMESPACE
+	sp<security::IKeystoreService> service = interface_cast<security::IKeystoreService>(binder);
+#else
 	sp<IKeystoreService> service = interface_cast<IKeystoreService>(binder);
+#endif
 	if (service == NULL) {
 		printf("error: could not connect to keystore service\n");
 		ALOGE("error: could not connect to keystore service\n");
 		create_error_file();
 		return -2;
 	}
+#ifdef USE_SECURITY_NAMESPACE
+	std::vector<uint8_t> auth_token_vector(&auth_token[0], (&auth_token[0]) + size);
+	int result = 0;
+	auto binder_result = service->addAuthToken(auth_token_vector, &result);
+	if (!binder_result.isOk() || !keystore::KeyStoreServiceReturnCode(result).isOk()) {
+#else
 	::keystore::KeyStoreServiceReturnCode auth_result = service->addAuthToken(auth_token, size);
 	if (!auth_result.isOk()) {
+#endif
 		// The keystore checks the uid of the calling process and will return a permission denied on this operation for user 0
 		printf("keystore error adding auth token\n");
 		ALOGE("keystore error adding auth token\n");
