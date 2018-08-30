@@ -14,6 +14,13 @@ else
     LOCAL_SHARED_LIBRARIES += libc++
 endif
 
+COMMON_CFLAGS = \
+    -Wno-error \
+    -Wno-format \
+    -Wno-unused-variable \
+    -Wno-unused-parameter \
+    -Wno-unused-private-field
+
 LOCAL_SRC_FILES = \
     btree.cpp \
     MtpDataPacket.cpp \
@@ -44,6 +51,8 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
     LOCAL_CFLAGS += -DHAS_USBHOST_TIMEOUT
 endif
 
+LOCAL_CFLAGS += $(COMMON_CFLAGS)
+
 include $(BUILD_SHARED_LIBRARY)
 
 # Build twrpmtp binary / executable
@@ -53,6 +62,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := twrpmtp
 LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS = -D_FILE_OFFSET_BITS=64 -DMTP_DEVICE -DMTP_HOST -DTWRPMTP
+LOCAL_CFLAGS += $(COMMON_CFLAGS)
 LOCAL_C_INCLUDES += $(LOCAL_PATH) bionic frameworks/base/include system/core/include bionic/libc/private/
 LOCAL_SRC_FILES = \
     btree.cpp \
