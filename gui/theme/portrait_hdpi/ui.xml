@@ -409,7 +409,7 @@
 			<text color="%text_color%">
 				<font resource="font_m"/>
 				<placement x="900" y="%row18_y%"/>
-				<text>B v1.2</text>
+				<text>%br_actual_build%</text>
 			</text>	
 			
 			<text color="%text_color%">
