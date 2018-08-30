@@ -171,7 +171,6 @@ int main(int argc, char **argv) {
   	gui_msg("batik_msg2=[BATIK]: Welcome! ^_^");
   	gui_msg(Msg("batik_msg3=[VERSION]: '{1}'") (TW_VERSION_STR));
   	gui_msg(Msg("batik_msg4=[BUILD]: {1}") (BR_BUILD));
-	gui_msg(Msg("batik_msg5=[MAINTAINER]: {1}") (BR_MAINTAINER));
   	gui_print("**************************");
 
 
