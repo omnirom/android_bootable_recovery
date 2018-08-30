@@ -743,9 +743,11 @@
 		<string name="use_aromafm">Use Aroma File Manager</string>
 		
 		<!-- Welcome -->
+		<string name="batik_msg1">**************************</string>
 		<string name="batik_msg2">[BATIK]: Welcome!</string>
 		<string name="batik_msg3">[VERSION]: {1}</string>
 		<string name="batik_msg4">[BUILD]: {1}</string>
+		<string name="batik_msg5">**************************</string>
 		
 	</resources>
 </language>
