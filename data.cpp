@@ -577,7 +577,6 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue("false", "0");
 
 	mConst.SetValue(TW_VERSION_VAR, TW_VERSION_STR);
-	mConst.SetValue(BR_MAINTAINER_STR, BR_MAINTAINER);
 	mConst.SetValue(BR_ACTUAL_BUILD_VAR, BR_BUILD);
 	mPersist.SetValue("tw_button_vibrate", "80");
 	mPersist.SetValue("tw_keyboard_vibrate", "40");
