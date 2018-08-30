@@ -23,6 +23,7 @@
 #define BR_BUILD                "B 1.2"
 #define BR_DEVICE               BR_DEVICE_MODEL
 #define BR_MAINTAINER_STR       "br_maintainer"
+#define BR_ACTUAL_BUILD_VAR     "br_actual_build"
 
 
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
