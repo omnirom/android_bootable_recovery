@@ -31,10 +31,7 @@
 #include <sys/param.h>
 #include <fcntl.h>
 
-#ifdef TW_INCLUDE_CRYPTO
-	#include "cutils/properties.h"
-#endif
-
+#include "cutils/properties.h"
 #include "libblkid/include/blkid.h"
 #include "variables.h"
 #include "twcommon.h"
