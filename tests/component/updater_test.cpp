@@ -41,6 +41,7 @@
 #include <ziparchive/zip_archive.h>
 #include <ziparchive/zip_writer.h>
 
+#include "applypatch/applypatch.h"
 #include "common/test_constants.h"
 #include "edify/expr.h"
 #include "otautil/error_code.h"
@@ -214,55 +215,47 @@ TEST_F(UpdaterTest, getprop) {
     expect(nullptr, "getprop(\"arg1\", \"arg2\")", kArgsParsingFailure);
 }
 
-TEST_F(UpdaterTest, apply_patch_check) {
-  // Zero-argument is not valid.
-  expect(nullptr, "apply_patch_check()", kArgsParsingFailure);
+TEST_F(UpdaterTest, patch_partition_check) {
+  // Zero argument is not valid.
+  expect(nullptr, "patch_partition_check()", kArgsParsingFailure);
 
-  // File not found.
-  expect("", "apply_patch_check(\"/doesntexist\")", kNoCause);
+  std::string source_file = from_testdata_base("boot.img");
+  std::string source_content;
+  ASSERT_TRUE(android::base::ReadFileToString(source_file, &source_content));
+  size_t source_size = source_content.size();
+  std::string source_hash = get_sha1(source_content);
+  Partition source(source_file, source_size, source_hash);
 
-  std::string src_file = from_testdata_base("boot.img");
-  std::string src_content;
-  ASSERT_TRUE(android::base::ReadFileToString(src_file, &src_content));
-  size_t src_size = src_content.size();
-  std::string src_hash = get_sha1(src_content);
+  std::string target_file = from_testdata_base("recovery.img");
+  std::string target_content;
+  ASSERT_TRUE(android::base::ReadFileToString(target_file, &target_content));
+  size_t target_size = target_content.size();
+  std::string target_hash = get_sha1(target_content);
+  Partition target(target_file, target_size, target_hash);
 
-  // One-argument with EMMC:file:size:sha1 should pass the check.
-  std::string filename = android::base::Join(
-      std::vector<std::string>{ "EMMC", src_file, std::to_string(src_size), src_hash }, ":");
-  std::string cmd = "apply_patch_check(\"" + filename + "\")";
+  // One argument is not valid.
+  expect(nullptr, "patch_partition_check(\"" + source.ToString() + "\")", kArgsParsingFailure);
+  expect(nullptr, "patch_partition_check(\"" + target.ToString() + "\")", kArgsParsingFailure);
+
+  // Both of the source and target have the desired checksum.
+  std::string cmd =
+      "patch_partition_check(\"" + source.ToString() + "\", \"" + target.ToString() + "\")";
   expect("t", cmd, kNoCause);
 
-  // EMMC:file:(size-1):sha1:(size+1):sha1 should fail the check.
-  std::string filename_bad = android::base::Join(
-      std::vector<std::string>{ "EMMC", src_file, std::to_string(src_size - 1), src_hash,
-                                std::to_string(src_size + 1), src_hash },
-      ":");
-  cmd = "apply_patch_check(\"" + filename_bad + "\")";
+  // Only source partition has the desired checksum.
+  Partition bad_target(target_file, target_size - 1, target_hash);
+  cmd = "patch_partition_check(\"" + source.ToString() + "\", \"" + bad_target.ToString() + "\")";
+  expect("t", cmd, kNoCause);
+
+  // Only target partition has the desired checksum.
+  Partition bad_source(source_file, source_size + 1, source_hash);
+  cmd = "patch_partition_check(\"" + bad_source.ToString() + "\", \"" + target.ToString() + "\")";
+  expect("t", cmd, kNoCause);
+
+  // Neither of the source or target has the desired checksum.
+  cmd =
+      "patch_partition_check(\"" + bad_source.ToString() + "\", \"" + bad_target.ToString() + "\")";
   expect("", cmd, kNoCause);
-
-  // EMMC:file:(size-1):sha1:size:sha1:(size+1):sha1 should pass the check.
-  filename_bad =
-      android::base::Join(std::vector<std::string>{ "EMMC", src_file, std::to_string(src_size - 1),
-                                                    src_hash, std::to_string(src_size), src_hash,
-                                                    std::to_string(src_size + 1), src_hash },
-                          ":");
-  cmd = "apply_patch_check(\"" + filename_bad + "\")";
-  expect("t", cmd, kNoCause);
-
-  // Multiple arguments.
-  // As long as it successfully loads the partition specified in filename, it won't check against
-  // any given SHAs.
-  cmd = "apply_patch_check(\"" + filename + "\", \"wrong_sha1\", \"wrong_sha2\")";
-  expect("t", cmd, kNoCause);
-
-  cmd = "apply_patch_check(\"" + filename + "\", \"wrong_sha1\", \"" + src_hash +
-        "\", \"wrong_sha2\")";
-  expect("t", cmd, kNoCause);
-
-  cmd = "apply_patch_check(\"" + filename_bad + "\", \"wrong_sha1\", \"" + src_hash +
-        "\", \"wrong_sha2\")";
-  expect("t", cmd, kNoCause);
 }
 
 TEST_F(UpdaterTest, file_getprop) {
