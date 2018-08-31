@@ -49,21 +49,21 @@ using namespace std::string_literals;
 static bool GenerateTarget(const Partition& target, const FileContents& source_file,
                            const Value& patch, const Value* bonus_data);
 
-int LoadFileContents(const std::string& filename, FileContents* file) {
+bool LoadFileContents(const std::string& filename, FileContents* file) {
   // No longer allow loading contents from eMMC partitions.
   if (android::base::StartsWith(filename, "EMMC:")) {
-    return -1;
+    return false;
   }
 
   std::string data;
   if (!android::base::ReadFileToString(filename, &data)) {
     PLOG(ERROR) << "Failed to read \"" << filename << "\"";
-    return -1;
+    return false;
   }
 
   file->data = std::vector<unsigned char>(data.begin(), data.end());
   SHA1(file->data.data(), file->data.size(), file->sha1);
-  return 0;
+  return true;
 }
 
 // Reads the contents of a Partition to the given FileContents buffer.
@@ -97,7 +97,7 @@ static bool ReadPartitionToBuffer(const Partition& partition, FileContents* out,
     return false;
   }
 
-  if (LoadFileContents(Paths::Get().cache_temp_source(), out) == 0 &&
+  if (LoadFileContents(Paths::Get().cache_temp_source(), out) &&
       memcmp(out->sha1, expected_sha1, SHA_DIGEST_LENGTH) == 0) {
     return true;
   }
@@ -106,30 +106,30 @@ static bool ReadPartitionToBuffer(const Partition& partition, FileContents* out,
   return false;
 }
 
-int SaveFileContents(const std::string& filename, const FileContents* file) {
+bool SaveFileContents(const std::string& filename, const FileContents* file) {
   android::base::unique_fd fd(
       open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
   if (fd == -1) {
     PLOG(ERROR) << "Failed to open \"" << filename << "\" for write";
-    return -1;
+    return false;
   }
 
   if (!android::base::WriteFully(fd, file->data.data(), file->data.size())) {
     PLOG(ERROR) << "Failed to write " << file->data.size() << " bytes of data to " << filename;
-    return -1;
+    return false;
   }
 
   if (fsync(fd) != 0) {
     PLOG(ERROR) << "Failed to fsync \"" << filename << "\"";
-    return -1;
+    return false;
   }
 
   if (close(fd.release()) != 0) {
     PLOG(ERROR) << "Failed to close \"" << filename << "\"";
-    return -1;
+    return false;
   }
 
-  return 0;
+  return true;
 }
 
 // Writes a memory buffer to 'target' Partition.
@@ -300,7 +300,7 @@ bool FlashPartition(const Partition& partition, const std::string& source_filena
   }
 
   FileContents source_file;
-  if (LoadFileContents(source_filename, &source_file) != 0) {
+  if (!LoadFileContents(source_filename, &source_file)) {
     LOG(ERROR) << "Failed to load source file";
     return false;
   }
@@ -355,7 +355,7 @@ static bool GenerateTarget(const Partition& target, const FileContents& source_f
     LOG(ERROR) << "Not enough free space on /cache";
     return false;
   }
-  if (SaveFileContents(Paths::Get().cache_temp_source(), &source_file) < 0) {
+  if (!SaveFileContents(Paths::Get().cache_temp_source(), &source_file)) {
     LOG(ERROR) << "Failed to back up source file";
     return false;
   }
