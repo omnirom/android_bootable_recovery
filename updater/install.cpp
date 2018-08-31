@@ -196,94 +196,82 @@ Value* PackageExtractFileFn(const char* name, State* state,
   }
 }
 
-// apply_patch(src_file, tgt_file, tgt_sha1, tgt_size, patch1_sha1, patch1_blob, [...])
-//   Applies a binary patch to the src_file to produce the tgt_file. If the desired target is the
-//   same as the source, pass "-" for tgt_file. tgt_sha1 and tgt_size are the expected final SHA1
-//   hash and size of the target file. The remaining arguments must come in pairs: a SHA1 hash (a
-//   40-character hex string) and a blob. The blob is the patch to be applied when the source
-//   file's current contents have the given SHA1.
+// patch_partition_check(target_partition, source_partition)
+//   Checks if the target and source partitions have the desired checksums to be patched. It returns
+//   directly, if the target partition already has the expected checksum. Otherwise it in turn
+//   checks the integrity of the source partition and the backup file on /cache.
 //
-//   The patching is done in a safe manner that guarantees the target file either has the desired
-//   SHA1 hash and size, or it is untouched -- it will not be left in an unrecoverable intermediate
-//   state. If the process is interrupted during patching, the target file may be in an intermediate
-//   state; a copy exists in the cache partition so restarting the update can successfully update
-//   the file.
-Value* ApplyPatchFn(const char* name, State* state,
-                    const std::vector<std::unique_ptr<Expr>>& argv) {
-  if (argv.size() < 6 || (argv.size() % 2) == 1) {
+// For example, patch_partition_check(
+//     "EMMC:/dev/block/boot:12342568:8aaacf187a6929d0e9c3e9e46ea7ff495b43424d",
+//     "EMMC:/dev/block/boot:12363048:06b0b16299dcefc94900efed01e0763ff644ffa4")
+Value* PatchPartitionCheckFn(const char* name, State* state,
+                             const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 2) {
     return ErrorAbort(state, kArgsParsingFailure,
-                      "%s(): expected at least 6 args and an "
-                      "even number, got %zu",
-                      name, argv.size());
+                      "%s(): Invalid number of args (expected 2, got %zu)", name, argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argv, &args, 0, 4)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-  }
-  const std::string& source_filename = args[0];
-  const std::string& target_filename = args[1];
-  const std::string& target_sha1 = args[2];
-  const std::string& target_size_str = args[3];
-
-  size_t target_size;
-  if (!android::base::ParseUint(target_size_str.c_str(), &target_size)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count", name,
-                      target_size_str.c_str());
+  if (!ReadArgs(state, argv, &args, 0, 2)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
 
-  int patchcount = (argv.size() - 4) / 2;
-  std::vector<std::unique_ptr<Value>> arg_values;
-  if (!ReadValueArgs(state, argv, &arg_values, 4, argv.size() - 4)) {
-    return nullptr;
+  std::string err;
+  auto target = Partition::Parse(args[0], &err);
+  if (!target) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse target \"%s\": %s", name,
+                      args[0].c_str(), err.c_str());
   }
 
-  for (int i = 0; i < patchcount; ++i) {
-    if (arg_values[i * 2]->type != Value::Type::STRING) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s(): sha-1 #%d is not string", name, i * 2);
-    }
-    if (arg_values[i * 2 + 1]->type != Value::Type::BLOB) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s(): patch #%d is not blob", name, i * 2 + 1);
-    }
+  auto source = Partition::Parse(args[1], &err);
+  if (!source) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse source \"%s\": %s", name,
+                      args[1].c_str(), err.c_str());
   }
 
-  std::vector<std::string> patch_sha_str;
-  std::vector<std::unique_ptr<Value>> patches;
-  for (int i = 0; i < patchcount; ++i) {
-    patch_sha_str.push_back(arg_values[i * 2]->data);
-    patches.push_back(std::move(arg_values[i * 2 + 1]));
-  }
-
-  int result = applypatch(source_filename.c_str(), target_filename.c_str(), target_sha1.c_str(),
-                          target_size, patch_sha_str, patches, nullptr);
-
-  return StringValue(result == 0 ? "t" : "");
+  bool result = PatchPartitionCheck(target, source);
+  return StringValue(result ? "t" : "");
 }
 
-// apply_patch_check(filename, [sha1, ...])
-//   Returns true if the contents of filename or the temporary copy in the cache partition (if
-//   present) have a SHA-1 checksum equal to one of the given sha1 values. sha1 values are
-//   specified as 40 hex digits.
-Value* ApplyPatchCheckFn(const char* name, State* state,
-                         const std::vector<std::unique_ptr<Expr>>& argv) {
-  if (argv.size() < 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s(): expected at least 1 arg, got %zu", name,
-                      argv.size());
+// patch_partition(target, source, patch)
+//   Applies the given patch to the source partition, and writes the result to the target partition.
+//
+// For example, patch_partition(
+//     "EMMC:/dev/block/boot:12342568:8aaacf187a6929d0e9c3e9e46ea7ff495b43424d",
+//     "EMMC:/dev/block/boot:12363048:06b0b16299dcefc94900efed01e0763ff644ffa4",
+//     package_extract_file("boot.img.p"))
+Value* PatchPartitionFn(const char* name, State* state,
+                        const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 3) {
+    return ErrorAbort(state, kArgsParsingFailure,
+                      "%s(): Invalid number of args (expected 3, got %zu)", name, argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argv, &args, 0, 1)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  if (!ReadArgs(state, argv, &args, 0, 2)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
-  const std::string& filename = args[0];
 
-  std::vector<std::string> sha1s;
-  if (argv.size() > 1 && !ReadArgs(state, argv, &sha1s, 1, argv.size() - 1)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  std::string err;
+  auto target = Partition::Parse(args[0], &err);
+  if (!target) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse target \"%s\": %s", name,
+                      args[0].c_str(), err.c_str());
   }
-  int result = applypatch_check(filename.c_str(), sha1s);
 
-  return StringValue(result == 0 ? "t" : "");
+  auto source = Partition::Parse(args[1], &err);
+  if (!source) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse source \"%s\": %s", name,
+                      args[1].c_str(), err.c_str());
+  }
+
+  std::vector<std::unique_ptr<Value>> values;
+  if (!ReadValueArgs(state, argv, &values, 2, 1) || values[0]->type != Value::Type::BLOB) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Invalid patch arg", name);
+  }
+
+  bool result = PatchPartition(target, source, *values[0], nullptr);
+  return StringValue(result ? "t" : "");
 }
 
 // mount(fs_type, partition_type, location, mount_point)
@@ -956,9 +944,9 @@ void RegisterInstallFunctions() {
   RegisterFunction("getprop", GetPropFn);
   RegisterFunction("file_getprop", FileGetPropFn);
 
-  RegisterFunction("apply_patch", ApplyPatchFn);
-  RegisterFunction("apply_patch_check", ApplyPatchCheckFn);
   RegisterFunction("apply_patch_space", ApplyPatchSpaceFn);
+  RegisterFunction("patch_partition", PatchPartitionFn);
+  RegisterFunction("patch_partition_check", PatchPartitionCheckFn);
 
   RegisterFunction("wipe_block_device", WipeBlockDeviceFn);
 
