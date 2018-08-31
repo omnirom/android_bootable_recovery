@@ -26,55 +26,23 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/properties.h>
-#include <android-base/unique_fd.h>
 
 #include "common.h"
 #include "fuse_sideload.h"
 #include "install.h"
 #include "ui.h"
 
-static void set_usb_driver(bool enabled) {
-  // USB configfs doesn't use /s/c/a/a/enable.
-  if (android::base::GetBoolProperty("sys.usb.configfs", false)) {
-    return;
-  }
-
-  static constexpr const char* USB_DRIVER_CONTROL = "/sys/class/android_usb/android0/enable";
-  android::base::unique_fd fd(open(USB_DRIVER_CONTROL, O_WRONLY));
-  if (fd == -1) {
-    PLOG(ERROR) << "Failed to open driver control";
-    return;
-  }
-  // Not using android::base::WriteStringToFile since that will open with O_CREAT and give EPERM
-  // when USB_DRIVER_CONTROL doesn't exist. When it gives EPERM, we don't know whether that's due
-  // to non-existent USB_DRIVER_CONTROL or indeed a permission issue.
-  if (!android::base::WriteStringToFd(enabled ? "1" : "0", fd)) {
-    PLOG(ERROR) << "Failed to set driver control";
-  }
-}
-
-static void stop_adbd() {
-  ui->Print("Stopping adbd...\n");
-  android::base::SetProperty("ctl.stop", "adbd");
-  set_usb_driver(false);
-}
-
-static void maybe_restart_adbd() {
-  if (is_ro_debuggable()) {
-    ui->Print("Restarting adbd...\n");
-    set_usb_driver(true);
-    android::base::SetProperty("ctl.start", "adbd");
-  }
-}
-
 int apply_from_adb(bool* wipe_cache) {
   modified_flash = true;
-
-  stop_adbd();
-  set_usb_driver(true);
+  // Save the usb state to restore after the sideload operation.
+  std::string usb_state = android::base::GetProperty("sys.usb.state", "none");
+  // Clean up state and stop adbd.
+  if (usb_state != "none" && !SetUsbConfig("none")) {
+    LOG(ERROR) << "Failed to clear USB config";
+    return INSTALL_ERROR;
+  }
 
   ui->Print(
       "\n\nNow send the package you want to apply\n"
@@ -84,6 +52,11 @@ int apply_from_adb(bool* wipe_cache) {
   if ((child = fork()) == 0) {
     execl("/system/bin/recovery", "recovery", "--adbd", nullptr);
     _exit(EXIT_FAILURE);
+  }
+
+  if (!SetUsbConfig("sideload")) {
+    LOG(ERROR) << "Failed to set usb config to sideload";
+    return INSTALL_ERROR;
   }
 
   // How long (in seconds) we wait for the host to start sending us a package, before timing out.
@@ -136,8 +109,17 @@ int apply_from_adb(bool* wipe_cache) {
     }
   }
 
-  set_usb_driver(false);
-  maybe_restart_adbd();
+  // Clean up before switching to the older state, for example setting the state
+  // to none sets sys/class/android_usb/android0/enable to 0.
+  if (!SetUsbConfig("none")) {
+    LOG(ERROR) << "Failed to clear USB config";
+  }
+
+  if (usb_state != "none") {
+    if (!SetUsbConfig(usb_state)) {
+      LOG(ERROR) << "Failed to set USB config to " << usb_state;
+    }
+  }
 
   return result;
 }

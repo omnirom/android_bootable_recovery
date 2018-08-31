@@ -286,6 +286,12 @@ static bool erase_volume(const char* volume) {
   return (result == 0);
 }
 
+// Sets the usb config to 'state'
+bool SetUsbConfig(const std::string& state) {
+  android::base::SetProperty("sys.usb.config", state);
+  return android::base::WaitForProperty("sys.usb.state", state);
+}
+
 // Returns the selected filename, or an empty string.
 static std::string browse_directory(const std::string& path, Device* device) {
   ensure_path_mounted(path.c_str());
