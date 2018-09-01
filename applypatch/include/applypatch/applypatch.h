@@ -92,12 +92,11 @@ bool CheckPartition(const Partition& target);
 // function is idempotent. Returns the flashing result.
 bool FlashPartition(const Partition& target, const std::string& source_filename);
 
-// Reads a file into memory; stores the file contents and associated metadata in *file. Returns 0
-// on success, or -1 on error.
-int LoadFileContents(const std::string& filename, FileContents* file);
+// Reads a file into memory; stores the file contents and associated metadata in *file.
+bool LoadFileContents(const std::string& filename, FileContents* file);
 
-// Saves the given FileContents object to the given filename. Returns 0 on success, or -1 on error.
-int SaveFileContents(const std::string& filename, const FileContents* file);
+// Saves the given FileContents object to the given filename.
+bool SaveFileContents(const std::string& filename, const FileContents* file);
 
 // bspatch.cpp
 
