@@ -1023,6 +1023,7 @@ int GUIAction::flash(std::string arg)
 		string zip_filename = (slashpos == string::npos) ? zip_path : zip_path.substr(slashpos + 1);
 		operation_start("Flashing");
 		DataManager::SetValue("tw_filename", zip_path);
+		DataManager::SetValue("/sdcard/batik/tools1/lazyflasher.zip", zip_path);
 		DataManager::SetValue("tw_file", zip_filename);
 		DataManager::SetValue(TW_ZIP_INDEX, (i + 1));
 
