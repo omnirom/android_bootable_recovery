@@ -49,13 +49,13 @@ class ApplyPatchTest : public ::testing::Test {
   void SetUp() override {
     source_file = from_testdata_base("boot.img");
     FileContents boot_fc;
-    ASSERT_EQ(0, LoadFileContents(source_file, &boot_fc));
+    ASSERT_TRUE(LoadFileContents(source_file, &boot_fc));
     source_size = boot_fc.data.size();
     source_sha1 = print_sha1(boot_fc.sha1);
 
     target_file = from_testdata_base("recovery.img");
     FileContents recovery_fc;
-    ASSERT_EQ(0, LoadFileContents(target_file, &recovery_fc));
+    ASSERT_TRUE(LoadFileContents(target_file, &recovery_fc));
     target_size = recovery_fc.data.size();
     target_sha1 = print_sha1(recovery_fc.sha1);
 
@@ -135,11 +135,11 @@ TEST_F(ApplyPatchTest, PatchPartitionCheck_UseBackup_BothCorrupted) {
 
 TEST_F(ApplyPatchTest, PatchPartition) {
   FileContents patch_fc;
-  ASSERT_EQ(0, LoadFileContents(from_testdata_base("recovery-from-boot.p"), &patch_fc));
+  ASSERT_TRUE(LoadFileContents(from_testdata_base("recovery-from-boot.p"), &patch_fc));
   Value patch(Value::Type::BLOB, std::string(patch_fc.data.cbegin(), patch_fc.data.cend()));
 
   FileContents bonus_fc;
-  ASSERT_EQ(0, LoadFileContents(from_testdata_base("bonus.file"), &bonus_fc));
+  ASSERT_TRUE(LoadFileContents(from_testdata_base("bonus.file"), &bonus_fc));
   Value bonus(Value::Type::BLOB, std::string(bonus_fc.data.cbegin(), bonus_fc.data.cend()));
 
   ASSERT_TRUE(PatchPartition(target_partition, source_partition, patch, &bonus));
@@ -149,7 +149,7 @@ TEST_F(ApplyPatchTest, PatchPartition) {
 // everything).
 TEST_F(ApplyPatchTest, PatchPartitionWithoutBonusFile) {
   FileContents patch_fc;
-  ASSERT_EQ(0, LoadFileContents(from_testdata_base("recovery-from-boot-with-bonus.p"), &patch_fc));
+  ASSERT_TRUE(LoadFileContents(from_testdata_base("recovery-from-boot-with-bonus.p"), &patch_fc));
   Value patch(Value::Type::BLOB, std::string(patch_fc.data.cbegin(), patch_fc.data.cend()));
 
   ASSERT_TRUE(PatchPartition(target_partition, source_partition, patch, nullptr));
