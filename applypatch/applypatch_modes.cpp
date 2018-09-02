@@ -35,56 +35,48 @@
 #include "applypatch/applypatch.h"
 #include "edify/expr.h"
 
-static int CheckMode(const std::string& target) {
-  return applypatch_check(target, {});
+static int CheckMode(const std::string& target_emmc) {
+  std::string err;
+  auto target = Partition::Parse(target_emmc, &err);
+  if (!target) {
+    LOG(ERROR) << "Failed to parse target \"" << target_emmc << "\": " << err;
+    return 2;
+  }
+  return CheckPartition(target) ? 0 : 1;
 }
 
 static int FlashMode(const std::string& target_emmc, const std::string& source_file) {
-  std::vector<std::string> pieces = android::base::Split(target_emmc, ":");
-  if (pieces.size() != 4 || pieces[0] != "EMMC") {
+  std::string err;
+  auto target = Partition::Parse(target_emmc, &err);
+  if (!target) {
+    LOG(ERROR) << "Failed to parse target \"" << target_emmc << "\": " << err;
     return 2;
   }
-  size_t target_size;
-  if (!android::base::ParseUint(pieces[2], &target_size) || target_size == 0) {
-    LOG(ERROR) << "Failed to parse \"" << pieces[2] << "\" as byte count";
-    return 1;
-  }
-  return applypatch_flash(source_file.c_str(), target_emmc.c_str(), pieces[3].c_str(), target_size);
+  return FlashPartition(target, source_file) ? 0 : 1;
 }
 
 static int PatchMode(const std::string& target_emmc, const std::string& source_emmc,
                      const std::string& patch_file, const std::string& bonus_file) {
-  std::vector<std::string> target_pieces = android::base::Split(target_emmc, ":");
-  if (target_pieces.size() != 4 || target_pieces[0] != "EMMC") {
+  std::string err;
+  auto target = Partition::Parse(target_emmc, &err);
+  if (!target) {
+    LOG(ERROR) << "Failed to parse target \"" << target_emmc << "\": " << err;
     return 2;
   }
 
-  size_t target_size;
-  if (!android::base::ParseUint(target_pieces[2], &target_size) || target_size == 0) {
-    LOG(ERROR) << "Failed to parse \"" << target_pieces[2] << "\" as byte count";
-    return 1;
-  }
-
-  std::vector<std::string> source_pieces = android::base::Split(source_emmc, ":");
-  if (source_pieces.size() != 4 || source_pieces[0] != "EMMC") {
+  auto source = Partition::Parse(source_emmc, &err);
+  if (!source) {
+    LOG(ERROR) << "Failed to parse source \"" << source_emmc << "\": " << err;
     return 2;
   }
 
-  size_t source_size;
-  if (!android::base::ParseUint(source_pieces[2], &source_size) || source_size == 0) {
-    LOG(ERROR) << "Failed to parse \"" << source_pieces[2] << "\" as byte count";
-    return 1;
-  }
-
-  std::string contents;
-  if (!android::base::ReadFileToString(patch_file, &contents)) {
+  std::string patch_contents;
+  if (!android::base::ReadFileToString(patch_file, &patch_contents)) {
     PLOG(ERROR) << "Failed to read patch file \"" << patch_file << "\"";
     return 1;
   }
-  std::vector<std::unique_ptr<Value>> patches;
-  patches.push_back(std::make_unique<Value>(Value::Type::BLOB, std::move(contents)));
-  std::vector<std::string> sha1s{ source_pieces[3] };
 
+  Value patch(Value::Type::BLOB, std::move(patch_contents));
   std::unique_ptr<Value> bonus;
   if (!bonus_file.empty()) {
     std::string bonus_contents;
@@ -95,8 +87,7 @@ static int PatchMode(const std::string& target_emmc, const std::string& source_e
     bonus = std::make_unique<Value>(Value::Type::BLOB, std::move(bonus_contents));
   }
 
-  return applypatch(source_emmc.c_str(), target_emmc.c_str(), target_pieces[3].c_str(), target_size,
-                    sha1s, patches, bonus.get());
+  return PatchPartition(target, source, patch, bonus.get()) ? 0 : 1;
 }
 
 static void Usage() {
