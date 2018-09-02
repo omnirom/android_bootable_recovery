@@ -730,6 +730,9 @@
 		<string name="donation_text_4">"3112-01-019706-53-4" atas nama "Muhammad Rifa'i Aziz"</string>
 
 		<!-- New Included String2 -->
+		<string name="storage">Penyimpanan Internal</string>
+		<string name="sdcard1">Kartu SD</string>
+		<string name="usb-otg">USB OTG</string>
 		<string name="use_aromafm">Gunakan Aroma File Manager</string>
 		<string name="br_next">LANJUT</string>
 		<string name="br_prev">KEMBALI</string>
