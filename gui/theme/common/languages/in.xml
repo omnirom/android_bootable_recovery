@@ -678,8 +678,6 @@
 		<string name="partition_not_found">lokasi: {1} tidak ditemukan dalam daftar partisi</string>
 
 		<!--mod tools-->
-		<string name="tools_hdr">Tools</string>
-		<string name="tools">Tools</string>
 		<string name="SuperSU_btn">SuperSU</string>
 		<string name="SuperSU_text">SuperSU akan di pasang.</string>
 		<string name="SuperSU_confirm">Coba untuk memasang?</string>
@@ -687,27 +685,25 @@
 		<string name="Lazy_Flasher_text">Lazy Flasher akan di pasang.</string>
 		<string name="Lazy_Flasher_confirm">Coba untuk memasang?</string>
 		<string name="Unroot_SuperSU_btn">Unroot SuperSU</string>
-		<string name="Unroot_SuperSU_text">Unroot SuperSU will akan di pasang.</string>
-		<string name="Unroot_SuperSU_confirm">Coba untuk memasang?</string>
+		<string name="Unroot_SuperSU_text">SuperSU akan di unroot.</string>
+		<string name="Unroot_SuperSU_confirm">Yakin untuk di unroot?</string>
 		<string name="Magisk_btn">Magisk</string>
 		<string name="Magisk_text">Magisk akan di pasang.</string>
 		<string name="Magisk_confirm">Coba untuk memasang?</string>
 		<string name="Unroot_Magisk_btn">Unroot Magisk</string>
-		<string name="Unroot_Magisk_text">Unroot Magisk akan di pasang.</string>
-		<string name="Unroot_Magisk_confirm">Coba untuk memasang?</string>
+		<string name="Unroot_Magisk_text">Magisk akan di unroot.</string>
+		<string name="Unroot_Magisk_confirm">Yakin untuk di unroot?</string>
 		<string name="Reset_Password_btn">Reset Password</string>
-		<string name="Reset_Password_text">Reset Password akan di pasang.</string>
-		<string name="Reset_Password_confirm">Coba untuk memasang?</string>
+		<string name="Reset_Password_text">Password akan di reset.</string>
+		<string name="Reset_Password_confirm">Yakin untuk di reset?</string>
 		
 		<!--mod tools2-->
-		<string name="tools2_hdr">Tools2</string>
-		<string name="tools2">Tools2</string>
 		<string name="Enable_HAL3_btn">Enable HAL3</string>
-		<string name="Enable_HAL3_text">Enable HAL3 akan di pasang.</string>
-		<string name="Enable_HAL3_confirm">Coba untuk memasang?</string>
+		<string name="Enable_HAL3_text">Aktifkan HAL3.</string>
+		<string name="Enable_HAL3_confirm">Coba untuk mengaktifkan?</string>
 		<string name="App_Delete_btn">App Delete</string>
-		<string name="App_Delete_text">App Delete akan di pasang.</string>
-		<string name="App_Delete_confirm">Coba untuk memasang?</string>
+		<string name="App_Delete_text">Hapus aplikasi.</string>
+		<string name="App_Delete_confirm">Yakin ingin menghapus?</string>
 		<string name="Ramdisk_Cleaner_btn">Ramdisk Cleaner</string>
 		<string name="Ramdisk_Cleaner_text">Ramdisk Cleaner akan di pasang.</string>
 		<string name="Ramdisk_Cleaner_confirm">Coba untuk memasang?</string>
@@ -716,7 +712,7 @@
 		<string name="about_hdr">Tentang</string>
 		<string name="about">Tentang</string>	
 		<string name="changelog">Perubahan</string>
-		<string name="tools">Alat-alat</string>
+		<string name="tools">Alat</string>
 		<string name="overview">Ikhtisar</string>
 		<string name="info">Info</string>
 		<string name="infocredit">Info dan Kredit</string>	
@@ -732,5 +728,20 @@
 		<string name="donation_text_2">mendukung Batik Recovery agar bisa berkembang, silahkan</string>
 		<string name="donation_text_3">donasi melalui rekening BRI dengan nomor rekening</string>
 		<string name="donation_text_4">"3112-01-019706-53-4" atas nama "Muhammad Rifa'i Aziz"</string>
-	</resources>
+
+		<!-- New Included String2 -->
+		<string name="use_aromafm">Gunakan Aroma File Manager</string>
+		<string name="br_next">LANJUT</string>
+		<string name="br_prev">KEMBALI</string>
+		<string name="br">Batik Recovery</string>
+		<string name="console">Perintah</string>
+
+		<!-- Welcome -->
+		<string name="batik_msg1">**************************</string>
+		<string name="batik_msg2">[BATIK]: Selamat Datang!</string>
+		<string name="batik_msg3">[VERSI]: {1}</string>
+		<string name="batik_msg4">[BUILD]: {1}</string>
+		<string name="batik_msg5">**************************</string>
+
+</resources>
 </language>
