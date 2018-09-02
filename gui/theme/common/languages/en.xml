@@ -740,6 +740,9 @@
 		<string name="Ramdisk_Cleaner_confirm">Try to install it?</string>
 		
 		<!-- New Included String2 -->
+		<string name="storage">Internal Storage</string>
+		<string name="sdcard1">Micro SD</string>
+		<string name="usb-otg">USB OTG</string>
 		<string name="use_aromafm">Use Aroma File Manager</string>
 		<string name="br_next">NEXT</string>
 		<string name="br_prev">PREV</string>
