@@ -4974,6 +4974,8 @@
 				<listitem name="Add some icon style"/>
 				<listitem name="Update Magisk 17.1"/>
 				<listitem name="Add Jowo Language"/>
+				<listitem name="Full Backup / Restore Partition"/>
+				<listitem name="Further ensure TWRP is not replaced by stock recovery"/>
 		</listbox>
 		
 			<text style="text_l">
