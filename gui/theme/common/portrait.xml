@@ -47,6 +47,42 @@
 			<image resource="main_button"/>
 		</style>
 		
+		<style name="tab_overview">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_overview"/>
+		</style>
+		
+		<style name="tab_info">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_info"/>
+		</style>
+		
+		<style name="tab_credit">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_credit"/>
+		</style>
+		
+		<style name="tab_thanksto">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_thanksto"/>
+		</style>
+		
+		<style name="tab_changelog">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_changelog"/>
+		</style>
+		
+		<style name="tab_donation">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_donation"/>
+		</style>
+		
 		<style name="bn_install">
 			<highlight color="%highlight_color%"/>
 			<image resource="bn_install"/>
@@ -335,180 +371,228 @@
 		</page>
 
 		<page name="main2">
-			<template name="awal"/>
-
-			<button style="bn_install">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x1%" y="%row1_y%"/>
-				<actions>
-					<action function="queueclear"/>
-					<action function="set">tw_selectimage=0</action>
-					<action function="page">install</action>
-				</actions>
-			</button>
-
-			<button style="bn_wipe">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x2%" y="%row1_y%"/>
-				<action function="page">wipe</action>
-			</button>
-
-			<button style="bn_backup">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x3%" y="%row1_y%"/>
-				<action function="page">backup</action>
-			</button>
-
-			<button style="bn_restore">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x1%" y="%row5a_y%"/>
-				<action function="page">restore</action>
-			</button>
-
-			<button style="bn_mount">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x2%" y="%row5a_y%"/>
-				<action function="page">mount</action>
-			</button>
-
-			<button style="bn_setting">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x3%" y="%row5a_y%"/>
-				<action function="page">settings</action>
-			</button>
-
-			<button style="bn_advanced">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x1%" y="%row10_y%"/>
-				<action function="page">advanced</action>
-			</button>
-
-			<button style="bn_reboot">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x2%" y="%row10_y%"/>
-				<action function="overlay">reboot2</action>
-			</button>
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
 			
-			<button style="bn_about">
+			<text style="text_l">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%bn_x3%" y="%row10_y%"/>
-				<action function="page">about</action>
-			</button>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@overview=Overview}</text>
+			</text>
 			
-			<button style="text_tx">
+			<text style="text_s">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x1%" y="%row4_y%"/>
-				<text>{@install_btn=Install}</text>
-			</button>
+				<placement x="%center_x%" y="%row20a_y%" placement="5"/>
+				<text>{@overview_text_1=Batik Recovery is Recovery Project Developed by Batik Recovery}</text>
+			</text>
 			
-			<button style="text_tx">
+			<text style="text_s">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x2%" y="%row4_y%"/>
-				<text>{@wipe_btn=Wipe}</text>
-			</button>
+				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
+				<text>{@overview_text_2=Teamwork Form Indonesia. Batik Recovery base TWRP %tw_version%}</text>
+			</text>
 			
-			<button style="text_tx">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x3%" y="%row4_y%"/>
-				<text>{@backup_btn=backup}</text>
-			</button>
-			
-			<button style="text_tx">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x1%" y="%row8a_y%"/>
-				<text>{@restore_btn=Restore}</text>
-			</button>
-			
-			<button style="text_tx">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x2%" y="%row8a_y%"/>
-				<text>{@mount_btn=Mount}</text>
-			</button>
-			
-			<button style="text_tx">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x3%" y="%row8a_y%"/>
-				<text>{@settings_btn=Settings}</text>
-			</button>
-			
-			<button style="text_tx">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x1%" y="%row13_y%"/>
-				<text>{@advanced_btn=Advanced}</text>
-			</button>
-			
-			<button style="text_tx">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x2%" y="%row13_y%"/>
-				<text>{@reboot_btn=Reboot}</text>
-			</button>
-			
-			<button style="text_tx">
-				<condition var1="iconstyle" var2="1"/>
-				<placement x="%tx_x3%" y="%row13_y%"/>
-				<text>{@about=About}</text>
-			</button>
-			
-			<button style="main_button">
+			<fill color="%text_color%">
 				<condition var1="iconstyle" var2="0"/>
-				<placement x="%menu_x1%" y="%row1_y%"/>
-				<text>{@install_btn=Install}</text>
-				<actions>
-					<action function="queueclear"/>
-					<action function="set">tw_selectimage=0</action>
-					<action function="page">install</action>
-				</actions>
-			</button>
-
-			<button style="main_button">
-				<condition var1="iconstyle" var2="0"/>
-				<placement x="%menu_x2%" y="%row1_y%"/>
-				<text>{@wipe_btn=Wipe}</text>
-				<action function="page">wipe</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="iconstyle" var2="0"/>
-				<placement x="%menu_x1%" y="%row4a_y%"/>
-				<text>{@backup_btn=Backup}</text>
-				<action function="page">backup</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="iconstyle" var2="0"/>
-				<placement x="%menu_x2%" y="%row4a_y%"/>
-				<text>{@restore_btn=Restore}</text>
-				<action function="page">restore</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="iconstyle" var2="0"/>
-				<placement x="%menu_x1%" y="%row8_y%"/>
-				<text>{@mount_btn=Mount}</text>
-				<action function="page">mount</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="iconstyle" var2="0"/>
-				<placement x="%menu_x2%" y="%row8_y%"/>
-				<text>{@settings_btn=Settings}</text>
-				<action function="page">settings</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="iconstyle" var2="0"/>
-				<placement x="%menu_x1%" y="%row11a_y%"/>
-				<text>{@advanced_btn=Advanced}</text>
-				<action function="page">advanced2</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="iconstyle" var2="0"/>
-				<placement x="%menu_x2%" y="%row11a_y%"/>
-				<text>{@reboot_btn=Reboot}</text>
-				<action function="page">reboot</action>
-			</button>
+				<placement x="0" y="%row17a_y%" w="%screen_width%" h="%navbar_height1%"/>
+			</fill>
 			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@overview=Overview}</text>
+			</text>
+			
+			<text style="text_s">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%center_x%" y="%row20a_y%" placement="5"/>
+				<text>{@overview_text_1=Batik Recovery is Recovery Project Developed by Batik Recovery}</text>
+			</text>
+			
+			<text style="text_s">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
+				<text>{@overview_text_2=Teamwork Form Indonesia. Batik Recovery base TWRP %tw_version%}</text>
+			</text>
+			
+		</page>
+		
+		<page name="info">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@info=Info}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%menu_x1%" y="%row20a_y%"/>
+				<text>{@author=Author}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%info_x2%" y="%row20a_y%"/>
+				<text>:   ZHANtech™</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%menu_x1%" y="%row21a_y%"/>
+				<text>{@contact=Contact}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%info_x2%" y="%row21a_y%"/>
+				<text>:   @zhantech (Telegram)</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%menu_x1%" y="%row22a_y%"/>
+				<text>{@maintainer=Maintainer}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%info_x2%" y="%row22a_y%"/>
+				<text>:   ZHANtech™</text>
+			</text>
+		
+		</page>
+		
+		<page name="credit">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@credit=Credit}</text>
+			</text>
+			
+		<listbox style="about">
+			<placement x="%menu_x1%" y="%row20a_y%" w="950" h="180"/>
+				<listitem name="Github for source code"/>
+				<listitem name="Teamwin Recovery Project"/>
+				<listitem name="Dark Recovery"/>
+				<listitem name="Pitchblack Recovery Project"/>
+				<listitem name="Orangefox Recovery Project"/>
+				<listitem name="SuperSu by Chainfire"/>
+				<listitem name="Magisk for topjohnwu"/>
+				<listitem name="Lazyflasher by jcadduono"/>
+				<listitem name="Cam2API Enabler(HAL3) by helmiau"/>
+				<listitem name="Password Remover by Magua"/>
+				<listitem name="Aroma File Manager by amarullz"/>
+				<listitem name="App Deleter by THE_pirate_predator"/>
+		</listbox>
+		
+		</page>
+		
+		<page name="thanksto">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@thanksto=Thanks To}</text>
+			</text>
+			
+		<listbox style="about">
+			<placement x="%menu_x1%" y="%row20a_y%" w="950" h="180"/>
+				<listitem name="Allah Ta'ala"/>
+				<listitem name="Rasulullah"/>
+				<listitem name="My Family"/>
+				<listitem name="Reza Adi"/>
+				<listitem name="Mr Yacha"/>
+				<listitem name="Muhajaya"/>
+				<listitem name="Vickry"/>
+				<listitem name="Ahmad-farid007"/>
+				<listitem name="Rivv"/>
+				<listitem name="Rizak"/>
+				<listitem name="#nTu21"/>
+				<listitem name="Costa Nostra"/>
+				<listitem name="ali_tea"/>
+				<listitem name="Helmi Amirudin"/>
+		</listbox>
+		
+		</page>
+		
+		<page name="changelog">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@changelog=Changelog}</text>
+			</text>
+			
+		<listbox style="about">
+			<placement x="%menu_x1%" y="%row20a_y%" w="950" h="180"/>
+				<listitem name="~ Alpha-01 ~"/>
+				<listitem name="Initial Build"/>
+				<listitem name=""/>
+				<listitem name="~ Alpha-02 ~"/>
+				<listitem name="Add Fitured"/>
+				<listitem name=""/>
+				<listitem name="~ B v1.1 ~"/>
+				<listitem name="Upstreamed base TWRP 3.2.3-0"/>
+				<listitem name="Update Batik Theme v1.1"/>
+				<listitem name="Update Magisk 16.71"/>
+				<listitem name="Add Indonesia, Sunda Language"/>
+				<listitem name=""/>
+				<listitem name="~ B 1.2 ~"/>
+				<listitem name="Overlay Reboot Menu"/>
+				<listitem name="Add some icon style"/>
+				<listitem name="Update Magisk 17.1"/>
+				<listitem name="Add Jowo Language"/>
+				<listitem name="Full Backup / Restore Partition"/>
+				<listitem name="Further ensure TWRP is not replaced by stock recovery"/>
+		</listbox>
+		
+		</page>
+		
+		<page name="donation">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@donation=Donation}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row20a_y%" placement="5"/>
+				<text>{@donation_text_1=If you feel satisfied with this Batik Recovery and want to}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
+				<text>{@donation_text_2=support Batik Recovery so that it can develop, please donate}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row22a_y%" placement="5"/>
+				<text>{@donation_text_3=as much as possible via a BRI account with an account number}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row23a_y%" placement="5"/>
+				<text>{@donation_text_4="3112-01-019706-53-4" on behalf of "Muhammad Rifa'i Aziz"}</text>
+			</text>
+		
 		</page>
 
 		<page name="install">
@@ -3898,20 +3982,30 @@
 		</page>
 
 		<page name="advanced">
-			<template name="awal"/>
+			<template name="page"/>
+			
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@advanced_hdr=Advanced}</text>
+			</text>
+			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Batik Recovery</text>
+			</text>	
 
 			<button style="bn_copylog">
-				<placement x="%bn_x1%" y="%row1_y%"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
 				<action function="page">copylog</action>
 			</button>
 
 			<button style="bn_fix">
-				<placement x="%bn_x2%" y="%row1_y%"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
 				<action function="page">fixcontexts</action>
 			</button>
 
 			<button style="bn_partition">
-				<placement x="%bn_x3%" y="%row1_y%"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
 				<actions>
 					<action function="set">partitionlisterror=0</action>
 					<action function="page">partsdcardsel</action>
@@ -3919,47 +4013,47 @@
 			</button>
 
 			<button style="bn_terminal">
-				<placement x="%bn_x1%" y="%row5a_y%"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
 				<action function="page">terminalcommand</action>
 			</button>
 
 			<button style="bn_tools">
-				<placement x="%bn_x2%" y="%row5a_y%"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
 				<action function="page">tools</action>
 			</button>
 
 			<button style="bn_adb">
-				<placement x="%bn_x3%" y="%row5a_y%"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
 				<action function="page">sideload</action>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x1%" y="%row4_y%"/>
+				<placement x="%tx_x1%" y="%row5_y%"/>
 				<text>{@copy_log_btn=Copy Log}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x2%" y="%row4_y%"/>
+				<placement x="%tx_x2%" y="%row5_y%"/>
 				<text>{@fix_context_btn=Fix Contexts}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x3%" y="%row4_y%"/>
+				<placement x="%tx_x3%" y="%row5_y%"/>
 				<text>{@part_sd_btn=Partition SD Card}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x1%" y="%row8a_y%"/>
+				<placement x="%tx_x1%" y="%row9a_y%"/>
 				<text>{@terminal_btn=Terminal}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x2%" y="%row8a_y%"/>
+				<placement x="%tx_x2%" y="%row9a_y%"/>
 				<text>{@tools=Tools}</text>
 			</button>
 			
 			<button style="text_tx">
-				<placement x="%tx_x3%" y="%row8a_y%"/>
+				<placement x="%tx_x3%" y="%row9a_y%"/>
 				<text>{@adb_sideload_btn=ADB Sideload}</text>
 			</button>
 
@@ -3976,11 +4070,16 @@
 		
 		<page name="advanced2">
 			<template name="page"/>
-
+			
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@advanced_hdr=Advanced}</text>
 			</text>
+			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Batik Recovery</text>
+			</text>	
 
 			<button style="main_button">
 				<placement x="%menu_x1%" y="%row2a_y%"/>
@@ -5088,7 +5187,6 @@
 
 		<page name="lock">
 			<background color="%background_color%"/>
-			<template name="batik"/>
 
 			<text color="%text_color%">
 				<font resource="font_b"/>
