@@ -747,6 +747,9 @@
 		<string name="Ramdisk_Cleaner_confirm">Arek Mersihan Ramdisk ieu teh?</string>
 		
 		<!-- New Included String2 -->
+		<string name="storage">Penyimpanan Internal</string>
+		<string name="sdcard1">Kartu SD</string>
+		<string name="usb-otg">USB OTG</string>
 		<string name="use_aromafm">Gunakan Aroma File Manager</string>
 		<string name="br_next">LANJUT</string>
 		<string name="br_prev">KEMBALI</string>
