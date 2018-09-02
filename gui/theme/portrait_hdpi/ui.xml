@@ -25,10 +25,7 @@
 		<font name="keylabel-small" filename="RobotoCondensed-Regular.ttf" size="46"/>
 		<font name="keylabel-longpress" filename="RobotoCondensed-Regular.ttf" size="32"/>
 
-		<image name="header" filename="header" retainaspect="1"/>
 		<image name="overlay" filename="overlay" retainaspect="1"/>
-		<image name="bg_batik" filename="bg_batik" retainaspect="1"/>
-		<image name="brand_name" filename="brand_name" retainaspect="1"/>
 		<image name="logo" filename="logo" retainaspect="1"/>
 		<image name="main_button" filename="main_button" retainaspect="1"/>
 		<image name="bn_install" filename="bn_install" retainaspect="1"/>
