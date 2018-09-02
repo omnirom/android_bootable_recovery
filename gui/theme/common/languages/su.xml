@@ -13,8 +13,8 @@
 		<!-- Partition display names -->
 		<string name="system">Sistem</string>
 		<string name="system_image">Image Sistem</string>
-		<string name="vendor">Vendor</string>
-		<string name="vendor_image">Image Vendor</string>
+		<string name="vendor">Cust/Vendor</string>
+		<string name="vendor_image">Cust/Vendor Image</string>
 		<string name="boot">Boot</string>
 		<string name="recovery">Pamulihan</string>
 		<string name="cache">Cache</string>
