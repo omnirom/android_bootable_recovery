@@ -746,5 +746,19 @@
 		<string name="Ramdisk_Cleaner_text">Arek Mersihan Ramdisk.</string>
 		<string name="Ramdisk_Cleaner_confirm">Arek Mersihan Ramdisk ieu teh?</string>
 		
-	</resources>
+		<!-- New Included String2 -->
+		<string name="use_aromafm">Gunakan Aroma File Manager</string>
+		<string name="br_next">LANJUT</string>
+		<string name="br_prev">KEMBALI</string>
+		<string name="br">Batik Recovery</string>
+		<string name="console">Perintah</string>
+
+		<!-- Welcome -->
+		<string name="batik_msg1">**************************</string>
+		<string name="batik_msg2">[BATIK]: Wilujeung Sumping!</string>
+		<string name="batik_msg3">[VERSI]: {1}</string>
+		<string name="batik_msg4">[BUILD]: {1}</string>
+		<string name="batik_msg5">**************************</string>
+
+</resources>
 </language>
