@@ -841,6 +841,37 @@
 			</text>
 
 			<template name="console"/>
+			
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row20_y%"/>
+				<text>{@Lazy_Flasher_btn=Lazy Flasher}</text>
+				<actions>
+					<action function="set">tw_back=flash_done</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/lazyflasher.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Lazy_Flasher_text=Lazy Flasher will be installed.}</action>
+					<action function="set">tw_text2={@Lazy_Flasher_confirm=Try to Lazy Flasher Device?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="main_button_half_height">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%center_x%" y="%row20_y%"/>
+				<text>More Features</text>
+				<action function="page">tools</action>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%center_x%" y="%row20_y%"/>
+				<text>More Features</text>
+				<action function="page">tools2</action>
+			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
