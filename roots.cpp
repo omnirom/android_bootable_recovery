@@ -126,7 +126,7 @@ int ensure_path_mounted_at(const char* path, const char* mount_point) {
   mkdir(mount_point, 0755);  // in case it doesn't already exist
 
   if (strcmp(v->fs_type, "ext4") == 0 || strcmp(v->fs_type, "squashfs") == 0 ||
-      strcmp(v->fs_type, "vfat") == 0) {
+      strcmp(v->fs_type, "vfat") == 0 || strcmp(v->fs_type, "f2fs") == 0) {
     int result = mount(v->blk_device, mount_point, v->fs_type, v->flags, v->fs_options);
     if (result == -1 && fs_mgr_is_formattable(v)) {
       PLOG(ERROR) << "Failed to mount " << mount_point << "; formatting";
