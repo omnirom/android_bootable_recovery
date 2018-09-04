@@ -843,7 +843,7 @@
 			<template name="console"/>
 			
 			<button style="main_button_half_height">
-				<placement x="%indent%" y="%row20_y%"/>
+				<placement x="%indent%" y="%row19_y%"/>
 				<text>{@Lazy_Flasher_btn=Lazy Flasher}</text>
 				<actions>
 					<action function="set">tw_back=flash_done</action>
@@ -861,14 +861,14 @@
 			
 			<button style="main_button_half_height">
 				<condition var1="iconstyle" var2="1"/>
-				<placement x="%center_x%" y="%row20_y%"/>
+				<placement x="%center_x%" y="%row19_y%"/>
 				<text>More Features</text>
 				<action function="page">tools</action>
 			</button>
 
 			<button style="main_button_half_height">
 				<condition var1="iconstyle" var2="0"/>
-				<placement x="%center_x%" y="%row20_y%"/>
+				<placement x="%center_x%" y="%row19_y%"/>
 				<text>More Features</text>
 				<action function="page">tools2</action>
 			</button>
