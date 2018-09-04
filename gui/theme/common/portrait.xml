@@ -3619,7 +3619,7 @@
 			</fill>
 
 			<listbox style="scrolllist">
-				<placement x="%indent%" y="%row3a_y%" w="%content_width%" h="630"/>
+				<placement x="%indent%" y="%row3a_y%" w="%content_width%" h="600"/>
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
 				<listitem name="{@zip_sig_chk=Zip signature verification}">
 					<data variable="tw_signed_zip_verify"/>
@@ -3666,7 +3666,7 @@
 			</text>
 			
 			<listbox style="scrolllist">
-				<placement x="%indent%" y="%row16a_y%" w="%content_width%" h="260"/>
+				<placement x="%indent%" y="%row16a_y%" w="%content_width%" h="290"/>
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
 				<listitem name="{@rev_navbar_chk=Reversed navbar layout}">
 					<data variable="tw_samsung_navbar"/>
