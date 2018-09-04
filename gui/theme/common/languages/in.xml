@@ -738,6 +738,8 @@
 		<string name="br_prev">KEMBALI</string>
 		<string name="br">Batik Recovery</string>
 		<string name="console">Perintah</string>
+		<string name="unlock">Buka Kunci</string>
+		<string name="more_features">Fitur Lainnya</string>
 
 		<!-- Welcome -->
 		<string name="batik_msg1">**************************</string>
