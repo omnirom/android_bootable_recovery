@@ -390,7 +390,7 @@
 			<text style="text_s">
 				<condition var1="iconstyle" var2="1"/>
 				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
-				<text>{@overview_text_2=Teamwork Form Indonesia. Batik Recovery base TWRP %tw_version%}</text>
+				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP %tw_version%}</text>
 			</text>
 			
 			<fill color="%text_color%">
@@ -413,7 +413,7 @@
 			<text style="text_s">
 				<condition var1="iconstyle" var2="0"/>
 				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
-				<text>{@overview_text_2=Teamwork Form Indonesia. Batik Recovery base TWRP %tw_version%}</text>
+				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP %tw_version%}</text>
 			</text>
 			
 		</page>
@@ -862,7 +862,7 @@
 			<button style="main_button_half_height">
 				<condition var1="iconstyle" var2="1"/>
 				<placement x="%center_x%" y="%row19_y%"/>
-				<text>More Features</text>
+				<text>{@more_features=More Features}</text>
 				<action function="page">tools</action>
 			</button>
 
@@ -4939,7 +4939,7 @@
 			
 			<text style="text_s">
 				<placement x="%center_x%" y="%row4a_y%" placement="5"/>
-				<text>{@overview_text_2=Teamwork Form Indonesia. Batik Recovery base TWRP %tw_version%}</text>
+				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP %tw_version%}</text>
 			</text>
 			
 			<text style="text_l">
@@ -5238,7 +5238,7 @@
 
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row14_y%" placement="4"/>
-				<text>UNLOCK</text>
+				<text>{@unlock=UNLOCK}</text>
 				<action function="overlay"/>
 			</button>
 
