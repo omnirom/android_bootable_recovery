@@ -3643,9 +3643,6 @@
 					<condition var1="tw_military_time" var2="0"/>
 					<data variable="tw_military_time"/>
 				</listitem>
-				<listitem name="{@rev_navbar_chk=Reversed navbar layout}">
-					<data variable="tw_samsung_navbar"/>
-				</listitem>
 				<listitem name="{@reboot_install_app_prompt_install=Prompt to install TWRP app on every reboot}">
 					<data variable="tw_app_prompt"/>
 				</listitem>
@@ -3665,12 +3662,15 @@
 			
 			<text style="text_m_accent">
 				<placement x="%indent%" y="%row15_y%"/>
-				<text>Other Features</text>
+				<text>UI Center</text>
 			</text>
 			
 			<listbox style="scrolllist">
 				<placement x="%indent%" y="%row16a_y%" w="%content_width%" h="200"/>
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
+				<listitem name="{@rev_navbar_chk=Reversed navbar layout}">
+					<data variable="tw_samsung_navbar"/>
+				</listitem>
 				<listitem name="{@use_aromafm=Use Aroma File Manager}">
 					<data variable="aromafm"/>
 				</listitem>
