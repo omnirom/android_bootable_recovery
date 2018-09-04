@@ -3661,12 +3661,12 @@
 			</listbox>
 			
 			<text style="text_m_accent">
-				<placement x="%indent%" y="%row15_y%"/>
+				<placement x="%indent%" y="%row14_y%"/>
 				<text>UI Center</text>
 			</text>
 			
 			<listbox style="scrolllist">
-				<placement x="%indent%" y="%row16a_y%" w="%content_width%" h="290"/>
+				<placement x="%indent%" y="%row15a_y%" w="%content_width%" h="290"/>
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
 				<listitem name="{@rev_navbar_chk=Reversed navbar layout}">
 					<data variable="tw_samsung_navbar"/>
