@@ -323,7 +323,7 @@ really_install_package(const char *path, bool* wipe_cache, bool needs_mount,
     }
 
     // Try to open the package.
-    ZipArchive zip;
+    ZipArchive zip = {};
     err = mzOpenZipArchive(map.addr, map.length, &zip);
     if (err != 0) {
         LOGE("Can't open %s\n(%s)\n", path, err != -1 ? strerror(err) : "bad");
