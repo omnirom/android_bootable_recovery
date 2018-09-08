@@ -10,6 +10,7 @@
 	</details>
 
 	<include>
+		<xmlfile name="colors.xml"/>
 		<xmlfile name="portrait.xml"/>
 	</include>
 
@@ -28,6 +29,7 @@
 		<image name="overlay" filename="overlay" retainaspect="1"/>
 		<image name="logo" filename="logo" retainaspect="1"/>
 		<image name="main_button" filename="main_button" retainaspect="1"/>
+		<image name="style" filename="style" retainaspect="1"/>
 		<image name="bn_install" filename="bn_install" retainaspect="1"/>
 		<image name="bn_wipe" filename="bn_wipe" retainaspect="1"/>
 		<image name="bn_backup" filename="bn_backup" retainaspect="1"/>
@@ -111,10 +113,20 @@
 	</resources>
 
 	<variables>
+		<variable name="background_color" value="#000000"/>
+		<variable name="accent_color" value="#FFFFFF"/>
+		<variable name="blue" value="#1E90FF"/>
+		<variable name="teal" value="#008080"/>
+		<variable name="brown" value="#8B4513"/>
+		<variable name="gray" value="#808080"/>
 		<variable name="tw_samsung_navbar" value="0" persist="1"/>
 		<variable name="tw_military_time" value="1" persist="0"/>
 		<variable name="iconstyle" value="1" persist="1"/>
 		<variable name="aromafm" value="1" persist="1"/>
+		<variable name="blue"/>
+		<variable name="teal"/>
+		<variable name="brown"/>
+		<variable name="gray"/>
 		<variable name="tw_hide_kb" value="0"/>
 		<variable name="screen_width" value="1080"/>
 		<variable name="screen_height" value="1920"/>
@@ -235,8 +247,6 @@
 		<variable name="navbar_btn_y" value="1856"/>
 		<variable name="keyboard_y" value="1149"/>
 		<variable name="keyboard_terminal_y" value="1053"/>
-		<variable name="background_color" value="#000000"/>
-		<variable name="accent_color" value="#0090CA"/>
 		<variable name="accent_color_semitransparent" value="#0090CA30"/>
 		<variable name="text_color" value="#EEEEEE"/>
 		<variable name="text_button_color" value="#EEEEEE"/>
@@ -294,13 +304,6 @@
 
 	<templates>
 		
-		<template name="batik">
-			<image>
-				<image resource="bg_batik"/>
-				<placement x="0" y="0"/>
-			</image>
-		</template>
-		
 		<template name="main-menu">
 		
 			<text style="text_l">
@@ -310,8 +313,62 @@
 			
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>%tw_version%</text>
+				<text>%tw_version% - %br_actual_build%</text>
 			</text>			
+
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row11_y%"/>
+			</image>
 
 			<button style="bn_install">
 				<condition var1="iconstyle" var2="1"/>
@@ -494,6 +551,10 @@
 		
 		<template name="page">
 			<background color="%background_color%"/>
+			
+			<fill color="%accent%">
+				<placement x="0" y="0" w="%screen_width%" h="%row1_y%"/>
+			</fill>
 
 			<fill color="%text_color%">
 				<placement x="0" y="%row1_y%" w="%screen_width%" h="10"/>
@@ -553,6 +614,10 @@
 				<text>{@battery_pct=Battery: %tw_battery%}</text>
 			</text>
 			
+			<fill color="%accent%">
+				<placement x="0" y="%navbar_y1%" w="%screen_width%" h="%navbar_height%"/>
+			</fill>
+			
 			<fill color="%text_color%">
 				<placement x="0" y="%navbar_y1%" w="%screen_width%" h="%navbar_height1%"/>
 			</fill>
@@ -608,6 +673,7 @@
 		</template>
 		
 		<template name="tab_about">
+			
 			<button style="tab_overview">
 				<condition var1="iconstyle" var2="1"/>
 				<placement x="175" y="%row17_y%"/>
@@ -647,7 +713,7 @@
 		
 		<template name="advanced">
 			
-						<button>
+			<button>
 				<condition var1="iconstyle" var2="1"/>
 				<condition var1="tw_samsung_navbar" var2="0"/>
 				<fill color="%transparent%"/>
@@ -820,7 +886,7 @@
 		</template>
 
 		<template name="tabs_backup">
-			<fill color="%background_color%">
+			<fill color="%accent%">
 				<placement x="0" y="row1_y" w="%screen_width%" h="tab_height"/>
 			</fill>
 
@@ -838,7 +904,7 @@
 		</template>
 
 		<template name="tabs_settings">
-			<fill color="%background_color%">
+			<fill color="%accent%">
 				<placement x="0" y="row1_y" w="%screen_width%" h="tab_height"/>
 			</fill>
 
