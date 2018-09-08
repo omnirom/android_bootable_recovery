@@ -33,7 +33,7 @@
 
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
-		<string name="twrp_watch_header">TWRP %TW_MAIN_VERSION_STR%</string>
+		<string name="twrp_watch_header">TWRP</string>
 		<string name="cpu_temp">CPU: %tw_cpu_temp% &#xB0;C</string>
 		<string name="battery_pct">Batré: %tw_battery%</string>
 		<string name="sort_by_name">Urutkeun dumasar kana Nami</string>
@@ -705,7 +705,7 @@
 		<string name="thanksto">Nuhun ka</string>
 		<string name="donation">Donasi</string>
 		<string name="overview_text_1">Batik Recovery teh Project Recovery anu dijieun ku Batik Recovery</string>
-		<string name="overview_text_2">Teamwork ti Indonesia. Batik Recovery pondasina TWRP %TW_MAIN_VERSION_STR%</string>				
+		<string name="overview_text_2">Teamwork ti Indonesia. Batik Recovery pondasina TWRP</string>				
 		<string name="author">Nu Nyieun</string>	
 		<string name="contact">Kontak</string>
 		<string name="maintainer">Maintainer</string>	
