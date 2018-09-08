@@ -72,6 +72,8 @@ public:
 	
 	static bool Repack_Image(string mount_point);
 	static bool Unpack_Image(string mount_point);
+	static void Read_Write_Specific_Partition(string path, string partition_name, bool backup);
+
 	static int Recursive_Mkdir(string Path);                                    // Recursively makes the entire path
 	static void GUI_Operation_Text(string Read_Value, string Default_Text);     // Updates text for display in the GUI, e.g. Backing up %partition name%
 	static void GUI_Operation_Text(string Read_Value, string Partition_Name, string Default_Text); // Same as above but includes partition name
