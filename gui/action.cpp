@@ -230,6 +230,9 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(flashimage);
 		ADD_ACTION(twcmd);
 		ADD_ACTION(setbootslot);
+		ADD_ACTION(wlfw);
+		ADD_ACTION(wlfx);
+
 	}
 
 	// First, get the action
@@ -1908,3 +1911,36 @@ int GUIAction::setbootslot(std::string arg)
 	operation_end(0);
 	return 0;
 }
+
+int GUIAction::wlfw(std::string arg __unused)
+{
+  operation_start("WLFW");
+  if (simulate)
+    {
+      simulate_progress_bar();
+    }
+  else
+    {
+      //TWFunc::Dumwolf(true, false);
+      TWFunc::Unpack_Image("/recovery");
+    }
+  operation_end(0);
+  return 0;
+}
+
+int GUIAction::wlfx(std::string arg __unused)
+{
+  operation_start("WLFX");
+  if (simulate)
+    {
+      simulate_progress_bar();
+    }
+  else
+    {
+      //TWFunc::Dumwolf(false, false);
+      TWFunc::Repack_Image("/recovery");
+    }
+  operation_end(0);
+  return 0;
+}
+
