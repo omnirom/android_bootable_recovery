@@ -58,6 +58,12 @@ extern "C" {
 	#include "libcrecovery/common.h"
 }
 
+static string tmp = Batik_tmp_dir;
+static string split_img = tmp + "/split_img";
+static string ramdisk = tmp + "/ramdisk";
+static string tmp_boot = tmp + "/boot.img";
+
+
 /* Execute a command */
 int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 	FILE* exec;
