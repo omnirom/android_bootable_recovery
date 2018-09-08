@@ -1067,6 +1067,60 @@ int TWFunc::Set_Brightness(std::string brightness_value)
 	return result;
 }
 
+//* from here onwards, credits PBRP 
+void TWFunc::Read_Write_Specific_Partition(string path, string partition_name,
+					   bool backup)
+{
+  TWPartition *Partition =
+    PartitionManager.Find_Partition_By_Path(partition_name);
+  if (Partition == NULL || Partition->Current_File_System != "emmc")
+    {
+      LOGERR("Read_Write_Specific_Partition: Unable to find %s\n",
+	     partition_name.c_str());
+      return;
+    }
+  string Read_Write, oldfile, null;
+  unsigned long long Remain, Remain_old;
+  oldfile = path + ".bak";
+  if (backup)
+    Read_Write = "dump_image " + Partition->Actual_Block_Device + " " + path;
+  else
+    {
+      Read_Write =
+	"flash_image " + Partition->Actual_Block_Device + " " + path;
+      if (TWFunc::Path_Exists(oldfile))
+	{
+	  Remain_old = TWFunc::Get_File_Size(oldfile);
+	  Remain = TWFunc::Get_File_Size(path);
+	  if (Remain_old < Remain)
+	    {
+	      return;
+	    }
+	}
+      TWFunc::Exec_Cmd(Read_Write, null);
+      return;
+    }
+  if (TWFunc::Path_Exists(path))
+    unlink(path.c_str());
+  TWFunc::Exec_Cmd(Read_Write, null);
+  return;
+}
+
+
+string TWFunc::Load_File(string extension)
+{
+  string line, path = split_img + "/" + extension;
+  ifstream File;
+  File.open(path);
+  if (File.is_open())
+    {
+      getline(File, line);
+      File.close();
+    }
+  return line;
+}
+
+
 bool TWFunc::Unpack_Image(string mount_point)
 {
   string null;
