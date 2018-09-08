@@ -313,7 +313,7 @@
 			
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>%tw_version% - %br_actual_build%</text>
+				<text>%tw_version%</text>
 			</text>			
 
 			<image>
