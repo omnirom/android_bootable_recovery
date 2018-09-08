@@ -25,6 +25,7 @@
 #endif
 
 #define BR_BUILD                "B 1.2"
+#define BR_VERSION_VAR          "br_version"
 #define BR_DEVICE               BR_DEVICE_MODEL
 #define BR_MAINTAINER_STR       "br_maintainer"
 #define BR_ACTUAL_BUILD_VAR     "br_actual_build"
@@ -155,7 +156,7 @@
 #define AROMAFM                     "aromafm"
 #define DISABLE_DM_VERITY           "dm_verity_check"
 
-// *** OrangeFox - Variables ** //
+// *** BATIK - Variables ** //
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
