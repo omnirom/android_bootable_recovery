@@ -860,17 +860,9 @@
 			</button>
 			
 			<button style="main_button_half_height">
-				<condition var1="iconstyle" var2="1"/>
 				<placement x="%center_x%" y="%row19_y%"/>
 				<text>{@more_features=More Features}</text>
 				<action function="page">tools</action>
-			</button>
-
-			<button style="main_button_half_height">
-				<condition var1="iconstyle" var2="0"/>
-				<placement x="%center_x%" y="%row19_y%"/>
-				<text>More Features</text>
-				<action function="page">tools2</action>
 			</button>
 
 			<button style="main_button_half_height">
@@ -3282,6 +3274,30 @@
 				<image resource="overlay"/>
 				<placement x="100" y="row5_y"/>
 			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1a%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2a%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1a%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2a%" y="%row11_y%"/>
+			</image>
 
 			<button style="bn_system">
 				<condition var1="iconstyle" var2="1"/>
@@ -3619,7 +3635,7 @@
 			</fill>
 
 			<listbox style="scrolllist">
-				<placement x="%indent%" y="%row3a_y%" w="%content_width%" h="590"/>
+				<placement x="%indent%" y="%row3a_y%" w="%content_width%" h="500"/>
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
 				<listitem name="{@zip_sig_chk=Zip signature verification}">
 					<data variable="tw_signed_zip_verify"/>
@@ -3656,17 +3672,16 @@
 				<listitem name="{@sha2_chk=Use SHA2 for hashing}">
 					<condition var1="tw_no_sha2" var2="0"/>
 					<data variable="tw_use_sha2"/>
-				</listitem>
-						
+				</listitem>					
 			</listbox>
 			
 			<text style="text_m_accent">
-				<placement x="%indent%" y="%row14_y%"/>
+				<placement x="%indent%" y="%row11a_y%"/>
 				<text>UI Center</text>
 			</text>
 			
 			<listbox style="scrolllist">
-				<placement x="%indent%" y="%row15a_y%" w="%content_width%" h="290"/>
+				<placement x="%indent%" y="%row12a_y%" w="%content_width%" h="290"/>
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
 				<listitem name="{@rev_navbar_chk=Reversed navbar layout}">
 					<data variable="tw_samsung_navbar"/>
@@ -3680,10 +3695,182 @@
 			</listbox>
 			
 			<button style="main_button_half_height">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%indent%" y="%row19_y%"/>
+				<text>Circle Style</text>
+				<actions>
+					<action function="set">iconstyle=1</action>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "images/style/circle.png" "images/style.png";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button style="main_button_half_height">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%center_x%" y="%row19_y%"/>
+				<text>Square Style</text>
+				<actions>
+					<action function="set">iconstyle=1</action>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "images/style/square.png" "images/style.png";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button style="main_button_half_height">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>Batik Style</text>
+				<actions>
+					<action function="set">iconstyle=1</action>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "images/style/batik.png" "images/style.png";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<fill color="%text_color%">
+				<placement x="50" y="1300" w="170" h="100"/>
+			</fill>
+			
+			<fill color="%text_color%">
+				<placement x="250" y="1300" w="170" h="100"/>
+			</fill>	
+			
+			<fill color="%text_color%">
+				<placement x="450" y="1300" w="170" h="100"/>
+			</fill>	
+			
+			<fill color="%text_color%">
+				<placement x="650" y="1300" w="170" h="100"/>
+			</fill>	
+			
+			<fill color="%text_color%">
+				<placement x="850" y="1300" w="170" h="100"/>
+			</fill>				
+			
+			<button>
+				<fill color="%blue%"/>
+				<placement x="60" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/blue.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button>
+				<fill color="%teal%"/>
+				<placement x="260" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/teal.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button>
+				<fill color="%brown%"/>
+				<placement x="460" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/brown.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button>
+				<fill color="%gray%"/>
+				<placement x="660" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/gray.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button>
+				<fill color="%background_color%"/>
+				<placement x="860" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/black.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+
+			
+			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@restore_defaults_btn=Restore Defaults}</text>
 				<actions>
 					<action function="restoredefaultsettings"/>
+					<action function="set">black=1</action>
 					<action function="set">tw_samsung_navbar=0</action>
 					<action function="set">tw_tab_icons=0</action>
 					<action function="set">aromafm=1</action>
@@ -4023,7 +4210,43 @@
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
 				<text>Batik Recovery</text>
-			</text>	
+			</text>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
+			</image>
 
 			<button style="bn_copylog">
 				<placement x="%bn_x1%" y="%row2_y%"/>
@@ -4203,7 +4426,79 @@
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
 				<text>{@br=Batik Recovery}</text>
-			</text>
+			</text>	
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row15a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row15a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row15a_y%"/>
+			</image>
 
 			<button style="bn_ramdisk">
 				<condition var1="iconstyle" var2="1"/>
