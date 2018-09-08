@@ -20,14 +20,25 @@
 #define TW_MAIN_VERSION_STR       "3.2.3"
 #define TW_VERSION_STR TW_MAIN_VERSION_STR TW_DEVICE_VERSION
 
+#ifdef BR_OFFICIAL
+#define TW_DEVICE_VERSION	   "OFFICIAL"
+#endif
+
+#define BR_BUILD                "B 1.2"
+#define BR_VERSION_VAR          "br_version"
+#define BR_DEVICE               BR_DEVICE_MODEL
+#define BR_MAINTAINER_STR       "br_maintainer"
+#define BR_ACTUAL_BUILD_VAR     "br_actual_build"
+
+
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
 #define TW_FILENAME                 "tw_filename"
 #define TW_ZIP_INDEX                "tw_zip_index"
-#define TW_ZIP_QUEUE_COUNT       "tw_zip_queue_count"
+#define TW_ZIP_QUEUE_COUNT          "tw_zip_queue_count"
 
 #define MAX_BACKUP_NAME_LEN 64
 #define TW_BACKUP_TEXT              "tw_backup_text"
-#define TW_BACKUP_NAME		        "tw_backup_name"
+#define TW_BACKUP_NAME		          "tw_backup_name"
 #define TW_BACKUP_SYSTEM_VAR        "tw_backup_system"
 #define TW_BACKUP_DATA_VAR          "tw_backup_data"
 #define TW_BACKUP_BOOT_VAR          "tw_backup_boot"
@@ -139,6 +150,19 @@
 #define TW_MILITARY_TIME            "tw_military_time"
 #define TW_USE_SHA2                 "tw_use_sha2"
 #define TW_NO_SHA2                  "tw_no_sha2"
+
+// BATIK RECOVERY
+#define ICONSTYLE                   "iconstyle"
+#define AROMAFM                     "aromafm"
+#define DISABLE_DM_VERITY           "dm_verity_check"
+
+// *** BATIK - Variables ** //
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <unistd.h>
+static const std::string batik_Tmp = "/tmp";
+static const std::string batik_tmp_dir = batik_Tmp + "/batik";
 
 // Also used:
 //   tw_boot_is_mountable

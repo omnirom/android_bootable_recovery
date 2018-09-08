@@ -10,10 +10,13 @@
 	</details>
 
 	<include>
+		<xmlfile name="colors.xml"/>
 		<xmlfile name="portrait.xml"/>
 	</include>
 
 	<resources>
+		<font name="font_b" filename="RobotoCondensed-Regular.ttf" size="400"/>
+		<font name="font_xl" filename="RobotoCondensed-Regular.ttf" size="90"/>
 		<font name="font_l" filename="RobotoCondensed-Regular.ttf" size="54"/>
 		<font name="font_m" filename="RobotoCondensed-Regular.ttf" size="42"/>
 		<font name="font_s" filename="RobotoCondensed-Regular.ttf" size="36"/>
@@ -23,8 +26,41 @@
 		<font name="keylabel-small" filename="RobotoCondensed-Regular.ttf" size="46"/>
 		<font name="keylabel-longpress" filename="RobotoCondensed-Regular.ttf" size="32"/>
 
+		<image name="overlay" filename="overlay" retainaspect="1"/>
 		<image name="logo" filename="logo" retainaspect="1"/>
-		<image name="main_button" filename="main_button"/>
+		<image name="main_button" filename="main_button" retainaspect="1"/>
+		<image name="style" filename="style" retainaspect="1"/>
+		<image name="bn_install" filename="bn_install" retainaspect="1"/>
+		<image name="bn_wipe" filename="bn_wipe" retainaspect="1"/>
+		<image name="bn_backup" filename="bn_backup" retainaspect="1"/>
+		<image name="bn_restore" filename="bn_restore" retainaspect="1"/>
+		<image name="bn_mount" filename="bn_mount"retainaspect="1"/>
+		<image name="bn_advanced" filename="bn_advanced" retainaspect="1"/>
+		<image name="bn_setting" filename="bn_setting" retainaspect="1"/>
+		<image name="bn_reboot" filename="bn_reboot" retainaspect="1"/>
+		<image name="bn_about" filename="bn_about" retainaspect="1"/>
+		<image name="bn_copylog" filename="bn_copylog" retainaspect="1"/>
+		<image name="bn_fm" filename="bn_fm" retainaspect="1"/>
+		<image name="bn_fix" filename="bn_fix" retainaspect="1"/>
+		<image name="bn_partition" filename="bn_partition" retainaspect="1"/>
+		<image name="bn_tools" filename="bn_tools" retainaspect="1"/>
+		<image name="bn_terminal" filename="bn_terminal" retainaspect="1"/>
+		<image name="bn_adb" filename="bn_adb" retainaspect="1"/>
+		<image name="bn_system" filename="bn_system" retainaspect="1"/>
+		<image name="bn_recovery" filename="bn_recovery" retainaspect="1"/>
+		<image name="bn_poweroff" filename="bn_poweroff" retainaspect="1"/>
+		<image name="bn_bootloader" filename="bn_bootloader" retainaspect="1"/>
+		<image name="bn_ramdisk" filename="bn_ramdisk" retainaspect="1"/>
+		<image name="bn_appdelete" filename="bn_appdelete" retainaspect="1"/>
+		<image name="bn_delsubs" filename="bn_delsubs" retainaspect="1"/>
+		<image name="bn_lazyflasher" filename="bn_lazyflasher" retainaspect="1"/>
+		<image name="bn_reset_pass" filename="bn_reset_pass" retainaspect="1"/>
+		<image name="bn_d_hal3" filename="bn_d_hal3" retainaspect="1"/>
+		<image name="bn_e_hal3" filename="bn_e_hal3" retainaspect="1"/>
+		<image name="bn_d_navbar" filename="bn_d_navbar" retainaspect="1"/>
+		<image name="bn_e_navbar" filename="bn_e_navbar" retainaspect="1"/>
+		<image name="bn_i_magisk" filename="bn_i_magisk" retainaspect="1"/>
+		<image name="bn_u_magisk" filename="bn_u_magisk" retainaspect="1"/>		
 		<image name="main_button_half_height" filename="main_button_half_height"/>
 		<image name="main_button_half_height_full_width" filename="main_button_half_height_full_width"/>
 		<image name="fab_selectfolder" filename="fab_selectfolder" retainaspect="1"/>
@@ -58,7 +94,12 @@
 		<image name="tab_display" filename="tab_display" retainaspect="1"/>
 		<image name="tab_vibration" filename="tab_vibration" retainaspect="1"/>
 		<image name="tab_language" filename="tab_language" retainaspect="1"/>
-
+		<image name="tab_overview" filename="tab_overview" retainaspect="1"/>
+		<image name="tab_info" filename="tab_info" retainaspect="1"/>
+		<image name="tab_credit" filename="tab_credit" retainaspect="1"/>
+		<image name="tab_thanksto" filename="tab_thanksto" retainaspect="1"/>
+		<image name="tab_changelog" filename="tab_changelog" retainaspect="1"/>
+		<image name="tab_donation" filename="tab_donation" retainaspect="1"/>
 		<image name="backspace" filename="backspace" retainaspect="1"/>
 		<image name="enter" filename="enter" retainaspect="1"/>
 		<image name="shift" filename="shift" retainaspect="1"/>
@@ -68,17 +109,31 @@
 		<image name="kb_arrow_right" filename="kb_arrow_right" retainaspect="1"/>
 		<image name="kb_arrow_up" filename="kb_arrow_up" retainaspect="1"/>
 		<image name="kb_arrow_down" filename="kb_arrow_down" retainaspect="1"/>
+		<resource name="button-bes" type="image" filename="button-bes" />
 	</resources>
 
 	<variables>
+		<variable name="background_color" value="#000000"/>
+		<variable name="accent_color" value="#FFFFFF"/>
+		<variable name="blue" value="#1E90FF"/>
+		<variable name="teal" value="#008080"/>
+		<variable name="brown" value="#8B4513"/>
+		<variable name="gray" value="#808080"/>
 		<variable name="tw_samsung_navbar" value="0" persist="1"/>
-
+		<variable name="tw_military_time" value="1" persist="0"/>
+		<variable name="iconstyle" value="1" persist="1"/>
+		<variable name="aromafm" value="1" persist="1"/>
+		<variable name="blue"/>
+		<variable name="teal"/>
+		<variable name="brown"/>
+		<variable name="gray"/>
 		<variable name="tw_hide_kb" value="0"/>
 		<variable name="screen_width" value="1080"/>
 		<variable name="screen_height" value="1920"/>
 		<variable name="status_height" value="72"/>
 		<variable name="header_height" value="256"/>
 		<variable name="navbar_height" value="130"/>
+		<variable name="navbar_height1" value="10"/>
 		<variable name="content_width" value="1008"/>
 		<variable name="content_overlay_width" value="936"/>
 		<variable name="dialog_height" value="704"/>
@@ -86,8 +141,22 @@
 		<variable name="console_button_x" value="840"/>
 		<variable name="indent" value="36"/>
 		<variable name="col1_x_left" value="72"/>
-		<variable name="col1_x_header" value="184"/>
+		<variable name="col1_x_header" value="270"/>
 		<variable name="center_x" value="540"/>
+		<variable name="menu_x1" value="75"/>
+		<variable name="menu_x2" value="565"/>
+		<variable name="bn_x1" value="135"/>
+		<variable name="bn_x1a" value="300"/>
+		<variable name="bn_x2" value="452"/>
+		<variable name="bn_x2a" value="604"/>
+		<variable name="bn_x3" value="769"/>
+		<variable name="tx_x1" value="110"/>
+		<variable name="tx_x1a" value="275"/>
+		<variable name="tx_x2" value="427"/>
+		<variable name="tx_x2a" value="579"/>
+		<variable name="tx_x3" value="744"/>
+		<variable name="unlock" value="900"/>
+		<variable name="info_x2" value="300"/>
 		<variable name="col1_x_right" value="576"/>
 		<variable name="indent_right" value="1044"/>
 		<variable name="tab_height" value="96"/>
@@ -114,9 +183,12 @@
 		<variable name="btn4_col3_x" value="558"/>
 		<variable name="btn4_col4_x" value="819"/>
 		<variable name="row1_header_y" value="4"/>
+		<variable name="row1a_header_y" value="20"/>
 		<variable name="row2_header_y" value="72"/>
 		<variable name="row3_header_y" value="90"/>
 		<variable name="row4_header_y" value="168"/>
+		<variable name="row0_y" value="192"/>
+		<variable name="row0a_y" value="224"/>
 		<variable name="row1_y" value="256"/>
 		<variable name="row1a_y" value="288"/>
 		<variable name="row2_y" value="320"/>
@@ -171,11 +243,10 @@
 		<variable name="row24a_y" value="1760"/>
 		<variable name="row25_y" value="1792"/>
 		<variable name="navbar_y" value="1792"/>
+		<variable name="navbar_y1" value="1785"/>
 		<variable name="navbar_btn_y" value="1856"/>
 		<variable name="keyboard_y" value="1149"/>
 		<variable name="keyboard_terminal_y" value="1053"/>
-		<variable name="background_color" value="#1A1A1A"/>
-		<variable name="accent_color" value="#0090CA"/>
 		<variable name="accent_color_semitransparent" value="#0090CA30"/>
 		<variable name="text_color" value="#EEEEEE"/>
 		<variable name="text_button_color" value="#EEEEEE"/>
@@ -188,7 +259,8 @@
 		<variable name="warning" value="#F8F8A0"/>
 		<variable name="error" value="#FF0101"/>
 		<variable name="highlight" value="#0090CA"/>
-		<variable name="fileselector_linecolor" value="#555555"/>
+		<variable name="fileselector_linecolor" value="#000000"/>
+		<variable name="fileselector_linecolor2" value="#efefef"/>
 		<variable name="fileselector_highlight_color" value="#555555"/>
 		<variable name="fileselector_separatorheight" value="2"/>
 		<variable name="fileselector_spacing" value="0"/>
@@ -196,9 +268,10 @@
 		<variable name="fileselector_filemanager_height" value="1376"/>
 		<variable name="partitionlist_spacing" value="0"/>
 		<variable name="partitionlist_storage_height" value="544"/>
-		<variable name="partitionlist_flashimage_height" value="544"/>
+		<variable name="infocreditlist_height" value="544"/>
+		<variable name="partitionlist_flashimage_height" value="1000"/>
 		<variable name="partitionlist_wipe_height" value="1088"/>
-		<variable name="partitionlist_mount_height" value="832"/>
+		<variable name="partitionlist_mount_height" value="1000"/>
 		<variable name="partitionlist_backup_height" value="768"/>
 		<variable name="listbox_timezone_height" value="756"/>
 		<variable name="listbox_settings_height" value="960"/>
@@ -210,7 +283,7 @@
 		<variable name="slidervalue_padding" value="0"/>
 		<variable name="slidervalue_sliderw" value="72"/>
 		<variable name="slidervalue_sliderh" value="108"/>
-		<variable name="slideout_height" value="1686"/>
+		<variable name="slideout_height" value="1450"/>
 		<variable name="slideout_bg_height" value="1720"/>
 		<variable name="input_height" value="64"/>
 		<variable name="input_line_width" value="3"/>
@@ -230,22 +303,272 @@
 	</mousecursor>
 
 	<templates>
+		
+		<template name="main-menu">
+		
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>Batik Recovery</text>
+			</text>
+			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>%br_version%</text>
+			</text>			
+
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row11_y%"/>
+			</image>
+
+			<button style="bn_install">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
+				<actions>
+					<action function="queueclear"/>
+					<action function="set">tw_selectimage=0</action>
+					<action function="page">install</action>
+				</actions>
+			</button>
+
+			<button style="bn_wipe">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
+				<action function="page">wipe</action>
+			</button>
+
+			<button style="bn_backup">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
+				<action function="page">backup</action>
+			</button>
+
+			<button style="bn_restore">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
+				<action function="page">restore</action>
+			</button>
+
+			<button style="bn_mount">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+				<action function="page">mount</action>
+			</button>
+
+			<button style="bn_setting">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
+				<action function="page">settings</action>
+			</button>
+
+			<button style="bn_advanced">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row11_y%"/>
+				<action function="page">advanced</action>
+			</button>
+
+			<button style="bn_reboot">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row11_y%"/>
+				<action function="overlay">reboot2</action>
+			</button>
+			
+			<button style="bn_about">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row11_y%"/>
+				<action function="page">about</action>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1%" y="%row5_y%"/>
+				<text>{@install_btn=Install}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row5_y%"/>
+				<text>{@wipe_btn=Wipe}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row5_y%"/>
+				<text>{@backup_btn=backup}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1%" y="%row9a_y%"/>
+				<text>{@restore_btn=Restore}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row9a_y%"/>
+				<text>{@mount_btn=Mount}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row9a_y%"/>
+				<text>{@settings_btn=Settings}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1%" y="%row14_y%"/>
+				<text>{@advanced_btn=Advanced}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row14_y%"/>
+				<text>{@reboot_btn=Reboot}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row14_y%"/>
+				<text>{@about=About}</text>
+			</button>
+			
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row2a_y%"/>
+				<text>{@install_btn=Install}</text>
+				<actions>
+					<action function="queueclear"/>
+					<action function="set">tw_selectimage=0</action>
+					<action function="page">install</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x2%" y="%row2a_y%"/>
+				<text>{@wipe_btn=Wipe}</text>
+				<action function="page">wipe</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row6_y%"/>
+				<text>{@backup_btn=Backup}</text>
+				<action function="page">backup</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x2%" y="%row6_y%"/>
+				<text>{@restore_btn=Restore}</text>
+				<action function="page">restore</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row9a_y%"/>
+				<text>{@mount_btn=Mount}</text>
+				<action function="page">mount</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x2%" y="%row9a_y%"/>
+				<text>{@settings_btn=Settings}</text>
+				<action function="page">settings</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row13_y%"/>
+				<text>{@advanced_btn=Advanced}</text>
+				<action function="page">advanced2</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x2%" y="%row13_y%"/>
+				<text>{@reboot_btn=Reboot}</text>
+				<action function="page">reboot</action>
+			</button>
+			
+			<fill color="%text_color%">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="0" y="%row16_y%" w="%screen_width%" h="%navbar_height1%"/>
+			</fill>
+		
+		</template>
+		
 		<template name="page">
 			<background color="%background_color%"/>
+			
+			<fill color="%accent%">
+				<placement x="0" y="0" w="%screen_width%" h="%row1_y%"/>
+			</fill>
 
-			<fill color="%accent_color%">
-				<placement x="0" y="0" w="%screen_width%" h="%header_height%"/>
+			<fill color="%text_color%">
+				<placement x="0" y="%row1_y%" w="%screen_width%" h="10"/>
 			</fill>
 
 			<image>
 				<condition var1="tw_busy" var2="1"/>
 				<image resource="logo"/>
-				<placement x="0" y="0"/>
+				<placement x="0" y="%row3_header_y%"/>
 			</image>
 
 			<button>
 				<condition var1="tw_busy" var2="0"/>
-				<placement x="0" y="0"/>
+				<placement x="0" y="%row3_header_y%"/>
 				<image resource="logo"/>
 				<action function="key">home</action>
 			</button>
@@ -290,9 +613,13 @@
 				<placement x="%indent_right%" y="%row1_header_y%" placement="1"/>
 				<text>{@battery_pct=Battery: %tw_battery%}</text>
 			</text>
-
-			<fill color="#000000">
-				<placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%"/>
+			
+			<fill color="%accent%">
+				<placement x="0" y="%navbar_y1%" w="%screen_width%" h="%navbar_height%"/>
+			</fill>
+			
+			<fill color="%text_color%">
+				<placement x="0" y="%navbar_y1%" w="%screen_width%" h="%navbar_height1%"/>
 			</fill>
 
 			<button>
@@ -343,6 +670,88 @@
 				<touch key="power+voldown"/>
 				<action function="screenshot"/>
 			</action>
+		</template>
+		
+		<template name="tab_about">
+			
+			<button style="tab_overview">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="175" y="%row17_y%"/>
+				<action function="page">main2</action>
+			</button>
+			
+			<button style="tab_info">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="300" y="%row17_y%"/>
+				<action function="page">info</action>
+			</button>
+			
+			<button style="tab_credit">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="425" y="%row17_y%"/>
+				<action function="page">credit</action>
+			</button>
+			
+			<button style="tab_thanksto">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="550" y="%row17_y%"/>
+				<action function="page">thanksto</action>
+			</button>
+			
+			<button style="tab_changelog">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="675" y="%row17_y%"/>
+				<action function="page">changelog</action>
+			</button>
+			
+			<button style="tab_donation">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="800" y="%row17_y%"/>
+				<action function="page">donation</action>
+			</button>
+		</template>
+		
+		<template name="advanced">
+			
+			<button>
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="tw_samsung_navbar" var2="0"/>
+				<fill color="%transparent%"/>
+				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">advanced</action>
+			</button>
+			
+			<button>
+				<condition var1="iconstyle" var2="0"/>
+				<condition var1="tw_samsung_navbar" var2="0"/>
+				<fill color="%transparent%"/>
+				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">advanced2</action>
+			</button>
+			
+			<button>
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="tw_samsung_navbar" var2="1"/>
+				<fill color="%transparent%"/>
+				<placement x="%center_x%" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">advanced</action>
+			</button>
+			
+			<button>
+				<condition var1="iconstyle" var2="0"/>
+				<condition var1="tw_samsung_navbar" var2="1"/>
+				<fill color="%transparent%"/>
+				<placement x="%center_x%" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">advanced2</action>
+			</button>
+			
+		</template>
+
+		<template name="batik-navbar">
+			<image>
+				<image resource="brand_name"/>
+				<placement x="0" y="%row15_y%" placement="4"/>
+			</image>
 		</template>
 
 		<template name="progress_bar">
@@ -477,7 +886,7 @@
 		</template>
 
 		<template name="tabs_backup">
-			<fill color="%accent_color%">
+			<fill color="%accent%">
 				<placement x="0" y="row1_y" w="%screen_width%" h="tab_height"/>
 			</fill>
 
@@ -495,7 +904,7 @@
 		</template>
 
 		<template name="tabs_settings">
-			<fill color="%accent_color%">
+			<fill color="%accent%">
 				<placement x="0" y="row1_y" w="%screen_width%" h="tab_height"/>
 			</fill>
 

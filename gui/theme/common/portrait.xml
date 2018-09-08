@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <recovery>
 	<styles>
+		<style name="text_xl">
+			<font resource="font_xl" color="%text_color%"/>
+		</style>
+		
 		<style name="text_l">
 			<font resource="font_l" color="%text_color%"/>
 		</style>
@@ -20,6 +24,11 @@
 		<style name="text_s">
 			<font resource="font_s" color="%text_color%"/>
 		</style>
+		
+		<style name="text_tx">
+			<font resource="font_s" color="%text_button_color%"/>
+			<image resource="button-bes" />
+		</style>		
 
 		<style name="input">
 			<background color="%background_color%"/>
@@ -36,6 +45,197 @@
 			<highlight color="%highlight_color%"/>
 			<font resource="font_l" color="%text_button_color%"/>
 			<image resource="main_button"/>
+		</style>
+		
+		<style name="tab_overview">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_overview"/>
+		</style>
+		
+		<style name="tab_info">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_info"/>
+		</style>
+		
+		<style name="tab_credit">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_credit"/>
+		</style>
+		
+		<style name="tab_thanksto">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_thanksto"/>
+		</style>
+		
+		<style name="tab_changelog">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_changelog"/>
+		</style>
+		
+		<style name="tab_donation">
+			<highlight color="%highlight_color%"/>
+			<font resource="font_l" color="%text_button_color%"/>
+			<image resource="tab_donation"/>
+		</style>
+		
+		<style name="bn_install">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_install"/>
+		</style>
+		
+		<style name="bn_wipe">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_wipe"/>
+		</style>
+		
+		<style name="bn_backup">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_backup"/>
+		</style>
+		
+		<style name="bn_restore">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_restore"/>
+		</style>
+		
+		<style name="bn_mount">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_mount"/>
+		</style>
+		
+		<style name="bn_advanced">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_advanced"/>
+		</style>
+		
+		<style name="bn_setting">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_setting"/>
+		</style>
+		
+		<style name="bn_reboot">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_reboot"/>
+		</style>
+		
+		<style name="bn_about">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_about"/>
+		</style>
+		
+		<style name="bn_copylog">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_copylog"/>
+		</style>
+		
+		<style name="bn_fix">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_fix"/>
+		</style>
+		
+		<style name="bn_partition">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_partition"/>
+		</style>
+		
+		<style name="bn_fm">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_fm"/>
+		</style>
+		
+		<style name="bn_terminal">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_terminal"/>
+		</style>
+		
+		<style name="bn_tools">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_tools"/>
+		</style>
+		
+		<style name="bn_adb">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_adb"/>
+		</style>
+		
+		<style name="bn_system">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_system"/>
+		</style>
+		
+		<style name="bn_poweroff">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_poweroff"/>
+		</style>
+		
+		<style name="bn_recovery">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_recovery"/>
+		</style>
+		
+		<style name="bn_bootloader">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_bootloader"/>
+		</style>
+		
+		<style name="bn_ramdisk">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_ramdisk"/>
+		</style>
+		
+		<style name="bn_appdelete">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_appdelete"/>
+		</style>
+		
+		<style name="bn_delsubs">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_delsubs"/>
+		</style>
+		
+		<style name="bn_lazyflasher">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_lazyflasher"/>
+		</style>
+		
+		<style name="bn_reset_pass">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_reset_pass"/>
+		</style>
+		
+		<style name="bn_d_hal3">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_d_hal3"/>
+		</style>
+		
+		<style name="bn_e_hal3">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_e_hal3"/>
+		</style>
+		
+		<style name="bn_d_navbar">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_d_navbar"/>
+		</style>
+		
+		<style name="bn_e_navbar">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_e_navbar"/>
+		</style>
+		
+		<style name="bn_i_magisk">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_i_magisk"/>
+		</style>
+		
+		<style name="bn_u_magisk">
+			<highlight color="%highlight_color%"/>
+			<image resource="bn_u_magisk"/>
 		</style>
 
 		<style name="main_button_half_height">
@@ -88,7 +288,7 @@
 
 		<style name="fileselector">
 			<highlight color="%fileselector_highlight_color%"/>
-			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<header background="%background_color%" textcolor="%accent_color%"/>
 			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
 			<sort name="tw_gui_sort_order"/>
@@ -99,12 +299,18 @@
 
 		<style name="listbox">
 			<highlight color="%fileselector_highlight_color%"/>
-			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<header background="%background_color%" textcolor="%accent_color%"/>
 			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
 			<icon selected="radio_true" unselected="radio_false"/>
 			<background color="%background_color%"/>
 			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%accent_color%"/>
+		</style>
+		
+		<style name="about">
+			<background color="%transparent%"/>
+			<font resource="font_s" spacing="8%" color="%text_color%" />
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 		</style>
 
 		<style name="scrolllist">
@@ -115,7 +321,7 @@
 
 		<style name="partitionlist">
 			<highlight color="%fileselector_highlight_color%"/>
-			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<header background="%background_color%" textcolor="%accent_color%"/>
 			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
 			<icon selected="checkbox_true" unselected="checkbox_false"/>
@@ -127,7 +333,7 @@
 		<style name="partitionlist_storage">
 			<highlight color="%fileselector_highlight_color%"/>
 			<placement x="%col1_x_left%" y="%row5_y%" w="%content_overlay_width%" h="%partitionlist_storage_height%"/>
-			<header background="%background_color%" textcolor="%accent_color%" separatorcolor="%accent_color%" separatorheight="%fileselector_separatorheight%"/>
+			<header background="%background_color%" textcolor="%accent_color%"/>
 			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
 			<icon selected="radio_true" unselected="radio_false"/>
@@ -137,7 +343,7 @@
 		</style>
 
 		<style name="slider">
-			<placement x="%center_x%" y="%row23_y%"/>
+			<placement x="%center_x%" y="%row23_y%" placement="4"/>
 			<font resource="font_s" color="%text_color%"/>
 			<resource base="slider" used="slider_used" touch="slider_touch"/>
 		</style>
@@ -145,7 +351,7 @@
 		<style name="slidervalue">
 			<resource handle="handle"/>
 			<font resource="font_m" color="%text_color%"/>
-			<colors line="%fileselector_linecolor%"/>
+			<colors line="%fileselector_linecolor2%"/>
 			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
 		</style>
 
@@ -166,74 +372,232 @@
 
 		<page name="main2">
 			<template name="page"/>
-
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
 			<text style="text_l">
-				<placement x="%col1_x_header%" y="%row3_header_y%"/>
-				<text>{@twrp_header=Team Win Recovery Project}</text>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@overview=Overview}</text>
 			</text>
-
-			<text style="text_m">
-				<condition var1="tw_no_cpu_temp" var2="0"/>
-				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>%tw_version%</text>
+			
+			<text style="text_s">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%center_x%" y="%row20a_y%" placement="5"/>
+				<text>{@overview_text_1=Batik Recovery is Recovery Project Developed by Batik Recovery}</text>
 			</text>
-
-			<button style="main_button">
-				<placement x="%indent%" y="%row2a_y%"/>
-				<text>{@install_btn=Install}</text>
-				<actions>
-					<action function="queueclear"/>
-					<action function="set">tw_selectimage=0</action>
-					<action function="page">install</action>
-				</actions>
-			</button>
-
-			<button style="main_button">
-				<placement x="%center_x%" y="%row2a_y%"/>
-				<text>{@wipe_btn=Wipe}</text>
-				<action function="page">wipe</action>
-			</button>
-
-			<button style="main_button">
-				<placement x="%indent%" y="%row8_y%"/>
-				<text>{@backup_btn=Backup}</text>
-				<action function="page">backup</action>
-			</button>
-
-			<button style="main_button">
-				<placement x="%center_x%" y="%row8_y%"/>
-				<text>{@restore_btn=Restore}</text>
-				<action function="page">restore</action>
-			</button>
-
-			<button style="main_button">
-				<placement x="%indent%" y="%row13a_y%"/>
-				<text>{@mount_btn=Mount}</text>
-				<action function="page">mount</action>
-			</button>
-
-			<button style="main_button">
-				<placement x="%center_x%" y="%row13a_y%"/>
-				<text>{@settings_btn=Settings}</text>
-				<action function="page">settings</action>
-			</button>
-
-			<button style="main_button">
-				<placement x="%indent%" y="%row19_y%"/>
-				<text>{@advanced_btn=Advanced}</text>
-				<action function="page">advanced</action>
-			</button>
-
-			<button style="main_button">
-				<placement x="%center_x%" y="%row19_y%"/>
-				<text>{@reboot_btn=Reboot}</text>
-				<action function="page">reboot</action>
-			</button>
+			
+			<text style="text_s">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
+				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP %tw_version%}</text>
+			</text>
+			
+			<fill color="%text_color%">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="0" y="%row17a_y%" w="%screen_width%" h="%navbar_height1%"/>
+			</fill>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@overview=Overview}</text>
+			</text>
+			
+			<text style="text_s">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%center_x%" y="%row20a_y%" placement="5"/>
+				<text>{@overview_text_1=Batik Recovery is Recovery Project Developed by Batik Recovery}</text>
+			</text>
+			
+			<text style="text_s">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
+				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP %tw_version%}</text>
+			</text>
+			
+		</page>
+		
+		<page name="info">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@info=Info}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%menu_x1%" y="%row20a_y%"/>
+				<text>{@author=Author}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%info_x2%" y="%row20a_y%"/>
+				<text>:   ZHANtech™</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%menu_x1%" y="%row21a_y%"/>
+				<text>{@contact=Contact}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%info_x2%" y="%row21a_y%"/>
+				<text>:   @zhantech (Telegram)</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%menu_x1%" y="%row22a_y%"/>
+				<text>{@maintainer=Maintainer}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%info_x2%" y="%row22a_y%"/>
+				<text>:   ZHANtech™</text>
+			</text>
+		
+		</page>
+		
+		<page name="credit">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@credit=Credit}</text>
+			</text>
+			
+		<listbox style="about">
+			<placement x="%menu_x1%" y="%row20a_y%" w="950" h="180"/>
+				<listitem name="Github for source code"/>
+				<listitem name="Teamwin Recovery Project"/>
+				<listitem name="Dark Recovery"/>
+				<listitem name="Pitchblack Recovery Project"/>
+				<listitem name="Orangefox Recovery Project"/>
+				<listitem name="SuperSu by Chainfire"/>
+				<listitem name="Magisk for topjohnwu"/>
+				<listitem name="Lazyflasher by jcadduono"/>
+				<listitem name="Cam2API Enabler(HAL3) by helmiau"/>
+				<listitem name="Password Remover by Magua"/>
+				<listitem name="Aroma File Manager by amarullz"/>
+				<listitem name="App Deleter by THE_pirate_predator"/>
+		</listbox>
+		
+		</page>
+		
+		<page name="thanksto">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@thanksto=Thanks To}</text>
+			</text>
+			
+		<listbox style="about">
+			<placement x="%menu_x1%" y="%row20a_y%" w="950" h="180"/>
+				<listitem name="Allah Ta'ala"/>
+				<listitem name="Rasulullah"/>
+				<listitem name="My Family"/>
+				<listitem name="Reza Adi"/>
+				<listitem name="Mr Yacha"/>
+				<listitem name="Muhajaya"/>
+				<listitem name="Vickry"/>
+				<listitem name="Ahmad-farid007"/>
+				<listitem name="Rivv"/>
+				<listitem name="Rizak"/>
+				<listitem name="#nTu21"/>
+				<listitem name="Costa Nostra"/>
+				<listitem name="ali_tea"/>
+				<listitem name="Helmi Amirudin"/>
+		</listbox>
+		
+		</page>
+		
+		<page name="changelog">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@changelog=Changelog}</text>
+			</text>
+			
+		<listbox style="about">
+			<placement x="%menu_x1%" y="%row20a_y%" w="950" h="180"/>
+				<listitem name="~ Alpha-01 ~"/>
+				<listitem name="Initial Build"/>
+				<listitem name=""/>
+				<listitem name="~ Alpha-02 ~"/>
+				<listitem name="Add Fitured"/>
+				<listitem name=""/>
+				<listitem name="~ B v1.1 ~"/>
+				<listitem name="Upstreamed base TWRP 3.2.3-0"/>
+				<listitem name="Update Batik Theme v1.1"/>
+				<listitem name="Update Magisk 16.71"/>
+				<listitem name="Add Indonesia, Sunda Language"/>
+				<listitem name=""/>
+				<listitem name="~ B 1.2 ~"/>
+				<listitem name="Overlay Reboot Menu"/>
+				<listitem name="Add some icon style"/>
+				<listitem name="Update Magisk 17.1"/>
+				<listitem name="Add Jowo Language"/>
+				<listitem name="Full Backup / Restore Partition"/>
+				<listitem name="Further ensure TWRP is not replaced by stock recovery"/>
+		</listbox>
+		
+		</page>
+		
+		<page name="donation">
+			
+			<template name="page"/>
+			<template name="main-menu"/>
+			<template name="tab_about"/>
+			
+			<text style="text_l">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%menu_x1%" y="%row19_y%"/>
+				<text>* {@donation=Donation}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row20a_y%" placement="5"/>
+				<text>{@donation_text_1=If you feel satisfied with this Batik Recovery and want to}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
+				<text>{@donation_text_2=support Batik Recovery so that it can develop, please donate}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row22a_y%" placement="5"/>
+				<text>{@donation_text_3=as much as possible via a BRI account with an account number}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row23a_y%" placement="5"/>
+				<text>{@donation_text_4="3112-01-019706-53-4" on behalf of "Muhammad Rifa'i Aziz"}</text>
+			</text>
+		
 		</page>
 
 		<page name="install">
 			<template name="page"/>
-
+			
 			<text style="text_l">
 				<condition var1="tw_selectimage" var2="0"/>
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
@@ -477,6 +841,29 @@
 			</text>
 
 			<template name="console"/>
+			
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row19_y%"/>
+				<text>{@Lazy_Flasher_btn=Lazy Flasher}</text>
+				<actions>
+					<action function="set">tw_back=flash_done</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/lazyflasher.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Lazy_Flasher_text=Lazy Flasher will be installed.}</action>
+					<action function="set">tw_text2={@Lazy_Flasher_confirm=Try to Lazy Flasher Device?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row19_y%"/>
+				<text>{@more_features=More Features}</text>
+				<action function="page">tools</action>
+			</button>
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row21a_y%"/>
@@ -925,34 +1312,12 @@
 		<page name="rebootcheck">
 			<action>
 				<condition var1="tw_backup_system_size" op="&gt;=" var2="%tw_min_system%"/>
-				<action function="page">appcheck</action>
+				<action function="reboot">%tw_action_param%</action>
 			</action>
 
 			<action>
 				<condition var1="tw_backup_system_size" op="&lt;" var2="%tw_min_system%"/>
 				<action function="page">confirm_action</action>
-			</action>
-		</page>
-
-		<page name="appcheck">
-			<action>
-				<condition var1="tw_app_prompt" var2="1"/>
-				<action function="checkforapp"></action>
-			</action>
-
-			<action>
-				<condition var1="tw_app_prompt" op="!=" var2="1"/>
-				<action function="reboot">%tw_reboot_param%</action>
-			</action>
-
-			<action>
-				<condition var1="tw_app_install_status" var2="1"/>
-				<action function="page">rebootapp</action>
-			</action>
-
-			<action>
-				<condition var1="tw_app_install_status" var2="2"/>
-				<action function="reboot">%tw_reboot_param%</action>
 			</action>
 		</page>
 
@@ -2604,7 +2969,7 @@
 
 			<button style="checkbox">
 				<condition var1="tw_mount_system_ro" op="=" var2="0"/>
-				<placement x="%indent%" y="%row15a_y%" textplacement="6"/>
+				<placement x="%indent%" y="%row17_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_false"/>
 				<action function="mountsystemtoggle">1</action>
@@ -2612,7 +2977,7 @@
 
 			<button style="checkbox">
 				<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
-				<placement x="%indent%" y="%row15a_y%" textplacement="6"/>
+				<placement x="%indent%" y="%row17_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_true"/>
 				<actions>
@@ -2755,13 +3120,15 @@
 			<template name="page"/>
 
 			<text style="text_l">
+				<condition var1="iconstyle" var2="0"/>
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@reboot_hdr=Reboot}</text>
 			</text>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_reboot_system" var2="1"/>
-				<placement x="%indent%" y="%row2a_y%"/>
+				<placement x="%menu_x1%" y="%row2a_y%"/>
 				<text>{@rb_system_btn=System}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
@@ -2770,8 +3137,9 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_reboot_poweroff" var2="1"/>
-				<placement x="%center_x%" y="%row2a_y%"/>
+				<placement x="%menu_x2%" y="%row2a_y%"/>
 				<text>{@rb_poweroff_btn=Power Off}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
@@ -2789,8 +3157,9 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_reboot_recovery" var2="1"/>
-				<placement x="%indent%" y="%row8_y%"/>
+				<placement x="%menu_x1%" y="%row6_y%"/>
 				<text>{@rb_recovery_btn=Recovery}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
@@ -2808,8 +3177,9 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_reboot_bootloader" var2="1"/>
-				<placement x="%center_x%" y="%row8_y%"/>
+				<placement x="%menu_x2%" y="%row6_y%"/>
 				<text>{@rb_bootloader_btn=Bootloader}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
@@ -2827,8 +3197,9 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
 				<condition var1="tw_download_mode" var2="1"/>
-				<placement x="%indent%" y="%row13a_y%"/>
+				<placement x="%menu_x1%" y="%row6_y%"/>
 				<text>{@rb_download_btn=Download}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
@@ -2893,6 +3264,189 @@
 				<action function="page">main</action>
 			</action>
 		</page>
+		
+		<page name="reboot2">
+			<fill color="%semi_transparent%">
+				<placement x="0" y="0" w="%screen_width%" h="%screen_height%"/>
+			</fill>
+			
+			<image>
+				<image resource="overlay"/>
+				<placement x="100" y="row5_y"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1a%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2a%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1a%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2a%" y="%row11_y%"/>
+			</image>
+
+			<button style="bn_system">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1a%" y="%row6a_y%"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="set">tw_back=main</action>
+					<action function="page">reboot_system_routine</action>
+				</actions>
+			</button>
+			
+			<button style="bn_poweroff">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2a%" y="%row6a_y%"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="set">tw_back=main</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=poweroff</action>
+					<action function="set">tw_reboot_param=poweroff</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_ospo=sure you wish to power off?}</action>
+					<action function="set">tw_action_text1={@turning_off=Turning Off...}</action>
+					<action function="set">tw_complete_text1={@turning_off=Turning Off...}</action>
+					<action function="set">tw_slider_text={@swipe_power_off=Swipe to Power Off}</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</button>
+			
+			<button style="bn_recovery">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1a%" y="%row11_y%"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="set">tw_back=main</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=recovery</action>
+					<action function="set">tw_reboot_param=recovery</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</button>
+			
+			<button style="bn_bootloader">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2a%" y="%row11_y%"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="set">tw_back=main</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=bootloader</action>
+					<action function="set">tw_reboot_param=bootloader</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1a%" y="%row9a_y%"/>
+				<text>{@rb_system_btn=System}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2a%" y="%row9a_y%"/>
+				<text>{@rb_poweroff_btn=Power Off}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1a%" y="%row14_y%"/>
+				<text>{@rb_recovery_btn=Recovery}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2a%" y="%row14_y%"/>
+				<text>{@rb_bootloader_btn=Bootloader}</text>
+			</button>
+
+			<fill color="#000000">
+				<placement x="0" y="row25_y" w="%screen_width%" h="%navbar_height"/>
+			</fill>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="!=" var2="1"/>
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="back"/>
+				<condition var1="tw_busy" var2="0"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="=" var2="1"/>
+				<placement x="%back_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="console"/>
+				<condition var1="tw_busy" var2="0"/>
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<placement x="%center_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="home"/>
+				<condition var1="tw_busy" var2="0"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="key">home</action>
+				</actions>
+			</button>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="!=" var2="1"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="console"/>
+				<condition var1="tw_busy" var2="0"/>
+				<action function="overlay">slideout</action>
+			</button>
+
+			<button>
+				<condition var1="tw_samsung_navbar" op="=" var2="1"/>
+				<placement x="%console_button_x%" y="%navbar_btn_y%" placement="4"/>
+				<image resource="back"/>
+				<condition var1="tw_busy" var2="0"/>
+				<actions>
+					<action function="overlay"/>
+					<action function="key">%tw_back%</action>
+				</actions>
+			</button>
+
+			<action>
+				<touch key="power+voldown"/>
+				<action function="screenshot"/>
+			</action>
+		</page>
 
 		<page name="rebootapp">
 			<template name="page"/>
@@ -2939,7 +3493,7 @@
 			<slider>
 				<text>{@swipe_to_install_app=Swipe to Install TWRP App}</text>
 				<actions>
-					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_back=main</action>
 					<action function="set">tw_action=installapp</action>
 					<action function="set">tw_action_text1={@reboot_installing_app=Installing App...}</action>
 					<action function="set">tw_action_text2=</action>
@@ -2966,6 +3520,23 @@
 					<action function="page">reboot</action>
 				</actions>
 			</action>
+			
+			<button>
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="tw_samsung_navbar" var2="0"/>
+				<fill color="%transparent%"/>
+				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">main</action>
+			</button>
+			
+			<button>
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="tw_samsung_navbar" var2="1"/>
+				<fill color="%transparent%"/>
+				<placement x="%center_x%" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">main</action>
+			</button>			
+			
 		</page>
 
 		<page name="system_readonly">
@@ -3064,7 +3635,7 @@
 			</fill>
 
 			<listbox style="scrolllist">
-				<placement x="%indent%" y="%row3a_y%" w="%content_width%" h="%listbox_settings_height%"/>
+				<placement x="%indent%" y="%row3a_y%" w="%content_width%" h="500"/>
 				<icon selected="checkbox_true" unselected="checkbox_false"/>
 				<listitem name="{@zip_sig_chk=Zip signature verification}">
 					<data variable="tw_signed_zip_verify"/>
@@ -3085,10 +3656,8 @@
 					<data variable="tw_skip_digest_check"/>
 				</listitem>
 				<listitem name="{@use24clock_chk=Use 24-hour clock}">
+					<condition var1="tw_military_time" var2="0"/>
 					<data variable="tw_military_time"/>
-				</listitem>
-				<listitem name="{@rev_navbar_chk=Reversed navbar layout}">
-					<data variable="tw_samsung_navbar"/>
 				</listitem>
 				<listitem name="{@reboot_install_app_prompt_install=Prompt to install TWRP app on every reboot}">
 					<data variable="tw_app_prompt"/>
@@ -3103,16 +3672,210 @@
 				<listitem name="{@sha2_chk=Use SHA2 for hashing}">
 					<condition var1="tw_no_sha2" var2="0"/>
 					<data variable="tw_use_sha2"/>
+				</listitem>					
+			</listbox>
+			
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row11a_y%"/>
+				<text>UI Center</text>
+			</text>
+			
+			<listbox style="scrolllist">
+				<placement x="%indent%" y="%row12a_y%" w="%content_width%" h="290"/>
+				<icon selected="checkbox_true" unselected="checkbox_false"/>
+				<listitem name="{@rev_navbar_chk=Reversed navbar layout}">
+					<data variable="tw_samsung_navbar"/>
+				</listitem>
+				<listitem name="{@use_aromafm=Use Aroma File Manager}">
+					<data variable="aromafm"/>
+				</listitem>
+				<listitem name="New Icon Style">
+					<data variable="iconstyle"/>
 				</listitem>
 			</listbox>
+			
+			<button style="main_button_half_height">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%indent%" y="%row19_y%"/>
+				<text>Circle Style</text>
+				<actions>
+					<action function="set">iconstyle=1</action>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "images/style/circle.png" "images/style.png";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button style="main_button_half_height">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%center_x%" y="%row19_y%"/>
+				<text>Square Style</text>
+				<actions>
+					<action function="set">iconstyle=1</action>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "images/style/square.png" "images/style.png";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button style="main_button_half_height">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>Batik Style</text>
+				<actions>
+					<action function="set">iconstyle=1</action>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "images/style/batik.png" "images/style.png";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<fill color="%text_color%">
+				<placement x="50" y="1300" w="170" h="100"/>
+			</fill>
+			
+			<fill color="%text_color%">
+				<placement x="250" y="1300" w="170" h="100"/>
+			</fill>	
+			
+			<fill color="%text_color%">
+				<placement x="450" y="1300" w="170" h="100"/>
+			</fill>	
+			
+			<fill color="%text_color%">
+				<placement x="650" y="1300" w="170" h="100"/>
+			</fill>	
+			
+			<fill color="%text_color%">
+				<placement x="850" y="1300" w="170" h="100"/>
+			</fill>				
+			
+			<button>
+				<fill color="%blue%"/>
+				<placement x="60" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/blue.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button>
+				<fill color="%teal%"/>
+				<placement x="260" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/teal.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button>
+				<fill color="%brown%"/>
+				<placement x="460" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/brown.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button>
+				<fill color="%gray%"/>
+				<placement x="660" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/gray.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
+			
+			<button>
+				<fill color="%background_color%"/>
+				<placement x="860" y="%row17a_y%" w="150" h="75"/>
+				<actions>
+					<action function="set">tw_busy=1</action>
+					<action function="wlfw"/>
+					<action function="cmd"> 
+					cd "/twres";
+					cp -r "colors/black.xml" "colors.xml";
+					rm -rf "/tmp/batik/ramdisk/twres";
+					cp -r -f "/twres" "/tmp/batik/ramdisk/twres";
+					cd /;
+					</action>
+					<action function="wlfx"/>
+					<action function="reload"/>
+				</actions>
+			</button>
 
+			
 			<button style="main_button_half_height">
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@restore_defaults_btn=Restore Defaults}</text>
 				<actions>
+					<action function="restoredefaultsettings"/>
+					<action function="set">black=1</action>
 					<action function="set">tw_samsung_navbar=0</action>
 					<action function="set">tw_tab_icons=0</action>
-					<action function="restoredefaultsettings"/>
+					<action function="set">aromafm=1</action>
+					<action function="set">iconstyle=1</action>
+					<action function="set">tw_military_time=1</action>
 				</actions>
 			</button>
 
@@ -3126,6 +3889,7 @@
 				<action function="page">main</action>
 			</action>
 		</page>
+		
 
 		<page name="settings_timezone">
 			<template name="page"/>
@@ -3431,89 +4195,120 @@
 				<action function="page">main</action>
 			</action>
 
-			<action>
-				<touch key="back"/>
-				<actions>
-					<action function="page">advanced</action>
-				</actions>
-			</action>
+			<template name="advanced"/>
+			
 		</page>
 
 		<page name="advanced">
 			<template name="page"/>
-
+			
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@advanced_hdr=Advanced}</text>
 			</text>
+			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Batik Recovery</text>
+			</text>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
+			</image>
 
-			<button style="main_button">
-				<placement x="%indent%" y="%row2a_y%"/>
-				<text>{@copy_log_btn=Copy Log}</text>
+			<button style="bn_copylog">
+				<placement x="%bn_x1%" y="%row2_y%"/>
 				<action function="page">copylog</action>
 			</button>
 
-			<button style="main_button">
-				<condition var1="tw_has_data_media" var2="1"/>
-				<placement x="%center_x%" y="%row2a_y%"/>
-				<text>{@fix_context_btn=Fix Contexts}</text>
+			<button style="bn_fix">
+				<placement x="%bn_x2%" y="%row2_y%"/>
 				<action function="page">fixcontexts</action>
 			</button>
 
-			<button style="main_button">
-				<condition var1="tw_allow_partition_sdcard" var2="1"/>
-				<placement x="%indent%" y="%row8_y%"/>
-				<text>{@part_sd_btn=Partition SD Card}</text>
+			<button style="bn_partition">
+				<placement x="%bn_x3%" y="%row2_y%"/>
 				<actions>
 					<action function="set">partitionlisterror=0</action>
 					<action function="page">partsdcardsel</action>
 				</actions>
 			</button>
 
-			<button style="main_button">
-				<placement x="%center_x%" y="%row8_y%"/>
-				<text>{@file_manager_btn=File Manager}</text>
-				<action function="page">filemanagerlist</action>
-			</button>
-
-			<button style="main_button">
-				<placement x="%indent%" y="%row13a_y%"/>
-				<text>{@terminal_btn=Terminal}</text>
+			<button style="bn_terminal">
+				<placement x="%bn_x1%" y="%row6a_y%"/>
 				<action function="page">terminalcommand</action>
 			</button>
 
-			<button style="main_button">
-				<placement x="%center_x%" y="%row13a_y%"/>
-				<text>{@reload_theme_btn=Reload Theme}</text>
-				<action function="reload"/>
+			<button style="bn_tools">
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+				<action function="page">tools</action>
 			</button>
 
-			<button style="main_button">
-				<placement x="%indent%" y="%row19_y%"/>
-				<text>{@adb_sideload_btn=ADB Sideload}</text>
+			<button style="bn_adb">
+				<placement x="%bn_x3%" y="%row6a_y%"/>
 				<action function="page">sideload</action>
 			</button>
-
-			<button style="main_button">
-				<condition var1="tw_show_dumlock" var2="1"/>
-				<placement x="%center_x%" y="%row19_y%"/>
-				<text>{@dumlock_btn=HTC Dumlock}</text>
-				<action function="page">htcdumlock</action>
+			
+			<button style="text_tx">
+				<placement x="%tx_x1%" y="%row5_y%"/>
+				<text>{@copy_log_btn=Copy Log}</text>
 			</button>
-
-			<button style="main_button">
-				<condition var1="tw_has_injecttwrp" var2="1"/>
-				<placement x="%center_x%" y="%row19_y%"/>
-				<text>{@inject_twrp_btn=Inject TWRP}</text>
-				<actions>
-					<action function="set">tw_back=advanced</action>
-					<action function="set">tw_action=reinjecttwrp</action>
-					<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
-					<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
-					<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
-					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
-					<action function="page">confirm_action</action>
-				</actions>
+			
+			<button style="text_tx">
+				<placement x="%tx_x2%" y="%row5_y%"/>
+				<text>{@fix_context_btn=Fix Contexts}</text>
+			</button>
+			
+			<button style="text_tx">
+				<placement x="%tx_x3%" y="%row5_y%"/>
+				<text>{@part_sd_btn=Partition SD Card}</text>
+			</button>
+			
+			<button style="text_tx">
+				<placement x="%tx_x1%" y="%row9a_y%"/>
+				<text>{@terminal_btn=Terminal}</text>
+			</button>
+			
+			<button style="text_tx">
+				<placement x="%tx_x2%" y="%row9a_y%"/>
+				<text>{@tools=Tools}</text>
+			</button>
+			
+			<button style="text_tx">
+				<placement x="%tx_x3%" y="%row9a_y%"/>
+				<text>{@adb_sideload_btn=ADB Sideload}</text>
 			</button>
 
 			<action>
@@ -3525,6 +4320,713 @@
 				<touch key="back"/>
 				<action function="page">main</action>
 			</action>
+		</page>
+		
+		<page name="advanced2">
+			<template name="page"/>
+			
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@advanced_hdr=Advanced}</text>
+			</text>
+			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Batik Recovery</text>
+			</text>	
+
+			<button style="main_button">
+				<placement x="%menu_x1%" y="%row2a_y%"/>
+				<text>{@copy_log_btn=Copy Log}</text>
+				<action function="page">copylog</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="tw_has_data_media" var2="1"/>
+				<placement x="%menu_x2%" y="%row2a_y%"/>
+				<text>{@fix_context_btn=Fix Contexts}</text>
+				<action function="page">fixcontexts</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="tw_allow_partition_sdcard" var2="1"/>
+				<placement x="%menu_x1%" y="%row6_y%"/>
+				<text>{@part_sd_btn=Partition SD Card}</text>
+				<actions>
+					<action function="set">partitionlisterror=0</action>
+					<action function="page">partsdcardsel</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<placement x="%menu_x2%" y="%row6_y%"/>
+				<text>{@terminal_btn=Terminal}</text>
+				<action function="page">terminalcommand</action>
+			</button>
+
+			<button style="main_button">
+				<placement x="%menu_x1%" y="%row9a_y%"/>
+				<text>{@tools=Tools}</text>
+				<action function="page">tools</action>
+			</button>
+
+			<button style="main_button">
+				<placement x="%menu_x2%" y="%row9a_y%"/>
+				<text>{@adb_sideload_btn=ADB Sideload}</text>
+				<action function="page">sideload</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="tw_show_dumlock" var2="1"/>
+				<placement x="%menu_x1%" y="%row9a_y%"/>
+				<text>{@dumlock_btn=HTC Dumlock}</text>
+				<action function="page">htcdumlock</action>
+			</button>
+
+			<button style="main_button">
+				<condition var1="tw_has_injecttwrp" var2="1"/>
+				<placement x="%menu_x1%" y="%row9a_y%"/>
+				<text>{@inject_twrp_btn=Inject TWRP}</text>
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=reinjecttwrp</action>
+					<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
+					<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
+					<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="main_button">
+				<placement x="%menu_x1%" y="%row13_y%"/>
+				<text>{@about=About}</text>
+				<action function="page">about</action>
+			</button>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+		
+		<page name="tools">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@tools=Tools}</text>
+			</text>
+			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@br=Batik Recovery}</text>
+			</text>	
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row11_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row15a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row15a_y%"/>
+			</image>
+			
+			<image>
+				<image resource="style"/>
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row15a_y%"/>
+			</image>
+
+			<button style="bn_ramdisk">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row2_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/ramdiskcleaner.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Ramdisk_Cleaner_text=Ramdisk Cleaner will be installed.}</action>
+					<action function="set">tw_text2={@Ramdisk_Cleaner_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_e_hal3">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row2_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/enablehal3.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Enable_HAL3_text=Enable HAL3 will be installed.}</action>
+					<action function="set">tw_text2={@Enable_HAL3_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_d_hal3">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row2_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/disablehal3.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Disable HAL3 will be installed.</action>
+					<action function="set">tw_text2={@Enable_HAL3_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_appdelete">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row6a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/appdel.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@App_Delete_text=App Delete will be installed.}</action>
+					<action function="set">tw_text2={@App_Delete_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_e_navbar">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row6a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/nb.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Navbar will be installed.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_d_navbar">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row6a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/unnb.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Navbar will be uninstalled.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_delsubs">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x1%" y="%row11_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/subs.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=subs overlay remover will be uninstalled.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="bn_lazyflasher">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row11_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/lazyflasher.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Lazy_Flasher_text=Lazy Flasher will be installed.}</action>
+					<action function="set">tw_text2={@Lazy_Flasher_confirm=Try to Lazy Flasher Device?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="bn_reset_pass">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row11_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/rmpass.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Reset_Password_text=Reset Password will be installed.}</action>
+					<action function="set">tw_text2={@Reset_Password_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="bn_fm">
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="aromafm" var2="1"/>
+				<placement x="%bn_x1%" y="%row15a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/aroma.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Aroma will be installed.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="bn_fm">
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="aromafm" var2="0"/>
+				<placement x="%bn_x1%" y="%row15a_y%"/>
+				<action function="page">filemanagerlist</action>
+			</button>
+
+			<button style="bn_i_magisk">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x2%" y="%row15a_y%"/>
+					<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/magisk.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Magisk_text=Magisk will be installed.}</action>
+					<action function="set">tw_text2={@Magisk_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="bn_u_magisk">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%bn_x3%" y="%row15a_y%"/>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/unrootmagisk.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Unroot_Magisk_text=Unroot Magisk will be installed.}</action>
+					<action function="set">tw_text2={@Unroot_Magisk_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1%" y="%row5_y%"/>
+				<text>{@Ramdisk_Cleaner_btn=Ramdisk Cleaner}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row5_y%"/>
+				<text>{@Enable_HAL3_btn=Enabled HAL3}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row5_y%"/>
+				<text>Disable HAL3</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1%" y="%row9a_y%"/>
+				<text>{@App_Delete_btn=App Delete}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row9a_y%"/>
+				<text>Enable Navbar</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row9a_y%"/>
+				<text>Disable Navbar</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x1%" y="%row14_y%"/>
+				<text>Del Subs Overlay</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row14_y%"/>
+				<text>{@Lazy_Flasher_btn=Lazy Flasher}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row14_y%"/>
+				<text>{@Reset_Password_btn=Reset Password}</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="aromafm" var2="1"/>
+				<placement x="%tx_x1%" y="%row18a_y%"/>
+				<text>Aroma FM</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="aromafm" var2="0"/>
+				<placement x="%tx_x1%" y="%row18a_y%"/>
+				<text>File Manager</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x2%" y="%row18a_y%"/>
+				<text>Root Magisk</text>
+			</button>
+			
+			<button style="text_tx">
+				<condition var1="iconstyle" var2="1"/>
+				<placement x="%tx_x3%" y="%row18a_y%"/>
+				<text>{@Unroot_Magisk_btn=Unroot Magisk}</text>
+			</button>
+			
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row2a_y%"/>
+				<text>{@Ramdisk_Cleaner_btn=Ramdisk Cleaner}</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/ramdiskcleaner.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Ramdisk_Cleaner_text=Ramdisk Cleaner will be installed.}</action>
+					<action function="set">tw_text2={@Ramdisk_Cleaner_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<condition var1="tw_has_data_media" var2="1"/>
+				<placement x="%menu_x2%" y="%row2a_y%"/>
+				<text>{@Enable_HAL3_btn=Enabled HAL3}</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/enablehal3.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Enable_HAL3_text=Enable HAL3 will be installed.}</action>
+					<action function="set">tw_text2={@Enable_HAL3_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<condition var1="tw_allow_partition_sdcard" var2="1"/>
+				<placement x="%menu_x1%" y="%row6_y%"/>
+				<text>Disable HAL3</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/disablehal3.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Disable HAL3 will be installed.</action>
+					<action function="set">tw_text2={@Enable_HAL3_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x2%" y="%row6_y%"/>
+				<text>{@App_Delete_btn=App Delete}</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/appdel.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@App_Delete_text=App Delete will be installed.}</action>
+					<action function="set">tw_text2={@App_Delete_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row9a_y%"/>
+				<text>Enable Navbar</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/nb.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Navbar will be installed.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x2%" y="%row9a_y%"/>
+				<text>Disable Navbar</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/unnb.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Navbar will be uninstalled.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row13_y%"/>
+				<text>Del Subs Overlay</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools2/subs.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=subs overlay remover will be uninstalled.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x2%" y="%row13_y%"/>
+				<text>{@Lazy_Flasher_btn=Lazy Flasher}</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/lazyflasher.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Lazy_Flasher_text=Lazy Flasher will be installed.}</action>
+					<action function="set">tw_text2={@Lazy_Flasher_confirm=Try to Lazy Flasher Device?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row16a_y%"/>
+				<text>{@Reset_Password_btn=Reset Password}</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/rmpass.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Reset_Password_text=Reset Password will be installed.}</action>
+					<action function="set">tw_text2={@Reset_Password_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<condition var1="aromafm" var2="1"/>
+				<placement x="%menu_x2%" y="%row16a_y%"/>
+				<text>Aroma FM</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/aroma.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1=Aroma will be installed.</action>
+					<action function="set">tw_text2=Try to install it?</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<condition var1="aromafm" var2="0"/>
+				<placement x="%menu_x2%" y="%row16a_y%"/>
+				<text>File Manager</text>
+				<action function="page">filemanagerlist</action>
+			</button>
+			
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x1%" y="%row20_y%"/>
+				<text>Root Magisk</text>
+					<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/magisk.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Magisk_text=Magisk will be installed.}</action>
+					<action function="set">tw_text2={@Magisk_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+			
+			<button style="main_button">
+				<condition var1="iconstyle" var2="0"/>
+				<placement x="%menu_x2%" y="%row20_y%"/>
+				<text>{@Unroot_Magisk_btn=Unroot Magisk}</text>
+				<actions>
+					<action function="set">tw_back=tools</action>
+					<action function="set">tw_filename=/sdcard/batik/tools1/unrootmagisk.zip</action>
+					<action function="set">tw_action=queuezip</action>
+					<action function="set">tw_has_action2=1</action>
+					<action function="set">tw_action2=flash</action>
+					<action function="set">tw_action2_param=flash_zip</action>
+					<action function="set">tw_text1={@Unroot_Magisk_text=Unroot Magisk will be installed.}</action>
+					<action function="set">tw_text2={@Unroot_Magisk_confirm=Try to install it?}</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<template name="advanced"/>
+			
 		</page>
 
 		<page name="partsdcardsel">
@@ -3567,10 +5069,7 @@
 				<action function="page">main</action>
 			</action>
 
-			<action>
-				<touch key="back"/>
-				<action function="page">advanced</action>
-			</action>
+			<template name="advanced"/>
 		</page>
 
 		<page name="partsdcardcheck">
@@ -3709,6 +5208,242 @@
 				</actions>
 			</action>
 		</page>
+		
+		<page name="about">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@about=about}</text>
+			</text>
+			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@br=Batik Recovery}</text>
+			</text>
+			
+			<text style="text_l">
+				<placement x="%menu_x1%" y="%row2_y%"/>
+				<text>* {@overview=Overview}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row3a_y%" placement="5"/>
+				<text>{@overview_text_1=Batik Recovery is Recovery Project Developed by Batik Recovery}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row4a_y%" placement="5"/>
+				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP}</text>
+			</text>
+			
+			<text style="text_l">
+				<placement x="%menu_x1%" y="%row6_y%"/>
+				<text>* {@info=Info}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%menu_x1%" y="%row7a_y%"/>
+				<text>{@author=Author}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%info_x2%" y="%row7a_y%"/>
+				<text>:   ZHANtech™</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%menu_x1%" y="%row8a_y%"/>
+				<text>{@contact=Contact}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%info_x2%" y="%row8a_y%"/>
+				<text>:   @zhantech (Telegram)</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%menu_x1%" y="%row9a_y%"/>
+				<text>{@maintainer=Maintainer}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%info_x2%" y="%row9a_y%"/>
+				<text>:   ZHANtech™</text>
+			</text>
+
+			
+			<text style="text_l">
+				<placement x="%menu_x1%" y="%row11_y%"/>
+				<text>* {@credit=Credit}</text>
+			</text>
+			
+		<listbox style="about">
+			<placement x="%menu_x1%" y="%row12a_y%" w="950" h="180"/>
+				<listitem name="Github for source code"/>
+				<listitem name="Teamwin Recovery Project"/>
+				<listitem name="Dark Recovery"/>
+				<listitem name="Pitchblack Recovery Project"/>
+				<listitem name="Orangefox Recovery Project"/>
+				<listitem name="SuperSu by Chainfire"/>
+				<listitem name="Magisk for topjohnwu"/>
+				<listitem name="Lazyflasher by jcadduono"/>
+				<listitem name="Cam2API Enabler(HAL3) by helmiau"/>
+				<listitem name="Password Remover by Magua"/>
+				<listitem name="Aroma File Manager by amarullz"/>
+				<listitem name="App Deleter by THE_pirate_predator"/>
+		</listbox>
+		
+			<text style="text_l">
+				<placement x="%menu_x1%" y="%row16_y%"/>
+				<text>* {@thanksto=Thanks To}</text>
+			</text>
+			
+		<listbox style="about">
+			<placement x="%menu_x1%" y="%row17a_y%" w="950" h="180"/>
+				<listitem name="Allah Ta'ala"/>
+				<listitem name="Rasulullah"/>
+				<listitem name="My Family"/>
+				<listitem name="Reza Adi"/>
+				<listitem name="Mr Yacha"/>
+				<listitem name="Muhajaya"/>
+				<listitem name="Vickry"/>
+				<listitem name="Ahmad-farid007"/>
+				<listitem name="Rivv"/>
+				<listitem name="Rizak"/>
+				<listitem name="#nTu21"/>
+				<listitem name="Costa Nostra"/>
+				<listitem name="ali_tea"/>
+				<listitem name="Helmi Amirudin"/>
+		</listbox>
+		
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row21_y%"/>
+				<text>{@br_next=NEXT}</text>
+				<action function="page">about2</action>
+			</button>
+			
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+			
+			<button>
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="tw_samsung_navbar" var2="0"/>
+				<fill color="%transparent%"/>
+				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">main</action>
+			</button>
+			
+			<button>
+				<condition var1="iconstyle" var2="0"/>
+				<condition var1="tw_samsung_navbar" var2="0"/>
+				<fill color="%transparent%"/>
+				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">advanced2</action>
+			</button>
+	
+			<button>
+				<condition var1="iconstyle" var2="1"/>
+				<condition var1="tw_samsung_navbar" var2="1"/>
+				<fill color="%transparent%"/>
+				<placement x="center_x" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">main</action>
+			</button>
+			
+			<button>
+				<condition var1="iconstyle" var2="0"/>
+				<condition var1="tw_samsung_navbar" var2="1"/>
+				<fill color="%transparent%"/>
+				<placement x="center_x" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">advanced2</action>
+			</button>
+			
+		</page>
+		
+		<page name="about2">
+			<template name="page"/>
+			
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@about=about}</text>
+			</text>
+			
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@br=Batik Recovery}</text>
+			</text>
+			
+			<text style="text_l">
+				<placement x="%menu_x1%" y="%row2_y%"/>
+				<text>* {@changelog=Changelog}</text>
+			</text>
+			
+		<listbox style="about">
+			<placement x="%menu_x1%" y="%row3a_y%" w="950" h="450"/>
+				<listitem name="~ Alpha-01 ~"/>
+				<listitem name="Initial Build"/>
+				<listitem name=""/>
+				<listitem name="~ Alpha-02 ~"/>
+				<listitem name="Add Fitured"/>
+				<listitem name=""/>
+				<listitem name="~ B v1.1 ~"/>
+				<listitem name="Upstreamed base TWRP 3.2.3-0"/>
+				<listitem name="Update Batik Theme v1.1"/>
+				<listitem name="Update Magisk 16.71"/>
+				<listitem name="Add Indonesia, Sunda Language"/>
+				<listitem name=""/>
+				<listitem name="~ B 1.2 ~"/>
+				<listitem name="Overlay Reboot Menu"/>
+				<listitem name="Add some icon style"/>
+				<listitem name="Update Magisk 17.1"/>
+				<listitem name="Add Jowo Language"/>
+				<listitem name="Full Backup / Restore Partition"/>
+				<listitem name="Further ensure TWRP is not replaced by stock recovery"/>
+		</listbox>
+		
+			<text style="text_l">
+				<placement x="%menu_x1%" y="%row12_y%"/>
+				<text>* {@donation=Donation}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row13a_y%" placement="5"/>
+				<text>{@donation_text_1=If you feel satisfied with this Batik Recovery and want to}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row14a_y%" placement="5"/>
+				<text>{@donation_text_2=support Batik Recovery so that it can develop, please donate}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row15a_y%" placement="5"/>
+				<text>{@donation_text_3=as much as possible via a BRI account with an account number}</text>
+			</text>
+			
+			<text style="text_s">
+				<placement x="%center_x%" y="%row16a_y%" placement="5"/>
+				<text>{@donation_text_4="3112-01-019706-53-4" on behalf of "Muhammad Rifa'i Aziz"}</text>
+			</text>
+			
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row21_y%"/>
+				<text>{@br_prev=PREV}</text>
+				<action function="page">about</action>
+			</button>			
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">about</action>
+			</action>
+		</page>
 
 		<page name="htcdumlock">
 			<template name="page"/>
@@ -3777,17 +5512,30 @@
 		</page>
 
 		<page name="lock">
-			<background color="%semi_transparent%"/>
+			<background color="%background_color%"/>
+
+			<text color="%text_color%">
+				<font resource="font_b"/>
+				<placement x="%center_x%" y="%row7_y%" placement="4"/>
+				<text>%tw_time%</text>
+			</text>
+
+			<text color="%text_color%">
+				<font resource="font_s"/>
+				<placement x="%center_x%" y="%row11a_y%" placement="4"/>
+				<text>CPU: %tw_cpu_temp% °C   -   Battery: %tw_battery%</text>
+			</text>
 
 			<image>
 				<image resource="unlock_icon"/>
-				<placement x="%center_x%" y="%row10_y%" placement="4"/>
+				<placement x="%unlock%" y="%row11a_y%"/>
 			</image>
 
-			<slider>
-				<text>{@swipe_to_unlock=Swipe to Unlock}</text>
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row14_y%" placement="4"/>
+				<text>{@unlock=UNLOCK}</text>
 				<action function="overlay"/>
-			</slider>
+			</button>
 
 			<action>
 				<touch key="power"/>
@@ -3841,10 +5589,19 @@
 				<action function="page">main</action>
 			</action>
 
-			<action>
-				<touch key="back"/>
-				<action function="page">advanced</action>
-			</action>
+			<button>
+				<condition var1="iconstyle" var2="1"/>
+				<fill color="%transparent%"/>
+				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">tools</action>
+			</button>
+			
+			<button>
+				<condition var1="iconstyle" var2="0"/>
+				<fill color="%transparent%"/>
+				<placement x="50" y="%navbar_y1%" w="450" h="150" placement="4"/>
+				<action function="page">tools</action>
+			</button>
 
 			<action>
 				<condition var1="tw_filename1" op="modified"/>
@@ -4590,14 +6347,8 @@
 					<action function="page">main</action>
 				</actions>
 			</action>
-
-			<action>
-				<touch key="back"/>
-				<actions>
-					<action function="set">tw_hide_kb=0</action>
-					<action function="page">advanced</action>
-				</actions>
-			</action>
+			
+			<template name="advanced"/>		
 
 			<action>
 				<touch key="power+voldown" />
@@ -4650,10 +6401,8 @@
 				<action function="page">main</action>
 			</action>
 
-			<action>
-				<touch key="back"/>
-				<action function="page">advanced</action>
-			</action>
+			<template name="advanced"/>		
+			
 		</page>
 
 		<page name="fixcontexts">
@@ -4702,36 +6451,37 @@
 				<action function="page">main</action>
 			</action>
 
-			<action>
-				<touch key="back"/>
-				<action function="page">advanced</action>
-			</action>
+			<template name="advanced"/>		
 		</page>
-
+		
 		<page name="slideout">
-			<fill color="%background_color%">
-				<placement x="0" y="%row2_header_y%" w="%screen_width%" h="%slideout_bg_height%"/>
-			</fill>
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@console=Console}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@br=Batik Recovery}</text>
+			</text>
 
 			<console>
-				<placement x="%indent%" y="%row3_header_y%" w="%content_width%" h="%slideout_height%"/>
+				<placement x="%indent%" y="%row1a_y%" w="%content_width%" h="%slideout_height%"/>
 			</console>
-
+			
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+			
 			<button>
 				<fill color="%transparent%"/>
 				<placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%"/>
 				<action function="overlay"/>
 			</button>
-
-			<action>
-				<touch key="power"/>
-				<action function="togglebacklight"/>
-			</action>
-
-			<action>
-				<touch key="power+voldown"/>
-				<action function="screenshot"/>
-			</action>
+					
 		</page>
 
 		<page name="select_storage">

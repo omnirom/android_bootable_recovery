@@ -13,8 +13,8 @@
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System Image</string>
-		<string name="vendor">Vendor</string>
-		<string name="vendor_image">Vendor Image</string>
+		<string name="vendor">Cust/Vendor</string>
+		<string name="vendor_image">Cust/Vendor Image</string>
 		<string name="boot">Boot</string>
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
@@ -687,5 +687,76 @@
 		<string name="include_kernel_log">Include Kernel Log</string>
 		<string name="sha2_chk">Use SHA2 for hashing</string>
 		<string name="unable_set_boot_slot">Error changing bootloader boot slot to {1}</string>
+		<!-- New Included String -->
+		<string name="about">About</string>	
+		<string name="changelog">Changelog</string>
+		<string name="tools">Tools</string>
+		<string name="overview">Overview</string>
+		<string name="infocredit">Info and Credit</string>
+		<string name="info">Info</string>
+		<string name="credit">Credit</string>		
+		<string name="thanksto">Thanks To</string>
+		<string name="donation">Donation</string>
+		<string name="overview_text_1">Batik Recovery is Recovery Project Developed by Batik Recovery</string>
+		<string name="overview_text_2">Teamwork from Indonesia. Batik Recovery base TWRP %tw_version%</string>				
+		<string name="author">Author</string>	
+		<string name="contact">Contact</string>
+		<string name="maintainer">Maintainer</string>	
+		<string name="menu">Menu</string>
+		<string name="donation_text_1">If you feel satisfied with this Batik Recovery and want to</string>
+		<string name="donation_text_2">support Batik Recovery so that it can develop, please donate</string>
+		<string name="donation_text_3">as much as possible via a BRI account with an account number</string>
+		<string name="donation_text_4">"3112-01-019706-53-4" on behalf of "Muhammad Rifa'i Aziz"</string>
+		
+		<!--mod tools-->
+		<string name="SuperSU_btn">SuperSU</string>
+		<string name="SuperSU_text">SuperSU will be installed.</string>
+		<string name="SuperSU_confirm">Try to install it?</string>
+		<string name="Lazy_Flasher_btn">Lazy Flasher</string>
+		<string name="Lazy_Flasher_text">Lazy Flasher will be installed.</string>
+		<string name="Lazy_Flasher_confirm">Try to install it?</string>
+		<string name="Unroot_SuperSU_btn">Unroot SuperSU</string>
+		<string name="Unroot_SuperSU_text">Unroot SuperSU will be installed.</string>
+		<string name="Unroot_SuperSU_confirm">Try to install it?</string>
+		<string name="Magisk_btn">Magisk</string>
+		<string name="Magisk_text">Magisk will be installed.</string>
+		<string name="Magisk_confirm">Try to install it?</string>
+		<string name="Unroot_Magisk_btn">Unroot Magisk</string>
+		<string name="Unroot_Magisk_text">Unroot Magisk will be installed.</string>
+		<string name="Unroot_Magisk_confirm">Try to install it?</string>
+		<string name="Reset_Password_btn">Reset Password</string>
+		<string name="Reset_Password_text">Reset Password will be installed.</string>
+		<string name="Reset_Password_confirm">Try to install it?</string>
+		
+		<!--mod tools2-->
+		<string name="Enable_HAL3_btn">Enable HAL3</string>
+		<string name="Enable_HAL3_text">Enable HAL3 will be installed.</string>
+		<string name="Enable_HAL3_confirm">Try to install it?</string>
+		<string name="App_Delete_btn">App Delete</string>
+		<string name="App_Delete_text">App Delete will be installed.</string>
+		<string name="App_Delete_confirm">Try to install it?</string>
+		<string name="Ramdisk_Cleaner_btn">Ramdisk Cleaner</string>
+		<string name="Ramdisk_Cleaner_text">Ramdisk Cleaner will be installed.</string>
+		<string name="Ramdisk_Cleaner_confirm">Try to install it?</string>
+		
+		<!-- New Included String2 -->
+		<string name="storage">Internal Storage</string>
+		<string name="sdcard1">Micro SD</string>
+		<string name="usb-otg">USB OTG</string>
+		<string name="use_aromafm">Use Aroma File Manager</string>
+		<string name="br_next">NEXT</string>
+		<string name="br_prev">PREV</string>
+		<string name="br">Batik Recovery</string>
+		<string name="console">Console</string>
+		<string name="unlock">UNLOCK</string>
+		<string name="more_features">More Features</string>
+		
+		<!-- Welcome -->
+		<string name="batik_msg1">**************************</string>
+		<string name="batik_msg2">[BATIK]: Welcome!</string>
+		<string name="batik_msg3">[VERSION]: {1}</string>
+		<string name="batik_msg4">[BUILD]: {1}</string>
+		<string name="batik_msg5">**************************</string>
+		
 	</resources>
 </language>
