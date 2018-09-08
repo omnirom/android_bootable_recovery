@@ -157,7 +157,7 @@
 #include <string>
 #include <unistd.h>
 static const std::string batik_Tmp = "/tmp";
-static const std::string batik_tmp_dir = batik_Tmp + "/batik"
+static const std::string batik_tmp_dir = batik_Tmp + "/batik";
 
 // Also used:
 //   tw_boot_is_mountable
