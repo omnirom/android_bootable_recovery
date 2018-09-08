@@ -20,6 +20,10 @@
 #define TW_MAIN_VERSION_STR       "3.2.3"
 #define TW_VERSION_STR TW_MAIN_VERSION_STR TW_DEVICE_VERSION
 
+#ifdef BR_OFFICIAL
+#define TW_DEVICE_VERSION	   "OFFICIAL"
+#endif
+
 #define BR_BUILD                "B 1.2"
 #define BR_DEVICE               BR_DEVICE_MODEL
 #define BR_MAINTAINER_STR       "br_maintainer"
