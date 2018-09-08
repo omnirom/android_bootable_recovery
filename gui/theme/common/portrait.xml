@@ -390,7 +390,7 @@
 			<text style="text_s">
 				<condition var1="iconstyle" var2="1"/>
 				<placement x="%center_x%" y="%row21a_y%" placement="5"/>
-				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP %TW_MAIN_VERSION_STR%}</text>
+				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP}</text>
 			</text>
 			
 			<fill color="%text_color%">
@@ -5234,7 +5234,7 @@
 			
 			<text style="text_s">
 				<placement x="%center_x%" y="%row4a_y%" placement="5"/>
-				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP %TW_MAIN_VERSION_STR%}</text>
+				<text>{@overview_text_2=Teamwork from Indonesia. Batik Recovery base TWRP}</text>
 			</text>
 			
 			<text style="text_l">
