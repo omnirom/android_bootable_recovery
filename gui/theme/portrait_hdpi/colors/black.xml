@@ -1,0 +1,11 @@
+ <?xml version="1.0"?>
+<recovery>
+	<details>
+		<resolution width="1080" height="1920"/>
+		<author>Batik</author>
+		<title>Batik Color</title>
+	</details>
+	<variables>
+		<variable name="accent" value="#000000"/>
+	</variables>
+</recovery>
