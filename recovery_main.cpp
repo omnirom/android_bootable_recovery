@@ -305,11 +305,6 @@ static void redirect_stdio(const char* filename) {
   }
 }
 
-static bool SetUsbConfig(const std::string& state) {
-  android::base::SetProperty("sys.usb.config", state);
-  return android::base::WaitForProperty("sys.usb.state", state);
-}
-
 int main(int argc, char** argv) {
   // We don't have logcat yet under recovery; so we'll print error on screen and log to stdout
   // (which is redirected to recovery.log) as we used to do.

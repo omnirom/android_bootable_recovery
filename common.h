@@ -44,4 +44,5 @@ void ui_print(const char* format, ...) __printflike(1, 2);
 
 bool is_ro_debuggable();
 
+bool SetUsbConfig(const std::string& state);
 #endif  // RECOVERY_COMMON_H
