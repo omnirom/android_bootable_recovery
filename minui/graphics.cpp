@@ -342,7 +342,7 @@ void gr_flip() {
 
 int gr_init() {
   // pixel_format needs to be set before loading any resources or initializing backends.
-  std::string format = android::base::GetProperty("ro.recovery.ui.pixel_format", "");
+  std::string format = android::base::GetProperty("ro.minui.pixel_format", "");
   if (format == "ABGR_8888") {
     pixel_format = PixelFormat::ABGR;
   } else if (format == "RGBX_8888") {
@@ -378,7 +378,7 @@ int gr_init() {
 
   gr_backend = backend.release();
 
-  int overscan_percent = android::base::GetIntProperty("ro.recovery.ui.overscan_percent", 0);
+  int overscan_percent = android::base::GetIntProperty("ro.minui.overscan_percent", 0);
   overscan_offset_x = gr_draw->width * overscan_percent / 100;
   overscan_offset_y = gr_draw->height * overscan_percent / 100;
 
@@ -390,7 +390,7 @@ int gr_init() {
   }
 
   std::string rotation_str =
-      android::base::GetProperty("ro.recovery.ui.default_rotation", "ROTATION_NONE");
+      android::base::GetProperty("ro.minui.default_rotation", "ROTATION_NONE");
   if (rotation_str == "ROTATION_RIGHT") {
     gr_rotate(GRRotation::RIGHT);
   } else if (rotation_str == "ROTATION_DOWN") {
