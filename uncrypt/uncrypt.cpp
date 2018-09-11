@@ -300,7 +300,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     int head_block = 0;
     int head = 0, tail = 0;
 
-    android::base::unique_fd fd(open(path, O_RDONLY));
+    android::base::unique_fd fd(open(path, O_RDWR));
     if (fd == -1) {
         PLOG(ERROR) << "failed to open " << path << " for reading";
         return kUncryptFileOpenError;
