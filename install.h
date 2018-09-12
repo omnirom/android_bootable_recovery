@@ -23,8 +23,15 @@
 
 #include <ziparchive/zip_archive.h>
 
-enum { INSTALL_SUCCESS, INSTALL_ERROR, INSTALL_CORRUPT, INSTALL_NONE, INSTALL_SKIPPED,
-        INSTALL_RETRY };
+enum InstallResult {
+  INSTALL_SUCCESS,
+  INSTALL_ERROR,
+  INSTALL_CORRUPT,
+  INSTALL_NONE,
+  INSTALL_SKIPPED,
+  INSTALL_RETRY,
+  INSTALL_KEY_INTERRUPTED
+};
 
 // Installs the given update package. If INSTALL_SUCCESS is returned and *wipe_cache is true on
 // exit, caller should wipe the cache partition.
