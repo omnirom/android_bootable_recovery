@@ -394,7 +394,7 @@ static bool wipe_data(Device* device) {
     return success;
 }
 
-static bool prompt_and_wipe_data(Device* device) {
+static InstallResult prompt_and_wipe_data(Device* device) {
   // Use a single string and let ScreenRecoveryUI handles the wrapping.
   std::vector<std::string> headers{
     "Can't load Android system. Your data may be corrupt. "
@@ -415,13 +415,17 @@ static bool prompt_and_wipe_data(Device* device) {
 
     // If ShowMenu() returned RecoveryUI::KeyError::INTERRUPTED, WaitKey() was interrupted.
     if (chosen_item == static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED)) {
-      return false;
+      return INSTALL_KEY_INTERRUPTED;
     }
     if (chosen_item != 1) {
-      return true;  // Just reboot, no wipe; not a failure, user asked for it
+      return INSTALL_SUCCESS;  // Just reboot, no wipe; not a failure, user asked for it
     }
     if (ask_to_wipe_data(device)) {
-      return wipe_data(device);
+      if (wipe_data(device)) {
+        return INSTALL_SUCCESS;
+      } else {
+        return INSTALL_ERROR;
+      }
     }
   }
 }
@@ -1194,10 +1198,10 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   } else if (should_prompt_and_wipe_data) {
     ui->ShowText(true);
     ui->SetBackground(RecoveryUI::ERROR);
-    if (!prompt_and_wipe_data(device)) {
-      status = INSTALL_ERROR;
+    status = prompt_and_wipe_data(device);
+    if (status != INSTALL_KEY_INTERRUPTED) {
+      ui->ShowText(false);
     }
-    ui->ShowText(false);
   } else if (should_wipe_cache) {
     if (!wipe_cache(false, device)) {
       status = INSTALL_ERROR;
