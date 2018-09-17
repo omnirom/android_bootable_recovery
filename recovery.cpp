@@ -1196,6 +1196,9 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
       status = INSTALL_ERROR;
     }
   } else if (should_prompt_and_wipe_data) {
+    // Trigger the logging to capture the cause, even if user chooses to not wipe data.
+    modified_flash = true;
+
     ui->ShowText(true);
     ui->SetBackground(RecoveryUI::ERROR);
     status = prompt_and_wipe_data(device);
