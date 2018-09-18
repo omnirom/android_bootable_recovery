@@ -425,6 +425,10 @@ int main(int argc, char** argv) {
     device->RemoveMenuItemForAction(Device::WIPE_CACHE);
   }
 
+  if (!android::base::GetBoolProperty("ro.boot.logical_partitions", false)) {
+    device->RemoveMenuItemForAction(Device::ENTER_FASTBOOT);
+  }
+
   ui->SetBackground(RecoveryUI::NONE);
   if (show_text) ui->ShowText(true);
 
