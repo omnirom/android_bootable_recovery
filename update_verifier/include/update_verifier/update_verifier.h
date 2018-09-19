@@ -16,17 +16,45 @@
 
 #pragma once
 
+#include <map>
 #include <string>
+#include <vector>
 
-int update_verifier(int argc, char** argv);
+#include "otautil/rangeset.h"
 
-// Returns true to indicate a passing verification (or the error should be ignored); Otherwise
-// returns false on fatal errors, where we should reject the current boot and trigger a fallback.
-// This function tries to process the care_map.txt as protobuf message; and falls back to use the
-// plain text format if the parse failed.
-//
+// The update verifier performs verification upon the first boot to a new slot on A/B devices.
+// During the verification, it reads all the blocks in the care_map. And if a failure happens,
+// it rejects the current boot and triggers a fallback.
+
 // Note that update_verifier should be backward compatible to not reject care_map.txt from old
 // releases, which could otherwise fail to boot into the new release. For example, we've changed
 // the care_map format between N and O. An O update_verifier would fail to work with N care_map.txt.
 // This could be a result of sideloading an O OTA while the device having a pending N update.
-bool verify_image(const std::string& care_map_name);
+int update_verifier(int argc, char** argv);
+
+// The UpdateVerifier parses the content in the care map, and continues to verify the
+// partitions by reading the cared blocks if there's no format error in the file. Otherwise,
+// it should skip the verification to avoid bricking the device.
+class UpdateVerifier {
+ public:
+  // This function tries to process the care_map.pb as protobuf message; and falls back to use
+  // care_map.txt if the pb format file doesn't exist. If the parsing succeeds, put the result of
+  // the pair <partition_name, ranges> into the |partition_map_|.
+  bool ParseCareMap(const std::string& file_name = "");
+
+  // Verifies the new boot by reading all the cared blocks for partitions in |partition_map_|.
+  bool VerifyPartitions();
+
+ private:
+  // Parses the legacy care_map.txt in plain text format.
+  bool ParseCareMapPlainText(const std::string& content);
+
+  // Finds all the dm-enabled partitions, and returns a map of <partition_name, block_device>.
+  std::map<std::string, std::string> FindDmPartitions();
+
+  // Returns true if we successfully read the blocks in |ranges| of the |dm_block_device|.
+  bool ReadBlocks(const std::string partition_name, const std::string& dm_block_device,
+                  const RangeSet& ranges);
+
+  std::map<std::string, RangeSet> partition_map_;
+};
