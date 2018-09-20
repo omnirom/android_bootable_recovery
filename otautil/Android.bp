@@ -41,6 +41,7 @@ cc_library_static {
             srcs: [
                 "dirutil.cpp",
                 "mounts.cpp",
+                "parse_install_logs.cpp",
                 "sysutil.cpp",
                 "thermalutil.cpp",
             ],
