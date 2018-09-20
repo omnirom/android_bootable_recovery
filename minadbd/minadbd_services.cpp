@@ -33,19 +33,20 @@
 #include "sysdeps.h"
 
 static void sideload_host_service(unique_fd sfd, const std::string& args) {
-    int file_size;
-    int block_size;
-    if (sscanf(args.c_str(), "%d:%d", &file_size, &block_size) != 2) {
-        printf("bad sideload-host arguments: %s\n", args.c_str());
-        exit(1);
-    }
+  int64_t file_size;
+  int block_size;
+  if ((sscanf(args.c_str(), "%" SCNd64 ":%d", &file_size, &block_size) != 2) || file_size <= 0 ||
+      block_size <= 0) {
+    printf("bad sideload-host arguments: %s\n", args.c_str());
+    exit(1);
+  }
 
-    printf("sideload-host file size %d block size %d\n", file_size, block_size);
+  printf("sideload-host file size %" PRId64 " block size %d\n", file_size, block_size);
 
-    int result = run_adb_fuse(sfd, file_size, block_size);
+  int result = run_adb_fuse(sfd, file_size, block_size);
 
-    printf("sideload_host finished\n");
-    exit(result == 0 ? 0 : 1);
+  printf("sideload_host finished\n");
+  exit(result == 0 ? 0 : 1);
 }
 
 unique_fd daemon_service_to_fd(const char* name, atransport* /* transport */) {
