@@ -71,10 +71,13 @@ LOCAL_REQUIRED_MODULES += \
 endif
 endif
 
+# On A/B devices recovery-persist reads the recovery related file from the persist storage and
+# copies them into /data/misc/recovery. Then, for both A/B and non-A/B devices, recovery-persist
+# parses the last_install file and reports the embedded update metrics. Also, the last_install file
+# will be deteleted after the report.
+LOCAL_REQUIRED_MODULES += recovery-persist
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
-LOCAL_REQUIRED_MODULES += \
-    recovery-persist \
-    recovery-refresh
+LOCAL_REQUIRED_MODULES += recovery-refresh
 endif
 
 include $(BUILD_PHONY_PACKAGE)
