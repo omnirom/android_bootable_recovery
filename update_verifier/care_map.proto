@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 
-package UpdateVerifier;
+package recovery_update_verifier;
 option optimize_for = LITE_RUNTIME;
 
 message CareMap {
