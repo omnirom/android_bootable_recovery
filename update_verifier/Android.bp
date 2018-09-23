@@ -15,9 +15,8 @@
 cc_defaults {
     name: "update_verifier_defaults",
 
-    cflags: [
-        "-Wall",
-        "-Werror",
+    defaults: [
+        "recovery_defaults",
     ],
 
     local_include_dirs: [
