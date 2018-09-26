@@ -346,7 +346,9 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
     endif
 endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libclang_rt.ubsan_standalone-aarch64-android.so
+    ifeq ($(TARGET_ARCH), arm64)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libclang_rt.ubsan_standalone-aarch64-android.so
+    endif
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/liblogwrap.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_misc.so
 endif
