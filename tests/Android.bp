@@ -45,7 +45,7 @@ cc_defaults {
             static_libs: [
                 "libutils",
             ],
-        },
+        }
     },
 }
 
@@ -93,7 +93,6 @@ librecovery_static_libs = [
     "libhidlbase",
     "libhidltransport",
     "libhwbinder",
-    "libbinderthreadstate",
     "libvndksupport",
     "libtinyxml2",
 ]
