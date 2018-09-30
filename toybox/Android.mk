@@ -216,18 +216,27 @@ LOCAL_SRC_FILES += \
     toys/pending/telnet.c \
     toys/pending/test.c \
     toys/pending/watch.c \
-    toys/pending/xzcat.c \
     toys/posix/ps.c \
     toys/posix/ulimit.c
-
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 27; echo $$?),0)
+LOCAL_SRC_FILES += \
+    toys/pending/xzcat.c
+endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -eq 26; echo $$?),0)
 # Android 8.0 had some tools in different paths
 LOCAL_SRC_FILES += \
-    toys/pending/dmesg.c \
+    toys/pending/dmesg.c
+else
+LOCAL_SRC_FILES += \
+    toys/lsb/dmesg.c
+endif
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
+# Android 8.0/8.1 had some tools in different paths
+LOCAL_SRC_FILES += \
     toys/net/ftpget.c
 else
 LOCAL_SRC_FILES += \
-    toys/lsb/dmesg.c \
     toys/pending/ftpget.c
 endif
 
@@ -238,7 +247,6 @@ LOCAL_SRC_FILES += \
     toys/android/sendevent.c \
     toys/android/start.c \
     toys/net/ifconfig.c \
-    toys/net/microcom.c \
     toys/net/netcat.c \
     toys/net/netstat.c \
     toys/net/rfkill.c \
@@ -265,13 +273,21 @@ LOCAL_SRC_FILES += \
     toys/net/netstat.c \
     toys/net/rfkill.c \
     toys/net/tunctl.c \
-    toys/pending/chrt.c \
     toys/pending/getfattr.c \
     toys/pending/modprobe.c \
     toys/pending/setfattr.c \
     toys/posix/file.c \
     toys/posix/uudecode.c \
     toys/posix/uuencode.c
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 26; echo $$?),0)
+# Android 8.1 had some tools in different paths
+LOCAL_SRC_FILES += \
+    toys/other/chrt.c \
+    toys/pending/gzip.c
+else
+LOCAL_SRC_FILES += \
+    toys/pending/chrt.c
+endif
 LOCAL_SHARED_LIBRARIES += liblog
 else
 LOCAL_SRC_FILES += \
@@ -305,12 +321,20 @@ LOCAL_CFLAGS += \
     -ffunction-sections -fdata-sections \
     -fno-asynchronous-unwind-tables \
 
-toybox_version := $(shell git -C $(LOCAL_PATH) rev-parse --short=12 HEAD 2>/dev/null)-android
-LOCAL_CFLAGS += -DTOYBOX_VERSION='"$(toybox_version)"'
+toybox_version := $(shell sed 's/#define.*TOYBOX_VERSION.*"\(.*\)"/\1/p;d' $(LOCAL_PATH)/main.c)
+LOCAL_CFLAGS += -DTOYBOX_VERSION=\"$(toybox_version)\"
 
 LOCAL_CLANG := true
 
 LOCAL_SHARED_LIBRARIES += libcutils libselinux
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 26; echo $$?),0)
+LOCAL_CFLAGS += \
+    -Wno-gnu-variable-sized-type-not-at-end \
+    -Wno-missing-field-initializers
+
+LOCAL_SHARED_LIBRARIES += libz
+endif
 
 LOCAL_MODULE := toybox_recovery
 LOCAL_MODULE_STEM := toybox
@@ -499,11 +523,17 @@ ALL_TOOLS += \
     uptime \
     vconfig \
     watch \
-    xxd \
+    xxd
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 27; echo $$?),0)
+ALL_TOOLS += \
     xzcat
+endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 24; echo $$?),0)
 ALL_TOOLS += \
-    du
+    du \
+    gzip \
+    gunzip \
+    zcat
 endif
 # Account for master branch changes pulld into CM14.1
 ifneq ($(CM_BUILD),)

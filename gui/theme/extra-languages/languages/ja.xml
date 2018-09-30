@@ -457,14 +457,7 @@
 		<string name="fixing_contexts">コンテキストの修正中...</string>
 		<string name="fix_contexts_complete">コンテキストを修正しました</string>
 		<string name="reboot_hdr">再起動</string>
-		<string name="su_hdr">SuperSU チェック</string>
-		<string name="su_note1">機器がroot化されていないようです。</string>
-		<string name="su_note2">SuperSU をインストールしますか?</string>
-		<string name="su_note3">機器をroot化します。</string>
-		<string name="su_cancel">インストールしない</string>
-		<string name="swipe_su_to_install">スワイプでインストール</string>
-		<string name="swipe_su_install">   インストール</string>
-		<string name="su_installing">SuperSU のインストール中</string>
+		<string name="install_cancel">インストールしない</string>
 		<string name="sel_storage_list">ストレージの選択</string>
 		<string name="ok_btn">OK</string>
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->

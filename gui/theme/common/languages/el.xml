@@ -17,7 +17,7 @@
         <string name="data_backup">Data (εκτός αποθ. χώρου)</string>
         <string name="sdcard">Κάρτα SD</string>
         <string name="internal">Εσωτερικός χώρος αποθήκευσης</string>
-        <string name="microsd">Micro SDCard</string>
+        <string name="microsd">Κάρτα Micro SD</string>
         <string name="usbotg">USB OTG</string>
         <string name="android_secure">Android secure</string>
         <string name="dalvik">Dalvik / ART Cache</string>
@@ -464,14 +464,7 @@
         <string name="fixing_contexts">Διόρθωση δικαιωμάτων...</string>
         <string name="fix_contexts_complete">Η Διόρθωση δικαιωμάτων ολοκληρώθηκε</string>
         <string name="reboot_hdr">Επανεκκίνηση</string>
-        <string name="su_hdr">Έλεγχος SuperSU</string>
-        <string name="su_note1">Η συσκευή σας δεν φαίνεται να έχει root.</string>
-        <string name="su_note2">Εγκατάσταση SuperSU τώρα;</string>
-        <string name="su_note3">Αυτό κάνει root στην συσκευή σας.</string>
-        <string name="su_cancel">Μην εγκαταστήσετε</string>
-        <string name="swipe_su_to_install">Σύρετε για εγκατάσταση</string>
-        <string name="swipe_su_install">   Εγκατάσταση</string>
-        <string name="su_installing">Εγκατάσταση SuperSU</string>
+        <string name="install_cancel">Μην εγκαταστήσετε</string>
         <string name="sel_storage_list">Επιλέξτε Αποθ. χώρο</string>
         <string name="ok_btn">OΚ</string>
         <string name="no_kernel_selinux">Το Kernel δεν υποστηρίζει την ανάγνωση περιεχομένων SELinux.</string>

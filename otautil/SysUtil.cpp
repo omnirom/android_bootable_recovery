@@ -16,14 +16,12 @@
 
 #include "SysUtil.h"
 
-#include <errno.h>
 #include <fcntl.h>
-#include <stdint.h>
+#include <stdint.h>  // SIZE_MAX
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -32,9 +30,7 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 
-static bool sysMapFD(int fd, MemMapping* pMap) {
-  CHECK(pMap != nullptr);
-
+bool MemMapping::MapFD(int fd) {
   struct stat sb;
   if (fstat(fd, &sb) == -1) {
     PLOG(ERROR) << "fstat(" << fd << ") failed";
@@ -47,50 +43,49 @@ static bool sysMapFD(int fd, MemMapping* pMap) {
     return false;
   }
 
-  pMap->addr = static_cast<unsigned char*>(memPtr);
-  pMap->length = sb.st_size;
-  pMap->ranges.push_back({ memPtr, static_cast<size_t>(sb.st_size) });
+  addr = static_cast<unsigned char*>(memPtr);
+  length = sb.st_size;
+  ranges_.clear();
+  ranges_.emplace_back(MappedRange{ memPtr, static_cast<size_t>(sb.st_size) });
 
   return true;
 }
 
 // A "block map" which looks like this (from uncrypt/uncrypt.cpp):
 //
-//     /dev/block/platform/msm_sdcc.1/by-name/userdata     # block device
-//     49652 4096                        # file size in bytes, block size
-//     3                                 # count of block ranges
-//     1000 1008                         # block range 0
-//     2100 2102                         # ... block range 1
-//     30 33                             # ... block range 2
+//   /dev/block/platform/msm_sdcc.1/by-name/userdata     # block device
+//   49652 4096                                          # file size in bytes, block size
+//   3                                                   # count of block ranges
+//   1000 1008                                           # block range 0
+//   2100 2102                                           # ... block range 1
+//   30 33                                               # ... block range 2
 //
-// Each block range represents a half-open interval; the line "30 33"
-// reprents the blocks [30, 31, 32].
-static int sysMapBlockFile(const char* filename, MemMapping* pMap) {
-  CHECK(pMap != nullptr);
-
+// Each block range represents a half-open interval; the line "30 33" reprents the blocks
+// [30, 31, 32].
+bool MemMapping::MapBlockFile(const std::string& filename) {
   std::string content;
   if (!android::base::ReadFileToString(filename, &content)) {
     PLOG(ERROR) << "Failed to read " << filename;
-    return -1;
+    return false;
   }
 
   std::vector<std::string> lines = android::base::Split(android::base::Trim(content), "\n");
   if (lines.size() < 4) {
     LOG(ERROR) << "Block map file is too short: " << lines.size();
-    return -1;
+    return false;
   }
 
   size_t size;
-  unsigned int blksize;
-  if (sscanf(lines[1].c_str(), "%zu %u", &size, &blksize) != 2) {
+  size_t blksize;
+  if (sscanf(lines[1].c_str(), "%zu %zu", &size, &blksize) != 2) {
     LOG(ERROR) << "Failed to parse file size and block size: " << lines[1];
-    return -1;
+    return false;
   }
 
   size_t range_count;
   if (sscanf(lines[2].c_str(), "%zu", &range_count) != 1) {
     LOG(ERROR) << "Failed to parse block map header: " << lines[2];
-    return -1;
+    return false;
   }
 
   size_t blocks;
@@ -101,14 +96,14 @@ static int sysMapBlockFile(const char* filename, MemMapping* pMap) {
       lines.size() != 3 + range_count) {
     LOG(ERROR) << "Invalid data in block map file: size " << size << ", blksize " << blksize
                << ", range_count " << range_count << ", lines " << lines.size();
-    return -1;
+    return false;
   }
 
   // Reserve enough contiguous address space for the whole file.
   void* reserve = mmap64(nullptr, blocks * blksize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
   if (reserve == MAP_FAILED) {
     PLOG(ERROR) << "failed to reserve address space";
-    return -1;
+    return false;
   }
 
   const std::string& block_dev = lines[0];
@@ -116,10 +111,10 @@ static int sysMapBlockFile(const char* filename, MemMapping* pMap) {
   if (fd == -1) {
     PLOG(ERROR) << "failed to open block device " << block_dev;
     munmap(reserve, blocks * blksize);
-    return -1;
+    return false;
   }
 
-  pMap->ranges.resize(range_count);
+  ranges_.clear();
 
   unsigned char* next = static_cast<unsigned char*>(reserve);
   size_t remaining_size = blocks * blksize;
@@ -129,84 +124,79 @@ static int sysMapBlockFile(const char* filename, MemMapping* pMap) {
 
     size_t start, end;
     if (sscanf(line.c_str(), "%zu %zu\n", &start, &end) != 2) {
-      LOG(ERROR) << "failed to parse range " << i << " in block map: " << line;
+      LOG(ERROR) << "failed to parse range " << i << ": " << line;
       success = false;
       break;
     }
-    size_t length = (end - start) * blksize;
-    if (end <= start || (end - start) > SIZE_MAX / blksize || length > remaining_size) {
-      LOG(ERROR) << "unexpected range in block map: " << start << " " << end;
+    size_t range_size = (end - start) * blksize;
+    if (end <= start || (end - start) > SIZE_MAX / blksize || range_size > remaining_size) {
+      LOG(ERROR) << "Invalid range: " << start << " " << end;
       success = false;
       break;
     }
 
-    void* addr = mmap64(next, length, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd,
-                        static_cast<off64_t>(start) * blksize);
-    if (addr == MAP_FAILED) {
-      PLOG(ERROR) << "failed to map block " << i;
+    void* range_start = mmap64(next, range_size, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd,
+                               static_cast<off64_t>(start) * blksize);
+    if (range_start == MAP_FAILED) {
+      PLOG(ERROR) << "failed to map range " << i << ": " << line;
       success = false;
       break;
     }
-    pMap->ranges[i].addr = addr;
-    pMap->ranges[i].length = length;
+    ranges_.emplace_back(MappedRange{ range_start, range_size });
 
-    next += length;
-    remaining_size -= length;
+    next += range_size;
+    remaining_size -= range_size;
   }
   if (success && remaining_size != 0) {
-    LOG(ERROR) << "ranges in block map are invalid: remaining_size = " << remaining_size;
+    LOG(ERROR) << "Invalid ranges: remaining_size " << remaining_size;
     success = false;
   }
   if (!success) {
     munmap(reserve, blocks * blksize);
-    return -1;
+    return false;
   }
 
-  pMap->addr = static_cast<unsigned char*>(reserve);
-  pMap->length = size;
+  addr = static_cast<unsigned char*>(reserve);
+  length = size;
 
   LOG(INFO) << "mmapped " << range_count << " ranges";
 
-  return 0;
+  return true;
 }
 
-int sysMapFile(const char* fn, MemMapping* pMap) {
-  if (fn == nullptr || pMap == nullptr) {
-    LOG(ERROR) << "Invalid argument(s)";
-    return -1;
+bool MemMapping::MapFile(const std::string& fn) {
+  if (fn.empty()) {
+    LOG(ERROR) << "Empty filename";
+    return false;
   }
 
-  *pMap = {};
-
   if (fn[0] == '@') {
-    if (sysMapBlockFile(fn + 1, pMap) != 0) {
+    // Block map file "@/cache/recovery/block.map".
+    if (!MapBlockFile(fn.substr(1))) {
       LOG(ERROR) << "Map of '" << fn << "' failed";
-      return -1;
+      return false;
     }
   } else {
     // This is a regular file.
-    android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(fn, O_RDONLY)));
+    android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(fn.c_str(), O_RDONLY)));
     if (fd == -1) {
       PLOG(ERROR) << "Unable to open '" << fn << "'";
-      return -1;
+      return false;
     }
 
-    if (!sysMapFD(fd, pMap)) {
+    if (!MapFD(fd)) {
       LOG(ERROR) << "Map of '" << fn << "' failed";
-      return -1;
+      return false;
     }
   }
-  return 0;
+  return true;
 }
 
-/*
- * Release a memory mapping.
- */
-void sysReleaseMap(MemMapping* pMap) {
-  std::for_each(pMap->ranges.cbegin(), pMap->ranges.cend(), [](const MappedRange& range) {
+MemMapping::~MemMapping() {
+  for (const auto& range : ranges_) {
     if (munmap(range.addr, range.length) == -1) {
-      PLOG(ERROR) << "munmap(" << range.addr << ", " << range.length << ") failed";
+      PLOG(ERROR) << "Failed to munmap(" << range.addr << ", " << range.length << ")";
     }
-  });
-  pMap->ranges.clear();
+  };
+  ranges_.clear();
 }

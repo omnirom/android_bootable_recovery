@@ -441,14 +441,7 @@
 		<string name="sideload_usage">Použití: adb sideload název.zip</string>
 		<string name="sideload_complete">ADB Sideload dokončený</string>
 		<string name="reboot_hdr">Restart</string>
-		<string name="su_hdr">Kontrola SuperSU</string>
-		<string name="su_note1">Vaše zařízení se netváří jako rootnuté.</string>
-		<string name="su_note2">Instalovat SuperSU nyní?</string>
-		<string name="su_note3">Toto rootne vaše zařízení.</string>
-		<string name="su_cancel">Neinstalovat</string>
-		<string name="swipe_su_to_install">Potáhnutím nainstalovat</string>
-		<string name="swipe_su_install">   Instalovat</string>
-		<string name="su_installing">Instalace SuperSU</string>
+		<string name="install_cancel">Neinstalovat</string>
 		<string name="sel_storage_list">Vyberte úložiště</string>
 		<string name="ok_btn">OK</string>
 		<string name="no_kernel_selinux">Kernel nemá podporu pro čtení obsahu SELinux.</string>
@@ -511,7 +504,7 @@
 		<string name="done">Hotovo.</string>
 		<string name="start_partition_sd">Dělení SD karty...</string>
 		<string name="partition_sd_locate">Nelze najít zařízení na rozdělení.</string>
-		<string name="ext_swap_size">Velikost EXT + Swap je větší jako velikost SD-karty.</string>
+		<string name="ext_swap_size">Velikost EXT + Swap je větší jako velikost SD karty.</string>
 		<string name="remove_part_table">Vymazávání tabulky rozdělení...</string>
 		<string name="unable_rm_part">Nelze vymazat tabulku rozdělení.</string>
 		<string name="create_part">Vytváření oddílu {1}...</string>

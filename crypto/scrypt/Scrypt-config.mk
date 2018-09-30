@@ -82,7 +82,7 @@ target_src_files  := $(common_src_files) $($(target_arch)_src_files)
 target_src_files  := $(filter-out $($(target_arch)_exclude_files), $(target_src_files))
 
 # Hacks for ARM NEON support
-ifeq ($(target_arch),arm)
+ifneq (,$(filter $(target_arch), arm arm64))
 ifeq ($(ARCH_ARM_HAVE_NEON),true)
 target_c_flags   += $(arm_neon_c_flags)
 target_src_files += $(arm_neon_src_files)

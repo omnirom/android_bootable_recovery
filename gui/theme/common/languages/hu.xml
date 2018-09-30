@@ -475,14 +475,7 @@
 		<string name="fixing_contexts">Kontextus javítása...</string>
 		<string name="fix_contexts_complete">Kontextus javítása kész</string>
 		<string name="reboot_hdr">Újraindítás</string>
-		<string name="su_hdr">SuperSU ellenőrzés</string>
-		<string name="su_note1">A készüléke nem tűnik rootoltnak.</string>
-		<string name="su_note2">SuperSU telepítése most?</string>
-		<string name="su_note3">Ez rootolni fogja a készülékét.</string>
-		<string name="su_cancel">Ne telepítse</string>
-		<string name="swipe_su_to_install">Csúsztasson a telepítéshez</string>
-		<string name="swipe_su_install">   Telepítés</string>
-		<string name="su_installing">SuperSU telepítése</string>
+		<string name="install_cancel">Ne telepítse</string>
 		<string name="sel_storage_list">Válasszon tárolót</string>
 		<string name="ok_btn">OK</string>
 

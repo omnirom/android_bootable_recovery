@@ -13,9 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <unistd.h>
+
 #include <gtest/gtest.h>
 
-TEST(SideloadTest, fusedevice) {
-  ASSERT_NE(-1, access("/dev/fuse", R_OK | W_OK));
+#include "fuse_sideload.h"
+
+TEST(SideloadTest, fuse_device) {
+  ASSERT_EQ(0, access("/dev/fuse", R_OK | W_OK));
+}
+
+TEST(SideloadTest, run_fuse_sideload_wrong_parameters) {
+  provider_vtab vtab;
+  vtab.close = [](void*) {};
+
+  ASSERT_EQ(-1, run_fuse_sideload(&vtab, nullptr, 4096, 4095));
+  ASSERT_EQ(-1, run_fuse_sideload(&vtab, nullptr, 4096, (1 << 22) + 1));
+
+  // Too many blocks.
+  ASSERT_EQ(-1, run_fuse_sideload(&vtab, nullptr, ((1 << 18) + 1) * 4096, 4096));
 }

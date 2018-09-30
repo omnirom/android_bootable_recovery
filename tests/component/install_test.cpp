@@ -15,6 +15,8 @@
  */
 
 #include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <string>
@@ -62,6 +64,56 @@ TEST(InstallTest, verify_package_compatibility_invalid_entry) {
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
   ASSERT_FALSE(verify_package_compatibility(zip));
+  CloseArchive(zip);
+}
+
+TEST(InstallTest, read_metadata_from_package_smoke) {
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.fd, "w");
+  ZipWriter writer(zip_file);
+  ASSERT_EQ(0, writer.StartEntry("META-INF/com/android/metadata", kCompressStored));
+  const std::string content("abcdefg");
+  ASSERT_EQ(0, writer.WriteBytes(content.data(), content.size()));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  std::string metadata;
+  ASSERT_TRUE(read_metadata_from_package(zip, &metadata));
+  ASSERT_EQ(content, metadata);
+  CloseArchive(zip);
+
+  TemporaryFile temp_file2;
+  FILE* zip_file2 = fdopen(temp_file2.fd, "w");
+  ZipWriter writer2(zip_file2);
+  ASSERT_EQ(0, writer2.StartEntry("META-INF/com/android/metadata", kCompressDeflated));
+  ASSERT_EQ(0, writer2.WriteBytes(content.data(), content.size()));
+  ASSERT_EQ(0, writer2.FinishEntry());
+  ASSERT_EQ(0, writer2.Finish());
+  ASSERT_EQ(0, fclose(zip_file2));
+
+  ASSERT_EQ(0, OpenArchive(temp_file2.path, &zip));
+  metadata.clear();
+  ASSERT_TRUE(read_metadata_from_package(zip, &metadata));
+  ASSERT_EQ(content, metadata);
+  CloseArchive(zip);
+}
+
+TEST(InstallTest, read_metadata_from_package_no_entry) {
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.fd, "w");
+  ZipWriter writer(zip_file);
+  ASSERT_EQ(0, writer.StartEntry("dummy_entry", kCompressStored));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  std::string metadata;
+  ASSERT_FALSE(read_metadata_from_package(zip, &metadata));
   CloseArchive(zip);
 }
 
@@ -175,18 +227,62 @@ TEST(InstallTest, update_binary_command_smoke) {
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  ZipString payload_name("payload.bin");
+  ZipEntry payload_entry;
+  ASSERT_EQ(0, FindEntry(zip, payload_name, &payload_entry));
   int status_fd = 10;
-  std::string path = "/path/to/update.zip";
+  std::string package = "/path/to/update.zip";
+  std::string binary_path = "/sbin/update_engine_sideload";
   std::vector<std::string> cmd;
-  ASSERT_EQ(0, update_binary_command(path, zip, 0, status_fd, &cmd));
-  ASSERT_EQ("/sbin/update_engine_sideload", cmd[0]);
-  ASSERT_EQ("--payload=file://" + path, cmd[1]);
+  ASSERT_EQ(0, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
+  ASSERT_EQ(5U, cmd.size());
+  ASSERT_EQ(binary_path, cmd[0]);
+  ASSERT_EQ("--payload=file://" + package, cmd[1]);
+  ASSERT_EQ("--offset=" + std::to_string(payload_entry.offset), cmd[2]);
   ASSERT_EQ("--headers=" + properties, cmd[3]);
   ASSERT_EQ("--status_fd=" + std::to_string(status_fd), cmd[4]);
   CloseArchive(zip);
 #else
-  // Cannot test update_binary_command() because it tries to extract update-binary to /tmp.
-  GTEST_LOG_(INFO) << "Test skipped on non-A/B device.";
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.fd, "w");
+  ZipWriter writer(zip_file);
+  static constexpr const char* UPDATE_BINARY_NAME = "META-INF/com/google/android/update-binary";
+  ASSERT_EQ(0, writer.StartEntry(UPDATE_BINARY_NAME, kCompressStored));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  int status_fd = 10;
+  std::string package = "/path/to/update.zip";
+  TemporaryDir td;
+  std::string binary_path = std::string(td.path) + "/update_binary";
+  std::vector<std::string> cmd;
+  ASSERT_EQ(0, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
+  ASSERT_EQ(4U, cmd.size());
+  ASSERT_EQ(binary_path, cmd[0]);
+  ASSERT_EQ("3", cmd[1]);  // RECOVERY_API_VERSION
+  ASSERT_EQ(std::to_string(status_fd), cmd[2]);
+  ASSERT_EQ(package, cmd[3]);
+  struct stat sb;
+  ASSERT_EQ(0, stat(binary_path.c_str(), &sb));
+  ASSERT_EQ(static_cast<mode_t>(0755), sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+
+  // With non-zero retry count. update_binary will be removed automatically.
+  cmd.clear();
+  ASSERT_EQ(0, update_binary_command(package, zip, binary_path, 2, status_fd, &cmd));
+  ASSERT_EQ(5U, cmd.size());
+  ASSERT_EQ(binary_path, cmd[0]);
+  ASSERT_EQ("3", cmd[1]);  // RECOVERY_API_VERSION
+  ASSERT_EQ(std::to_string(status_fd), cmd[2]);
+  ASSERT_EQ(package, cmd[3]);
+  ASSERT_EQ("retry", cmd[4]);
+  sb = {};
+  ASSERT_EQ(0, stat(binary_path.c_str(), &sb));
+  ASSERT_EQ(static_cast<mode_t>(0755), sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+
+  CloseArchive(zip);
 #endif  // AB_OTA_UPDATER
 }
 
@@ -217,12 +313,30 @@ TEST(InstallTest, update_binary_command_invalid) {
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
   int status_fd = 10;
-  std::string path = "/path/to/update.zip";
+  std::string package = "/path/to/update.zip";
+  std::string binary_path = "/sbin/update_engine_sideload";
   std::vector<std::string> cmd;
-  ASSERT_EQ(INSTALL_CORRUPT, update_binary_command(path, zip, 0, status_fd, &cmd));
+  ASSERT_EQ(INSTALL_CORRUPT, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
   CloseArchive(zip);
 #else
-  // Cannot test update_binary_command() because it tries to extract update-binary to /tmp.
-  GTEST_LOG_(INFO) << "Test skipped on non-A/B device.";
+  TemporaryFile temp_file;
+  FILE* zip_file = fdopen(temp_file.fd, "w");
+  ZipWriter writer(zip_file);
+  // The archive must have something to be opened correctly.
+  ASSERT_EQ(0, writer.StartEntry("dummy_entry", 0));
+  ASSERT_EQ(0, writer.FinishEntry());
+  ASSERT_EQ(0, writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file));
+
+  // Missing update binary.
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+  int status_fd = 10;
+  std::string package = "/path/to/update.zip";
+  TemporaryDir td;
+  std::string binary_path = std::string(td.path) + "/update_binary";
+  std::vector<std::string> cmd;
+  ASSERT_EQ(INSTALL_CORRUPT, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
+  CloseArchive(zip);
 #endif  // AB_OTA_UPDATER
 }

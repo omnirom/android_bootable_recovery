@@ -103,6 +103,8 @@ bool twrpAdbBuFifo::Backup_ADB_Command(std::string Options) {
 
 	if (args[1].compare("--twrp") != 0) {
 		gui_err("twrp_adbbu_option=--twrp option is required to enable twrp adb backup");
+		if (!twadbbu::Write_TWERROR())
+			LOGERR("Unable to write to ADB Backup\n");
 		sleep(2);
 		return false;
 	}
@@ -130,9 +132,11 @@ bool twrpAdbBuFifo::Backup_ADB_Command(std::string Options) {
 		}
 		else {
 			gui_msg(Msg(msg::kError, "partition_not_found=path: {1} not found in partition list")(path));
-			return false;
-		}
+			if (!twadbbu::Write_TWERROR())
+				LOGERR("Unable to write to TWRP ADB Backup.\n");
+		return false;
 	}
+}
 
 	if (Backup_List.empty()) {
 		DataManager::GetValue("tw_backup_list", Backup_List);
@@ -187,7 +191,7 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 	DataManager::SetValue("tw_action_text2", "");
 	gui_changePage("action_page");
 
-	while (1) {
+	while (true) {
 		memset(&cmd, 0, sizeof(cmd));
 		if (read(adb_control_twrp_fd, cmd, sizeof(cmd)) > 0) {
 			struct AdbBackupControlType cmdstruct;
@@ -202,37 +206,49 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 				LOGINFO("ADB version: %" PRIu64 "\n", twhdr.version);
 				if (twhdr.version != ADB_BACKUP_VERSION) {
 					LOGERR("Incompatible adb backup version!\n");
+					ret = false;
 					break;
 				}
 				partition_count = twhdr.partition_count;
 			}
 			else if (cmdtype == MD5TRAILER) {
-				LOGINFO("Restoring MD5TRAILER\n");
+				LOGINFO("Reading ADB Backup MD5TRAILER\n");
 				memcpy(&adbmd5, cmd, sizeof(cmd));
 			}
 			else if (cmdtype == TWMD5) {
-				struct AdbBackupFileTrailer md5check;
-				LOGINFO("Restoring TWMD5\n");
+				int check_digest;
 
-				memset(&md5check, 0, sizeof(md5check));
-				memcpy(&md5check, cmd, sizeof(cmd));
-				if (strcmp(md5check.md5, adbmd5.md5) != 0) {
-					LOGERR("md5 doesn't match!\n");
-					LOGERR("file md5: %s\n", adbmd5.md5);
-					LOGERR("check md5: %s\n", md5check.md5);
-					ret = false;
-					break;
+				DataManager::GetValue(TW_SKIP_DIGEST_CHECK_VAR, check_digest);
+				if (check_digest > 0) {
+					TWFunc::GUI_Operation_Text(TW_VERIFY_DIGEST_TEXT, gui_parse_text("{@verifying_digest}"));
+					gui_msg("verifying_digest=Verifying Digest");
+					struct AdbBackupFileTrailer md5check;
+					LOGINFO("Verifying md5sums\n");
+
+					memset(&md5check, 0, sizeof(md5check));
+					memcpy(&md5check, cmd, sizeof(cmd));
+					if (strcmp(md5check.md5, adbmd5.md5) != 0) {
+						LOGERR("md5 doesn't match!\n");
+						LOGERR("Stored file md5: %s\n", adbmd5.md5);
+						LOGERR("ADB Backup check md5: %s\n", md5check.md5);
+						ret = false;
+						break;
+					}
+					else {
+						LOGINFO("ADB Backup md5 matches\n");
+						LOGINFO("Stored file md5: %s\n", adbmd5.md5);
+						LOGINFO("ADB Backup check md5: %s\n", md5check.md5);
+						continue;
+					}
+				} else {
+					gui_msg("skip_digest=Skipping Digest check based on user setting.");
+					continue;
 				}
-				else {
-					LOGINFO("adbrestore md5 matches\n");
-					LOGINFO("adbmd5.md5: %s\n", adbmd5.md5);
-					LOGINFO("md5check.md5: %s\n", md5check.md5);
-					ret = true;
-					break;
-				}
+
 			}
 			else if (cmdtype == TWENDADB) {
 				LOGINFO("received TWENDADB\n");
+				ret = 1;
 				break;
 			}
 			else {
@@ -270,6 +286,7 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
 						ret = false;
+						break;
 					}
 				}
 				else if (cmdtype == TWFN) {
@@ -296,17 +313,11 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 
 					if (path.compare("/system") == 0) {
 						if (part_settings.Part->Is_Read_Only()) {
-							struct AdbBackupControlType twerror;
-							strncpy(twerror.start_of_header, TWRP, sizeof(twerror.start_of_header));
-							strncpy(twerror.type, TWERROR, sizeof(twerror.type));
-							memset(twerror.space, 0, sizeof(twerror.space));
-							twerror.crc = crc32(0L, Z_NULL, 0);
-							twerror.crc = crc32(twerror.crc, (const unsigned char*) &twerror, sizeof(twerror));
-							if (write(adb_control_bu_fd, &twerror, sizeof(twerror)) < 0) {
-								LOGERR("Cannot write to ADB_CONTROL_BU_FD: %s\n", strerror(errno));
-							}
+							if (!twadbbu::Write_TWERROR())
+								LOGERR("Unable to write to TWRP ADB Backup.\n");
 							gui_msg(Msg(msg::kError, "restore_read_only=Cannot restore {1} -- mounted read only.")(part_settings.Part->Backup_Display_Name));
-							return false;
+							ret = false;
+							break;
 
 						}
 					}
@@ -320,6 +331,7 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					if (!PartitionManager.Restore_Partition(&part_settings)) {
 						LOGERR("ADB Restore failed.\n");
 						ret = false;
+						break;
 					}
 				}
 			}
@@ -337,6 +349,5 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 	DataManager::SetValue("ui_progress", 100);
 	gui_changePage("main");
 	close(adb_control_bu_fd);
-	close(adb_control_twrp_fd);
 	return ret;
 }

@@ -23,6 +23,8 @@
 #include <pthread.h>
 #include "infomanager.hpp"
 
+#define PERSIST_SETTINGS_FILE  "/persist/.twrps"
+
 using namespace std;
 
 class DataManager
@@ -30,13 +32,14 @@ class DataManager
 public:
 	static int ResetDefaults();
 	static int LoadValues(const string& filename);
+	static int LoadPersistValues(void);
 	static int Flush();
 
 	// Core get routines
 	static int GetValue(const string& varName, string& value);
 	static int GetValue(const string& varName, int& value);
 	static int GetValue(const string& varName, float& value);
-	static unsigned long long GetValue(const string& varName, unsigned long long& value);
+	static int GetValue(const string& varName, unsigned long long& value);
 
 	// Helper functions
 	static string GetStrValue(const string& varName);

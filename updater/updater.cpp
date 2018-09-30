@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
 
   const char* package_filename = argv[3];
   MemMapping map;
-  if (sysMapFile(package_filename, &map) != 0) {
+  if (!map.MapFile(package_filename)) {
     LOG(ERROR) << "failed to map package " << argv[3];
     return 3;
   }
@@ -211,12 +211,18 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (state.error_code != kNoError) {
-      fprintf(cmd_pipe, "log error: %d\n", state.error_code);
-      // Cause code should provide additional information about the abort;
-      // report only when an error exists.
-      if (state.cause_code != kNoCause) {
-        fprintf(cmd_pipe, "log cause: %d\n", state.cause_code);
+    // Installation has been aborted. Set the error code to kScriptExecutionFailure unless
+    // a more specific code has been set in errmsg.
+    if (state.error_code == kNoError) {
+      state.error_code = kScriptExecutionFailure;
+    }
+    fprintf(cmd_pipe, "log error: %d\n", state.error_code);
+    // Cause code should provide additional information about the abort.
+    if (state.cause_code != kNoCause) {
+      fprintf(cmd_pipe, "log cause: %d\n", state.cause_code);
+      if (state.cause_code == kPatchApplicationFailure) {
+        LOG(INFO) << "Patch application failed, retry update.";
+        fprintf(cmd_pipe, "retry_update\n");
       }
     }
 
@@ -231,7 +237,6 @@ int main(int argc, char** argv) {
   if (updater_info.package_zip) {
     CloseArchive(updater_info.package_zip);
   }
-  sysReleaseMap(&map);
 
   return 0;
 }

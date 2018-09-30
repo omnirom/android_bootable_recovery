@@ -1607,8 +1607,7 @@ int GUIAction::installsu(std::string arg __unused)
 	if (simulate) {
 		simulate_progress_bar();
 	} else {
-		if (!TWFunc::Install_SuperSU())
-			op_status = 1;
+		LOGERR("Installing SuperSU was deprecated from TWRP.\n");
 	}
 
 	operation_end(op_status);

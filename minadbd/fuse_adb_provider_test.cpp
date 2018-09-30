@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#include "fuse_adb_provider.h"
-
-#include <gtest/gtest.h>
-
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/socket.h>
 
 #include <string>
 
+#include <gtest/gtest.h>
+
 #include "adb_io.h"
+#include "fuse_adb_provider.h"
 
 TEST(fuse_adb_provider, read_block_adb) {
   adb_data data = {};
@@ -46,9 +46,8 @@ TEST(fuse_adb_provider, read_block_adb) {
 
   uint32_t block = 1234U;
   const char expected_block[] = "00001234";
-  ASSERT_EQ(0, read_block_adb(reinterpret_cast<void*>(&data), block,
-                              reinterpret_cast<uint8_t*>(block_data),
-                              sizeof(expected_data) - 1));
+  ASSERT_EQ(0, read_block_adb(static_cast<void*>(&data), block,
+                              reinterpret_cast<uint8_t*>(block_data), sizeof(expected_data) - 1));
 
   // Check that read_block_adb requested the right block.
   char block_req[sizeof(expected_block)] = {};
@@ -80,9 +79,12 @@ TEST(fuse_adb_provider, read_block_adb_fail_write) {
 
   ASSERT_EQ(0, close(sockets[1]));
 
+  // write(2) raises SIGPIPE since the reading end has been closed. Ignore the signal to avoid
+  // failing the test.
+  signal(SIGPIPE, SIG_IGN);
+
   char buf[1];
-  ASSERT_EQ(-EIO, read_block_adb(reinterpret_cast<void*>(&data), 0,
-                                 reinterpret_cast<uint8_t*>(buf), 1));
+  ASSERT_EQ(-EIO, read_block_adb(static_cast<void*>(&data), 0, reinterpret_cast<uint8_t*>(buf), 1));
 
   close(sockets[0]);
 }

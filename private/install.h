@@ -23,5 +23,9 @@
 
 #include <ziparchive/zip_archive.h>
 
-int update_binary_command(const std::string& path, ZipArchiveHandle zip, int retry_count,
-                          int status_fd, std::vector<std::string>* cmd);
+// Extract the update binary from the open zip archive |zip| located at |package| to |binary_path|.
+// Store the command line that should be called into |cmd|. The |status_fd| is the file descriptor
+// the child process should use to report back the progress of the update.
+int update_binary_command(const std::string& package, ZipArchiveHandle zip,
+                          const std::string& binary_path, int retry_count, int status_fd,
+                          std::vector<std::string>* cmd);

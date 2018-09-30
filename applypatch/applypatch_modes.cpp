@@ -44,19 +44,6 @@ static int CheckMode(int argc, const char** argv) {
     return applypatch_check(argv[2], sha1);
 }
 
-static int SpaceMode(int argc, const char** argv) {
-    if (argc != 3) {
-        return 2;
-    }
-
-    size_t bytes;
-    if (!android::base::ParseUint(argv[2], &bytes) || bytes == 0) {
-        printf("can't parse \"%s\" as byte count\n\n", argv[2]);
-        return 1;
-    }
-    return CacheSizeCheck(bytes);
-}
-
 // Parse arguments (which should be of the form "<sha1>:<filename>" into the
 // new parallel arrays *sha1s and *files. Returns true on success.
 static bool ParsePatchArgs(int argc, const char** argv, std::vector<std::string>* sha1s,
@@ -175,13 +162,12 @@ int applypatch_modes(int argc, const char** argv) {
             "usage: %s [-b <bonus-file>] <src-file> <tgt-file> <tgt-sha1> <tgt-size> "
             "[<src-sha1>:<patch> ...]\n"
             "   or  %s -c <file> [<sha1> ...]\n"
-            "   or  %s -s <bytes>\n"
             "   or  %s -l\n"
             "\n"
             "Filenames may be of the form\n"
             "  EMMC:<partition>:<len_1>:<sha1_1>:<len_2>:<sha1_2>:...\n"
             "to specify reading from or writing to an EMMC partition.\n\n",
-            argv[0], argv[0], argv[0], argv[0]);
+            argv[0], argv[0], argv[0]);
         return 2;
     }
 
@@ -191,8 +177,6 @@ int applypatch_modes(int argc, const char** argv) {
         result = ShowLicenses();
     } else if (strncmp(argv[1], "-c", 3) == 0) {
         result = CheckMode(argc, argv);
-    } else if (strncmp(argv[1], "-s", 3) == 0) {
-        result = SpaceMode(argc, argv);
     } else {
         result = PatchMode(argc, argv);
     }
