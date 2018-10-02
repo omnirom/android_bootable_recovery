@@ -206,6 +206,10 @@ static GRSurface* fbdev_init(minui_backend* backend) {
     vi.xres_virtual = fi.line_length / gr_framebuffer[0].pixel_bytes;
 #endif
     gr_framebuffer[0].data = reinterpret_cast<uint8_t*>(bits);
+#if defined(RECOVERY_RGBX)
+        printf("setting GGL_PIXEL_FORMAT_RGBX_8888\n");
+        gr_framebuffer[0].format = GGL_PIXEL_FORMAT_RGBX_8888;
+#else
     if (vi.bits_per_pixel == 16) {
         printf("setting GGL_PIXEL_FORMAT_RGB_565\n");
         gr_framebuffer[0].format = GGL_PIXEL_FORMAT_RGB_565;
@@ -227,7 +231,7 @@ static GRSurface* fbdev_init(minui_backend* backend) {
             gr_framebuffer[0].format = GGL_PIXEL_FORMAT_RGB_565;
         }
     }
-
+#endif
     // Drawing directly to the framebuffer takes about 5 times longer.
     // Instead, we will allocate some memory and draw to that, then
     // memcpy the data into the framebuffer later.
