@@ -283,6 +283,7 @@
 		<string name="rb_recovery_btn">Recovery</string>
 		<string name="rb_bootloader_btn">Bootloader</string>
 		<string name="rb_download_btn">Download</string>
+		<string name="rb_edl_btn">Edl</string>
 		<string name="turning_off">Spegnimento in corso...</string>
 		<string name="swipe_power_off">Scorri per spegnere</string>
 		<string name="swipe_power_off_s">Spegni</string>
@@ -645,7 +646,7 @@
 		<string name="dumlock_restore">Ripristino del Boot originale...</string>
 		<string name="dumlock_reflash">Reinstallazione della Recovery in Boot...</string>
 		<string name="run_script">Esecuzione dello script {1}...</string>
-		<string name="rename_stock">Il file della Recovery stock, in System, è stato rinominato per prevenire la sostituzione di TWRP da parte della ROM.</string>
+		<string name="rename_stock">Il file della Recovery stock, in System, è stato rinominato per prevenire la sostituzione di TWRP da paete della ROM.</string>
 		<string name="split_backup">Divisione del backup in archivi multipli...</string>
 		<string name="backup_error">Errore nella creazione del backup.</string>
 		<string name="restore_error">Errore durante il ripristino.</string>
