@@ -280,6 +280,7 @@
 		<string name="rb_recovery_btn">Рекавери</string>
 		<string name="rb_bootloader_btn">Загрузчик</string>
 		<string name="rb_download_btn">Режим загрузки</string>
+		<string name="rb_edl_btn">Edl</string>
 		<string name="turning_off">Выключение...</string>
 		<string name="swipe_power_off">Свайп для выключения</string>
 		<string name="swipe_power_off_s">Выключение</string>
