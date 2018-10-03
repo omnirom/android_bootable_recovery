@@ -722,6 +722,10 @@ void DataManager::SetDefaultValues()
 	printf("TW_HAS_DOWNLOAD_MODE := true\n");
 	mConst.SetValue(TW_DOWNLOAD_MODE, "1");
 #endif
+#ifdef TW_HAS_EDL_MODE
+	printf("TW_HAS_EDL_MODE := true\n");
+	mConst.SetValue(TW_EDL_MODE, "1");
+#endif
 #ifdef TW_INCLUDE_CRYPTO
 	mConst.SetValue(TW_HAS_CRYPTO, "1");
 	printf("TW_INCLUDE_CRYPTO := true\n");

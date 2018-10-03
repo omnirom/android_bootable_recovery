@@ -345,6 +345,8 @@ int main(int argc, char **argv) {
 		TWFunc::tw_reboot(rb_bootloader);
 	else if (Reboot_Arg == "download")
 		TWFunc::tw_reboot(rb_download);
+	else if (Reboot_Arg == "edl")
+		TWFunc::tw_reboot(rb_edl);
 	else
 		TWFunc::tw_reboot(rb_system);
 

@@ -281,6 +281,9 @@ endif
 ifeq ($(TW_HAS_DOWNLOAD_MODE), true)
     LOCAL_CFLAGS += -DTW_HAS_DOWNLOAD_MODE
 endif
+ifeq ($(TW_HAS_EDL_MODE), true)
+    LOCAL_CFLAGS += -DTW_HAS_EDL_MODE
+endif
 ifeq ($(TW_NO_SCREEN_BLANK), true)
     LOCAL_CFLAGS += -DTW_NO_SCREEN_BLANK
 endif

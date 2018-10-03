@@ -343,6 +343,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					TWFunc::tw_reboot(rb_bootloader);
 				else if (strlen(value) && strcmp(value, "download") == 0)
 					TWFunc::tw_reboot(rb_download);
+				else if (strlen(value) && strcmp(value, "edl") == 0)
+					TWFunc::tw_reboot(rb_edl);
 				else
 					TWFunc::tw_reboot(rb_system);
 			} else if (strcmp(command, "cmd") == 0) {
