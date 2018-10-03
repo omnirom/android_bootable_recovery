@@ -45,7 +45,7 @@ cc_defaults {
             static_libs: [
                 "libutils",
             ],
-        }
+        },
     },
 }
 
@@ -93,12 +93,14 @@ librecovery_static_libs = [
     "libhidlbase",
     "libhidltransport",
     "libhwbinder",
+    "libbinderthreadstate",
     "libvndksupport",
     "libtinyxml2",
 ]
 
 cc_test {
     name: "recovery_unit_test",
+    isolated: true,
 
     defaults: [
         "recovery_test_defaults",
@@ -117,7 +119,6 @@ cc_test {
         "libotautil",
         "libupdater",
         "libgtest_prod",
-        "libBionicGtestMain",
     ],
 
     data: ["testdata/*"],
@@ -125,6 +126,7 @@ cc_test {
 
 cc_test {
     name: "recovery_manual_test",
+    isolated: true,
 
     defaults: [
         "recovery_test_defaults",
@@ -135,14 +137,11 @@ cc_test {
     srcs: [
         "manual/recovery_test.cpp",
     ],
-
-    static_libs: [
-        "libBionicGtestMain",
-    ],
 }
 
 cc_test {
     name: "recovery_component_test",
+    isolated: true,
 
     defaults: [
         "recovery_test_defaults",
@@ -159,7 +158,6 @@ cc_test {
         "libupdater",
         "libupdate_verifier",
         "libprotobuf-cpp-lite",
-        "libBionicGtestMain",
     ],
 
     data: [
@@ -170,6 +168,7 @@ cc_test {
 
 cc_test_host {
     name: "recovery_host_test",
+    isolated: true,
 
     defaults: [
         "recovery_test_defaults",
@@ -193,7 +192,6 @@ cc_test_host {
         "libdivsufsort64",
         "libdivsufsort",
         "libz",
-        "libBionicGtestMain",
     ],
 
     data: ["testdata/*"],
