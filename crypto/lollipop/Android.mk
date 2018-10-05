@@ -5,7 +5,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libcryptfslollipop
 LOCAL_MODULE_TAGS := eng optional
 LOCAL_CFLAGS :=
-LOCAL_SRC_FILES = cryptfs.c
+LOCAL_SRC_FILES = cryptfs.cpp
 LOCAL_SHARED_LIBRARIES := libcrypto libhardware libcutils
 LOCAL_C_INCLUDES := external/openssl/include $(commands_recovery_local_path)/crypto/scrypt/lib/crypto
 
@@ -37,7 +37,7 @@ LOCAL_MODULE := twrpdec
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-LOCAL_SRC_FILES := main.c cryptfs.c
+LOCAL_SRC_FILES := main.cpp cryptfs.cpp
 LOCAL_SHARED_LIBRARIES := libcrypto libhardware libcutils libc
 LOCAL_C_INCLUDES := external/openssl/include $(commands_recovery_local_path)/crypto/scrypt/lib/crypto
 
