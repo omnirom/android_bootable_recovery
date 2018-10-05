@@ -91,6 +91,11 @@
 /* __le32 and __le16 defined in system/extras/ext4_utils/ext4_utils.h */
 #define __le8  unsigned char
 
+
+#if !defined(SHA256_DIGEST_LENGTH)
+#define SHA256_DIGEST_LENGTH 32
+#endif
+
 struct crypt_mnt_ftr {
   __le32 magic;         /* See above */
   __le16 major_version;
@@ -151,6 +156,12 @@ struct crypt_mnt_ftr {
      then we will be OK.
    */
   unsigned char scrypted_intermediate_key[SCRYPT_LEN];
+
+  /* sha of this structure with this element set to zero
+     Used when encrypting on reboot to validate structure before doing something
+     fatal
+   */
+  unsigned char sha256[SHA256_DIGEST_LENGTH];
 };
 
 /* Persistant data that should be available before decryption.
