@@ -42,7 +42,9 @@
 #include <time.h>
 #include "cryptfs.h"
 #include "cutils/properties.h"
+extern "C" {
 #include "crypto_scrypt.h"
+}
 
 #ifndef TW_CRYPTO_HAVE_KEYMASTERX
 #include <hardware/keymaster.h>
@@ -499,6 +501,8 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
                                  size_t *signature_size)
 {
     int rc = 0;
+    size_t to_sign_size;
+    unsigned char to_sign[RSA_KEY_SIZE_BYTES];
     keymaster0_device_t *keymaster0_dev = 0;
     keymaster1_device_t *keymaster1_dev = 0;
     if (keymaster_init(&keymaster0_dev, &keymaster1_dev)) {
@@ -507,8 +511,7 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
         goto out;
     }
 
-    unsigned char to_sign[RSA_KEY_SIZE_BYTES];
-    size_t to_sign_size = sizeof(to_sign);
+    to_sign_size = sizeof(to_sign);
     memset(to_sign, 0, RSA_KEY_SIZE_BYTES);
 
     // To sign a message with RSA, the message must satisfy two
@@ -1341,6 +1344,10 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   int rc = 0;
   unsigned char* intermediate_key = 0;
   size_t intermediate_key_size = 0;
+  int N,r,p;
+  #ifdef CONFIG_HW_DISK_ENCRYPTION
+    int key_index = 0;
+  #endif
 
   printf("crypt_ftr->fs_size = %lld\n", crypt_ftr->fs_size);
 
@@ -1354,7 +1361,6 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   }
 
 #ifdef CONFIG_HW_DISK_ENCRYPTION
-  int key_index = 0;
   if(is_hw_disk_encryption((char*)crypt_ftr->crypto_type_name)) {
     key_index = verify_hw_fde_passwd(passwd, crypt_ftr);
 
@@ -1405,9 +1411,9 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   /* Work out if the problem is the password or the data */
   unsigned char scrypted_intermediate_key[sizeof(crypt_ftr->
                                                  scrypted_intermediate_key)];
-  int N = 1 << crypt_ftr->N_factor;
-  int r = 1 << crypt_ftr->r_factor;
-  int p = 1 << crypt_ftr->p_factor;
+  N = 1 << crypt_ftr->N_factor;
+  r = 1 << crypt_ftr->r_factor;
+  p = 1 << crypt_ftr->p_factor;
 
   rc = crypto_scrypt(intermediate_key, intermediate_key_size,
                      crypt_ftr->salt, sizeof(crypt_ftr->salt),
