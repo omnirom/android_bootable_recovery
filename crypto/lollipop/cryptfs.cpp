@@ -95,7 +95,7 @@ extern "C" {
 #define RETRY_MOUNT_ATTEMPTS 10
 #define RETRY_MOUNT_DELAY_SECONDS 1
 
-char *me = "cryptfs";
+const char *me = "cryptfs";
 
 static unsigned char saved_master_key[KEY_LEN_BYTES];
 static char *saved_mount_point;
@@ -1100,7 +1100,7 @@ static void convert_key_to_hex_ascii(const unsigned char *master_key,
 
 static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr, const unsigned char *master_key,
                                      const char *real_blk_name, const char *name, int fd,
-                                     char *extra_params)
+                                     const char *extra_params)
 {
   char buffer[DM_CRYPT_BUF_SIZE];
   struct dm_ioctl *io;
@@ -1222,7 +1222,7 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, const unsigned
   int i;
   int retval = -1;
   int version[3];
-  char *extra_params;
+  const char *extra_params;
   int load_count;
 #ifdef CONFIG_HW_DISK_ENCRYPTION
   char encrypted_state[PROPERTY_VALUE_MAX] = {0};
@@ -1326,7 +1326,7 @@ errout:
   return retval;
 }
 
-int delete_crypto_blk_dev(char *name)
+int delete_crypto_blk_dev(const char *name)
 {
   int fd;
   char buffer[DM_CRYPT_BUF_SIZE];
@@ -1549,7 +1549,7 @@ static int try_mount_multiple_fs(const char *crypto_blkdev,
 }
 
 static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
-                                   char *passwd, char *mount_point, char *label)
+                                   char *passwd, const char *mount_point, const char *label)
 {
   /* Allocate enough space for a 256 bit key, but we may use less */
   unsigned char decrypted_master_key[32];
@@ -1798,5 +1798,5 @@ int cryptfs_setup_ext_volume(const char* label, const char* real_blkdev,
  * storage volume.
  */
 int cryptfs_revert_ext_volume(const char* label) {
-    return delete_crypto_blk_dev((char*) label);
+    return delete_crypto_blk_dev(label);
 }

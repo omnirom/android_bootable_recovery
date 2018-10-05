@@ -131,7 +131,7 @@ struct crypt_mnt_ftr {
 
   /* key_master key, used to sign the derived key which is then used to generate
    * the intermediate key
-   * This key should be used for no other purposes! We use this key to sign unpadded 
+   * This key should be used for no other purposes! We use this key to sign unpadded
    * data, which is acceptable but only if the key is not reused elsewhere. */
   __le8 keymaster_blob[KEYMASTER_BLOB_SIZE];
   __le32 keymaster_blob_size;
@@ -208,22 +208,15 @@ struct volume_info {
 #define ENABLE_INPLACE_ERR_OTHER -1
 #define ENABLE_INPLACE_ERR_DEV -2  /* crypto_blkdev issue */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef int (*kdf_func)(const char *passwd, const unsigned char *salt,
+        unsigned char *ikey, void *params);
 
-  typedef int (*kdf_func)(const char *passwd, const unsigned char *salt,
-                          unsigned char *ikey, void *params);
-
-  void set_partition_data(const char* block_device, const char* key_location, const char* fs);
-  int cryptfs_check_footer();
-  int cryptfs_check_passwd(char *pw);
-  int cryptfs_verify_passwd(char *newpw);
-  int cryptfs_get_password_type(void);
-  int delete_crypto_blk_dev(char *name);
-  int cryptfs_setup_ext_volume(const char* label, const char* real_blkdev,
-          const unsigned char* key, int keysize, char* out_crypto_blkdev);
-  int cryptfs_revert_ext_volume(const char* label);
-#ifdef __cplusplus
-}
-#endif
+void set_partition_data(const char* block_device, const char* key_location, const char* fs);
+int cryptfs_check_footer();
+int cryptfs_check_passwd(char *pw);
+int cryptfs_verify_passwd(char *newpw);
+int cryptfs_get_password_type(void);
+int delete_crypto_blk_dev(const char *name);
+int cryptfs_setup_ext_volume(const char* label, const char* real_blkdev,
+        const unsigned char* key, int keysize, char* out_crypto_blkdev);
+int cryptfs_revert_ext_volume(const char* label);

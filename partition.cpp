@@ -54,17 +54,20 @@ extern "C" {
 	// #include "make_ext4fs.h" TODO need ifdef for android8
 	#include <ext4_utils/make_ext4fs.h>
 #endif
+#ifdef TW_INCLUDE_CRYPTO
+	#include "gpt/gpt.h"
+#endif
+}
 
 #ifdef TW_INCLUDE_CRYPTO
 	#include "crypto/lollipop/cryptfs.h"
-	#include "gpt/gpt.h"
 	#ifdef TW_INCLUDE_FBE
 		#include "crypto/ext4crypt/Decrypt.h"
 	#endif
 #else
 	#define CRYPT_FOOTER_OFFSET 0x4000
 #endif
-}
+
 #include <selinux/selinux.h>
 #include <selinux/label.h>
 #ifdef HAVE_CAPABILITIES
@@ -2036,7 +2039,7 @@ bool TWPartition::Wipe_Encryption() {
 	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
 		if (!UnMount(true))
 			return false;
-		if (delete_crypto_blk_dev((char*)("userdata")) != 0) {
+		if (delete_crypto_blk_dev("userdata") != 0) {
 			LOGERR("Error deleting crypto block device, continuing anyway.\n");
 		}
 	}
