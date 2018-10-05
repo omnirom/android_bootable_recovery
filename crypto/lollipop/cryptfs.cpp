@@ -42,7 +42,9 @@
 #include <time.h>
 #include "cryptfs.h"
 #include "cutils/properties.h"
+extern "C" {
 #include "crypto_scrypt.h"
+}
 
 #ifndef TW_CRYPTO_HAVE_KEYMASTERX
 #include <hardware/keymaster.h>
