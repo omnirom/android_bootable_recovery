@@ -46,6 +46,7 @@ extern "C" {
 #include "crypto_scrypt.h"
 }
 
+#ifdef USE_LEGACY_KEYMASTER
 #ifndef TW_CRYPTO_HAVE_KEYMASTERX
 #include <hardware/keymaster.h>
 #else
@@ -54,6 +55,11 @@ extern "C" {
 #include <openssl/sha.h>
 #include <hardware/keymaster0.h>
 #include <hardware/keymaster1.h>
+#endif
+#elif defined (USE_KEYMASTER_3)
+#include "../ext4crypt/Keymaster3.h"
+#elif defined (USE_KEYMASTER_4)
+#include "../ext4crypt/Keymaster4.h"
 #endif
 
 #ifndef min /* already defined by windows.h */
@@ -88,6 +94,9 @@ extern "C" {
 
 #define RETRY_MOUNT_ATTEMPTS 10
 #define RETRY_MOUNT_DELAY_SECONDS 1
+#define DEFAULT_HEX_PASSWORD "64656661756c745f70617373776f7264"
+
+bool Using_hex_password = false;
 
 char *me = "cryptfs";
 
@@ -95,6 +104,9 @@ static int  master_key_saved = 0;
 static char key_fname[PROPERTY_VALUE_MAX] = "";
 static char real_blkdev[PROPERTY_VALUE_MAX] = "";
 static char file_system[PROPERTY_VALUE_MAX] = "";
+
+
+static int get_crypt_ftr_info(char **metadata_fname, off64_t *off);
 
 #ifdef CONFIG_HW_DISK_ENCRYPTION
 static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
@@ -142,6 +154,8 @@ void set_partition_data(const char* block_device, const char* key_location, cons
   strcpy(file_system, fs);
 }
 
+#ifdef USE_LEGACY_KEYMASTER
+extern "C" {
 #ifndef TW_CRYPTO_HAVE_KEYMASTERX
 static int keymaster_init(keymaster_device_t **keymaster_dev)
 {
@@ -627,6 +641,187 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
         return rc;
 }
 #endif //#ifndef TW_CRYPTO_HAVE_KEYMASTERX
+}
+#else //#ifndef USE_LEGACY_KEYMASTER
+
+/***************KEYMASTER 3 & 4 BEGIN**************************/
+
+/* Should we use keymaster? */
+static int keymaster_check_compatibility()
+{
+    return keymaster_compatibility_cryptfs_scrypt();
+}
+
+/* Create a new keymaster key and store it in this footer */
+static int keymaster_create_key(struct crypt_mnt_ftr *ftr)
+{
+    if (ftr->keymaster_blob_size) {
+        printf("Already have key\n");
+        return 0;
+    }
+
+    int rc = keymaster_create_key_for_cryptfs_scrypt(RSA_KEY_SIZE, RSA_EXPONENT,
+            KEYMASTER_CRYPTFS_RATE_LIMIT, ftr->keymaster_blob, KEYMASTER_BLOB_SIZE,
+            &ftr->keymaster_blob_size);
+    if (rc) {
+        if (ftr->keymaster_blob_size > KEYMASTER_BLOB_SIZE) {
+            printf("Keymaster key blob too large\n");
+            ftr->keymaster_blob_size = 0;
+        }
+        printf("Failed to generate keypair\n");
+        return -1;
+    }
+    return 0;
+}
+
+#ifdef USE_KEYMASTER_4
+
+/* Set sha256 checksum in structure */
+static void set_ftr_sha(struct crypt_mnt_ftr *crypt_ftr)
+{
+    SHA256_CTX c;
+    SHA256_Init(&c);
+    memset(crypt_ftr->sha256, 0, sizeof(crypt_ftr->sha256));
+    SHA256_Update(&c, crypt_ftr, sizeof(*crypt_ftr));
+    SHA256_Final(crypt_ftr->sha256, &c);
+}
+
+
+/* key or salt can be NULL, in which case just skip writing that value.  Useful to
+ * update the failed mount count but not change the key.
+ */
+static int put_crypt_ftr_and_key(struct crypt_mnt_ftr *crypt_ftr)
+{
+    int fd;
+    unsigned int cnt;
+    /* starting_off is set to the SEEK_SET offset
+     * where the crypto structure starts
+     */
+    off64_t starting_off;
+    int rc = -1;
+    char *fname = NULL;
+    struct stat statbuf;
+
+    set_ftr_sha(crypt_ftr);
+
+    if (get_crypt_ftr_info(&fname, &starting_off)) {
+        printf("Unable to get crypt_ftr_info\n");
+        return -1;
+    }
+    if (fname[0] != '/') {
+        printf("Unexpected value for crypto key location\n");
+        return -1;
+    }
+    if ( (fd = open(fname, O_RDWR | O_CREAT|O_CLOEXEC, 0600)) < 0) {
+        printf("Cannot open footer file %s for put\n", fname);
+        return -1;
+    }
+
+    /* Seek to the start of the crypt footer */
+    if (lseek64(fd, starting_off, SEEK_SET) == -1) {
+        printf("Cannot seek to real block device footer\n");
+        goto errout;
+    }
+
+    if ((cnt = write(fd, crypt_ftr, sizeof(struct crypt_mnt_ftr))) != sizeof(struct crypt_mnt_ftr)) {
+        printf("Cannot write real block device footer\n");
+        goto errout;
+    }
+
+    fstat(fd, &statbuf);
+    /* If the keys are kept on a raw block device, do not try to truncate it. */
+    if (S_ISREG(statbuf.st_mode)) {
+        if (ftruncate(fd, 0x4000)) {
+            printf("Cannot set footer file size\n");
+            goto errout;
+        }
+    }
+
+    /* Success! */
+    rc = 0;
+
+errout:
+    close(fd);
+    return rc;
+
+}
+#endif
+
+/* This signs the given object using the keymaster key. */
+static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
+                                 const unsigned char *object,
+                                 const size_t object_size,
+                                 unsigned char **signature,
+                                 size_t *signature_size)
+{
+    unsigned char to_sign[RSA_KEY_SIZE_BYTES];
+    size_t to_sign_size = sizeof(to_sign);
+    memset(to_sign, 0, RSA_KEY_SIZE_BYTES);
+
+    // To sign a message with RSA, the message must satisfy two
+    // constraints:
+    //
+    // 1. The message, when interpreted as a big-endian numeric value, must
+    //    be strictly less than the public modulus of the RSA key.  Note
+    //    that because the most significant bit of the public modulus is
+    //    guaranteed to be 1 (else it's an (n-1)-bit key, not an n-bit
+    //    key), an n-bit message with most significant bit 0 always
+    //    satisfies this requirement.
+    //
+    // 2. The message must have the same length in bits as the public
+    //    modulus of the RSA key.  This requirement isn't mathematically
+    //    necessary, but is necessary to ensure consistency in
+    //    implementations.
+    switch (ftr->kdf_type) {
+        case KDF_SCRYPT_KEYMASTER:
+            // This ensures the most significant byte of the signed message
+            // is zero.  We could have zero-padded to the left instead, but
+            // this approach is slightly more robust against changes in
+            // object size.  However, it's still broken (but not unusably
+            // so) because we really should be using a proper deterministic
+            // RSA padding function, such as PKCS1.
+            memcpy(to_sign + 1, object, min((size_t)RSA_KEY_SIZE_BYTES - 1, object_size));
+            printf("Signing safely-padded object\n");
+            break;
+        default:
+            printf("Unknown KDF type %d\n", ftr->kdf_type);
+            return -1;
+    }
+#ifdef USE_KEYMASTER_3
+    return keymaster_sign_object_for_cryptfs_scrypt(ftr->keymaster_blob, ftr->keymaster_blob_size,
+            KEYMASTER_CRYPTFS_RATE_LIMIT, to_sign, to_sign_size, signature, signature_size,
+            ftr->keymaster_blob, KEYMASTER_BLOB_SIZE, &ftr->keymaster_blob_size);
+#else
+    for (;;) {
+        auto result = keymaster_sign_object_for_cryptfs_scrypt(
+                ftr->keymaster_blob, ftr->keymaster_blob_size, KEYMASTER_CRYPTFS_RATE_LIMIT, to_sign,
+                to_sign_size, signature, signature_size);
+        switch (result) {
+            case KeymasterSignResult::ok:
+                return 0;
+            case KeymasterSignResult::upgrade:
+                break;
+            default:
+                return -1;
+        }
+        printf("Upgrading key\n");
+        if (keymaster_upgrade_key_for_cryptfs_scrypt(
+                RSA_KEY_SIZE, RSA_EXPONENT, KEYMASTER_CRYPTFS_RATE_LIMIT, ftr->keymaster_blob,
+                ftr->keymaster_blob_size, ftr->keymaster_blob, KEYMASTER_BLOB_SIZE,
+                &ftr->keymaster_blob_size) != 0) {
+            printf("Failed to upgrade key\n");
+            return -1;
+        }
+        /*if (put_crypt_ftr_and_key(ftr) != 0) {
+            printf("Failed to write upgraded key to disk\n");
+        }*/
+        printf("Key upgraded in memory\n");
+    }
+#endif
+}
+#endif //#ifndef USE_LEGACY_KEYMASTER
+
+/***************KEYMASTER 3 & 4 END************************/
 
 static void ioctl_init(struct dm_ioctl *io, size_t dataSize, const char *name, unsigned flags)
 {
@@ -715,7 +910,7 @@ static int get_crypt_ftr_info(char **metadata_fname, off64_t *off)
   if (!cached_data) {
     printf("get_crypt_ftr_info crypto key location: '%s'\n", key_fname);
     if (!strcmp(key_fname, KEY_IN_FOOTER)) {
-      if ( (fd = open(real_blkdev, O_RDWR)) < 0) {
+      if ( (fd = open(real_blkdev, O_RDWR|O_CLOEXEC)) < 0) {
         printf("Cannot open real block device %s\n", real_blkdev);
         return -1;
       }
@@ -769,7 +964,7 @@ static int get_crypt_ftr_and_key(struct crypt_mnt_ftr *crypt_ftr)
     printf("Unexpected value for crypto key location\n");
     return -1;
   }
-  if ( (fd = open(fname, O_RDWR)) < 0) {
+  if ( (fd = open(fname, O_RDWR|O_CLOEXEC)) < 0) {
     printf("Cannot open footer file %s for get\n", fname);
     return -1;
   }
@@ -831,39 +1026,24 @@ static int hexdigit (char c)
     return -1;
 }
 
-static unsigned char* convert_hex_ascii_to_key(const char* master_key_ascii,
-                                               unsigned int* out_keysize)
+static void convert_hex_ascii_to_key(const unsigned char* master_key,
+                                    unsigned int keysize, char *master_key_ascii)
 {
-    unsigned int i;
-    *out_keysize = 0;
+    unsigned int i, a;
+    unsigned char nibble;
 
-    size_t size = strlen (master_key_ascii);
-    if (size % 2) {
-        printf("Trying to convert ascii string of odd length\n");
-        return NULL;
+    for (i = 0, a = 0; i < keysize; i++, a += 2) {
+        /* For each byte, write out two ascii hex digits */
+        nibble = (master_key[i] >> 4) & 0xf;
+        master_key_ascii[a] = nibble + (nibble > 9 ? 0x57 : 0x30);
+
+        nibble = master_key[i] & 0xf;
+        master_key_ascii[a + 1] = nibble + (nibble > 9 ? 0x57 : 0x30);
     }
 
-    unsigned char* master_key = (unsigned char*) malloc(size / 2);
-    if (master_key == 0) {
-        printf("Cannot allocate\n");
-        return NULL;
-    }
+    /* Add the null termination */
+    master_key_ascii[a] = '\0';
 
-    for (i = 0; i < size; i += 2) {
-        int high_nibble = hexdigit (master_key_ascii[i]);
-        int low_nibble = hexdigit (master_key_ascii[i + 1]);
-
-        if(high_nibble < 0 || low_nibble < 0) {
-            printf("Invalid hex string\n");
-            free (master_key);
-            return NULL;
-        }
-
-        master_key[*out_keysize] = high_nibble * 16 + low_nibble;
-        (*out_keysize)++;
-    }
-
-    return master_key;
 }
 
 /* Convert a binary key of specified length into an ascii hex string equivalent,
@@ -975,14 +1155,7 @@ static int get_dm_crypt_version(int fd, const char *name,  int *version)
     v = (struct dm_target_versions *) &buffer[sizeof(struct dm_ioctl)];
     while (v->next) {
 #ifdef CONFIG_HW_DISK_ENCRYPTION
-        int flag;
-        if (is_hw_fde_enabled()) {
-            flag = (!strcmp(v->name, "crypt") || !strcmp(v->name, "req-crypt"));
-        } else {
-            flag = (!strcmp(v->name, "crypt"));
-        }
-        printf("get_dm_crypt_version flag: %i, name: '%s'\n", flag, v->name);
-        if (flag) {
+        if (! strcmp(v->name, "crypt") || ! strcmp(v->name, "req-crypt")) {
 #else
         if (! strcmp(v->name, "crypt")) {
 #endif
@@ -1147,9 +1320,12 @@ static int pbkdf2(const char *passwd, const unsigned char *salt,
     printf("Using pbkdf2 for cryptfs KDF\n");
 
     /* Turn the password into a key and IV that can decrypt the master key */
-    unsigned int keysize;
-    char* master_key = (char*)convert_hex_ascii_to_key(passwd, &keysize);
-    if (!master_key) return -1;
+    unsigned int keysize = strlen(passwd);
+    char* master_key = (char*)malloc(strlen(DEFAULT_HEX_PASSWORD) + 1);
+    if (Using_hex_password) {
+        convert_hex_ascii_to_key((const unsigned char*)passwd, keysize, master_key);
+    }
+    else return -1;
     PKCS5_PBKDF2_HMAC_SHA1(master_key, keysize, salt, SALT_LEN,
                            HASH_COUNT, KEY_LEN_BYTES+IV_LEN_BYTES, ikey);
 
@@ -1170,10 +1346,13 @@ static int scrypt(const char *passwd, const unsigned char *salt,
     int p = 1 << ftr->p_factor;
 
     /* Turn the password into a key and IV that can decrypt the master key */
-    unsigned int keysize;
-    unsigned char* master_key = convert_hex_ascii_to_key(passwd, &keysize);
-    if (!master_key) return -1;
-    crypto_scrypt(master_key, keysize, salt, SALT_LEN, N, r, p, ikey,
+    unsigned int keysize = strlen(passwd);
+    char* master_key = (char*)malloc(strlen(DEFAULT_HEX_PASSWORD) + 1);
+    if (Using_hex_password) {
+        convert_hex_ascii_to_key((const unsigned char*)passwd, keysize, master_key);
+    }
+    else return -1;
+    crypto_scrypt((const unsigned char*)master_key, keysize, salt, SALT_LEN, N, r, p, ikey,
             KEY_LEN_BYTES + IV_LEN_BYTES);
 
     memset(master_key, 0, keysize);
@@ -1187,22 +1366,24 @@ static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
     printf("Using scrypt with keymaster for cryptfs KDF\n");
 
     int rc;
-    unsigned int key_size;
+    unsigned int key_size = strlen(passwd);
     size_t signature_size;
     unsigned char* signature;
+    char* master_key = (char*)malloc(std::max(strlen(DEFAULT_HEX_PASSWORD), strlen(passwd)) + 1);
     struct crypt_mnt_ftr *ftr = (struct crypt_mnt_ftr *) params;
 
     int N = 1 << ftr->N_factor;
     int r = 1 << ftr->r_factor;
     int p = 1 << ftr->p_factor;
 
-    unsigned char* master_key = convert_hex_ascii_to_key(passwd, &key_size);
-    if (!master_key) {
-        printf("Failed to convert passwd from hex, using passwd instead\n");
-        master_key = (unsigned char*)strdup(passwd);
+    if (Using_hex_password) {
+        convert_hex_ascii_to_key((const unsigned char*)passwd, key_size, master_key);
+    }
+    else {
+        strcpy(master_key, passwd);
     }
 
-    rc = crypto_scrypt(master_key, key_size, salt, SALT_LEN,
+    rc = crypto_scrypt((const unsigned char*)master_key, key_size, salt, SALT_LEN,
                        N, r, p, ikey, KEY_LEN_BYTES + IV_LEN_BYTES);
     memset(master_key, 0, key_size);
     free(master_key);
@@ -1258,7 +1439,7 @@ static int decrypt_master_key_aux(char *passwd, unsigned char *salt,
                             encrypted_master_key, KEY_LEN_BYTES)) {
     return -1;
   }
-#ifndef TW_CRYPTO_HAVE_KEYMASTERX
+#if !defined (TW_CRYPTO_HAVE_KEYMASTERX) && defined (USE_LEGACY_KEYMASTER)
   if (! EVP_DecryptFinal(&d_ctx, decrypted_master_key + decrypted_len, &final_len)) {
 #else
   if (! EVP_DecryptFinal_ex(&d_ctx, decrypted_master_key + decrypted_len, &final_len)) {
@@ -1343,20 +1524,47 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   int rc = 0;
   unsigned char* intermediate_key = 0;
   size_t intermediate_key_size = 0;
+  int N = 1 << crypt_ftr->N_factor;
+  int r = 1 << crypt_ftr->r_factor;
+  int p = 1 << crypt_ftr->p_factor;
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+  int key_index = 0;
+#endif
 
   printf("crypt_ftr->fs_size = %lld\n", crypt_ftr->fs_size);
 
-  if (! (crypt_ftr->flags & CRYPT_MNT_KEY_UNENCRYPTED) ) {
-    if (decrypt_master_key(passwd, decrypted_master_key, crypt_ftr,
-                           &intermediate_key, &intermediate_key_size)) {
-      printf("Failed to decrypt master key\n");
-      rc = -1;
-      goto errout;
-    }
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+  if(is_hw_disk_encryption((char*)crypt_ftr->crypto_type_name)) {
+      if (crypt_ftr->flags & CRYPT_FORCE_COMPLETE) {
+          if (decrypt_master_key(passwd, decrypted_master_key, crypt_ftr,
+                      &intermediate_key, &intermediate_key_size)) {
+              printf("Failed to decrypt master key\n");
+              rc = -1;
+              goto errout;
+          }
+      }
+  } else {
+      if (! (crypt_ftr->flags & CRYPT_MNT_KEY_UNENCRYPTED) ) {
+          if (decrypt_master_key(passwd, decrypted_master_key, crypt_ftr,
+                      &intermediate_key, &intermediate_key_size)) {
+              printf("Failed to decrypt master key\n");
+              rc = -1;
+              goto errout;
+          }
+      }
   }
+#else
+  if (! (crypt_ftr->flags & CRYPT_MNT_KEY_UNENCRYPTED) ) {
+          if (decrypt_master_key(passwd, decrypted_master_key, crypt_ftr,
+                      &intermediate_key, &intermediate_key_size)) {
+              printf("Failed to decrypt master key\n");
+              rc = -1;
+              goto errout;
+          }
+      }
+#endif
 
 #ifdef CONFIG_HW_DISK_ENCRYPTION
-  int key_index = 0;
   if(is_hw_disk_encryption((char*)crypt_ftr->crypto_type_name)) {
     key_index = verify_hw_fde_passwd(passwd, crypt_ftr);
 
@@ -1404,12 +1612,12 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   }
 #endif
 
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+  if(!is_hw_disk_encryption((char*)crypt_ftr->crypto_type_name)) {
+#endif
   /* Work out if the problem is the password or the data */
   unsigned char scrypted_intermediate_key[sizeof(crypt_ftr->
                                                  scrypted_intermediate_key)];
-  int N = 1 << crypt_ftr->N_factor;
-  int r = 1 << crypt_ftr->r_factor;
-  int p = 1 << crypt_ftr->p_factor;
 
   rc = crypto_scrypt(intermediate_key, intermediate_key_size,
                      crypt_ftr->salt, sizeof(crypt_ftr->salt),
@@ -1438,6 +1646,9 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
       rc = 0;
     }
   }
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+  }
+#endif
 
   if (rc == 0) {
     // Don't increment the failed attempt counter as it doesn't
@@ -1505,6 +1716,7 @@ int cryptfs_check_passwd(char *passwd)
 
     // try falling back to Lollipop hex passwords
     if (rc) {
+        Using_hex_password = true;
         int hex_pass_len = strlen(passwd) * 2 + 1;
         char *hex_passwd = (char *)malloc(hex_pass_len);
         if (hex_passwd) {
@@ -1516,7 +1728,6 @@ int cryptfs_check_passwd(char *passwd)
             free(hex_passwd);
         }
     }
-
     return rc;
 }
 
