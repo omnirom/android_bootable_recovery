@@ -65,6 +65,8 @@ using android::hardware::boot::V1_0::IBootControl;
 using android::hardware::boot::V1_0::BoolResult;
 using android::hardware::boot::V1_0::CommandResult;
 
+constexpr const char* kDefaultCareMapPrefix = "/data/ota_package/care_map";
+
 // Find directories in format of "/sys/block/dm-X".
 static int dm_name_filter(const dirent* de) {
   if (android::base::StartsWith(de->d_name, "dm-")) {
@@ -72,6 +74,10 @@ static int dm_name_filter(const dirent* de) {
   }
   return 0;
 }
+
+UpdateVerifier::UpdateVerifier()
+    : care_map_prefix_(kDefaultCareMapPrefix),
+      property_reader_([](const std::string& id) { return android::base::GetProperty(id, ""); }) {}
 
 // Iterate the content of "/sys/block/dm-X/dm/name" and find all the dm-wrapped block devices.
 // We will later read all the ("cared") blocks from "/dev/block/dm-X" to ensure the target
@@ -224,18 +230,14 @@ bool UpdateVerifier::ParseCareMapPlainText(const std::string& content) {
   return true;
 }
 
-bool UpdateVerifier::ParseCareMap(const std::string& file_name) {
+bool UpdateVerifier::ParseCareMap() {
   partition_map_.clear();
 
-  std::string care_map_name = file_name;
-  if (care_map_name.empty()) {
-    std::string care_map_prefix = "/data/ota_package/care_map";
-    care_map_name = care_map_prefix + ".pb";
-    if (access(care_map_name.c_str(), R_OK) == -1) {
-      LOG(WARNING) << care_map_name
-                   << " doesn't exist, falling back to read the care_map in plain text format.";
-      care_map_name = care_map_prefix + ".txt";
-    }
+  std::string care_map_name = care_map_prefix_ + ".pb";
+  if (access(care_map_name.c_str(), R_OK) == -1) {
+    LOG(WARNING) << care_map_name
+                 << " doesn't exist, falling back to read the care_map in plain text format.";
+    care_map_name = care_map_prefix_ + ".txt";
   }
 
   android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
@@ -283,7 +285,21 @@ bool UpdateVerifier::ParseCareMap(const std::string& file_name) {
       return false;
     }
 
-    // TODO(xunchang) compare the fingerprint of the partition.
+    // Continues to check other partitions if there is a fingerprint mismatch.
+    if (partition.id().empty() || partition.id() == "unknown") {
+      LOG(WARNING) << "Skip reading partition " << partition.name()
+                   << ": property_id is not provided to get fingerprint.";
+      continue;
+    }
+
+    std::string fingerprint = property_reader_(partition.id());
+    if (fingerprint != partition.fingerprint()) {
+      LOG(WARNING) << "Skip reading partition " << partition.name() << ": fingerprint "
+                   << fingerprint << " doesn't match the expected value "
+                   << partition.fingerprint();
+      continue;
+    }
+
     partition_map_.emplace(partition.name(), ranges);
   }
 
@@ -293,6 +309,15 @@ bool UpdateVerifier::ParseCareMap(const std::string& file_name) {
   }
 
   return true;
+}
+
+void UpdateVerifier::set_care_map_prefix(const std::string& prefix) {
+  care_map_prefix_ = prefix;
+}
+
+void UpdateVerifier::set_property_reader(
+    const std::function<std::string(const std::string&)>& property_reader) {
+  property_reader_ = property_reader;
 }
 
 static int reboot_device() {
