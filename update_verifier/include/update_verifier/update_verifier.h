@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -37,15 +38,18 @@ int update_verifier(int argc, char** argv);
 // it should skip the verification to avoid bricking the device.
 class UpdateVerifier {
  public:
+  UpdateVerifier();
+
   // This function tries to process the care_map.pb as protobuf message; and falls back to use
-  // care_map.txt if the pb format file doesn't exist. If the parsing succeeds, put the result of
-  // the pair <partition_name, ranges> into the |partition_map_|.
-  bool ParseCareMap(const std::string& file_name = "");
+  // care_map.txt if the pb format file doesn't exist. If the parsing succeeds, put the result
+  // of the pair <partition_name, ranges> into the |partition_map_|.
+  bool ParseCareMap();
 
   // Verifies the new boot by reading all the cared blocks for partitions in |partition_map_|.
   bool VerifyPartitions();
 
  private:
+  friend class UpdateVerifierTest;
   // Parses the legacy care_map.txt in plain text format.
   bool ParseCareMapPlainText(const std::string& content);
 
@@ -56,5 +60,15 @@ class UpdateVerifier {
   bool ReadBlocks(const std::string partition_name, const std::string& dm_block_device,
                   const RangeSet& ranges);
 
+  // Functions to override the care_map_prefix_ and property_reader_, used in test only.
+  void set_care_map_prefix(const std::string& prefix);
+  void set_property_reader(const std::function<std::string(const std::string&)>& property_reader);
+
   std::map<std::string, RangeSet> partition_map_;
+  // The path to the care_map excluding the filename extension; default value:
+  // "/data/ota_package/care_map"
+  std::string care_map_prefix_;
+
+  // The function to read the device property; default value: android::base::GetProperty()
+  std::function<std::string(const std::string&)> property_reader_;
 };
