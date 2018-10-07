@@ -288,7 +288,7 @@ static GRSurface* fbdev_flip(minui_backend* backend __unused) {
     unsigned int idx;
     unsigned char tmp;
     unsigned char* ucfb_vaddr = (unsigned char*)gr_draw->data;
-    for (idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes);
+    for (idx = 0 ; idx < (unsigned int)(gr_draw->height * gr_draw->row_bytes);
             idx += 4) {
         tmp = ucfb_vaddr[idx];
         ucfb_vaddr[idx    ] = ucfb_vaddr[idx + 2];
