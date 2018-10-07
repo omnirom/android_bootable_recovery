@@ -228,6 +228,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdexfile.so
             RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libservices.so
             RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_portable.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.weaver@1.0.so
          endif
     endif
 endif
