@@ -109,7 +109,7 @@ static bool ParseLastCommandFile(size_t* last_command_index) {
     return false;
   }
 
-  if (!android::base::ParseInt(lines[0], last_command_index)) {
+  if (!android::base::ParseUint(lines[0], last_command_index)) {
     LOG(ERROR) << "Failed to parse integer in: " << lines[0];
     return false;
   }
