@@ -52,6 +52,17 @@
                                         correctly marked partial encryption */
 #define CRYPT_DATA_CORRUPT 0x8 /* Set when encryption is fine, but the
                                   underlying volume is corrupt */
+#define CRYPT_FORCE_ENCRYPTION 0x10 /* Set when it is time to encrypt this
+                                       volume on boot. Everything in this
+                                       structure is set up correctly as
+                                       though device is encrypted except
+                                       that the master key is encrypted with the
+                                       default password. */
+#define CRYPT_FORCE_COMPLETE 0x20 /* Set when the above encryption cycle is
+                                     complete. On next cryptkeeper entry, match
+                                     the password. If it matches fix the master
+                                     key and remove this flag. */
+
 #ifdef CONFIG_HW_DISK_ENCRYPTION
 /* This flag is used to transition from L->M upgrade. L release passed
  * a byte for every nible of user password while M release is passing

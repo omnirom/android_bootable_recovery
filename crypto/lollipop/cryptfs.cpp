@@ -94,6 +94,9 @@ extern "C" {
 
 #define RETRY_MOUNT_ATTEMPTS 10
 #define RETRY_MOUNT_DELAY_SECONDS 1
+#define DEFAULT_HEX_PASSWORD "64656661756c745f70617373776f7264"
+
+bool Using_hex_password = false;
 
 const char *me = "cryptfs";
 
@@ -1041,39 +1044,24 @@ static int hexdigit (char c)
     return -1;
 }
 
-static unsigned char* convert_hex_ascii_to_key(const char* master_key_ascii,
-                                               unsigned int* out_keysize)
+static void convert_hex_ascii_to_key(const unsigned char* master_key,
+                                    unsigned int keysize, char *master_key_ascii)
 {
-    unsigned int i;
-    *out_keysize = 0;
+    unsigned int i, a;
+    unsigned char nibble;
 
-    size_t size = strlen (master_key_ascii);
-    if (size % 2) {
-        printf("Trying to convert ascii string of odd length\n");
-        return NULL;
+    for (i = 0, a = 0; i < keysize; i++, a += 2) {
+        /* For each byte, write out two ascii hex digits */
+        nibble = (master_key[i] >> 4) & 0xf;
+        master_key_ascii[a] = nibble + (nibble > 9 ? 0x57 : 0x30);
+
+        nibble = master_key[i] & 0xf;
+        master_key_ascii[a + 1] = nibble + (nibble > 9 ? 0x57 : 0x30);
     }
 
-    unsigned char* master_key = (unsigned char*) malloc(size / 2);
-    if (master_key == 0) {
-        printf("Cannot allocate\n");
-        return NULL;
-    }
+    /* Add the null termination */
+    master_key_ascii[a] = '\0';
 
-    for (i = 0; i < size; i += 2) {
-        int high_nibble = hexdigit (master_key_ascii[i]);
-        int low_nibble = hexdigit (master_key_ascii[i + 1]);
-
-        if(high_nibble < 0 || low_nibble < 0) {
-            printf("Invalid hex string\n");
-            free (master_key);
-            return NULL;
-        }
-
-        master_key[*out_keysize] = high_nibble * 16 + low_nibble;
-        (*out_keysize)++;
-    }
-
-    return master_key;
 }
 
 /* Convert a binary key of specified length into an ascii hex string equivalent,
@@ -1362,9 +1350,12 @@ static int pbkdf2(const char *passwd, const unsigned char *salt,
     printf("Using pbkdf2 for cryptfs KDF\n");
 
     /* Turn the password into a key and IV that can decrypt the master key */
-    unsigned int keysize;
-    char* master_key = (char*)convert_hex_ascii_to_key(passwd, &keysize);
-    if (!master_key) return -1;
+    unsigned int keysize = strlen(passwd);
+    char* master_key = (char*)malloc(strlen(DEFAULT_HEX_PASSWORD) + 1);
+    if (Using_hex_password) {
+        convert_hex_ascii_to_key((const unsigned char*)passwd, keysize, master_key);
+    }
+    else return -1;
     PKCS5_PBKDF2_HMAC_SHA1(master_key, keysize, salt, SALT_LEN,
                            HASH_COUNT, KEY_LEN_BYTES+IV_LEN_BYTES, ikey);
 
@@ -1385,10 +1376,13 @@ static int scrypt(const char *passwd, const unsigned char *salt,
     int p = 1 << ftr->p_factor;
 
     /* Turn the password into a key and IV that can decrypt the master key */
-    unsigned int keysize;
-    unsigned char* master_key = convert_hex_ascii_to_key(passwd, &keysize);
-    if (!master_key) return -1;
-    crypto_scrypt(master_key, keysize, salt, SALT_LEN, N, r, p, ikey,
+    unsigned int keysize = strlen(passwd);
+    char* master_key = (char*)malloc(strlen(DEFAULT_HEX_PASSWORD) + 1);
+    if (Using_hex_password) {
+        convert_hex_ascii_to_key((const unsigned char*)passwd, keysize, master_key);
+    }
+    else return -1;
+    crypto_scrypt((const unsigned char*)master_key, keysize, salt, SALT_LEN, N, r, p, ikey,
             KEY_LEN_BYTES + IV_LEN_BYTES);
 
     memset(master_key, 0, keysize);
@@ -1402,22 +1396,25 @@ static int scrypt_keymaster(const char *passwd, const unsigned char *salt,
     printf("Using scrypt with keymaster for cryptfs KDF\n");
 
     int rc;
-    unsigned int key_size;
+    unsigned int key_size = strlen(passwd);
     size_t signature_size;
     unsigned char* signature;
+    char* master_key = (char*)malloc(std::max(strlen(DEFAULT_HEX_PASSWORD), strlen(passwd)) + 1);
     struct crypt_mnt_ftr *ftr = (struct crypt_mnt_ftr *) params;
 
     int N = 1 << ftr->N_factor;
     int r = 1 << ftr->r_factor;
     int p = 1 << ftr->p_factor;
 
-    unsigned char* master_key = convert_hex_ascii_to_key(passwd, &key_size);
-    if (!master_key) {
+    if (Using_hex_password) {
+        convert_hex_ascii_to_key((const unsigned char*)passwd, key_size, master_key);
+    }
+    else {
         printf("Failed to convert passwd from hex, using passwd instead\n");
-        master_key = (unsigned char*)strdup(passwd);
+        strcpy(master_key, passwd);
     }
 
-    rc = crypto_scrypt(master_key, key_size, salt, SALT_LEN,
+    rc = crypto_scrypt((const unsigned char*)master_key, key_size, salt, SALT_LEN,
                        N, r, p, ikey, KEY_LEN_BYTES + IV_LEN_BYTES);
     memset(master_key, 0, key_size);
     free(master_key);
@@ -1571,7 +1568,11 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
 
   printf("crypt_ftr->fs_size = %lld\n", crypt_ftr->fs_size);
 
+#ifdef CONFIG_HW_DISK_ENCRYPTION
+  if (crypt_ftr->flags & CRYPT_FORCE_COMPLETE) {
+#else
   if (! (crypt_ftr->flags & CRYPT_MNT_KEY_UNENCRYPTED) ) {
+#endif
     if (decrypt_master_key(passwd, decrypted_master_key, crypt_ftr,
                            &intermediate_key, &intermediate_key_size)) {
       printf("Failed to decrypt master key\n");
@@ -1628,6 +1629,7 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   }
 #endif
 
+#ifndef CONFIG_HW_DISK_ENCRYPTION
   /* Work out if the problem is the password or the data */
   unsigned char scrypted_intermediate_key[sizeof(crypt_ftr->
                                                  scrypted_intermediate_key)];
@@ -1659,6 +1661,7 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
       rc = 0;
     }
   }
+#endif
 
   if (rc == 0) {
     // Don't increment the failed attempt counter as it doesn't
@@ -1726,6 +1729,7 @@ int cryptfs_check_passwd(char *passwd)
 
     // try falling back to Lollipop hex passwords
     if (rc) {
+        Using_hex_password = true;
         int hex_pass_len = strlen(passwd) * 2 + 1;
         char *hex_passwd = (char *)malloc(hex_pass_len);
         if (hex_passwd) {
@@ -1737,7 +1741,6 @@ int cryptfs_check_passwd(char *passwd)
             free(hex_passwd);
         }
     }
-
     return rc;
 }
 
