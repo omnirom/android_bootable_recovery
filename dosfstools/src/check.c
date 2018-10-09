@@ -585,10 +585,10 @@ static int check_file(DOS_FS * fs, DOS_FILE * file)
 	if (!(file->dir_ent.attr & ATTR_DIR) && le32toh(file->dir_ent.size) <=
 	    (uint64_t)clusters * fs->cluster_size) {
 	    printf
-		("%s\n  File size is %u bytes, cluster chain length is > %lu "
+		("%s\n  File size is %u bytes, cluster chain length is > %llu "
 		 "bytes.\n  Truncating file to %u bytes.\n", path_name(file),
 		 le32toh(file->dir_ent.size),
-		 (uint64_t)clusters * fs->cluster_size,
+		 (unsigned long long)clusters * fs->cluster_size,
 		 le32toh(file->dir_ent.size));
 	    truncate_file(fs, file, clusters);
 	    break;
