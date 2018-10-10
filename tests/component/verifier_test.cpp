@@ -27,6 +27,7 @@
 #include <android-base/file.h>
 #include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
+#include <android-base/unique_fd.h>
 #include <gtest/gtest.h>
 
 #include "common/test_constants.h"
@@ -34,6 +35,89 @@
 #include "verifier.h"
 
 using namespace std::string_literals;
+
+static void LoadKeyFromFile(const std::string& file_name, Certificate* cert) {
+  std::string testkey_string;
+  ASSERT_TRUE(android::base::ReadFileToString(file_name, &testkey_string));
+  ASSERT_TRUE(LoadCertificateFromBuffer(
+      std::vector<uint8_t>(testkey_string.begin(), testkey_string.end()), cert));
+}
+
+static void VerifyPackageWithCertificate(const std::string& name, Certificate&& cert) {
+  std::string package = from_testdata_base(name);
+  MemMapping memmap;
+  if (!memmap.MapFile(package)) {
+    FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
+  }
+
+  std::vector<Certificate> certs;
+  certs.emplace_back(std::move(cert));
+  ASSERT_EQ(VERIFY_SUCCESS, verify_file(memmap.addr, memmap.length, certs));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_failure) {
+  Certificate cert(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  std::string testkey_string;
+  ASSERT_TRUE(
+      android::base::ReadFileToString(from_testdata_base("testkey_v1.txt"), &testkey_string));
+  ASSERT_FALSE(LoadCertificateFromBuffer(
+      std::vector<uint8_t>(testkey_string.begin(), testkey_string.end()), &cert));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_sha1_exponent3) {
+  Certificate cert(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_v1.x509.pem"), &cert);
+
+  ASSERT_EQ(SHA_DIGEST_LENGTH, cert.hash_len);
+  ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
+  ASSERT_EQ(nullptr, cert.ec);
+
+  VerifyPackageWithCertificate("otasigned_v1.zip", std::move(cert));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_sha1_exponent65537) {
+  Certificate cert(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_v2.x509.pem"), &cert);
+
+  ASSERT_EQ(SHA_DIGEST_LENGTH, cert.hash_len);
+  ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
+  ASSERT_EQ(nullptr, cert.ec);
+
+  VerifyPackageWithCertificate("otasigned_v2.zip", std::move(cert));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_sha256_exponent3) {
+  Certificate cert(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_v3.x509.pem"), &cert);
+
+  ASSERT_EQ(SHA256_DIGEST_LENGTH, cert.hash_len);
+  ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
+  ASSERT_EQ(nullptr, cert.ec);
+
+  VerifyPackageWithCertificate("otasigned_v3.zip", std::move(cert));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_sha256_exponent65537) {
+  Certificate cert(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_v4.x509.pem"), &cert);
+
+  ASSERT_EQ(SHA256_DIGEST_LENGTH, cert.hash_len);
+  ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
+  ASSERT_EQ(nullptr, cert.ec);
+
+  VerifyPackageWithCertificate("otasigned_v4.zip", std::move(cert));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_sha256_ec256bits) {
+  Certificate cert(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_v5.x509.pem"), &cert);
+
+  ASSERT_EQ(SHA256_DIGEST_LENGTH, cert.hash_len);
+  ASSERT_EQ(Certificate::KEY_TYPE_EC, cert.key_type);
+  ASSERT_EQ(nullptr, cert.rsa);
+
+  VerifyPackageWithCertificate("otasigned_v5.zip", std::move(cert));
+}
 
 class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
  protected:
