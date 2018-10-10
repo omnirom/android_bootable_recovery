@@ -1909,7 +1909,7 @@ bool TWPartition::Wipe_Encryption() {
 		return false;
 
 	Has_Data_Media = false;
-	Decrypted_Block_Device = "";
+	//Decrypted_Block_Device = "";
 #ifdef TW_INCLUDE_CRYPTO
 	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
 		if (!UnMount(true))
