@@ -762,93 +762,6 @@ Value* PackageExtractDirFn(const char* name, State* state,
   return StringValue(success ? "t" : "");
 }
 
-// package_extract_file(package_file[, dest_file])
-//   Extracts a single package_file from the update package and writes it to dest_file,
-//   overwriting existing files if necessary. Without the dest_file argument, returns the
-//   contents of the package file as a binary blob.
-Value* PackageExtractFileFn(const char* name, State* state,
-                            const std::vector<std::unique_ptr<Expr>>& argv) {
-  if (argv.size() < 1 || argv.size() > 2) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 or 2 args, got %zu", name,
-                      argv.size());
-  }
-
-  if (argv.size() == 2) {
-    // The two-argument version extracts to a file.
-
-    std::vector<std::string> args;
-    if (!ReadArgs(state, argv, &args)) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %zu args", name,
-                        argv.size());
-    }
-    const std::string& zip_path = args[0];
-    const std::string& dest_path = args[1];
-
-    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
-    ZipString zip_string_path(zip_path.c_str());
-    ZipEntry entry;
-    if (FindEntry(za, zip_string_path, &entry) != 0) {
-      LOG(ERROR) << name << ": no " << zip_path << " in package";
-      return StringValue("");
-    }
-
-    unique_fd fd(TEMP_FAILURE_RETRY(
-        ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
-    if (fd == -1) {
-      PLOG(ERROR) << name << ": can't open " << dest_path << " for write";
-      return StringValue("");
-    }
-
-    bool success = true;
-    int32_t ret = ExtractEntryToFile(za, &entry, fd);
-    if (ret != 0) {
-      LOG(ERROR) << name << ": Failed to extract entry \"" << zip_path << "\" ("
-                 << entry.uncompressed_length << " bytes) to \"" << dest_path
-                 << "\": " << ErrorCodeString(ret);
-      success = false;
-    }
-    if (ota_fsync(fd) == -1) {
-      PLOG(ERROR) << "fsync of \"" << dest_path << "\" failed";
-      success = false;
-    }
-    if (ota_close(fd) == -1) {
-      PLOG(ERROR) << "close of \"" << dest_path << "\" failed";
-      success = false;
-    }
-
-    return StringValue(success ? "t" : "");
-  } else {
-    // The one-argument version returns the contents of the file as the result.
-
-    std::vector<std::string> args;
-    if (!ReadArgs(state, argv, &args)) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse %zu args", name,
-                        argv.size());
-    }
-    const std::string& zip_path = args[0];
-
-    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
-    ZipString zip_string_path(zip_path.c_str());
-    ZipEntry entry;
-    if (FindEntry(za, zip_string_path, &entry) != 0) {
-      return ErrorAbort(state, kPackageExtractFileFailure, "%s(): no %s in package", name,
-                        zip_path.c_str());
-    }
-
-    std::string buffer;
-    buffer.resize(entry.uncompressed_length);
-
-    int32_t ret = ExtractToMemory(za, &entry, reinterpret_cast<uint8_t*>(&buffer[0]), buffer.size());
-    if (ret != 0) {
-      return ErrorAbort(state, kPackageExtractFileFailure,
-                        "%s: Failed to extract entry \"%s\" (%zu bytes) to memory: %s", name,
-                        zip_path.c_str(), buffer.size(), ErrorCodeString(ret));
-    }
-
-    return new Value(VAL_BLOB, buffer);
-  }
-}
-
 // symlink(target, [src1, src2, ...])
 //   Creates all sources as symlinks to target. It unlinks any previously existing src1, src2, etc
 //   before creating symlinks.
@@ -1088,8 +1001,8 @@ static int ApplyParsedPerms(State* state, const char* filename, const struct sta
 static struct perm_parsed_args recursive_parsed_args;
 static State* recursive_state;
 
-static int do_SetMetadataRecursive(const char* filename, const struct stat* statptr, int fileflags,
-                                   struct FTW* pfwt) {
+static int do_SetMetadataRecursive(const char* filename, const struct stat* statptr, int /*fileflags*/,
+                                   struct FTW* /*pfwt*/) {
   return ApplyParsedPerms(recursive_state, filename, statptr, recursive_parsed_args);
 }
 
@@ -1483,7 +1396,7 @@ Value* EnableRebootFn(const char* name, State* state, const std::vector<std::uni
   return StringValue("t");
 }
 
-Value* Tune2FsFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+Value* Tune2FsFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& /*argv*/) {
 #ifdef HAVE_LIBTUNE2FS
   if (argv.empty()) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects args, got %zu", name, argv.size());
