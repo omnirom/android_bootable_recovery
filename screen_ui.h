@@ -31,21 +31,90 @@
 // From minui/minui.h.
 struct GRSurface;
 
-// This class maintains the menu selection and display of the screen ui.
+enum class UIElement {
+  HEADER,
+  MENU,
+  MENU_SEL_BG,
+  MENU_SEL_BG_ACTIVE,
+  MENU_SEL_FG,
+  LOG,
+  TEXT_FILL,
+  INFO
+};
+
+// Interface to draw the UI elements on the screen.
+class DrawInterface {
+ public:
+  virtual ~DrawInterface() = default;
+
+  // Sets the color to the predefined value for |element|.
+  virtual void SetColor(UIElement element) const = 0;
+
+  // Draws a highlight bar at (x, y) - (x + width, y + height).
+  virtual void DrawHighlightBar(int x, int y, int width, int height) const = 0;
+
+  // Draws a horizontal rule at Y. Returns the offset it should be moving along Y-axis.
+  virtual int DrawHorizontalRule(int y) const = 0;
+
+  // Draws a line of text. Returns the offset it should be moving along Y-axis.
+  virtual int DrawTextLine(int x, int y, const std::string& line, bool bold) const = 0;
+
+  // Draws surface portion (sx, sy, w, h) at screen location (dx, dy).
+  virtual void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx,
+                           int dy) const = 0;
+
+  // Draws rectangle at (x, y) - (x + w, y + h).
+  virtual void DrawFill(int x, int y, int w, int h) const = 0;
+
+  // Draws given surface (surface->pixel_bytes = 1) as text at (x, y).
+  virtual void DrawTextIcon(int x, int y, GRSurface* surface) const = 0;
+
+  // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
+  virtual int DrawTextLines(int x, int y, const std::vector<std::string>& lines) const = 0;
+
+  // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines. It
+  // keeps symmetrical margins of 'x' at each end of a line. Returns the offset it should be moving
+  // along Y-axis.
+  virtual int DrawWrappedTextLines(int x, int y, const std::vector<std::string>& lines) const = 0;
+};
+
+// Interface for classes that maintain the menu selection and display.
 class Menu {
+ public:
+  virtual ~Menu() = default;
+  // Returns the current menu selection.
+  size_t selection() const;
+  // Sets the current selection to |sel|. Handle the overflow cases depending on if the menu is
+  // scrollable.
+  virtual int Select(int sel) = 0;
+  // Displays the menu headers on the screen at offset x, y
+  virtual int DrawHeader(int x, int y) const = 0;
+  // Iterates over the menu items and displays each of them at offset x, y.
+  virtual int DrawItems(int x, int y, int screen_width, bool long_press) const = 0;
+
+ protected:
+  Menu(size_t initial_selection, const DrawInterface& draw_func);
+  // Current menu selection.
+  size_t selection_;
+  // Reference to the class that implements all the draw functions.
+  const DrawInterface& draw_funcs_;
+};
+
+// This class uses strings as the menu header and items.
+class TextMenu : public Menu {
  public:
   // Constructs a Menu instance with the given |headers|, |items| and properties. Sets the initial
   // selection to |initial_selection|.
-  Menu(bool scrollable, size_t max_items, size_t max_length,
-       const std::vector<std::string>& headers, const std::vector<std::string>& items,
-       size_t initial_selection);
+  TextMenu(bool scrollable, size_t max_items, size_t max_length,
+           const std::vector<std::string>& headers, const std::vector<std::string>& items,
+           size_t initial_selection, int char_height, const DrawInterface& draw_funcs);
+
+  int Select(int sel) override;
+  int DrawHeader(int x, int y) const override;
+  int DrawItems(int x, int y, int screen_width, bool long_press) const override;
 
   bool scrollable() const {
     return scrollable_;
-  }
-
-  size_t selection() const {
-    return selection_;
   }
 
   // Returns count of menu items.
@@ -75,10 +144,6 @@ class Menu {
   // |cur_selection_str| if the items exceed the screen limit.
   bool ItemsOverflow(std::string* cur_selection_str) const;
 
-  // Sets the current selection to |sel|. Handle the overflow cases depending on if the menu is
-  // scrollable.
-  int Select(int sel);
-
  private:
   // The menu is scrollable to display more items. Used on wear devices who have smaller screens.
   const bool scrollable_;
@@ -92,25 +157,45 @@ class Menu {
   std::vector<std::string> text_items_;
   // The first item to display on the screen.
   size_t menu_start_;
-  // Current menu selection.
-  size_t selection_;
+
+  // Height in pixels of each character.
+  int char_height_;
+};
+
+// This class uses GRSurfaces* as the menu header and items.
+class GraphicMenu : public Menu {
+ public:
+  // Constructs a Menu instance with the given |headers|, |items| and properties. Sets the initial
+  // selection to |initial_selection|.
+  GraphicMenu(size_t max_width, size_t max_height, GRSurface* graphic_headers,
+              const std::vector<GRSurface*>& graphic_items, size_t initial_selection,
+              const DrawInterface& draw_funcs);
+
+  int Select(int sel) override;
+  int DrawHeader(int x, int y) const override;
+  int DrawItems(int x, int y, int screen_width, bool long_press) const override;
+
+  // Checks if all the header and items are valid GRSurfaces; and that they can fit in the area
+  // defined by |max_width_| and |max_height_|.
+  bool Validate() const;
+
+ private:
+  // Returns true if |surface| fits on the screen with a vertical offset |y|.
+  bool ValidateGraphicSurface(int y, const GRSurface* surface) const;
+
+  const size_t max_width_;
+  const size_t max_height_;
+
+  // Pointers to the menu headers and items in graphic icons. This class does not have the ownership
+  // of the these objects.
+  GRSurface* graphic_headers_;
+  std::vector<GRSurface*> graphic_items_;
 };
 
 // Implementation of RecoveryUI appropriate for devices with a screen
 // (shows an icon + a progress bar, text logging, menu, etc.)
-class ScreenRecoveryUI : public RecoveryUI {
+class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
  public:
-  enum UIElement {
-    HEADER,
-    MENU,
-    MENU_SEL_BG,
-    MENU_SEL_BG_ACTIVE,
-    MENU_SEL_FG,
-    LOG,
-    TEXT_FILL,
-    INFO
-  };
-
   ScreenRecoveryUI();
   explicit ScreenRecoveryUI(bool scrollable_menu);
   ~ScreenRecoveryUI() override;
@@ -148,8 +233,6 @@ class ScreenRecoveryUI : public RecoveryUI {
   void KeyLongPress(int) override;
 
   void Redraw();
-
-  void SetColor(UIElement e) const;
 
   // Checks the background text image, for debugging purpose. It iterates the locales embedded in
   // the on-device resource files and shows the localized text, for manual inspection.
@@ -212,24 +295,16 @@ class ScreenRecoveryUI : public RecoveryUI {
   // Returns pixel height of draw buffer.
   virtual int ScreenHeight() const;
 
-  // Draws a highlight bar at (x, y) - (x + width, y + height).
-  virtual void DrawHighlightBar(int x, int y, int width, int height) const;
-  // Draws a horizontal rule at Y. Returns the offset it should be moving along Y-axis.
-  virtual int DrawHorizontalRule(int y) const;
-  // Draws a line of text. Returns the offset it should be moving along Y-axis.
-  virtual int DrawTextLine(int x, int y, const std::string& line, bool bold) const;
-  // Draws surface portion (sx, sy, w, h) at screen location (dx, dy).
-  virtual void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx, int dy) const;
-  // Draws rectangle at (x, y) - (x + w, y + h).
-  virtual void DrawFill(int x, int y, int w, int h) const;
-  // Draws given surface (surface->pixel_bytes = 1) as text at (x, y).
-  virtual void DrawTextIcon(int x, int y, GRSurface* surface) const;
-  // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
-  int DrawTextLines(int x, int y, const std::vector<std::string>& lines) const;
-  // Similar to DrawTextLines() to draw multiple text lines, but additionally wraps long lines. It
-  // keeps symmetrical margins of 'x' at each end of a line. Returns the offset it should be moving
-  // along Y-axis.
-  int DrawWrappedTextLines(int x, int y, const std::vector<std::string>& lines) const;
+  // Implementation of the draw functions in DrawInterface.
+  void SetColor(UIElement e) const override;
+  void DrawHighlightBar(int x, int y, int width, int height) const override;
+  int DrawHorizontalRule(int y) const override;
+  void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx, int dy) const override;
+  void DrawFill(int x, int y, int w, int h) const override;
+  void DrawTextIcon(int x, int y, GRSurface* surface) const override;
+  int DrawTextLine(int x, int y, const std::string& line, bool bold) const override;
+  int DrawTextLines(int x, int y, const std::vector<std::string>& lines) const override;
+  int DrawWrappedTextLines(int x, int y, const std::vector<std::string>& lines) const override;
 
   Icon currentIcon;
 
