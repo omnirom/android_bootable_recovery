@@ -38,8 +38,39 @@
 static const std::vector<std::string> HEADERS{ "header" };
 static const std::vector<std::string> ITEMS{ "item1", "item2", "item3", "item4", "1234567890" };
 
-TEST(ScreenUITest, StartPhoneMenuSmoke) {
-  Menu menu(false, 10, 20, HEADERS, ITEMS, 0);
+// TODO(xunchang) check if some draw functions are called when drawing menus.
+class MockDrawFunctions : public DrawInterface {
+  void SetColor(UIElement /* element */) const override {}
+  void DrawHighlightBar(int /* x */, int /* y */, int /* width */,
+                        int /* height */) const override {};
+  int DrawHorizontalRule(int /* y */) const override {
+    return 0;
+  };
+  int DrawTextLine(int /* x */, int /* y */, const std::string& /* line */,
+                   bool /* bold */) const override {
+    return 0;
+  };
+  void DrawSurface(GRSurface* /* surface */, int /* sx */, int /* sy */, int /* w */, int /* h */,
+                   int /* dx */, int /* dy */) const override {};
+  void DrawFill(int /* x */, int /* y */, int /* w */, int /* h */) const override {};
+  void DrawTextIcon(int /* x */, int /* y */, GRSurface* /* surface */) const override {};
+  int DrawTextLines(int /* x */, int /* y */,
+                    const std::vector<std::string>& /* lines */) const override {
+    return 0;
+  };
+  int DrawWrappedTextLines(int /* x */, int /* y */,
+                           const std::vector<std::string>& /* lines */) const override {
+    return 0;
+  };
+};
+
+class ScreenUITest : public testing::Test {
+ protected:
+  MockDrawFunctions draw_funcs_;
+};
+
+TEST_F(ScreenUITest, StartPhoneMenuSmoke) {
+  TextMenu menu(false, 10, 20, HEADERS, ITEMS, 0, 20, draw_funcs_);
   ASSERT_FALSE(menu.scrollable());
   ASSERT_EQ(HEADERS[0], menu.text_headers()[0]);
   ASSERT_EQ(5u, menu.ItemsCount());
@@ -53,8 +84,8 @@ TEST(ScreenUITest, StartPhoneMenuSmoke) {
   ASSERT_EQ(0, menu.selection());
 }
 
-TEST(ScreenUITest, StartWearMenuSmoke) {
-  Menu menu(true, 10, 8, HEADERS, ITEMS, 1);
+TEST_F(ScreenUITest, StartWearMenuSmoke) {
+  TextMenu menu(true, 10, 8, HEADERS, ITEMS, 1, 20, draw_funcs_);
   ASSERT_TRUE(menu.scrollable());
   ASSERT_EQ(HEADERS[0], menu.text_headers()[0]);
   ASSERT_EQ(5u, menu.ItemsCount());
@@ -69,8 +100,8 @@ TEST(ScreenUITest, StartWearMenuSmoke) {
   ASSERT_EQ(1, menu.selection());
 }
 
-TEST(ScreenUITest, StartPhoneMenuItemsOverflow) {
-  Menu menu(false, 1, 20, HEADERS, ITEMS, 0);
+TEST_F(ScreenUITest, StartPhoneMenuItemsOverflow) {
+  TextMenu menu(false, 1, 20, HEADERS, ITEMS, 0, 20, draw_funcs_);
   ASSERT_FALSE(menu.scrollable());
   ASSERT_EQ(1u, menu.ItemsCount());
 
@@ -84,8 +115,8 @@ TEST(ScreenUITest, StartPhoneMenuItemsOverflow) {
   ASSERT_EQ(1u, menu.MenuEnd());
 }
 
-TEST(ScreenUITest, StartWearMenuItemsOverflow) {
-  Menu menu(true, 1, 20, HEADERS, ITEMS, 0);
+TEST_F(ScreenUITest, StartWearMenuItemsOverflow) {
+  TextMenu menu(true, 1, 20, HEADERS, ITEMS, 0, 20, draw_funcs_);
   ASSERT_TRUE(menu.scrollable());
   ASSERT_EQ(5u, menu.ItemsCount());
 
@@ -101,9 +132,9 @@ TEST(ScreenUITest, StartWearMenuItemsOverflow) {
   ASSERT_EQ(1u, menu.MenuEnd());
 }
 
-TEST(ScreenUITest, PhoneMenuSelectSmoke) {
+TEST_F(ScreenUITest, PhoneMenuSelectSmoke) {
   int sel = 0;
-  Menu menu(false, 10, 20, HEADERS, ITEMS, sel);
+  TextMenu menu(false, 10, 20, HEADERS, ITEMS, sel, 20, draw_funcs_);
   // Mimic down button 10 times (2 * items size)
   for (int i = 0; i < 10; i++) {
     sel = menu.Select(++sel);
@@ -130,9 +161,9 @@ TEST(ScreenUITest, PhoneMenuSelectSmoke) {
   }
 }
 
-TEST(ScreenUITest, WearMenuSelectSmoke) {
+TEST_F(ScreenUITest, WearMenuSelectSmoke) {
   int sel = 0;
-  Menu menu(true, 10, 20, HEADERS, ITEMS, sel);
+  TextMenu menu(true, 10, 20, HEADERS, ITEMS, sel, 20, draw_funcs_);
   // Mimic pressing down button 10 times (2 * items size)
   for (int i = 0; i < 10; i++) {
     sel = menu.Select(++sel);
@@ -159,9 +190,9 @@ TEST(ScreenUITest, WearMenuSelectSmoke) {
   }
 }
 
-TEST(ScreenUITest, WearMenuSelectItemsOverflow) {
+TEST_F(ScreenUITest, WearMenuSelectItemsOverflow) {
   int sel = 1;
-  Menu menu(true, 3, 20, HEADERS, ITEMS, sel);
+  TextMenu menu(true, 3, 20, HEADERS, ITEMS, sel, 20, draw_funcs_);
   ASSERT_EQ(5u, menu.ItemsCount());
 
   // Scroll the menu to the end, and check the start & end of menu.
