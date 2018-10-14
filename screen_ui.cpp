@@ -54,15 +54,23 @@ static double now() {
   return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
-Menu::Menu(bool scrollable, size_t max_items, size_t max_length,
-           const std::vector<std::string>& headers, const std::vector<std::string>& items,
-           size_t initial_selection)
-    : scrollable_(scrollable),
+Menu::Menu(size_t initial_selection, const DrawInterface& draw_func)
+    : selection_(initial_selection), draw_funcs_(draw_func) {}
+
+size_t Menu::selection() const {
+  return selection_;
+}
+
+TextMenu::TextMenu(bool scrollable, size_t max_items, size_t max_length,
+                   const std::vector<std::string>& headers, const std::vector<std::string>& items,
+                   size_t initial_selection, int char_height, const DrawInterface& draw_funcs)
+    : Menu(initial_selection, draw_funcs),
+      scrollable_(scrollable),
       max_display_items_(max_items),
       max_item_length_(max_length),
       text_headers_(headers),
       menu_start_(0),
-      selection_(initial_selection) {
+      char_height_(char_height) {
   CHECK_LE(max_items, static_cast<size_t>(std::numeric_limits<int>::max()));
 
   // It's fine to have more entries than text_rows_ if scrollable menu is supported.
@@ -74,29 +82,29 @@ Menu::Menu(bool scrollable, size_t max_items, size_t max_length,
   CHECK(!text_items_.empty());
 }
 
-const std::vector<std::string>& Menu::text_headers() const {
+const std::vector<std::string>& TextMenu::text_headers() const {
   return text_headers_;
 }
 
-std::string Menu::TextItem(size_t index) const {
+std::string TextMenu::TextItem(size_t index) const {
   CHECK_LT(index, text_items_.size());
 
   return text_items_[index];
 }
 
-size_t Menu::MenuStart() const {
+size_t TextMenu::MenuStart() const {
   return menu_start_;
 }
 
-size_t Menu::MenuEnd() const {
+size_t TextMenu::MenuEnd() const {
   return std::min(ItemsCount(), menu_start_ + max_display_items_);
 }
 
-size_t Menu::ItemsCount() const {
+size_t TextMenu::ItemsCount() const {
   return text_items_.size();
 }
 
-bool Menu::ItemsOverflow(std::string* cur_selection_str) const {
+bool TextMenu::ItemsOverflow(std::string* cur_selection_str) const {
   if (!scrollable_ || ItemsCount() <= max_display_items_) {
     return false;
   }
@@ -107,7 +115,7 @@ bool Menu::ItemsOverflow(std::string* cur_selection_str) const {
 }
 
 // TODO(xunchang) modify the function parameters to button up & down.
-int Menu::Select(int sel) {
+int TextMenu::Select(int sel) {
   CHECK_LE(ItemsCount(), static_cast<size_t>(std::numeric_limits<int>::max()));
   int count = ItemsCount();
 
@@ -138,6 +146,151 @@ int Menu::Select(int sel) {
   }
 
   return selection_;
+}
+
+int TextMenu::DrawHeader(int x, int y) const {
+  int offset = 0;
+
+  draw_funcs_.SetColor(UIElement::HEADER);
+  if (!scrollable()) {
+    offset += draw_funcs_.DrawWrappedTextLines(x, y + offset, text_headers());
+  } else {
+    offset += draw_funcs_.DrawTextLines(x, y + offset, text_headers());
+    // Show the current menu item number in relation to total number if items don't fit on the
+    // screen.
+    std::string cur_selection_str;
+    if (ItemsOverflow(&cur_selection_str)) {
+      offset += draw_funcs_.DrawTextLine(x, y + offset, cur_selection_str, true);
+    }
+  }
+
+  return offset;
+}
+
+int TextMenu::DrawItems(int x, int y, int screen_width, bool long_press) const {
+  int offset = 0;
+
+  draw_funcs_.SetColor(UIElement::MENU);
+  // Do not draw the horizontal rule for wear devices.
+  if (!scrollable()) {
+    offset += draw_funcs_.DrawHorizontalRule(y + offset) + 4;
+  }
+  for (size_t i = MenuStart(); i < MenuEnd(); ++i) {
+    bool bold = false;
+    if (i == selection()) {
+      // Draw the highlight bar.
+      draw_funcs_.SetColor(long_press ? UIElement::MENU_SEL_BG_ACTIVE : UIElement::MENU_SEL_BG);
+
+      int bar_height = char_height_ + 4;
+      draw_funcs_.DrawHighlightBar(0, y + offset - 2, screen_width, bar_height);
+
+      // Bold white text for the selected item.
+      draw_funcs_.SetColor(UIElement::MENU_SEL_FG);
+      bold = true;
+    }
+    offset += draw_funcs_.DrawTextLine(x, y + offset, TextItem(i), bold);
+
+    draw_funcs_.SetColor(UIElement::MENU);
+  }
+  offset += draw_funcs_.DrawHorizontalRule(y + offset);
+
+  return offset;
+}
+
+GraphicMenu::GraphicMenu(size_t max_width, size_t max_height, GRSurface* graphic_headers,
+                         const std::vector<GRSurface*>& graphic_items, size_t initial_selection,
+                         const DrawInterface& draw_funcs)
+    : Menu(initial_selection, draw_funcs),
+      max_width_(max_width),
+      max_height_(max_height),
+      graphic_headers_(graphic_headers),
+      graphic_items_(graphic_items) {}
+
+int GraphicMenu::Select(int sel) {
+  CHECK_LE(graphic_items_.size(), static_cast<size_t>(std::numeric_limits<int>::max()));
+  int count = graphic_items_.size();
+
+  // Wraps the selection at boundary if the menu is not scrollable.
+  if (sel < 0) {
+    selection_ = count - 1;
+  } else if (sel >= count) {
+    selection_ = 0;
+  } else {
+    selection_ = sel;
+  }
+
+  return selection_;
+}
+
+int GraphicMenu::DrawHeader(int x, int y) const {
+  draw_funcs_.DrawTextIcon(x, y, graphic_headers_);
+  return graphic_headers_->height;
+}
+
+int GraphicMenu::DrawItems(int x, int y, int screen_width, bool long_press) const {
+  int offset = 0;
+
+  draw_funcs_.SetColor(UIElement::MENU);
+  offset += draw_funcs_.DrawHorizontalRule(y + offset) + 4;
+
+  for (size_t i = 0; i < graphic_items_.size(); i++) {
+    auto& item = graphic_items_[i];
+    if (i == selection_) {
+      draw_funcs_.SetColor(long_press ? UIElement::MENU_SEL_BG_ACTIVE : UIElement::MENU_SEL_BG);
+
+      int bar_height = item->height + 4;
+      draw_funcs_.DrawHighlightBar(0, y + offset - 2, screen_width, bar_height);
+
+      // Bold white text for the selected item.
+      draw_funcs_.SetColor(UIElement::MENU_SEL_FG);
+    }
+    draw_funcs_.DrawTextIcon(x, y + offset, item);
+    offset += item->height;
+
+    draw_funcs_.SetColor(UIElement::MENU);
+  }
+
+  return offset;
+}
+
+bool GraphicMenu::Validate() const {
+  int offset = 0;
+  if (!ValidateGraphicSurface(offset, graphic_headers_)) {
+    return false;
+  }
+  offset += graphic_headers_->height;
+
+  for (const auto& item : graphic_items_) {
+    if (!ValidateGraphicSurface(offset, item)) {
+      return false;
+    }
+    offset += item->height;
+  }
+
+  return true;
+}
+
+bool GraphicMenu::ValidateGraphicSurface(int y, const GRSurface* surface) const {
+  if (!surface) {
+    fprintf(stderr, "Graphic surface can not be null");
+    return false;
+  }
+
+  if (surface->pixel_bytes != 1 || surface->width != surface->row_bytes) {
+    fprintf(stderr, "Invalid graphic surface, pixel bytes: %d, width: %d row_bytes: %d",
+            surface->pixel_bytes, surface->width, surface->row_bytes);
+    return false;
+  }
+
+  if (surface->width > max_width_ || surface->height > max_height_ - y) {
+    fprintf(stderr,
+            "Graphic surface doesn't fit into the screen. width: %d, height: %d, max_width: %zu,"
+            " max_height: %zu, vertical offset: %d\n",
+            surface->width, surface->height, max_width_, max_height_, y);
+    return false;
+  }
+
+  return true;
 }
 
 ScreenRecoveryUI::ScreenRecoveryUI() : ScreenRecoveryUI(false) {}
@@ -332,26 +485,26 @@ void ScreenRecoveryUI::draw_foreground_locked() {
 
 void ScreenRecoveryUI::SetColor(UIElement e) const {
   switch (e) {
-    case INFO:
+    case UIElement::INFO:
       gr_color(249, 194, 0, 255);
       break;
-    case HEADER:
+    case UIElement::HEADER:
       gr_color(247, 0, 6, 255);
       break;
-    case MENU:
-    case MENU_SEL_BG:
+    case UIElement::MENU:
+    case UIElement::MENU_SEL_BG:
       gr_color(0, 106, 157, 255);
       break;
-    case MENU_SEL_BG_ACTIVE:
+    case UIElement::MENU_SEL_BG_ACTIVE:
       gr_color(0, 156, 100, 255);
       break;
-    case MENU_SEL_FG:
+    case UIElement::MENU_SEL_FG:
       gr_color(255, 255, 255, 255);
       break;
-    case LOG:
+    case UIElement::LOG:
       gr_color(196, 196, 196, 255);
       break;
-    case TEXT_FILL:
+    case UIElement::TEXT_FILL:
       gr_color(0, 0, 0, 160);
       break;
     default:
@@ -384,7 +537,7 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   int text_x = margin_width_;
   int line_spacing = gr_sys_font()->char_height;  // Put some extra space between images.
   // Write the header and descriptive texts.
-  SetColor(INFO);
+  SetColor(UIElement::INFO);
   std::string header = "Show background text image";
   text_y += DrawTextLine(text_x, text_y, header, true);
   std::string locale_selection = android::base::StringPrintf(
@@ -400,7 +553,7 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   // Iterate through the text images and display them in order for the current locale.
   for (const auto& p : surfaces) {
     text_y += line_spacing;
-    SetColor(LOG);
+    SetColor(UIElement::LOG);
     text_y += DrawTextLine(text_x, text_y, p.first, false);
     gr_color(255, 255, 255, 255);
     gr_texticon(text_x, text_y, p.second.get());
@@ -547,7 +700,7 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
     static constexpr int kMenuIndent = 4;
     int x = margin_width_ + kMenuIndent;
 
-    SetColor(INFO);
+    SetColor(UIElement::INFO);
 
     for (size_t i = 0; i < title_lines_.size(); i++) {
       y += DrawTextLine(x, y, title_lines_[i], i == 0);
@@ -555,50 +708,13 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
 
     y += DrawTextLines(x, y, help_message);
 
-    // Draw menu header.
-    SetColor(HEADER);
-    if (!menu_->scrollable()) {
-      y += DrawWrappedTextLines(x, y, menu_->text_headers());
-    } else {
-      y += DrawTextLines(x, y, menu_->text_headers());
-      // Show the current menu item number in relation to total number if items don't fit on the
-      // screen.
-      std::string cur_selection_str;
-      if (menu_->ItemsOverflow(&cur_selection_str)) {
-        y += DrawTextLine(x, y, cur_selection_str, true);
-      }
-    }
-
-    // Draw menu items.
-    SetColor(MENU);
-    // Do not draw the horizontal rule for wear devices.
-    if (!menu_->scrollable()) {
-      y += DrawHorizontalRule(y) + 4;
-    }
-    for (size_t i = menu_->MenuStart(); i < menu_->MenuEnd(); ++i) {
-      bool bold = false;
-      if (i == static_cast<size_t>(menu_->selection())) {
-        // Draw the highlight bar.
-        SetColor(IsLongPress() ? MENU_SEL_BG_ACTIVE : MENU_SEL_BG);
-
-        int bar_height = char_height_ + 4;
-        DrawHighlightBar(0, y - 2, ScreenWidth(), bar_height);
-
-        // Bold white text for the selected item.
-        SetColor(MENU_SEL_FG);
-        bold = true;
-      }
-
-      y += DrawTextLine(x, y, menu_->TextItem(i), bold);
-
-      SetColor(MENU);
-    }
-    y += DrawHorizontalRule(y);
+    y += menu_->DrawHeader(x, y);
+    y += menu_->DrawItems(x, y, ScreenWidth(), IsLongPress());
   }
 
   // Display from the bottom up, until we hit the top of the screen, the bottom of the menu, or
   // we've displayed the entire text buffer.
-  SetColor(LOG);
+  SetColor(UIElement::LOG);
   int row = text_row_;
   size_t count = 0;
   for (int ty = ScreenHeight() - margin_height_ - char_height_; ty >= y && count < text_rows_;
@@ -992,8 +1108,8 @@ void ScreenRecoveryUI::StartMenu(const std::vector<std::string>& headers,
                                  const std::vector<std::string>& items, size_t initial_selection) {
   std::lock_guard<std::mutex> lg(updateMutex);
   if (text_rows_ > 0 && text_cols_ > 1) {
-    menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_, text_cols_ - 1, headers, items,
-                                   initial_selection);
+    menu_ = std::make_unique<TextMenu>(scrollable_menu_, text_rows_, text_cols_ - 1, headers, items,
+                                       initial_selection, char_height_, *this);
     update_screen_locked();
   }
 }

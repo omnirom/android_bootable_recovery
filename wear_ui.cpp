@@ -73,7 +73,7 @@ void WearRecoveryUI::draw_screen_locked() {
   if (!show_text) {
     draw_foreground_locked();
   } else {
-    SetColor(TEXT_FILL);
+    SetColor(UIElement::TEXT_FILL);
     gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
     // clang-format off
@@ -99,8 +99,9 @@ void WearRecoveryUI::StartMenu(const std::vector<std::string>& headers,
                                const std::vector<std::string>& items, size_t initial_selection) {
   std::lock_guard<std::mutex> lg(updateMutex);
   if (text_rows_ > 0 && text_cols_ > 0) {
-    menu_ = std::make_unique<Menu>(scrollable_menu_, text_rows_ - menu_unusable_rows_ - 1,
-                                   text_cols_ - 1, headers, items, initial_selection);
+    menu_ = std::make_unique<TextMenu>(scrollable_menu_, text_rows_ - menu_unusable_rows_ - 1,
+                                       text_cols_ - 1, headers, items, initial_selection,
+                                       char_height_, *this);
     update_screen_locked();
   }
 }
