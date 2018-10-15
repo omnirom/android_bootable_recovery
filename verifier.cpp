@@ -34,6 +34,7 @@
 #include <openssl/obj_mac.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
+#include <ziparchive/zip_archive.h>
 
 #include "asn1_decoder.h"
 #include "otautil/print_sha1.h"
@@ -443,6 +444,60 @@ std::unique_ptr<EC_KEY, ECKEYDeleter> parse_ec_key(FILE* file) {
     }
 
     return key;
+}
+
+static std::vector<Certificate> IterateZipEntriesAndSearchForKeys(const ZipArchiveHandle& handle) {
+  void* cookie;
+  ZipString suffix("x509.pem");
+  int32_t iter_status = StartIteration(handle, &cookie, nullptr, &suffix);
+  if (iter_status != 0) {
+    LOG(ERROR) << "Failed to iterate over entries in the certificate zipfile: "
+               << ErrorCodeString(iter_status);
+    return {};
+  }
+
+  std::vector<Certificate> result;
+
+  ZipString name;
+  ZipEntry entry;
+  while ((iter_status = Next(cookie, &entry, &name)) == 0) {
+    std::vector<uint8_t> pem_content(entry.uncompressed_length);
+    if (int32_t extract_status =
+            ExtractToMemory(handle, &entry, pem_content.data(), pem_content.size());
+        extract_status != 0) {
+      LOG(ERROR) << "Failed to extract " << std::string(name.name, name.name + name.name_length);
+      return {};
+    }
+
+    Certificate cert(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+    // Aborts the parsing if we fail to load one of the key file.
+    if (!LoadCertificateFromBuffer(pem_content, &cert)) {
+      LOG(ERROR) << "Failed to load keys from "
+                 << std::string(name.name, name.name + name.name_length);
+      return {};
+    }
+
+    result.emplace_back(std::move(cert));
+  }
+
+  if (iter_status != -1) {
+    LOG(ERROR) << "Error while iterating over zip entries: " << ErrorCodeString(iter_status);
+    return {};
+  }
+
+  return result;
+}
+
+std::vector<Certificate> LoadKeysFromZipfile(const std::string& zip_name) {
+  ZipArchiveHandle handle;
+  if (int32_t open_status = OpenArchive(zip_name.c_str(), &handle); open_status != 0) {
+    LOG(ERROR) << "Failed to open " << zip_name << ": " << ErrorCodeString(open_status);
+    return {};
+  }
+
+  std::vector<Certificate> result = IterateZipEntriesAndSearchForKeys(handle);
+  CloseArchive(handle);
+  return result;
 }
 
 bool LoadCertificateFromBuffer(const std::vector<uint8_t>& pem_content, Certificate* cert) {
