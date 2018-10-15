@@ -477,14 +477,7 @@
 		<string name="fixing_contexts">Fixing Contexts...</string>
 		<string name="fix_contexts_complete">Fix Contexts Complete</string>
 		<string name="reboot_hdr">Reboot</string>
-		<string name="su_hdr">SuperSU Check</string>
-		<string name="su_note1">Your device does not appear to be rooted.</string>
-		<string name="su_note2">Install SuperSU now?</string>
-		<string name="su_note3">This will root your device.</string>
-		<string name="su_cancel">Do Not Install</string>
-		<string name="swipe_su_to_install">Swipe to Install</string>
-		<string name="swipe_su_install">   Install</string>
-		<string name="su_installing">Installing SuperSU</string>
+		<string name="install_cancel">Do Not Install</string>
 		<string name="sel_storage_list">Select Storage</string>
 		<string name="ok_btn">OK</string>
 

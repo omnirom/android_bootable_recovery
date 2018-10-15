@@ -1,5 +1,11 @@
 on boot
+    export LD_CONFIG_FILE /sbin/ld.config.txt
 
 # For starting recovery on 5.0 and newer
 service recovery /sbin/recovery
+    seclabel u:r:recovery:s0
+
+# This helps fix ld.config.txt errors from the linker on Android 8.1
+service ldconfigtxt /sbin/touch /sbin/ld.config.txt
+    oneshot
     seclabel u:r:recovery:s0

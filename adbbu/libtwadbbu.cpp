@@ -75,7 +75,7 @@ std::vector<std::string> twadbbu::Get_ADB_Backup_Files(std::string fname) {
 		return std::vector<std::string>();
 	}
 
-	while (1) {
+	while (true) {
 		std::string cmdstr;
 		int readbytes;
 		if ((readbytes = read(fd, &buf, sizeof(buf))) > 0) {

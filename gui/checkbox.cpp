@@ -82,10 +82,11 @@ GUICheckbox::GUICheckbox(xml_node<>* node)
 			DataManager::SetValue(mVarName, attr->value());
 	}
 
-	mCheckW = mChecked->GetWidth();
-	mCheckH = mChecked->GetHeight();
-	if (mCheckW == 0)
-	{
+	mCheckW = mCheckH = 0;
+	if (mChecked && mChecked->GetResource()) {
+		mCheckW = mChecked->GetWidth();
+		mCheckH = mChecked->GetHeight();
+	} else if (mUnchecked && mUnchecked->GetResource()) {
 		mCheckW = mUnchecked->GetWidth();
 		mCheckH = mUnchecked->GetHeight();
 	}

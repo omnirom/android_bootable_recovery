@@ -37,6 +37,8 @@
 #include <openssl/sha.h>
 #include <zlib.h>
 
+#include "edify/expr.h"
+
 static inline int64_t Read8(const void *address) {
   return android::base::get_unaligned<int64_t>(address);
 }
@@ -48,7 +50,7 @@ static inline int32_t Read4(const void *address) {
 // This function is a wrapper of ApplyBSDiffPatch(). It has a custom sink function to deflate the
 // patched data and stream the deflated data to output.
 static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_len,
-                                            const Value* patch, size_t patch_offset,
+                                            const Value& patch, size_t patch_offset,
                                             const char* deflate_header, SinkFn sink, SHA_CTX* ctx) {
   size_t expected_target_length = static_cast<size_t>(Read8(deflate_header + 32));
   int level = Read4(deflate_header + 40);
@@ -57,13 +59,13 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   int mem_level = Read4(deflate_header + 52);
   int strategy = Read4(deflate_header + 56);
 
-  std::unique_ptr<z_stream, decltype(&deflateEnd)> strm(new z_stream(), deflateEnd);
-  strm->zalloc = Z_NULL;
-  strm->zfree = Z_NULL;
-  strm->opaque = Z_NULL;
-  strm->avail_in = 0;
-  strm->next_in = nullptr;
-  int ret = deflateInit2(strm.get(), level, method, window_bits, mem_level, strategy);
+  z_stream strm;
+  strm.zalloc = Z_NULL;
+  strm.zfree = Z_NULL;
+  strm.opaque = Z_NULL;
+  strm.avail_in = 0;
+  strm.next_in = nullptr;
+  int ret = deflateInit2(&strm, level, method, window_bits, mem_level, strategy);
   if (ret != Z_OK) {
     LOG(ERROR) << "Failed to init uncompressed data deflation: " << ret;
     return false;
@@ -74,18 +76,19 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
   size_t actual_target_length = 0;
   size_t total_written = 0;
   static constexpr size_t buffer_size = 32768;
-  auto compression_sink = [&](const uint8_t* data, size_t len) -> size_t {
+  auto compression_sink = [&strm, &actual_target_length, &expected_target_length, &total_written,
+                           &ret, &ctx, &sink](const uint8_t* data, size_t len) -> size_t {
     // The input patch length for an update never exceeds INT_MAX.
-    strm->avail_in = len;
-    strm->next_in = data;
+    strm.avail_in = len;
+    strm.next_in = data;
     do {
       std::vector<uint8_t> buffer(buffer_size);
-      strm->avail_out = buffer_size;
-      strm->next_out = buffer.data();
+      strm.avail_out = buffer_size;
+      strm.next_out = buffer.data();
       if (actual_target_length + len < expected_target_length) {
-        ret = deflate(strm.get(), Z_NO_FLUSH);
+        ret = deflate(&strm, Z_NO_FLUSH);
       } else {
-        ret = deflate(strm.get(), Z_FINISH);
+        ret = deflate(&strm, Z_FINISH);
       }
       if (ret != Z_OK && ret != Z_STREAM_END) {
         LOG(ERROR) << "Failed to deflate stream: " << ret;
@@ -93,20 +96,24 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
         return 0;
       }
 
-      size_t have = buffer_size - strm->avail_out;
+      size_t have = buffer_size - strm.avail_out;
       total_written += have;
       if (sink(buffer.data(), have) != have) {
         LOG(ERROR) << "Failed to write " << have << " compressed bytes to output.";
         return 0;
       }
       if (ctx) SHA1_Update(ctx, buffer.data(), have);
-    } while ((strm->avail_in != 0 || strm->avail_out == 0) && ret != Z_STREAM_END);
+    } while ((strm.avail_in != 0 || strm.avail_out == 0) && ret != Z_STREAM_END);
 
     actual_target_length += len;
     return len;
   };
 
-  if (ApplyBSDiffPatch(src_data, src_len, patch, patch_offset, compression_sink, nullptr) != 0) {
+  int bspatch_result =
+      ApplyBSDiffPatch(src_data, src_len, patch, patch_offset, compression_sink, nullptr);
+  deflateEnd(&strm);
+
+  if (bspatch_result != 0) {
     return false;
   }
 
@@ -128,48 +135,39 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
 int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const unsigned char* patch_data,
                     size_t patch_size, SinkFn sink) {
   Value patch(VAL_BLOB, std::string(reinterpret_cast<const char*>(patch_data), patch_size));
-
-  return ApplyImagePatch(old_data, old_size, &patch, sink, nullptr, nullptr);
+  return ApplyImagePatch(old_data, old_size, patch, sink, nullptr, nullptr);
 }
 
-/*
- * Apply the patch given in 'patch_filename' to the source data given
- * by (old_data, old_size).  Write the patched output to the 'output'
- * file, and update the SHA context with the output data as well.
- * Return 0 on success.
- */
-int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value* patch, SinkFn sink,
+int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value& patch, SinkFn sink,
                     SHA_CTX* ctx, const Value* bonus_data) {
-  if (patch->data.size() < 12) {
+  if (patch.data.size() < 12) {
     printf("patch too short to contain header\n");
     return -1;
   }
 
-  // IMGDIFF2 uses CHUNK_NORMAL, CHUNK_DEFLATE, and CHUNK_RAW.
-  // (IMGDIFF1, which is no longer supported, used CHUNK_NORMAL and
-  // CHUNK_GZIP.)
-  size_t pos = 12;
-  const char* header = &patch->data[0];
-  if (memcmp(header, "IMGDIFF2", 8) != 0) {
+  // IMGDIFF2 uses CHUNK_NORMAL, CHUNK_DEFLATE, and CHUNK_RAW. (IMGDIFF1, which is no longer
+  // supported, used CHUNK_NORMAL and CHUNK_GZIP.)
+  const char* const patch_header = patch.data.data();
+  if (memcmp(patch_header, "IMGDIFF2", 8) != 0) {
     printf("corrupt patch file header (magic number)\n");
     return -1;
   }
 
-  int num_chunks = Read4(header + 8);
-
+  int num_chunks = Read4(patch_header + 8);
+  size_t pos = 12;
   for (int i = 0; i < num_chunks; ++i) {
     // each chunk's header record starts with 4 bytes.
-    if (pos + 4 > patch->data.size()) {
+    if (pos + 4 > patch.data.size()) {
       printf("failed to read chunk %d record\n", i);
       return -1;
     }
-    int type = Read4(&patch->data[pos]);
+    int type = Read4(patch_header + pos);
     pos += 4;
 
     if (type == CHUNK_NORMAL) {
-      const char* normal_header = &patch->data[pos];
+      const char* normal_header = patch_header + pos;
       pos += 24;
-      if (pos > patch->data.size()) {
+      if (pos > patch.data.size()) {
         printf("failed to read chunk %d normal header data\n", i);
         return -1;
       }
@@ -187,30 +185,32 @@ int ApplyImagePatch(const unsigned char* old_data, size_t old_size, const Value*
         return -1;
       }
     } else if (type == CHUNK_RAW) {
-      const char* raw_header = &patch->data[pos];
+      const char* raw_header = patch_header + pos;
       pos += 4;
-      if (pos > patch->data.size()) {
+      if (pos > patch.data.size()) {
         printf("failed to read chunk %d raw header data\n", i);
         return -1;
       }
 
       size_t data_len = static_cast<size_t>(Read4(raw_header));
 
-      if (pos + data_len > patch->data.size()) {
+      if (pos + data_len > patch.data.size()) {
         printf("failed to read chunk %d raw data\n", i);
         return -1;
       }
-      if (ctx) SHA1_Update(ctx, &patch->data[pos], data_len);
-      if (sink(reinterpret_cast<const unsigned char*>(&patch->data[pos]), data_len) != data_len) {
+      if (ctx) {
+        SHA1_Update(ctx, patch_header + pos, data_len);
+      }
+      if (sink(reinterpret_cast<const unsigned char*>(patch_header + pos), data_len) != data_len) {
         printf("failed to write chunk %d raw data\n", i);
         return -1;
       }
       pos += data_len;
     } else if (type == CHUNK_DEFLATE) {
       // deflate chunks have an additional 60 bytes in their chunk header.
-      const char* deflate_header = &patch->data[pos];
+      const char* deflate_header = patch_header + pos;
       pos += 60;
-      if (pos > patch->data.size()) {
+      if (pos > patch.data.size()) {
         printf("failed to read chunk %d deflate header data\n", i);
         return -1;
       }

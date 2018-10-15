@@ -27,7 +27,7 @@
 static int restore_internal(const char* bml, const char* filename)
 {
     char buf[4096];
-    int dstfd, srcfd, bytes_read, bytes_written, total_read = 0;
+    int dstfd, srcfd, bytes_read, total_read = 0;
     if (filename == NULL)
         srcfd = 0;
     else {
@@ -82,7 +82,7 @@ int cmd_bml_restore_raw_partition(const char *partition, const char *filename)
 
 int cmd_bml_backup_raw_partition(const char *partition, const char *out_file)
 {
-    char* bml;
+    const char* bml;
     if (strcmp("boot", partition) == 0)
         bml = BOARD_BML_BOOT;
     else if (strcmp("recovery", partition) == 0)
@@ -99,12 +99,11 @@ int cmd_bml_backup_raw_partition(const char *partition, const char *out_file)
     int ch;
     FILE *in;
     FILE *out;
-    int val = 0;
     char buf[512];
     unsigned sz = 0;
     unsigned i;
     int ret = -1;
-    char *in_file = bml;
+    const char *in_file = bml;
 
     in  = fopen ( in_file,  "r" );
     if (in == NULL)
@@ -144,23 +143,23 @@ ERROR3:
     return ret;
 }
 
-int cmd_bml_erase_raw_partition(const char *partition)
+int cmd_bml_erase_raw_partition(const char *partition __unused)
 {
     // TODO: implement raw wipe
     return 0;
 }
 
-int cmd_bml_erase_partition(const char *partition, const char *filesystem)
+int cmd_bml_erase_partition(const char *partition __unused, const char *filesystem __unused)
 {
     return -1;
 }
 
-int cmd_bml_mount_partition(const char *partition, const char *mount_point, const char *filesystem, int read_only)
+int cmd_bml_mount_partition(const char *partition __unused, const char *mount_point __unused, const char *filesystem __unused, int read_only __unused)
 {
     return -1;
 }
 
-int cmd_bml_get_partition_device(const char *partition, char *device)
+int cmd_bml_get_partition_device(const char *partition __unused, char *device __unused)
 {
     return -1;
 }

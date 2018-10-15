@@ -17,7 +17,7 @@
 #ifndef _ERROR_CODE_H_
 #define _ERROR_CODE_H_
 
-enum ErrorCode {
+enum ErrorCode : int {
   kNoError = -1,
   kLowBattery = 20,
   kZipVerificationFailure,
@@ -25,9 +25,12 @@ enum ErrorCode {
   kBootreasonInBlacklist,
   kPackageCompatibilityFailure,
   kScriptExecutionFailure,
+  kMapFileFailure,
+  kForkUpdateBinaryFailure,
+  kUpdateBinaryCommandFailure,
 };
 
-enum CauseCode {
+enum CauseCode : int {
   kNoCause = -1,
   kArgsParsingFailure = 100,
   kStashCreationFailure,
@@ -48,7 +51,7 @@ enum CauseCode {
   kVendorFailure = 200
 };
 
-enum UncryptErrorCode {
+enum UncryptErrorCode : int {
   kUncryptNoError = -1,
   kUncryptErrorPlaceholder = 50,
   kUncryptTimeoutError = 100,
@@ -68,6 +71,8 @@ enum UncryptErrorCode {
   kUncryptFileCloseError,
   kUncryptFileRenameError,
   kUncryptPackageMissingError,
+  kUncryptRealpathFindError,
+  kUncryptBlockDeviceFindError,
 };
 
-#endif // _ERROR_CODE_H_
+#endif  // _ERROR_CODE_H_

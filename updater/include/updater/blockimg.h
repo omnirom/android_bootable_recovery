@@ -17,6 +17,8 @@
 #ifndef _UPDATER_BLOCKIMG_H_
 #define _UPDATER_BLOCKIMG_H_
 
+#include <string>
+
 void RegisterBlockImageFunctions();
 
 #endif

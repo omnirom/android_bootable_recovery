@@ -38,7 +38,7 @@
 #if defined(_WIN32) && !defined(__SYMBIAN32__)
 #include <io.h>
 #else
-__inline static int setmode(int a, int b)
+__inline static int setmode(int a __unused, int b __unused)
 {
 	return 0;
 }
@@ -79,7 +79,7 @@ static void usage( const char * exe_name )
 
 int main(int argc, char** argv)
 {
-	size_t _i = 0, _j = 0;
+	int _i = 0, _j = 0;
 	OAES_CTX * ctx = NULL;
 	uint8_t _buf_in[OAES_BUF_LEN_DEC];
 	uint8_t *_buf_out = NULL, _key_data[32] = "";
@@ -249,8 +249,8 @@ int main(int argc, char** argv)
 
 	oaes_key_import_data( ctx, _key_data, _key_data_len );
 
-	while( _buf_in_len =
-		fread(_buf_in, sizeof(uint8_t), _read_len, _f_in) )
+	while( (_buf_in_len =
+		fread(_buf_in, sizeof(uint8_t), _read_len, _f_in)) )
 	{
 		switch(_op)
 		{

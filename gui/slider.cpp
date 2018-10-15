@@ -47,7 +47,6 @@ extern "C" {
 
 GUISlider::GUISlider(xml_node<>* node) : GUIObject(node)
 {
-	xml_attribute<>* attr;
 	xml_node<>* child;
 
 	sAction = NULL;
@@ -84,8 +83,12 @@ GUISlider::GUISlider(xml_node<>* node) : GUIObject(node)
 	Placement TextPlacement = CENTER;
 	LoadPlacement(FindNode(node, "placement"), &mRenderX, &mRenderY, &mRenderW, &mRenderH, &TextPlacement);
 
-	mRenderW = sSlider->GetWidth();
-	mRenderH = sSlider->GetHeight();
+	if (sSlider && sSlider->GetResource()) {
+		mRenderW = sSlider->GetWidth();
+		mRenderH = sSlider->GetHeight();
+	} else {
+		mRenderW = mRenderH = 0;
+	}
 	if (TextPlacement == CENTER || TextPlacement == CENTER_X_ONLY) {
 		mRenderX = mRenderX - (mRenderW / 2);
 		if (TextPlacement == CENTER) {

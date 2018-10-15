@@ -322,7 +322,7 @@ void GUIKeyboard::DrawKey(Key& key, int keyX, int keyY, int keyW, int keyH)
 		gr_color(mFontColorSmall.red, mFontColorSmall.green, mFontColorSmall.blue, mFontColorSmall.alpha);
 	}
 
-	if (labelImage)
+	if (labelImage && labelImage->GetResource())
 	{
 		int w = labelImage->GetWidth();
 		int h = labelImage->GetHeight();
@@ -330,7 +330,7 @@ void GUIKeyboard::DrawKey(Key& key, int keyX, int keyY, int keyW, int keyH)
 		int y = keyY + (keyH - h) / 2;
 		gr_blit(labelImage->GetResource(), 0, 0, w, h, x, y);
 	}
-	else if (!labelText.empty())
+	else if (!labelText.empty() && labelFont && labelFont->GetResource())
 	{
 		void* fontResource = labelFont->GetResource();
 		int textW = gr_ttf_measureEx(labelText.c_str(), fontResource);
@@ -342,7 +342,7 @@ void GUIKeyboard::DrawKey(Key& key, int keyX, int keyY, int keyW, int keyH)
 
 	// longpress key label (only if font is defined)
 	keychar = key.longpresskey;
-	if (keychar > 32 && keychar < 127 && mLongpressFont->GetResource()) {
+	if (keychar > 32 && keychar < 127 && mLongpressFont && mLongpressFont->GetResource()) {
 		void* fontResource = mLongpressFont->GetResource();
 		gr_color(mLongpressFontColor.red, mLongpressFontColor.green, mLongpressFontColor.blue, mLongpressFontColor.alpha);
 		string text(1, keychar);

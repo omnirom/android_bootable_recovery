@@ -16,15 +16,9 @@
 
 LOCAL_PATH := $(call my-dir)
 
-ifdef project-path-for
-    RECOVERY_PATH := $(call project-path-for,recovery)
-else
-    RECOVERY_PATH := bootable/recovery
-endif
-
 # Unit tests
 include $(CLEAR_VARS)
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_MODULE := recovery_unit_test
 LOCAL_COMPATIBILITY_SUITE := device-tests
 LOCAL_STATIC_LIBRARIES := \
@@ -36,7 +30,8 @@ LOCAL_STATIC_LIBRARIES := \
     libutils \
     libz \
     libselinux \
-    libbase
+    libbase \
+    libBionicGtestMain
 
 LOCAL_SRC_FILES := \
     unit/asn1_decoder_test.cpp \
@@ -47,17 +42,18 @@ LOCAL_SRC_FILES := \
     unit/zip_test.cpp \
     unit/ziputil_test.cpp
 
-LOCAL_C_INCLUDES := $(RECOVERY_PATH)
+LOCAL_C_INCLUDES := $(commands_recovery_local_path)
 LOCAL_SHARED_LIBRARIES := liblog
 include $(BUILD_NATIVE_TEST)
 
 # Manual tests
 include $(CLEAR_VARS)
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_MODULE := recovery_manual_test
 LOCAL_STATIC_LIBRARIES := \
     libminui \
-    libbase
+    libbase \
+    libBionicGtestMain
 
 LOCAL_SRC_FILES := manual/recovery_test.cpp
 LOCAL_SHARED_LIBRARIES := \
@@ -88,6 +84,7 @@ include $(BUILD_NATIVE_TEST)
 # Component tests
 include $(CLEAR_VARS)
 LOCAL_CFLAGS := \
+    -Wall \
     -Werror \
     -D_FILE_OFFSET_BITS=64
 
@@ -105,7 +102,7 @@ endif
 
 LOCAL_MODULE := recovery_component_test
 LOCAL_COMPATIBILITY_SUITE := device-tests
-LOCAL_C_INCLUDES := $(RECOVERY_PATH)
+LOCAL_C_INCLUDES := $(commands_recovery_local_path)
 LOCAL_SRC_FILES := \
     component/applypatch_test.cpp \
     component/bootloader_message_test.cpp \
@@ -149,9 +146,9 @@ LOCAL_STATIC_LIBRARIES := \
     libdivsufsort \
     libdivsufsort64 \
     libfs_mgr \
-    liblog \
     libvintf_recovery \
     libvintf \
+    libhidl-gen-utils \
     libtinyxml2 \
     libselinux \
     libext4_utils \
@@ -160,6 +157,7 @@ LOCAL_STATIC_LIBRARIES := \
     libcrypto \
     libbz \
     libziparchive \
+    liblog \
     libutils \
     libz \
     libbase \
@@ -169,6 +167,7 @@ LOCAL_STATIC_LIBRARIES := \
     libsquashfs_utils \
     libcutils \
     libbrotli \
+    libBionicGtestMain \
     $(tune2fs_static_libraries)
 
 testdata_files := $(call find-subdir-files, testdata/*)
@@ -198,7 +197,7 @@ include $(BUILD_NATIVE_TEST)
 
 # Host tests
 include $(CLEAR_VARS)
-LOCAL_CFLAGS := -Werror
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_MODULE := recovery_host_test
 LOCAL_MODULE_HOST_OS := linux
 LOCAL_C_INCLUDES := bootable/recovery
@@ -207,16 +206,19 @@ LOCAL_SRC_FILES := \
 LOCAL_STATIC_LIBRARIES := \
     libimgdiff \
     libimgpatch \
+    libotautil \
     libbsdiff \
     libbspatch \
     libziparchive \
     libutils \
     libbase \
     libcrypto \
+    libbrotli \
     libbz \
     libdivsufsort64 \
     libdivsufsort \
-    libz
+    libz \
+    libBionicGtestMain
 LOCAL_SHARED_LIBRARIES := \
     liblog
 include $(BUILD_HOST_NATIVE_TEST)

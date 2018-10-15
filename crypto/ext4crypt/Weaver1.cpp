@@ -24,9 +24,9 @@
 #include "Weaver1.h"
 
 //#include <android-base/logging.h>
-#include <keystore/keymaster_tags.h>
-#include <keystore/authorization_set.h>
-#include <keystore/keystore_hidl_support.h>
+//#include <keystore/keymaster_tags.h>
+//#include <keystore/authorization_set.h>
+//#include <keystore/keystore_hidl_support.h>
 
 #include <android/hardware/weaver/1.0/IWeaver.h>
 

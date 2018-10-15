@@ -33,6 +33,7 @@
 #include <android-base/stringprintf.h>
 
 #include "applypatch/applypatch.h"
+#include "otautil/cache_location.h"
 
 static int EliminateOpenFiles(std::set<std::string>* files) {
   std::unique_ptr<DIR, decltype(&closedir)> d(opendir("/proc"), closedir);
@@ -90,10 +91,9 @@ static std::set<std::string> FindExpendableFiles() {
     while ((de = readdir(d.get())) != 0) {
       std::string path = std::string(dirs[i]) + "/" + de->d_name;
 
-      // We can't delete CACHE_TEMP_SOURCE; if it's there we might have
-      // restarted during installation and could be depending on it to
-      // be there.
-      if (path == CACHE_TEMP_SOURCE) {
+      // We can't delete cache_temp_source; if it's there we might have restarted during
+      // installation and could be depending on it to be there.
+      if (path == CacheLocation::location().cache_temp_source()) {
         continue;
       }
 
@@ -112,6 +112,12 @@ static std::set<std::string> FindExpendableFiles() {
 }
 
 int MakeFreeSpaceOnCache(size_t bytes_needed) {
+#ifndef __ANDROID__
+  // TODO (xunchang) implement a heuristic cache size check during host simulation.
+  printf("Skip making (%zu) bytes free space on cache; program is running on host\n", bytes_needed);
+  return 0;
+#endif
+
   size_t free_now = FreeSpaceForFile("/cache");
   printf("%zu bytes free on /cache (%zu needed)\n", free_now, bytes_needed);
 

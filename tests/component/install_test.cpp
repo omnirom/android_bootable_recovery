@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -36,7 +37,7 @@
 
 TEST(InstallTest, verify_package_compatibility_no_entry) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   // The archive must have something to be opened correctly.
   ASSERT_EQ(0, writer.StartEntry("dummy_entry", 0));
@@ -53,7 +54,7 @@ TEST(InstallTest, verify_package_compatibility_no_entry) {
 
 TEST(InstallTest, verify_package_compatibility_invalid_entry) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   ASSERT_EQ(0, writer.StartEntry("compatibility.zip", 0));
   ASSERT_EQ(0, writer.FinishEntry());
@@ -69,7 +70,7 @@ TEST(InstallTest, verify_package_compatibility_invalid_entry) {
 
 TEST(InstallTest, read_metadata_from_package_smoke) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   ASSERT_EQ(0, writer.StartEntry("META-INF/com/android/metadata", kCompressStored));
   const std::string content("abcdefg");
@@ -86,7 +87,7 @@ TEST(InstallTest, read_metadata_from_package_smoke) {
   CloseArchive(zip);
 
   TemporaryFile temp_file2;
-  FILE* zip_file2 = fdopen(temp_file2.fd, "w");
+  FILE* zip_file2 = fdopen(temp_file2.release(), "w");
   ZipWriter writer2(zip_file2);
   ASSERT_EQ(0, writer2.StartEntry("META-INF/com/android/metadata", kCompressDeflated));
   ASSERT_EQ(0, writer2.WriteBytes(content.data(), content.size()));
@@ -103,7 +104,7 @@ TEST(InstallTest, read_metadata_from_package_smoke) {
 
 TEST(InstallTest, read_metadata_from_package_no_entry) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   ASSERT_EQ(0, writer.StartEntry("dummy_entry", kCompressStored));
   ASSERT_EQ(0, writer.FinishEntry());
@@ -119,7 +120,7 @@ TEST(InstallTest, read_metadata_from_package_no_entry) {
 
 TEST(InstallTest, verify_package_compatibility_with_libvintf_malformed_xml) {
   TemporaryFile compatibility_zip_file;
-  FILE* compatibility_zip = fdopen(compatibility_zip_file.fd, "w");
+  FILE* compatibility_zip = fdopen(compatibility_zip_file.release(), "w");
   ZipWriter compatibility_zip_writer(compatibility_zip);
   ASSERT_EQ(0, compatibility_zip_writer.StartEntry("system_manifest.xml", kCompressDeflated));
   std::string malformed_xml = "malformed";
@@ -129,7 +130,7 @@ TEST(InstallTest, verify_package_compatibility_with_libvintf_malformed_xml) {
   ASSERT_EQ(0, fclose(compatibility_zip));
 
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   ASSERT_EQ(0, writer.StartEntry("compatibility.zip", kCompressStored));
   std::string compatibility_zip_content;
@@ -164,7 +165,7 @@ TEST(InstallTest, verify_package_compatibility_with_libvintf_system_manifest_xml
   ASSERT_TRUE(
       android::base::ReadFileToString(system_manifest_xml_path, &system_manifest_xml_content));
   TemporaryFile compatibility_zip_file;
-  FILE* compatibility_zip = fdopen(compatibility_zip_file.fd, "w");
+  FILE* compatibility_zip = fdopen(compatibility_zip_file.release(), "w");
   ZipWriter compatibility_zip_writer(compatibility_zip);
   ASSERT_EQ(0, compatibility_zip_writer.StartEntry("system_manifest.xml", kCompressDeflated));
   ASSERT_EQ(0, compatibility_zip_writer.WriteBytes(system_manifest_xml_content.data(),
@@ -174,7 +175,7 @@ TEST(InstallTest, verify_package_compatibility_with_libvintf_system_manifest_xml
   ASSERT_EQ(0, fclose(compatibility_zip));
 
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   ASSERT_EQ(0, writer.StartEntry("compatibility.zip", kCompressStored));
   std::string compatibility_zip_content;
@@ -198,10 +199,10 @@ TEST(InstallTest, verify_package_compatibility_with_libvintf_system_manifest_xml
   CloseArchive(zip);
 }
 
-TEST(InstallTest, update_binary_command_smoke) {
 #ifdef AB_OTA_UPDATER
+static void VerifyAbUpdateBinaryCommand(const std::string& serialno, bool success = true) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   ASSERT_EQ(0, writer.StartEntry("payload.bin", kCompressStored));
   ASSERT_EQ(0, writer.FinishEntry());
@@ -215,11 +216,13 @@ TEST(InstallTest, update_binary_command_smoke) {
   ASSERT_NE("", device);
   std::string timestamp = android::base::GetProperty("ro.build.date.utc", "");
   ASSERT_NE("", timestamp);
-  std::string metadata = android::base::Join(
-      std::vector<std::string>{
-          "ota-type=AB", "pre-device=" + device, "post-timestamp=" + timestamp,
-      },
-      "\n");
+
+  std::vector<std::string> meta{ "ota-type=AB", "pre-device=" + device,
+                                 "post-timestamp=" + timestamp };
+  if (!serialno.empty()) {
+    meta.push_back("serialno=" + serialno);
+  }
+  std::string metadata = android::base::Join(meta, "\n");
   ASSERT_EQ(0, writer.WriteBytes(metadata.data(), metadata.size()));
   ASSERT_EQ(0, writer.FinishEntry());
   ASSERT_EQ(0, writer.Finish());
@@ -234,17 +237,28 @@ TEST(InstallTest, update_binary_command_smoke) {
   std::string package = "/path/to/update.zip";
   std::string binary_path = "/sbin/update_engine_sideload";
   std::vector<std::string> cmd;
-  ASSERT_EQ(0, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
-  ASSERT_EQ(5U, cmd.size());
-  ASSERT_EQ(binary_path, cmd[0]);
-  ASSERT_EQ("--payload=file://" + package, cmd[1]);
-  ASSERT_EQ("--offset=" + std::to_string(payload_entry.offset), cmd[2]);
-  ASSERT_EQ("--headers=" + properties, cmd[3]);
-  ASSERT_EQ("--status_fd=" + std::to_string(status_fd), cmd[4]);
+  if (success) {
+    ASSERT_EQ(0, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
+    ASSERT_EQ(5U, cmd.size());
+    ASSERT_EQ(binary_path, cmd[0]);
+    ASSERT_EQ("--payload=file://" + package, cmd[1]);
+    ASSERT_EQ("--offset=" + std::to_string(payload_entry.offset), cmd[2]);
+    ASSERT_EQ("--headers=" + properties, cmd[3]);
+    ASSERT_EQ("--status_fd=" + std::to_string(status_fd), cmd[4]);
+  } else {
+    ASSERT_EQ(INSTALL_ERROR, update_binary_command(package, zip, binary_path, 0, status_fd, &cmd));
+  }
   CloseArchive(zip);
+}
+#endif  // AB_OTA_UPDATER
+
+TEST(InstallTest, update_binary_command_smoke) {
+#ifdef AB_OTA_UPDATER
+  // Empty serialno will pass the verification.
+  VerifyAbUpdateBinaryCommand({});
 #else
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   static constexpr const char* UPDATE_BINARY_NAME = "META-INF/com/google/android/update-binary";
   ASSERT_EQ(0, writer.StartEntry(UPDATE_BINARY_NAME, kCompressStored));
@@ -289,7 +303,7 @@ TEST(InstallTest, update_binary_command_smoke) {
 TEST(InstallTest, update_binary_command_invalid) {
 #ifdef AB_OTA_UPDATER
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   // Missing payload_properties.txt.
   ASSERT_EQ(0, writer.StartEntry("payload.bin", kCompressStored));
@@ -320,7 +334,7 @@ TEST(InstallTest, update_binary_command_invalid) {
   CloseArchive(zip);
 #else
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.fd, "w");
+  FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
   // The archive must have something to be opened correctly.
   ASSERT_EQ(0, writer.StartEntry("dummy_entry", 0));
@@ -340,3 +354,34 @@ TEST(InstallTest, update_binary_command_invalid) {
   CloseArchive(zip);
 #endif  // AB_OTA_UPDATER
 }
+
+#ifdef AB_OTA_UPDATER
+TEST(InstallTest, update_binary_command_multiple_serialno) {
+  std::string serialno = android::base::GetProperty("ro.serialno", "");
+  ASSERT_NE("", serialno);
+
+  // Single matching serialno will pass the verification.
+  VerifyAbUpdateBinaryCommand(serialno);
+
+  static constexpr char alphabet[] =
+      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  auto generator = []() { return alphabet[rand() % (sizeof(alphabet) - 1)]; };
+
+  // Generate 900 random serial numbers.
+  std::string random_serial;
+  for (size_t i = 0; i < 900; i++) {
+    generate_n(back_inserter(random_serial), serialno.size(), generator);
+    random_serial.append("|");
+  }
+  // Random serialnos should fail the verification.
+  VerifyAbUpdateBinaryCommand(random_serial, false);
+
+  std::string long_serial = random_serial + serialno + "|";
+  for (size_t i = 0; i < 99; i++) {
+    generate_n(back_inserter(long_serial), serialno.size(), generator);
+    long_serial.append("|");
+  }
+  // String with the matching serialno should pass the verification.
+  VerifyAbUpdateBinaryCommand(long_serial);
+}
+#endif  // AB_OTA_UPDATER

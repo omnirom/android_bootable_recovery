@@ -441,14 +441,7 @@
 		<string name="sideload_usage">Použitie: adb sideload názov.zip</string>
 		<string name="sideload_complete">ADB Sideload dokončený</string>
 		<string name="reboot_hdr">Reštart</string>
-		<string name="su_hdr">Kontrola SuperSU</string>
-		<string name="su_note1">Vaše zariadenie nemá ROOT.</string>
-		<string name="su_note2">Chcete nainštalovať SuperSU?</string>
-		<string name="su_note3">Toto povolí ROOT práva na vašom zariadení.</string>
-		<string name="su_cancel">Neinštalovať</string>
-		<string name="swipe_su_to_install">Potiahnite pre inštaláciu ROOT</string>
-		<string name="swipe_su_install">   Inštalovať</string>
-		<string name="su_installing">Inštalácia SuperSU</string>
+		<string name="install_cancel">Neinštalovať</string>
 		<string name="sel_storage_list">Vyberte úložisko</string>
 		<string name="ok_btn">OK</string>
 		<string name="no_kernel_selinux">Kernel nemá podporu pre čítanie obsahu SELinux.</string>

@@ -205,6 +205,7 @@ int main(int argc, char **argv) {
 	PartitionManager.Mount_By_Path("/cache", false);
 
 	bool Shutdown = false;
+	bool SkipDecryption = false;
 	string Send_Intent = "";
 	{
 		TWPartition* misc = PartitionManager.Find_Partition_By_Path("/misc");
@@ -238,6 +239,9 @@ int main(int argc, char **argv) {
 				if (*ptr) {
 					string ORSCommand = "install ";
 					ORSCommand.append(ptr);
+
+					// If we have a map of blocks we don't need to mount data.
+					SkipDecryption = *ptr == '@';
 
 					if (!OpenRecoveryScript::Insert_ORS_Command(ORSCommand))
 						break;
@@ -307,12 +311,16 @@ int main(int argc, char **argv) {
 	TWFunc::Update_Log_File();
 	// Offer to decrypt if the device is encrypted
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
-		LOGINFO("Is encrypted, do decrypt page first\n");
-		if (gui_startPage("decrypt", 1, 1) != 0) {
-			LOGERR("Failed to start decrypt GUI page.\n");
+		if (SkipDecryption) {
+			LOGINFO("Skipping decryption\n");
 		} else {
-			// Check for and load custom theme if present
-			gui_loadCustomResources();
+			LOGINFO("Is encrypted, do decrypt page first\n");
+			if (gui_startPage("decrypt", 1, 1) != 0) {
+				LOGERR("Failed to start decrypt GUI page.\n");
+			} else {
+				// Check for and load custom theme if present
+				gui_loadCustomResources();
+			}
 		}
 	} else if (datamedia) {
 		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
@@ -345,10 +353,9 @@ int main(int argc, char **argv) {
 
 	// Run any outstanding OpenRecoveryScript
 #ifndef TARGET_RECOVERY_IS_MULTIROM
-	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
+	if ((DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 || SkipDecryption) && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
 	}
-#else
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0)
 	{
 		if ((TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE)))
@@ -417,24 +424,6 @@ int main(int argc, char **argv) {
 #ifndef TW_OEM_BUILD
 	// Disable flashing of stock recovery
 	TWFunc::Disable_Stock_Recovery_Replace();
-	// Check for su to see if the device is rooted or not
-	if (DataManager::GetIntValue("tw_mount_system_ro") == 0 && PartitionManager.Mount_By_Path("/system", false)) {
-		// read /system/build.prop to get sdk version and do not offer to root if running M or higher (sdk version 23 == M)
-		string sdkverstr = TWFunc::System_Property_Get("ro.build.version.sdk");
-		int sdkver = 23;
-		if (!sdkverstr.empty()) {
-			sdkver = atoi(sdkverstr.c_str());
-		}
-		if (TWFunc::Path_Exists("/supersu/su") && TWFunc::Path_Exists("/system/bin") && !TWFunc::Path_Exists("/system/bin/su") && !TWFunc::Path_Exists("/system/xbin/su") && !TWFunc::Path_Exists("/system/bin/.ext/.su") && sdkver < 23) {
-			// Device doesn't have su installed
-			DataManager::SetValue("tw_busy", 1);
-			if (gui_startPage("installsu", 1, 1) != 0) {
-				LOGERR("Failed to start SuperSU install page.\n");
-			}
-		}
-		sync();
-		PartitionManager.UnMount_By_Path("/system", false);
-	}
 #endif
 
 	// Reboot

@@ -34,4 +34,6 @@ update_binary_command(const char* path, int retry_count,
 
 bool verify_package_compatibility(ZipWrap *package_zip);
 
+void read_source_target_build(ZipWrap* zip/*, std::vector<std::string>& log_buffer*/);
+
 #endif  // RECOVERY_INSTALL_COMMAND_H_

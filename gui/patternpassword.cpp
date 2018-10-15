@@ -40,7 +40,6 @@ extern "C" {
 GUIPatternPassword::GUIPatternPassword(xml_node<>* node)
 	: GUIObject(node)
 {
-	xml_attribute<>* attr;
 	xml_node<>* child;
 
 	// 3x3 is the default.
@@ -107,7 +106,7 @@ GUIPatternPassword::GUIPatternPassword(xml_node<>* node)
 		mDotCircle = gr_render_circle(mDotRadius, mDotColor.red, mDotColor.green, mDotColor.blue, mDotColor.alpha);
 		mActiveDotCircle = gr_render_circle(mDotRadius/2, mActiveDotColor.red, mActiveDotColor.green, mActiveDotColor.blue, mActiveDotColor.alpha);
 	}
-	else
+	else if (mDotImage && mDotImage->GetResource())
 		mDotRadius = mDotImage->GetWidth()/2;
 
 	SetRenderPos(mRenderX, mRenderY, mRenderW, mRenderH);
@@ -210,10 +209,10 @@ int GUIPatternPassword::Render(void)
 				gr_blit(mActiveDotCircle, 0, 0, gr_get_width(mActiveDotCircle), gr_get_height(mActiveDotCircle), mDots[i].x + mDotRadius/2, mDots[i].y + mDotRadius/2);
 			}
 		} else {
-			if (mDots[i].active) {
+			if (mDots[i].active && mActiveDotImage && mActiveDotImage->GetResource()) {
 				gr_blit(mActiveDotImage->GetResource(), 0, 0, mActiveDotImage->GetWidth(), mActiveDotImage->GetHeight(),
 						mDots[i].x + (mDotRadius - mActiveDotImage->GetWidth()/2), mDots[i].y + (mDotRadius - mActiveDotImage->GetHeight()/2));
-			} else {
+			} else if (mDotImage && mDotImage->GetResource()) {
 				gr_blit(mDotImage->GetResource(), 0, 0, mDotImage->GetWidth(), mDotImage->GetHeight(), mDots[i].x, mDots[i].y);
 			}
 		}

@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <android-base/file.h>
@@ -32,16 +33,17 @@
 #include <android-base/test_utils.h>
 #include <bootloader_message/bootloader_message.h>
 #include <brotli/encode.h>
-#include <bsdiff.h>
+#include <bsdiff/bsdiff.h>
 #include <gtest/gtest.h>
 #include <ziparchive/zip_archive.h>
 #include <ziparchive/zip_writer.h>
 
 #include "common/test_constants.h"
 #include "edify/expr.h"
-#include "error_code.h"
 #include "otautil/SysUtil.h"
-#include "print_sha1.h"
+#include "otautil/cache_location.h"
+#include "otautil/error_code.h"
+#include "otautil/print_sha1.h"
 #include "updater/blockimg.h"
 #include "updater/install.h"
 #include "updater/updater.h"
@@ -74,6 +76,23 @@ static void expect(const char* expected, const char* expr_str, CauseCode cause_c
   ASSERT_EQ(cause_code, state.cause_code);
 }
 
+static void BuildUpdatePackage(const std::unordered_map<std::string, std::string>& entries,
+                               int fd) {
+  FILE* zip_file_ptr = fdopen(fd, "wb");
+  ZipWriter zip_writer(zip_file_ptr);
+
+  for (const auto& entry : entries) {
+    ASSERT_EQ(0, zip_writer.StartEntry(entry.first.c_str(), 0));
+    if (!entry.second.empty()) {
+      ASSERT_EQ(0, zip_writer.WriteBytes(entry.second.data(), entry.second.size()));
+    }
+    ASSERT_EQ(0, zip_writer.FinishEntry());
+  }
+
+  ASSERT_EQ(0, zip_writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file_ptr));
+}
+
 static std::string get_sha1(const std::string& content) {
   uint8_t digest[SHA_DIGEST_LENGTH];
   SHA1(reinterpret_cast<const uint8_t*>(content.c_str()), content.size(), digest);
@@ -86,7 +105,16 @@ class UpdaterTest : public ::testing::Test {
     RegisterBuiltins();
     RegisterInstallFunctions();
     RegisterBlockImageFunctions();
+
+    // Mock the location of last_command_file.
+    CacheLocation::location().set_cache_temp_source(temp_saved_source_.path);
+    CacheLocation::location().set_last_command_file(temp_last_command_.path);
+    CacheLocation::location().set_stash_directory_base(temp_stash_base_.path);
   }
+
+  TemporaryFile temp_saved_source_;
+  TemporaryFile temp_last_command_;
+  TemporaryDir temp_stash_base_;
 };
 
 TEST_F(UpdaterTest, getprop) {
@@ -592,7 +620,7 @@ TEST_F(UpdaterTest, set_progress) {
 
   TemporaryFile tf;
   UpdaterInfo updater_info;
-  updater_info.cmd_pipe = fdopen(tf.fd, "w");
+  updater_info.cmd_pipe = fdopen(tf.release(), "w");
   expect(".52", "set_progress(\".52\")", kNoCause, &updater_info);
   fflush(updater_info.cmd_pipe);
 
@@ -601,6 +629,7 @@ TEST_F(UpdaterTest, set_progress) {
   ASSERT_EQ(android::base::StringPrintf("set_progress %f\n", .52), cmd);
   // recovery-updater protocol expects 2 tokens ("set_progress <frac>").
   ASSERT_EQ(2U, android::base::Split(cmd, " ").size());
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
 }
 
 TEST_F(UpdaterTest, show_progress) {
@@ -616,7 +645,7 @@ TEST_F(UpdaterTest, show_progress) {
 
   TemporaryFile tf;
   UpdaterInfo updater_info;
-  updater_info.cmd_pipe = fdopen(tf.fd, "w");
+  updater_info.cmd_pipe = fdopen(tf.release(), "w");
   expect(".52", "show_progress(\".52\", \"10\")", kNoCause, &updater_info);
   fflush(updater_info.cmd_pipe);
 
@@ -625,32 +654,22 @@ TEST_F(UpdaterTest, show_progress) {
   ASSERT_EQ(android::base::StringPrintf("progress %f %d\n", .52, 10), cmd);
   // recovery-updater protocol expects 3 tokens ("progress <frac> <secs>").
   ASSERT_EQ(3U, android::base::Split(cmd, " ").size());
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
 }
 
-TEST_F(UpdaterTest, block_image_update) {
-  // Create a zip file with new_data and patch_data.
-  TemporaryFile zip_file;
-  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
-  ZipWriter zip_writer(zip_file_ptr);
-
-  // Add a dummy new data.
-  ASSERT_EQ(0, zip_writer.StartEntry("new_data", 0));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
-
-  // Generate and add the patch data.
+TEST_F(UpdaterTest, block_image_update_patch_data) {
   std::string src_content = std::string(4096, 'a') + std::string(4096, 'c');
   std::string tgt_content = std::string(4096, 'b') + std::string(4096, 'd');
+
+  // Generate the patch data.
   TemporaryFile patch_file;
   ASSERT_EQ(0, bsdiff::bsdiff(reinterpret_cast<const uint8_t*>(src_content.data()),
       src_content.size(), reinterpret_cast<const uint8_t*>(tgt_content.data()),
       tgt_content.size(), patch_file.path, nullptr));
   std::string patch_content;
   ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch_content));
-  ASSERT_EQ(0, zip_writer.StartEntry("patch_data", 0));
-  ASSERT_EQ(0, zip_writer.WriteBytes(patch_content.data(), patch_content.size()));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
 
-  // Add two transfer lists. The first one contains a bsdiff; and we expect the update to succeed.
+  // Create the transfer list that contains a bsdiff.
   std::string src_hash = get_sha1(src_content);
   std::string tgt_hash = get_sha1(tgt_content);
   std::vector<std::string> transfer_list = {
@@ -663,27 +682,16 @@ TEST_F(UpdaterTest, block_image_update) {
                                 src_hash.c_str(), tgt_hash.c_str(), src_hash.c_str()),
     "free " + src_hash,
   };
-  ASSERT_EQ(0, zip_writer.StartEntry("transfer_list", 0));
-  std::string commands = android::base::Join(transfer_list, '\n');
-  ASSERT_EQ(0, zip_writer.WriteBytes(commands.data(), commands.size()));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
 
-  // Stash and free some blocks, then fail the 2nd update intentionally.
-  std::vector<std::string> fail_transfer_list = {
-    "4",
-    "2",
-    "0",
-    "2",
-    "stash " + tgt_hash + " 2,0,2",
-    "free " + tgt_hash,
-    "fail",
+  std::unordered_map<std::string, std::string> entries = {
+    { "new_data", "" },
+    { "patch_data", patch_content },
+    { "transfer_list", android::base::Join(transfer_list, '\n') },
   };
-  ASSERT_EQ(0, zip_writer.StartEntry("fail_transfer_list", 0));
-  std::string fail_commands = android::base::Join(fail_transfer_list, '\n');
-  ASSERT_EQ(0, zip_writer.WriteBytes(fail_commands.data(), fail_commands.size()));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
-  ASSERT_EQ(0, zip_writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file_ptr));
+
+  // Build the update package.
+  TemporaryFile zip_file;
+  BuildUpdatePackage(entries, zip_file.release());
 
   MemMapping map;
   ASSERT_TRUE(map.MapFile(zip_file.path));
@@ -694,11 +702,11 @@ TEST_F(UpdaterTest, block_image_update) {
   UpdaterInfo updater_info;
   updater_info.package_zip = handle;
   TemporaryFile temp_pipe;
-  updater_info.cmd_pipe = fopen(temp_pipe.path, "wbe");
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
   updater_info.package_zip_addr = map.addr;
   updater_info.package_zip_len = map.length;
 
-  // Execute the commands in the 1st transfer list.
+  // Execute the commands in the transfer list.
   TemporaryFile update_file;
   ASSERT_TRUE(android::base::WriteStringToFile(src_content, update_file.path));
   std::string script = "block_image_update(\"" + std::string(update_file.path) +
@@ -709,57 +717,28 @@ TEST_F(UpdaterTest, block_image_update) {
   ASSERT_TRUE(android::base::ReadFileToString(update_file.path, &updated_content));
   ASSERT_EQ(tgt_hash, get_sha1(updated_content));
 
-  // Expect the 2nd update to fail, but expect the stashed blocks to be freed.
-  script = "block_image_update(\"" + std::string(update_file.path) +
-      R"(", package_extract_file("fail_transfer_list"), "new_data", "patch_data"))";
-  expect("", script.c_str(), kNoCause, &updater_info);
-  // Updater generates the stash name based on the input file name.
-  std::string name_digest = get_sha1(update_file.path);
-  std::string stash_base = "/cache/recovery/" + name_digest;
-  ASSERT_EQ(0, access(stash_base.c_str(), F_OK));
-  ASSERT_EQ(-1, access((stash_base + tgt_hash).c_str(), F_OK));
-  ASSERT_EQ(0, rmdir(stash_base.c_str()));
-
   ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
   CloseArchive(handle);
 }
 
-TEST_F(UpdaterTest, new_data_short_write) {
-  // Create a zip file with new_data.
-  TemporaryFile zip_file;
-  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
-  ZipWriter zip_writer(zip_file_ptr);
-
-  // Add the empty new data.
-  ASSERT_EQ(0, zip_writer.StartEntry("empty_new_data", 0));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
-  // Add the short written new data.
-  ASSERT_EQ(0, zip_writer.StartEntry("short_new_data", 0));
-  std::string new_data_short = std::string(10, 'a');
-  ASSERT_EQ(0, zip_writer.WriteBytes(new_data_short.data(), new_data_short.size()));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
-  // Add the data of exactly one block.
-  ASSERT_EQ(0, zip_writer.StartEntry("exact_new_data", 0));
-  std::string new_data_exact = std::string(4096, 'a');
-  ASSERT_EQ(0, zip_writer.WriteBytes(new_data_exact.data(), new_data_exact.size()));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
-  // Add a dummy patch data.
-  ASSERT_EQ(0, zip_writer.StartEntry("patch_data", 0));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
-
+TEST_F(UpdaterTest, block_image_update_fail) {
+  std::string src_content(4096 * 2, 'e');
+  std::string src_hash = get_sha1(src_content);
+  // Stash and free some blocks, then fail the update intentionally.
   std::vector<std::string> transfer_list = {
-    "4",
-    "1",
-    "0",
-    "0",
-    "new 2,0,1",
+    "4", "2", "0", "2", "stash " + src_hash + " 2,0,2", "free " + src_hash, "fail",
   };
-  ASSERT_EQ(0, zip_writer.StartEntry("transfer_list", 0));
-  std::string commands = android::base::Join(transfer_list, '\n');
-  ASSERT_EQ(0, zip_writer.WriteBytes(commands.data(), commands.size()));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
-  ASSERT_EQ(0, zip_writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file_ptr));
+
+  // Add a new data of 10 bytes to test the deadlock.
+  std::unordered_map<std::string, std::string> entries = {
+    { "new_data", std::string(10, 0) },
+    { "patch_data", "" },
+    { "transfer_list", android::base::Join(transfer_list, '\n') },
+  };
+
+  // Build the update package.
+  TemporaryFile zip_file;
+  BuildUpdatePackage(entries, zip_file.release());
 
   MemMapping map;
   ASSERT_TRUE(map.MapFile(zip_file.path));
@@ -770,7 +749,95 @@ TEST_F(UpdaterTest, new_data_short_write) {
   UpdaterInfo updater_info;
   updater_info.package_zip = handle;
   TemporaryFile temp_pipe;
-  updater_info.cmd_pipe = fopen(temp_pipe.path, "wbe");
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
+  updater_info.package_zip_addr = map.addr;
+  updater_info.package_zip_len = map.length;
+
+  TemporaryFile update_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src_content, update_file.path));
+  // Expect the stashed blocks to be freed.
+  std::string script = "block_image_update(\"" + std::string(update_file.path) +
+                       R"(", package_extract_file("transfer_list"), "new_data", "patch_data"))";
+  expect("", script.c_str(), kNoCause, &updater_info);
+  // Updater generates the stash name based on the input file name.
+  std::string name_digest = get_sha1(update_file.path);
+  std::string stash_base = std::string(temp_stash_base_.path) + "/" + name_digest;
+  ASSERT_EQ(0, access(stash_base.c_str(), F_OK));
+  ASSERT_EQ(-1, access((stash_base + src_hash).c_str(), F_OK));
+  ASSERT_EQ(0, rmdir(stash_base.c_str()));
+
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
+  CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, new_data_over_write) {
+  std::vector<std::string> transfer_list = {
+    "4", "1", "0", "0", "new 2,0,1",
+  };
+
+  // Write 4096 + 100 bytes of new data.
+  std::unordered_map<std::string, std::string> entries = {
+    { "new_data", std::string(4196, 0) },
+    { "patch_data", "" },
+    { "transfer_list", android::base::Join(transfer_list, '\n') },
+  };
+
+  // Build the update package.
+  TemporaryFile zip_file;
+  BuildUpdatePackage(entries, zip_file.release());
+
+  MemMapping map;
+  ASSERT_TRUE(map.MapFile(zip_file.path));
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
+
+  // Set up the handler, command_pipe, patch offset & length.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+  TemporaryFile temp_pipe;
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
+  updater_info.package_zip_addr = map.addr;
+  updater_info.package_zip_len = map.length;
+
+  TemporaryFile update_file;
+  std::string script = "block_image_update(\"" + std::string(update_file.path) +
+                       R"(", package_extract_file("transfer_list"), "new_data", "patch_data"))";
+  expect("t", script.c_str(), kNoCause, &updater_info);
+
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
+  CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, new_data_short_write) {
+  std::vector<std::string> transfer_list = {
+    "4",
+    "1",
+    "0",
+    "0",
+    "new 2,0,1",
+  };
+
+  std::unordered_map<std::string, std::string> entries = {
+    { "empty_new_data", "" },
+    { "short_new_data", std::string(10, 'a') },
+    { "exact_new_data", std::string(4096, 'a') },
+    { "patch_data", "" },
+    { "transfer_list", android::base::Join(transfer_list, '\n') },
+  };
+
+  TemporaryFile zip_file;
+  BuildUpdatePackage(entries, zip_file.release());
+
+  MemMapping map;
+  ASSERT_TRUE(map.MapFile(zip_file.path));
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
+
+  // Set up the handler, command_pipe, patch offset & length.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+  TemporaryFile temp_pipe;
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
   updater_info.package_zip_addr = map.addr;
   updater_info.package_zip_len = map.length;
 
@@ -788,18 +855,12 @@ TEST_F(UpdaterTest, new_data_short_write) {
   std::string script_exact_data = "block_image_update(\"" + std::string(update_file.path) +
       R"(", package_extract_file("transfer_list"), "exact_new_data", "patch_data"))";
   expect("t", script_exact_data.c_str(), kNoCause, &updater_info);
+
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
   CloseArchive(handle);
 }
 
 TEST_F(UpdaterTest, brotli_new_data) {
-  // Create a zip file with new_data.
-  TemporaryFile zip_file;
-  FILE* zip_file_ptr = fdopen(zip_file.fd, "wb");
-  ZipWriter zip_writer(zip_file_ptr);
-
-  // Add a brotli compressed new data entry.
-  ASSERT_EQ(0, zip_writer.StartEntry("new.dat.br", 0));
-
   auto generator = []() { return rand() % 128; };
   // Generate 100 blocks of random data.
   std::string brotli_new_data;
@@ -807,16 +868,12 @@ TEST_F(UpdaterTest, brotli_new_data) {
   generate_n(back_inserter(brotli_new_data), 4096 * 100, generator);
 
   size_t encoded_size = BrotliEncoderMaxCompressedSize(brotli_new_data.size());
-  std::vector<uint8_t> encoded_data(encoded_size);
+  std::string encoded_data(encoded_size, 0);
   ASSERT_TRUE(BrotliEncoderCompress(
       BROTLI_DEFAULT_QUALITY, BROTLI_DEFAULT_WINDOW, BROTLI_DEFAULT_MODE, brotli_new_data.size(),
-      reinterpret_cast<const uint8_t*>(brotli_new_data.data()), &encoded_size, encoded_data.data()));
-
-  ASSERT_EQ(0, zip_writer.WriteBytes(encoded_data.data(), encoded_size));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
-  // Add a dummy patch data.
-  ASSERT_EQ(0, zip_writer.StartEntry("patch_data", 0));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
+      reinterpret_cast<const uint8_t*>(brotli_new_data.data()), &encoded_size,
+      reinterpret_cast<uint8_t*>(const_cast<char*>(encoded_data.data()))));
+  encoded_data.resize(encoded_size);
 
   // Write a few small chunks of new data, then a large chunk, and finally a few small chunks.
   // This helps us to catch potential short writes.
@@ -832,12 +889,15 @@ TEST_F(UpdaterTest, brotli_new_data) {
     "new 2,98,99",
     "new 2,99,100",
   };
-  ASSERT_EQ(0, zip_writer.StartEntry("transfer_list", 0));
-  std::string commands = android::base::Join(transfer_list, '\n');
-  ASSERT_EQ(0, zip_writer.WriteBytes(commands.data(), commands.size()));
-  ASSERT_EQ(0, zip_writer.FinishEntry());
-  ASSERT_EQ(0, zip_writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file_ptr));
+
+  std::unordered_map<std::string, std::string> entries = {
+    { "new.dat.br", std::move(encoded_data) },
+    { "patch_data", "" },
+    { "transfer_list", android::base::Join(transfer_list, '\n') },
+  };
+
+  TemporaryFile zip_file;
+  BuildUpdatePackage(entries, zip_file.release());
 
   MemMapping map;
   ASSERT_TRUE(map.MapFile(zip_file.path));
@@ -848,7 +908,7 @@ TEST_F(UpdaterTest, brotli_new_data) {
   UpdaterInfo updater_info;
   updater_info.package_zip = handle;
   TemporaryFile temp_pipe;
-  updater_info.cmd_pipe = fopen(temp_pipe.path, "wb");
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wb");
   updater_info.package_zip_addr = map.addr;
   updater_info.package_zip_len = map.length;
 
@@ -862,5 +922,221 @@ TEST_F(UpdaterTest, brotli_new_data) {
   std::string updated_content;
   ASSERT_TRUE(android::base::ReadFileToString(update_file.path, &updated_content));
   ASSERT_EQ(brotli_new_data, updated_content);
+
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
+  CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, last_command_update) {
+  std::string last_command_file = CacheLocation::location().last_command_file();
+
+  std::string block1 = std::string(4096, '1');
+  std::string block2 = std::string(4096, '2');
+  std::string block3 = std::string(4096, '3');
+  std::string block1_hash = get_sha1(block1);
+  std::string block2_hash = get_sha1(block2);
+  std::string block3_hash = get_sha1(block3);
+
+  // Compose the transfer list to fail the first update.
+  std::vector<std::string> transfer_list_fail = {
+    "4",
+    "2",
+    "0",
+    "2",
+    "stash " + block1_hash + " 2,0,1",
+    "move " + block1_hash + " 2,1,2 1 2,0,1",
+    "stash " + block3_hash + " 2,2,3",
+    "fail",
+  };
+
+  // Mimic a resumed update with the same transfer commands.
+  std::vector<std::string> transfer_list_continue = {
+    "4",
+    "2",
+    "0",
+    "2",
+    "stash " + block1_hash + " 2,0,1",
+    "move " + block1_hash + " 2,1,2 1 2,0,1",
+    "stash " + block3_hash + " 2,2,3",
+    "move " + block1_hash + " 2,2,3 1 2,0,1",
+  };
+
+  std::unordered_map<std::string, std::string> entries = {
+    { "new_data", "" },
+    { "patch_data", "" },
+    { "transfer_list_fail", android::base::Join(transfer_list_fail, '\n') },
+    { "transfer_list_continue", android::base::Join(transfer_list_continue, '\n') },
+  };
+
+  // Build the update package.
+  TemporaryFile zip_file;
+  BuildUpdatePackage(entries, zip_file.release());
+
+  MemMapping map;
+  ASSERT_TRUE(map.MapFile(zip_file.path));
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
+
+  // Set up the handler, command_pipe, patch offset & length.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+  TemporaryFile temp_pipe;
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
+  updater_info.package_zip_addr = map.addr;
+  updater_info.package_zip_len = map.length;
+
+  std::string src_content = block1 + block2 + block3;
+  TemporaryFile update_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src_content, update_file.path));
+  std::string script =
+      "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list_fail"), "new_data", "patch_data"))";
+  expect("", script.c_str(), kNoCause, &updater_info);
+
+  // Expect last_command to contain the last stash command.
+  std::string last_command_content;
+  ASSERT_TRUE(android::base::ReadFileToString(last_command_file.c_str(), &last_command_content));
+  EXPECT_EQ("2\nstash " + block3_hash + " 2,2,3", last_command_content);
+  std::string updated_contents;
+  ASSERT_TRUE(android::base::ReadFileToString(update_file.path, &updated_contents));
+  ASSERT_EQ(block1 + block1 + block3, updated_contents);
+
+  // Resume the update, expect the first 'move' to be skipped but the second 'move' to be executed.
+  ASSERT_TRUE(android::base::WriteStringToFile(src_content, update_file.path));
+  std::string script_second_update =
+      "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list_continue"), "new_data", "patch_data"))";
+  expect("t", script_second_update.c_str(), kNoCause, &updater_info);
+  ASSERT_TRUE(android::base::ReadFileToString(update_file.path, &updated_contents));
+  ASSERT_EQ(block1 + block2 + block1, updated_contents);
+
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
+  CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, last_command_update_unresumable) {
+  std::string last_command_file = CacheLocation::location().last_command_file();
+
+  std::string block1 = std::string(4096, '1');
+  std::string block2 = std::string(4096, '2');
+  std::string block1_hash = get_sha1(block1);
+  std::string block2_hash = get_sha1(block2);
+
+  // Construct an unresumable update with source blocks mismatch.
+  std::vector<std::string> transfer_list_unresumable = {
+    "4", "2", "0", "2", "stash " + block1_hash + " 2,0,1", "move " + block2_hash + " 2,1,2 1 2,0,1",
+  };
+
+  std::unordered_map<std::string, std::string> entries = {
+    { "new_data", "" },
+    { "patch_data", "" },
+    { "transfer_list_unresumable", android::base::Join(transfer_list_unresumable, '\n') },
+  };
+
+  // Build the update package.
+  TemporaryFile zip_file;
+  BuildUpdatePackage(entries, zip_file.release());
+
+  MemMapping map;
+  ASSERT_TRUE(map.MapFile(zip_file.path));
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
+
+  // Set up the handler, command_pipe, patch offset & length.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+  TemporaryFile temp_pipe;
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
+  updater_info.package_zip_addr = map.addr;
+  updater_info.package_zip_len = map.length;
+
+  // Set up the last_command_file
+  ASSERT_TRUE(
+      android::base::WriteStringToFile("0\nstash " + block1_hash + " 2,0,1", last_command_file));
+
+  // The last_command_file will be deleted if the update encounters an unresumable failure
+  // later.
+  std::string src_content = block1 + block1;
+  TemporaryFile update_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src_content, update_file.path));
+  std::string script =
+      "block_image_update(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list_unresumable"), "new_data", "patch_data"))";
+  expect("", script.c_str(), kNoCause, &updater_info);
+  ASSERT_EQ(-1, access(last_command_file.c_str(), R_OK));
+
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
+  CloseArchive(handle);
+}
+
+TEST_F(UpdaterTest, last_command_verify) {
+  std::string last_command_file = CacheLocation::location().last_command_file();
+
+  std::string block1 = std::string(4096, '1');
+  std::string block2 = std::string(4096, '2');
+  std::string block3 = std::string(4096, '3');
+  std::string block1_hash = get_sha1(block1);
+  std::string block2_hash = get_sha1(block2);
+  std::string block3_hash = get_sha1(block3);
+
+  std::vector<std::string> transfer_list_verify = {
+    "4",
+    "2",
+    "0",
+    "2",
+    "stash " + block1_hash + " 2,0,1",
+    "move " + block1_hash + " 2,0,1 1 2,0,1",
+    "move " + block1_hash + " 2,1,2 1 2,0,1",
+    "stash " + block3_hash + " 2,2,3",
+  };
+
+  std::unordered_map<std::string, std::string> entries = {
+    { "new_data", "" },
+    { "patch_data", "" },
+    { "transfer_list_verify", android::base::Join(transfer_list_verify, '\n') },
+  };
+
+  // Build the update package.
+  TemporaryFile zip_file;
+  BuildUpdatePackage(entries, zip_file.release());
+
+  MemMapping map;
+  ASSERT_TRUE(map.MapFile(zip_file.path));
+  ZipArchiveHandle handle;
+  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
+
+  // Set up the handler, command_pipe, patch offset & length.
+  UpdaterInfo updater_info;
+  updater_info.package_zip = handle;
+  TemporaryFile temp_pipe;
+  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
+  updater_info.package_zip_addr = map.addr;
+  updater_info.package_zip_len = map.length;
+
+  std::string src_content = block1 + block1 + block3;
+  TemporaryFile update_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(src_content, update_file.path));
+
+  ASSERT_TRUE(
+      android::base::WriteStringToFile("2\nstash " + block3_hash + " 2,2,3", last_command_file));
+
+  // Expect the verification to succeed and the last_command_file is intact.
+  std::string script_verify =
+      "block_image_verify(\"" + std::string(update_file.path) +
+      R"(", package_extract_file("transfer_list_verify"), "new_data","patch_data"))";
+  expect("t", script_verify.c_str(), kNoCause, &updater_info);
+
+  std::string last_command_content;
+  ASSERT_TRUE(android::base::ReadFileToString(last_command_file.c_str(), &last_command_content));
+  EXPECT_EQ("2\nstash " + block3_hash + " 2,2,3", last_command_content);
+
+  // Expect the verification to succeed but last_command_file to be deleted; because the target
+  // blocks don't have the expected contents for the second move command.
+  src_content = block1 + block2 + block3;
+  ASSERT_TRUE(android::base::WriteStringToFile(src_content, update_file.path));
+  expect("t", script_verify.c_str(), kNoCause, &updater_info);
+  ASSERT_EQ(-1, access(last_command_file.c_str(), R_OK));
+
+  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
   CloseArchive(handle);
 }

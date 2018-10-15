@@ -134,8 +134,17 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 		mFolderIcon = LoadAttrImage(child, "folder");
 		mFileIcon = LoadAttrImage(child, "file");
 	}
-	int iconWidth = std::max(mFolderIcon->GetWidth(), mFileIcon->GetWidth());
-	int iconHeight = std::max(mFolderIcon->GetHeight(), mFileIcon->GetHeight());
+	int iconWidth = 0, iconHeight = 0;
+	if (mFolderIcon && mFolderIcon->GetResource() && mFileIcon && mFileIcon->GetResource()) {
+		iconWidth = std::max(mFolderIcon->GetWidth(), mFileIcon->GetWidth());
+		iconHeight = std::max(mFolderIcon->GetHeight(), mFileIcon->GetHeight());
+	} else if (mFolderIcon && mFolderIcon->GetResource()) {
+		iconWidth = mFolderIcon->GetWidth();
+		iconHeight = mFolderIcon->GetHeight();
+	} else if (mFileIcon && mFileIcon->GetResource()) {
+		iconWidth = mFileIcon->GetWidth();
+		iconHeight = mFileIcon->GetHeight();
+	}
 	SetMaxIconSize(iconWidth, iconHeight);
 
 #ifdef TARGET_RECOVERY_IS_MULTIROM

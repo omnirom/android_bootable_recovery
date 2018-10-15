@@ -450,14 +450,7 @@
         <string name="fixing_perms">Réparation des permissions...</string>
         <string name="fix_perms_complete">Réparation des permissions complétée</string>
         <string name="reboot_hdr">Redémarrer</string>
-        <string name="su_hdr">Vérification SuperSU</string>
-        <string name="su_note1">Votre appareil ne semble pas être rooté.</string>
-        <string name="su_note2">Installer SuperSU maintenant?</string>
-        <string name="su_note3">Ceci va rooter votre appareil.</string>
-        <string name="su_cancel">Ne pas installer</string>
-        <string name="swipe_su_to_install">Glisser pour installer</string>
-        <string name="swipe_su_install">Installer</string>
-        <string name="su_installing">Installation de SuperSU</string>
+        <string name="install_cancel">Ne pas installer</string>
         <string name="sel_storage_list">Sélection du stockage</string>
         <string name="ok_btn">OK</string>
         <string name="no_kernel_selinux">Le noyau ne supporte pas la lecture des contextes SELinux.</string>

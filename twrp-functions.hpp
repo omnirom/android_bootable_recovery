@@ -94,7 +94,6 @@ public:
 	static int write_file(string fn, const string& line); //write from file
 	static int write_file(string fn, const string& line, const char *mode); //write from file
 #endif //TARGET_RECOVERY_IS_MULTIROM
-	static bool Install_SuperSU(void); // Installs su binary and apk and sets proper permissions
 	static bool Try_Decrypting_Backup(string Restore_Path, string Password); // true for success, false for failed to decrypt
 	static string System_Property_Get(string Prop_Name);                // Returns value of Prop_Name from reading /system/build.prop
 	static string Get_Current_Date(void);                               // Returns the current date in ccyy-m-dd--hh-nn-ss format

@@ -42,7 +42,7 @@
 #ifdef USE_MINZIP
 #include "../minzip/SysUtil.h"
 #else
-#include "../otautil/SysUtil.h"
+#include <otautil/SysUtil.h>
 #endif
 
 extern "C" {

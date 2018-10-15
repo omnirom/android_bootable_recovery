@@ -3389,24 +3389,9 @@
 
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row7_y%"/>
-				<text>{@su_cancel=Do not Install}</text>
+				<text>{@install_cancel=Do not Install}</text>
 				<action function="reboot">%tw_reboot_param%</action>
 			</button>
-
-			<slider>
-				<text>{@swipe_su_install=   Install}</text>
-				<actions>
-					<action function="set">tw_back=reboot</action>
-					<action function="set">tw_action=installapp</action>
-					<action function="set">tw_action_text1={@reboot_installing_app=Installing App...}</action>
-					<action function="set">tw_action_text2=</action>
-					<action function="set">tw_has_action2=1</action>
-					<action function="set">tw_action2=reboot</action>
-					<action function="set">tw_action2_param=%tw_reboot_param%</action>
-					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
-					<action function="page">action_page</action>
-				</actions>
-			</slider>
 
 			<action>
 				<touch key="home"/>
@@ -5401,48 +5386,6 @@
 				<touch key="back"/>
 				<action function="page">advanced</action>
 			</action>
-		</page>
-
-		<page name="installsu">
-			<template name="page"/>
-
-			<template name="statusbar"/>
-
-			<text style="text_m">
-				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@reboot_hdr=Reboot} &gt; {@su_hdr=SuperSU Check}</text>
-			</text>
-
-			<text style="text_m_accent">
-				<placement x="%center_x%" y="%row2_y%" placement="5"/>
-				<text>{@su_note1=Your device does not appear to be rooted.}</text>
-			</text>
-
-			<text style="text_m">
-				<placement x="%center_x%" y="%row4_y%" placement="5"/>
-				<text>{@su_note2=Install SuperSU now?}</text>
-			</text>
-
-			<text style="text_m">
-				<placement x="%center_x%" y="%row5_y%" placement="5"/>
-				<text>{@su_note3=This will root your device.}</text>
-			</text>
-
-			<button style="main_button_full_width">
-				<placement x="%indent%" y="%row6_y%"/>
-				<text>{@su_cancel=Do not Install}</text>
-				<action function="set">tw_page_done=1</action>
-			</button>
-
-			<slider>
-				<text>{@swipe_su_install=   Install}</text>
-				<actions>
-					<action function="set">tw_action=installsu</action>
-					<action function="set">tw_action_text1={@su_installing=Installing SuperSU}</action>
-					<action function="set">tw_action_text2=</action>
-					<action function="page">singleaction_page</action>
-				</actions>
-			</slider>
 		</page>
 
 		<page name="slideout">

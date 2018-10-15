@@ -42,6 +42,8 @@ else
     LOCAL_CFLAGS += -DUSE_LEGACY_KEYMASTER
 endif
 
+LOCAL_CFLAGS += -Wno-unused-function
+
 LOCAL_WHOLE_STATIC_LIBRARIES += libscrypttwrp_static
 
 include $(BUILD_SHARED_LIBRARY)

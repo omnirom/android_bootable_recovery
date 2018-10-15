@@ -462,14 +462,7 @@
 		<string name="fixing_contexts">Repareren van Contexts...</string>
 		<string name="fix_contexts_complete">Het repareren van Contexts is gereed</string>
 		<string name="reboot_hdr">Herstart</string>
-		<string name="su_hdr">SuperSU Controle</string>
-		<string name="su_note1">Uw apparaat lijkt niet geroot te zijn.</string>
-		<string name="su_note2">Installeer SuperSU nu?</string>
-		<string name="su_note3">Dit zal uw apparaat rooten.</string>
-		<string name="su_cancel">Installeer niet</string>
-		<string name="swipe_su_to_install">Veeg om te installeren</string>
-		<string name="swipe_su_install">   Installeren</string>
-		<string name="su_installing">Installeren van SuperSU</string>
+		<string name="install_cancel">Installeer niet</string>
 		<string name="sel_storage_list">Selecteer opslag</string>
 		<string name="ok_btn">OK</string>
 

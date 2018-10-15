@@ -769,7 +769,6 @@ int TWPartitionManager::Cancel_Backup() {
 int TWPartitionManager::Run_Backup(bool adbbackup) {
 	PartitionSettings part_settings;
 	int partition_count = 0, disable_free_space_check = 0, skip_digest = 0;
-	int gui_adb_backup;
 	string Backup_Name, Backup_List, backup_path;
 	unsigned long long total_bytes = 0, free_space = 0;
 	TWPartition* storage = NULL;
@@ -1623,6 +1622,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			(*iter)->Mount(true);
 		}
 	}
+	property_set("twrp.mount_to_decrypt", "1");
 
 	property_get("ro.crypto.state", crypto_state, "error");
 	if (strcmp(crypto_state, "error") == 0) {
@@ -1692,6 +1692,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 			(*iter)->UnMount(false);
 		}
 	}
+	property_set("twrp.mount_to_decrypt", "0");
 
 	if (pwret != 0) {
 		gui_err("fail_decrypt=Failed to decrypt data.");

@@ -19,6 +19,8 @@
 
 #include <stdlib.h>
 
+#include <string>
+
 // Zip entries in ziptest_valid.zip.
 static const std::string kATxtContents("abcdefghabcdefgh\n");
 static const std::string kBTxtContents("abcdefgh\n");
@@ -30,10 +32,14 @@ static const std::string kATxtSha1Sum("32c96a03dc8cd20097940f351bca6261ee5a1643"
 // echo -n -e "abcdefgh\n" | sha1sum
 static const std::string kBTxtSha1Sum("e414af7161c9554089f4106d6f1797ef14a73666");
 
-static const char* data_root = getenv("ANDROID_DATA");
-
 static std::string from_testdata_base(const std::string& fname) {
-  return std::string(data_root) + "/nativetest/recovery/testdata/" + fname;
+#ifdef __ANDROID__
+  static std::string data_root = getenv("ANDROID_DATA");
+#else
+  static std::string data_root = std::string(getenv("ANDROID_PRODUCT_OUT")) + "/data";
+#endif
+
+  return data_root + "/nativetest/recovery/testdata/" + fname;
 }
 
 #endif  // _OTA_TEST_CONSTANTS_H

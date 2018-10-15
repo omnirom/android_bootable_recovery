@@ -14,17 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINZIP_DIRUTIL_H_
-#define MINZIP_DIRUTIL_H_
+#ifndef OTAUTIL_DIRUTIL_H_
+#define OTAUTIL_DIRUTIL_H_
 
-#include <stdbool.h>
-#include <utime.h>
+#include <sys/stat.h>  // mode_t
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
 
 struct selabel_handle;
+
+// Like "mkdir -p", try to guarantee that all directories specified in path are present, creating as
+// many directories as necessary. The specified mode is passed to all mkdir calls; no modifications
+// are made to umask.
+//
+// If strip_filename is set, everything after the final '/' is stripped before creating the
+// directory
+// hierarchy.
+//
+// Returns 0 on success; returns -1 (and sets errno) on failure (usually if some element of path is
+// not a directory).
+int mkdir_recursively(const std::string& path, mode_t mode, bool strip_filename,
+                      const struct selabel_handle* sehnd);
 
 /* Like "mkdir -p", try to guarantee that all directories
  * specified in path are present, creating as many directories
@@ -47,8 +57,4 @@ int dirCreateHierarchy(const char *path, int mode,
  */
 int dirUnlinkHierarchy(const char *path);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MINZIP_DIRUTIL_H_
+#endif  // OTAUTIL_DIRUTIL_H_

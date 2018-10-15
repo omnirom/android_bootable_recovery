@@ -193,7 +193,7 @@ static bool update_binary_has_legacy_properties(const char *binary) {
 
 	void *data = mmap(NULL, finfo.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (data == MAP_FAILED) {
-		LOGINFO("has_legacy_properties: mmap (size=%lld) failed: %s!\n", finfo.st_size, strerror(errno));
+		LOGINFO("has_legacy_properties: mmap (size=%zu) failed: %s!\n", finfo.st_size, strerror(errno));
 	} else {
 		if (memmem(data, finfo.st_size, str_to_match, len_to_match)) {
 			LOGINFO("has_legacy_properties: Found legacy property match!\n");
@@ -327,7 +327,14 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 		string digest_str;
 		string Full_Filename = path;
 		string digest_file = path;
-		digest_file += ".md5";
+		string defmd5file = digest_file + ".md5sum";
+
+		if (TWFunc::Path_Exists(defmd5file)) {
+			digest_file += ".md5sum";
+		}
+		else {
+			digest_file += ".md5";
+		}
 
 		gui_msg("check_for_digest=Checking for Digest file...");
 		if (!TWFunc::Path_Exists(digest_file)) {

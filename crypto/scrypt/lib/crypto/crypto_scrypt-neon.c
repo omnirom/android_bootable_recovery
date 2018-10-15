@@ -28,7 +28,6 @@
  */
 #include "scrypt_platform.h"
 
-#include <machine/cpu-features.h>
 #include <arm_neon.h>
 
 #include <errno.h>
@@ -136,9 +135,7 @@ smix(uint8_t * B, size_t r, uint64_t N, void * V, void * XY)
 	uint8x16_t * X = XY;
 	uint8x16_t * Y = (void *)((uintptr_t)(XY) + 128 * r);
         uint8x16_t * Z = (void *)((uintptr_t)(XY) + 256 * r);
-        uint32_t * X32 = (void *)X;
 	uint64_t i, j;
-        size_t k;
 
 	/* 1: X <-- B */
 	blkcpy(X, B, 128 * r);

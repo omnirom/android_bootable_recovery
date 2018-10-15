@@ -57,8 +57,8 @@ public:
 	virtual ~FontResource();
 
 public:
-	void* GetResource() { return this ? mFont : NULL; }
-	int GetHeight() { return gr_ttf_getMaxFontHeight(this ? mFont : NULL); }
+	void* GetResource() { return mFont; }
+	int GetHeight() { return gr_ttf_getMaxFontHeight(mFont); }
 	void Override(xml_node<>* node, ZipWrap* pZip);
 
 protected:
@@ -80,9 +80,9 @@ public:
 	virtual ~ImageResource();
 
 public:
-	gr_surface GetResource() { return this ? mSurface : NULL; }
-	int GetWidth() { return gr_get_width(this ? mSurface : NULL); }
-	int GetHeight() { return gr_get_height(this ? mSurface : NULL); }
+	gr_surface GetResource() { return mSurface; }
+	int GetWidth() { return gr_get_width(mSurface); }
+	int GetHeight() { return gr_get_height(mSurface); }
 
 protected:
 	gr_surface mSurface;
@@ -95,10 +95,10 @@ public:
 	virtual ~AnimationResource();
 
 public:
-	gr_surface GetResource() { return (!this || mSurfaces.empty()) ? NULL : mSurfaces.at(0); }
-	gr_surface GetResource(int entry) { return (!this || mSurfaces.empty()) ? NULL : mSurfaces.at(entry); }
-	int GetWidth() { return gr_get_width(this ? GetResource() : NULL); }
-	int GetHeight() { return gr_get_height(this ? GetResource() : NULL); }
+	gr_surface GetResource() { return mSurfaces.empty() ? NULL : mSurfaces.at(0); }
+	gr_surface GetResource(int entry) { return mSurfaces.empty() ? NULL : mSurfaces.at(entry); }
+	int GetWidth() { return gr_get_width(GetResource()); }
+	int GetHeight() { return gr_get_height(GetResource()); }
 	int GetResourceCount() { return mSurfaces.size(); }
 
 protected:

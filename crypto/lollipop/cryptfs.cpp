@@ -100,10 +100,7 @@ bool Using_hex_password = false;
 
 const char *me = "cryptfs";
 
-static unsigned char saved_master_key[KEY_LEN_BYTES];
-static char *saved_mount_point;
 static int  master_key_saved = 0;
-static struct crypt_persist_data *persist_data = NULL;
 static char key_fname[PROPERTY_VALUE_MAX] = "";
 static char real_blkdev[PROPERTY_VALUE_MAX] = "";
 static char file_system[PROPERTY_VALUE_MAX] = "";
@@ -823,24 +820,6 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
 
 /***************KEYMASTER 3 & 4 END************************/
 
-/* Store password when userdata is successfully decrypted and mounted.
- * Cleared by cryptfs_clear_password
- *
- * To avoid a double prompt at boot, we need to store the CryptKeeper
- * password and pass it to KeyGuard, which uses it to unlock KeyStore.
- * Since the entire framework is torn down and rebuilt after encryption,
- * we have to use a daemon or similar to store the password. Since vold
- * is secured against IPC except from system processes, it seems a reasonable
- * place to store this.
- *
- * password should be cleared once it has been used.
- *
- * password is aged out after password_max_age_seconds seconds.
- */
-static char* password = 0;
-static int password_expiry_time = 0;
-static const int password_max_age_seconds = 60;
-
 static void ioctl_init(struct dm_ioctl *io, size_t dataSize, const char *name, unsigned flags)
 {
     memset(io, 0, dataSize);
@@ -968,7 +947,7 @@ static int get_crypt_ftr_info(char **metadata_fname, off64_t *off)
 static int get_crypt_ftr_and_key(struct crypt_mnt_ftr *crypt_ftr)
 {
   int fd;
-  unsigned int nr_sec, cnt;
+  unsigned int cnt;
   off64_t starting_off;
   int rc = -1;
   char *fname = NULL;
@@ -1158,8 +1137,6 @@ static int get_dm_crypt_version(int fd, const char *name,  int *version)
     char buffer[DM_CRYPT_BUF_SIZE];
     struct dm_ioctl *io;
     struct dm_target_versions *v;
-    int flag;
-    int i;
 
     io = (struct dm_ioctl *) buffer;
 
@@ -1175,6 +1152,7 @@ static int get_dm_crypt_version(int fd, const char *name,  int *version)
     v = (struct dm_target_versions *) &buffer[sizeof(struct dm_ioctl)];
     while (v->next) {
 #ifdef CONFIG_HW_DISK_ENCRYPTION
+        int flag;
         if (is_hw_fde_enabled()) {
             flag = (!strcmp(v->name, "crypt") || !strcmp(v->name, "req-crypt"));
         } else {
@@ -1201,13 +1179,9 @@ static int create_crypto_blk_dev(struct crypt_mnt_ftr *crypt_ftr, const unsigned
                                  const char *real_blk_name, char *crypto_blk_name, const char *name)
 {
   char buffer[DM_CRYPT_BUF_SIZE];
-  char master_key_ascii[129]; /* Large enough to hold 512 bit key and null */
-  char *crypt_params;
   struct dm_ioctl *io;
-  struct dm_target_spec *tgt;
   unsigned int minor;
   int fd=0;
-  int i;
   int retval = -1;
   int version[3];
   const char *extra_params;
@@ -1553,10 +1527,6 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   char crypto_blkdev[MAXPATHLEN];
   char tmp_mount_point[64];
   int rc = 0;
-  kdf_func kdf;
-  void *kdf_params;
-  int use_keymaster = 0;
-  int upgrade = 0;
   unsigned char* intermediate_key = 0;
   size_t intermediate_key_size = 0;
   int N = 1 << crypt_ftr->N_factor;

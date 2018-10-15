@@ -42,6 +42,7 @@ private:
 	int adb_control_bu_fd;                                                   // fd for twrp to bu communication
 	int adb_read_fd;                                                         // adb read data stream
 	int adb_write_fd;                                                        // adb write data stream
+	int debug_adb_fd;                                                        // fd to write debug tars
 	bool firstPart;                                                          // first partition in the stream
 	FILE *adbd_fp;                                                           // file pointer for adb stream
 	char cmd[512];                                                           // store result of commands
@@ -54,6 +55,7 @@ private:
 	void close_backup_fds();                                                 // close backup resources
 	void close_restore_fds();                                                // close restore resources
 	bool checkMD5Trailer(char adbReadStream[], uint64_t md5fnsize, twrpMD5* digest); // Check MD5 Trailer
+	void printErrMsg(std::string msg, int errNum);                          // print error msg to adb log
 };
 
 #endif // _TWRPBACK_HPP

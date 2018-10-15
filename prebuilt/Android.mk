@@ -183,7 +183,6 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libe4crypt.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libgatekeeper.so
-        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libsoftkeymaster.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_messages.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeystore_binder.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libbinder.so
@@ -210,6 +209,20 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         else
             RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster1.so
         endif
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libsoftkeymaster.so
+        endif
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.keymaster@4.0.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster4support.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeystore_aidl.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeystore_parcelables.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libutilscallstack.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libunwindstack.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdexfile.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libservices.so
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_portable.so
+         endif
     endif
 endif
 ifeq ($(AB_OTA_UPDATER), true)
@@ -219,7 +232,9 @@ ifeq ($(AB_OTA_UPDATER), true)
     endif
 endif
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/make_ext4fs
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/make_ext4fs
+    endif
 endif
 ifneq ($(wildcard system/core/libsparse/Android.*),)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libsparse.so
@@ -313,10 +328,19 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hidl.base@1.0.so
     endif
 endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libclang_rt.ubsan_standalone-aarch64-android.so
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/liblogwrap.so
+endif
+
+TW_BB_SYMLINKS :=
+ifneq ($(TW_USE_TOOLBOX), true)
+    TW_BB_SYMLINKS := busybox_symlinks
+endif
 
 TWRP_AUTOGEN := $(intermediates)/teamwin
 GEN := $(intermediates)/teamwin
-$(GEN): $(RELINK)
+$(GEN): $(RELINK) $(TW_BB_SYMLINKS) toolbox_symlinks
 $(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,init)/init
 	$(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
 
@@ -445,114 +469,6 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	LOCAL_MODULE_TAGS := eng
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWHTCD_PATH)
-	LOCAL_SRC_FILES := $(LOCAL_MODULE)
-	include $(BUILD_PREBUILT)
-endif
-
-ifneq ($(TW_EXCLUDE_SUPERSU), true)
-	ifeq ($(TARGET_ARCH), arm)
-		#chattr.pie
-		include $(CLEAR_VARS)
-		LOCAL_MODULE := chattr.pie
-		LOCAL_MODULE_TAGS := eng
-		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-		LOCAL_SRC_FILES := $(LOCAL_MODULE)
-		include $(BUILD_PREBUILT)
-
-		#libsupol.so
-		include $(CLEAR_VARS)
-		LOCAL_MODULE := libsupol.so
-		LOCAL_MODULE_TAGS := eng
-		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-		LOCAL_SRC_FILES := $(LOCAL_MODULE)
-		include $(BUILD_PREBUILT)
-
-		#su binary
-		include $(CLEAR_VARS)
-		LOCAL_MODULE := suarm
-		LOCAL_MODULE_STEM := su
-		LOCAL_MODULE_TAGS := eng
-		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-		LOCAL_SRC_FILES := $(LOCAL_MODULE)
-		include $(BUILD_PREBUILT)
-
-		#supolicy
-		include $(CLEAR_VARS)
-		LOCAL_MODULE := supolicy
-		LOCAL_MODULE_TAGS := eng
-		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-		LOCAL_SRC_FILES := $(LOCAL_MODULE)
-		include $(BUILD_PREBUILT)
-	endif
-	ifeq ($(TARGET_ARCH), arm64)
-		#libsupol.so
-		include $(CLEAR_VARS)
-		LOCAL_MODULE := libsupol.soarm64
-		LOCAL_MODULE_STEM := libsupol.so
-		LOCAL_MODULE_TAGS := eng
-		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-		LOCAL_SRC_FILES := $(LOCAL_MODULE)
-		include $(BUILD_PREBUILT)
-
-		#su binary
-		include $(CLEAR_VARS)
-		LOCAL_MODULE := suarm64
-		LOCAL_MODULE_STEM := su
-		LOCAL_MODULE_TAGS := eng
-		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-		LOCAL_SRC_FILES := $(LOCAL_MODULE)
-		include $(BUILD_PREBUILT)
-
-		#supolicy
-		include $(CLEAR_VARS)
-		LOCAL_MODULE := supolicyarm64
-		LOCAL_MODULE_STEM := supolicy
-		LOCAL_MODULE_TAGS := eng
-		LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-		LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-		LOCAL_SRC_FILES := $(LOCAL_MODULE)
-		include $(BUILD_PREBUILT)
-	endif
-
-	#install-recovery.sh
-	include $(CLEAR_VARS)
-	LOCAL_MODULE := install-recovery.sh
-	LOCAL_MODULE_TAGS := eng
-	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-	LOCAL_SRC_FILES := $(LOCAL_MODULE)
-	include $(BUILD_PREBUILT)
-
-	#install-supersu.sh
-	include $(CLEAR_VARS)
-	LOCAL_MODULE := install-supersu.sh
-	LOCAL_MODULE_TAGS := eng
-	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-	LOCAL_SRC_FILES := $(LOCAL_MODULE)
-	include $(BUILD_PREBUILT)
-
-	#99SuperSUDaemon
-	include $(CLEAR_VARS)
-	LOCAL_MODULE := 99SuperSUDaemon
-	LOCAL_MODULE_TAGS := eng
-	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
-	LOCAL_SRC_FILES := $(LOCAL_MODULE)
-	include $(BUILD_PREBUILT)
-
-	#SuperSU special installer APK
-	include $(CLEAR_VARS)
-	LOCAL_MODULE := Superuser.apk
-	LOCAL_MODULE_TAGS := eng
-	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/supersu
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
 	include $(BUILD_PREBUILT)
 endif

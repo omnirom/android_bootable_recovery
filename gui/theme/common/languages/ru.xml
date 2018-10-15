@@ -472,14 +472,7 @@
 		<string name="fixing_contexts">Исправление контекста...</string>
 		<string name="fix_contexts_complete">Исправление контекста завершено</string>
 		<string name="reboot_hdr">Перезагрузка</string>
-		<string name="su_hdr">Проверика SuperSU</string>
-		<string name="su_note1">В вашем устройстве отсутствует рут-доступ.</string>
-		<string name="su_note2">Установить SuperSU сейчас?</string>
-		<string name="su_note3">Рут-доступ будет активирован.</string>
-		<string name="su_cancel">Не устанавливать</string>
-		<string name="swipe_su_to_install">Свайп для установки</string>
-		<string name="swipe_su_install">   Установка</string>
-		<string name="su_installing">Установка SuperSU</string>
+		<string name="install_cancel">Не устанавливать</string>
 		<string name="sel_storage_list">Выберите накопитель</string>
 		<string name="ok_btn">OK</string>
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->

@@ -101,7 +101,7 @@ static struct pollfd ev_fds[MAX_DEVICES];
 static struct ev evs[MAX_DEVICES];
 static unsigned ev_count = 0;
 static struct timeval lastInputStat;
-static unsigned long lastInputMTime;
+static time_t lastInputMTime;
 static int has_mouse = 0;
 
 static inline int ABS(int x) {
@@ -360,7 +360,7 @@ void ev_exit(void)
 	ev_count = 0;
 }
 
-static int vk_inside_display(__s32 value, struct input_absinfo *info, int screen_size)
+/*static int vk_inside_display(__s32 value, struct input_absinfo *info, int screen_size)
 {
     int screen_pos;
 
@@ -369,7 +369,7 @@ static int vk_inside_display(__s32 value, struct input_absinfo *info, int screen
 
     screen_pos = (value - info->minimum) * (screen_size - 1) / (info->maximum - info->minimum);
     return (screen_pos >= 0 && screen_pos < screen_size);
-}
+}*/
 
 static int vk_tp_to_screen(struct position *p, int *x, int *y)
 {
@@ -782,7 +782,7 @@ int ev_get(struct input_event *ev, int timeout_ms)
     return -2;
 }
 
-int ev_wait(int timeout)
+int ev_wait(int timeout __unused)
 {
     return -1;
 }
@@ -792,7 +792,7 @@ void ev_dispatch(void)
     return;
 }
 
-int ev_get_input(int fd, short revents, struct input_event *ev)
+int ev_get_input(int fd __unused, short revents __unused, struct input_event *ev __unused)
 {
     return -1;
 }

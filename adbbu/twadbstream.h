@@ -39,7 +39,7 @@
 #define TWMD5 "twverifymd5"				//This command is compared to the md5trailer by ORS to verify transfer
 #define TWENDADB "twendadb"				//End Protocol
 #define TWERROR "twerror"				//Send error
-#define ADB_BACKUP_VERSION 2				//Backup Version
+#define ADB_BACKUP_VERSION 3				//Backup Version
 #define DATA_MAX_CHUNK_SIZE 1048576			//Maximum size between each data header
 #define MAX_ADB_READ 512				//align with default tar size for amount to read fom adb stream
 
