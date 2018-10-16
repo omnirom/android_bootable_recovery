@@ -329,7 +329,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 #define F2FS_IOCTL_MAGIC		0xf5
 #endif
 #define F2FS_IOC_SET_PIN_FILE	_IOW(F2FS_IOCTL_MAGIC, 13, __u32)
-#define F2FS_IOC_GET_PIN_FILE	_IOW(F2FS_IOCTL_MAGIC, 14, __u32)
+#define F2FS_IOC_GET_PIN_FILE	_IOR(F2FS_IOCTL_MAGIC, 14, __u32)
 #endif
     if (f2fs_fs) {
         __u32 set = 1;
