@@ -229,6 +229,43 @@ TEST_F(ScreenUITest, WearMenuSelectItemsOverflow) {
   ASSERT_EQ(3u, menu.MenuEnd());
 }
 
+TEST_F(ScreenUITest, GraphicMenuSelection) {
+  GRSurface fake_surface = GRSurface{ 50, 50, 50, 1, nullptr };
+  std::vector<GRSurface*> items = { &fake_surface, &fake_surface, &fake_surface };
+  GraphicMenu menu(&fake_surface, items, 0, draw_funcs_);
+
+  ASSERT_EQ(0, menu.selection());
+
+  int sel = 0;
+  for (int i = 0; i < 3; i++) {
+    sel = menu.Select(++sel);
+    ASSERT_EQ((i + 1) % 3, sel);
+    ASSERT_EQ(sel, menu.selection());
+  }
+
+  sel = 0;
+  for (int i = 0; i < 3; i++) {
+    sel = menu.Select(--sel);
+    ASSERT_EQ(2 - i, sel);
+    ASSERT_EQ(sel, menu.selection());
+  }
+}
+
+TEST_F(ScreenUITest, GraphicMenuValidate) {
+  auto fake_surface = GRSurface{ 50, 50, 50, 1, nullptr };
+  std::vector<GRSurface*> items = { &fake_surface, &fake_surface, &fake_surface };
+
+  ASSERT_TRUE(GraphicMenu::Validate(200, 200, &fake_surface, items));
+
+  // Menu exceeds the horizontal boundary.
+  auto wide_surface = GRSurface{ 300, 50, 300, 1, nullptr };
+  ASSERT_FALSE(GraphicMenu::Validate(299, 200, &wide_surface, items));
+
+  // Menu exceeds the vertical boundary.
+  items.push_back(&fake_surface);
+  ASSERT_FALSE(GraphicMenu::Validate(200, 249, &fake_surface, items));
+}
+
 static constexpr int kMagicAction = 101;
 
 enum class KeyCode : int {

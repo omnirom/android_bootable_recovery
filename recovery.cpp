@@ -397,23 +397,22 @@ static bool wipe_data(Device* device) {
 
 static InstallResult prompt_and_wipe_data(Device* device) {
   // Use a single string and let ScreenRecoveryUI handles the wrapping.
-  std::vector<std::string> headers{
+  std::vector<std::string> wipe_data_menu_headers{
     "Can't load Android system. Your data may be corrupt. "
     "If you continue to get this message, you may need to "
     "perform a factory data reset and erase all user data "
     "stored on this device.",
   };
   // clang-format off
-  std::vector<std::string> items {
+  std::vector<std::string> wipe_data_menu_items {
     "Try again",
     "Factory data reset",
   };
   // clang-format on
   for (;;) {
-    size_t chosen_item = ui->ShowMenu(
-        headers, items, 0, true,
+    size_t chosen_item = ui->ShowPromptWipeDataMenu(
+        wipe_data_menu_headers, wipe_data_menu_items,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
-
     // If ShowMenu() returned RecoveryUI::KeyError::INTERRUPTED, WaitKey() was interrupted.
     if (chosen_item == static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED)) {
       return INSTALL_KEY_INTERRUPTED;
@@ -421,6 +420,8 @@ static InstallResult prompt_and_wipe_data(Device* device) {
     if (chosen_item != 1) {
       return INSTALL_SUCCESS;  // Just reboot, no wipe; not a failure, user asked for it
     }
+
+    // TODO(xunchang) localize the confirmation texts also.
     if (ask_to_wipe_data(device)) {
       if (wipe_data(device)) {
         return INSTALL_SUCCESS;
