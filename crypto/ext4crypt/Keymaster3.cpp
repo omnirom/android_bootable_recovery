@@ -259,7 +259,7 @@ int keymaster_compatibility_cryptfs_scrypt() {
 
     std::copy(key.data(), key.data() + key.size(), key_buffer);
     return 0;
-}
+}*/
 
 int keymaster_sign_object_for_cryptfs_scrypt(const uint8_t* key_blob,
                                              size_t key_blob_size,
@@ -321,4 +321,4 @@ int keymaster_sign_object_for_cryptfs_scrypt(const uint8_t* key_blob,
     *signature_buffer_size = output.size();
     std::copy(output.data(), output.data() + output.size(), *signature_buffer);
     return 0;
-}*/
+}
