@@ -66,7 +66,7 @@ extern "C" {
 }
 
 #ifdef TW_INCLUDE_CRYPTO
-	#include "crypto/lollipop/cryptfs.h"
+	#include "crypto/fde/cryptfs.h"
 	#include "gui/rapidxml.hpp"
 	#include "gui/pages.hpp"
 	#ifdef TW_INCLUDE_FBE
