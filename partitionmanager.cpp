@@ -60,13 +60,17 @@
 #include "mtp/MtpMessage.hpp"
 #endif
 
+#ifdef TW_INCLUDE_CRYPTO
+	#include "crypto/fde/cryptfs.h"
+#endif
+
 extern "C" {
 	#include "cutils/properties.h"
 	#include "gui/gui.h"
 }
 
 #ifdef TW_INCLUDE_CRYPTO
-	#include "crypto/lollipop/cryptfs.h"
+	//#include "crypto/lollipop/cryptfs.h"
 	#include "gui/rapidxml.hpp"
 	#include "gui/pages.hpp"
 	#ifdef TW_INCLUDE_FBE
