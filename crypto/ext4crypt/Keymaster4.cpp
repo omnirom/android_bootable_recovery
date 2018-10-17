@@ -290,9 +290,14 @@ int keymaster_upgrade_key_for_cryptfs_scrypt(uint32_t rsa_key_size, uint64_t rsa
     return 0;
 }
 
+#define RSA_KEY_SIZE 2048
+#define RSA_EXPONENT 0x10001
+
 KeymasterSignResult keymaster_sign_object_for_cryptfs_scrypt(
     const uint8_t* key_blob, size_t key_blob_size, uint32_t ratelimit, const uint8_t* object,
-    const size_t object_size, uint8_t** signature_buffer, size_t* signature_buffer_size) {
+    const size_t object_size, uint8_t** signature_buffer, size_t* signature_buffer_size,
+    uint8_t* key_buffer,
+    uint32_t key_buffer_size, uint32_t* key_out_size) {
     Keymaster dev;
     if (!dev) {
         LOG(ERROR) << "Failed to initiate keymaster session" << std::endl;
@@ -321,7 +326,12 @@ KeymasterSignResult keymaster_sign_object_for_cryptfs_scrypt(
 
     if (op.errorCode() == km::ErrorCode::KEY_REQUIRES_UPGRADE) {
         LOG(ERROR) << "Keymaster key requires upgrade" << std::endl;
-        return KeymasterSignResult::upgrade;
+        if (keymaster_upgrade_key_for_cryptfs_scrypt(RSA_KEY_SIZE, RSA_EXPONENT, ratelimit,
+            key_blob, key_blob_size, key_buffer, key_buffer_size, key_out_size)) {
+            LOG(ERROR) << "Keymaster failed to upgrade key" << std::endl;
+            return KeymasterSignResult::error;
+        }
+        //return KeymasterSignResult::upgrade;
     }
 
     if (op.errorCode() != km::ErrorCode::OK) {
