@@ -60,13 +60,17 @@
 #include "mtp/MtpMessage.hpp"
 #endif
 
+#ifdef TW_INCLUDE_CRYPTO
+	#include "crypto/fde/cryptfs.h"
+#endif
+
 extern "C" {
 	#include "cutils/properties.h"
 	#include "gui/gui.h"
 }
 
 #ifdef TW_INCLUDE_CRYPTO
-	#include "crypto/lollipop/cryptfs.h"
+	//#include "crypto/lollipop/cryptfs.h"
 	#include "gui/rapidxml.hpp"
 	#include "gui/pages.hpp"
 	#ifdef TW_INCLUDE_FBE
@@ -1686,6 +1690,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 		char cPassword[255];
 		strcpy(cPassword, Password.c_str());
 		int ret = cryptfs_check_passwd(cPassword);
+		LOGERR("cryptfs_check_passwd returned %i\n", ret);
 		exit(ret);
 	} else {
 		// Parent
