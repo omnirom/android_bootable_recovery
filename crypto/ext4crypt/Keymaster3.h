@@ -127,13 +127,13 @@ class Keymaster {
  */
 __BEGIN_DECLS
 
-int keymaster_compatibility_cryptfs_scrypt();
+//int keymaster_compatibility_cryptfs_scrypt();
 /*int keymaster_create_key_for_cryptfs_scrypt(uint32_t rsa_key_size,
                                             uint64_t rsa_exponent,
                                             uint32_t ratelimit,
                                             uint8_t* key_buffer,
                                             uint32_t key_buffer_size,
-                                            uint32_t* key_out_size);
+                                            uint32_t* key_out_size);*/
 
 int keymaster_sign_object_for_cryptfs_scrypt(const uint8_t* key_blob,
                                              size_t key_blob_size,
@@ -141,7 +141,10 @@ int keymaster_sign_object_for_cryptfs_scrypt(const uint8_t* key_blob,
                                              const uint8_t* object,
                                              const size_t object_size,
                                              uint8_t** signature_buffer,
-                                             size_t* signature_buffer_size);*/
+                                             size_t* signature_buffer_size,
+                                             uint8_t* key_buffer,
+                                             uint32_t key_buffer_size,
+                                             uint32_t* key_out_size);
 
 __END_DECLS
 

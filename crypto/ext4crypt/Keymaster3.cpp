@@ -203,6 +203,7 @@ bool Keymaster::isSecure() {
 
 using namespace ::android::vold;
 
+/*
 int keymaster_compatibility_cryptfs_scrypt() {
     Keymaster dev;
     if (!dev) {
@@ -211,6 +212,7 @@ int keymaster_compatibility_cryptfs_scrypt() {
     }
     return dev.isSecure();
 }
+*/
 
 /*int keymaster_create_key_for_cryptfs_scrypt(uint32_t rsa_key_size,
                                             uint64_t rsa_exponent,
@@ -259,7 +261,7 @@ int keymaster_compatibility_cryptfs_scrypt() {
 
     std::copy(key.data(), key.data() + key.size(), key_buffer);
     return 0;
-}
+}*/
 
 int keymaster_sign_object_for_cryptfs_scrypt(const uint8_t* key_blob,
                                              size_t key_blob_size,
@@ -267,7 +269,10 @@ int keymaster_sign_object_for_cryptfs_scrypt(const uint8_t* key_blob,
                                              const uint8_t* object,
                                              const size_t object_size,
                                              uint8_t** signature_buffer,
-                                             size_t* signature_buffer_size)
+                                             size_t* signature_buffer_size,
+                                             uint8_t* key_buffer,
+                                             uint32_t key_buffer_size,
+                                             uint32_t* key_out_size)
 {
     Keymaster dev;
     if (!dev) {
@@ -294,6 +299,25 @@ int keymaster_sign_object_for_cryptfs_scrypt(const uint8_t* key_blob,
         if (op.errorCode() == ErrorCode::KEY_RATE_LIMIT_EXCEEDED) {
             sleep(ratelimit);
             continue;
+        } else if (op.errorCode() == ErrorCode::KEY_REQUIRES_UPGRADE) {
+            std::string newKey;
+            bool ret = dev.upgradeKey(key, paramBuilder, &newKey);
+            if(ret == false) {
+                LOG(ERROR) << "Error upgradeKey: ";
+                return -1;
+            }
+
+            if (key_out_size) {
+                *key_out_size = newKey.size();
+            }
+
+            if (key_buffer_size < newKey.size()) {
+                LOG(ERROR) << "key buffer size is too small";
+                return -1;
+            }
+
+            std::copy(newKey.data(), newKey.data() + newKey.size(), key_buffer);
+            key = newKey;
         } else break;
     }
 
@@ -321,4 +345,4 @@ int keymaster_sign_object_for_cryptfs_scrypt(const uint8_t* key_blob,
     *signature_buffer_size = output.size();
     std::copy(output.data(), output.data() + output.size(), *signature_buffer);
     return 0;
-}*/
+}
