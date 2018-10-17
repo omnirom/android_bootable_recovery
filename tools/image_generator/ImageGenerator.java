@@ -26,10 +26,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.StringTokenizer;
 
@@ -113,6 +115,25 @@ public class ImageGenerator {
     put("th", "NotoSansThaiUI-Regular");
     put("ur", "NotoNaskhArabicUI-Regular");
     put("zh", "NotoSansCJK-Regular");
+  }};
+
+  // Languages that write from right to left.
+  private static final Set<String> RTL_LANGUAGE = new HashSet<String>() {{
+    add("ar"); // Arabic
+    add("fa"); // Persian
+    add("he"); // Hebrew
+    add("iw"); // Hebrew
+    add("ur"); // Urdu
+  }};
+
+  // Languages that breaks on arbitrary characters.
+  // TODO(xunchang) switch to icu library if possible.
+  private static final Set<String> LOGOGRAM_LANGUAGE = new HashSet<String>() {{
+    add("ja"); // Japanese
+    add("km"); // Khmer
+    add("ko"); // Korean
+    add("lo"); // Lao
+    add("zh"); // Chinese
   }};
 
   /**
@@ -220,7 +241,20 @@ public class ImageGenerator {
     }
 
     Map<Locale, String> result =
-        new TreeMap<Locale, String>(Comparator.comparing(Locale::toLanguageTag));
+        // Overrides the string comparator so that sr is sorted behind sr-Latn. And thus recovery
+        // can find the most relevant locale when going down the list.
+        new TreeMap<>((Locale l1, Locale l2) -> {
+          if (l1.toLanguageTag().equals(l2.toLanguageTag())) {
+            return 0;
+          }
+          if (l1.getLanguage().equals(l2.toLanguageTag())) {
+            return -1;
+          }
+          if (l2.getLanguage().equals(l1.toLanguageTag())) {
+            return 1;
+          }
+          return l1.toLanguageTag().compareTo(l2.toLanguageTag());
+        });
 
     // Find all the localized resource subdirectories in the format of values-$LOCALE
     String[] nameList = resourceDir.list(
@@ -269,6 +303,8 @@ public class ImageGenerator {
     List<String> wrappedText = new ArrayList<>();
     StringTokenizer st = new StringTokenizer(text, " \n");
 
+    // TODO(xunchang). We assume that all words can fit on the screen. Raise an
+    // IllegalStateException if the word is wider than the image width.
     StringBuilder line = new StringBuilder();
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
@@ -284,6 +320,25 @@ public class ImageGenerator {
   }
 
   /**
+   * One character is a word for CJK.
+   */
+  private List<String> wrapTextByCharacters(String text, FontMetrics metrics) {
+    List<String> wrappedText = new ArrayList<>();
+
+    StringBuilder line = new StringBuilder();
+    for (char token : text.toCharArray()) {
+      if (metrics.stringWidth(line + Character.toString(token)) > mImageWidth) {
+        wrappedText.add(line.toString());
+        line = new StringBuilder();
+      }
+      line.append(token);
+    }
+    wrappedText.add(line.toString());
+
+    return wrappedText;
+  }
+
+  /**
    * Wraps the text with a maximum of mImageWidth pixels per line.
    *
    * @param text the string representation of text to wrap
@@ -292,12 +347,33 @@ public class ImageGenerator {
    *
    * @return a list of strings with their width smaller than mImageWidth pixels
    */
-  private List<String> wrapText(String text, FontMetrics metrics) {
-    // TODO(xunchang) handle other cases of text wrapping
-    // 1. RTL languages: "ar"(Arabic), "fa"(Persian), "he"(Hebrew), "iw"(Hebrew), "ur"(Urdu)
-    // 2. Language uses characters: CJK, "lo"(lao), "km"(khmer)
+  private List<String> wrapText(String text, FontMetrics metrics, String language) {
+    if (LOGOGRAM_LANGUAGE.contains(language)) {
+      return wrapTextByCharacters(text, metrics);
+    }
 
     return wrapTextByWords(text, metrics);
+  }
+
+  /**
+   * Encodes the information of the text image for |locale|.
+   * According to minui/resources.cpp, the width, height and locale of the image is decoded as:
+   *   int w = (row[1] << 8) | row[0];
+   *   int h = (row[3] << 8) | row[2];
+   *   __unused int len = row[4];
+   *   char* loc = reinterpret_cast<char*>(&row[5]);
+  */
+  private List<Integer> encodeTextInfo(int width, int height, String locale) {
+    List<Integer> info = new ArrayList<>(Arrays.asList(width & 0xff, width >> 8,
+        height & 0xff, height >> 8, locale.length()));
+
+    byte[] localeBytes = locale.getBytes();
+    for (byte b: localeBytes) {
+      info.add((int)b);
+    }
+    info.add(0);
+
+    return info;
   }
 
   /**
@@ -309,17 +385,23 @@ public class ImageGenerator {
    * @throws IOException if we cannot find the corresponding font file for the given locale.
    * @throws FontFormatException if we failed to load the font file for the given locale.
    */
-  private void drawText(String text, Locale locale) throws IOException, FontFormatException  {
+  private void drawText(String text, Locale locale, String languageTag, boolean centralAlignment)
+      throws IOException, FontFormatException  {
     Graphics2D graphics = mBufferedImage.createGraphics();
     graphics.setColor(Color.WHITE);
     graphics.setRenderingHint(
         RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
     graphics.setFont(loadFontsByLocale(locale.getLanguage()));
 
-    System.out.println("Drawing text for locale " + locale + " text " + text);
+    System.out.println("Encoding \"" + locale + "\" as \"" + languageTag + "\": " + text);
 
     FontMetrics fontMetrics = graphics.getFontMetrics();
-    List<String> wrappedText = wrapTextByWords(text, fontMetrics);
+    List<String> wrappedText = wrapText(text, fontMetrics, locale.getLanguage());
+
+    // Marks the start y offset for the text image of current locale; and reserves one line to
+    // encode the image metadata.
+    int currentImageStart = mVerticalOffset;
+    mVerticalOffset += 1;
     for (String line : wrappedText) {
       int lineHeight = fontMetrics.getHeight();
       // Doubles the height of the image if we are short of space.
@@ -329,8 +411,22 @@ public class ImageGenerator {
 
       // Draws the text at mVerticalOffset and increments the offset with line space.
       int baseLine = mVerticalOffset + lineHeight - fontMetrics.getDescent();
-      graphics.drawString(line, 0, baseLine);
+
+      // Draws from right if it's an RTL language.
+      int x = centralAlignment ? (mImageWidth - fontMetrics.stringWidth(line)) / 2 :
+          RTL_LANGUAGE.contains(languageTag) ? mImageWidth - fontMetrics.stringWidth(line) : 0;
+
+      graphics.drawString(line, x, baseLine);
+
       mVerticalOffset += lineHeight;
+    }
+
+    // Encodes the metadata of the current localized image as pixels.
+    int currentImageHeight = mVerticalOffset - currentImageStart - 1;
+    List<Integer> info = encodeTextInfo(mImageWidth, currentImageHeight, languageTag);
+    for (int i = 0; i < info.size(); i++) {
+      int pixel[] =  { info.get(i) };
+      mBufferedImage.getRaster().setPixel(i, currentImageStart, pixel);
     }
   }
 
@@ -362,11 +458,24 @@ public class ImageGenerator {
    */
   public void generateImage(Map<Locale, String> localizedTextMap, String outputPath) throws
       FontFormatException, IOException {
+    Map<String, Integer> languageCount = new TreeMap<>();
     for (Locale locale : localizedTextMap.keySet()) {
-      // TODO(xunchang) reprocess the locales for the same language and make the last locale the
-      // catch-all type. e.g. "zh-CN, zh-HK, zh-TW" will become "zh-CN, zh-HK, zh"
-      // Or maybe we don't need to support these variants?
-      drawText(localizedTextMap.get(locale), locale);
+      String language = locale.getLanguage();
+      languageCount.put(language, languageCount.getOrDefault(language, 0) + 1 );
+    }
+
+    for (Locale locale : localizedTextMap.keySet()) {
+      Integer count = languageCount.get(locale.getLanguage());
+      // Recovery expects en-US instead of en_US.
+      String languageTag = locale.toLanguageTag();
+      if (count == 1) {
+        // Make the last country variant for a given language be the catch-all for that language.
+        languageTag = locale.getLanguage();
+      } else {
+        languageCount.put(locale.getLanguage(), count - 1);
+      }
+
+      drawText(localizedTextMap.get(locale), locale, languageTag, false);
     }
 
     // TODO(xunchang) adjust the width to save some space if all texts are smaller than imageWidth.
