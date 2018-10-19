@@ -475,7 +475,7 @@ int DataManager::SetValue(const string& varName, const string& value, const int 
 	if (varName == "tw_storage_path") {
 		SetBackupFolder();
 	}
-	gui_notifyVarChange(varName.c_str(), value.c_str());
+	if(DataManager::GetIntValue("is_gui_mode")) gui_notifyVarChange(varName.c_str(), value.c_str());
 	return 0;
 }
 
@@ -556,7 +556,7 @@ void DataManager::SetBackupFolder()
 	} else {
 		if (PartitionManager.Fstab_Processed() != 0) {
 			LOGINFO("Storage partition '%s' not found\n", str.c_str());
-			gui_err("unable_locate_storage=Unable to locate storage device.");
+			if(DataManager::GetIntValue("is_gui_mode")) gui_err("unable_locate_storage=Unable to locate storage device.");
 		}
 	}
 }
@@ -1038,7 +1038,7 @@ void DataManager::Output_Version(void)
 	}
 	FILE *fp = fopen(Path.c_str(), "w");
 	if (fp == NULL) {
-		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Path)(strerror(errno)));
+		if(DataManager::GetIntValue("is_gui_mode")) gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Path)(strerror(errno)));
 		return;
 	}
 	strcpy(version, TW_VERSION_STR);
@@ -1074,7 +1074,7 @@ void DataManager::ReadSettingsFile(void)
 	{
 		usleep(500000);
 		if (!PartitionManager.Mount_Settings_Storage(false))
-			gui_msg(Msg(msg::kError, "unable_to_mount=Unable to mount {1}")(settings_file));
+			if(DataManager::GetIntValue("is_gui_mode")) gui_msg(Msg(msg::kError, "unable_to_mount=Unable to mount {1}")(settings_file));
 	}
 
 	mkdir(mkdir_path, 0777);

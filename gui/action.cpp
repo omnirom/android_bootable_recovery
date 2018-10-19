@@ -384,8 +384,8 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 	}
 
 	if (simulate) {
-		simulate_progress_bar();
-	} else {
+		if (DataManager::GetIntValue("is_gui_mode")) simulate_progress_bar();
+	} else {						
 		ret_val = TWinstall_zip(filename.c_str(), wipe_cache);
 
 		// Now, check if we need to ensure TWRP remains installed...
@@ -394,10 +394,10 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 		{
 			DataManager::SetValue("tw_operation", "Configuring TWRP");
 			DataManager::SetValue("tw_partition", "");
-			gui_msg("config_twrp=Configuring TWRP...");
+			if (DataManager::GetIntValue("is_gui_mode")) gui_msg("config_twrp=Configuring TWRP...");
 			if (TWFunc::Exec_Cmd("/sbin/installTwrp reinstall") < 0)
 			{
-				gui_msg("config_twrp_err=Unable to configure TWRP with this kernel.");
+				if (DataManager::GetIntValue("is_gui_mode")) gui_msg("config_twrp_err=Unable to configure TWRP with this kernel.");
 			}
 		}
 	}
@@ -936,6 +936,8 @@ int GUIAction::getpartitiondetails(std::string arg)
 
 int GUIAction::screenshot(std::string arg __unused)
 {
+
+	if (DataManager::GetIntValue("is_gui_mode")){
 	time_t tm;
 	char path[256];
 	int path_len;
@@ -973,6 +975,7 @@ int GUIAction::screenshot(std::string arg __unused)
 	} else {
 		gui_err("screenshot_err=Failed to take a screenshot!");
 	}
+}
 	return 0;
 }
 
