@@ -76,6 +76,10 @@ bool load_keys(const char* filename, std::vector<Certificate>& certs);
 // false if there is a parsing failure or the signature's encryption algorithm is not supported.
 bool LoadCertificateFromBuffer(const std::vector<uint8_t>& pem_content, Certificate* cert);
 
+// Iterates over the zip entries with the suffix "x509.pem" and returns a list of recognized
+// certificates. Returns an empty list if we fail to parse any of the entries.
+std::vector<Certificate> LoadKeysFromZipfile(const std::string& zip_name);
+
 #define VERIFY_SUCCESS        0
 #define VERIFY_FAILURE        1
 
