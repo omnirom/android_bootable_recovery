@@ -201,6 +201,7 @@ cc_library_static {
         "libbase",
         "libcrypto",
         "libcrypto_utils",
+        "libziparchive",
     ],
 
     static_libs: [

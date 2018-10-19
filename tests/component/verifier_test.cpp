@@ -26,9 +26,11 @@
 
 #include <android-base/file.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 #include <android-base/test_utils.h>
 #include <android-base/unique_fd.h>
 #include <gtest/gtest.h>
+#include <ziparchive/zip_writer.h>
 
 #include "common/test_constants.h"
 #include "otautil/sysutil.h"
@@ -43,16 +45,43 @@ static void LoadKeyFromFile(const std::string& file_name, Certificate* cert) {
       std::vector<uint8_t>(testkey_string.begin(), testkey_string.end()), cert));
 }
 
-static void VerifyPackageWithCertificate(const std::string& name, Certificate&& cert) {
+static void VerifyPackageWithCertificates(const std::string& name,
+                                          const std::vector<Certificate>& certs) {
   std::string package = from_testdata_base(name);
   MemMapping memmap;
   if (!memmap.MapFile(package)) {
     FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
   }
 
+  ASSERT_EQ(VERIFY_SUCCESS, verify_file(memmap.addr, memmap.length, certs));
+}
+
+static void VerifyPackageWithSingleCertificate(const std::string& name, Certificate&& cert) {
   std::vector<Certificate> certs;
   certs.emplace_back(std::move(cert));
-  ASSERT_EQ(VERIFY_SUCCESS, verify_file(memmap.addr, memmap.length, certs));
+  VerifyPackageWithCertificates(name, certs);
+}
+
+static void BuildCertificateArchive(const std::vector<std::string>& file_names, int fd) {
+  FILE* zip_file_ptr = fdopen(fd, "wb");
+  ZipWriter zip_writer(zip_file_ptr);
+
+  for (const auto& name : file_names) {
+    std::string content;
+    ASSERT_TRUE(android::base::ReadFileToString(name, &content));
+
+    // Makes sure the zip entry name has the correct suffix.
+    std::string entry_name = name;
+    if (!android::base::EndsWith(entry_name, "x509.pem")) {
+      entry_name += "x509.pem";
+    }
+    ASSERT_EQ(0, zip_writer.StartEntry(entry_name.c_str(), ZipWriter::kCompress));
+    ASSERT_EQ(0, zip_writer.WriteBytes(content.data(), content.size()));
+    ASSERT_EQ(0, zip_writer.FinishEntry());
+  }
+
+  ASSERT_EQ(0, zip_writer.Finish());
+  ASSERT_EQ(0, fclose(zip_file_ptr));
 }
 
 TEST(VerifierTest, LoadCertificateFromBuffer_failure) {
@@ -72,7 +101,7 @@ TEST(VerifierTest, LoadCertificateFromBuffer_sha1_exponent3) {
   ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
   ASSERT_EQ(nullptr, cert.ec);
 
-  VerifyPackageWithCertificate("otasigned_v1.zip", std::move(cert));
+  VerifyPackageWithSingleCertificate("otasigned_v1.zip", std::move(cert));
 }
 
 TEST(VerifierTest, LoadCertificateFromBuffer_sha1_exponent65537) {
@@ -83,7 +112,7 @@ TEST(VerifierTest, LoadCertificateFromBuffer_sha1_exponent65537) {
   ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
   ASSERT_EQ(nullptr, cert.ec);
 
-  VerifyPackageWithCertificate("otasigned_v2.zip", std::move(cert));
+  VerifyPackageWithSingleCertificate("otasigned_v2.zip", std::move(cert));
 }
 
 TEST(VerifierTest, LoadCertificateFromBuffer_sha256_exponent3) {
@@ -94,7 +123,7 @@ TEST(VerifierTest, LoadCertificateFromBuffer_sha256_exponent3) {
   ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
   ASSERT_EQ(nullptr, cert.ec);
 
-  VerifyPackageWithCertificate("otasigned_v3.zip", std::move(cert));
+  VerifyPackageWithSingleCertificate("otasigned_v3.zip", std::move(cert));
 }
 
 TEST(VerifierTest, LoadCertificateFromBuffer_sha256_exponent65537) {
@@ -105,7 +134,7 @@ TEST(VerifierTest, LoadCertificateFromBuffer_sha256_exponent65537) {
   ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
   ASSERT_EQ(nullptr, cert.ec);
 
-  VerifyPackageWithCertificate("otasigned_v4.zip", std::move(cert));
+  VerifyPackageWithSingleCertificate("otasigned_v4.zip", std::move(cert));
 }
 
 TEST(VerifierTest, LoadCertificateFromBuffer_sha256_ec256bits) {
@@ -116,7 +145,55 @@ TEST(VerifierTest, LoadCertificateFromBuffer_sha256_ec256bits) {
   ASSERT_EQ(Certificate::KEY_TYPE_EC, cert.key_type);
   ASSERT_EQ(nullptr, cert.rsa);
 
-  VerifyPackageWithCertificate("otasigned_v5.zip", std::move(cert));
+  VerifyPackageWithSingleCertificate("otasigned_v5.zip", std::move(cert));
+}
+
+TEST(VerifierTest, LoadKeysFromZipfile_empty_archive) {
+  TemporaryFile otacerts;
+  BuildCertificateArchive({}, otacerts.release());
+  std::vector<Certificate> certs = LoadKeysFromZipfile(otacerts.path);
+  ASSERT_TRUE(certs.empty());
+}
+
+TEST(VerifierTest, LoadKeysFromZipfile_single_key) {
+  TemporaryFile otacerts;
+  BuildCertificateArchive({ from_testdata_base("testkey_v1.x509.pem") }, otacerts.release());
+  std::vector<Certificate> certs = LoadKeysFromZipfile(otacerts.path);
+  ASSERT_EQ(1, certs.size());
+
+  VerifyPackageWithCertificates("otasigned_v1.zip", certs);
+}
+
+TEST(VerifierTest, LoadKeysFromZipfile_corrupted_key) {
+  TemporaryFile corrupted_key;
+  std::string content;
+  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v1.x509.pem"), &content));
+  content = "random-contents" + content;
+  ASSERT_TRUE(android::base::WriteStringToFd(content, corrupted_key.release()));
+
+  TemporaryFile otacerts;
+  BuildCertificateArchive({ from_testdata_base("testkey_v2.x509.pem"), corrupted_key.path },
+                          otacerts.release());
+  std::vector<Certificate> certs = LoadKeysFromZipfile(otacerts.path);
+  ASSERT_EQ(0, certs.size());
+}
+
+TEST(VerifierTest, LoadKeysFromZipfile_multiple_key) {
+  TemporaryFile otacerts;
+  BuildCertificateArchive(
+      {
+          from_testdata_base("testkey_v3.x509.pem"),
+          from_testdata_base("testkey_v4.x509.pem"),
+          from_testdata_base("testkey_v5.x509.pem"),
+
+      },
+      otacerts.release());
+  std::vector<Certificate> certs = LoadKeysFromZipfile(otacerts.path);
+  ASSERT_EQ(3, certs.size());
+
+  VerifyPackageWithCertificates("otasigned_v3.zip", certs);
+  VerifyPackageWithCertificates("otasigned_v4.zip", certs);
+  VerifyPackageWithCertificates("otasigned_v5.zip", certs);
 }
 
 class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
