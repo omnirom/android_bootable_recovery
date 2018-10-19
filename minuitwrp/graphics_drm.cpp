@@ -157,8 +157,8 @@ static drm_surface *drm_create_surface(int width, int height) {
     printf("setting DRM_FORMAT_ABGR8888 and GGL_PIXEL_FORMAT_BGRA_8888, GGL_PIXEL_FORMAT may not match!\n");
 #elif defined(RECOVERY_RGBX)
     format = DRM_FORMAT_XBGR8888;
-    base_format = GGL_PIXEL_FORMAT_BGRA_8888;
-    printf("setting DRM_FORMAT_XBGR8888 and GGL_PIXEL_FORMAT_BGRA_8888, GGL_PIXEL_FORMAT may not match!\n");
+    base_format = GGL_PIXEL_FORMAT_RGBA_8888;
+    printf("setting DRM_FORMAT_XBGR8888 and GGL_PIXEL_FORMAT_RGBA_8888\n");
 #else
     format = DRM_FORMAT_RGB565;
     base_format = GGL_PIXEL_FORMAT_BGRA_8888;
