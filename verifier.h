@@ -70,8 +70,6 @@ struct Certificate {
 int verify_file(const unsigned char* addr, size_t length, const std::vector<Certificate>& keys,
                 const std::function<void(float)>& set_progress = nullptr);
 
-bool load_keys(const char* filename, std::vector<Certificate>& certs);
-
 // Checks that the RSA key has a modulus of 2048 bits long, and public exponent is 3 or 65537.
 bool CheckRSAKey(const std::unique_ptr<RSA, RSADeleter>& rsa);
 
