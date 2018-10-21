@@ -28,7 +28,7 @@ android_test {
         "guava",
     ],
 
-    instrumentation_for: "com.example.android.systemupdatersample",
+    instrumentation_for: "SystemUpdaterSample",
 
     optimize: {
         enabled: false,
