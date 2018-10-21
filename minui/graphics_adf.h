@@ -14,21 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef _GRAPHICS_ADF_H_
-#define _GRAPHICS_ADF_H_
+#pragma once
+
+#include <stdint.h>
 
 #include <adf/adf.h>
 
 #include "graphics.h"
+#include "minui/minui.h"
 
 class GRSurfaceAdf : public GRSurface {
+ public:
+  uint8_t* data() override {
+    return mmapped_buffer_;
+  }
+
  private:
+  friend class MinuiBackendAdf;
+
   int fence_fd;
   int fd;
   __u32 offset;
   __u32 pitch;
 
-  friend class MinuiBackendAdf;
+  uint8_t* mmapped_buffer_{ nullptr };
 };
 
 class MinuiBackendAdf : public MinuiBackend {
@@ -54,5 +63,3 @@ class MinuiBackendAdf : public MinuiBackend {
   unsigned int n_surfaces;
   GRSurfaceAdf surfaces[2];
 };
-
-#endif  // _GRAPHICS_ADF_H_

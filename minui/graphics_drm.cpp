@@ -70,8 +70,8 @@ void MinuiBackendDrm::Blank(bool blank) {
 void MinuiBackendDrm::DrmDestroySurface(GRSurfaceDrm* surface) {
   if (!surface) return;
 
-  if (surface->data) {
-    munmap(surface->data, surface->row_bytes * surface->height);
+  if (surface->mmapped_buffer_) {
+    munmap(surface->mmapped_buffer_, surface->row_bytes * surface->height);
   }
 
   if (surface->fb_id) {
@@ -172,15 +172,14 @@ GRSurfaceDrm* MinuiBackendDrm::DrmCreateSurface(int width, int height) {
   surface->width = width;
   surface->row_bytes = create_dumb.pitch;
   surface->pixel_bytes = create_dumb.bpp / 8;
-  surface->data = static_cast<unsigned char*>(mmap(nullptr, surface->height * surface->row_bytes,
-                                                   PROT_READ | PROT_WRITE, MAP_SHARED, drm_fd,
-                                                   map_dumb.offset));
-  if (surface->data == MAP_FAILED) {
+  auto mmapped = mmap(nullptr, surface->height * surface->row_bytes, PROT_READ | PROT_WRITE,
+                      MAP_SHARED, drm_fd, map_dumb.offset);
+  if (mmapped == MAP_FAILED) {
     perror("mmap() failed");
     DrmDestroySurface(surface);
     return nullptr;
   }
-
+  surface->mmapped_buffer_ = static_cast<uint8_t*>(mmapped);
   return surface;
 }
 
