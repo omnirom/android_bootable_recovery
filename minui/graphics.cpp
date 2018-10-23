@@ -40,7 +40,7 @@ static uint32_t gr_current = ~0;
 static constexpr uint32_t alpha_mask = 0xff000000;
 
 // gr_draw is owned by backends.
-static const GRSurface* gr_draw = nullptr;
+static GRSurface* gr_draw = nullptr;
 static GRRotation rotation = GRRotation::NONE;
 static PixelFormat pixel_format = PixelFormat::UNKNOWN;
 
@@ -121,28 +121,29 @@ static void incr_y(uint32_t** p, int row_pixels) {
 }
 
 // Returns pixel pointer at given coordinates with rotation adjustment.
-static uint32_t* pixel_at(const GRSurface* surf, int x, int y, int row_pixels) {
+static uint32_t* PixelAt(GRSurface* surface, int x, int y, int row_pixels) {
   switch (rotation) {
     case GRRotation::NONE:
-      return reinterpret_cast<uint32_t*>(surf->data) + y * row_pixels + x;
+      return reinterpret_cast<uint32_t*>(surface->data()) + y * row_pixels + x;
     case GRRotation::RIGHT:
-      return reinterpret_cast<uint32_t*>(surf->data) + x * row_pixels + (surf->width - y);
+      return reinterpret_cast<uint32_t*>(surface->data()) + x * row_pixels + (surface->width - y);
     case GRRotation::DOWN:
-      return reinterpret_cast<uint32_t*>(surf->data) + (surf->height - 1 - y) * row_pixels +
-             (surf->width - 1 - x);
+      return reinterpret_cast<uint32_t*>(surface->data()) + (surface->height - 1 - y) * row_pixels +
+             (surface->width - 1 - x);
     case GRRotation::LEFT:
-      return reinterpret_cast<uint32_t*>(surf->data) + (surf->height - 1 - x) * row_pixels + y;
+      return reinterpret_cast<uint32_t*>(surface->data()) + (surface->height - 1 - x) * row_pixels +
+             y;
     default:
       printf("invalid rotation %d", static_cast<int>(rotation));
   }
   return nullptr;
 }
 
-static void text_blend(uint8_t* src_p, int src_row_bytes, uint32_t* dst_p, int dst_row_pixels,
-                       int width, int height) {
+static void TextBlend(const uint8_t* src_p, int src_row_bytes, uint32_t* dst_p, int dst_row_pixels,
+                      int width, int height) {
   uint8_t alpha_current = static_cast<uint8_t>((alpha_mask & gr_current) >> 24);
   for (int j = 0; j < height; ++j) {
-    uint8_t* sx = src_p;
+    const uint8_t* sx = src_p;
     uint32_t* px = dst_p;
     for (int i = 0; i < width; ++i, incr_x(&px, dst_row_pixels)) {
       uint8_t a = *sx++;
@@ -176,18 +177,18 @@ void gr_text(const GRFont* font, int x, int y, const char* s, bool bold) {
     }
 
     int row_pixels = gr_draw->row_bytes / gr_draw->pixel_bytes;
-    uint8_t* src_p = font->texture->data + ((ch - ' ') * font->char_width) +
-                     (bold ? font->char_height * font->texture->row_bytes : 0);
-    uint32_t* dst_p = pixel_at(gr_draw, x, y, row_pixels);
+    const uint8_t* src_p = font->texture->data() + ((ch - ' ') * font->char_width) +
+                           (bold ? font->char_height * font->texture->row_bytes : 0);
+    uint32_t* dst_p = PixelAt(gr_draw, x, y, row_pixels);
 
-    text_blend(src_p, font->texture->row_bytes, dst_p, row_pixels, font->char_width,
-               font->char_height);
+    TextBlend(src_p, font->texture->row_bytes, dst_p, row_pixels, font->char_width,
+              font->char_height);
 
     x += font->char_width;
   }
 }
 
-void gr_texticon(int x, int y, GRSurface* icon) {
+void gr_texticon(int x, int y, const GRSurface* icon) {
   if (icon == nullptr) return;
 
   if (icon->pixel_bytes != 1) {
@@ -201,10 +202,9 @@ void gr_texticon(int x, int y, GRSurface* icon) {
   if (outside(x, y) || outside(x + icon->width - 1, y + icon->height - 1)) return;
 
   int row_pixels = gr_draw->row_bytes / gr_draw->pixel_bytes;
-  uint8_t* src_p = icon->data;
-  uint32_t* dst_p = pixel_at(gr_draw, x, y, row_pixels);
-
-  text_blend(src_p, icon->row_bytes, dst_p, row_pixels, icon->width, icon->height);
+  const uint8_t* src_p = icon->data();
+  uint32_t* dst_p = PixelAt(gr_draw, x, y, row_pixels);
+  TextBlend(src_p, icon->row_bytes, dst_p, row_pixels, icon->width, icon->height);
 }
 
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -221,9 +221,9 @@ void gr_clear() {
       (gr_current & 0xff) == ((gr_current >> 16) & 0xff) &&
       (gr_current & 0xff) == ((gr_current >> 24) & 0xff) &&
       gr_draw->row_bytes == gr_draw->width * gr_draw->pixel_bytes) {
-    memset(gr_draw->data, gr_current & 0xff, gr_draw->height * gr_draw->row_bytes);
+    memset(gr_draw->data(), gr_current & 0xff, gr_draw->height * gr_draw->row_bytes);
   } else {
-    uint32_t* px = reinterpret_cast<uint32_t*>(gr_draw->data);
+    uint32_t* px = reinterpret_cast<uint32_t*>(gr_draw->data());
     int row_diff = gr_draw->row_bytes / gr_draw->pixel_bytes - gr_draw->width;
     for (int y = 0; y < gr_draw->height; ++y) {
       for (int x = 0; x < gr_draw->width; ++x) {
@@ -244,7 +244,7 @@ void gr_fill(int x1, int y1, int x2, int y2) {
   if (outside(x1, y1) || outside(x2 - 1, y2 - 1)) return;
 
   int row_pixels = gr_draw->row_bytes / gr_draw->pixel_bytes;
-  uint32_t* p = pixel_at(gr_draw, x1, y1, row_pixels);
+  uint32_t* p = PixelAt(gr_draw, x1, y1, row_pixels);
   uint8_t alpha = static_cast<uint8_t>(((gr_current & alpha_mask) >> 24));
   if (alpha > 0) {
     for (int y = y1; y < y2; ++y) {
@@ -258,7 +258,7 @@ void gr_fill(int x1, int y1, int x2, int y2) {
   }
 }
 
-void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
+void gr_blit(const GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
   if (source == nullptr) return;
 
   if (gr_draw->pixel_bytes != source->pixel_bytes) {
@@ -274,11 +274,12 @@ void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
   if (rotation != GRRotation::NONE) {
     int src_row_pixels = source->row_bytes / source->pixel_bytes;
     int row_pixels = gr_draw->row_bytes / gr_draw->pixel_bytes;
-    uint32_t* src_py = reinterpret_cast<uint32_t*>(source->data) + sy * source->row_bytes / 4 + sx;
-    uint32_t* dst_py = pixel_at(gr_draw, dx, dy, row_pixels);
+    const uint32_t* src_py =
+        reinterpret_cast<const uint32_t*>(source->data()) + sy * source->row_bytes / 4 + sx;
+    uint32_t* dst_py = PixelAt(gr_draw, dx, dy, row_pixels);
 
     for (int y = 0; y < h; y += 1) {
-      uint32_t* src_px = src_py;
+      const uint32_t* src_px = src_py;
       uint32_t* dst_px = dst_py;
       for (int x = 0; x < w; x += 1) {
         *dst_px = *src_px++;
@@ -288,8 +289,8 @@ void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy) {
       incr_y(&dst_py, row_pixels);
     }
   } else {
-    unsigned char* src_p = source->data + sy * source->row_bytes + sx * source->pixel_bytes;
-    unsigned char* dst_p = gr_draw->data + dy * gr_draw->row_bytes + dx * gr_draw->pixel_bytes;
+    const uint8_t* src_p = source->data() + sy * source->row_bytes + sx * source->pixel_bytes;
+    uint8_t* dst_p = gr_draw->data() + dy * gr_draw->row_bytes + dx * gr_draw->pixel_bytes;
 
     for (int i = 0; i < h; ++i) {
       memcpy(dst_p, src_p, w * source->pixel_bytes);

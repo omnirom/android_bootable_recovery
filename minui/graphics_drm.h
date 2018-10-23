@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef _GRAPHICS_DRM_H_
-#define _GRAPHICS_DRM_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -25,11 +24,17 @@
 #include "minui/minui.h"
 
 class GRSurfaceDrm : public GRSurface {
+ public:
+  uint8_t* data() override {
+    return mmapped_buffer_;
+  }
+
  private:
+  friend class MinuiBackendDrm;
+
   uint32_t fb_id;
   uint32_t handle;
-
-  friend class MinuiBackendDrm;
+  uint8_t* mmapped_buffer_{ nullptr };
 };
 
 class MinuiBackendDrm : public MinuiBackend {
@@ -54,5 +59,3 @@ class MinuiBackendDrm : public MinuiBackend {
   drmModeConnector* main_monitor_connector;
   int drm_fd;
 };
-
-#endif  // _GRAPHICS_DRM_H_

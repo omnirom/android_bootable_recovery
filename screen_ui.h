@@ -29,7 +29,7 @@
 #include "ui.h"
 
 // From minui/minui.h.
-struct GRSurface;
+class GRSurface;
 
 enum class UIElement {
   HEADER,
