@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef _MINUI_H_
-#define _MINUI_H_
+#pragma once
 
+#include <stdint.h>
 #include <sys/types.h>
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -27,12 +28,31 @@
 // Graphics.
 //
 
-struct GRSurface {
+class GRSurface {
+ public:
+  GRSurface() = default;
+  virtual ~GRSurface();
+
+  // Creates and returns a GRSurface instance for the given data_size. The starting address of the
+  // surface data is aligned to SURFACE_DATA_ALIGNMENT. Returns the created GRSurface instance (in
+  // std::unique_ptr), or nullptr on error.
+  static std::unique_ptr<GRSurface> Create(size_t data_size);
+
+  virtual uint8_t* data() {
+    return data_;
+  }
+
+  const uint8_t* data() const {
+    return const_cast<const uint8_t*>(const_cast<GRSurface*>(this)->data());
+  }
+
   int width;
   int height;
   int row_bytes;
   int pixel_bytes;
-  unsigned char* data;
+
+ private:
+  uint8_t* data_{ nullptr };
 };
 
 struct GRFont {
@@ -75,7 +95,7 @@ void gr_clear();
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 void gr_fill(int x1, int y1, int x2, int y2);
 
-void gr_texticon(int x, int y, GRSurface* icon);
+void gr_texticon(int x, int y, const GRSurface* icon);
 
 const GRFont* gr_sys_font();
 int gr_init_font(const char* name, GRFont** dest);
@@ -85,7 +105,7 @@ int gr_measure(const GRFont* font, const char* s);
 // Returns -1 if font is nullptr.
 int gr_font_size(const GRFont* font, int* x, int* y);
 
-void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
+void gr_blit(const GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(const GRSurface* surface);
 unsigned int gr_get_height(const GRSurface* surface);
 
@@ -165,5 +185,3 @@ std::vector<std::string> get_locales_in_png(const std::string& png_name);
 // Free a surface allocated by any of the res_create_*_surface()
 // functions.
 void res_free_surface(GRSurface* surface);
-
-#endif
