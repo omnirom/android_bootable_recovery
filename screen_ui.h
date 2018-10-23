@@ -60,14 +60,14 @@ class DrawInterface {
   virtual int DrawTextLine(int x, int y, const std::string& line, bool bold) const = 0;
 
   // Draws surface portion (sx, sy, w, h) at screen location (dx, dy).
-  virtual void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx,
+  virtual void DrawSurface(const GRSurface* surface, int sx, int sy, int w, int h, int dx,
                            int dy) const = 0;
 
   // Draws rectangle at (x, y) - (x + w, y + h).
   virtual void DrawFill(int x, int y, int w, int h) const = 0;
 
   // Draws given surface (surface->pixel_bytes = 1) as text at (x, y).
-  virtual void DrawTextIcon(int x, int y, GRSurface* surface) const = 0;
+  virtual void DrawTextIcon(int x, int y, const GRSurface* surface) const = 0;
 
   // Draws multiple text lines. Returns the offset it should be moving along Y-axis.
   virtual int DrawTextLines(int x, int y, const std::vector<std::string>& lines) const = 0;
@@ -299,9 +299,10 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
   void SetColor(UIElement e) const override;
   void DrawHighlightBar(int x, int y, int width, int height) const override;
   int DrawHorizontalRule(int y) const override;
-  void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx, int dy) const override;
+  void DrawSurface(const GRSurface* surface, int sx, int sy, int w, int h, int dx,
+                   int dy) const override;
   void DrawFill(int x, int y, int w, int h) const override;
-  void DrawTextIcon(int x, int y, GRSurface* surface) const override;
+  void DrawTextIcon(int x, int y, const GRSurface* surface) const override;
   int DrawTextLine(int x, int y, const std::string& line, bool bold) const override;
   int DrawTextLines(int x, int y, const std::vector<std::string>& lines) const override;
   int DrawWrappedTextLines(int x, int y, const std::vector<std::string>& lines) const override;
