@@ -36,8 +36,9 @@ class WearRecoveryUI : public ScreenRecoveryUI {
   // Recovery, build id and etc) and the bottom lines that may otherwise go out of the screen.
   const int menu_unusable_rows_;
 
-  void StartMenu(const std::vector<std::string>& headers, const std::vector<std::string>& items,
-                 size_t initial_selection) override;
+  std::unique_ptr<Menu> CreateMenu(const std::vector<std::string>& text_headers,
+                                   const std::vector<std::string>& text_items,
+                                   size_t initial_selection) const override;
 
   int GetProgressBaseline() const override;
 

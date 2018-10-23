@@ -95,13 +95,14 @@ void WearRecoveryUI::update_progress_locked() {
 
 void WearRecoveryUI::SetStage(int /* current */, int /* max */) {}
 
-void WearRecoveryUI::StartMenu(const std::vector<std::string>& headers,
-                               const std::vector<std::string>& items, size_t initial_selection) {
-  std::lock_guard<std::mutex> lg(updateMutex);
+std::unique_ptr<Menu> WearRecoveryUI::CreateMenu(const std::vector<std::string>& text_headers,
+                                                 const std::vector<std::string>& text_items,
+                                                 size_t initial_selection) const {
   if (text_rows_ > 0 && text_cols_ > 0) {
-    menu_ = std::make_unique<TextMenu>(scrollable_menu_, text_rows_ - menu_unusable_rows_ - 1,
-                                       text_cols_ - 1, headers, items, initial_selection,
-                                       char_height_, *this);
-    update_screen_locked();
+    return std::make_unique<TextMenu>(scrollable_menu_, text_rows_ - menu_unusable_rows_ - 1,
+                                      text_cols_ - 1, text_headers, text_items, initial_selection,
+                                      char_height_, *this);
   }
+
+  return nullptr;
 }
