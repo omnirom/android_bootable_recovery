@@ -197,12 +197,9 @@ int TextMenu::DrawItems(int x, int y, int screen_width, bool long_press) const {
   return offset;
 }
 
-GraphicMenu::GraphicMenu(size_t max_width, size_t max_height, GRSurface* graphic_headers,
-                         const std::vector<GRSurface*>& graphic_items, size_t initial_selection,
-                         const DrawInterface& draw_funcs)
+GraphicMenu::GraphicMenu(GRSurface* graphic_headers, const std::vector<GRSurface*>& graphic_items,
+                         size_t initial_selection, const DrawInterface& draw_funcs)
     : Menu(initial_selection, draw_funcs),
-      max_width_(max_width),
-      max_height_(max_height),
       graphic_headers_(graphic_headers),
       graphic_items_(graphic_items) {}
 
@@ -223,6 +220,7 @@ int GraphicMenu::Select(int sel) {
 }
 
 int GraphicMenu::DrawHeader(int x, int y) const {
+  draw_funcs_.SetColor(UIElement::HEADER);
   draw_funcs_.DrawTextIcon(x, y, graphic_headers_);
   return graphic_headers_->height;
 }
@@ -253,15 +251,16 @@ int GraphicMenu::DrawItems(int x, int y, int screen_width, bool long_press) cons
   return offset;
 }
 
-bool GraphicMenu::Validate() const {
+bool GraphicMenu::Validate(size_t max_width, size_t max_height, GRSurface* graphic_headers,
+                           const std::vector<GRSurface*>& graphic_items) {
   int offset = 0;
-  if (!ValidateGraphicSurface(offset, graphic_headers_)) {
+  if (!ValidateGraphicSurface(max_width, max_height, offset, graphic_headers)) {
     return false;
   }
-  offset += graphic_headers_->height;
+  offset += graphic_headers->height;
 
-  for (const auto& item : graphic_items_) {
-    if (!ValidateGraphicSurface(offset, item)) {
+  for (const auto& item : graphic_items) {
+    if (!ValidateGraphicSurface(max_width, max_height, offset, item)) {
       return false;
     }
     offset += item->height;
@@ -270,7 +269,8 @@ bool GraphicMenu::Validate() const {
   return true;
 }
 
-bool GraphicMenu::ValidateGraphicSurface(int y, const GRSurface* surface) const {
+bool GraphicMenu::ValidateGraphicSurface(size_t max_width, size_t max_height, int y,
+                                         const GRSurface* surface) {
   if (!surface) {
     fprintf(stderr, "Graphic surface can not be null");
     return false;
@@ -282,11 +282,11 @@ bool GraphicMenu::ValidateGraphicSurface(int y, const GRSurface* surface) const 
     return false;
   }
 
-  if (surface->width > max_width_ || surface->height > max_height_ - y) {
+  if (surface->width > max_width || surface->height > max_height - y) {
     fprintf(stderr,
             "Graphic surface doesn't fit into the screen. width: %d, height: %d, max_width: %zu,"
             " max_height: %zu, vertical offset: %d\n",
-            surface->width, surface->height, max_width_, max_height_, y);
+            surface->width, surface->height, max_width, max_height, y);
     return false;
   }
 
@@ -697,7 +697,6 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
     const std::vector<std::string>& help_message) {
   int y = margin_height_;
   if (menu_) {
-    static constexpr int kMenuIndent = 4;
     int x = margin_width_ + kMenuIndent;
 
     SetColor(UIElement::INFO);
@@ -836,6 +835,16 @@ bool ScreenRecoveryUI::InitTextParams() {
   return true;
 }
 
+// TODO(xunchang) load localized text icons for the menu. (Init for screenRecoveryUI but
+// not wearRecoveryUI).
+bool ScreenRecoveryUI::LoadWipeDataMenuText() {
+  wipe_data_menu_header_text_ = nullptr;
+  factory_data_reset_text_ = nullptr;
+  try_again_text_ = nullptr;
+
+  return true;
+}
+
 bool ScreenRecoveryUI::Init(const std::string& locale) {
   RecoveryUI::Init(locale);
 
@@ -875,6 +884,8 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
   LoadLocalizedBitmap("erasing_text", &erasing_text);
   LoadLocalizedBitmap("no_command_text", &no_command_text);
   LoadLocalizedBitmap("error_text", &error_text);
+
+  LoadWipeDataMenuText();
 
   LoadAnimation();
 
@@ -1104,14 +1115,36 @@ void ScreenRecoveryUI::ShowFile(const std::string& filename) {
   text_row_ = old_text_row;
 }
 
-void ScreenRecoveryUI::StartMenu(const std::vector<std::string>& headers,
-                                 const std::vector<std::string>& items, size_t initial_selection) {
-  std::lock_guard<std::mutex> lg(updateMutex);
-  if (text_rows_ > 0 && text_cols_ > 1) {
-    menu_ = std::make_unique<TextMenu>(scrollable_menu_, text_rows_, text_cols_ - 1, headers, items,
-                                       initial_selection, char_height_, *this);
-    update_screen_locked();
+std::unique_ptr<Menu> ScreenRecoveryUI::CreateMenu(GRSurface* graphic_header,
+                                                   const std::vector<GRSurface*>& graphic_items,
+                                                   const std::vector<std::string>& text_headers,
+                                                   const std::vector<std::string>& text_items,
+                                                   size_t initial_selection) const {
+  // horizontal unusable area: margin width + menu indent
+  size_t max_width = ScreenWidth() - margin_width_ - kMenuIndent;
+  // vertical unusable area: margin height + title lines + helper message + high light bar.
+  // It is safe to reserve more space.
+  size_t max_height = ScreenHeight() - margin_height_ - char_height_ * (title_lines_.size() + 3);
+  if (GraphicMenu::Validate(max_width, max_height, graphic_header, graphic_items)) {
+    return std::make_unique<GraphicMenu>(graphic_header, graphic_items, initial_selection, *this);
   }
+
+  fprintf(stderr, "Failed to initialize graphic menu, falling back to use the text menu.\n");
+
+  return CreateMenu(text_headers, text_items, initial_selection);
+}
+
+std::unique_ptr<Menu> ScreenRecoveryUI::CreateMenu(const std::vector<std::string>& text_headers,
+                                                   const std::vector<std::string>& text_items,
+                                                   size_t initial_selection) const {
+  if (text_rows_ > 0 && text_cols_ > 1) {
+    return std::make_unique<TextMenu>(scrollable_menu_, text_rows_, text_cols_ - 1, text_headers,
+                                      text_items, initial_selection, char_height_, *this);
+  }
+
+  fprintf(stderr, "Failed to create text menu, text_rows %zu, text_cols %zu.\n", text_rows_,
+          text_cols_);
+  return nullptr;
 }
 
 int ScreenRecoveryUI::SelectMenu(int sel) {
@@ -1127,17 +1160,7 @@ int ScreenRecoveryUI::SelectMenu(int sel) {
   return sel;
 }
 
-void ScreenRecoveryUI::EndMenu() {
-  std::lock_guard<std::mutex> lg(updateMutex);
-  if (menu_) {
-    menu_.reset();
-    update_screen_locked();
-  }
-}
-
-size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
-                                  const std::vector<std::string>& items, size_t initial_selection,
-                                  bool menu_only,
+size_t ScreenRecoveryUI::ShowMenu(std::unique_ptr<Menu>&& menu, bool menu_only,
                                   const std::function<int(int, bool)>& key_handler) {
   // Throw away keys pressed previously, so user doesn't accidentally trigger menu items.
   FlushKeys();
@@ -1146,9 +1169,13 @@ size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
   // menu.
   if (IsKeyInterrupted()) return static_cast<size_t>(KeyError::INTERRUPTED);
 
-  StartMenu(headers, items, initial_selection);
+  CHECK(menu != nullptr);
 
-  int selected = initial_selection;
+  // Starts and displays the menu
+  menu_ = std::move(menu);
+  Redraw();
+
+  int selected = menu_->selection();
   int chosen_item = -1;
   while (chosen_item < 0) {
     int key = WaitKey();
@@ -1160,7 +1187,8 @@ size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
         continue;
       } else {
         LOG(INFO) << "Timed out waiting for key input; rebooting.";
-        EndMenu();
+        menu_.reset();
+        Redraw();
         return static_cast<size_t>(KeyError::TIMED_OUT);
       }
     }
@@ -1186,8 +1214,35 @@ size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
     }
   }
 
-  EndMenu();
+  menu_.reset();
+  Redraw();
+
   return chosen_item;
+}
+
+size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
+                                  const std::vector<std::string>& items, size_t initial_selection,
+                                  bool menu_only,
+                                  const std::function<int(int, bool)>& key_handler) {
+  auto menu = CreateMenu(headers, items, initial_selection);
+  if (menu == nullptr) {
+    return initial_selection;
+  }
+
+  return ShowMenu(CreateMenu(headers, items, initial_selection), menu_only, key_handler);
+}
+
+size_t ScreenRecoveryUI::ShowPromptWipeDataMenu(const std::vector<std::string>& backup_headers,
+                                                const std::vector<std::string>& backup_items,
+                                                const std::function<int(int, bool)>& key_handler) {
+  auto wipe_data_menu =
+      CreateMenu(wipe_data_menu_header_text_, { try_again_text_, factory_data_reset_text_ },
+                 backup_headers, backup_items, 0);
+  if (wipe_data_menu == nullptr) {
+    return 0;
+  }
+
+  return ShowMenu(std::move(wipe_data_menu), true, key_handler);
 }
 
 bool ScreenRecoveryUI::IsTextVisible() {
