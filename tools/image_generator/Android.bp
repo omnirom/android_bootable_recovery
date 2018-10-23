@@ -17,6 +17,10 @@ java_library_host {
 
     manifest: "ImageGenerator.mf",
 
+    static_libs: [
+        "commons-cli-1.2",
+    ],
+
     srcs: [
         "ImageGenerator.java",
     ],
