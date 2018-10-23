@@ -695,18 +695,18 @@ int install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
 }
 
 bool verify_package(const unsigned char* package_data, size_t package_size) {
-  static constexpr const char* PUBLIC_KEYS_FILE = "/res/keys";
-  std::vector<Certificate> loadedKeys;
-  if (!load_keys(PUBLIC_KEYS_FILE, loadedKeys)) {
+  static constexpr const char* CERTIFICATE_ZIP_FILE = "/system/etc/security/otacerts.zip";
+  std::vector<Certificate> loaded_keys = LoadKeysFromZipfile(CERTIFICATE_ZIP_FILE);
+  if (loaded_keys.empty()) {
     LOG(ERROR) << "Failed to load keys";
     return false;
   }
-  LOG(INFO) << loadedKeys.size() << " key(s) loaded from " << PUBLIC_KEYS_FILE;
+  LOG(INFO) << loaded_keys.size() << " key(s) loaded from " << CERTIFICATE_ZIP_FILE;
 
   // Verify package.
   ui->Print("Verifying update package...\n");
   auto t0 = std::chrono::system_clock::now();
-  int err = verify_file(package_data, package_size, loadedKeys,
+  int err = verify_file(package_data, package_size, loaded_keys,
                         std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
   std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
   ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
