@@ -20,7 +20,6 @@
 
 #include <memory>
 
-#include <android-base/macros.h>
 #include <xf86drmMode.h>
 
 #include "graphics.h"
@@ -28,7 +27,6 @@
 
 class GRSurfaceDrm : public GRSurface {
  public:
-  explicit GRSurfaceDrm(int drm_fd) : drm_fd_(drm_fd) {}
   ~GRSurfaceDrm() override;
 
   // Creates a GRSurfaceDrm instance.
@@ -41,13 +39,14 @@ class GRSurfaceDrm : public GRSurface {
  private:
   friend class MinuiBackendDrm;
 
+  GRSurfaceDrm(int width, int height, int row_bytes, int pixel_bytes, int drm_fd, uint32_t handle)
+      : GRSurface(width, height, row_bytes, pixel_bytes), drm_fd_(drm_fd), handle(handle) {}
+
   const int drm_fd_;
 
   uint32_t fb_id{ 0 };
   uint32_t handle{ 0 };
   uint8_t* mmapped_buffer_{ nullptr };
-
-  DISALLOW_COPY_AND_ASSIGN(GRSurfaceDrm);
 };
 
 class MinuiBackendDrm : public MinuiBackend {
