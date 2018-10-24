@@ -600,7 +600,7 @@ int ScreenRecoveryUI::ScreenHeight() const {
   return gr_fb_height();
 }
 
-void ScreenRecoveryUI::DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx,
+void ScreenRecoveryUI::DrawSurface(const GRSurface* surface, int sx, int sy, int w, int h, int dx,
                                    int dy) const {
   gr_blit(surface, sx, sy, w, h, dx, dy);
 }
@@ -618,7 +618,7 @@ void ScreenRecoveryUI::DrawFill(int x, int y, int w, int h) const {
   gr_fill(x, y, w, h);
 }
 
-void ScreenRecoveryUI::DrawTextIcon(int x, int y, GRSurface* surface) const {
+void ScreenRecoveryUI::DrawTextIcon(int x, int y, const GRSurface* surface) const {
   gr_texticon(x, y, surface);
 }
 

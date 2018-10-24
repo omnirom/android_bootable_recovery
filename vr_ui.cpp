@@ -34,13 +34,13 @@ int VrRecoveryUI::ScreenHeight() const {
   return gr_fb_height();
 }
 
-void VrRecoveryUI::DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx,
+void VrRecoveryUI::DrawSurface(const GRSurface* surface, int sx, int sy, int w, int h, int dx,
                                int dy) const {
   gr_blit(surface, sx, sy, w, h, dx + stereo_offset_, dy);
   gr_blit(surface, sx, sy, w, h, dx - stereo_offset_ + ScreenWidth(), dy);
 }
 
-void VrRecoveryUI::DrawTextIcon(int x, int y, GRSurface* surface) const {
+void VrRecoveryUI::DrawTextIcon(int x, int y, const GRSurface* surface) const {
   gr_texticon(x + stereo_offset_, y, surface);
   gr_texticon(x - stereo_offset_ + ScreenWidth(), y, surface);
 }
