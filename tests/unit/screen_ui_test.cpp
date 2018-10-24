@@ -42,26 +42,26 @@ static const std::vector<std::string> ITEMS{ "item1", "item2", "item3", "item4",
 class MockDrawFunctions : public DrawInterface {
   void SetColor(UIElement /* element */) const override {}
   void DrawHighlightBar(int /* x */, int /* y */, int /* width */,
-                        int /* height */) const override {};
+                        int /* height */) const override {}
   int DrawHorizontalRule(int /* y */) const override {
     return 0;
-  };
+  }
   int DrawTextLine(int /* x */, int /* y */, const std::string& /* line */,
                    bool /* bold */) const override {
     return 0;
-  };
-  void DrawSurface(GRSurface* /* surface */, int /* sx */, int /* sy */, int /* w */, int /* h */,
-                   int /* dx */, int /* dy */) const override {};
-  void DrawFill(int /* x */, int /* y */, int /* w */, int /* h */) const override {};
-  void DrawTextIcon(int /* x */, int /* y */, GRSurface* /* surface */) const override {};
+  }
+  void DrawSurface(const GRSurface* /* surface */, int /* sx */, int /* sy */, int /* w */,
+                   int /* h */, int /* dx */, int /* dy */) const override {}
+  void DrawFill(int /* x */, int /* y */, int /* w */, int /* h */) const override {}
+  void DrawTextIcon(int /* x */, int /* y */, const GRSurface* /* surface */) const override {}
   int DrawTextLines(int /* x */, int /* y */,
                     const std::vector<std::string>& /* lines */) const override {
     return 0;
-  };
+  }
   int DrawWrappedTextLines(int /* x */, int /* y */,
                            const std::vector<std::string>& /* lines */) const override {
     return 0;
-  };
+  }
 };
 
 class ScreenUITest : public testing::Test {
