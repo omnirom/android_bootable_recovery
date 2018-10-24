@@ -100,16 +100,16 @@ GRSurface* MinuiBackendFbdev::Init() {
   gr_framebuffer[0].height = vi.yres;
   gr_framebuffer[0].row_bytes = fi.line_length;
   gr_framebuffer[0].pixel_bytes = vi.bits_per_pixel / 8;
-  gr_framebuffer[0].data = static_cast<uint8_t*>(bits);
-  memset(gr_framebuffer[0].data, 0, gr_framebuffer[0].height * gr_framebuffer[0].row_bytes);
+  gr_framebuffer[0].buffer_ = static_cast<uint8_t*>(bits);
+  memset(gr_framebuffer[0].buffer_, 0, gr_framebuffer[0].height * gr_framebuffer[0].row_bytes);
 
   /* check if we can use double buffering */
   if (vi.yres * fi.line_length * 2 <= fi.smem_len) {
     double_buffered = true;
 
-    memcpy(gr_framebuffer + 1, gr_framebuffer, sizeof(GRSurface));
-    gr_framebuffer[1].data =
-        gr_framebuffer[0].data + gr_framebuffer[0].height * gr_framebuffer[0].row_bytes;
+    gr_framebuffer[1] = gr_framebuffer[0];
+    gr_framebuffer[1].buffer_ =
+        gr_framebuffer[0].buffer_ + gr_framebuffer[0].height * gr_framebuffer[0].row_bytes;
 
     gr_draw = gr_framebuffer + 1;
 
@@ -120,16 +120,12 @@ GRSurface* MinuiBackendFbdev::Init() {
     // draw in, and then "flipping" the buffer consists of a
     // memcpy from the buffer we allocated to the framebuffer.
 
-    gr_draw = static_cast<GRSurface*>(malloc(sizeof(GRSurface)));
-    memcpy(gr_draw, gr_framebuffer, sizeof(GRSurface));
-    gr_draw->data = static_cast<unsigned char*>(malloc(gr_draw->height * gr_draw->row_bytes));
-    if (!gr_draw->data) {
-      perror("failed to allocate in-memory surface");
-      return nullptr;
-    }
+    gr_draw = new GRSurfaceFbdev;
+    *gr_draw = gr_framebuffer[0];
+    gr_draw->buffer_ = new uint8_t[gr_draw->height * gr_draw->row_bytes];
   }
 
-  memset(gr_draw->data, 0, gr_draw->height * gr_draw->row_bytes);
+  memset(gr_draw->buffer_, 0, gr_draw->height * gr_draw->row_bytes);
   fb_fd = fd;
   SetDisplayedFramebuffer(0);
 
@@ -150,7 +146,7 @@ GRSurface* MinuiBackendFbdev::Flip() {
     SetDisplayedFramebuffer(1 - displayed_buffer);
   } else {
     // Copy from the in-memory surface to the framebuffer.
-    memcpy(gr_framebuffer[0].data, gr_draw->data, gr_draw->height * gr_draw->row_bytes);
+    memcpy(gr_framebuffer[0].buffer_, gr_draw->buffer_, gr_draw->height * gr_draw->row_bytes);
   }
   return gr_draw;
 }
@@ -160,8 +156,8 @@ MinuiBackendFbdev::~MinuiBackendFbdev() {
   fb_fd = -1;
 
   if (!double_buffered && gr_draw) {
-    free(gr_draw->data);
-    free(gr_draw);
+    delete[] gr_draw->buffer_;
+    delete gr_draw;
   }
   gr_draw = nullptr;
 }

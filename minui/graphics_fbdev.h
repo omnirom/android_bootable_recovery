@@ -14,13 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef _GRAPHICS_FBDEV_H_
-#define _GRAPHICS_FBDEV_H_
+#pragma once
 
 #include <linux/fb.h>
+#include <stdint.h>
 
 #include "graphics.h"
 #include "minui/minui.h"
+
+class GRSurfaceFbdev : public GRSurface {
+ public:
+  uint8_t* data() override {
+    return buffer_;
+  }
+
+ private:
+  friend class MinuiBackendFbdev;
+
+  // Points to the start of the buffer: either the mmap'd framebuffer or one allocated in-memory.
+  uint8_t* buffer_;
+};
 
 class MinuiBackendFbdev : public MinuiBackend {
  public:
@@ -33,12 +46,10 @@ class MinuiBackendFbdev : public MinuiBackend {
  private:
   void SetDisplayedFramebuffer(unsigned n);
 
-  GRSurface gr_framebuffer[2];
+  GRSurfaceFbdev gr_framebuffer[2];
   bool double_buffered;
-  GRSurface* gr_draw;
+  GRSurfaceFbdev* gr_draw;
   int displayed_buffer;
   fb_var_screeninfo vi;
   int fb_fd;
 };
-
-#endif  // _GRAPHICS_FBDEV_H_

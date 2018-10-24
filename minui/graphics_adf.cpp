@@ -45,14 +45,14 @@ int MinuiBackendAdf::SurfaceInit(const drm_mode_modeinfo* mode, GRSurfaceAdf* su
   surf->row_bytes = surf->pitch;
   surf->pixel_bytes = (format == DRM_FORMAT_RGB565) ? 2 : 4;
 
-  surf->data = static_cast<uint8_t*>(
-      mmap(nullptr, surf->pitch * surf->height, PROT_WRITE, MAP_SHARED, surf->fd, surf->offset));
-  if (surf->data == MAP_FAILED) {
+  auto mmapped =
+      mmap(nullptr, surf->pitch * surf->height, PROT_WRITE, MAP_SHARED, surf->fd, surf->offset);
+  if (mmapped == MAP_FAILED) {
     int saved_errno = errno;
     close(surf->fd);
     return -saved_errno;
   }
-
+  surf->mmapped_buffer_ = static_cast<uint8_t*>(mmapped);
   return 0;
 }
 
@@ -185,7 +185,9 @@ void MinuiBackendAdf::Blank(bool blank) {
 }
 
 void MinuiBackendAdf::SurfaceDestroy(GRSurfaceAdf* surf) {
-  munmap(surf->data, surf->pitch * surf->height);
+  if (surf->mmapped_buffer_) {
+    munmap(surf->mmapped_buffer_, surf->pitch * surf->height);
+  }
   close(surf->fence_fd);
   close(surf->fd);
 }
