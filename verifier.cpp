@@ -500,6 +500,48 @@ std::vector<Certificate> LoadKeysFromZipfile(const std::string& zip_name) {
   return result;
 }
 
+bool CheckRSAKey(const std::unique_ptr<RSA, RSADeleter>& rsa) {
+  if (!rsa) {
+    return false;
+  }
+
+  const BIGNUM* out_n;
+  const BIGNUM* out_e;
+  RSA_get0_key(rsa.get(), &out_n, &out_e, nullptr /* private exponent */);
+  auto modulus_bits = BN_num_bits(out_n);
+  if (modulus_bits != 2048) {
+    LOG(ERROR) << "Modulus should be 2048 bits long, actual: " << modulus_bits;
+    return false;
+  }
+
+  BN_ULONG exponent = BN_get_word(out_e);
+  if (exponent != 3 && exponent != 65537) {
+    LOG(ERROR) << "Public exponent should be 3 or 65537, actual: " << exponent;
+    return false;
+  }
+
+  return true;
+}
+
+bool CheckECKey(const std::unique_ptr<EC_KEY, ECKEYDeleter>& ec_key) {
+  if (!ec_key) {
+    return false;
+  }
+
+  const EC_GROUP* ec_group = EC_KEY_get0_group(ec_key.get());
+  if (!ec_group) {
+    LOG(ERROR) << "Failed to get the ec_group from the ec_key";
+    return false;
+  }
+  auto degree = EC_GROUP_get_degree(ec_group);
+  if (degree != 256) {
+    LOG(ERROR) << "Field size of the ec key should be 256 bits long, actual: " << degree;
+    return false;
+  }
+
+  return true;
+}
+
 bool LoadCertificateFromBuffer(const std::vector<uint8_t>& pem_content, Certificate* cert) {
   std::unique_ptr<BIO, decltype(&BIO_free)> content(
       BIO_new_mem_buf(pem_content.data(), pem_content.size()), BIO_free);
@@ -538,22 +580,20 @@ bool LoadCertificateFromBuffer(const std::vector<uint8_t>& pem_content, Certific
   }
 
   int key_type = EVP_PKEY_id(public_key.get());
-  // TODO(xunchang) check the rsa key has exponent 3 or 65537 with RSA_get0_key; and ec key is
-  // 256 bits.
   if (key_type == EVP_PKEY_RSA) {
     cert->key_type = Certificate::KEY_TYPE_RSA;
     cert->ec.reset();
     cert->rsa.reset(EVP_PKEY_get1_RSA(public_key.get()));
-    if (!cert->rsa) {
-      LOG(ERROR) << "Failed to get the rsa key info from public key";
+    if (!cert->rsa || !CheckRSAKey(cert->rsa)) {
+      LOG(ERROR) << "Failed to validate the rsa key info from public key";
       return false;
     }
   } else if (key_type == EVP_PKEY_EC) {
     cert->key_type = Certificate::KEY_TYPE_EC;
     cert->rsa.reset();
     cert->ec.reset(EVP_PKEY_get1_EC_KEY(public_key.get()));
-    if (!cert->ec) {
-      LOG(ERROR) << "Failed to get the ec key info from the public key";
+    if (!cert->ec || !CheckECKey(cert->ec)) {
+      LOG(ERROR) << "Failed to validate the ec key info from the public key";
       return false;
     }
   } else {

@@ -30,6 +30,9 @@
 #include <android-base/test_utils.h>
 #include <android-base/unique_fd.h>
 #include <gtest/gtest.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/nid.h>
 #include <ziparchive/zip_writer.h>
 
 #include "common/test_constants.h"
@@ -146,6 +149,35 @@ TEST(VerifierTest, LoadCertificateFromBuffer_sha256_ec256bits) {
   ASSERT_EQ(nullptr, cert.rsa);
 
   VerifyPackageWithSingleCertificate("otasigned_v5.zip", std::move(cert));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_check_rsa_keys) {
+  std::unique_ptr<RSA, RSADeleter> rsa(RSA_new());
+  std::unique_ptr<BIGNUM, decltype(&BN_free)> exponent(BN_new(), BN_free);
+  BN_set_word(exponent.get(), 3);
+  RSA_generate_key_ex(rsa.get(), 2048, exponent.get(), nullptr);
+  ASSERT_TRUE(CheckRSAKey(rsa));
+
+  // Exponent is expected to be 3 or 65537
+  BN_set_word(exponent.get(), 17);
+  RSA_generate_key_ex(rsa.get(), 2048, exponent.get(), nullptr);
+  ASSERT_FALSE(CheckRSAKey(rsa));
+
+  // Modulus is expected to be 2048.
+  BN_set_word(exponent.get(), 3);
+  RSA_generate_key_ex(rsa.get(), 1024, exponent.get(), nullptr);
+  ASSERT_FALSE(CheckRSAKey(rsa));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_check_ec_keys) {
+  std::unique_ptr<EC_KEY, ECKEYDeleter> ec(EC_KEY_new_by_curve_name(NID_X9_62_prime256v1));
+  ASSERT_EQ(1, EC_KEY_generate_key(ec.get()));
+  ASSERT_TRUE(CheckECKey(ec));
+
+  // Expects 256-bit EC key with curve NIST P-256
+  ec.reset(EC_KEY_new_by_curve_name(NID_secp224r1));
+  ASSERT_EQ(1, EC_KEY_generate_key(ec.get()));
+  ASSERT_FALSE(CheckECKey(ec));
 }
 
 TEST(VerifierTest, LoadKeysFromZipfile_empty_archive) {
