@@ -33,11 +33,12 @@ class VrRecoveryUI : public ScreenRecoveryUI {
   int ScreenWidth() const override;
   int ScreenHeight() const override;
 
-  void DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx, int dy) const override;
+  void DrawSurface(const GRSurface* surface, int sx, int sy, int w, int h, int dx,
+                   int dy) const override;
   int DrawHorizontalRule(int y) const override;
   void DrawHighlightBar(int x, int y, int width, int height) const override;
   void DrawFill(int x, int y, int w, int h) const override;
-  void DrawTextIcon(int x, int y, GRSurface* surface) const override;
+  void DrawTextIcon(int x, int y, const GRSurface* surface) const override;
   int DrawTextLine(int x, int y, const std::string& line, bool bold) const override;
 };
 
