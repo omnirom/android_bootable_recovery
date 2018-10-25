@@ -1,3 +1,6 @@
+soong_namespace {
+}
+
 subdirs = [
 //    "applypatch",
     "bootloader_message",
