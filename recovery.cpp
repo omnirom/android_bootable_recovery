@@ -520,34 +520,17 @@ static bool check_wipe_package(size_t wipe_package_size) {
         LOG(ERROR) << "Can't open wipe package : " << ErrorCodeString(err);
         return false;
     }
-    std::string metadata;
-    if (!read_metadata_from_package(zip, &metadata)) {
-        CloseArchive(zip);
-        return false;
+
+    std::map<std::string, std::string> metadata;
+    if (!ReadMetadataFromPackage(zip, &metadata)) {
+      LOG(ERROR) << "Failed to parse metadata in the zip file";
+      return false;
     }
+
+    int result = CheckPackageMetadata(metadata, OtaType::BRICK);
     CloseArchive(zip);
 
-    // Check metadata
-    std::vector<std::string> lines = android::base::Split(metadata, "\n");
-    bool ota_type_matched = false;
-    bool device_type_matched = false;
-    bool has_serial_number = false;
-    bool serial_number_matched = false;
-    for (const auto& line : lines) {
-        if (line == "ota-type=BRICK") {
-            ota_type_matched = true;
-        } else if (android::base::StartsWith(line, "pre-device=")) {
-            std::string device_type = line.substr(strlen("pre-device="));
-            std::string real_device_type = android::base::GetProperty("ro.build.product", "");
-            device_type_matched = (device_type == real_device_type);
-        } else if (android::base::StartsWith(line, "serialno=")) {
-            std::string serial_no = line.substr(strlen("serialno="));
-            std::string real_serial_no = android::base::GetProperty("ro.serialno", "");
-            has_serial_number = true;
-            serial_number_matched = (serial_no == real_serial_no);
-        }
-    }
-    return ota_type_matched && device_type_matched && (!has_serial_number || serial_number_matched);
+    return result == 0;
 }
 
 // Wipes the current A/B device, with a secure wipe of all the partitions in RECOVERY_WIPE.
