@@ -18,6 +18,9 @@
 
 #include <stdint.h>
 
+#include <memory>
+
+#include <android-base/macros.h>
 #include <xf86drmMode.h>
 
 #include "graphics.h"
@@ -25,6 +28,12 @@
 
 class GRSurfaceDrm : public GRSurface {
  public:
+  explicit GRSurfaceDrm(int drm_fd) : drm_fd_(drm_fd) {}
+  ~GRSurfaceDrm() override;
+
+  // Creates a GRSurfaceDrm instance.
+  static std::unique_ptr<GRSurfaceDrm> Create(int drm_fd, int width, int height);
+
   uint8_t* data() override {
     return mmapped_buffer_;
   }
@@ -32,30 +41,33 @@ class GRSurfaceDrm : public GRSurface {
  private:
   friend class MinuiBackendDrm;
 
-  uint32_t fb_id;
-  uint32_t handle;
+  const int drm_fd_;
+
+  uint32_t fb_id{ 0 };
+  uint32_t handle{ 0 };
   uint8_t* mmapped_buffer_{ nullptr };
+
+  DISALLOW_COPY_AND_ASSIGN(GRSurfaceDrm);
 };
 
 class MinuiBackendDrm : public MinuiBackend {
  public:
+  MinuiBackendDrm() = default;
+  ~MinuiBackendDrm() override;
+
   GRSurface* Init() override;
   GRSurface* Flip() override;
   void Blank(bool) override;
-  ~MinuiBackendDrm() override;
-  MinuiBackendDrm();
 
  private:
   void DrmDisableCrtc(int drm_fd, drmModeCrtc* crtc);
-  int DrmEnableCrtc(int drm_fd, drmModeCrtc* crtc, GRSurfaceDrm* surface);
-  GRSurfaceDrm* DrmCreateSurface(int width, int height);
-  void DrmDestroySurface(GRSurfaceDrm* surface);
+  bool DrmEnableCrtc(int drm_fd, drmModeCrtc* crtc, const std::unique_ptr<GRSurfaceDrm>& surface);
   void DisableNonMainCrtcs(int fd, drmModeRes* resources, drmModeCrtc* main_crtc);
   drmModeConnector* FindMainMonitor(int fd, drmModeRes* resources, uint32_t* mode_index);
 
-  GRSurfaceDrm* GRSurfaceDrms[2];
-  int current_buffer;
-  drmModeCrtc* main_monitor_crtc;
-  drmModeConnector* main_monitor_connector;
-  int drm_fd;
+  std::unique_ptr<GRSurfaceDrm> GRSurfaceDrms[2];
+  int current_buffer{ 0 };
+  drmModeCrtc* main_monitor_crtc{ nullptr };
+  drmModeConnector* main_monitor_connector{ nullptr };
+  int drm_fd{ -1 };
 };
