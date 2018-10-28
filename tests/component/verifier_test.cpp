@@ -30,6 +30,9 @@
 #include <android-base/test_utils.h>
 #include <android-base/unique_fd.h>
 #include <gtest/gtest.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/nid.h>
 #include <ziparchive/zip_writer.h>
 
 #include "common/test_constants.h"
@@ -148,6 +151,35 @@ TEST(VerifierTest, LoadCertificateFromBuffer_sha256_ec256bits) {
   VerifyPackageWithSingleCertificate("otasigned_v5.zip", std::move(cert));
 }
 
+TEST(VerifierTest, LoadCertificateFromBuffer_check_rsa_keys) {
+  std::unique_ptr<RSA, RSADeleter> rsa(RSA_new());
+  std::unique_ptr<BIGNUM, decltype(&BN_free)> exponent(BN_new(), BN_free);
+  BN_set_word(exponent.get(), 3);
+  RSA_generate_key_ex(rsa.get(), 2048, exponent.get(), nullptr);
+  ASSERT_TRUE(CheckRSAKey(rsa));
+
+  // Exponent is expected to be 3 or 65537
+  BN_set_word(exponent.get(), 17);
+  RSA_generate_key_ex(rsa.get(), 2048, exponent.get(), nullptr);
+  ASSERT_FALSE(CheckRSAKey(rsa));
+
+  // Modulus is expected to be 2048.
+  BN_set_word(exponent.get(), 3);
+  RSA_generate_key_ex(rsa.get(), 1024, exponent.get(), nullptr);
+  ASSERT_FALSE(CheckRSAKey(rsa));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_check_ec_keys) {
+  std::unique_ptr<EC_KEY, ECKEYDeleter> ec(EC_KEY_new_by_curve_name(NID_X9_62_prime256v1));
+  ASSERT_EQ(1, EC_KEY_generate_key(ec.get()));
+  ASSERT_TRUE(CheckECKey(ec));
+
+  // Expects 256-bit EC key with curve NIST P-256
+  ec.reset(EC_KEY_new_by_curve_name(NID_secp224r1));
+  ASSERT_EQ(1, EC_KEY_generate_key(ec.get()));
+  ASSERT_FALSE(CheckECKey(ec));
+}
+
 TEST(VerifierTest, LoadKeysFromZipfile_empty_archive) {
   TemporaryFile otacerts;
   BuildCertificateArchive({}, otacerts.release());
@@ -206,8 +238,9 @@ class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
     }
 
     for (auto it = ++args.cbegin(); it != args.cend(); ++it) {
-      std::string public_key_file = from_testdata_base("testkey_" + *it + ".txt");
-      ASSERT_TRUE(load_keys(public_key_file.c_str(), certs));
+      std::string public_key_file = from_testdata_base("testkey_" + *it + ".x509.pem");
+      certs.emplace_back(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+      LoadKeyFromFile(public_key_file, &certs.back());
     }
   }
 
@@ -221,70 +254,10 @@ class VerifierSuccessTest : public VerifierTest {
 class VerifierFailureTest : public VerifierTest {
 };
 
-TEST(VerifierTest, load_keys_multiple_keys) {
-  std::string testkey_v4;
-  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v4.txt"), &testkey_v4));
-
-  std::string testkey_v3;
-  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v3.txt"), &testkey_v3));
-
-  std::string keys = testkey_v4 + "," + testkey_v3 + "," + testkey_v4;
-  TemporaryFile key_file1;
-  ASSERT_TRUE(android::base::WriteStringToFile(keys, key_file1.path));
-  std::vector<Certificate> certs;
-  ASSERT_TRUE(load_keys(key_file1.path, certs));
-  ASSERT_EQ(3U, certs.size());
-}
-
-TEST(VerifierTest, load_keys_invalid_keys) {
-  std::vector<Certificate> certs;
-  ASSERT_FALSE(load_keys("/doesntexist", certs));
-
-  // Empty file.
-  TemporaryFile key_file1;
-  ASSERT_FALSE(load_keys(key_file1.path, certs));
-
-  // Invalid contents.
-  ASSERT_TRUE(android::base::WriteStringToFile("invalid", key_file1.path));
-  ASSERT_FALSE(load_keys(key_file1.path, certs));
-
-  std::string testkey_v4;
-  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v4.txt"), &testkey_v4));
-
-  // Invalid key version: "v4 ..." => "v6 ...".
-  std::string invalid_key2(testkey_v4);
-  invalid_key2[1] = '6';
-  TemporaryFile key_file2;
-  ASSERT_TRUE(android::base::WriteStringToFile(invalid_key2, key_file2.path));
-  ASSERT_FALSE(load_keys(key_file2.path, certs));
-
-  // Invalid key content: inserted extra bytes ",2209831334".
-  std::string invalid_key3(testkey_v4);
-  invalid_key3.insert(invalid_key2.size() - 2, ",2209831334");
-  TemporaryFile key_file3;
-  ASSERT_TRUE(android::base::WriteStringToFile(invalid_key3, key_file3.path));
-  ASSERT_FALSE(load_keys(key_file3.path, certs));
-
-  // Invalid key: the last key must not end with an extra ','.
-  std::string invalid_key4 = testkey_v4 + ",";
-  TemporaryFile key_file4;
-  ASSERT_TRUE(android::base::WriteStringToFile(invalid_key4, key_file4.path));
-  ASSERT_FALSE(load_keys(key_file4.path, certs));
-
-  // Invalid key separator.
-  std::string invalid_key5 = testkey_v4 + ";" + testkey_v4;
-  TemporaryFile key_file5;
-  ASSERT_TRUE(android::base::WriteStringToFile(invalid_key5, key_file5.path));
-  ASSERT_FALSE(load_keys(key_file5.path, certs));
-}
-
 TEST(VerifierTest, BadPackage_AlteredFooter) {
-  std::string testkey_v3;
-  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v3.txt"), &testkey_v3));
-  TemporaryFile key_file1;
-  ASSERT_TRUE(android::base::WriteStringToFile(testkey_v3, key_file1.path));
   std::vector<Certificate> certs;
-  ASSERT_TRUE(load_keys(key_file1.path, certs));
+  certs.emplace_back(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_v3.x509.pem"), &certs.back());
 
   std::string package;
   ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("otasigned_v3.zip"), &package));
@@ -298,12 +271,9 @@ TEST(VerifierTest, BadPackage_AlteredFooter) {
 }
 
 TEST(VerifierTest, BadPackage_AlteredContent) {
-  std::string testkey_v3;
-  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v3.txt"), &testkey_v3));
-  TemporaryFile key_file1;
-  ASSERT_TRUE(android::base::WriteStringToFile(testkey_v3, key_file1.path));
   std::vector<Certificate> certs;
-  ASSERT_TRUE(load_keys(key_file1.path, certs));
+  certs.emplace_back(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_v3.x509.pem"), &certs.back());
 
   std::string package;
   ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("otasigned_v3.zip"), &package));
@@ -324,13 +294,9 @@ TEST(VerifierTest, BadPackage_AlteredContent) {
 }
 
 TEST(VerifierTest, BadPackage_SignatureStartOutOfBounds) {
-  std::string testkey_v3;
-  ASSERT_TRUE(android::base::ReadFileToString(from_testdata_base("testkey_v3.txt"), &testkey_v3));
-
-  TemporaryFile key_file;
-  ASSERT_TRUE(android::base::WriteStringToFile(testkey_v3, key_file.path));
   std::vector<Certificate> certs;
-  ASSERT_TRUE(load_keys(key_file.path, certs));
+  certs.emplace_back(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_v3.x509.pem"), &certs.back());
 
   // Signature start is 65535 (0xffff) while comment size is 0 (Bug: 31914369).
   std::string package = "\x50\x4b\x05\x06"s + std::string(12, '\0') + "\xff\xff\xff\xff\x00\x00"s;
