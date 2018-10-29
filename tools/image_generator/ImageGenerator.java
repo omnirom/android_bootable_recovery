@@ -38,6 +38,13 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -367,28 +374,73 @@ public class ImageGenerator {
     ImageIO.write(mBufferedImage, "png", new File(outputPath));
   }
 
-  public static void printUsage() {
-    System.out.println("Usage: java -jar path_to_jar imageWidth textName fontDirectory"
-        + " resourceDirectory outputFilename");
+  public static void printUsage(Options options) {
+    new HelpFormatter().printHelp("java -jar path_to_jar [required_options]", options);
+
+  }
+
+  public static Options createOptions() {
+    Options options = new Options();
+    options.addOption(OptionBuilder
+        .withLongOpt("image_width")
+        .withDescription("The initial width of the image in pixels.")
+        .hasArgs(1)
+        .isRequired()
+        .create());
+
+    options.addOption(OptionBuilder
+        .withLongOpt("text_name")
+        .withDescription("The description of the text string, e.g. recovery_erasing")
+        .hasArgs(1)
+        .isRequired()
+        .create());
+
+    options.addOption(OptionBuilder
+        .withLongOpt("font_dir")
+        .withDescription("The directory that contains all the support font format files, e.g."
+            + " $OUT/system/fonts/")
+        .hasArgs(1)
+        .isRequired()
+        .create());
+
+    options.addOption(OptionBuilder
+        .withLongOpt("resource_dir")
+        .withDescription("The resource directory that contains all the translated strings in xml"
+            + " format, e.g. bootable/recovery/tools/recovery_l10n/res/")
+        .hasArgs(1)
+        .isRequired()
+        .create());
+
+    options.addOption(OptionBuilder
+        .withLongOpt("output_file")
+        .withDescription("Path to the generated image")
+        .hasArgs(1)
+        .isRequired()
+        .create());
+
+    return options;
   }
 
   public static void main(String[] args) throws NumberFormatException, IOException,
       FontFormatException, LocalizedStringNotFoundException {
-    if (args.length != 5) {
-      printUsage();
-      System.err.println("We expect 5 arguments, get " + args.length);
-      System.exit(1);
+    Options options = createOptions();
+    CommandLine cmd;
+    try {
+      cmd = new GnuParser().parse(options, args);
+    } catch (ParseException e) {
+      System.err.println(e.getMessage());
+      printUsage(options);
+      return;
     }
 
-    // TODO(xunchang) switch to commandline parser
-    int imageWidth = Integer.parseUnsignedInt(args[0]);
+    int imageWidth = Integer.parseUnsignedInt(cmd.getOptionValue("image_width"));
 
-    ImageGenerator imageGenerator =
-        new ImageGenerator(imageWidth, args[1], DEFAULT_FONT_SIZE, args[2]);
+    ImageGenerator imageGenerator = new ImageGenerator(imageWidth, cmd.getOptionValue("text_name"),
+        DEFAULT_FONT_SIZE, cmd.getOptionValue("font_dir"));
 
     Map<Locale, String> localizedStringMap =
-        imageGenerator.readLocalizedStringFromXmls(args[3]);
-    imageGenerator.generateImage(localizedStringMap, args[4]);
+        imageGenerator.readLocalizedStringFromXmls(cmd.getOptionValue("resource_dir"));
+    imageGenerator.generateImage(localizedStringMap, cmd.getOptionValue("output_file"));
   }
 }
 
