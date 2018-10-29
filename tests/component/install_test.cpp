@@ -36,15 +36,23 @@
 #include "otautil/paths.h"
 #include "private/install.h"
 
-TEST(InstallTest, verify_package_compatibility_no_entry) {
-  TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
+static void BuildZipArchive(const std::map<std::string, std::string>& file_map, int fd,
+                            int compression_type) {
+  FILE* zip_file = fdopen(fd, "w");
   ZipWriter writer(zip_file);
-  // The archive must have something to be opened correctly.
-  ASSERT_EQ(0, writer.StartEntry("dummy_entry", 0));
-  ASSERT_EQ(0, writer.FinishEntry());
+  for (const auto& [name, content] : file_map) {
+    ASSERT_EQ(0, writer.StartEntry(name.c_str(), compression_type));
+    ASSERT_EQ(0, writer.WriteBytes(content.data(), content.size()));
+    ASSERT_EQ(0, writer.FinishEntry());
+  }
   ASSERT_EQ(0, writer.Finish());
   ASSERT_EQ(0, fclose(zip_file));
+}
+
+TEST(InstallTest, verify_package_compatibility_no_entry) {
+  TemporaryFile temp_file;
+  // The archive must have something to be opened correctly.
+  BuildZipArchive({ { "dummy_entry", "" } }, temp_file.release(), kCompressStored);
 
   // Doesn't contain compatibility zip entry.
   ZipArchiveHandle zip;
@@ -55,12 +63,7 @@ TEST(InstallTest, verify_package_compatibility_no_entry) {
 
 TEST(InstallTest, verify_package_compatibility_invalid_entry) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
-  ASSERT_EQ(0, writer.StartEntry("compatibility.zip", 0));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
+  BuildZipArchive({ { "compatibility.zip", "" } }, temp_file.release(), kCompressStored);
 
   // Empty compatibility zip entry.
   ZipArchiveHandle zip;
@@ -71,14 +74,9 @@ TEST(InstallTest, verify_package_compatibility_invalid_entry) {
 
 TEST(InstallTest, read_metadata_from_package_smoke) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
-  ASSERT_EQ(0, writer.StartEntry("META-INF/com/android/metadata", kCompressStored));
   const std::string content("abcdefg");
-  ASSERT_EQ(0, writer.WriteBytes(content.data(), content.size()));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
+  BuildZipArchive({ { "META-INF/com/android/metadata", content } }, temp_file.release(),
+                  kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
@@ -88,13 +86,8 @@ TEST(InstallTest, read_metadata_from_package_smoke) {
   CloseArchive(zip);
 
   TemporaryFile temp_file2;
-  FILE* zip_file2 = fdopen(temp_file2.release(), "w");
-  ZipWriter writer2(zip_file2);
-  ASSERT_EQ(0, writer2.StartEntry("META-INF/com/android/metadata", kCompressDeflated));
-  ASSERT_EQ(0, writer2.WriteBytes(content.data(), content.size()));
-  ASSERT_EQ(0, writer2.FinishEntry());
-  ASSERT_EQ(0, writer2.Finish());
-  ASSERT_EQ(0, fclose(zip_file2));
+  BuildZipArchive({ { "META-INF/com/android/metadata", content } }, temp_file2.release(),
+                  kCompressDeflated);
 
   ASSERT_EQ(0, OpenArchive(temp_file2.path, &zip));
   metadata.clear();
@@ -105,12 +98,7 @@ TEST(InstallTest, read_metadata_from_package_smoke) {
 
 TEST(InstallTest, read_metadata_from_package_no_entry) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
-  ASSERT_EQ(0, writer.StartEntry("dummy_entry", kCompressStored));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
+  BuildZipArchive({ { "dummy_entry", "" } }, temp_file.release(), kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
@@ -121,27 +109,16 @@ TEST(InstallTest, read_metadata_from_package_no_entry) {
 
 TEST(InstallTest, verify_package_compatibility_with_libvintf_malformed_xml) {
   TemporaryFile compatibility_zip_file;
-  FILE* compatibility_zip = fdopen(compatibility_zip_file.release(), "w");
-  ZipWriter compatibility_zip_writer(compatibility_zip);
-  ASSERT_EQ(0, compatibility_zip_writer.StartEntry("system_manifest.xml", kCompressDeflated));
   std::string malformed_xml = "malformed";
-  ASSERT_EQ(0, compatibility_zip_writer.WriteBytes(malformed_xml.data(), malformed_xml.size()));
-  ASSERT_EQ(0, compatibility_zip_writer.FinishEntry());
-  ASSERT_EQ(0, compatibility_zip_writer.Finish());
-  ASSERT_EQ(0, fclose(compatibility_zip));
+  BuildZipArchive({ { "system_manifest.xml", malformed_xml } }, compatibility_zip_file.release(),
+                  kCompressDeflated);
 
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
-  ASSERT_EQ(0, writer.StartEntry("compatibility.zip", kCompressStored));
   std::string compatibility_zip_content;
   ASSERT_TRUE(
       android::base::ReadFileToString(compatibility_zip_file.path, &compatibility_zip_content));
-  ASSERT_EQ(0,
-            writer.WriteBytes(compatibility_zip_content.data(), compatibility_zip_content.size()));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
+  BuildZipArchive({ { "compatibility.zip", compatibility_zip_content } }, temp_file.release(),
+                  kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
@@ -166,27 +143,15 @@ TEST(InstallTest, verify_package_compatibility_with_libvintf_system_manifest_xml
   ASSERT_TRUE(
       android::base::ReadFileToString(system_manifest_xml_path, &system_manifest_xml_content));
   TemporaryFile compatibility_zip_file;
-  FILE* compatibility_zip = fdopen(compatibility_zip_file.release(), "w");
-  ZipWriter compatibility_zip_writer(compatibility_zip);
-  ASSERT_EQ(0, compatibility_zip_writer.StartEntry("system_manifest.xml", kCompressDeflated));
-  ASSERT_EQ(0, compatibility_zip_writer.WriteBytes(system_manifest_xml_content.data(),
-                                                   system_manifest_xml_content.size()));
-  ASSERT_EQ(0, compatibility_zip_writer.FinishEntry());
-  ASSERT_EQ(0, compatibility_zip_writer.Finish());
-  ASSERT_EQ(0, fclose(compatibility_zip));
+  BuildZipArchive({ { "system_manifest.xml", system_manifest_xml_content } },
+                  compatibility_zip_file.release(), kCompressDeflated);
 
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
-  ASSERT_EQ(0, writer.StartEntry("compatibility.zip", kCompressStored));
   std::string compatibility_zip_content;
   ASSERT_TRUE(
       android::base::ReadFileToString(compatibility_zip_file.path, &compatibility_zip_content));
-  ASSERT_EQ(0,
-            writer.WriteBytes(compatibility_zip_content.data(), compatibility_zip_content.size()));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
+  BuildZipArchive({ { "compatibility.zip", compatibility_zip_content } }, temp_file.release(),
+                  kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
@@ -202,13 +167,8 @@ TEST(InstallTest, verify_package_compatibility_with_libvintf_system_manifest_xml
 
 TEST(InstallTest, SetUpNonAbUpdateCommands) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
   static constexpr const char* UPDATE_BINARY_NAME = "META-INF/com/google/android/update-binary";
-  ASSERT_EQ(0, writer.StartEntry(UPDATE_BINARY_NAME, kCompressStored));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
+  BuildZipArchive({ { UPDATE_BINARY_NAME, "" } }, temp_file.release(), kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
@@ -246,13 +206,8 @@ TEST(InstallTest, SetUpNonAbUpdateCommands) {
 
 TEST(InstallTest, SetUpNonAbUpdateCommands_MissingUpdateBinary) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
   // The archive must have something to be opened correctly.
-  ASSERT_EQ(0, writer.StartEntry("dummy_entry", 0));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
+  BuildZipArchive({ { "dummy_entry", "" } }, temp_file.release(), kCompressStored);
 
   // Missing update binary.
   ZipArchiveHandle zip;
@@ -268,16 +223,8 @@ TEST(InstallTest, SetUpNonAbUpdateCommands_MissingUpdateBinary) {
 
 static void VerifyAbUpdateCommands(const std::string& serialno, bool success = true) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
-  ASSERT_EQ(0, writer.StartEntry("payload.bin", kCompressStored));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.StartEntry("payload_properties.txt", kCompressStored));
+
   const std::string properties = "some_properties";
-  ASSERT_EQ(0, writer.WriteBytes(properties.data(), properties.size()));
-  ASSERT_EQ(0, writer.FinishEntry());
-  // A metadata entry is mandatory.
-  ASSERT_EQ(0, writer.StartEntry("META-INF/com/android/metadata", kCompressStored));
   std::string device = android::base::GetProperty("ro.product.device", "");
   ASSERT_NE("", device);
   std::string timestamp = android::base::GetProperty("ro.build.date.utc", "");
@@ -289,10 +236,11 @@ static void VerifyAbUpdateCommands(const std::string& serialno, bool success = t
     meta.push_back("serialno=" + serialno);
   }
   std::string metadata = android::base::Join(meta, "\n");
-  ASSERT_EQ(0, writer.WriteBytes(metadata.data(), metadata.size()));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
+
+  BuildZipArchive({ { "payload.bin", "" },
+                    { "payload_properties.txt", properties },
+                    { "META-INF/com/android/metadata", metadata } },
+                  temp_file.release(), kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
@@ -323,13 +271,7 @@ TEST(InstallTest, SetUpAbUpdateCommands) {
 
 TEST(InstallTest, SetUpAbUpdateCommands_MissingPayloadPropertiesTxt) {
   TemporaryFile temp_file;
-  FILE* zip_file = fdopen(temp_file.release(), "w");
-  ZipWriter writer(zip_file);
-  // Missing payload_properties.txt.
-  ASSERT_EQ(0, writer.StartEntry("payload.bin", kCompressStored));
-  ASSERT_EQ(0, writer.FinishEntry());
-  // A metadata entry is mandatory.
-  ASSERT_EQ(0, writer.StartEntry("META-INF/com/android/metadata", kCompressStored));
+
   std::string device = android::base::GetProperty("ro.product.device", "");
   ASSERT_NE("", device);
   std::string timestamp = android::base::GetProperty("ro.build.date.utc", "");
@@ -339,10 +281,9 @@ TEST(InstallTest, SetUpAbUpdateCommands_MissingPayloadPropertiesTxt) {
           "ota-type=AB", "pre-device=" + device, "post-timestamp=" + timestamp,
       },
       "\n");
-  ASSERT_EQ(0, writer.WriteBytes(metadata.data(), metadata.size()));
-  ASSERT_EQ(0, writer.FinishEntry());
-  ASSERT_EQ(0, writer.Finish());
-  ASSERT_EQ(0, fclose(zip_file));
+
+  BuildZipArchive({ { "payload.bin", "" }, { "META-INF/com/android/metadata", metadata } },
+                  temp_file.release(), kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
