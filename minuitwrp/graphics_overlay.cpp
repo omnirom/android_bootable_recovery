@@ -50,7 +50,6 @@ static void overlay_exit(minui_backend*);
 
 static GRSurface gr_framebuffer;
 static GRSurface* gr_draw = NULL;
-static int displayed_buffer;
 
 static fb_var_screeninfo vi;
 static int fb_fd = -1;
@@ -100,7 +99,6 @@ static minui_backend my_backend = {
 
 bool target_has_overlay(char *version)
 {
-    int ret;
     int mdp_version;
     bool overlay_supported = false;
 
