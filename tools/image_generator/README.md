@@ -6,7 +6,8 @@ under recovery mode. And thus we don't need to do the manual work by running
 emulators with different dpi.
 
 # Usage:
-  `java -jar path_to_jar imageWidth textName fontDirectory resourceDirectory outputFilename`
+  `java -jar path_to_jar --image_width imageWidth --text_name textName --font_dir fontDirectory
+   --resource_dir resourceDirectory --output_file outputFilename`
 
 # Description of the parameters:
 1. `imageWidth`: The number of pixels per line; and the text strings will be
