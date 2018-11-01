@@ -24,13 +24,14 @@
 #include <string>
 #include <vector>
 
+#include <android-base/macros.h>
+
 //
 // Graphics.
 //
 
 class GRSurface {
  public:
-  GRSurface() = default;
   virtual ~GRSurface();
 
   // Creates and returns a GRSurface instance that's sufficient for storing an image of the given
@@ -58,6 +59,8 @@ class GRSurface {
 
  private:
   uint8_t* data_{ nullptr };
+
+  DISALLOW_COPY_AND_ASSIGN(GRSurface);
 };
 
 struct GRFont {
