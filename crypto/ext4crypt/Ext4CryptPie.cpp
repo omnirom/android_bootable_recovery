@@ -295,9 +295,10 @@ static void get_data_file_encryption_modes(PolicyKeyRef* key_ref) {
 }
 
 static bool ensure_policy(const PolicyKeyRef& key_ref, const std::string& path) {
-    return e4crypt_policy_ensure(path.c_str(), key_ref.key_raw_ref.data(),
+    return true;
+    /*return e4crypt_policy_ensure(path.c_str(), key_ref.key_raw_ref.data(),
                                  key_ref.key_raw_ref.size(), key_ref.contents_mode.c_str(),
-                                 key_ref.filenames_mode.c_str()) == 0;
+                                 key_ref.filenames_mode.c_str()) == 0;*/
 }
 
 static bool is_numeric(const char* name) {
