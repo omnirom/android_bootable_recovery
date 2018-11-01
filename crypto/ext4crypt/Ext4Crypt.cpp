@@ -317,9 +317,8 @@ bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, userid_t use
 }
 
 static bool ensure_policy(const std::string& raw_ref __unused, const std::string& path) {
-    LOG(INFO) << "ensure_policy '" << path << "'\n";
     return true;
-    return access(path.c_str(), F_OK) == 0; // ensure policy will set a policy if one is not set on an empty folder - we don't want to do this in recovery
+    // ensure policy will set a policy if one is not set on an empty folder - we don't want to do this in recovery
     /*if (e4crypt_policy_ensure(path.c_str(), raw_ref.data(), raw_ref.size()) != 0) {
         LOG(ERROR) << "Failed to set policy on: " << path << "\n";
         return false;

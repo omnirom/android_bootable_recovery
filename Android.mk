@@ -196,6 +196,11 @@ LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 #else
 #  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
 #endif
+ifeq ($(TARGET_RECOVERY_TWRP_LIB),)
+    LOCAL_SRC_FILES += BasePartition.cpp
+else
+    LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_TWRP_LIB)
+endif
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
@@ -302,6 +307,9 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         TW_INCLUDE_CRYPTO_FBE := true
         LOCAL_CFLAGS += -DTW_INCLUDE_FBE
         LOCAL_SHARED_LIBRARIES += libe4crypt
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+            LOCAL_CFLAGS += -DTW_INCLUDE_FBE_METADATA_DECRYPT
+        endif
     endif
     ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),)
     ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),false)
@@ -481,6 +489,9 @@ ifeq ($(shell test $(CM_PLATFORM_SDK_VERSION) -ge 3; echo $$?),0)
     LOCAL_REQUIRED_MODULES += \
         fsck.f2fs \
         mkfs.f2fs
+endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+    LOCAL_REQUIRED_MODULES += sload.f2fs
 endif
 endif
 
