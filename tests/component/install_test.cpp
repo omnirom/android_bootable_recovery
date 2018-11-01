@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -74,15 +75,15 @@ TEST(InstallTest, verify_package_compatibility_invalid_entry) {
 
 TEST(InstallTest, read_metadata_from_package_smoke) {
   TemporaryFile temp_file;
-  const std::string content("abcdefg");
+  const std::string content("abc=defg");
   BuildZipArchive({ { "META-INF/com/android/metadata", content } }, temp_file.release(),
                   kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
-  std::string metadata;
-  ASSERT_TRUE(read_metadata_from_package(zip, &metadata));
-  ASSERT_EQ(content, metadata);
+  std::map<std::string, std::string> metadata;
+  ASSERT_TRUE(ReadMetadataFromPackage(zip, &metadata));
+  ASSERT_EQ("defg", metadata["abc"]);
   CloseArchive(zip);
 
   TemporaryFile temp_file2;
@@ -91,8 +92,8 @@ TEST(InstallTest, read_metadata_from_package_smoke) {
 
   ASSERT_EQ(0, OpenArchive(temp_file2.path, &zip));
   metadata.clear();
-  ASSERT_TRUE(read_metadata_from_package(zip, &metadata));
-  ASSERT_EQ(content, metadata);
+  ASSERT_TRUE(ReadMetadataFromPackage(zip, &metadata));
+  ASSERT_EQ("defg", metadata["abc"]);
   CloseArchive(zip);
 }
 
@@ -102,8 +103,8 @@ TEST(InstallTest, read_metadata_from_package_no_entry) {
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
-  std::string metadata;
-  ASSERT_FALSE(read_metadata_from_package(zip, &metadata));
+  std::map<std::string, std::string> metadata;
+  ASSERT_FALSE(ReadMetadataFromPackage(zip, &metadata));
   CloseArchive(zip);
 }
 
@@ -235,11 +236,11 @@ static void VerifyAbUpdateCommands(const std::string& serialno, bool success = t
   if (!serialno.empty()) {
     meta.push_back("serialno=" + serialno);
   }
-  std::string metadata = android::base::Join(meta, "\n");
+  std::string metadata_string = android::base::Join(meta, "\n");
 
   BuildZipArchive({ { "payload.bin", "" },
                     { "payload_properties.txt", properties },
-                    { "META-INF/com/android/metadata", metadata } },
+                    { "META-INF/com/android/metadata", metadata_string } },
                   temp_file.release(), kCompressStored);
 
   ZipArchiveHandle zip;
@@ -247,10 +248,15 @@ static void VerifyAbUpdateCommands(const std::string& serialno, bool success = t
   ZipString payload_name("payload.bin");
   ZipEntry payload_entry;
   ASSERT_EQ(0, FindEntry(zip, payload_name, &payload_entry));
-  int status_fd = 10;
-  std::string package = "/path/to/update.zip";
-  std::vector<std::string> cmd;
+
+  std::map<std::string, std::string> metadata;
+  ASSERT_TRUE(ReadMetadataFromPackage(zip, &metadata));
   if (success) {
+    ASSERT_EQ(0, CheckPackageMetadata(metadata, OtaType::AB));
+
+    int status_fd = 10;
+    std::string package = "/path/to/update.zip";
+    std::vector<std::string> cmd;
     ASSERT_EQ(0, SetUpAbUpdateCommands(package, zip, status_fd, &cmd));
     ASSERT_EQ(5U, cmd.size());
     ASSERT_EQ("/system/bin/update_engine_sideload", cmd[0]);
@@ -259,7 +265,7 @@ static void VerifyAbUpdateCommands(const std::string& serialno, bool success = t
     ASSERT_EQ("--headers=" + properties, cmd[3]);
     ASSERT_EQ("--status_fd=" + std::to_string(status_fd), cmd[4]);
   } else {
-    ASSERT_EQ(INSTALL_ERROR, SetUpAbUpdateCommands(package, zip, status_fd, &cmd));
+    ASSERT_EQ(INSTALL_ERROR, CheckPackageMetadata(metadata, OtaType::AB));
   }
   CloseArchive(zip);
 }
@@ -282,8 +288,12 @@ TEST(InstallTest, SetUpAbUpdateCommands_MissingPayloadPropertiesTxt) {
       },
       "\n");
 
-  BuildZipArchive({ { "payload.bin", "" }, { "META-INF/com/android/metadata", metadata } },
-                  temp_file.release(), kCompressStored);
+  BuildZipArchive(
+      {
+          { "payload.bin", "" },
+          { "META-INF/com/android/metadata", metadata },
+      },
+      temp_file.release(), kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
@@ -321,4 +331,242 @@ TEST(InstallTest, SetUpAbUpdateCommands_MultipleSerialnos) {
   }
   // String with the matching serialno should pass the verification.
   VerifyAbUpdateCommands(long_serialno);
+}
+
+static void test_check_package_metadata(const std::string& metadata_string, OtaType ota_type,
+                                        int exptected_result) {
+  TemporaryFile temp_file;
+  BuildZipArchive(
+      {
+          { "META-INF/com/android/metadata", metadata_string },
+      },
+      temp_file.release(), kCompressStored);
+
+  ZipArchiveHandle zip;
+  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
+
+  std::map<std::string, std::string> metadata;
+  ASSERT_TRUE(ReadMetadataFromPackage(zip, &metadata));
+  ASSERT_EQ(exptected_result, CheckPackageMetadata(metadata, ota_type));
+  CloseArchive(zip);
+}
+
+TEST(InstallTest, CheckPackageMetadata_ota_type) {
+  std::string device = android::base::GetProperty("ro.product.device", "");
+  ASSERT_NE("", device);
+
+  // ota-type must be present
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "pre-device=" + device,
+          "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, INSTALL_ERROR);
+
+  // Checks if ota-type matches
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+          "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, 0);
+
+  test_check_package_metadata(metadata, OtaType::BRICK, INSTALL_ERROR);
+}
+
+TEST(InstallTest, CheckPackageMetadata_device_type) {
+  // device type can not be empty
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=BRICK",
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::BRICK, INSTALL_ERROR);
+
+  // device type mismatches
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=BRICK",
+          "pre-device=dummy_device_type",
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::BRICK, INSTALL_ERROR);
+}
+
+TEST(InstallTest, CheckPackageMetadata_serial_number_smoke) {
+  std::string device = android::base::GetProperty("ro.product.device", "");
+  ASSERT_NE("", device);
+
+  // Serial number doesn't need to exist
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=BRICK",
+          "pre-device=" + device,
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::BRICK, 0);
+
+  // Serial number mismatches
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=BRICK",
+          "pre-device=" + device,
+          "serialno=dummy_serial",
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::BRICK, INSTALL_ERROR);
+
+  std::string serialno = android::base::GetProperty("ro.serialno", "");
+  ASSERT_NE("", serialno);
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=BRICK",
+          "pre-device=" + device,
+          "serialno=" + serialno,
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::BRICK, 0);
+}
+
+TEST(InstallTest, CheckPackageMetadata_multiple_serial_number) {
+  std::string device = android::base::GetProperty("ro.product.device", "");
+  ASSERT_NE("", device);
+
+  std::string serialno = android::base::GetProperty("ro.serialno", "");
+  ASSERT_NE("", serialno);
+
+  std::vector<std::string> serial_numbers;
+  // Creates a dummy serial number string.
+  for (size_t c = 'a'; c <= 'z'; c++) {
+    serial_numbers.emplace_back(c, serialno.size());
+  }
+
+  // No matched serialno found.
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=BRICK",
+          "pre-device=" + device,
+          "serialno=" + android::base::Join(serial_numbers, '|'),
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::BRICK, INSTALL_ERROR);
+
+  serial_numbers.emplace_back(serialno);
+  std::shuffle(serial_numbers.begin(), serial_numbers.end(), std::default_random_engine());
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=BRICK",
+          "pre-device=" + device,
+          "serialno=" + android::base::Join(serial_numbers, '|'),
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::BRICK, 0);
+}
+
+TEST(InstallTest, CheckPackageMetadata_ab_build_version) {
+  std::string device = android::base::GetProperty("ro.product.device", "");
+  ASSERT_NE("", device);
+
+  std::string build_version = android::base::GetProperty("ro.build.version.incremental", "");
+  ASSERT_NE("", build_version);
+
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+          "pre-build-incremental=" + build_version,
+          "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, 0);
+
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+          "pre-build-incremental=dummy_build",
+          "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, INSTALL_ERROR);
+}
+
+TEST(InstallTest, CheckPackageMetadata_ab_fingerprint) {
+  std::string device = android::base::GetProperty("ro.product.device", "");
+  ASSERT_NE("", device);
+
+  std::string finger_print = android::base::GetProperty("ro.build.fingerprint", "");
+  ASSERT_NE("", finger_print);
+
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+          "pre-build=" + finger_print,
+          "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, 0);
+
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+          "pre-build=dummy_build_fingerprint",
+          "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, INSTALL_ERROR);
+}
+
+TEST(InstallTest, CheckPackageMetadata_ab_post_timestamp) {
+  std::string device = android::base::GetProperty("ro.product.device", "");
+  ASSERT_NE("", device);
+
+  // post timestamp is required for upgrade.
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, INSTALL_ERROR);
+
+  // post timestamp should be larger than the timestamp on device.
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+          "post-timestamp=0",
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, INSTALL_ERROR);
+
+  // fingerprint is required for downgrade
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+          "post-timestamp=0",
+          "ota-downgrade=yes",
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, INSTALL_ERROR);
+
+  std::string finger_print = android::base::GetProperty("ro.build.fingerprint", "");
+  ASSERT_NE("", finger_print);
+
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+          "post-timestamp=0",
+          "pre-build=" + finger_print,
+          "ota-downgrade=yes",
+      },
+      "\n");
+  test_check_package_metadata(metadata, OtaType::AB, 0);
 }
