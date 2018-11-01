@@ -69,17 +69,6 @@ class ScreenUITest : public testing::Test {
   MockDrawFunctions draw_funcs_;
 };
 
-// TODO(xunchang) Create a constructor.
-static GRSurface CreateFakeGRSurface(int width, int height, int row_bytes, int pixel_bytes) {
-  GRSurface fake_surface;
-  fake_surface.width = width;
-  fake_surface.height = height;
-  fake_surface.row_bytes = row_bytes;
-  fake_surface.pixel_bytes = pixel_bytes;
-
-  return fake_surface;
-}
-
 TEST_F(ScreenUITest, StartPhoneMenuSmoke) {
   TextMenu menu(false, 10, 20, HEADERS, ITEMS, 0, 20, draw_funcs_);
   ASSERT_FALSE(menu.scrollable());
@@ -241,9 +230,14 @@ TEST_F(ScreenUITest, WearMenuSelectItemsOverflow) {
 }
 
 TEST_F(ScreenUITest, GraphicMenuSelection) {
-  auto fake_surface = CreateFakeGRSurface(50, 50, 50, 1);
-  std::vector<GRSurface*> items = { &fake_surface, &fake_surface, &fake_surface };
-  GraphicMenu menu(&fake_surface, items, 0, draw_funcs_);
+  auto header = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  auto item = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  std::vector<GRSurface*> items = {
+    item.get(),
+    item.get(),
+    item.get(),
+  };
+  GraphicMenu menu(header.get(), items, 0, draw_funcs_);
 
   ASSERT_EQ(0, menu.selection());
 
@@ -263,18 +257,23 @@ TEST_F(ScreenUITest, GraphicMenuSelection) {
 }
 
 TEST_F(ScreenUITest, GraphicMenuValidate) {
-  auto fake_surface = CreateFakeGRSurface(50, 50, 50, 1);
-  std::vector<GRSurface*> items = { &fake_surface, &fake_surface, &fake_surface };
+  auto header = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  auto item = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  std::vector<GRSurface*> items = {
+    item.get(),
+    item.get(),
+    item.get(),
+  };
 
-  ASSERT_TRUE(GraphicMenu::Validate(200, 200, &fake_surface, items));
+  ASSERT_TRUE(GraphicMenu::Validate(200, 200, header.get(), items));
 
   // Menu exceeds the horizontal boundary.
-  auto wide_surface = CreateFakeGRSurface(300, 50, 300, 1);
-  ASSERT_FALSE(GraphicMenu::Validate(299, 200, &wide_surface, items));
+  auto wide_surface = GRSurface::Create(300, 50, 300, 1, 300 * 50);
+  ASSERT_FALSE(GraphicMenu::Validate(299, 200, wide_surface.get(), items));
 
   // Menu exceeds the vertical boundary.
-  items.push_back(&fake_surface);
-  ASSERT_FALSE(GraphicMenu::Validate(200, 249, &fake_surface, items));
+  items.push_back(item.get());
+  ASSERT_FALSE(GraphicMenu::Validate(200, 249, header.get(), items));
 }
 
 static constexpr int kMagicAction = 101;
