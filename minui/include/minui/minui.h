@@ -33,10 +33,11 @@ class GRSurface {
   GRSurface() = default;
   virtual ~GRSurface();
 
-  // Creates and returns a GRSurface instance for the given data_size. The starting address of the
-  // surface data is aligned to SURFACE_DATA_ALIGNMENT. Returns the created GRSurface instance (in
-  // std::unique_ptr), or nullptr on error.
-  static std::unique_ptr<GRSurface> Create(size_t data_size);
+  // Creates and returns a GRSurface instance that's sufficient for storing an image of the given
+  // size. The starting address of the surface data is aligned to SURFACE_DATA_ALIGNMENT. Returns
+  // the created GRSurface instance (in std::unique_ptr), or nullptr on error.
+  static std::unique_ptr<GRSurface> Create(int width, int height, int row_bytes, int pixel_bytes,
+                                           size_t data_size);
 
   virtual uint8_t* data() {
     return data_;
@@ -50,6 +51,10 @@ class GRSurface {
   int height;
   int row_bytes;
   int pixel_bytes;
+
+ protected:
+  GRSurface(int width, int height, int row_bytes, int pixel_bytes)
+      : width(width), height(height), row_bytes(row_bytes), pixel_bytes(pixel_bytes) {}
 
  private:
   uint8_t* data_{ nullptr };
