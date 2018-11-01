@@ -102,15 +102,15 @@ std::unique_ptr<GRSurfaceDrm> GRSurfaceDrm::Create(int drm_fd, int width, int he
     return nullptr;
   }
 
-  std::unique_ptr<GRSurfaceDrm> surface = std::make_unique<GRSurfaceDrm>(drm_fd);
-  surface->handle = create_dumb.handle;
+  // Cannot use std::make_unique to access non-public ctor.
+  auto surface = std::unique_ptr<GRSurfaceDrm>(new GRSurfaceDrm(
+      width, height, create_dumb.pitch, create_dumb.bpp / 8, drm_fd, create_dumb.handle));
 
   uint32_t handles[4], pitches[4], offsets[4];
 
   handles[0] = surface->handle;
   pitches[0] = create_dumb.pitch;
   offsets[0] = 0;
-
   if (drmModeAddFB2(drm_fd, width, height, format, handles, pitches, offsets, &surface->fb_id, 0) !=
       0) {
     perror("Failed to drmModeAddFB2");
@@ -124,10 +124,6 @@ std::unique_ptr<GRSurfaceDrm> GRSurfaceDrm::Create(int drm_fd, int width, int he
     return nullptr;
   }
 
-  surface->height = height;
-  surface->width = width;
-  surface->row_bytes = create_dumb.pitch;
-  surface->pixel_bytes = create_dumb.bpp / 8;
   auto mmapped = mmap(nullptr, surface->height * surface->row_bytes, PROT_READ | PROT_WRITE,
                       MAP_SHARED, drm_fd, map_dumb.offset);
   if (mmapped == MAP_FAILED) {
