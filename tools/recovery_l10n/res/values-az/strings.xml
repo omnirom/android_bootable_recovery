@@ -6,4 +6,14 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Əmr yoxdur"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Xəta!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Təhlükəsizlik güncəlləməsi yüklənir"</string>
+    <!-- no translation found for recovery_wipe_data_menu_header (550255032058254478) -->
+    <skip />
+    <!-- no translation found for recovery_try_again (7168248750158873496) -->
+    <skip />
+    <!-- no translation found for recovery_factory_data_reset (7321351565602894783) -->
+    <skip />
+    <!-- no translation found for recovery_wipe_data_confirmation (5439823343348043954) -->
+    <skip />
+    <!-- no translation found for recovery_cancel_wipe_data (66987687653647384) -->
+    <skip />
 </resources>

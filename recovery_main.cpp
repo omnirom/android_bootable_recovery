@@ -478,8 +478,13 @@ int main(int argc, char** argv) {
         break;
 
       case Device::ENTER_FASTBOOT:
-        LOG(INFO) << "Entering fastboot";
-        fastboot = true;
+        if (logical_partitions_mapped()) {
+          ui->Print("Partitions may be mounted - rebooting to enter fastboot.");
+          android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,fastboot");
+        } else {
+          LOG(INFO) << "Entering fastboot";
+          fastboot = true;
+        }
         break;
 
       case Device::ENTER_RECOVERY:

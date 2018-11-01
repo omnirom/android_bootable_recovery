@@ -38,10 +38,12 @@
 #include <cryptfs.h>
 #include <ext4_utils/wipe.h>
 #include <fs_mgr.h>
+#include <fs_mgr_dm_linear.h>
 
 #include "otautil/mounts.h"
 
 static struct fstab* fstab = nullptr;
+static bool did_map_logical_partitions = false;
 
 extern struct selabel_handle* sehandle;
 
@@ -115,6 +117,25 @@ int ensure_path_mounted_at(const char* path, const char* mount_point) {
 
   if (!mount_point) {
     mount_point = v->mount_point;
+  }
+
+  // If we can't acquire the block device for a logical partition, it likely
+  // was never created. In that case we try to create it.
+  if (fs_mgr_is_logical(v) && !fs_mgr_update_logical_partition(v)) {
+    if (did_map_logical_partitions) {
+      LOG(ERROR) << "Failed to find block device for partition";
+      return -1;
+    }
+    std::string super_name = fs_mgr_get_super_partition_name();
+    if (!android::fs_mgr::CreateLogicalPartitions(super_name)) {
+      LOG(ERROR) << "Failed to create logical partitions";
+      return -1;
+    }
+    did_map_logical_partitions = true;
+    if (!fs_mgr_update_logical_partition(v)) {
+      LOG(ERROR) << "Failed to find block device for partition";
+      return -1;
+    }
   }
 
   const MountedVolume* mv = find_mounted_volume_by_mount_point(mount_point);
@@ -386,4 +407,8 @@ int setup_install_mounts() {
     }
   }
   return 0;
+}
+
+bool logical_partitions_mapped() {
+  return did_map_logical_partitions;
 }
