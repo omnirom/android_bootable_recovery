@@ -40,6 +40,9 @@ class GRSurface {
   static std::unique_ptr<GRSurface> Create(int width, int height, int row_bytes, int pixel_bytes,
                                            size_t data_size);
 
+  // Clones the current GRSurface instance (i.e. an image).
+  std::unique_ptr<GRSurface> Clone() const;
+
   virtual uint8_t* data() {
     return data_;
   }
@@ -59,6 +62,7 @@ class GRSurface {
 
  private:
   uint8_t* data_{ nullptr };
+  size_t data_size_;
 
   DISALLOW_COPY_AND_ASSIGN(GRSurface);
 };
