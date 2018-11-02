@@ -44,10 +44,16 @@ std::unique_ptr<GRSurface> GRSurface::Create(int width, int height, int row_byte
   static constexpr size_t kSurfaceDataAlignment = 8;
   // Cannot use std::make_unique to access non-public ctor.
   auto result = std::unique_ptr<GRSurface>(new GRSurface(width, height, row_bytes, pixel_bytes));
-  size_t aligned_size =
+  result->data_size_ =
       (data_size + kSurfaceDataAlignment - 1) / kSurfaceDataAlignment * kSurfaceDataAlignment;
-  result->data_ = static_cast<uint8_t*>(aligned_alloc(kSurfaceDataAlignment, aligned_size));
+  result->data_ = static_cast<uint8_t*>(aligned_alloc(kSurfaceDataAlignment, result->data_size_));
   if (result->data_ == nullptr) return nullptr;
+  return result;
+}
+
+std::unique_ptr<GRSurface> GRSurface::Clone() const {
+  auto result = GRSurface::Create(width, height, row_bytes, pixel_bytes, data_size_);
+  memcpy(result->data_, data_, data_size_);
   return result;
 }
 

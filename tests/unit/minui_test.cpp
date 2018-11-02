@@ -15,8 +15,9 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 
-#include <memory>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -29,4 +30,15 @@ TEST(GRSurfaceTest, Create_aligned) {
     ASSERT_TRUE(surface);
     ASSERT_EQ(0, reinterpret_cast<uintptr_t>(surface->data()) % kSurfaceDataAlignment);
   }
+}
+
+TEST(GRSurfaceTest, Clone) {
+  static constexpr size_t kImageSize = 10 * 50;
+  auto image = GRSurface::Create(50, 10, 50, 1, kImageSize);
+  for (auto i = 0; i < kImageSize; i++) {
+    image->data()[i] = rand() % 128;
+  }
+  auto image_copy = image->Clone();
+  ASSERT_EQ(std::vector(image->data(), image->data() + kImageSize),
+            std::vector(image_copy->data(), image_copy->data() + kImageSize));
 }
