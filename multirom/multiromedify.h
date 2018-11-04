@@ -23,6 +23,7 @@ enum
     // returned by EdifyHacker::getProcessFlags()
     EDIFY_CHANGED     = 0x01,
     EDIFY_BLOCK_UPDATES = 0x02,
+    EDIFY_VENDOR = 0x04,
 };
 
 class EdifyElement

@@ -435,7 +435,7 @@ bool MultiROM::erase(std::string name)
 bool MultiROM::wipe(std::string name, std::string what)
 {
 	gui_print("Changing mountpoints...\n");
-	if(!changeMounts(name))
+	if(!changeMounts(name, true))
 	{
 		gui_print("Failed to change mountpoints!\n");
 		return false;
@@ -498,7 +498,7 @@ bool MultiROM::restorecon(std::string name)
 		replaced_contexts = true;
 	}
 
-	if(!changeMounts(name))
+	if(!changeMounts(name, true))
 		goto exit;
 
 	static const char * const parts[] = { "/system", "/data", "/cache", NULL };
@@ -562,7 +562,7 @@ bool MultiROM::initBackup(const std::string& name)
 {
 	bool hadInternalStorage = (DataManager::GetStrValue("tw_storage_path").find("/data") == 0);
 
-	if(!changeMounts(name))
+	if(!changeMounts(name, true))
 		return false;
 
 	std::string boot = getRomsPath() + name;
@@ -885,7 +885,7 @@ static bool MakeMultiROMRecoveryFstab(void)
 	return true;
 }
 
-bool MultiROM::changeMounts(std::string name)
+bool MultiROM::changeMounts(std::string name, bool needs_vendor)
 {
 	gui_print("Changing mounts to ROM %s...\n", name.c_str());
 
@@ -905,7 +905,7 @@ bool MultiROM::changeMounts(std::string name)
 
 	TWPartition *realdata, *data, *sys, *cache;
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-    TWPartition *vendor;
+    TWPartition *vendor = nullptr;
 #endif
 	std::vector<TWPartition*>& parts = PartitionManager.getPartitions();
 	for(std::vector<TWPartition*>::iterator itr = parts.begin(); itr != parts.end();) {
@@ -920,7 +920,7 @@ bool MultiROM::changeMounts(std::string name)
 			itr = parts.erase(itr);
         }
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-		else if ((*itr)->Mount_Point == "/vendor") {
+		else if (needs_vendor && (*itr)->Mount_Point == "/vendor") {
 			(*itr)->UnMount(true);
 			delete *itr;
 			itr = parts.erase(itr);
@@ -996,9 +996,9 @@ bool MultiROM::changeMounts(std::string name)
 		else
 			data = TWPartition::makePartFromFstab("/data_t %s %s/data flags=bindof=/realdata\n", fs, base.c_str());
 
-        if (Paths_Exist(base, "/vendor.sparse.img"))
+        if (needs_vendor && Paths_Exist(base, "/vendor.sparse.img"))
 			vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor.sparse.img flags=imagemount\n", fs, base.c_str());
-		else
+		else if (needs_vendor)
 			vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor flags=bindof=/realdata\n", fs, base.c_str());
 	}
 	else if (!(M(type) & MASK_IMAGES))
@@ -1007,7 +1007,8 @@ bool MultiROM::changeMounts(std::string name)
 		sys = TWPartition::makePartFromFstab("/system %s %s/system flags=bindof=/realdata\n", fs, base.c_str());
 		data = TWPartition::makePartFromFstab("/data_t %s %s/data flags=bindof=/realdata\n", fs, base.c_str());
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-		vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor flags=bindof=/realdata\n", fs, base.c_str());
+        if (needs_vendor)
+            vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor flags=bindof=/realdata\n", fs, base.c_str());
 #endif
 	}
 	else
@@ -1016,7 +1017,8 @@ bool MultiROM::changeMounts(std::string name)
 		sys = TWPartition::makePartFromFstab("/system %s %s/system.img flags=imagemount\n", fs, base.c_str());
 		data = TWPartition::makePartFromFstab("/data_t %s %s/data.img flags=imagemount\n", fs, base.c_str());
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-		vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor.img flags=imagemount\n", fs, base.c_str());
+        if(needs_vendor)
+            vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor.img flags=imagemount\n", fs, base.c_str());
 #endif
 	}
 
@@ -1029,7 +1031,8 @@ bool MultiROM::changeMounts(std::string name)
 	parts.push_back(cache);
 	parts.push_back(sys);
 	parts.push_back(data);
-	parts.push_back(vendor);
+    if (needs_vendor)
+        parts.push_back(vendor);
 
 	if(DataManager::GetStrValue("tw_storage_path").find("/data/media") == 0)
 	{
@@ -1040,7 +1043,7 @@ bool MultiROM::changeMounts(std::string name)
 
 	PartitionManager.Update_System_Details();
 
-	if(!cache->Mount(true) || !sys->Mount(true) || !data->Mount(true) || !vendor->Mount(true))
+	if(!cache->Mount(true) || !sys->Mount(true) || !data->Mount(true) || (needs_vendor && !vendor->Mount(true)))
 	{
 		gui_print("Failed to mount fake partitions, canceling!\n");
 		cache->UnMount(false);
@@ -1048,7 +1051,8 @@ bool MultiROM::changeMounts(std::string name)
 		data->UnMount(false);
 		realdata->UnMount(false);
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-		vendor->UnMount(false);
+        if (needs_vendor)
+            vendor->UnMount(false);
 #endif
 		PartitionManager.Pop_Context();
 		PartitionManager.Update_System_Details();
@@ -1137,7 +1141,7 @@ void MultiROM::restoreMounts()
 		std::string base_name = TWFunc::Get_Filename(line);
 		if (base_name != "boot.img" &&
 		    base_name != "cache.img" && base_name != "system.img" && base_name != "data.img" &&
-		    base_name != "cache.sparse.img" && base_name != "system.sparse.img" && base_name != "data.sparse.img" && base_name != "vendor.img") {
+		    base_name != "cache.sparse.img" && base_name != "system.sparse.img" && base_name != "data.sparse.img" && base_name != "vendor.sparse.img" && base_name != "vendor.img") {
 			FILE *f;
 			struct mntent *ent;
 
@@ -1365,8 +1369,12 @@ bool MultiROM::createFakeSystemImg()
 	return true;
 }
 
-bool MultiROM::createFakeVendorImg()
+bool MultiROM::createFakeVendorImg(bool needs_vendor)
 {
+
+    if (!needs_vendor) {
+        return true;
+    }
 	std::string sysimg = m_path;
 	translateToRealdata(sysimg);
 
@@ -1421,6 +1429,7 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	int wipe_cache = 0;
 	int sideloaded = 0;
 	bool restore_script = false;
+    bool needs_vendor = false;
 	EdifyHacker hacker;
 	std::string boot, sysimg, loop_device;
 	DIR *dp_keep_busy[4] = { NULL, NULL, NULL, NULL };
@@ -1436,10 +1445,11 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	if(!prepareZIP(file, &hacker, restore_script))  // may change file var
 		return false;
 
+    needs_vendor = (hacker.getProcessFlags() & EDIFY_VENDOR);
 	// unblank here so we can see some progress (kinda optional)
 	blankTimer.resetTimerAndUnblank();
 
-	if(!changeMounts(rom))
+	if(!changeMounts(rom, needs_vendor))
 	{
 		gui_print("Failed to change mountpoints!\n");
 		goto exit;
@@ -1455,12 +1465,13 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	if(!fakeBootPartition(boot.c_str()))
 		goto exit;
 
+
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 	{
 		gui_print("ZIP uses block updates\n");
 		if(!createFakeSystemImg()
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-              ||  !createFakeVendorImg()
+              ||  !createFakeVendorImg(needs_vendor)
 #endif
           )
 			goto exit;
@@ -1539,6 +1550,7 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 	int status, verify_status = 0;
 	EdifyHacker hacker;
 	bool restore_script = false;
+    bool needs_vendor = false;
 	DIR *dp_keep_busy[4] = { NULL, NULL, NULL, NULL };
 
 	gui_print("Flashing ZIP file %s\n", file.c_str());
@@ -1550,12 +1562,13 @@ bool MultiROM::flashORSZip(std::string file, int *wipe_cache)
 	if(!prepareZIP(file, &hacker, restore_script)) // may change file var
 		return false;
 
+    needs_vendor = (hacker.getProcessFlags() & EDIFY_VENDOR);
 	if(hacker.getProcessFlags() & EDIFY_BLOCK_UPDATES)
 	{
 		gui_print("ZIP uses block updates\n");
 		if(!createFakeSystemImg()
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-           ||   !createFakeVendorImg()
+           ||   !createFakeVendorImg(needs_vendor)
 #endif
           )
 			return false;
@@ -2167,12 +2180,21 @@ bool MultiROM::createSparseImage(const std::string& base, const char *img)
 	// make sparse files and format it ext4
 	char cmd[256];
 
+    char* file_contexts = NULL;
+
+    if (!access("/file_contexts", F_OK)) {
+        file_contexts = "/file_contexts";
+    } else {
+        file_contexts = "/plat_file_contexts";
+    }
+
 	// make_ext4fs errors out if it has unknown path
-	if(TWFunc::Path_Exists("/file_contexts") &&
-		(!strcmp(img, "data") ||
+	if(TWFunc::Path_Exists(file_contexts) &&
+        (!strcmp(img, "data") ||
 		 !strcmp(img, "system") ||
+		 !strcmp(img, "vendor") ||
 		 !strcmp(img, "cache"))) {
-		snprintf(cmd, sizeof(cmd), "make_ext4fs -l %dM -a \"/%s\" -S /file_contexts \"%s/%s.sparse.img\"", max_size_MB, img, base.c_str(), img);
+		snprintf(cmd, sizeof(cmd), "make_ext4fs -l %dM -a \"/%s\" -S %s \"%s/%s.sparse.img\"", max_size_MB, img, file_contexts, base.c_str(), img);
 	} else {
 		snprintf(cmd, sizeof(cmd), "make_ext4fs -l %dM \"%s/%s.img\"", max_size_MB, base.c_str(), img);
 	}
@@ -2308,6 +2330,7 @@ bool MultiROM::createDirs(std::string name, int type)
 
 bool MultiROM::extractBootForROM(std::string base)
 {
+#if 0
 	char path[256];
 	struct bootimg img;
 
@@ -2343,7 +2366,7 @@ bool MultiROM::extractBootForROM(std::string base)
 	static const char *cp_f[] = {
 		"*.rc", "default.prop", "init", "main_init", "fstab.*",
 		// Since Android 4.3 - for SELinux
-		"file_contexts", "file_contexts.bin", "property_contexts", "seapp_contexts", "sepolicy",
+		"plat_file_contexts", "file_contexts.bin", "plat_property_contexts", "plat_seapp_contexts", "sepolicy",
 		NULL
 	};
 
@@ -2366,6 +2389,7 @@ bool MultiROM::extractBootForROM(std::string base)
 	}
 	else
 		system_args("rm \"%s/boot.img\"", base.c_str());
+#endif
 	return true;
 }
 
@@ -2837,7 +2861,7 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 		return false;
 
 	gui_print("Changing mountpoints\n");
-	if(!changeMounts(name))
+	if(!changeMounts(name, true))
 	{
 		gui_print("Failed to change mountpoints!\n");
 		return false;
@@ -3028,10 +3052,6 @@ bool MultiROM::ubuntuTouchProcessBoot(const std::string& root, const char *init_
 		gui_print("Failed to unpack boot img!\n");
 		goto fail_inject;
 	}
-	if (libbootimg_dump_dtb(&img, "/tmp/boot/dtb.img") < 0)
-	{
-		gui_print("Didn't find dtb, ignoring\n");
-	}
 	else
 	{
 		gui_print("Found dtb\n");
@@ -3114,7 +3134,7 @@ bool MultiROM::ubuntuTouchProcess(const std::string& root, const std::string& na
 	}
 
 	gui_print("Changing mountpoints\n");
-	if(!changeMounts(name))
+	if(!changeMounts(name, true))
 	{
 		gui_print("Failed to change mountpoints\n");
 		return false;
@@ -3188,12 +3208,6 @@ bool MultiROM::sailfishProcessBoot(const std::string& root)
 		gui_print("Failed to unpack boot img!\n");
 		goto fail_inject;
 	}
-
-	ret = libbootimg_dump_dtb(&img, "/tmp/boot/dtb.img");
-	if(ret < 0 && ret != LIBBOOTIMG_ERROR_NO_BLOB_DATA)
-		gui_print("Failed to extract dtb.img from boot.img!\n");
-	else if(ret >= 0)
-		system_args("cp /tmp/boot/dtb.img \"%s/dtb.img\"", root.c_str());
 
 	// DEPLOY
 	system_args("cp /tmp/boot/initrd.img \"%s/initrd.img\"", root.c_str());
@@ -3485,7 +3499,7 @@ void MultiROM::executeCacheScripts()
 
 	LOGINFO("Running script for ROM %s, type %d\n", script.name.c_str(), script.type);
 
-	if(!changeMounts(script.name))
+	if(!changeMounts(script.name, true))
 		return;
 
 	int had_boot;

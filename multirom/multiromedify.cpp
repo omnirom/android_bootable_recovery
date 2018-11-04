@@ -577,6 +577,7 @@ void EdifyHacker::applyOffendingMask(std::list<EdifyElement*>::iterator& itr, in
             partition = "system";
         } else if(((EdifyFunc*)(*itr1))->getArgsStr().find("vendor") != std::string::npos) {
             partition = "vendor";
+            m_processFlags |= EDIFY_VENDOR;
         }
 
 
@@ -629,7 +630,7 @@ void EdifyHacker::replaceOffendings()
         if(t.compare(HACKER_IDENT_LINE) == 0)
         {
             LOGINFO("EdifyHacker: this updater-script has been already processed, doing nothing.\n");
-            m_processFlags = 0; // FIXME: potential problem: if the script needs EDIFY_BLOCK_UPDATES tmpsystem.img it wont be created, in this case
+            m_processFlags = EDIFY_BLOCK_UPDATES; // FIXME: potential problem: if the script needs EDIFY_BLOCK_UPDATES tmpsystem.img it wont be created, in this case
             return;
         }
     }
