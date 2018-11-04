@@ -27,6 +27,7 @@
 #include <android-base/stringprintf.h>
 #include <android-base/test_utils.h>
 #include <gtest/gtest.h>
+#include <gtest/gtest_prod.h>
 
 #include "common/test_constants.h"
 #include "device.h"
@@ -68,17 +69,6 @@ class ScreenUITest : public testing::Test {
  protected:
   MockDrawFunctions draw_funcs_;
 };
-
-// TODO(xunchang) Create a constructor.
-static GRSurface CreateFakeGRSurface(int width, int height, int row_bytes, int pixel_bytes) {
-  GRSurface fake_surface;
-  fake_surface.width = width;
-  fake_surface.height = height;
-  fake_surface.row_bytes = row_bytes;
-  fake_surface.pixel_bytes = pixel_bytes;
-
-  return fake_surface;
-}
 
 TEST_F(ScreenUITest, StartPhoneMenuSmoke) {
   TextMenu menu(false, 10, 20, HEADERS, ITEMS, 0, 20, draw_funcs_);
@@ -241,9 +231,14 @@ TEST_F(ScreenUITest, WearMenuSelectItemsOverflow) {
 }
 
 TEST_F(ScreenUITest, GraphicMenuSelection) {
-  auto fake_surface = CreateFakeGRSurface(50, 50, 50, 1);
-  std::vector<GRSurface*> items = { &fake_surface, &fake_surface, &fake_surface };
-  GraphicMenu menu(&fake_surface, items, 0, draw_funcs_);
+  auto header = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  auto item = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  std::vector<GRSurface*> items = {
+    item.get(),
+    item.get(),
+    item.get(),
+  };
+  GraphicMenu menu(header.get(), items, 0, draw_funcs_);
 
   ASSERT_EQ(0, menu.selection());
 
@@ -263,18 +258,23 @@ TEST_F(ScreenUITest, GraphicMenuSelection) {
 }
 
 TEST_F(ScreenUITest, GraphicMenuValidate) {
-  auto fake_surface = CreateFakeGRSurface(50, 50, 50, 1);
-  std::vector<GRSurface*> items = { &fake_surface, &fake_surface, &fake_surface };
+  auto header = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  auto item = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  std::vector<GRSurface*> items = {
+    item.get(),
+    item.get(),
+    item.get(),
+  };
 
-  ASSERT_TRUE(GraphicMenu::Validate(200, 200, &fake_surface, items));
+  ASSERT_TRUE(GraphicMenu::Validate(200, 200, header.get(), items));
 
   // Menu exceeds the horizontal boundary.
-  auto wide_surface = CreateFakeGRSurface(300, 50, 300, 1);
-  ASSERT_FALSE(GraphicMenu::Validate(299, 200, &wide_surface, items));
+  auto wide_surface = GRSurface::Create(300, 50, 300, 1, 300 * 50);
+  ASSERT_FALSE(GraphicMenu::Validate(299, 200, wide_surface.get(), items));
 
   // Menu exceeds the vertical boundary.
-  items.push_back(&fake_surface);
-  ASSERT_FALSE(GraphicMenu::Validate(200, 249, &fake_surface, items));
+  items.push_back(item.get());
+  ASSERT_FALSE(GraphicMenu::Validate(200, 249, header.get(), items));
 }
 
 static constexpr int kMagicAction = 101;
@@ -307,24 +307,13 @@ class TestableScreenRecoveryUI : public ScreenRecoveryUI {
 
   int KeyHandler(int key, bool visible) const;
 
-  // The following functions expose the protected members for test purpose.
-  void RunLoadAnimation() {
-    LoadAnimation();
-  }
-
-  size_t GetLoopFrames() const {
-    return loop_frames;
-  }
-
-  size_t GetIntroFrames() const {
-    return intro_frames;
-  }
-
-  bool GetRtlLocale() const {
-    return rtl_locale_;
-  }
-
  private:
+  FRIEND_TEST(ScreenRecoveryUITest, Init);
+  FRIEND_TEST(ScreenRecoveryUITest, RtlLocale);
+  FRIEND_TEST(ScreenRecoveryUITest, RtlLocaleWithSuffix);
+  FRIEND_TEST(ScreenRecoveryUITest, LoadAnimation);
+  FRIEND_TEST(ScreenRecoveryUITest, LoadAnimation_MissingAnimation);
+
   std::vector<KeyCode> key_buffer_;
   size_t key_buffer_index_;
 };
@@ -388,7 +377,7 @@ TEST_F(ScreenRecoveryUITest, Init) {
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
   ASSERT_EQ(kTestLocale, ui_->GetLocale());
-  ASSERT_FALSE(ui_->GetRtlLocale());
+  ASSERT_FALSE(ui_->rtl_locale_);
   ASSERT_FALSE(ui_->IsTextVisible());
   ASSERT_FALSE(ui_->WasTextEverVisible());
 }
@@ -416,14 +405,14 @@ TEST_F(ScreenRecoveryUITest, RtlLocale) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestRtlLocale));
-  ASSERT_TRUE(ui_->GetRtlLocale());
+  ASSERT_TRUE(ui_->rtl_locale_);
 }
 
 TEST_F(ScreenRecoveryUITest, RtlLocaleWithSuffix) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestRtlLocaleWithSuffix));
-  ASSERT_TRUE(ui_->GetRtlLocale());
+  ASSERT_TRUE(ui_->rtl_locale_);
 }
 
 TEST_F(ScreenRecoveryUITest, ShowMenu) {
@@ -548,10 +537,10 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation) {
   }
   Paths::Get().set_resource_dir(resource_dir.path);
 
-  ui_->RunLoadAnimation();
+  ui_->LoadAnimation();
 
-  ASSERT_EQ(2u, ui_->GetIntroFrames());
-  ASSERT_EQ(3u, ui_->GetLoopFrames());
+  ASSERT_EQ(2u, ui_->intro_frames);
+  ASSERT_EQ(3u, ui_->loop_frames);
 
   for (const auto& name : tempfiles) {
     ASSERT_EQ(0, unlink(name.c_str()));
@@ -567,7 +556,7 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
   Paths::Get().set_resource_dir("/proc/self");
 
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(ui_->RunLoadAnimation(), ::testing::KilledBySignal(SIGABRT), "");
+  ASSERT_EXIT(ui_->LoadAnimation(), ::testing::KilledBySignal(SIGABRT), "");
 }
 
 #undef RETURN_IF_NO_GRAPHICS

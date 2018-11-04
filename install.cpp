@@ -32,9 +32,7 @@
 #include <condition_variable>
 #include <functional>
 #include <limits>
-#include <map>
 #include <mutex>
-#include <string>
 #include <thread>
 #include <vector>
 
@@ -47,7 +45,6 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <vintf/VintfObjectRecovery.h>
-#include <ziparchive/zip_archive.h>
 
 #include "common.h"
 #include "otautil/error_code.h"
@@ -67,18 +64,7 @@ static constexpr float VERIFICATION_PROGRESS_FRACTION = 0.25;
 
 static std::condition_variable finish_log_temperature;
 
-// This function parses and returns the build.version.incremental
-static std::string parse_build_number(const std::string& str) {
-    size_t pos = str.find('=');
-    if (pos != std::string::npos) {
-        return android::base::Trim(str.substr(pos+1));
-    }
-
-    LOG(ERROR) << "Failed to parse build number in " << str;
-    return "";
-}
-
-bool read_metadata_from_package(ZipArchiveHandle zip, std::string* metadata) {
+bool ReadMetadataFromPackage(ZipArchiveHandle zip, std::map<std::string, std::string>* metadata) {
   CHECK(metadata != nullptr);
 
   static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
@@ -90,101 +76,79 @@ bool read_metadata_from_package(ZipArchiveHandle zip, std::string* metadata) {
   }
 
   uint32_t length = entry.uncompressed_length;
-  metadata->resize(length, '\0');
-  int32_t err = ExtractToMemory(zip, &entry, reinterpret_cast<uint8_t*>(&(*metadata)[0]), length);
+  std::string metadata_string(length, '\0');
+  int32_t err =
+      ExtractToMemory(zip, &entry, reinterpret_cast<uint8_t*>(&metadata_string[0]), length);
   if (err != 0) {
     LOG(ERROR) << "Failed to extract " << METADATA_PATH << ": " << ErrorCodeString(err);
     return false;
   }
+
+  for (const std::string& line : android::base::Split(metadata_string, "\n")) {
+    size_t eq = line.find('=');
+    if (eq != std::string::npos) {
+      metadata->emplace(android::base::Trim(line.substr(0, eq)),
+                        android::base::Trim(line.substr(eq + 1)));
+    }
+  }
+
   return true;
 }
 
-// Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
-static void read_source_target_build(ZipArchiveHandle zip, std::vector<std::string>* log_buffer) {
-  std::string metadata;
-  if (!read_metadata_from_package(zip, &metadata)) {
-    return;
-  }
-  // Examples of the pre-build and post-build strings in metadata:
-  //   pre-build-incremental=2943039
-  //   post-build-incremental=2951741
-  std::vector<std::string> lines = android::base::Split(metadata, "\n");
-  for (const std::string& line : lines) {
-    std::string str = android::base::Trim(line);
-    if (android::base::StartsWith(str, "pre-build-incremental")) {
-      std::string source_build = parse_build_number(str);
-      if (!source_build.empty()) {
-        log_buffer->push_back("source_build: " + source_build);
-      }
-    } else if (android::base::StartsWith(str, "post-build-incremental")) {
-      std::string target_build = parse_build_number(str);
-      if (!target_build.empty()) {
-        log_buffer->push_back("target_build: " + target_build);
-      }
-    }
+// Gets the value for the given key in |metadata|. Returns an emtpy string if the key isn't
+// present.
+static std::string get_value(const std::map<std::string, std::string>& metadata,
+                             const std::string& key) {
+  const auto& it = metadata.find(key);
+  return (it == metadata.end()) ? "" : it->second;
+}
+
+static std::string OtaTypeToString(OtaType type) {
+  switch (type) {
+    case OtaType::AB:
+      return "AB";
+    case OtaType::BLOCK:
+      return "BLOCK";
+    case OtaType::BRICK:
+      return "BRICK";
   }
 }
 
-// Parses the metadata of the OTA package in |zip| and checks whether we are allowed to accept this
-// A/B package. Downgrading is not allowed unless explicitly enabled in the package and only for
+// Read the build.version.incremental of src/tgt from the metadata and log it to last_install.
+static void ReadSourceTargetBuild(const std::map<std::string, std::string>& metadata,
+                                  std::vector<std::string>* log_buffer) {
+  // Examples of the pre-build and post-build strings in metadata:
+  //   pre-build-incremental=2943039
+  //   post-build-incremental=2951741
+  auto source_build = get_value(metadata, "pre-build-incremental");
+  if (!source_build.empty()) {
+    log_buffer->push_back("source_build: " + source_build);
+  }
+
+  auto target_build = get_value(metadata, "post-build-incremental");
+  if (!target_build.empty()) {
+    log_buffer->push_back("target_build: " + target_build);
+  }
+}
+
+// Checks the build version, fingerprint and timestamp in the metadata of the A/B package.
+// Downgrading is not allowed unless explicitly enabled in the package and only for
 // incremental packages.
-static int check_newer_ab_build(ZipArchiveHandle zip) {
-  std::string metadata_str;
-  if (!read_metadata_from_package(zip, &metadata_str)) {
-    return INSTALL_CORRUPT;
-  }
-  std::map<std::string, std::string> metadata;
-  for (const std::string& line : android::base::Split(metadata_str, "\n")) {
-    size_t eq = line.find('=');
-    if (eq != std::string::npos) {
-      metadata[line.substr(0, eq)] = line.substr(eq + 1);
-    }
-  }
-
-  std::string value = android::base::GetProperty("ro.product.device", "");
-  const std::string& pkg_device = metadata["pre-device"];
-  if (pkg_device != value || pkg_device.empty()) {
-    LOG(ERROR) << "Package is for product " << pkg_device << " but expected " << value;
-    return INSTALL_ERROR;
-  }
-
-  // We allow the package to not have any serialno; and we also allow it to carry multiple serial
-  // numbers split by "|"; e.g. serialno=serialno1|serialno2|serialno3 ... We will fail the
-  // verification if the device's serialno doesn't match any of these carried numbers.
-  value = android::base::GetProperty("ro.serialno", "");
-  const std::string& pkg_serial_no = metadata["serialno"];
-  if (!pkg_serial_no.empty()) {
-    bool match = false;
-    for (const std::string& number : android::base::Split(pkg_serial_no, "|")) {
-      if (value == android::base::Trim(number)) {
-        match = true;
-        break;
-      }
-    }
-    if (!match) {
-      LOG(ERROR) << "Package is for serial " << pkg_serial_no;
-      return INSTALL_ERROR;
-    }
-  }
-
-  if (metadata["ota-type"] != "AB") {
-    LOG(ERROR) << "Package is not A/B";
-    return INSTALL_ERROR;
-  }
-
+static int CheckAbSpecificMetadata(const std::map<std::string, std::string>& metadata) {
   // Incremental updates should match the current build.
-  value = android::base::GetProperty("ro.build.version.incremental", "");
-  const std::string& pkg_pre_build = metadata["pre-build-incremental"];
-  if (!pkg_pre_build.empty() && pkg_pre_build != value) {
-    LOG(ERROR) << "Package is for source build " << pkg_pre_build << " but expected " << value;
+  auto device_pre_build = android::base::GetProperty("ro.build.version.incremental", "");
+  auto pkg_pre_build = get_value(metadata, "pre-build-incremental");
+  if (!pkg_pre_build.empty() && pkg_pre_build != device_pre_build) {
+    LOG(ERROR) << "Package is for source build " << pkg_pre_build << " but expected "
+               << device_pre_build;
     return INSTALL_ERROR;
   }
 
-  value = android::base::GetProperty("ro.build.fingerprint", "");
-  const std::string& pkg_pre_build_fingerprint = metadata["pre-build"];
-  if (!pkg_pre_build_fingerprint.empty() && pkg_pre_build_fingerprint != value) {
+  auto device_fingerprint = android::base::GetProperty("ro.build.fingerprint", "");
+  auto pkg_pre_build_fingerprint = get_value(metadata, "pre-build");
+  if (!pkg_pre_build_fingerprint.empty() && pkg_pre_build_fingerprint != device_fingerprint) {
     LOG(ERROR) << "Package is for source build " << pkg_pre_build_fingerprint << " but expected "
-               << value;
+               << device_fingerprint;
     return INSTALL_ERROR;
   }
 
@@ -194,10 +158,11 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
   int64_t pkg_post_timestamp = 0;
   // We allow to full update to the same version we are running, in case there
   // is a problem with the current copy of that version.
-  if (metadata["post-timestamp"].empty() ||
-      !android::base::ParseInt(metadata["post-timestamp"].c_str(), &pkg_post_timestamp) ||
+  auto pkg_post_timestamp_string = get_value(metadata, "post-timestamp");
+  if (pkg_post_timestamp_string.empty() ||
+      !android::base::ParseInt(pkg_post_timestamp_string, &pkg_post_timestamp) ||
       pkg_post_timestamp < build_timestamp) {
-    if (metadata["ota-downgrade"] != "yes") {
+    if (get_value(metadata, "ota-downgrade") != "yes") {
       LOG(ERROR) << "Update package is older than the current build, expected a build "
                     "newer than timestamp "
                  << build_timestamp << " but package has timestamp " << pkg_post_timestamp
@@ -213,13 +178,55 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
   return 0;
 }
 
+int CheckPackageMetadata(const std::map<std::string, std::string>& metadata, OtaType ota_type) {
+  auto package_ota_type = get_value(metadata, "ota-type");
+  auto expected_ota_type = OtaTypeToString(ota_type);
+  if (ota_type != OtaType::AB && ota_type != OtaType::BRICK) {
+    LOG(INFO) << "Skip package metadata check for ota type " << expected_ota_type;
+    return 0;
+  }
+
+  if (package_ota_type != expected_ota_type) {
+    LOG(ERROR) << "Unexpected ota package type, expects " << expected_ota_type << ", actual "
+               << package_ota_type;
+    return INSTALL_ERROR;
+  }
+
+  auto device = android::base::GetProperty("ro.product.device", "");
+  auto pkg_device = get_value(metadata, "pre-device");
+  if (pkg_device != device || pkg_device.empty()) {
+    LOG(ERROR) << "Package is for product " << pkg_device << " but expected " << device;
+    return INSTALL_ERROR;
+  }
+
+  // We allow the package to not have any serialno; and we also allow it to carry multiple serial
+  // numbers split by "|"; e.g. serialno=serialno1|serialno2|serialno3 ... We will fail the
+  // verification if the device's serialno doesn't match any of these carried numbers.
+  auto pkg_serial_no = get_value(metadata, "serialno");
+  if (!pkg_serial_no.empty()) {
+    auto device_serial_no = android::base::GetProperty("ro.serialno", "");
+    bool serial_number_match = false;
+    for (const auto& number : android::base::Split(pkg_serial_no, "|")) {
+      if (device_serial_no == android::base::Trim(number)) {
+        serial_number_match = true;
+      }
+    }
+    if (!serial_number_match) {
+      LOG(ERROR) << "Package is for serial " << pkg_serial_no;
+      return INSTALL_ERROR;
+    }
+  }
+
+  if (ota_type == OtaType::AB) {
+    return CheckAbSpecificMetadata(metadata);
+  }
+
+  return 0;
+}
+
 int SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int status_fd,
                           std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
-  int ret = check_newer_ab_build(zip);
-  if (ret != 0) {
-    return ret;
-  }
 
   // For A/B updates we extract the payload properties to a buffer and obtain the RAW payload offset
   // in the zip file.
@@ -311,20 +318,33 @@ static void log_max_temperature(int* max_temperature, const std::atomic<bool>& l
 static int try_update_binary(const std::string& package, ZipArchiveHandle zip, bool* wipe_cache,
                              std::vector<std::string>* log_buffer, int retry_count,
                              int* max_temperature) {
-  read_source_target_build(zip, log_buffer);
+  std::map<std::string, std::string> metadata;
+  if (!ReadMetadataFromPackage(zip, &metadata)) {
+    LOG(ERROR) << "Failed to parse metadata in the zip file";
+    return INSTALL_CORRUPT;
+  }
+
+  bool is_ab = android::base::GetBoolProperty("ro.build.ab_update", false);
+  // Verifies against the metadata in the package first.
+  if (int check_status = is_ab ? CheckPackageMetadata(metadata, OtaType::AB) : 0;
+      check_status != 0) {
+    log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
+    return check_status;
+  }
+
+  ReadSourceTargetBuild(metadata, log_buffer);
 
   int pipefd[2];
   pipe(pipefd);
-
-  bool is_ab = android::base::GetBoolProperty("ro.build.ab_update", false);
   std::vector<std::string> args;
-  int ret = is_ab ? SetUpAbUpdateCommands(package, zip, pipefd[1], &args)
-                  : SetUpNonAbUpdateCommands(package, zip, retry_count, pipefd[1], &args);
-  if (ret) {
+  if (int update_status =
+          is_ab ? SetUpAbUpdateCommands(package, zip, pipefd[1], &args)
+                : SetUpNonAbUpdateCommands(package, zip, retry_count, pipefd[1], &args);
+      update_status != 0) {
     close(pipefd[0]);
     close(pipefd[1]);
     log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
-    return ret;
+    return update_status;
   }
 
   // When executing the update binary contained in the package, the
