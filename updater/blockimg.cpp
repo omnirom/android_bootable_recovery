@@ -1399,7 +1399,10 @@ static int PerformCommandDiff(CommandParameters& params) {
 
       // We expect the output of the patcher to fill the tgt ranges exactly.
       if (!writer.Finished()) {
-        LOG(ERROR) << "range sink underrun?";
+        LOG(ERROR) << "Failed to fully write target blocks (range sink underrun): Missing "
+                   << writer.AvailableSpace() << " bytes";
+        failure_type = kPatchApplicationFailure;
+        return -1;
       }
     } else {
       LOG(INFO) << "skipping " << blocks << " blocks already patched to " << tgt.blocks() << " ["
