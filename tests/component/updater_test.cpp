@@ -664,6 +664,48 @@ TEST_F(UpdaterTest, block_image_update_patch_data) {
   ASSERT_EQ(tgt_content, updated_content);
 }
 
+TEST_F(UpdaterTest, block_image_update_patch_underrun) {
+  std::string src_content = std::string(4096, 'a') + std::string(4096, 'c');
+  std::string tgt_content = std::string(4096, 'b') + std::string(4096, 'd');
+
+  // Generate the patch data. We intentionally provide one-byte short target to trigger the underrun
+  // path.
+  TemporaryFile patch_file;
+  ASSERT_EQ(0,
+            bsdiff::bsdiff(reinterpret_cast<const uint8_t*>(src_content.data()), src_content.size(),
+                           reinterpret_cast<const uint8_t*>(tgt_content.data()),
+                           tgt_content.size() - 1, patch_file.path, nullptr));
+  std::string patch_content;
+  ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch_content));
+
+  // Create the transfer list that contains a bsdiff.
+  std::string src_hash = get_sha1(src_content);
+  std::string tgt_hash = get_sha1(tgt_content);
+  std::vector<std::string> transfer_list{
+    // clang-format off
+    "4",
+    "2",
+    "0",
+    "2",
+    "stash " + src_hash + " 2,0,2",
+    android::base::StringPrintf("bsdiff 0 %zu %s %s 2,0,2 2 - %s:2,0,2", patch_content.size(),
+                                src_hash.c_str(), tgt_hash.c_str(), src_hash.c_str()),
+    "free " + src_hash,
+    // clang-format on
+  };
+
+  PackageEntries entries{
+    { "new_data", "" },
+    { "patch_data", patch_content },
+    { "transfer_list", android::base::Join(transfer_list, '\n') },
+  };
+
+  ASSERT_TRUE(android::base::WriteStringToFile(src_content, image_file_));
+
+  // The update should fail due to underrun.
+  RunBlockImageUpdate(false, entries, image_file_, "", kPatchApplicationFailure);
+}
+
 TEST_F(UpdaterTest, block_image_update_fail) {
   std::string src_content(4096 * 2, 'e');
   std::string src_hash = get_sha1(src_content);
