@@ -231,12 +231,12 @@ TEST_F(ScreenUITest, WearMenuSelectItemsOverflow) {
 }
 
 TEST_F(ScreenUITest, GraphicMenuSelection) {
-  auto header = GRSurface::Create(50, 50, 50, 1, 50 * 50);
-  auto item = GRSurface::Create(50, 50, 50, 1, 50 * 50);
-  std::vector<GRSurface*> items = {
-    item.get(),
-    item.get(),
-    item.get(),
+  auto image = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  auto header = image->Clone();
+  std::vector<const GRSurface*> items = {
+    image.get(),
+    image.get(),
+    image.get(),
   };
   GraphicMenu menu(header.get(), items, 0, draw_funcs_);
 
@@ -258,12 +258,12 @@ TEST_F(ScreenUITest, GraphicMenuSelection) {
 }
 
 TEST_F(ScreenUITest, GraphicMenuValidate) {
-  auto header = GRSurface::Create(50, 50, 50, 1, 50 * 50);
-  auto item = GRSurface::Create(50, 50, 50, 1, 50 * 50);
-  std::vector<GRSurface*> items = {
-    item.get(),
-    item.get(),
-    item.get(),
+  auto image = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  auto header = image->Clone();
+  std::vector<const GRSurface*> items = {
+    image.get(),
+    image.get(),
+    image.get(),
   };
 
   ASSERT_TRUE(GraphicMenu::Validate(200, 200, header.get(), items));
@@ -273,7 +273,7 @@ TEST_F(ScreenUITest, GraphicMenuValidate) {
   ASSERT_FALSE(GraphicMenu::Validate(299, 200, wide_surface.get(), items));
 
   // Menu exceeds the vertical boundary.
-  items.push_back(item.get());
+  items.emplace_back(image.get());
   ASSERT_FALSE(GraphicMenu::Validate(200, 249, header.get(), items));
 }
 
@@ -539,8 +539,8 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation) {
 
   ui_->LoadAnimation();
 
-  ASSERT_EQ(2u, ui_->intro_frames);
-  ASSERT_EQ(3u, ui_->loop_frames);
+  ASSERT_EQ(2u, ui_->intro_frames_.size());
+  ASSERT_EQ(3u, ui_->loop_frames_.size());
 
   for (const auto& name : tempfiles) {
     ASSERT_EQ(0, unlink(name.c_str()));
