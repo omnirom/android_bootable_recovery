@@ -197,11 +197,16 @@ int TextMenu::DrawItems(int x, int y, int screen_width, bool long_press) const {
   return offset;
 }
 
-GraphicMenu::GraphicMenu(GRSurface* graphic_headers, const std::vector<GRSurface*>& graphic_items,
+GraphicMenu::GraphicMenu(const GRSurface* graphic_headers,
+                         const std::vector<const GRSurface*>& graphic_items,
                          size_t initial_selection, const DrawInterface& draw_funcs)
-    : Menu(initial_selection, draw_funcs),
-      graphic_headers_(graphic_headers),
-      graphic_items_(graphic_items) {}
+    : Menu(initial_selection, draw_funcs) {
+  graphic_headers_ = graphic_headers->Clone();
+  graphic_items_.reserve(graphic_items.size());
+  for (const auto& item : graphic_items) {
+    graphic_items_.emplace_back(item->Clone());
+  }
+}
 
 int GraphicMenu::Select(int sel) {
   CHECK_LE(graphic_items_.size(), static_cast<size_t>(std::numeric_limits<int>::max()));
@@ -221,7 +226,7 @@ int GraphicMenu::Select(int sel) {
 
 int GraphicMenu::DrawHeader(int x, int y) const {
   draw_funcs_.SetColor(UIElement::HEADER);
-  draw_funcs_.DrawTextIcon(x, y, graphic_headers_);
+  draw_funcs_.DrawTextIcon(x, y, graphic_headers_.get());
   return graphic_headers_->height;
 }
 
@@ -242,7 +247,7 @@ int GraphicMenu::DrawItems(int x, int y, int screen_width, bool long_press) cons
       // Bold white text for the selected item.
       draw_funcs_.SetColor(UIElement::MENU_SEL_FG);
     }
-    draw_funcs_.DrawTextIcon(x, y + offset, item);
+    draw_funcs_.DrawTextIcon(x, y + offset, item.get());
     offset += item->height;
 
     draw_funcs_.SetColor(UIElement::MENU);
@@ -251,8 +256,8 @@ int GraphicMenu::DrawItems(int x, int y, int screen_width, bool long_press) cons
   return offset;
 }
 
-bool GraphicMenu::Validate(size_t max_width, size_t max_height, GRSurface* graphic_headers,
-                           const std::vector<GRSurface*>& graphic_items) {
+bool GraphicMenu::Validate(size_t max_width, size_t max_height, const GRSurface* graphic_headers,
+                           const std::vector<const GRSurface*>& graphic_items) {
   int offset = 0;
   if (!ValidateGraphicSurface(max_width, max_height, offset, graphic_headers)) {
     return false;
@@ -307,7 +312,9 @@ ScreenRecoveryUI::ScreenRecoveryUI(bool scrollable_menu)
       animation_fps_(
           android::base::GetIntProperty("ro.recovery.ui.animation_fps", kDefaultAnimationFps)),
       density_(static_cast<float>(android::base::GetIntProperty("ro.sf.lcd_density", 160)) / 160.f),
-      currentIcon(NONE),
+      current_icon_(NONE),
+      current_frame_(0),
+      intro_done_(false),
       progressBarType(EMPTY),
       progressScopeStart(0),
       progressScopeSize(0),
@@ -322,10 +329,6 @@ ScreenRecoveryUI::ScreenRecoveryUI(bool scrollable_menu)
       show_text_ever(false),
       scrollable_menu_(scrollable_menu),
       file_viewer_text_(nullptr),
-      intro_frames(0),
-      loop_frames(0),
-      current_frame(0),
-      intro_done(false),
       stage(-1),
       max_stage(-1),
       locale_(""),
@@ -340,23 +343,23 @@ ScreenRecoveryUI::~ScreenRecoveryUI() {
   gr_exit();
 }
 
-GRSurface* ScreenRecoveryUI::GetCurrentFrame() const {
-  if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
-    return intro_done ? loopFrames[current_frame] : introFrames[current_frame];
+const GRSurface* ScreenRecoveryUI::GetCurrentFrame() const {
+  if (current_icon_ == INSTALLING_UPDATE || current_icon_ == ERASING) {
+    return intro_done_ ? loop_frames_[current_frame_].get() : intro_frames_[current_frame_].get();
   }
-  return error_icon;
+  return error_icon_.get();
 }
 
-GRSurface* ScreenRecoveryUI::GetCurrentText() const {
-  switch (currentIcon) {
+const GRSurface* ScreenRecoveryUI::GetCurrentText() const {
+  switch (current_icon_) {
     case ERASING:
-      return erasing_text;
+      return erasing_text_.get();
     case ERROR:
-      return error_text;
+      return error_text_.get();
     case INSTALLING_UPDATE:
-      return installing_text;
+      return installing_text_.get();
     case NO_COMMAND:
-      return no_command_text;
+      return no_command_text_.get();
     case NONE:
       abort();
   }
@@ -391,20 +394,21 @@ static constexpr int kLayouts[LAYOUT_MAX][DIMENSION_MAX] = {
 };
 
 int ScreenRecoveryUI::GetAnimationBaseline() const {
-  return GetTextBaseline() - PixelsFromDp(kLayouts[layout_][ICON]) - gr_get_height(loopFrames[0]);
+  return GetTextBaseline() - PixelsFromDp(kLayouts[layout_][ICON]) -
+         gr_get_height(loop_frames_[0].get());
 }
 
 int ScreenRecoveryUI::GetTextBaseline() const {
   return GetProgressBaseline() - PixelsFromDp(kLayouts[layout_][TEXT]) -
-         gr_get_height(installing_text);
+         gr_get_height(installing_text_.get());
 }
 
 int ScreenRecoveryUI::GetProgressBaseline() const {
-  int elements_sum = gr_get_height(loopFrames[0]) + PixelsFromDp(kLayouts[layout_][ICON]) +
-                     gr_get_height(installing_text) + PixelsFromDp(kLayouts[layout_][TEXT]) +
-                     gr_get_height(progressBarFill);
+  int elements_sum = gr_get_height(loop_frames_[0].get()) + PixelsFromDp(kLayouts[layout_][ICON]) +
+                     gr_get_height(installing_text_.get()) + PixelsFromDp(kLayouts[layout_][TEXT]) +
+                     gr_get_height(progress_bar_fill_.get());
   int bottom_gap = (ScreenHeight() - elements_sum) / 2;
-  return ScreenHeight() - bottom_gap - gr_get_height(progressBarFill);
+  return ScreenHeight() - bottom_gap - gr_get_height(progress_bar_fill_.get());
 }
 
 // Clear the screen and draw the currently selected background icon (if any).
@@ -413,20 +417,20 @@ void ScreenRecoveryUI::draw_background_locked() {
   pagesIdentical = false;
   gr_color(0, 0, 0, 255);
   gr_clear();
-  if (currentIcon != NONE) {
+  if (current_icon_ != NONE) {
     if (max_stage != -1) {
-      int stage_height = gr_get_height(stageMarkerEmpty);
-      int stage_width = gr_get_width(stageMarkerEmpty);
-      int x = (ScreenWidth() - max_stage * gr_get_width(stageMarkerEmpty)) / 2;
+      int stage_height = gr_get_height(stage_marker_empty_.get());
+      int stage_width = gr_get_width(stage_marker_empty_.get());
+      int x = (ScreenWidth() - max_stage * gr_get_width(stage_marker_empty_.get())) / 2;
       int y = ScreenHeight() - stage_height - margin_height_;
       for (int i = 0; i < max_stage; ++i) {
-        GRSurface* stage_surface = (i < stage) ? stageMarkerFill : stageMarkerEmpty;
-        DrawSurface(stage_surface, 0, 0, stage_width, stage_height, x, y);
+        const auto& stage_surface = (i < stage) ? stage_marker_fill_ : stage_marker_empty_;
+        DrawSurface(stage_surface.get(), 0, 0, stage_width, stage_height, x, y);
         x += stage_width;
       }
     }
 
-    GRSurface* text_surface = GetCurrentText();
+    const auto& text_surface = GetCurrentText();
     int text_x = (ScreenWidth() - gr_get_width(text_surface)) / 2;
     int text_y = GetTextBaseline();
     gr_color(255, 255, 255, 255);
@@ -437,8 +441,8 @@ void ScreenRecoveryUI::draw_background_locked() {
 // Draws the animation and progress bar (if any) on the screen. Does not flip pages. Should only be
 // called with updateMutex locked.
 void ScreenRecoveryUI::draw_foreground_locked() {
-  if (currentIcon != NONE) {
-    GRSurface* frame = GetCurrentFrame();
+  if (current_icon_ != NONE) {
+    const auto& frame = GetCurrentFrame();
     int frame_width = gr_get_width(frame);
     int frame_height = gr_get_height(frame);
     int frame_x = (ScreenWidth() - frame_width) / 2;
@@ -447,8 +451,8 @@ void ScreenRecoveryUI::draw_foreground_locked() {
   }
 
   if (progressBarType != EMPTY) {
-    int width = gr_get_width(progressBarEmpty);
-    int height = gr_get_height(progressBarEmpty);
+    int width = gr_get_width(progress_bar_empty_.get());
+    int height = gr_get_height(progress_bar_empty_.get());
 
     int progress_x = (ScreenWidth() - width) / 2;
     int progress_y = GetProgressBaseline();
@@ -464,19 +468,20 @@ void ScreenRecoveryUI::draw_foreground_locked() {
       if (rtl_locale_) {
         // Fill the progress bar from right to left.
         if (pos > 0) {
-          DrawSurface(progressBarFill, width - pos, 0, pos, height, progress_x + width - pos,
-                      progress_y);
+          DrawSurface(progress_bar_fill_.get(), width - pos, 0, pos, height,
+                      progress_x + width - pos, progress_y);
         }
         if (pos < width - 1) {
-          DrawSurface(progressBarEmpty, 0, 0, width - pos, height, progress_x, progress_y);
+          DrawSurface(progress_bar_empty_.get(), 0, 0, width - pos, height, progress_x, progress_y);
         }
       } else {
         // Fill the progress bar from left to right.
         if (pos > 0) {
-          DrawSurface(progressBarFill, 0, 0, pos, height, progress_x, progress_y);
+          DrawSurface(progress_bar_fill_.get(), 0, 0, pos, height, progress_x, progress_y);
         }
         if (pos < width - 1) {
-          DrawSurface(progressBarEmpty, pos, 0, width - pos, height, progress_x + pos, progress_y);
+          DrawSurface(progress_bar_empty_.get(), pos, 0, width - pos, height, progress_x + pos,
+                      progress_y);
         }
       }
     }
@@ -518,15 +523,14 @@ void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string
   SetLocale(locales_entries[sel]);
   std::vector<std::string> text_name = { "erasing_text", "error_text", "installing_text",
                                          "installing_security_text", "no_command_text" };
-  std::unordered_map<std::string, std::unique_ptr<GRSurface, decltype(&free)>> surfaces;
+  std::unordered_map<std::string, std::unique_ptr<GRSurface>> surfaces;
   for (const auto& name : text_name) {
-    GRSurface* text_image = nullptr;
-    LoadLocalizedBitmap(name.c_str(), &text_image);
+    auto text_image = LoadLocalizedBitmap(name);
     if (!text_image) {
       Print("Failed to load %s\n", name.c_str());
       return;
     }
-    surfaces.emplace(name, std::unique_ptr<GRSurface, decltype(&free)>(text_image, &free));
+    surfaces.emplace(name, std::move(text_image));
   }
 
   std::lock_guard<std::mutex> lg(updateMutex);
@@ -753,16 +757,16 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
 
       // update the installation animation, if active
       // skip this if we have a text overlay (too expensive to update)
-      if ((currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) && !show_text) {
-        if (!intro_done) {
-          if (current_frame == intro_frames - 1) {
-            intro_done = true;
-            current_frame = 0;
+      if ((current_icon_ == INSTALLING_UPDATE || current_icon_ == ERASING) && !show_text) {
+        if (!intro_done_) {
+          if (current_frame_ == intro_frames_.size() - 1) {
+            intro_done_ = true;
+            current_frame_ = 0;
           } else {
-            ++current_frame;
+            ++current_frame_;
           }
         } else {
-          current_frame = (current_frame + 1) % loop_frames;
+          current_frame_ = (current_frame_ + 1) % loop_frames_.size();
         }
 
         redraw = true;
@@ -791,18 +795,23 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
   }
 }
 
-void ScreenRecoveryUI::LoadBitmap(const char* filename, GRSurface** surface) {
-  int result = res_create_display_surface(filename, surface);
-  if (result < 0) {
-    LOG(ERROR) << "couldn't load bitmap " << filename << " (error " << result << ")";
+std::unique_ptr<GRSurface> ScreenRecoveryUI::LoadBitmap(const std::string& filename) {
+  GRSurface* surface;
+  if (auto result = res_create_display_surface(filename.c_str(), &surface); result < 0) {
+    LOG(ERROR) << "Failed to load bitmap " << filename << " (error " << result << ")";
+    return nullptr;
   }
+  return std::unique_ptr<GRSurface>(surface);
 }
 
-void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, GRSurface** surface) {
-  int result = res_create_localized_alpha_surface(filename, locale_.c_str(), surface);
-  if (result < 0) {
-    LOG(ERROR) << "couldn't load bitmap " << filename << " (error " << result << ")";
+std::unique_ptr<GRSurface> ScreenRecoveryUI::LoadLocalizedBitmap(const std::string& filename) {
+  GRSurface* surface;
+  if (auto result = res_create_localized_alpha_surface(filename.c_str(), locale_.c_str(), &surface);
+      result < 0) {
+    LOG(ERROR) << "Failed to load bitmap " << filename << " (error " << result << ")";
+    return nullptr;
   }
+  return std::unique_ptr<GRSurface>(surface);
 }
 
 static char** Alloc2d(size_t rows, size_t cols) {
@@ -817,9 +826,9 @@ static char** Alloc2d(size_t rows, size_t cols) {
 // Choose the right background string to display during update.
 void ScreenRecoveryUI::SetSystemUpdateText(bool security_update) {
   if (security_update) {
-    LoadLocalizedBitmap("installing_security_text", &installing_text);
+    installing_text_ = LoadLocalizedBitmap("installing_security_text");
   } else {
-    LoadLocalizedBitmap("installing_text", &installing_text);
+    installing_text_ = LoadLocalizedBitmap("installing_text");
   }
   Redraw();
 }
@@ -838,10 +847,6 @@ bool ScreenRecoveryUI::InitTextParams() {
 // TODO(xunchang) load localized text icons for the menu. (Init for screenRecoveryUI but
 // not wearRecoveryUI).
 bool ScreenRecoveryUI::LoadWipeDataMenuText() {
-  wipe_data_menu_header_text_ = nullptr;
-  factory_data_reset_text_ = nullptr;
-  try_again_text_ = nullptr;
-
   return true;
 }
 
@@ -869,21 +874,20 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
   // Set up the locale info.
   SetLocale(locale);
 
-  LoadBitmap("icon_error", &error_icon);
+  error_icon_ = LoadBitmap("icon_error");
 
-  LoadBitmap("progress_empty", &progressBarEmpty);
-  LoadBitmap("progress_fill", &progressBarFill);
+  progress_bar_empty_ = LoadBitmap("progress_empty");
+  progress_bar_fill_ = LoadBitmap("progress_fill");
+  stage_marker_empty_ = LoadBitmap("stage_empty");
+  stage_marker_fill_ = LoadBitmap("stage_fill");
 
-  LoadBitmap("stage_empty", &stageMarkerEmpty);
-  LoadBitmap("stage_fill", &stageMarkerFill);
+  erasing_text_ = LoadLocalizedBitmap("erasing_text");
+  no_command_text_ = LoadLocalizedBitmap("no_command_text");
+  error_text_ = LoadLocalizedBitmap("error_text");
 
-  // Background text for "installing_update" could be "installing update"
-  // or "installing security update". It will be set after UI init according
-  // to commands in BCB.
-  installing_text = nullptr;
-  LoadLocalizedBitmap("erasing_text", &erasing_text);
-  LoadLocalizedBitmap("no_command_text", &no_command_text);
-  LoadLocalizedBitmap("error_text", &error_text);
+  // Background text for "installing_update" could be "installing update" or
+  // "installing security update". It will be set after Init() according to the commands in BCB.
+  installing_text_.reset();
 
   LoadWipeDataMenuText();
 
@@ -915,32 +919,34 @@ void ScreenRecoveryUI::LoadAnimation() {
     }
   }
 
-  intro_frames = intro_frame_names.size();
-  loop_frames = loop_frame_names.size();
+  size_t intro_frames = intro_frame_names.size();
+  size_t loop_frames = loop_frame_names.size();
 
   // It's okay to not have an intro.
-  if (intro_frames == 0) intro_done = true;
+  if (intro_frames == 0) intro_done_ = true;
   // But you must have an animation.
   if (loop_frames == 0) abort();
 
   std::sort(intro_frame_names.begin(), intro_frame_names.end());
   std::sort(loop_frame_names.begin(), loop_frame_names.end());
 
-  introFrames = new GRSurface*[intro_frames];
-  for (size_t i = 0; i < intro_frames; i++) {
-    LoadBitmap(intro_frame_names.at(i).c_str(), &introFrames[i]);
+  intro_frames_.clear();
+  intro_frames_.reserve(intro_frames);
+  for (const auto& frame_name : intro_frame_names) {
+    intro_frames_.emplace_back(LoadBitmap(frame_name));
   }
 
-  loopFrames = new GRSurface*[loop_frames];
-  for (size_t i = 0; i < loop_frames; i++) {
-    LoadBitmap(loop_frame_names.at(i).c_str(), &loopFrames[i]);
+  loop_frames_.clear();
+  loop_frames_.reserve(loop_frames);
+  for (const auto& frame_name : loop_frame_names) {
+    loop_frames_.emplace_back(LoadBitmap(frame_name));
   }
 }
 
 void ScreenRecoveryUI::SetBackground(Icon icon) {
   std::lock_guard<std::mutex> lg(updateMutex);
 
-  currentIcon = icon;
+  current_icon_ = icon;
   update_screen_locked();
 }
 
@@ -972,7 +978,7 @@ void ScreenRecoveryUI::SetProgress(float fraction) {
   if (fraction > 1.0) fraction = 1.0;
   if (progressBarType == DETERMINATE && fraction > progress) {
     // Skip updates that aren't visibly different.
-    int width = gr_get_width(progressBarEmpty);
+    int width = gr_get_width(progress_bar_empty_.get());
     float scale = width * progressScopeSize;
     if ((int)(progress * scale) != (int)(fraction * scale)) {
       progress = fraction;
@@ -1115,11 +1121,10 @@ void ScreenRecoveryUI::ShowFile(const std::string& filename) {
   text_row_ = old_text_row;
 }
 
-std::unique_ptr<Menu> ScreenRecoveryUI::CreateMenu(GRSurface* graphic_header,
-                                                   const std::vector<GRSurface*>& graphic_items,
-                                                   const std::vector<std::string>& text_headers,
-                                                   const std::vector<std::string>& text_items,
-                                                   size_t initial_selection) const {
+std::unique_ptr<Menu> ScreenRecoveryUI::CreateMenu(
+    const GRSurface* graphic_header, const std::vector<const GRSurface*>& graphic_items,
+    const std::vector<std::string>& text_headers, const std::vector<std::string>& text_items,
+    size_t initial_selection) const {
   // horizontal unusable area: margin width + menu indent
   size_t max_width = ScreenWidth() - margin_width_ - kMenuIndent;
   // vertical unusable area: margin height + title lines + helper message + high light bar.
@@ -1235,9 +1240,9 @@ size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
 size_t ScreenRecoveryUI::ShowPromptWipeDataMenu(const std::vector<std::string>& backup_headers,
                                                 const std::vector<std::string>& backup_items,
                                                 const std::function<int(int, bool)>& key_handler) {
-  auto wipe_data_menu =
-      CreateMenu(wipe_data_menu_header_text_, { try_again_text_, factory_data_reset_text_ },
-                 backup_headers, backup_items, 0);
+  auto wipe_data_menu = CreateMenu(wipe_data_menu_header_text_.get(),
+                                   { try_again_text_.get(), factory_data_reset_text_.get() },
+                                   backup_headers, backup_items, 0);
   if (wipe_data_menu == nullptr) {
     return 0;
   }
