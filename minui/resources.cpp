@@ -46,22 +46,17 @@ std::unique_ptr<GRSurface> GRSurface::Create(int width, int height, int row_byte
   auto result = std::unique_ptr<GRSurface>(new GRSurface(width, height, row_bytes, pixel_bytes));
   result->data_size_ =
       (data_size + kSurfaceDataAlignment - 1) / kSurfaceDataAlignment * kSurfaceDataAlignment;
-  result->data_ = static_cast<uint8_t*>(aligned_alloc(kSurfaceDataAlignment, result->data_size_));
-  if (result->data_ == nullptr) return nullptr;
+  result->data_.reset(
+      static_cast<uint8_t*>(aligned_alloc(kSurfaceDataAlignment, result->data_size_)));
+  if (!result->data_) return nullptr;
   return result;
 }
 
 std::unique_ptr<GRSurface> GRSurface::Clone() const {
   auto result = GRSurface::Create(width, height, row_bytes, pixel_bytes, data_size_);
-  memcpy(result->data_, data_, data_size_);
+  if (!result) return nullptr;
+  memcpy(result->data(), data(), data_size_);
   return result;
-}
-
-GRSurface::~GRSurface() {
-  if (data_ != nullptr) {
-    free(data_);
-    data_ = nullptr;
-  }
 }
 
 PngHandler::PngHandler(const std::string& name) {
