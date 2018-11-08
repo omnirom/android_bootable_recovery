@@ -497,9 +497,16 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   if (retry_update) {
     return INSTALL_RETRY;
   }
-  if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    LOG(ERROR) << "Error in " << package << " (Status " << WEXITSTATUS(status) << ")";
+  if (WIFEXITED(status)) {
+    if (WEXITSTATUS(status) != EXIT_SUCCESS) {
+      LOG(ERROR) << "Error in " << package << " (status " << WEXITSTATUS(status) << ")";
+      return INSTALL_ERROR;
+    }
+  } else if (WIFSIGNALED(status)) {
+    LOG(ERROR) << "Error in " << package << " (killed by signal " << WTERMSIG(status) << ")";
     return INSTALL_ERROR;
+  } else {
+    LOG(FATAL) << "Invalid status code " << status;
   }
 
   return INSTALL_SUCCESS;
