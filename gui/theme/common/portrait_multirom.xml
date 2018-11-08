@@ -1720,6 +1720,16 @@ not implemented
 					<action function="set">tw_mrom_next_page=multirom_sideload_complete</action>
 					<action function="page">action_page</action>
 				</actions>
+            </button>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row6_y%"/>
+				<text>GSI Image</text>
+				<actions>
+					<action function="set">tw_multirom_add_source=gsi</action>
+                    <action function="set">tw_multirom_type_SparseSystem=1</action>
+					<action function="page">multirom_add_select</action>
+				</actions>
 			</button>
 
 			<text style="text_m_accent">
@@ -1731,7 +1741,8 @@ not implemented
 				<placement x="%indent%" y="%row11_y%"/>
 				<text>Enable System Partition Mode (e.g. for Magisk)</text>
 				<data variable="tw_multirom_type_SparseSystem"/>
-			</checkbox>
+            </checkbox>
+
 			<action>
 				<touch key="back"/>
 				<action function="page">multirom_add</action>
@@ -1758,6 +1769,15 @@ not implemented
 				</conditions>
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
 				<text>Select ZIP from %tw_storage_display_name%</text>
+            </text>
+
+			<text style="text_m">
+				<conditions>
+					<condition var1="tw_multirom_type" var2="1"/>
+					<condition var1="tw_multirom_add_source" var2="gsi"/>
+				</conditions>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>Select GSI image from %tw_storage_display_name%</text>
 			</text>
 
 			<text style="text_m">
@@ -1812,6 +1832,19 @@ not implemented
 				<path name="tw_zip_location" default="/sdcard"/>
 				<data name="tw_filename"/>
 				<selection name="tw_file"/>
+            </fileselector>
+
+			<fileselector>
+				<conditions>
+					<condition var1="tw_multirom_type" var2="1"/>
+					<condition var1="tw_multirom_add_source" var2="gsi"/>
+				</conditions>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn=".img" folders="1" files="1"/>
+				<path name="tw_gsi_location" default="/sdcard"/>
+				<data name="tw_filename"/>
+				<selection name="tw_image_name"/>
 			</fileselector>
 
 			<fileselector>

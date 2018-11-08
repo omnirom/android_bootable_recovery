@@ -906,6 +906,7 @@ void DataManager::SetDefaultValues()
 #endif
 
 	mPersist.SetValue(TW_AUTO_INJECT_MROM, "1");
+	mPersist.SetValue("tw_multirom_type_SparseSystem", "1");
 
 	mConst.SetValue("tw_is_multirom", "1");
 #else

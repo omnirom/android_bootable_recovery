@@ -920,10 +920,15 @@ bool MultiROM::changeMounts(std::string name, bool needs_vendor)
 			itr = parts.erase(itr);
         }
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-		else if (needs_vendor && (*itr)->Mount_Point == "/vendor") {
-			(*itr)->UnMount(true);
-			delete *itr;
-			itr = parts.erase(itr);
+		else if ((*itr)->Mount_Point == "/vendor") {
+            if (needs_vendor) {
+                (*itr)->UnMount(true);
+                delete *itr;
+                itr = parts.erase(itr);
+            } else {
+                vendor = *itr;
+                ++itr;
+            }
 		}
 #endif
 		else {
@@ -998,7 +1003,7 @@ bool MultiROM::changeMounts(std::string name, bool needs_vendor)
 
         if (needs_vendor && Paths_Exist(base, "/vendor.sparse.img"))
 			vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor.sparse.img flags=imagemount\n", fs, base.c_str());
-		else if (needs_vendor)
+		else if (needs_vendor && Paths_Exist(base, "/vendor"))
 			vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor flags=bindof=/realdata\n", fs, base.c_str());
 	}
 	else if (!(M(type) & MASK_IMAGES))
@@ -1007,7 +1012,7 @@ bool MultiROM::changeMounts(std::string name, bool needs_vendor)
 		sys = TWPartition::makePartFromFstab("/system %s %s/system flags=bindof=/realdata\n", fs, base.c_str());
 		data = TWPartition::makePartFromFstab("/data_t %s %s/data flags=bindof=/realdata\n", fs, base.c_str());
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-        if (needs_vendor)
+        if (needs_vendor && Paths_Exist(base, "/vendor"))
             vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor flags=bindof=/realdata\n", fs, base.c_str());
 #endif
 	}
@@ -1017,7 +1022,7 @@ bool MultiROM::changeMounts(std::string name, bool needs_vendor)
 		sys = TWPartition::makePartFromFstab("/system %s %s/system.img flags=imagemount\n", fs, base.c_str());
 		data = TWPartition::makePartFromFstab("/data_t %s %s/data.img flags=imagemount\n", fs, base.c_str());
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-        if(needs_vendor)
+        if(needs_vendor && Paths_Exist(base, "/vendor.img"))
             vendor = TWPartition::makePartFromFstab("/vendor %s %s/vendor.img flags=imagemount\n", fs, base.c_str());
 #endif
 	}
@@ -1031,7 +1036,7 @@ bool MultiROM::changeMounts(std::string name, bool needs_vendor)
 	parts.push_back(cache);
 	parts.push_back(sys);
 	parts.push_back(data);
-    if (needs_vendor)
+    if (needs_vendor && vendor != nullptr)
         parts.push_back(vendor);
 
 	if(DataManager::GetStrValue("tw_storage_path").find("/data/media") == 0)
@@ -1043,7 +1048,7 @@ bool MultiROM::changeMounts(std::string name, bool needs_vendor)
 
 	PartitionManager.Update_System_Details();
 
-	if(!cache->Mount(true) || !sys->Mount(true) || !data->Mount(true) || (needs_vendor && !vendor->Mount(true)))
+	if(!cache->Mount(true) || !sys->Mount(true) || !data->Mount(true) || (vendor != nullptr && !vendor->Mount(true)))
 	{
 		gui_print("Failed to mount fake partitions, canceling!\n");
 		cache->UnMount(false);
@@ -1051,7 +1056,7 @@ bool MultiROM::changeMounts(std::string name, bool needs_vendor)
 		data->UnMount(false);
 		realdata->UnMount(false);
 #ifdef MR_DEVICE_HAS_VENDOR_PARTITION
-        if (needs_vendor)
+        if (vendor != nullptr)
             vendor->UnMount(false);
 #endif
 		PartitionManager.Pop_Context();
@@ -1421,6 +1426,17 @@ bool MultiROM::createFakeVendorImg(bool needs_vendor)
 
 #define MR_UPDATE_SCRIPT_PATH  "META-INF/com/google/android/"
 #define MR_UPDATE_SCRIPT_NAME  "META-INF/com/google/android/updater-script"
+
+bool MultiROM::installFromFastbootImg(std::string rom, std::string file)
+{
+	string Command;
+
+	Command = "simg2img '" + file + "' '" + getRomsPath() + rom + "/system.sparse.img" + "'";
+	LOGINFO("Flash command: '%s'\n", Command.c_str());
+	TWFunc::Exec_Cmd(Command);
+    gui_print("Image successfully installed\n");
+	return true;
+}
 
 bool MultiROM::flashZip(std::string rom, std::string file)
 {
@@ -2280,7 +2296,7 @@ bool MultiROM::createDirs(std::string name, int type)
 
             if (!createSparseImage(base, "vendor"))
 				return false;
-			system_args("chcon u:object_r:vendor_file:s0 \"%s/vendor.sparse.img\"", base.c_str());
+            system_args("chcon u:object_r:vendor_file:s0 \"%s/vendor.sparse.img\"", base.c_str());
 
 			if (1) {
 				if (mkdir((base + "/data").c_str(), 0771) < 0) {
@@ -2651,6 +2667,12 @@ bool MultiROM::addROM(std::string zip, int os, std::string loc)
 				if(!installFromBackup(name, zip, type))
 					break;
 			}
+            else if(src == "gsi")
+            {
+                //Convert fastboot image to raw image
+                if (!installFromFastbootImg(name, zip))
+                    break;
+            }
 			else
 			{
 				gui_print("Wrong source: %s\n", src.c_str());
@@ -2861,7 +2883,7 @@ bool MultiROM::installFromBackup(std::string name, std::string path, int type)
 		return false;
 
 	gui_print("Changing mountpoints\n");
-	if(!changeMounts(name, true))
+	if(!changeMounts(name, has_vendor))
 	{
 		gui_print("Failed to change mountpoints!\n");
 		return false;
