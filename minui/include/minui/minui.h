@@ -17,6 +17,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <sys/types.h>
 
 #include <functional>
@@ -32,7 +33,7 @@
 
 class GRSurface {
  public:
-  virtual ~GRSurface();
+  virtual ~GRSurface() = default;
 
   // Creates and returns a GRSurface instance that's sufficient for storing an image of the given
   // size. The starting address of the surface data is aligned to SURFACE_DATA_ALIGNMENT. Returns
@@ -44,7 +45,7 @@ class GRSurface {
   std::unique_ptr<GRSurface> Clone() const;
 
   virtual uint8_t* data() {
-    return data_;
+    return data_.get();
   }
 
   const uint8_t* data() const {
@@ -61,7 +62,14 @@ class GRSurface {
       : width(width), height(height), row_bytes(row_bytes), pixel_bytes(pixel_bytes) {}
 
  private:
-  uint8_t* data_{ nullptr };
+  // The deleter for data_, whose data is allocated via aligned_alloc(3).
+  struct DataDeleter {
+    void operator()(uint8_t* data) {
+      free(data);
+    }
+  };
+
+  std::unique_ptr<uint8_t, DataDeleter> data_;
   size_t data_size_;
 
   DISALLOW_COPY_AND_ASSIGN(GRSurface);
