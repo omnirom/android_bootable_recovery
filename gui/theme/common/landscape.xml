@@ -4617,7 +4617,7 @@
 				</actions>
 			</action>
 			
-			action>
+			<action>
 				<touch key="power"/>
 				<action function="togglebacklight"/>
 			</action>
