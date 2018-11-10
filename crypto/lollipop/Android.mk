@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libcryptfslollipop
 LOCAL_MODULE_TAGS := eng optional
-LOCAL_CFLAGS :=
+LOCAL_CFLAGS := -Wno-implicit-function-declaration
 LOCAL_SRC_FILES = cryptfs.c
 LOCAL_SHARED_LIBRARIES := libcrypto libhardware libcutils
 LOCAL_C_INCLUDES := external/openssl/include $(commands_recovery_local_path)/crypto/scrypt/lib/crypto
