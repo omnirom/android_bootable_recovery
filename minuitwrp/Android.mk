@@ -189,5 +189,5 @@ LOCAL_SHARED_LIBRARIES += libcutils liblog libutils
 endif
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libminuitwrp
-
+LOCAL_CFLAGS += -Wno-sign-compare
 include $(BUILD_SHARED_LIBRARY)
