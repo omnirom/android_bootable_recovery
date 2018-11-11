@@ -482,6 +482,8 @@ endif
 endif
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
+    LOCAL_ADDITIONAL_DEPENDENCIES += file_contexts_text
+else
     LOCAL_REQUIRED_MODULES += file_contexts_text
 endif
 
