@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <bits/epoll_event.h> /* bionic workaround */
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
