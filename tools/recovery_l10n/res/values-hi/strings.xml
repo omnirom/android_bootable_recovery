@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"कोई निर्देश नहीं मिला"</string>
     <string name="recovery_error" msgid="5748178989622716736">"गड़बड़ी!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"सुरक्षा अपडेट इंस्टॉल किया जा रहा है"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android सिस्टम लोड नहीं किया जा सकता. शायद आपके डेटा में गड़बड़ी है. अगर आपको यह मैसेज मिलता रहता है, तो शायद आपको फ़ैक्ट्री डेटा रीसेट करना पड़े और इस डिवाइस की मेमोरी में मौजूद उपयोगकर्ता का सभी डेटा हमेशा के लिए मिटाना पड़े."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"फिर से कोशिश करें"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"फ़ैक्ट्री डेटा रीसेट"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"क्या उपयोगकर्ता का सभी डेटा मिटाएं?\n\n इसे वापस नहीं लाया जा सकता!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"अभी नहीं"</string>
 </resources>

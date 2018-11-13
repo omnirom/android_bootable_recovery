@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Inget kommando"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Fel!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Säkerhetsuppdatering installeras"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Det gick inte att läsa in Android-systemet. Data kan ha skadats. Om det här meddelandet visas igen kan du behöva återställa standardinställningarna så att all användardata som sparats på enheten raderas."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Försök igen"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Återställ standardinställningarna"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Vill du rensa bort all användardata?\n\n DET GÅR INTE ATT ÅNGRA DENNA ÅTGÄRD."</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Avbryt"</string>
 </resources>

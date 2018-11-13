@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Καμία εντολή"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Σφάλμα!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Εγκατάσταση ενημέρωσης ασφαλείας"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Δεν είναι δυνατή η φόρτωση του συστήματος Android. Τα δεδομένα σας μπορεί να είναι κατεστραμμένα. Εάν εξακολουθήσετε να λαμβάνετε αυτό το μήνυμα, μπορεί να χρειαστεί να κάνετε επαναφορά εργοστασιακών ρυθμίσεων και να διαγράψετε όλα τα δεδομένα που έχουν αποθηκευτεί σε αυτήν τη συσκευή."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Δοκιμάστε ξανά"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Επαναφορά εργοστασιακών δεδομένων"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Να διαγραφούν όλα τα δεδομένα χρήστη;\n\n ΔΕΝ ΕΙΝΑΙ ΔΥΝΑΤΗ Η ΑΝΑΙΡΕΣΗ ΑΥΤΗΣ ΤΗΣ ΕΝΕΡΓΕΙΑΣ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Ακύρωση"</string>
 </resources>

@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"ಯಾವುದೇ ಆದೇಶವಿಲ್ಲ"</string>
     <string name="recovery_error" msgid="5748178989622716736">"ದೋಷ!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"ಭದ್ರತೆಯ ಅಪ್‌ಡೇಟ್‌ ಸ್ಥಾಪಿಸಲಾಗುತ್ತಿದೆ"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android ಸಿಸ್ಟಂ ಅನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಡೇಟಾ ದೋಷಪೂರಿತವಾಗಿರಬಹುದು. ನೀವು ಈ ಸಂದೇಶ ಪಡೆಯುವುದು ಮುಂದುವರಿದರೆ, ನೀವು ಫ್ಯಾಕ್ಟರಿ ಡೇಟಾ ರಿಸೆಟ್ ಮಾಡುವ ಅಗತ್ಯವಿದೆ ಮತ್ತು ಈ ಸಾಧನದಲ್ಲಿ ಸಂಗ್ರಹಿಸಲಾದ ಎಲ್ಲಾ ಬಳಕೆದಾರರ ಡೇಟಾವನ್ನು ಅಳಿಸಬೇಕಾಗುತ್ತದೆ."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ಫ್ಯಾಕ್ಟರಿ ಡೇಟಾ ರಿಸೆಟ್‌"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"ಎಲ್ಲಾ ಬಳಕೆದಾರರ ಡೇಟಾವನ್ನು ಅಳಿಸುವುದೇ?\n\n ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"ರದ್ದುಮಾಡಿ"</string>
 </resources>

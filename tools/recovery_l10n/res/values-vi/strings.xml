@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Không có lệnh nào"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Lỗi!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Đang cài đặt bản cập nhật bảo mật"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Không thể tải hệ thống Android. Dữ liệu của bạn có thể bị hỏng. Nếu tiếp tục thấy thông báo này, bạn có thể cần phải thiết lập lại dữ liệu ban đầu và xóa tất cả dữ liệu người dùng lưu trữ trên thiết bị này."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Thử lại"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Thiết lập lại dữ liệu ban đầu"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Xóa sạch tất cả dữ liệu người dùng?\n\n KHÔNG THỂ HOÀN TÁC THAO TÁC NÀY!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Hủy"</string>
 </resources>

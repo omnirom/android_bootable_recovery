@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"কোনো আদেশ নেই"</string>
     <string name="recovery_error" msgid="5748178989622716736">"ত্রুটি!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"নিরাপত্তার আপডেট ইনস্টল করা হচ্ছে"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android সিস্টেম লোড করা যায়নি। আপনার ডেটা হয়ত নষ্ট হয়ে গেছে। যদি এই মেসেজটি আসতেই থাকে তাহলে হয়ত ফ্যাক্টরি ডেটা রিসেট করে এই ডিভাইসে থাকা ব্যবহারকারীর সব ডেটা মুছে ফেলতে হবে।"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"আবার চেষ্টা করুন"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ফ্যাক্টরি ডেটা রিসেট করুন"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"ব্যবহারকারীর সব ডেটা মুছে দিতে চান?\n\n এই ডেটা আর ফিরে পাওয়া যাবে না!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"বাতিল করুন"</string>
 </resources>

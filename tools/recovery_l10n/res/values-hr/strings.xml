@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Nema naredbe"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Pogreška!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Instaliranje sigurnosnog ažuriranja"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Sustav Android ne može se učitati. Podaci su možda oštećeni. Ako opet primite ovu poruku, možda ćete morati vratiti uređaj na tvorničko stanje i izbrisati sve podatke korisnika pohranjene na ovom uređaju."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Pokušaj ponovo"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Vraćanje na tvorničko stanje"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Želite li izbrisati sve podatke korisnika?\n\n TO SE NE MOŽE PONIŠTITI!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Odustani"</string>
 </resources>

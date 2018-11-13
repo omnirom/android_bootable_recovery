@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"명령어 없음"</string>
     <string name="recovery_error" msgid="5748178989622716736">"오류!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"보안 업데이트 설치 중"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android 시스템을 로드할 수 없습니다. 데이터가 손상되었을 수 있습니다. 이 메시지가 계속 표시되면 초기화를 실행하여 기기에 저장된 사용자 데이터를 모두 삭제해야 할 수도 있습니다."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"다시 시도"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"초기화"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"사용자 데이터를 모두 삭제하시겠습니까?\n\n 이 작업은 실행취소할 수 없습니다."</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"취소"</string>
 </resources>

@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Žádný příkaz"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Chyba!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Instalace aktualizace zabezpečení"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Systém Android se nepodařilo načíst. Vaše data jsou možná poškozena. Pokud se tato zpráva bude zobrazovat i nadále, bude nutné vymazat všechna uživatelská data v zařízení a obnovit tovární data."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Zkusit znovu"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Obnovení továrních dat"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Vymazat všechna uživatelská data?\n\nTUTO AKCI NELZE VRÁTIT ZPĚT!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Zrušit"</string>
 </resources>

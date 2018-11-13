@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Komut yok"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Hata!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Güvenlik güncellemesi yükleniyor"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android sisteminiz yüklenemedi. Verileriniz bozulmuş olabilir. Bu mesajı almaya devam ederseniz fabrika verilerine sıfırlama işlemi yapmanız ve bu cihazda depolanan tüm kullanıcı verilerini silmeniz gerekebilir."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Tekrar dene"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Fabrika verilerine sıfırla"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Tüm kullanıcı verileri silinsin mi?\n\n BU İŞLEM GERİ ALINAMAZ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"İptal"</string>
 </resources>
