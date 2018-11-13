@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"கட்டளை இல்லை"</string>
     <string name="recovery_error" msgid="5748178989622716736">"பிழை!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"பாதுகாப்புப் புதுப்பிப்பை நிறுவுகிறது"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android சிஸ்டத்தைக் காண்பிக்க இயலவில்லை. உங்களின் தரவு சிதைந்திருக்கலாம். இந்த மெசேஜ் உங்களுக்குத் தொடர்ந்து வந்தால், தரவின் ஆரம்பநிலைக்கு மீட்டமைத்தல் மற்றும் இந்தச் சாதனத்தில் சேமிக்கப்பட்டுள்ள அனைத்துப் பயனர் தரவையும் அழித்தல் ஆகியவற்றைச் செய்ய வேண்டியிருக்கலாம்."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"மீண்டும் முயல்க"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"தரவின் ஆரம்பநிலை மீட்டமைப்பு"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"பயனரின் அனைத்துத் தரவையும் நீக்கவா?\n\n இதைச் செயல்தவிர்க்க இயலாது!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"இல்லை"</string>
 </resources>

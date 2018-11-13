@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"കമാൻഡ് ഒന്നുമില്ല"</string>
     <string name="recovery_error" msgid="5748178989622716736">"പിശക്!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"സുരക്ഷാ അപ്ഡേറ്റ് ഇൻസ്റ്റാൾ ചെയ്യുന്നു"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android സിസ്‌റ്റം ലോഡ് ചെയ്യാനാവില്ല. നിങ്ങളുടെ ഡാറ്റ കേടായിരിക്കാം. ഈ സന്ദേശം തുടർന്നും ലഭിക്കുകയാണെങ്കിൽ, നിങ്ങൾ ഒരു ഫാക്‌ടറി ഡാറ്റ പുനഃക്രമീകരണം നടത്തേണ്ടതുണ്ട് ഒപ്പം ഈ ഉപകരണത്തിൽ സ്‌റ്റോർ ചെയ്‌തിട്ടുള്ള എല്ലാ ഉപയോക്തൃ ഡാറ്റകളും മായ്‌ക്കേണ്ടതുണ്ട്."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"വീണ്ടും ശ്രമിക്കുക"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ഫാക്‌ടറി ഡാറ്റ പുനഃക്രമീകരണം"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"എല്ലാ ഉപയോക്തൃ ഡാറ്റകളും മായ്‌ക്കണോ?\n\n ഇത് പഴയപടിയാക്കാനാവില്ല!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"റദ്ദാക്കുക"</string>
 </resources>

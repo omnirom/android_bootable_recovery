@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Geen opdrag nie"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Fout!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Installeer tans sekuriteitopdatering"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Kan nie Android-stelsel laai nie. Jou data is dalk korrup. As jy aanhou om hierdie boodskap te kry, sal jy dalk \'n fabrieksterugstelling moet doen en alle gebruikerdata moet uitvee wat op hierdie toestel geberg word."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Probeer weer"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Fabrieksterugstelling"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Vee alle gebruikerdata uit?\n\n DIT KAN NIE ONTDOEN WORD NIE!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Kanselleer"</string>
 </resources>

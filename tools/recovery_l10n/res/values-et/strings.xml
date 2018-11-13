@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Käsk puudub"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Viga!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Turvavärskenduse installimine"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android-süsteemi ei saa laadida. Teie andmed on võib-olla rikutud. Kui jätkate selle sõnumi hankimist, peate võib-olla tegema tehaseandmetele lähtestamise ja kustutama kõik sellesse seadmesse salvestatud kasutajaandmed."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Proovige uuesti"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Tehaseandmetele lähtestamine"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Kas kustutada kõik kasutajaandmed?\n\n SEDA TOIMINGUT EI SAA TAGASI VÕTTA!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Tühista"</string>
 </resources>

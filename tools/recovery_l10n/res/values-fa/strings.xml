@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"فرمانی وجود ندارد"</string>
     <string name="recovery_error" msgid="5748178989622716736">"خطا!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"در حال نصب به‌روزرسانی امنیتی"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"‏نمی‌توان سیستم Android را بارگیری کرد. ممکن است داده‌های شما خراب باشند. اگر همچنان این پیام را دریافت می‌کنید، شاید لازم باشد بازنشانی داده‌های کارخانه‌ای انجام دهید و همه داده‌های کاربر را که در این دستگاه ذخیره شده است پاک کنید."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"تلاش مجدد"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"بازنشانی داده‌های کارخانه"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"همه داده‌های کاربر پاک شود؟\n\n این کار قابل‌واگرد نیست!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"لغو"</string>
 </resources>

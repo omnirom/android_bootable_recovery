@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Немає команди"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Помилка!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Установлюється оновлення системи безпеки"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Не вдається завантажити систему Android. Можливо, ваші дані пошкоджено. Якщо ви далі отримуватимете це повідомлення, можливо, доведеться відновити заводські налаштування й видалити всі дані користувача з цього пристрою."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Повторити"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Відновити заводські налаштування"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Видалити всі дані користувача?\n\n ЦЮ ДІЮ НЕ МОЖНА ВІДМІНИТИ."</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Скасувати"</string>
 </resources>

@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Nessun comando"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Errore!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Installazione aggiornamento sicurezza…"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Impossibile caricare il sistema Android. I tuoi dati potrebbero essere danneggiati. Se continui a ricevere questo messaggio, potrebbe essere necessario eseguire un ripristino dei dati di fabbrica e cancellare tutti i dati utente memorizzati su questo dispositivo."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Riprova"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Ripristino dati di fabbrica"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Vuoi cancellare tutti i dati utente?\n\n NON È POSSIBILE ANNULLARE L\'OPERAZIONE."</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Annulla"</string>
 </resources>
