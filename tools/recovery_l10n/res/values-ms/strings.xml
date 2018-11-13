@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Tiada perintah"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Ralat!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Memasang kemas kini keselamatan"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Tidak dapat memuatkan sistem Android. Data anda mungkin rosak. Jika anda menerima mesej ini secara berterusan, anda mungkin perlu melaksanakan tetapan semula data kilang dan memadamkan semua data pengguna yang disimpan pada peranti ini."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Cuba lagi"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Tetapan semula data kilang"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Lapkan semua data pengguna?\n\n TINDAKAN INI TIDAK BOLEH DIBUAT ASAL!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Batal"</string>
 </resources>

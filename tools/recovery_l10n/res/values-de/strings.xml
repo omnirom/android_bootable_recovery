@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Kein Befehl"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Fehler"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Sicherheitsupdate wird installiert"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android-System kann nicht geladen werden. Deine Daten sind eventuell beschädigt. Wenn du diese Nachricht weiterhin erhältst, musst du dein Gerät unter Umständen auf die Werkseinstellungen zurücksetzen und alle darauf gespeicherten Nutzerdaten löschen."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Noch einmal versuchen"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Zurücksetzen auf Werkseinstellungen"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Alle Nutzerdaten löschen?\n\n DIESE AKTION KANN NICHT RÜCKGÄNGIG GEMACHT WERDEN."</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Abbrechen"</string>
 </resources>

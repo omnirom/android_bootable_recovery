@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"විධානයක් නොමැත"</string>
     <string name="recovery_error" msgid="5748178989622716736">"දෝෂය!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"ආරක්ෂක යාවත්කාලීනය ස්ථාපනය කරමින්"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android පද්ධතිය පූරණය කළ නොහැකිය. ඔබේ දත්ත දූෂිත විය හැකිය. ඔබට මෙම පණිවිඩය දිගටම ලැබෙන්නේ නම්, කර්මාන්ත ශාලා දත්ත යළි සැකසීමක් සිදු කර මෙම උපාංගයේ ගබඩා කළ සියලු පරිශීලක දත්ත මකා දැමීමට ඔබට අවශ්‍ය විය හැකිය."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"නැවත උත්සාහ කරන්න"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"කර්මාන්ත ශාලා දත්ත යළි සැකසීම"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"සියලු පරිශීලක දත්ත මකා දමන්නද?\n\n මෙය පසුගමනය කළ නොහැකිය!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"අවලංගු කරන්න"</string>
 </resources>

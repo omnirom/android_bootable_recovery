@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"ညွှန်ကြားချက်မပေးထားပါ"</string>
     <string name="recovery_error" msgid="5748178989622716736">"မှားနေပါသည်!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"လုံခြုံရေး အပ်ဒိတ်ကို ထည့်သွင်းနေသည်"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android စနစ် ဖွင့်၍မရပါ။ သင့်ဒေတာများ ပျက်နေခြင်း ဖြစ်နိုင်သည်။ ဤမက်ဆေ့ဂျ် ဆက်လက်ရရှိနေလျှင် စက်ရုံထုတ်အခြေအနေပြန်ယူပြီး ဤစက်ပေါ်တွင် သိမ်းထားသော အသုံးပြုသူဒေတာအားလုံး ဖျက်ရန် လိုအပ်နိုင်သည်။"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ထပ်စမ်းကြည့်ပါ"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"စက်ရုံထုတ်အခြေအနေပြန်ယူခြင်း"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"အသုံးပြုသူဒေတာ အားလုံးကို ရှင်းလင်းမလား။\n\n ၎င်းကို ပြန်ပြင်၍မရပါ။"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"မလုပ်တော့"</string>
 </resources>

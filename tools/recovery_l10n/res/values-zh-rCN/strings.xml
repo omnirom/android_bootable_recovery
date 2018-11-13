@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"无命令"</string>
     <string name="recovery_error" msgid="5748178989622716736">"出错了！"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"正在安装安全更新"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"无法加载 Android 系统。您的数据可能已损坏。如果系统仍然显示这条消息，您可能需要恢复出厂设置，并清空存储在此设备上的所有用户数据。"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"重试"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"恢复出厂设置"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"是否清除所有用户数据？\n\n此操作无法撤消！"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"取消"</string>
 </resources>

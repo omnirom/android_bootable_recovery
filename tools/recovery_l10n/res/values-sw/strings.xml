@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Hakuna amri"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Hitilafu fulani imetokea!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Inasakinisha sasisho la usalama"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Imeshindwa kupakia mfumo wa Android. Huenda data yako imeharibika. Kama utandelea kupata ujumbe huu, huenda ukahitaji kurejesha data iliyotoka nayo kiwandani na ufute data yote ya mtumiaji iliyohifadhiwa kwenye kifaa hiki."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Jaribu tena"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Kurejesha data iliyotoka nayo kiwandani"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Ungependa kufuta data yote ya mtumiaji?\n\n KITENDO HIKI HAKIWEZI KUTENDULIWA!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Ghairi"</string>
 </resources>

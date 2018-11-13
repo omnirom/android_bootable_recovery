@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Ingen kommando"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Fejl!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Installerer sikkerhedsopdateringen"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android-systemet kan ikke indlæses. Dine data er muligvis beskadigede. Hvis du bliver ved med at få denne meddelelse, er du måske nødt til at udføre en gendannelse af fabriksdata og slette alle brugerdata, der er gemt på denne enhed."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Prøv igen"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Gendannelse af fabriksdata"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Vil du rydde alle brugerdata?\n\n DETTE KAN IKKE FORTRYDES!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Annuller"</string>
 </resources>

@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"គ្មានពាក្យបញ្ជាទេ"</string>
     <string name="recovery_error" msgid="5748178989622716736">"កំហុស!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"កំពុងដំឡើងការអាប់ដេតសុវត្ថិភាព"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"មិនអាច​ផ្ទុកប្រព័ន្ធ Android បានទេ។ ទិន្នន័យ​របស់​អ្នកអាច​នឹងខូច។ ប្រសិនបើ​អ្នក​បន្តទទួល​បានសារនេះ អ្នកអាចនឹងត្រូវកំណត់​ទិន្នន័យ​ដូច​ចេញ​ពី​រោងចក្រ និងលុបទិន្នន័យ​ទាំងអស់​របស់អ្នក​ប្រើប្រាស់​ដែលបានផ្ទុកនៅ​លើ​ឧបករណ៍​នេះ។"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ព្យាយាម​ម្ដងទៀត"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"កំណត់​ទិន្នន័យ​ដូច​ចេញ​ពី​រោងចក្រ"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"ឈូស​ទិន្នន័យ​ទាំងអស់​របស់អ្នក​ប្រើប្រាស់?\n\nសកម្មភាព​នេះមិនអាចត្រឡប់វិញបានទេ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"បោះបង់"</string>
 </resources>
