@@ -32,9 +32,11 @@ import java.awt.FontFormatException;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -82,6 +84,20 @@ public class ImageGenerator {
 
     // Align the text in the center of the image.
     private final boolean mCenterAlignment;
+
+    // Some localized font cannot draw the word "Android" and some PUNCTUATIONS; we need to fall
+    // back to use our default latin font instead.
+    private static final char[] PUNCTUATIONS = {',', ';', '.', '!' };
+
+    private static final String ANDROID_STRING = "Android";
+
+    // The width of the word "Android" when drawing with the default font.
+    private int mAndroidStringWidth;
+
+    // The default Font to draw latin characters. It's loaded from DEFAULT_FONT_NAME.
+    private Font mDefaultFont;
+    // Cache of the loaded fonts for all languages.
+    private Map<String, Font> mLoadedFontMap;
 
     // An explicit map from language to the font name to use.
     // The map is extracted from frameworks/base/data/fonts/fonts.xml.
@@ -160,6 +176,72 @@ public class ImageGenerator {
         }
     }
 
+    /**
+     *  This class maintains the content of wrapped text, the attributes to draw these text, and
+     *  the width of each wrapped lines.
+     */
+    private class WrappedTextInfo {
+        /** LineInfo holds the AttributedString and width of each wrapped line. */
+        private class LineInfo {
+            public AttributedString mLineContent;
+            public int mLineWidth;
+
+            LineInfo(AttributedString text, int width) {
+                mLineContent = text;
+                mLineWidth = width;
+            }
+        }
+
+        // Maintains the content of each line, as well as the width needed to draw these lines for
+        // a given language.
+        public List<LineInfo> mWrappedLines;
+
+        WrappedTextInfo() {
+            mWrappedLines = new ArrayList<>();
+        }
+
+        /**
+         * Checks if the given text has words "Android" and some PUNCTUATIONS. If it does, and its
+         * associated textFont cannot display them correctly (e.g. for persian and hebrew); sets the
+         * attributes of these substrings to use our default font instead.
+         *
+         * @param text the input string to perform the check on
+         * @param width the pre-calculated width for the given text
+         * @param textFont the localized font to draw the input string
+         * @param fallbackFont our default font to draw latin characters
+         */
+        public void addLine(String text, int width, Font textFont, Font fallbackFont) {
+            AttributedString attributedText = new AttributedString(text);
+            attributedText.addAttribute(TextAttribute.FONT, textFont);
+            attributedText.addAttribute(TextAttribute.SIZE, mFontSize);
+
+            // Skips the check if we don't specify a fallbackFont.
+            if (fallbackFont != null) {
+                // Adds the attribute to use default font to draw the word "Android".
+                if (text.contains(ANDROID_STRING)
+                        && textFont.canDisplayUpTo(ANDROID_STRING) != -1) {
+                    int index = text.indexOf(ANDROID_STRING);
+                    attributedText.addAttribute(TextAttribute.FONT, fallbackFont, index,
+                            index + ANDROID_STRING.length());
+                }
+
+                // Adds the attribute to use default font to draw the PUNCTUATIONS ", . !"
+                for (char punctuation : PUNCTUATIONS) {
+                    if (text.indexOf(punctuation) != -1 && !textFont.canDisplay(punctuation)) {
+                        int index = 0;
+                        while ((index = text.indexOf(punctuation, index)) != -1) {
+                            attributedText.addAttribute(TextAttribute.FONT, fallbackFont, index,
+                                    index + 1);
+                            index += 1;
+                        }
+                    }
+                }
+            }
+
+            mWrappedLines.add(new LineInfo(attributedText, width));
+        }
+    }
+
     /** Initailizes the fields of the image image. */
     public ImageGenerator(
             int initialImageWidth,
@@ -177,6 +259,7 @@ public class ImageGenerator {
         mTextName = textName;
         mFontSize = fontSize;
         mFontDirPath = fontDirPath;
+        mLoadedFontMap = new TreeMap<>();
 
         mCenterAlignment = centerAlignment;
     }
@@ -295,12 +378,18 @@ public class ImageGenerator {
      * @throws FontFormatException if the font file doesn't have the expected format
      */
     private Font loadFontsByLocale(String language) throws IOException, FontFormatException {
+        if (mLoadedFontMap.containsKey(language)) {
+            return mLoadedFontMap.get(language);
+        }
+
         String fontName = LANGUAGE_TO_FONT_MAP.getOrDefault(language, DEFAULT_FONT_NAME);
         String[] suffixes = {".otf", ".ttf", ".ttc"};
         for (String suffix : suffixes) {
             File fontFile = new File(mFontDirPath, fontName + suffix);
             if (fontFile.isFile()) {
-                return Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(mFontSize);
+                Font result = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(mFontSize);
+                mLoadedFontMap.put(language, result);
+                return result;
             }
         }
 
@@ -309,39 +398,53 @@ public class ImageGenerator {
     }
 
     /** Separates the text string by spaces and wraps it by words. */
-    private List<String> wrapTextByWords(String text, FontMetrics metrics) {
-        List<String> wrappedText = new ArrayList<>();
+    private WrappedTextInfo wrapTextByWords(String text, FontMetrics metrics) {
+        WrappedTextInfo info = new WrappedTextInfo();
         StringTokenizer st = new StringTokenizer(text, " \n");
 
+        int lineWidth = 0;  // Width of the processed words of the current line.
         StringBuilder line = new StringBuilder();
         while (st.hasMoreTokens()) {
             String token = st.nextToken();
-            if (metrics.stringWidth(line + token + " ") > mImageWidth) {
-                wrappedText.add(line.toString());
+            int tokenWidth = metrics.stringWidth(token + " ");
+            // Handles the width mismatch of the word "Android" between different fonts.
+            if (token.contains(ANDROID_STRING)
+                    && metrics.getFont().canDisplayUpTo(ANDROID_STRING) != -1) {
+                tokenWidth = tokenWidth - metrics.stringWidth(ANDROID_STRING) + mAndroidStringWidth;
+            }
+
+            if (lineWidth + tokenWidth > mImageWidth) {
+                info.addLine(line.toString(), lineWidth, metrics.getFont(), mDefaultFont);
+
                 line = new StringBuilder();
+                lineWidth = 0;
             }
             line.append(token).append(" ");
+            lineWidth += tokenWidth;
         }
-        wrappedText.add(line.toString());
 
-        return wrappedText;
+        info.addLine(line.toString(), lineWidth, metrics.getFont(), mDefaultFont);
+
+        return info;
     }
 
     /** One character is a word for CJK. */
-    private List<String> wrapTextByCharacters(String text, FontMetrics metrics) {
-        List<String> wrappedText = new ArrayList<>();
-
+    private WrappedTextInfo wrapTextByCharacters(String text, FontMetrics metrics) {
+        WrappedTextInfo info = new WrappedTextInfo();
+        // TODO (xunchang) handle the text wrapping with logogram language mixed with latin.
         StringBuilder line = new StringBuilder();
         for (char token : text.toCharArray()) {
             if (metrics.stringWidth(line + Character.toString(token)) > mImageWidth) {
-                wrappedText.add(line.toString());
+                info.addLine(line.toString(), metrics.stringWidth(line.toString()),
+                        metrics.getFont(), null);
                 line = new StringBuilder();
             }
             line.append(token);
         }
-        wrappedText.add(line.toString());
+        info.addLine(line.toString(), metrics.stringWidth(line.toString()), metrics.getFont(),
+                null);
 
-        return wrappedText;
+        return info;
     }
 
     /**
@@ -350,9 +453,10 @@ public class ImageGenerator {
      * @param text the string representation of text to wrap
      * @param metrics the metrics of the Font used to draw the text; it gives the width in pixels of
      *     the text given its string representation
-     * @return a list of strings with their width smaller than mImageWidth pixels
+     * @return a WrappedTextInfo class with the width of each AttributedString smaller than
+     *     mImageWidth pixels
      */
-    private List<String> wrapText(String text, FontMetrics metrics, String language) {
+    private WrappedTextInfo wrapText(String text, FontMetrics metrics, String language) {
         if (LOGOGRAM_LANGUAGE.contains(language)) {
             return wrapTextByCharacters(text, metrics);
         }
@@ -401,11 +505,11 @@ public class ImageGenerator {
             throws IOException, FontFormatException {
         Graphics2D graphics = createGraphics(locale);
         FontMetrics fontMetrics = graphics.getFontMetrics();
-        List<String> wrappedText = wrapText(text, fontMetrics, locale.getLanguage());
+        WrappedTextInfo wrappedTextInfo = wrapText(text, fontMetrics, locale.getLanguage());
 
         int textWidth = 0;
-        for (String line : wrappedText) {
-            textWidth = Math.max(textWidth, fontMetrics.stringWidth(line));
+        for (WrappedTextInfo.LineInfo lineInfo : wrappedTextInfo.mWrappedLines) {
+            textWidth = Math.max(textWidth, lineInfo.mLineWidth);
         }
 
         // This may happen if one single word is larger than the image width.
@@ -436,17 +540,19 @@ public class ImageGenerator {
 
         Graphics2D graphics = createGraphics(locale);
         FontMetrics fontMetrics = graphics.getFontMetrics();
-        List<String> wrappedText = wrapText(text, fontMetrics, locale.getLanguage());
+        WrappedTextInfo wrappedTextInfo = wrapText(text, fontMetrics, locale.getLanguage());
 
         // Marks the start y offset for the text image of current locale; and reserves one line to
         // encode the image metadata.
         int currentImageStart = mVerticalOffset;
         mVerticalOffset += 1;
-        for (String line : wrappedText) {
+        for (WrappedTextInfo.LineInfo lineInfo : wrappedTextInfo.mWrappedLines) {
             int lineHeight = fontMetrics.getHeight();
             // Doubles the height of the image if we are short of space.
             if (mVerticalOffset + lineHeight >= mImageHeight) {
                 resize(mImageWidth, mImageHeight * 2);
+                // Recreates the graphics since it's attached to the buffered image.
+                graphics = createGraphics(locale);
             }
 
             // Draws the text at mVerticalOffset and increments the offset with line space.
@@ -455,12 +561,11 @@ public class ImageGenerator {
             // Draws from right if it's an RTL language.
             int x =
                     mCenterAlignment
-                            ? (mImageWidth - fontMetrics.stringWidth(line)) / 2
+                            ? (mImageWidth - lineInfo.mLineWidth) / 2
                             : RTL_LANGUAGE.contains(languageTag)
-                                    ? mImageWidth - fontMetrics.stringWidth(line)
+                                    ? mImageWidth - lineInfo.mLineWidth
                                     : 0;
-
-            graphics.drawString(line, x, baseLine);
+            graphics.drawString(lineInfo.mLineContent.getIterator(), x, baseLine);
 
             mVerticalOffset += lineHeight;
         }
@@ -502,6 +607,11 @@ public class ImageGenerator {
      */
     public void generateImage(Map<Locale, String> localizedTextMap, String outputPath)
             throws FontFormatException, IOException {
+        FontMetrics defaultFontMetrics =
+                createGraphics(Locale.forLanguageTag("en")).getFontMetrics();
+        mDefaultFont = defaultFontMetrics.getFont();
+        mAndroidStringWidth = defaultFontMetrics.stringWidth(ANDROID_STRING);
+
         Map<String, Integer> languageCount = new TreeMap<>();
         int textWidth = 0;
         for (Locale locale : localizedTextMap.keySet()) {
