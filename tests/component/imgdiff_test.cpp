@@ -25,7 +25,6 @@
 #include <android-base/memory.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-#include <android-base/test_utils.h>
 #include <applypatch/imgdiff.h>
 #include <applypatch/imgdiff_image.h>
 #include <applypatch/imgpatch.h>
