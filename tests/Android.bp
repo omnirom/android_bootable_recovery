@@ -92,7 +92,7 @@ librecovery_static_libs = [
     "libhidl-gen-utils",
     "libhidlbase",
     "libhidltransport",
-    "libhwbinder",
+    "libhwbinder_noltopgo",
     "libbinderthreadstate",
     "libvndksupport",
     "libtinyxml2",
