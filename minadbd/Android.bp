@@ -15,6 +15,7 @@
 cc_defaults {
     name: "minadbd_defaults",
 
+    cpp_std: "gnu++17",
     cflags: [
         "-DADB_HOST=0",
         "-Wall",
