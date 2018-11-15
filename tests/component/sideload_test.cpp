@@ -21,7 +21,6 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
-#include <android-base/test_utils.h>
 #include <gtest/gtest.h>
 
 #include "fuse_sideload.h"

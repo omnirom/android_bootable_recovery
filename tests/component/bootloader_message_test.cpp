@@ -17,8 +17,8 @@
 #include <string>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/strings.h>
-#include <android-base/test_utils.h>
 #include <bootloader_message/bootloader_message.h>
 #include <gtest/gtest.h>
 
