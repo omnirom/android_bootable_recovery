@@ -27,7 +27,6 @@
 #include <android-base/file.h>
 #include <android-base/properties.h>
 #include <android-base/strings.h>
-#include <android-base/test_utils.h>
 #include <gtest/gtest.h>
 #include <vintf/VintfObjectRecovery.h>
 #include <ziparchive/zip_archive.h>

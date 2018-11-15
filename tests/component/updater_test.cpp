@@ -33,7 +33,6 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-#include <android-base/test_utils.h>
 #include <bootloader_message/bootloader_message.h>
 #include <brotli/encode.h>
 #include <bsdiff/bsdiff.h>
