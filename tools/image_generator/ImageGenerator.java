@@ -46,6 +46,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilder;
@@ -58,6 +60,8 @@ public class ImageGenerator {
     private static final int INITIAL_HEIGHT = 20000;
 
     private static final float DEFAULT_FONT_SIZE = 40;
+
+    private static final Logger LOGGER = Logger.getLogger(ImageGenerator.class.getName());
 
     // This is the canvas we used to draw texts.
     private BufferedImage mBufferedImage;
@@ -322,12 +326,13 @@ public class ImageGenerator {
      * directory and collect the translated text.
      *
      * @param resourcePath the path to the resource directory
+     * @param localesSet a list of supported locales; resources of other locales will be omitted.
      * @return a map with the locale as key, and translated text as value
      * @throws LocalizedStringNotFoundException if we cannot find the translated text for the given
      *     locale
      */
-    public Map<Locale, String> readLocalizedStringFromXmls(String resourcePath)
-            throws IOException, LocalizedStringNotFoundException {
+    public Map<Locale, String> readLocalizedStringFromXmls(String resourcePath,
+            Set<String> localesSet) throws IOException, LocalizedStringNotFoundException {
         File resourceDir = new File(resourcePath);
         if (!resourceDir.isDirectory()) {
             throw new LocalizedStringNotFoundException(resourcePath + " is not a directory.");
@@ -354,6 +359,12 @@ public class ImageGenerator {
         String[] nameList =
                 resourceDir.list((File file, String name) -> name.startsWith("values-"));
         for (String name : nameList) {
+            String localeString = name.substring(7);
+            if (localesSet != null && !localesSet.contains(localeString)) {
+                LOGGER.info("Skip parsing text for locale " + localeString);
+                continue;
+            }
+
             File textFile = new File(resourcePath, name + "/strings.xml");
             String localizedText;
             try {
@@ -536,7 +547,7 @@ public class ImageGenerator {
      */
     private void drawText(String text, Locale locale, String languageTag)
             throws IOException, FontFormatException {
-        System.out.println("Encoding \"" + locale + "\" as \"" + languageTag + "\": " + text);
+        LOGGER.info("Encoding \"" + locale + "\" as \"" + languageTag + "\": " + text);
 
         Graphics2D graphics = createGraphics(locale);
         FontMetrics fontMetrics = graphics.getFontMetrics();
@@ -697,6 +708,19 @@ public class ImageGenerator {
                         .hasArg(false)
                         .create());
 
+        options.addOption(
+                OptionBuilder.withLongOpt("verbose")
+                        .withDescription("Output the logging above info level.")
+                        .hasArg(false)
+                        .create());
+
+        options.addOption(
+                OptionBuilder.withLongOpt("locales")
+                        .withDescription("A list of android locales separated by ',' e.g."
+                                + " 'af,en,zh-rTW'")
+                        .hasArg(true)
+                        .create());
+
         return options;
     }
 
@@ -716,6 +740,12 @@ public class ImageGenerator {
 
         int imageWidth = Integer.parseUnsignedInt(cmd.getOptionValue("image_width"));
 
+        if (cmd.hasOption("verbose")) {
+            LOGGER.setLevel(Level.INFO);
+        } else {
+            LOGGER.setLevel(Level.WARNING);
+        }
+
         ImageGenerator imageGenerator =
                 new ImageGenerator(
                         imageWidth,
@@ -724,8 +754,16 @@ public class ImageGenerator {
                         cmd.getOptionValue("font_dir"),
                         cmd.hasOption("center_alignment"));
 
+        Set<String> localesSet = null;
+        if (cmd.hasOption("locales")) {
+            String[] localesList = cmd.getOptionValue("locales").split(",");
+            localesSet = new HashSet<>(Arrays.asList(localesList));
+            // Ensures that we have the default locale, all english translations are identical.
+            localesSet.add("en-rAU");
+        }
         Map<Locale, String> localizedStringMap =
-                imageGenerator.readLocalizedStringFromXmls(cmd.getOptionValue("resource_dir"));
+                imageGenerator.readLocalizedStringFromXmls(cmd.getOptionValue("resource_dir"),
+                        localesSet);
         imageGenerator.generateImage(localizedStringMap, cmd.getOptionValue("output_file"));
     }
 }
