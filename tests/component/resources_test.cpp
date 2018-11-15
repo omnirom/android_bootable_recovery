@@ -101,7 +101,7 @@ TEST_P(ResourcesTest, ValidateLocale) {
     EXPECT_LT(0, len) << "Locale string should be non-empty.";
     EXPECT_NE(0, row[5]) << "Locale string is missing.";
 
-    ASSERT_GT(png_->height(), y + 1 + h) << "Locale: " << kLocale << " is not found in the file.";
+    ASSERT_GE(png_->height(), y + 1 + h) << "Locale: " << kLocale << " is not found in the file.";
     char* loc = reinterpret_cast<char*>(&row[5]);
     if (matches_locale(loc, kLocale.c_str())) {
       EXPECT_TRUE(android::base::StartsWith(loc, kLocale));
