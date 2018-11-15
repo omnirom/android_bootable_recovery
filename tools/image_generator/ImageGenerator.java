@@ -60,8 +60,9 @@ public class ImageGenerator {
     // This is the canvas we used to draw texts.
     private BufferedImage mBufferedImage;
 
-    // The width in pixels of our image. Once set, its value won't change.
-    private final int mImageWidth;
+    // The width in pixels of our image. The value will be adjusted once when we calculate the
+    // maximum width to fit the wrapped text strings.
+    private int mImageWidth;
 
     // The current height in pixels of our image. We will adjust the value when drawing more texts.
     private int mImageHeight;
@@ -78,6 +79,9 @@ public class ImageGenerator {
 
     // The directory that contains all the needed font files (e.g. ttf, otf, ttc files).
     private final String mFontDirPath;
+
+    // Align the text in the center of the image.
+    private final boolean mCenterAlignment;
 
     // An explicit map from language to the font name to use.
     // The map is extracted from frameworks/base/data/fonts/fonts.xml.
@@ -130,7 +134,9 @@ public class ImageGenerator {
             };
 
     // Languages that breaks on arbitrary characters.
-    // TODO(xunchang) switch to icu library if possible.
+    // TODO(xunchang) switch to icu library if possible. For example, for Thai and Khmer, there is
+    // no space between words; and word breaking is based on grammatical analysis and on word
+    // matching in dictionaries.
     private static final Set<String> LOGOGRAM_LANGUAGE =
             new HashSet<String>() {
                 {
@@ -138,6 +144,7 @@ public class ImageGenerator {
                     add("km"); // Khmer
                     add("ko"); // Korean
                     add("lo"); // Lao
+                    add("th"); // Thai
                     add("zh"); // Chinese
                 }
             };
@@ -154,8 +161,13 @@ public class ImageGenerator {
     }
 
     /** Initailizes the fields of the image image. */
-    public ImageGenerator(int imageWidth, String textName, float fontSize, String fontDirPath) {
-        mImageWidth = imageWidth;
+    public ImageGenerator(
+            int initialImageWidth,
+            String textName,
+            float fontSize,
+            String fontDirPath,
+            boolean centerAlignment) {
+        mImageWidth = initialImageWidth;
         mImageHeight = INITIAL_HEIGHT;
         mVerticalOffset = 0;
 
@@ -165,6 +177,8 @@ public class ImageGenerator {
         mTextName = textName;
         mFontSize = fontSize;
         mFontDirPath = fontDirPath;
+
+        mCenterAlignment = centerAlignment;
     }
 
     /**
@@ -299,8 +313,6 @@ public class ImageGenerator {
         List<String> wrappedText = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(text, " \n");
 
-        // TODO(xunchang). We assume that all words can fit on the screen. Raise an
-        // IllegalStateException if the word is wider than the image width.
         StringBuilder line = new StringBuilder();
         while (st.hasMoreTokens()) {
             String token = st.nextToken();
@@ -373,6 +385,43 @@ public class ImageGenerator {
         return info;
     }
 
+    /** Returns Graphics2D object that uses the given locale. */
+    private Graphics2D createGraphics(Locale locale) throws IOException, FontFormatException {
+        Graphics2D graphics = mBufferedImage.createGraphics();
+        graphics.setColor(Color.WHITE);
+        graphics.setRenderingHint(
+                RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+        graphics.setFont(loadFontsByLocale(locale.getLanguage()));
+
+        return graphics;
+    }
+
+    /** Returns the maximum screen width needed to fit the given text after wrapping. */
+    private int measureTextWidth(String text, Locale locale)
+            throws IOException, FontFormatException {
+        Graphics2D graphics = createGraphics(locale);
+        FontMetrics fontMetrics = graphics.getFontMetrics();
+        List<String> wrappedText = wrapText(text, fontMetrics, locale.getLanguage());
+
+        int textWidth = 0;
+        for (String line : wrappedText) {
+            textWidth = Math.max(textWidth, fontMetrics.stringWidth(line));
+        }
+
+        // This may happen if one single word is larger than the image width.
+        if (textWidth > mImageWidth) {
+            throw new IllegalStateException(
+                    "Wrapped text width "
+                            + textWidth
+                            + " is larger than image width "
+                            + mImageWidth
+                            + " for locale: "
+                            + locale);
+        }
+
+        return textWidth;
+    }
+
     /**
      * Draws the text string on the canvas for given locale.
      *
@@ -381,16 +430,11 @@ public class ImageGenerator {
      * @throws IOException if we cannot find the corresponding font file for the given locale.
      * @throws FontFormatException if we failed to load the font file for the given locale.
      */
-    private void drawText(String text, Locale locale, String languageTag, boolean centralAlignment)
+    private void drawText(String text, Locale locale, String languageTag)
             throws IOException, FontFormatException {
-        Graphics2D graphics = mBufferedImage.createGraphics();
-        graphics.setColor(Color.WHITE);
-        graphics.setRenderingHint(
-                RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
-        graphics.setFont(loadFontsByLocale(locale.getLanguage()));
-
         System.out.println("Encoding \"" + locale + "\" as \"" + languageTag + "\": " + text);
 
+        Graphics2D graphics = createGraphics(locale);
         FontMetrics fontMetrics = graphics.getFontMetrics();
         List<String> wrappedText = wrapText(text, fontMetrics, locale.getLanguage());
 
@@ -402,7 +446,7 @@ public class ImageGenerator {
             int lineHeight = fontMetrics.getHeight();
             // Doubles the height of the image if we are short of space.
             if (mVerticalOffset + lineHeight >= mImageHeight) {
-                resizeHeight(mImageHeight * 2);
+                resize(mImageWidth, mImageHeight * 2);
             }
 
             // Draws the text at mVerticalOffset and increments the offset with line space.
@@ -410,7 +454,7 @@ public class ImageGenerator {
 
             // Draws from right if it's an RTL language.
             int x =
-                    centralAlignment
+                    mCenterAlignment
                             ? (mImageWidth - fontMetrics.stringWidth(line)) / 2
                             : RTL_LANGUAGE.contains(languageTag)
                                     ? mImageWidth - fontMetrics.stringWidth(line)
@@ -431,18 +475,19 @@ public class ImageGenerator {
     }
 
     /**
-     * Redraws the image with the new height.
+     * Redraws the image with the new width and new height.
      *
+     * @param width the new width of the image in pixels.
      * @param height the new height of the image in pixels.
      */
-    private void resizeHeight(int height) {
-        BufferedImage resizedImage =
-                new BufferedImage(mImageWidth, height, BufferedImage.TYPE_BYTE_GRAY);
+    private void resize(int width, int height) {
+        BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
         Graphics2D graphic = resizedImage.createGraphics();
         graphic.drawImage(mBufferedImage, 0, 0, null);
         graphic.dispose();
 
         mBufferedImage = resizedImage;
+        mImageWidth = width;
         mImageHeight = height;
     }
 
@@ -458,10 +503,15 @@ public class ImageGenerator {
     public void generateImage(Map<Locale, String> localizedTextMap, String outputPath)
             throws FontFormatException, IOException {
         Map<String, Integer> languageCount = new TreeMap<>();
+        int textWidth = 0;
         for (Locale locale : localizedTextMap.keySet()) {
             String language = locale.getLanguage();
             languageCount.put(language, languageCount.getOrDefault(language, 0) + 1);
+            textWidth = Math.max(textWidth, measureTextWidth(localizedTextMap.get(locale), locale));
         }
+
+        // Removes the black margins to reduce the size of the image.
+        resize(textWidth, mImageHeight);
 
         for (Locale locale : localizedTextMap.keySet()) {
             Integer count = languageCount.get(locale.getLanguage());
@@ -475,12 +525,10 @@ public class ImageGenerator {
                 languageCount.put(locale.getLanguage(), count - 1);
             }
 
-            drawText(localizedTextMap.get(locale), locale, languageTag, false);
+            drawText(localizedTextMap.get(locale), locale, languageTag);
         }
 
-        // TODO(xunchang) adjust the width to save some space if all texts are smaller than
-        // imageWidth.
-        resizeHeight(mVerticalOffset);
+        resize(mImageWidth, mVerticalOffset);
         ImageIO.write(mBufferedImage, "png", new File(outputPath));
     }
 
@@ -528,9 +576,15 @@ public class ImageGenerator {
 
         options.addOption(
                 OptionBuilder.withLongOpt("output_file")
-                        .withDescription("Path to the generated image")
+                        .withDescription("Path to the generated image.")
                         .hasArgs(1)
                         .isRequired()
+                        .create());
+
+        options.addOption(
+                OptionBuilder.withLongOpt("center_alignment")
+                        .withDescription("Align the text in the center of the screen.")
+                        .hasArg(false)
                         .create());
 
         return options;
@@ -557,7 +611,8 @@ public class ImageGenerator {
                         imageWidth,
                         cmd.getOptionValue("text_name"),
                         DEFAULT_FONT_SIZE,
-                        cmd.getOptionValue("font_dir"));
+                        cmd.getOptionValue("font_dir"),
+                        cmd.hasOption("center_alignment"));
 
         Map<Locale, String> localizedStringMap =
                 imageGenerator.readLocalizedStringFromXmls(cmd.getOptionValue("resource_dir"));
