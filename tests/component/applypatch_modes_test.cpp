@@ -23,7 +23,6 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <android-base/test_utils.h>
 #include <bsdiff/bsdiff.h>
 #include <gtest/gtest.h>
 #include <openssl/sha.h>

@@ -24,7 +24,6 @@
 #include <android-base/file.h>
 #include <android-base/properties.h>
 #include <android-base/strings.h>
-#include <android-base/test_utils.h>
 #include <google/protobuf/repeated_field.h>
 #include <gtest/gtest.h>
 
