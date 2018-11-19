@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "62a52b12_393b5856",
+        "filename": "prebuilt/Android.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1001823
+      },
+      "writtenOn": "2018-11-19T20:48:28Z",
+      "side": 1,
+      "message": "maybe restrict to Android.bp? Android.mk does not build the declare in question, only bp does.\nThat way compilation issues are avoided in 7.1 trees, as those only have Android.mk, which does not include the module",
+      "range": {
+        "startLine": 66,
+        "startChar": 42,
+        "endLine": 66,
+        "endChar": 51
+      },
+      "revId": "1074b6dd38ef7d3dfa11a9d9088e631d2efde8ed",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
