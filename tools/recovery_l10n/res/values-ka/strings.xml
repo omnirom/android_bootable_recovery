@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"ბრძანება არ არის"</string>
     <string name="recovery_error" msgid="5748178989622716736">"წარმოიქმნა შეცდომა!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"მიმდინარეობს უსაფრთხოების განახლების ინსტალაცია"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android სისტემის ჩატვირთვა ვერ მოხერხდა. შესაძლოა თქვენი მონაცემები დაზიანებულია. თუ ამ შეტყობინებას კვლავ მიიღებთ, შეიძლება საჭირო იყოს ქარხნული მონაცემების აღდგენა და ამ მოწყობილობაზე შენახული მომხმარებლის ყველა მონაცემის ამოშლა."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ხელახლა ცდა"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ქარხნული მონაცემების აღდგენა"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"გსურთ მომხმარებლის ყველა მონაცემის ამოშლა?\n\n ამ მოქმედების გაუქმება ვერ მოხერხდება!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"გაუქმება"</string>
 </resources>

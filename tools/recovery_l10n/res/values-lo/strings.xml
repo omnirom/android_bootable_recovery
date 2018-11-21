@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"ບໍ່ມີຄຳສັ່ງ"</string>
     <string name="recovery_error" msgid="5748178989622716736">"ຜິດພາດ!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"ກຳລັງຕິດຕັ້ງອັບເດດຄວາມປອດໄພ"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"ບໍ່ສາມາດໂຫຼດລະບົບ Android ໄດ້. ຂໍ້ມູນຂອງທ່ານອາດເສຍຫາຍ. ຫາກທ່ານຍັງໄດ້ຮັບຂໍ້ຄວາມນີ້ຕໍ່ໄປ, ທ່ານອາດຕ້ອງຣີເຊັດເປັນຄ່າຈາກໂຮງງານ ແລະ ລຶບຂໍ້ມູນຜູ້ໃຊ້ທັງໝົດທີ່ຈັດເກັບໄວ້ຢູ່ອຸປະກອນນີ້ອອກ."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ລອງໃໝ່"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ຣີເຊັດຄ່າຈາກໂຮງງານ"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"ລຶບລ້າງຂໍ້ມູນຜູ້ໃຊ້ທັງໝົດບໍ?\n\n ຄຳສັ່ງນີ້ຈະບໍ່ສາມາດຍົກເລີກໄດ້!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"ຍົກເລີກ"</string>
 </resources>

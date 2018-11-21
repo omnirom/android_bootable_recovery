@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Ez dago agindurik"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Errorea"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Segurtasun-eguneratzea instalatzen"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Ezin da kargatu Android sistema. Zure datuak hondatuta egon daitezke. Mezu hau jasotzen jarraitzen baduzu, jatorrizko datuak berrezarri beharko dituzu eta gailuan gordetako erabiltzaile-datu guztiak ezabatu beharko dituzu."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Saiatu berriro"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Berrezarri jatorrizko datuak"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Erabiltzailearen datu guztiak xahutu nahi dituzu?\n\n EKINTZA HORI EZIN DA DESEGIN!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Utzi"</string>
 </resources>

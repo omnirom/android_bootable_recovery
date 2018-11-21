@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Nėra jokių komandų"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Klaida!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Diegiamas saugos naujinys"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Negalima įkelti „Android“ sistemos. Duomenys gali būti pažeisti. Jei ir toliau gausite šį pranešimą, jums gali reikėti atkurti gamyklinius duomenis ir ištrinti visus naudotojo duomenis, saugomus šiame įrenginyje."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Bandyti dar kartą"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Gamyklinių duomenų atkūrimas"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Išvalyti visus naudotojo duomenis?\n\n ŠIO VEIKSMO NEGALIMA ANULIUOTI!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Atšaukti"</string>
 </resources>
