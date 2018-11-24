@@ -500,7 +500,7 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
 endif
 
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
-LOCAL_REQUIRED_MODULES := recovery-persist recovery-refresh
+LOCAL_REQUIRED_MODULES += recovery-persist recovery-refresh
 endif
 
 include $(BUILD_EXECUTABLE)
