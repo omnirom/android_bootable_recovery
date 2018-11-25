@@ -219,10 +219,12 @@ static bool read_and_install_user_ce_key(userid_t user_id,
 
 static bool prepare_dir(const std::string& dir, mode_t mode, uid_t uid, gid_t gid) {
     LOG(DEBUG) << "Preparing: " << dir << std::endl;
+#if 0
     if (fs_prepare_dir(dir.c_str(), mode, uid, gid) != 0) {
         PLOG(ERROR) << "Failed to prepare " << dir << std::endl;
         return false;
     }
+#endif
     return true;
 }
 
@@ -295,9 +297,13 @@ static void get_data_file_encryption_modes(PolicyKeyRef* key_ref) {
 }
 
 static bool ensure_policy(const PolicyKeyRef& key_ref, const std::string& path) {
+#if 0
     return e4crypt_policy_ensure(path.c_str(), key_ref.key_raw_ref.data(),
                                  key_ref.key_raw_ref.size(), key_ref.contents_mode.c_str(),
                                  key_ref.filenames_mode.c_str()) == 0;
+#else
+  return true;
+#endif
 }
 
 static bool is_numeric(const char* name) {
