@@ -78,7 +78,6 @@ static constexpr const char* CACHE_ROOT = "/cache";
 static constexpr const char* DATA_ROOT = "/data";
 static constexpr const char* METADATA_ROOT = "/metadata";
 static constexpr const char* SDCARD_ROOT = "/sdcard";
-static constexpr const char* SYSTEM_ROOT = "/system";
 
 // We define RECOVERY_API_VERSION in Android.mk, which will be picked up by build system and packed
 // into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
@@ -837,14 +836,8 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
       }
       case Device::MOUNT_SYSTEM:
         // the system partition is mounted at /mnt/system
-        if (volume_for_mount_point(SYSTEM_ROOT) == nullptr) {
-          if (ensure_path_mounted_at("/", "/mnt/system") != -1) {
-            ui->Print("Mounted /system.\n");
-          }
-        } else {
-          if (ensure_path_mounted_at(SYSTEM_ROOT, "/mnt/system") != -1) {
-            ui->Print("Mounted /system.\n");
-          }
+        if (ensure_path_mounted_at(get_system_root().c_str(), "/mnt/system") != -1) {
+          ui->Print("Mounted /system.\n");
         }
         break;
 

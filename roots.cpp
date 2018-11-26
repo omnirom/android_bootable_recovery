@@ -44,6 +44,7 @@
 
 static struct fstab* fstab = nullptr;
 static bool did_map_logical_partitions = false;
+static constexpr const char* SYSTEM_ROOT = "/system";
 
 extern struct selabel_handle* sehandle;
 
@@ -411,4 +412,12 @@ int setup_install_mounts() {
 
 bool logical_partitions_mapped() {
   return did_map_logical_partitions;
+}
+
+std::string get_system_root() {
+  if (volume_for_mount_point(SYSTEM_ROOT) == nullptr) {
+    return "/";
+  } else {
+    return SYSTEM_ROOT;
+  }
 }
