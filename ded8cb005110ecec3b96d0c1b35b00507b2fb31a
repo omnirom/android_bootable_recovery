@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1a00d9f8_5bd45b33",
+        "filename": "minuitwrp/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1002365
+      },
+      "writtenOn": "2018-11-26T13:37:43Z",
+      "side": 1,
+      "message": "Please take out this block in favor of https://gerrit.omnirom.org/c/android_bootable_recovery/+/32479/",
+      "revId": "ded8cb005110ecec3b96d0c1b35b00507b2fb31a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    }
+  ]
+}
