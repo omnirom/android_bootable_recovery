@@ -16,6 +16,8 @@
 
 package com.android.recovery.tools;
 
+import com.ibm.icu.text.BreakIterator;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -44,7 +46,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -150,22 +151,6 @@ public class ImageGenerator {
                     add("he"); // Hebrew
                     add("iw"); // Hebrew
                     add("ur"); // Urdu
-                }
-            };
-
-    // Languages that breaks on arbitrary characters.
-    // TODO(xunchang) switch to icu library if possible. For example, for Thai and Khmer, there is
-    // no space between words; and word breaking is based on grammatical analysis and on word
-    // matching in dictionaries.
-    private static final Set<String> LOGOGRAM_LANGUAGE =
-            new HashSet<String>() {
-                {
-                    add("ja"); // Japanese
-                    add("km"); // Khmer
-                    add("ko"); // Korean
-                    add("lo"); // Lao
-                    add("th"); // Thai
-                    add("zh"); // Chinese
                 }
             };
 
@@ -408,16 +393,28 @@ public class ImageGenerator {
                 "Can not find the font file " + fontName + " for language " + language);
     }
 
-    /** Separates the text string by spaces and wraps it by words. */
-    private WrappedTextInfo wrapTextByWords(String text, FontMetrics metrics) {
+    /**
+     * Wraps the text with a maximum of mImageWidth pixels per line.
+     *
+     * @param text the string representation of text to wrap
+     * @param metrics the metrics of the Font used to draw the text; it gives the width in pixels of
+     *     the text given its string representation
+     * @return a WrappedTextInfo class with the width of each AttributedString smaller than
+     *     mImageWidth pixels
+     */
+    private WrappedTextInfo wrapText(String text, FontMetrics metrics) {
         WrappedTextInfo info = new WrappedTextInfo();
-        StringTokenizer st = new StringTokenizer(text, " \n");
+
+        BreakIterator lineBoundary = BreakIterator.getLineInstance();
+        lineBoundary.setText(text);
 
         int lineWidth = 0;  // Width of the processed words of the current line.
+        int start = lineBoundary.first();
         StringBuilder line = new StringBuilder();
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            int tokenWidth = metrics.stringWidth(token + " ");
+        for (int end = lineBoundary.next(); end != BreakIterator.DONE;
+                start = end, end = lineBoundary.next()) {
+            String token = text.substring(start, end);
+            int tokenWidth = metrics.stringWidth(token);
             // Handles the width mismatch of the word "Android" between different fonts.
             if (token.contains(ANDROID_STRING)
                     && metrics.getFont().canDisplayUpTo(ANDROID_STRING) != -1) {
@@ -430,49 +427,13 @@ public class ImageGenerator {
                 line = new StringBuilder();
                 lineWidth = 0;
             }
-            line.append(token).append(" ");
+            line.append(token);
             lineWidth += tokenWidth;
         }
 
         info.addLine(line.toString(), lineWidth, metrics.getFont(), mDefaultFont);
 
         return info;
-    }
-
-    /** One character is a word for CJK. */
-    private WrappedTextInfo wrapTextByCharacters(String text, FontMetrics metrics) {
-        WrappedTextInfo info = new WrappedTextInfo();
-        // TODO (xunchang) handle the text wrapping with logogram language mixed with latin.
-        StringBuilder line = new StringBuilder();
-        for (char token : text.toCharArray()) {
-            if (metrics.stringWidth(line + Character.toString(token)) > mImageWidth) {
-                info.addLine(line.toString(), metrics.stringWidth(line.toString()),
-                        metrics.getFont(), null);
-                line = new StringBuilder();
-            }
-            line.append(token);
-        }
-        info.addLine(line.toString(), metrics.stringWidth(line.toString()), metrics.getFont(),
-                null);
-
-        return info;
-    }
-
-    /**
-     * Wraps the text with a maximum of mImageWidth pixels per line.
-     *
-     * @param text the string representation of text to wrap
-     * @param metrics the metrics of the Font used to draw the text; it gives the width in pixels of
-     *     the text given its string representation
-     * @return a WrappedTextInfo class with the width of each AttributedString smaller than
-     *     mImageWidth pixels
-     */
-    private WrappedTextInfo wrapText(String text, FontMetrics metrics, String language) {
-        if (LOGOGRAM_LANGUAGE.contains(language)) {
-            return wrapTextByCharacters(text, metrics);
-        }
-
-        return wrapTextByWords(text, metrics);
     }
 
     /**
@@ -516,7 +477,7 @@ public class ImageGenerator {
             throws IOException, FontFormatException {
         Graphics2D graphics = createGraphics(locale);
         FontMetrics fontMetrics = graphics.getFontMetrics();
-        WrappedTextInfo wrappedTextInfo = wrapText(text, fontMetrics, locale.getLanguage());
+        WrappedTextInfo wrappedTextInfo = wrapText(text, fontMetrics);
 
         int textWidth = 0;
         for (WrappedTextInfo.LineInfo lineInfo : wrappedTextInfo.mWrappedLines) {
@@ -551,7 +512,7 @@ public class ImageGenerator {
 
         Graphics2D graphics = createGraphics(locale);
         FontMetrics fontMetrics = graphics.getFontMetrics();
-        WrappedTextInfo wrappedTextInfo = wrapText(text, fontMetrics, locale.getLanguage());
+        WrappedTextInfo wrappedTextInfo = wrapText(text, fontMetrics);
 
         // Marks the start y offset for the text image of current locale; and reserves one line to
         // encode the image metadata.
