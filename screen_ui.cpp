@@ -282,14 +282,14 @@ bool GraphicMenu::ValidateGraphicSurface(size_t max_width, size_t max_height, in
   }
 
   if (surface->pixel_bytes != 1 || surface->width != surface->row_bytes) {
-    fprintf(stderr, "Invalid graphic surface, pixel bytes: %d, width: %d row_bytes: %d",
+    fprintf(stderr, "Invalid graphic surface, pixel bytes: %zu, width: %zu row_bytes: %zu",
             surface->pixel_bytes, surface->width, surface->row_bytes);
     return false;
   }
 
   if (surface->width > max_width || surface->height > max_height - y) {
     fprintf(stderr,
-            "Graphic surface doesn't fit into the screen. width: %d, height: %d, max_width: %zu,"
+            "Graphic surface doesn't fit into the screen. width: %zu, height: %zu, max_width: %zu,"
             " max_height: %zu, vertical offset: %d\n",
             surface->width, surface->height, max_width, max_height, y);
     return false;

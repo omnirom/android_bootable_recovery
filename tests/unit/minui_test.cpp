@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <limits>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -24,21 +25,30 @@
 #include "minui/minui.h"
 
 TEST(GRSurfaceTest, Create_aligned) {
-  static constexpr size_t kSurfaceDataAlignment = 8;
-  for (size_t data_size = 100; data_size < 128; data_size++) {
-    auto surface = GRSurface::Create(10, 1, 10, 1, data_size);
-    ASSERT_TRUE(surface);
-    ASSERT_EQ(0, reinterpret_cast<uintptr_t>(surface->data()) % kSurfaceDataAlignment);
-  }
+  auto surface = GRSurface::Create(9, 11, 9, 1);
+  ASSERT_TRUE(surface);
+  ASSERT_EQ(0, reinterpret_cast<uintptr_t>(surface->data()) % GRSurface::kSurfaceDataAlignment);
+  // data_size will be rounded up to the next multiple of GRSurface::kSurfaceDataAlignment.
+  ASSERT_EQ(0, surface->data_size() % GRSurface::kSurfaceDataAlignment);
+  ASSERT_GE(surface->data_size(), 11 * 9);
+}
+
+TEST(GRSurfaceTest, Create_invalid_inputs) {
+  ASSERT_FALSE(GRSurface::Create(9, 11, 0, 1));
+  ASSERT_FALSE(GRSurface::Create(9, 0, 9, 1));
+  ASSERT_FALSE(GRSurface::Create(0, 11, 9, 1));
+  ASSERT_FALSE(GRSurface::Create(9, 11, 9, 0));
+  ASSERT_FALSE(GRSurface::Create(9, 101, std::numeric_limits<size_t>::max() / 100, 1));
 }
 
 TEST(GRSurfaceTest, Clone) {
-  static constexpr size_t kImageSize = 10 * 50;
-  auto image = GRSurface::Create(50, 10, 50, 1, kImageSize);
-  for (auto i = 0; i < kImageSize; i++) {
+  auto image = GRSurface::Create(50, 10, 50, 1);
+  ASSERT_GE(image->data_size(), 10 * 50);
+  for (auto i = 0; i < image->data_size(); i++) {
     image->data()[i] = rand() % 128;
   }
   auto image_copy = image->Clone();
-  ASSERT_EQ(std::vector(image->data(), image->data() + kImageSize),
-            std::vector(image_copy->data(), image_copy->data() + kImageSize));
+  ASSERT_EQ(image->data_size(), image_copy->data_size());
+  ASSERT_EQ(std::vector(image->data(), image->data() + image->data_size()),
+            std::vector(image_copy->data(), image_copy->data() + image->data_size()));
 }
