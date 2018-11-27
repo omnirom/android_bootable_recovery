@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
 
@@ -40,8 +41,8 @@ class GRSurfaceAdf : public GRSurface {
  private:
   friend class MinuiBackendAdf;
 
-  GRSurfaceAdf(int width, int height, int row_bytes, int pixel_bytes, __u32 offset, __u32 pitch,
-               int fd)
+  GRSurfaceAdf(size_t width, size_t height, size_t row_bytes, size_t pixel_bytes, __u32 offset,
+               __u32 pitch, int fd)
       : GRSurface(width, height, row_bytes, pixel_bytes), offset(offset), pitch(pitch), fd(fd) {}
 
   const __u32 offset;

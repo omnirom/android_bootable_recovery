@@ -231,7 +231,7 @@ TEST_F(ScreenUITest, WearMenuSelectItemsOverflow) {
 }
 
 TEST_F(ScreenUITest, GraphicMenuSelection) {
-  auto image = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  auto image = GRSurface::Create(50, 50, 50, 1);
   auto header = image->Clone();
   std::vector<const GRSurface*> items = {
     image.get(),
@@ -258,7 +258,7 @@ TEST_F(ScreenUITest, GraphicMenuSelection) {
 }
 
 TEST_F(ScreenUITest, GraphicMenuValidate) {
-  auto image = GRSurface::Create(50, 50, 50, 1, 50 * 50);
+  auto image = GRSurface::Create(50, 50, 50, 1);
   auto header = image->Clone();
   std::vector<const GRSurface*> items = {
     image.get(),
@@ -269,7 +269,7 @@ TEST_F(ScreenUITest, GraphicMenuValidate) {
   ASSERT_TRUE(GraphicMenu::Validate(200, 200, header.get(), items));
 
   // Menu exceeds the horizontal boundary.
-  auto wide_surface = GRSurface::Create(300, 50, 300, 1, 300 * 50);
+  auto wide_surface = GRSurface::Create(300, 50, 300, 1);
   ASSERT_FALSE(GraphicMenu::Validate(299, 200, wide_surface.get(), items));
 
   // Menu exceeds the vertical boundary.
