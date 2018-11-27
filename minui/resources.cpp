@@ -261,7 +261,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
   for (int i = 0; i < *frames; ++i) {
     auto height_per_frame = height / *frames;
     auto created_surface =
-        GRSurface::Create(width, height_per_frame, width * 4, 4, width * height_per_frame);
+        GRSurface::Create(width, height_per_frame, width * 4, 4, width * height_per_frame * 4);
     if (!created_surface) {
       result = -8;
       goto exit;
