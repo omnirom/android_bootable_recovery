@@ -17,6 +17,7 @@
 #pragma once
 
 #include <linux/fb.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include <memory>
@@ -30,8 +31,8 @@
 class GRSurfaceFbdev : public GRSurface {
  public:
   // Creates and returns a GRSurfaceFbdev instance, or nullptr on error.
-  static std::unique_ptr<GRSurfaceFbdev> Create(int width, int height, int row_bytes,
-                                                int pixel_bytes);
+  static std::unique_ptr<GRSurfaceFbdev> Create(size_t width, size_t height, size_t row_bytes,
+                                                size_t pixel_bytes);
 
   uint8_t* data() override {
     return buffer_;
