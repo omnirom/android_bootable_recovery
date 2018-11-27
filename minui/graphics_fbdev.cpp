@@ -32,8 +32,8 @@
 
 #include "minui/minui.h"
 
-std::unique_ptr<GRSurfaceFbdev> GRSurfaceFbdev::Create(int width, int height, int row_bytes,
-                                                       int pixel_bytes) {
+std::unique_ptr<GRSurfaceFbdev> GRSurfaceFbdev::Create(size_t width, size_t height,
+                                                       size_t row_bytes, size_t pixel_bytes) {
   // Cannot use std::make_unique to access non-public ctor.
   return std::unique_ptr<GRSurfaceFbdev>(new GRSurfaceFbdev(width, height, row_bytes, pixel_bytes));
 }
@@ -130,7 +130,7 @@ GRSurface* MinuiBackendFbdev::Init() {
   fb_fd = std::move(fd);
   SetDisplayedFramebuffer(0);
 
-  printf("framebuffer: %d (%d x %d)\n", fb_fd.get(), gr_draw->width, gr_draw->height);
+  printf("framebuffer: %d (%zu x %zu)\n", fb_fd.get(), gr_draw->width, gr_draw->height);
 
   Blank(true);
   Blank(false);
