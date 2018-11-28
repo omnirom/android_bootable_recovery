@@ -484,11 +484,7 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
 
     const char* f2fs_path = "/sbin/mkfs.f2fs";
     const char* f2fs_argv[] = { "mkfs.f2fs",
-                                "-d1",
-                                "-f",
-                                "-O", "encrypt",
-                                "-O", "quota",
-                                "-O", "verity",
+                                "-g", "android",
                                 "-w", "512",
                                 location.c_str(),
                                 (size < 512) ? nullptr : num_sectors.c_str(),
