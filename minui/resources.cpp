@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <limits>
 #include <memory>
 #include <regex>
 #include <string>
@@ -39,11 +40,14 @@
 
 static std::string g_resource_dir{ "/res/images" };
 
-std::unique_ptr<GRSurface> GRSurface::Create(int width, int height, int row_bytes, int pixel_bytes,
-                                             size_t data_size) {
-  static constexpr size_t kSurfaceDataAlignment = 8;
+std::unique_ptr<GRSurface> GRSurface::Create(size_t width, size_t height, size_t row_bytes,
+                                             size_t pixel_bytes) {
+  if (width == 0 || row_bytes == 0 || height == 0 || pixel_bytes == 0) return nullptr;
+  if (std::numeric_limits<size_t>::max() / row_bytes < height) return nullptr;
+
   // Cannot use std::make_unique to access non-public ctor.
   auto result = std::unique_ptr<GRSurface>(new GRSurface(width, height, row_bytes, pixel_bytes));
+  size_t data_size = row_bytes * height;
   result->data_size_ =
       (data_size + kSurfaceDataAlignment - 1) / kSurfaceDataAlignment * kSurfaceDataAlignment;
   result->data_.reset(
@@ -53,7 +57,7 @@ std::unique_ptr<GRSurface> GRSurface::Create(int width, int height, int row_byte
 }
 
 std::unique_ptr<GRSurface> GRSurface::Clone() const {
-  auto result = GRSurface::Create(width, height, row_bytes, pixel_bytes, data_size_);
+  auto result = GRSurface::Create(width, height, row_bytes, pixel_bytes);
   if (!result) return nullptr;
   memcpy(result->data(), data(), data_size_);
   return result;
@@ -189,7 +193,7 @@ int res_create_display_surface(const char* name, GRSurface** pSurface) {
   png_uint_32 width = png_handler.width();
   png_uint_32 height = png_handler.height();
 
-  auto surface = GRSurface::Create(width, height, width * 4, 4, width * height * 4);
+  auto surface = GRSurface::Create(width, height, width * 4, 4);
   if (!surface) {
     return -8;
   }
@@ -259,9 +263,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
     goto exit;
   }
   for (int i = 0; i < *frames; ++i) {
-    auto height_per_frame = height / *frames;
-    auto created_surface =
-        GRSurface::Create(width, height_per_frame, width * 4, 4, width * height_per_frame);
+    auto created_surface = GRSurface::Create(width, height / *frames, width * 4, 4);
     if (!created_surface) {
       result = -8;
       goto exit;
@@ -309,7 +311,7 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
   png_uint_32 width = png_handler.width();
   png_uint_32 height = png_handler.height();
 
-  auto surface = GRSurface::Create(width, height, width, 1, width * height);
+  auto surface = GRSurface::Create(width, height, width, 1);
   if (!surface) {
     return -8;
   }
@@ -415,7 +417,7 @@ int res_create_localized_alpha_surface(const char* name,
     if (y + 1 + h >= height || matches_locale(loc, locale)) {
       printf("  %20s: %s (%d x %d @ %d)\n", name, loc, w, h, y);
 
-      auto surface = GRSurface::Create(w, h, w, 1, w * h);
+      auto surface = GRSurface::Create(w, h, w, 1);
       if (!surface) {
         return -8;
       }

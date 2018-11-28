@@ -33,13 +33,16 @@
 
 class GRSurface {
  public:
+  static constexpr size_t kSurfaceDataAlignment = 8;
+
   virtual ~GRSurface() = default;
 
   // Creates and returns a GRSurface instance that's sufficient for storing an image of the given
-  // size. The starting address of the surface data is aligned to SURFACE_DATA_ALIGNMENT. Returns
-  // the created GRSurface instance (in std::unique_ptr), or nullptr on error.
-  static std::unique_ptr<GRSurface> Create(int width, int height, int row_bytes, int pixel_bytes,
-                                           size_t data_size);
+  // size (i.e. row_bytes * height). The starting address of the surface data is aligned to
+  // kSurfaceDataAlignment. Returns the created GRSurface instance (in std::unique_ptr), or nullptr
+  // on error.
+  static std::unique_ptr<GRSurface> Create(size_t width, size_t height, size_t row_bytes,
+                                           size_t pixel_bytes);
 
   // Clones the current GRSurface instance (i.e. an image).
   std::unique_ptr<GRSurface> Clone() const;
@@ -52,13 +55,17 @@ class GRSurface {
     return const_cast<const uint8_t*>(const_cast<GRSurface*>(this)->data());
   }
 
-  int width;
-  int height;
-  int row_bytes;
-  int pixel_bytes;
+  size_t data_size() const {
+    return data_size_;
+  }
+
+  size_t width;
+  size_t height;
+  size_t row_bytes;
+  size_t pixel_bytes;
 
  protected:
-  GRSurface(int width, int height, int row_bytes, int pixel_bytes)
+  GRSurface(size_t width, size_t height, size_t row_bytes, size_t pixel_bytes)
       : width(width), height(height), row_bytes(row_bytes), pixel_bytes(pixel_bytes) {}
 
  private:

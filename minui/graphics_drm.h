@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <memory>
@@ -39,7 +40,8 @@ class GRSurfaceDrm : public GRSurface {
  private:
   friend class MinuiBackendDrm;
 
-  GRSurfaceDrm(int width, int height, int row_bytes, int pixel_bytes, int drm_fd, uint32_t handle)
+  GRSurfaceDrm(size_t width, size_t height, size_t row_bytes, size_t pixel_bytes, int drm_fd,
+               uint32_t handle)
       : GRSurface(width, height, row_bytes, pixel_bytes), drm_fd_(drm_fd), handle(handle) {}
 
   const int drm_fd_;

@@ -41,13 +41,6 @@ Running the manual tests
   contents of pmsg buffer into /data/misc/recovery/inject.txt. Test will pass if
   this file has expected contents.
 
-`ResourceTest` validates whether the png files are qualified as background text
-image under recovery.
-
-    1. `adb sync data` to make sure the test-dir has the images to test.
-    2. The test will automatically pickup and verify all `_text.png` files in
-       the test dir.
-
 Using `adb` under recovery
 --------------------------
 
@@ -60,10 +53,10 @@ allows `adb` communication. A device should be listed under `adb devices`, eithe
     List of devices attached
     1234567890abcdef    recovery
 
-Although `/sbin/adbd` shares the same binary between normal boot and recovery images, only a subset
-of `adb` commands are meaningful under recovery, such as `adb root`, `adb shell`, `adb push`, `adb
-pull` etc. `adb shell` works only after manually mounting `/system` from recovery menu (assuming a
-valid system image on device).
+Although `/system/bin/adbd` is built from the same code base as the one in the normal boot, only a
+subset of `adb` commands are meaningful under recovery, such as `adb root`, `adb shell`, `adb push`,
+`adb pull` etc. Since Android Q, `adb shell` no longer requires manually mounting `/system` from
+recovery menu.
 
 ## Troubleshooting
 
@@ -74,8 +67,8 @@ valid system image on device).
 
  * Ensure `adbd` is built and running.
 
-By default, `adbd` is always included into recovery image, as `/sbin/adbd`. `init` starts `adbd`
-service automatically only in debuggable builds. This behavior is controlled by the recovery
+By default, `adbd` is always included into recovery image, as `/system/bin/adbd`. `init` starts
+`adbd` service automatically only in debuggable builds. This behavior is controlled by the recovery
 specific `/init.rc`, whose source code is at `bootable/recovery/etc/init.rc`.
 
 The best way to confirm a running `adbd` is by checking the serial output, which shows a service
