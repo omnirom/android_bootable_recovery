@@ -344,12 +344,7 @@ int format_volume(const char* volume, const char* directory) {
   // clang-format off
   std::vector<std::string> make_f2fs_cmd = {
     cmd,
-    "-d1",
-    "-f",
-    "-O", "encrypt",
-    "-O", "quota",
-    "-O", "verity",
-    "-w", std::to_string(kSectorSize),
+    "-g", "android",
     v->blk_device,
   };
   // clang-format on
