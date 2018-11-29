@@ -92,7 +92,7 @@ public class ImageGenerator {
 
     // Some localized font cannot draw the word "Android" and some PUNCTUATIONS; we need to fall
     // back to use our default latin font instead.
-    private static final char[] PUNCTUATIONS = {',', ';', '.', '!' };
+    private static final char[] PUNCTUATIONS = {',', ';', '.', '!', '?'};
 
     private static final String ANDROID_STRING = "Android";
 
@@ -214,8 +214,9 @@ public class ImageGenerator {
                             index + ANDROID_STRING.length());
                 }
 
-                // Adds the attribute to use default font to draw the PUNCTUATIONS ", . !"
+                // Adds the attribute to use default font to draw the PUNCTUATIONS ", . ; ! ?"
                 for (char punctuation : PUNCTUATIONS) {
+                    // TODO (xunchang) handle the RTL language that has different directions for '?'
                     if (text.indexOf(punctuation) != -1 && !textFont.canDisplay(punctuation)) {
                         int index = 0;
                         while ((index = text.indexOf(punctuation, index)) != -1) {
@@ -228,6 +229,11 @@ public class ImageGenerator {
             }
 
             mWrappedLines.add(new LineInfo(attributedText, width));
+        }
+
+        /** Merges two WrappedTextInfo. */
+        public void addLines(WrappedTextInfo other) {
+            mWrappedLines.addAll(other.mWrappedLines);
         }
     }
 
@@ -393,15 +399,7 @@ public class ImageGenerator {
                 "Can not find the font file " + fontName + " for language " + language);
     }
 
-    /**
-     * Wraps the text with a maximum of mImageWidth pixels per line.
-     *
-     * @param text the string representation of text to wrap
-     * @param metrics the metrics of the Font used to draw the text; it gives the width in pixels of
-     *     the text given its string representation
-     * @return a WrappedTextInfo class with the width of each AttributedString smaller than
-     *     mImageWidth pixels
-     */
+    /** Wraps the text with a maximum of mImageWidth pixels per line. */
     private WrappedTextInfo wrapText(String text, FontMetrics metrics) {
         WrappedTextInfo info = new WrappedTextInfo();
 
@@ -434,6 +432,29 @@ public class ImageGenerator {
         info.addLine(line.toString(), lineWidth, metrics.getFont(), mDefaultFont);
 
         return info;
+    }
+
+    /**
+     * Handles the special characters of the raw text embedded in the xml file; and wraps the text
+     * with a maximum of mImageWidth pixels per line.
+     *
+     * @param text the string representation of text to wrap
+     * @param metrics the metrics of the Font used to draw the text; it gives the width in pixels of
+     *     the text given its string representation
+     * @return a WrappedTextInfo class with the width of each AttributedString smaller than
+     *     mImageWidth pixels
+     */
+    private WrappedTextInfo processAndWrapText(String text, FontMetrics metrics) {
+        // Apostrophe is escaped in the xml file.
+        String processed = text.replace("\\'", "'");
+        // The separator "\n\n" indicates a new line in the text.
+        String[] lines = processed.split("\\\\n\\\\n");
+        WrappedTextInfo result = new WrappedTextInfo();
+        for (String line : lines) {
+            result.addLines(wrapText(line, metrics));
+        }
+
+        return result;
     }
 
     /**
@@ -477,7 +498,7 @@ public class ImageGenerator {
             throws IOException, FontFormatException {
         Graphics2D graphics = createGraphics(locale);
         FontMetrics fontMetrics = graphics.getFontMetrics();
-        WrappedTextInfo wrappedTextInfo = wrapText(text, fontMetrics);
+        WrappedTextInfo wrappedTextInfo = processAndWrapText(text, fontMetrics);
 
         int textWidth = 0;
         for (WrappedTextInfo.LineInfo lineInfo : wrappedTextInfo.mWrappedLines) {
@@ -512,7 +533,7 @@ public class ImageGenerator {
 
         Graphics2D graphics = createGraphics(locale);
         FontMetrics fontMetrics = graphics.getFontMetrics();
-        WrappedTextInfo wrappedTextInfo = wrapText(text, fontMetrics);
+        WrappedTextInfo wrappedTextInfo = processAndWrapText(text, fontMetrics);
 
         // Marks the start y offset for the text image of current locale; and reserves one line to
         // encode the image metadata.
