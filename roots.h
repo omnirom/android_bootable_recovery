@@ -55,4 +55,6 @@ int setup_install_mounts();
 
 bool logical_partitions_mapped();
 
+std::string get_system_root();
+
 #endif  // RECOVERY_ROOTS_H_
