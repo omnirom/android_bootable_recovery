@@ -18,6 +18,7 @@
 
 #include <ctype.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,7 +67,7 @@ void load_volume_table() {
   printf("=========================\n");
   for (int i = 0; i < fstab->num_entries; ++i) {
     const Volume* v = &fstab->recs[i];
-    printf("  %d %s %s %s %lld\n", i, v->mount_point, v->fs_type, v->blk_device, v->length);
+    printf("  %d %s %s %s %" PRId64 "\n", i, v->mount_point, v->fs_type, v->blk_device, v->length);
   }
   printf("\n");
 }
