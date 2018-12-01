@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -605,11 +606,15 @@ public class ImageGenerator {
         mDefaultFont = defaultFontMetrics.getFont();
         mAndroidStringWidth = defaultFontMetrics.stringWidth(ANDROID_STRING);
 
-        Map<String, Integer> languageCount = new TreeMap<>();
+        // The last country variant should be the fallback locale for a given language.
+        Map<String, Locale> fallbackLocaleMap = new HashMap<>();
         int textWidth = 0;
         for (Locale locale : localizedTextMap.keySet()) {
-            String language = locale.getLanguage();
-            languageCount.put(language, languageCount.getOrDefault(language, 0) + 1);
+            // Updates the fallback locale if we have a new language variant. Don't do it for en-XC
+            // as it's a pseudo-locale.
+            if (!locale.toLanguageTag().equals("en-XC")) {
+                fallbackLocaleMap.put(locale.getLanguage(), locale);
+            }
             textWidth = Math.max(textWidth, measureTextWidth(localizedTextMap.get(locale), locale));
         }
 
@@ -617,15 +622,16 @@ public class ImageGenerator {
         resize(textWidth, mImageHeight);
 
         for (Locale locale : localizedTextMap.keySet()) {
-            Integer count = languageCount.get(locale.getLanguage());
             // Recovery expects en-US instead of en_US.
             String languageTag = locale.toLanguageTag();
-            if (count == 1) {
-                // Make the last country variant for a given language be the catch-all for that
+            Locale fallbackLocale = fallbackLocaleMap.get(locale.getLanguage());
+            if (locale.equals(fallbackLocale)) {
+                // Makes the last country variant for a given language be the catch-all for that
                 // language.
                 languageTag = locale.getLanguage();
-            } else {
-                languageCount.put(locale.getLanguage(), count - 1);
+            } else if (localizedTextMap.get(locale).equals(localizedTextMap.get(fallbackLocale))) {
+                LOGGER.info("Skip parsing text for duplicate locale " + locale);
+                continue;
             }
 
             drawText(localizedTextMap.get(locale), locale, languageTag);
