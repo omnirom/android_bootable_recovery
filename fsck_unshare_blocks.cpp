@@ -40,7 +40,6 @@
 
 static constexpr const char* SYSTEM_E2FSCK_BIN = "/system/bin/e2fsck_static";
 static constexpr const char* TMP_E2FSCK_BIN = "/tmp/e2fsck.bin";
-static constexpr const char* SYSTEM_ROOT = "/system";
 
 static bool copy_file(const char* source, const char* dest) {
   android::base::unique_fd source_fd(open(source, O_RDONLY));
@@ -121,14 +120,10 @@ bool do_fsck_unshare_blocks() {
   std::vector<std::string> partitions = { "/odm", "/oem", "/product", "/vendor" };
 
   // Temporarily mount system so we can copy e2fsck_static.
-  bool mounted = false;
-  if (volume_for_mount_point(SYSTEM_ROOT) == nullptr) {
-    mounted = ensure_path_mounted_at("/", "/mnt/system") != -1;
-    partitions.push_back("/");
-  } else {
-    mounted = ensure_path_mounted_at(SYSTEM_ROOT, "/mnt/system") != -1;
-    partitions.push_back(SYSTEM_ROOT);
-  }
+  std::string system_root = get_system_root();
+  bool mounted = ensure_path_mounted_at(system_root.c_str(), "/mnt/system") != -1;
+  partitions.push_back(system_root);
+
   if (!mounted) {
     LOG(ERROR) << "Failed to mount system image.";
     return false;
