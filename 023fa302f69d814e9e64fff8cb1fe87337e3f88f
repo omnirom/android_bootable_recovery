@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8dd11632_0ffc1a52",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2081,
+      "author": {
+        "id": 1001224
+      },
+      "writtenOn": "2018-12-03T12:06:15Z",
+      "side": 0,
+      "message": "passing a negative value here will be simply ignored and replaced with a runtime calculated one, thus footer would be override: https://android.googlesource.com/platform/system/extras/+/android-8.1.0_r13/ext4_utils/make_ext4fs.c#760",
+      "range": {
+        "startLine": 2081,
+        "startChar": 49,
+        "endLine": 2081,
+        "endChar": 55
+      },
+      "revId": "023fa302f69d814e9e64fff8cb1fe87337e3f88f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}

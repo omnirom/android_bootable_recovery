@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "db46b9ff_c8777bbc",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2081,
+      "author": {
+        "id": 1001224
+      },
+      "writtenOn": "2018-12-03T12:06:15Z",
+      "side": 1,
+      "message": "really necessary? I\u0027m afraid everyone is using \"length\u003d-16384\" which can be automatically handled by the \"else if\" case when \"encryptable\u003dfooter\" is set.",
+      "range": {
+        "startLine": 2080,
+        "startChar": 0,
+        "endLine": 2081,
+        "endChar": 69
+      },
+      "revId": "a4868652db0d52a7cf4f497a88d54ff07fcd0648",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4fc722dc_185455a6",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2263,
+      "author": {
+        "id": 1001224
+      },
+      "writtenOn": "2018-12-03T12:06:15Z",
+      "side": 1,
+      "message": "move to a standalone function to avoid copypasta?",
+      "range": {
+        "startLine": 2244,
+        "startChar": 0,
+        "endLine": 2263,
+        "endChar": 45
+      },
+      "revId": "a4868652db0d52a7cf4f497a88d54ff07fcd0648",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "09341b6e_0e3f5277",
+        "filename": "partition.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2266,
+      "author": {
+        "id": 1001224
+      },
+      "writtenOn": "2018-12-03T12:06:15Z",
+      "side": 1,
+      "message": "may need ifdef for backward compatibility",
+      "range": {
+        "startLine": 2266,
+        "startChar": 29,
+        "endLine": 2266,
+        "endChar": 59
+      },
+      "revId": "a4868652db0d52a7cf4f497a88d54ff07fcd0648",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
