@@ -163,7 +163,7 @@ ifeq ($(TW_OEM_BUILD),true)
 endif
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 27; echo $$?),0)
         LOCAL_CFLAGS += -DUSE_EXT4
         LOCAL_C_INCLUDES += system/extras/ext4_utils
         LOCAL_SHARED_LIBRARIES += libext4_utils
