@@ -253,7 +253,7 @@ TWPartition::TWPartition() {
 	Format_Block_Size = 0;
 	Ignore_Blkid = false;
 	Retain_Layout_Version = false;
-	Crypto_Key_Location = "footer";
+	Crypto_Key_Location = "";
 	MTP_Storage_ID = 0;
 	Can_Flash_Img = false;
 	Mount_Read_Only = false;
@@ -2061,6 +2061,8 @@ bool TWPartition::Wipe_EXT23(string File_System) {
 }
 
 bool TWPartition::Wipe_EXT4() {
+	int ret;
+
 	Find_Actual_Block_Device();
 	if (!Is_Present) {
 		LOGINFO("Block device not present, cannot wipe %s.\n", Display_Name.c_str());
@@ -2070,17 +2072,27 @@ bool TWPartition::Wipe_EXT4() {
 	if (!UnMount(true))
 		return false;
 
+	unsigned long long dev_sz = TWFunc::IOCTL_Get_Block_Size(Actual_Block_Device.c_str());
+	if (!dev_sz)
+		return false;
+
+	/* Format the partition using the calculated length */
+	if (Length < 0) {
+		dev_sz += Length; // Reserve negative length, but really necessary?
+	} else if (Crypto_Key_Location == "footer") {
+		dev_sz -= CRYPT_FOOTER_OFFSET;
+	}
+
 #if defined(USE_EXT4)
-	int ret;
 	char *secontext = NULL;
 
 	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("make_ext4fs"));
 
 	if (!selinux_handle || selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
 		LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
-		ret = make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), NULL);
+		ret = make_ext4fs(Actual_Block_Device.c_str(), dev_sz, Mount_Point.c_str(), NULL);
 	} else {
-		ret = make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), selinux_handle);
+		ret = make_ext4fs(Actual_Block_Device.c_str(), dev_sz, Mount_Point.c_str(), selinux_handle);
 	}
 	if (ret != 0) {
 		gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
@@ -2093,33 +2105,34 @@ bool TWPartition::Wipe_EXT4() {
 		return true;
 	}
 #else
-	if (TWFunc::Path_Exists("/sbin/make_ext4fs")) {
+	if (TWFunc::Path_Exists("/sbin/mke2fs") && TWFunc::Path_Exists("/sbin/e2fsdroid")) {
+		string size_str = to_string(dev_sz / 4096);
 		string Command;
 
-		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("make_ext4fs"));
-		Find_Actual_Block_Device();
-		Command = "make_ext4fs";
-		if (!Is_Decrypted && Length != 0) {
-			// Only use length if we're not decrypted
-			char len[32];
-			sprintf(len, "%i", Length);
-			Command += " -l ";
-			Command += len;
-		}
-		if (TWFunc::Path_Exists("/file_contexts")) {
-			Command += " -S /file_contexts";
-		}
-		Command += " -a " + Mount_Point + " " + Actual_Block_Device;
-		LOGINFO("make_ext4fs command: %s\n", Command.c_str());
-		if (TWFunc::Exec_Cmd(Command) == 0) {
-			Current_File_System = "ext4";
-			Recreate_AndSec_Folder();
-			gui_msg("done=Done.");
-			return true;
-		} else {
+		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mke2fs"));
+
+		// Execute mke2fs to create empty ext4 filesystem
+		Command = "mke2fs -t ext4 -b 4096 " + Actual_Block_Device + " " + size_str;
+		LOGINFO("mke2fs command: %s\n", Command.c_str());
+		ret = TWFunc::Exec_Cmd(Command);
+		if (ret) {
 			gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
 			return false;
 		}
+
+		// Execute e2fsdroid to initialize selinux context
+		Command = "e2fsdroid -e -a " + Mount_Point + " " + Actual_Block_Device;
+		LOGINFO("e2fsdroid command: %s\n", Command.c_str());
+		ret = TWFunc::Exec_Cmd(Command);
+		if (ret) {
+			gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
+			return false;
+		}
+
+		Current_File_System = "ext4";
+		Recreate_AndSec_Folder();
+		gui_msg("done=Done.");
+		return true;
 	} else
 		return Wipe_EXT23("ext4");
 #endif
@@ -2228,23 +2241,31 @@ bool TWPartition::Wipe_F2FS() {
 	string command;
 
 	if (TWFunc::Path_Exists("/sbin/mkfs.f2fs")) {
+		Find_Actual_Block_Device();
+		if (!Is_Present) {
+			LOGINFO("Block device not present, cannot wipe %s.\n", Display_Name.c_str());
+			gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
+			return false;
+		}
 		if (!UnMount(true))
 			return false;
 
-		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkfs.f2fs"));
-		Find_Actual_Block_Device();
-		command = "mkfs.f2fs -t 0";
-		if (!Is_Decrypted && Length != 0) {
-			// Only use length if we're not decrypted
-			char len[32];
-			int mod_length = Length;
-			if (Length < 0)
-				mod_length *= -1;
-			sprintf(len, "%i", mod_length);
-			command += " -r ";
-			command += len;
+		unsigned long long dev_sz = TWFunc::IOCTL_Get_Block_Size(Actual_Block_Device.c_str());
+		if (!dev_sz)
+			return false;
+
+		/* Format the partition using the calculated length */
+		if (Length < 0) {
+			dev_sz += Length; // Reserve negative length, but really necessary?
+		} else if (Crypto_Key_Location == "footer") {
+			dev_sz -= CRYPT_FOOTER_OFFSET;
 		}
-		command += " " + Actual_Block_Device;
+		string size_str = to_string(dev_sz / 4096);
+
+		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkfs.f2fs"));
+		command = "mkfs.f2fs -d1 -f -O encrypt -O quota -O verity -w 4096";
+		command += " " + Actual_Block_Device + " " + size_str;
+		LOGINFO("mkfs.f2fs command: %s\n", command.c_str());
 		if (TWFunc::Exec_Cmd(command) == 0) {
 			Recreate_AndSec_Folder();
 			gui_msg("done=Done.");
