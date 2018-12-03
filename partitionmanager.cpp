@@ -436,7 +436,7 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("   Alternate_Block_Device: %s\n", Part->Alternate_Block_Device.c_str());
 	if (!Part->Decrypted_Block_Device.empty())
 		printf("   Decrypted_Block_Device: %s\n", Part->Decrypted_Block_Device.c_str());
-	if (!Part->Crypto_Key_Location.empty() && Part->Crypto_Key_Location != "footer")
+	if (!Part->Crypto_Key_Location.empty())
 		printf("   Crypto_Key_Location: %s\n", Part->Crypto_Key_Location.c_str());
 	if (Part->Length != 0)
 		printf("   Length: %i\n", Part->Length);
