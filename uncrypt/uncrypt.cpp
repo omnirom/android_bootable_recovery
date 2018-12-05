@@ -174,9 +174,7 @@ static std::string FindBlockDevice(const std::string& path, bool* encryptable, b
     if (entry.mount_point.empty()) {
       continue;
     }
-    auto len = entry.mount_point.size();
-    if (android::base::StartsWith(path, entry.mount_point) &&
-        (path[len] == '/' || path[len] == 0)) {
+    if (android::base::StartsWith(path, entry.mount_point + "/")) {
       *encrypted = false;
       *encryptable = false;
       if (entry.is_encryptable() || entry.fs_mgr_flags.file_encryption) {
