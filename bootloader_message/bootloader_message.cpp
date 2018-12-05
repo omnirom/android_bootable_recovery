@@ -27,21 +27,22 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
-#include <fs_mgr.h>
+#include <fstab/fstab.h>
 
 static std::string get_misc_blk_device(std::string* err) {
-  std::unique_ptr<fstab, decltype(&fs_mgr_free_fstab)> fstab(fs_mgr_read_fstab_default(),
-                                                             fs_mgr_free_fstab);
-  if (!fstab) {
+  Fstab fstab;
+  if (!ReadDefaultFstab(&fstab)) {
     *err = "failed to read default fstab";
     return "";
   }
-  fstab_rec* record = fs_mgr_get_entry_for_mount_point(fstab.get(), "/misc");
-  if (record == nullptr) {
-    *err = "failed to find /misc partition";
-    return "";
+  for (const auto& entry : fstab) {
+    if (entry.mount_point == "/misc") {
+      return entry.blk_device;
+    }
   }
-  return record->blk_device;
+
+  *err = "failed to find /misc partition";
+  return "";
 }
 
 // In recovery mode, recovery can get started and try to access the misc
