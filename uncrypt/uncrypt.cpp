@@ -115,6 +115,7 @@
 #include <cutils/android_reboot.h>
 #include <cutils/sockets.h>
 #include <fs_mgr.h>
+#include <fstab/fstab.h>
 
 #include "otautil/error_code.h"
 
@@ -136,7 +137,7 @@ static const std::string UNCRYPT_PATH_FILE = "/cache/recovery/uncrypt_file";
 static const std::string UNCRYPT_STATUS = "/cache/recovery/uncrypt_status";
 static const std::string UNCRYPT_SOCKET = "uncrypt";
 
-static struct fstab* fstab = nullptr;
+static Fstab fstab;
 
 static int write_at_offset(unsigned char* buffer, size_t size, int wfd, off64_t offset) {
     if (TEMP_FAILURE_RETRY(lseek64(wfd, offset, SEEK_SET)) == -1) {
@@ -162,18 +163,8 @@ static void add_block_to_ranges(std::vector<int>& ranges, int new_block) {
     }
 }
 
-static struct fstab* read_fstab() {
-    fstab = fs_mgr_read_fstab_default();
-    if (!fstab) {
-        LOG(ERROR) << "failed to read default fstab";
-        return NULL;
-    }
-
-    return fstab;
-}
-
-static const char* find_block_device(const char* path, bool* encryptable,
-                                     bool* encrypted, bool* f2fs_fs) {
+static std::string find_block_device(const char* path, bool* encryptable, bool* encrypted,
+                                     bool* f2fs_fs) {
     // Look for a volume whose mount point is the prefix of path and
     // return its block device.  Set encrypted if it's currently
     // encrypted.
@@ -181,30 +172,29 @@ static const char* find_block_device(const char* path, bool* encryptable,
     // ensure f2fs_fs is set to false first.
     *f2fs_fs = false;
 
-    for (int i = 0; i < fstab->num_entries; ++i) {
-        struct fstab_rec* v = &fstab->recs[i];
-        if (!v->mount_point) {
+    for (const auto& entry : fstab) {
+        if (entry.mount_point.empty()) {
             continue;
         }
-        int len = strlen(v->mount_point);
-        if (strncmp(path, v->mount_point, len) == 0 &&
+        auto len = entry.mount_point.size();
+        if (android::base::StartsWith(path, entry.mount_point) &&
             (path[len] == '/' || path[len] == 0)) {
             *encrypted = false;
             *encryptable = false;
-            if (fs_mgr_is_encryptable(v) || fs_mgr_is_file_encrypted(v)) {
+            if (entry.is_encryptable() || entry.fs_mgr_flags.file_encryption) {
                 *encryptable = true;
                 if (android::base::GetProperty("ro.crypto.state", "") == "encrypted") {
                     *encrypted = true;
                 }
             }
-            if (strcmp(v->fs_type, "f2fs") == 0) {
+            if (entry.fs_type == "f2fs") {
                 *f2fs_fs = true;
             }
-            return v->blk_device;
+            return entry.blk_device;
         }
     }
 
-    return NULL;
+    return "";
 }
 
 static bool write_status_to_socket(int status, int socket) {
@@ -493,8 +483,8 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
     bool encryptable;
     bool encrypted;
     bool f2fs_fs;
-    const char* blk_dev = find_block_device(path, &encryptable, &encrypted, &f2fs_fs);
-    if (blk_dev == nullptr) {
+    const std::string blk_dev = find_block_device(path, &encryptable, &encrypted, &f2fs_fs);
+    if (blk_dev.empty()) {
         LOG(ERROR) << "failed to find block device for " << path;
         return kUncryptBlockDeviceFindError;
     }
@@ -514,7 +504,7 @@ static int uncrypt(const char* input_path, const char* map_file, const int socke
     // and /sdcard we leave the file alone.
     if (strncmp(path, "/data/", 6) == 0) {
         LOG(INFO) << "writing block map " << map_file;
-        return produce_block_map(path, map_file, blk_dev, encrypted, f2fs_fs, socket);
+        return produce_block_map(path, map_file, blk_dev.c_str(), encrypted, f2fs_fs, socket);
     }
 
     return 0;
@@ -654,7 +644,8 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    if ((fstab = read_fstab()) == nullptr) {
+    if (!ReadDefaultFstab(&fstab)) {
+        LOG(ERROR) << "failed to read default fstab";
         log_uncrypt_error_code(kUncryptFstabReadError);
         return 1;
     }
