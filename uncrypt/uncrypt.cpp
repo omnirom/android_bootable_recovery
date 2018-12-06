@@ -89,7 +89,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <libgen.h>
 #include <linux/fs.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -103,6 +102,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <android-base/file.h>
@@ -163,38 +163,34 @@ static void add_block_to_ranges(std::vector<int>& ranges, int new_block) {
     }
 }
 
-static std::string find_block_device(const char* path, bool* encryptable, bool* encrypted,
-                                     bool* f2fs_fs) {
-    // Look for a volume whose mount point is the prefix of path and
-    // return its block device.  Set encrypted if it's currently
-    // encrypted.
+// Looks for a volume whose mount point is the prefix of path and returns its block device or an
+// empty string. Sets encryption flags accordingly.
+static std::string FindBlockDevice(const std::string& path, bool* encryptable, bool* encrypted,
+                                   bool* f2fs_fs) {
+  // Ensure f2fs_fs is set to false first.
+  *f2fs_fs = false;
 
-    // ensure f2fs_fs is set to false first.
-    *f2fs_fs = false;
-
-    for (const auto& entry : fstab) {
-        if (entry.mount_point.empty()) {
-            continue;
-        }
-        auto len = entry.mount_point.size();
-        if (android::base::StartsWith(path, entry.mount_point) &&
-            (path[len] == '/' || path[len] == 0)) {
-            *encrypted = false;
-            *encryptable = false;
-            if (entry.is_encryptable() || entry.fs_mgr_flags.file_encryption) {
-                *encryptable = true;
-                if (android::base::GetProperty("ro.crypto.state", "") == "encrypted") {
-                    *encrypted = true;
-                }
-            }
-            if (entry.fs_type == "f2fs") {
-                *f2fs_fs = true;
-            }
-            return entry.blk_device;
-        }
+  for (const auto& entry : fstab) {
+    if (entry.mount_point.empty()) {
+      continue;
     }
+    if (android::base::StartsWith(path, entry.mount_point + "/")) {
+      *encrypted = false;
+      *encryptable = false;
+      if (entry.is_encryptable() || entry.fs_mgr_flags.file_encryption) {
+        *encryptable = true;
+        if (android::base::GetProperty("ro.crypto.state", "") == "encrypted") {
+          *encrypted = true;
+        }
+      }
+      if (entry.fs_type == "f2fs") {
+        *f2fs_fs = true;
+      }
+      return entry.blk_device;
+    }
+  }
 
-    return "";
+  return "";
 }
 
 static bool write_status_to_socket(int status, int socket) {
@@ -207,103 +203,102 @@ static bool write_status_to_socket(int status, int socket) {
     return android::base::WriteFully(socket, &status_out, sizeof(int));
 }
 
-// Parse uncrypt_file to find the update package name.
-static bool find_uncrypt_package(const std::string& uncrypt_path_file, std::string* package_name) {
-    CHECK(package_name != nullptr);
-    std::string uncrypt_path;
-    if (!android::base::ReadFileToString(uncrypt_path_file, &uncrypt_path)) {
-        PLOG(ERROR) << "failed to open \"" << uncrypt_path_file << "\"";
-        return false;
-    }
+// Parses the given path file to find the update package name.
+static bool FindUncryptPackage(const std::string& uncrypt_path_file, std::string* package_name) {
+  CHECK(package_name != nullptr);
+  std::string uncrypt_path;
+  if (!android::base::ReadFileToString(uncrypt_path_file, &uncrypt_path)) {
+    PLOG(ERROR) << "failed to open \"" << uncrypt_path_file << "\"";
+    return false;
+  }
 
-    // Remove the trailing '\n' if present.
-    *package_name = android::base::Trim(uncrypt_path);
-    return true;
+  // Remove the trailing '\n' if present.
+  *package_name = android::base::Trim(uncrypt_path);
+  return true;
 }
 
-static int retry_fibmap(const int fd, const char* name, int* block, const int head_block) {
-    CHECK(block != nullptr);
-    for (size_t i = 0; i < FIBMAP_RETRY_LIMIT; i++) {
-        if (fsync(fd) == -1) {
-            PLOG(ERROR) << "failed to fsync \"" << name << "\"";
-            return kUncryptFileSyncError;
-        }
-        if (ioctl(fd, FIBMAP, block) != 0) {
-            PLOG(ERROR) << "failed to find block " << head_block;
-            return kUncryptIoctlError;
-        }
-        if (*block != 0) {
-            return kUncryptNoError;
-        }
-        sleep(1);
+static int RetryFibmap(int fd, const std::string& name, int* block, const int head_block) {
+  CHECK(block != nullptr);
+  for (size_t i = 0; i < FIBMAP_RETRY_LIMIT; i++) {
+    if (fsync(fd) == -1) {
+      PLOG(ERROR) << "failed to fsync \"" << name << "\"";
+      return kUncryptFileSyncError;
     }
-    LOG(ERROR) << "fibmap of " << head_block << "always returns 0";
-    return kUncryptIoctlError;
+    if (ioctl(fd, FIBMAP, block) != 0) {
+      PLOG(ERROR) << "failed to find block " << head_block;
+      return kUncryptIoctlError;
+    }
+    if (*block != 0) {
+      return kUncryptNoError;
+    }
+    sleep(1);
+  }
+  LOG(ERROR) << "fibmap of " << head_block << " always returns 0";
+  return kUncryptIoctlError;
 }
 
-static int produce_block_map(const char* path, const char* map_file, const char* blk_dev,
-                             bool encrypted, bool f2fs_fs, int socket) {
-    std::string err;
-    if (!android::base::RemoveFileIfExists(map_file, &err)) {
-        LOG(ERROR) << "failed to remove the existing map file " << map_file << ": " << err;
-        return kUncryptFileRemoveError;
+static int ProductBlockMap(const std::string& path, const std::string& map_file,
+                           const std::string& blk_dev, bool encrypted, bool f2fs_fs, int socket) {
+  std::string err;
+  if (!android::base::RemoveFileIfExists(map_file, &err)) {
+    LOG(ERROR) << "failed to remove the existing map file " << map_file << ": " << err;
+    return kUncryptFileRemoveError;
+  }
+  std::string tmp_map_file = map_file + ".tmp";
+  android::base::unique_fd mapfd(open(tmp_map_file.c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR));
+  if (mapfd == -1) {
+    PLOG(ERROR) << "failed to open " << tmp_map_file;
+    return kUncryptFileOpenError;
+  }
+
+  // Make sure we can write to the socket.
+  if (!write_status_to_socket(0, socket)) {
+    LOG(ERROR) << "failed to write to socket " << socket;
+    return kUncryptSocketWriteError;
+  }
+
+  struct stat sb;
+  if (stat(path.c_str(), &sb) != 0) {
+    PLOG(ERROR) << "failed to stat " << path;
+    return kUncryptFileStatError;
+  }
+
+  LOG(INFO) << " block size: " << sb.st_blksize << " bytes";
+
+  int blocks = ((sb.st_size - 1) / sb.st_blksize) + 1;
+  LOG(INFO) << "  file size: " << sb.st_size << " bytes, " << blocks << " blocks";
+
+  std::vector<int> ranges;
+
+  std::string s = android::base::StringPrintf("%s\n%" PRId64 " %" PRId64 "\n", blk_dev.c_str(),
+                                              static_cast<int64_t>(sb.st_size),
+                                              static_cast<int64_t>(sb.st_blksize));
+  if (!android::base::WriteStringToFd(s, mapfd)) {
+    PLOG(ERROR) << "failed to write " << tmp_map_file;
+    return kUncryptWriteError;
+  }
+
+  std::vector<std::vector<unsigned char>> buffers;
+  if (encrypted) {
+    buffers.resize(WINDOW_SIZE, std::vector<unsigned char>(sb.st_blksize));
+  }
+  int head_block = 0;
+  int head = 0, tail = 0;
+
+  android::base::unique_fd fd(open(path.c_str(), O_RDWR));
+  if (fd == -1) {
+    PLOG(ERROR) << "failed to open " << path << " for reading";
+    return kUncryptFileOpenError;
+  }
+
+  android::base::unique_fd wfd;
+  if (encrypted) {
+    wfd.reset(open(blk_dev.c_str(), O_WRONLY));
+    if (wfd == -1) {
+      PLOG(ERROR) << "failed to open " << blk_dev << " for writing";
+      return kUncryptBlockOpenError;
     }
-    std::string tmp_map_file = std::string(map_file) + ".tmp";
-    android::base::unique_fd mapfd(open(tmp_map_file.c_str(),
-                                        O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR));
-    if (mapfd == -1) {
-        PLOG(ERROR) << "failed to open " << tmp_map_file;
-        return kUncryptFileOpenError;
-    }
-
-    // Make sure we can write to the socket.
-    if (!write_status_to_socket(0, socket)) {
-        LOG(ERROR) << "failed to write to socket " << socket;
-        return kUncryptSocketWriteError;
-    }
-
-    struct stat sb;
-    if (stat(path, &sb) != 0) {
-        LOG(ERROR) << "failed to stat " << path;
-        return kUncryptFileStatError;
-    }
-
-    LOG(INFO) << " block size: " << sb.st_blksize << " bytes";
-
-    int blocks = ((sb.st_size-1) / sb.st_blksize) + 1;
-    LOG(INFO) << "  file size: " << sb.st_size << " bytes, " << blocks << " blocks";
-
-    std::vector<int> ranges;
-
-    std::string s = android::base::StringPrintf("%s\n%" PRId64 " %" PRId64 "\n",
-                       blk_dev, static_cast<int64_t>(sb.st_size),
-                       static_cast<int64_t>(sb.st_blksize));
-    if (!android::base::WriteStringToFd(s, mapfd)) {
-        PLOG(ERROR) << "failed to write " << tmp_map_file;
-        return kUncryptWriteError;
-    }
-
-    std::vector<std::vector<unsigned char>> buffers;
-    if (encrypted) {
-        buffers.resize(WINDOW_SIZE, std::vector<unsigned char>(sb.st_blksize));
-    }
-    int head_block = 0;
-    int head = 0, tail = 0;
-
-    android::base::unique_fd fd(open(path, O_RDWR));
-    if (fd == -1) {
-        PLOG(ERROR) << "failed to open " << path << " for reading";
-        return kUncryptFileOpenError;
-    }
-
-    android::base::unique_fd wfd;
-    if (encrypted) {
-        wfd.reset(open(blk_dev, O_WRONLY));
-        if (wfd == -1) {
-            PLOG(ERROR) << "failed to open " << blk_dev << " for writing";
-            return kUncryptBlockOpenError;
-        }
-    }
+  }
 
 // F2FS-specific ioctl
 // It requires the below kernel commit merged in v4.16-rc1.
@@ -351,7 +346,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
             if (block == 0) {
                 LOG(ERROR) << "failed to find block " << head_block << ", retrying";
-                int error = retry_fibmap(fd, path, &block, head_block);
+                int error = RetryFibmap(fd, path, &block, head_block);
                 if (error != kUncryptNoError) {
                     return error;
                 }
@@ -396,7 +391,7 @@ static int produce_block_map(const char* path, const char* map_file, const char*
 
         if (block == 0) {
             LOG(ERROR) << "failed to find block " << head_block << ", retrying";
-            int error = retry_fibmap(fd, path, &block, head_block);
+            int error = RetryFibmap(fd, path, &block, head_block);
             if (error != kUncryptNoError) {
                 return error;
             }
@@ -446,13 +441,12 @@ static int produce_block_map(const char* path, const char* map_file, const char*
         }
     }
 
-    if (rename(tmp_map_file.c_str(), map_file) == -1) {
-        PLOG(ERROR) << "failed to rename " << tmp_map_file << " to " << map_file;
-        return kUncryptFileRenameError;
+    if (rename(tmp_map_file.c_str(), map_file.c_str()) == -1) {
+      PLOG(ERROR) << "failed to rename " << tmp_map_file << " to " << map_file;
+      return kUncryptFileRenameError;
     }
     // Sync dir to make rename() result written to disk.
-    std::string file_name = map_file;
-    std::string dir_name = dirname(&file_name[0]);
+    std::string dir_name = android::base::Dirname(map_file);
     android::base::unique_fd dfd(open(dir_name.c_str(), O_RDONLY | O_DIRECTORY));
     if (dfd == -1) {
         PLOG(ERROR) << "failed to open dir " << dir_name;
@@ -469,45 +463,42 @@ static int produce_block_map(const char* path, const char* map_file, const char*
     return 0;
 }
 
-static int uncrypt(const char* input_path, const char* map_file, const int socket) {
-    LOG(INFO) << "update package is \"" << input_path << "\"";
+static int Uncrypt(const std::string& input_path, const std::string& map_file, int socket) {
+  LOG(INFO) << "update package is \"" << input_path << "\"";
 
-    // Turn the name of the file we're supposed to convert into an absolute path, so we can find
-    // what filesystem it's on.
-    char path[PATH_MAX+1];
-    if (realpath(input_path, path) == nullptr) {
-        PLOG(ERROR) << "failed to convert \"" << input_path << "\" to absolute path";
-        return kUncryptRealpathFindError;
-    }
+  // Turn the name of the file we're supposed to convert into an absolute path, so we can find what
+  // filesystem it's on.
+  std::string path;
+  if (!android::base::Realpath(input_path, &path)) {
+    PLOG(ERROR) << "Failed to convert \"" << input_path << "\" to absolute path";
+    return kUncryptRealpathFindError;
+  }
 
-    bool encryptable;
-    bool encrypted;
-    bool f2fs_fs;
-    const std::string blk_dev = find_block_device(path, &encryptable, &encrypted, &f2fs_fs);
-    if (blk_dev.empty()) {
-        LOG(ERROR) << "failed to find block device for " << path;
-        return kUncryptBlockDeviceFindError;
-    }
+  bool encryptable;
+  bool encrypted;
+  bool f2fs_fs;
+  const std::string blk_dev = FindBlockDevice(path, &encryptable, &encrypted, &f2fs_fs);
+  if (blk_dev.empty()) {
+    LOG(ERROR) << "Failed to find block device for " << path;
+    return kUncryptBlockDeviceFindError;
+  }
 
-    // If the filesystem it's on isn't encrypted, we only produce the
-    // block map, we don't rewrite the file contents (it would be
-    // pointless to do so).
-    LOG(INFO) << "encryptable: " << (encryptable ? "yes" : "no");
-    LOG(INFO) << "  encrypted: " << (encrypted ? "yes" : "no");
+  // If the filesystem it's on isn't encrypted, we only produce the block map, we don't rewrite the
+  // file contents (it would be pointless to do so).
+  LOG(INFO) << "encryptable: " << (encryptable ? "yes" : "no");
+  LOG(INFO) << "  encrypted: " << (encrypted ? "yes" : "no");
 
-    // Recovery supports installing packages from 3 paths: /cache,
-    // /data, and /sdcard.  (On a particular device, other locations
-    // may work, but those are three we actually expect.)
-    //
-    // On /data we want to convert the file to a block map so that we
-    // can read the package without mounting the partition.  On /cache
-    // and /sdcard we leave the file alone.
-    if (strncmp(path, "/data/", 6) == 0) {
-        LOG(INFO) << "writing block map " << map_file;
-        return produce_block_map(path, map_file, blk_dev.c_str(), encrypted, f2fs_fs, socket);
-    }
+  // Recovery supports installing packages from 3 paths: /cache, /data, and /sdcard. (On a
+  // particular device, other locations may work, but those are three we actually expect.)
+  //
+  // On /data we want to convert the file to a block map so that we can read the package without
+  // mounting the partition. On /cache and /sdcard we leave the file alone.
+  if (android::base::StartsWith(path, "/data/")) {
+    LOG(INFO) << "writing block map " << map_file;
+    return ProductBlockMap(path, map_file, blk_dev, encrypted, f2fs_fs, socket);
+  }
 
-    return 0;
+  return 0;
 }
 
 static void log_uncrypt_error_code(UncryptErrorCode error_code) {
@@ -523,18 +514,18 @@ static bool uncrypt_wrapper(const char* input_path, const char* map_file, const 
 
     std::string package;
     if (input_path == nullptr) {
-        if (!find_uncrypt_package(UNCRYPT_PATH_FILE, &package)) {
-            write_status_to_socket(-1, socket);
-            // Overwrite the error message.
-            log_uncrypt_error_code(kUncryptPackageMissingError);
-            return false;
-        }
-        input_path = package.c_str();
+      if (!FindUncryptPackage(UNCRYPT_PATH_FILE, &package)) {
+        write_status_to_socket(-1, socket);
+        // Overwrite the error message.
+        log_uncrypt_error_code(kUncryptPackageMissingError);
+        return false;
+      }
+      input_path = package.c_str();
     }
     CHECK(map_file != nullptr);
 
     auto start = std::chrono::system_clock::now();
-    int status = uncrypt(input_path, map_file, socket);
+    int status = Uncrypt(input_path, map_file, socket);
     std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
     int count = static_cast<int>(duration.count());
 
