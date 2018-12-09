@@ -308,11 +308,11 @@ class TestableScreenRecoveryUI : public ScreenRecoveryUI {
   int KeyHandler(int key, bool visible) const;
 
  private:
-  FRIEND_TEST(ScreenRecoveryUITest, Init);
-  FRIEND_TEST(ScreenRecoveryUITest, RtlLocale);
-  FRIEND_TEST(ScreenRecoveryUITest, RtlLocaleWithSuffix);
-  FRIEND_TEST(ScreenRecoveryUITest, LoadAnimation);
-  FRIEND_TEST(ScreenRecoveryUITest, LoadAnimation_MissingAnimation);
+  FRIEND_TEST(DISABLED_ScreenRecoveryUITest, Init);
+  FRIEND_TEST(DISABLED_ScreenRecoveryUITest, RtlLocale);
+  FRIEND_TEST(DISABLED_ScreenRecoveryUITest, RtlLocaleWithSuffix);
+  FRIEND_TEST(DISABLED_ScreenRecoveryUITest, LoadAnimation);
+  FRIEND_TEST(DISABLED_ScreenRecoveryUITest, LoadAnimation_MissingAnimation);
 
   std::vector<KeyCode> key_buffer_;
   size_t key_buffer_index_;
@@ -340,7 +340,7 @@ int TestableScreenRecoveryUI::WaitKey() {
   return static_cast<int>(key_buffer_[key_buffer_index_++]);
 }
 
-class ScreenRecoveryUITest : public ::testing::Test {
+class DISABLED_ScreenRecoveryUITest : public ::testing::Test {
  protected:
   const std::string kTestLocale = "en-US";
   const std::string kTestRtlLocale = "ar";
@@ -372,7 +372,7 @@ class ScreenRecoveryUITest : public ::testing::Test {
     }                                                                         \
   } while (false)
 
-TEST_F(ScreenRecoveryUITest, Init) {
+TEST_F(DISABLED_ScreenRecoveryUITest, Init) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
@@ -382,12 +382,12 @@ TEST_F(ScreenRecoveryUITest, Init) {
   ASSERT_FALSE(ui_->WasTextEverVisible());
 }
 
-TEST_F(ScreenRecoveryUITest, dtor_NotCallingInit) {
+TEST_F(DISABLED_ScreenRecoveryUITest, dtor_NotCallingInit) {
   ui_.reset();
   ASSERT_FALSE(ui_);
 }
 
-TEST_F(ScreenRecoveryUITest, ShowText) {
+TEST_F(DISABLED_ScreenRecoveryUITest, ShowText) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
@@ -401,21 +401,21 @@ TEST_F(ScreenRecoveryUITest, ShowText) {
   ASSERT_TRUE(ui_->WasTextEverVisible());
 }
 
-TEST_F(ScreenRecoveryUITest, RtlLocale) {
+TEST_F(DISABLED_ScreenRecoveryUITest, RtlLocale) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestRtlLocale));
   ASSERT_TRUE(ui_->rtl_locale_);
 }
 
-TEST_F(ScreenRecoveryUITest, RtlLocaleWithSuffix) {
+TEST_F(DISABLED_ScreenRecoveryUITest, RtlLocaleWithSuffix) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestRtlLocaleWithSuffix));
   ASSERT_TRUE(ui_->rtl_locale_);
 }
 
-TEST_F(ScreenRecoveryUITest, ShowMenu) {
+TEST_F(DISABLED_ScreenRecoveryUITest, ShowMenu) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
@@ -443,7 +443,7 @@ TEST_F(ScreenRecoveryUITest, ShowMenu) {
                                         std::placeholders::_1, std::placeholders::_2)));
 }
 
-TEST_F(ScreenRecoveryUITest, ShowMenu_NotMenuOnly) {
+TEST_F(DISABLED_ScreenRecoveryUITest, ShowMenu_NotMenuOnly) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
@@ -456,7 +456,7 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_NotMenuOnly) {
                                     std::placeholders::_1, std::placeholders::_2)));
 }
 
-TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut) {
+TEST_F(DISABLED_ScreenRecoveryUITest, ShowMenu_TimedOut) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
@@ -467,7 +467,7 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut) {
             ui_->ShowMenu(HEADERS, ITEMS, 3, true, nullptr));
 }
 
-TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
+TEST_F(DISABLED_ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
@@ -485,7 +485,7 @@ TEST_F(ScreenRecoveryUITest, ShowMenu_TimedOut_TextWasEverVisible) {
                                         std::placeholders::_1, std::placeholders::_2)));
 }
 
-TEST_F(ScreenRecoveryUITest, ShowMenuWithInterrupt) {
+TEST_F(DISABLED_ScreenRecoveryUITest, ShowMenuWithInterrupt) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
@@ -517,7 +517,7 @@ TEST_F(ScreenRecoveryUITest, ShowMenuWithInterrupt) {
                                     std::placeholders::_1, std::placeholders::_2)));
 }
 
-TEST_F(ScreenRecoveryUITest, LoadAnimation) {
+TEST_F(DISABLED_ScreenRecoveryUITest, LoadAnimation) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
@@ -547,7 +547,7 @@ TEST_F(ScreenRecoveryUITest, LoadAnimation) {
   }
 }
 
-TEST_F(ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
+TEST_F(DISABLED_ScreenRecoveryUITest, LoadAnimation_MissingAnimation) {
   RETURN_IF_NO_GRAPHICS;
 
   ASSERT_TRUE(ui_->Init(kTestLocale));
