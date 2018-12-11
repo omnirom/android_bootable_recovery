@@ -240,6 +240,11 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
                                 const std::vector<std::string>& backup_items,
                                 const std::function<int(int, bool)>& key_handler) override;
 
+  // Displays the localized wipe data confirmation menu.
+  size_t ShowPromptWipeDataConfirmationMenu(
+      const std::vector<std::string>& backup_headers, const std::vector<std::string>& backup_items,
+      const std::function<int(int, bool)>& key_handler) override;
+
  protected:
   static constexpr int kMenuIndent = 4;
 
@@ -334,9 +339,11 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
   std::unique_ptr<GRSurface> no_command_text_;
 
   // Localized text images for the wipe data menu.
-  std::unique_ptr<GRSurface> wipe_data_menu_header_text_;
-  std::unique_ptr<GRSurface> try_again_text_;
+  std::unique_ptr<GRSurface> cancel_wipe_data_text_;
   std::unique_ptr<GRSurface> factory_data_reset_text_;
+  std::unique_ptr<GRSurface> try_again_text_;
+  std::unique_ptr<GRSurface> wipe_data_confirmation_text_;
+  std::unique_ptr<GRSurface> wipe_data_menu_header_text_;
 
   // current_icon_ points to one of the frames in intro_frames_ or loop_frames_, indexed by
   // current_frame_, or error_icon_.
