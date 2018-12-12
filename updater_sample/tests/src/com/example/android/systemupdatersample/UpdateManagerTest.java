@@ -26,9 +26,10 @@ import static org.mockito.Mockito.when;
 import android.content.Context;
 import android.os.UpdateEngine;
 import android.os.UpdateEngineCallback;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.example.android.systemupdatersample.tests.R;
 import com.example.android.systemupdatersample.util.PayloadSpecs;
