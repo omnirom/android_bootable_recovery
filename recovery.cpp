@@ -369,7 +369,14 @@ static bool yes_no(Device* device, const char* question1, const char* question2)
 }
 
 static bool ask_to_wipe_data(Device* device) {
-  return yes_no(device, "Wipe all user data?", "  THIS CAN NOT BE UNDONE!");
+  std::vector<std::string> headers{ "Wipe all user data?", "  THIS CAN NOT BE UNDONE!" };
+  std::vector<std::string> items{ " Cancel", " Factory data reset" };
+
+  size_t chosen_item = ui->ShowPromptWipeDataConfirmationMenu(
+      headers, items,
+      std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
+
+  return (chosen_item == 1);
 }
 
 // Return true on success.
@@ -420,7 +427,6 @@ static InstallResult prompt_and_wipe_data(Device* device) {
       return INSTALL_SUCCESS;  // Just reboot, no wipe; not a failure, user asked for it
     }
 
-    // TODO(xunchang) localize the confirmation texts also.
     if (ask_to_wipe_data(device)) {
       if (wipe_data(device)) {
         return INSTALL_SUCCESS;

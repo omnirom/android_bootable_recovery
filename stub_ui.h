@@ -74,6 +74,13 @@ class StubRecoveryUI : public RecoveryUI {
     return 0;
   }
 
+  size_t ShowPromptWipeDataConfirmationMenu(
+      const std::vector<std::string>& /* backup_headers */,
+      const std::vector<std::string>& /* backup_items */,
+      const std::function<int(int, bool)>& /* key_handle */) override {
+    return 0;
+  }
+
   void SetTitle(const std::vector<std::string>& /* lines */) override {}
 };
 
