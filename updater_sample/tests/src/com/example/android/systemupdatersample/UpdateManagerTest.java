@@ -18,21 +18,26 @@ package com.example.android.systemupdatersample;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.ResultReceiver;
 import android.os.UpdateEngine;
 import android.os.UpdateEngineCallback;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.example.android.systemupdatersample.services.PrepareUpdateService;
 import com.example.android.systemupdatersample.tests.R;
-import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 
@@ -44,7 +49,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -61,49 +65,39 @@ public class UpdateManagerTest {
     @Mock
     private UpdateEngine mUpdateEngine;
     @Mock
-    private PayloadSpecs mPayloadSpecs;
+    private Context mMockContext;
     private UpdateManager mSubject;
-    private Context mContext;
-    private UpdateConfig mNonStreamingUpdate003;
+    private Context mTestContext;
+    private UpdateConfig mStreamingUpdate002;
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getContext();
-        mSubject = new UpdateManager(mUpdateEngine, mPayloadSpecs);
-        mNonStreamingUpdate003 =
-                UpdateConfig.fromJson(readResource(R.raw.update_config_003_nonstream));
+        mTestContext = InstrumentationRegistry.getContext();
+        mSubject = new UpdateManager(mUpdateEngine, null);
+        mStreamingUpdate002 =
+                UpdateConfig.fromJson(readResource(R.raw.update_config_002_stream));
     }
 
     @Test
     public void applyUpdate_appliesPayloadToUpdateEngine() throws Exception {
-        PayloadSpec payload = buildMockPayloadSpec();
-        when(mPayloadSpecs.forNonStreaming(any(File.class))).thenReturn(payload);
-        when(mUpdateEngine.bind(any(UpdateEngineCallback.class))).thenAnswer(answer -> {
-            // When UpdateManager is bound to update_engine, it passes
-            // UpdateEngineCallback as a callback to update_engine.
-            UpdateEngineCallback callback = answer.getArgument(0);
-            callback.onStatusUpdate(
-                    UpdateEngine.UpdateStatusConstants.IDLE,
-                    /*engineProgress*/ 0.0f);
-            return null;
-        });
-
-        mSubject.bind();
-        mSubject.applyUpdate(null, mNonStreamingUpdate003);
+        mockContextStartServiceAnswer(buildMockPayloadSpec());
+        mSubject.applyUpdate(mMockContext, mStreamingUpdate002);
 
         verify(mUpdateEngine).applyPayload(
                 "file://blah",
                 120,
                 340,
-                new String[] {
-                        "SWITCH_SLOT_ON_REBOOT=0" // ab_config.force_switch_slot = false
+                new String[]{
+                        "SWITCH_SLOT_ON_REBOOT=0", // ab_config.force_switch_slot = false
+                        "USER_AGENT=" + UpdateManager.HTTP_USER_AGENT
                 });
     }
 
     @Test
-    public void stateIsRunningAndEngineStatusIsIdle_reApplyLastUpdate() throws Exception {
-        PayloadSpec payload = buildMockPayloadSpec();
-        when(mPayloadSpecs.forNonStreaming(any(File.class))).thenReturn(payload);
+    @UiThreadTest
+    public void stateIsRunningAndEngineStatusIsIdle_reApplyLastUpdate() throws Throwable {
+        mockContextStartServiceAnswer(buildMockPayloadSpec());
+        // UpdateEngine always returns IDLE status.
         when(mUpdateEngine.bind(any(UpdateEngineCallback.class))).thenAnswer(answer -> {
             // When UpdateManager is bound to update_engine, it passes
             // UpdateEngineCallback as a callback to update_engine.
@@ -115,19 +109,34 @@ public class UpdateManagerTest {
         });
 
         mSubject.bind();
-        mSubject.applyUpdate(null, mNonStreamingUpdate003);
+        mSubject.applyUpdate(mMockContext, mStreamingUpdate002);
         mSubject.unbind();
         mSubject.bind(); // re-bind - now it should re-apply last update
 
         assertEquals(mSubject.getUpdaterState(), UpdaterState.RUNNING);
-        // it should be called 2 times
         verify(mUpdateEngine, times(2)).applyPayload(
                 "file://blah",
                 120,
                 340,
-                new String[] {
-                        "SWITCH_SLOT_ON_REBOOT=0" // ab_config.force_switch_slot = false
+                new String[]{
+                        "SWITCH_SLOT_ON_REBOOT=0", // ab_config.force_switch_slot = false
+                        "USER_AGENT=" + UpdateManager.HTTP_USER_AGENT
                 });
+    }
+
+    private void mockContextStartServiceAnswer(PayloadSpec payloadSpec) {
+        doAnswer(args -> {
+            Intent intent = args.getArgument(0);
+            ResultReceiver resultReceiver = intent.getParcelableExtra(
+                    PrepareUpdateService.EXTRA_PARAM_RESULT_RECEIVER);
+            Bundle b = new Bundle();
+            b.putSerializable(
+                    /* PrepareUpdateService.CallbackResultReceiver.BUNDLE_PARAM_PAYLOAD_SPEC */
+                    "payload-spec",
+                    payloadSpec);
+            resultReceiver.send(PrepareUpdateService.RESULT_CODE_SUCCESS, b);
+            return null;
+        }).when(mMockContext).startService(any(Intent.class));
     }
 
     private PayloadSpec buildMockPayloadSpec() {
@@ -141,7 +150,7 @@ public class UpdateManagerTest {
 
     private String readResource(int id) throws IOException {
         return CharStreams.toString(new InputStreamReader(
-                mContext.getResources().openRawResource(id)));
+                mTestContext.getResources().openRawResource(id)));
     }
 
 }

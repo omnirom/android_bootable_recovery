@@ -24,6 +24,7 @@ android_test {
 
     static_libs: [
         "androidx.test.runner",
+        "androidx.test.rules",
         "mockito-target-minus-junit4",
         "guava",
     ],
