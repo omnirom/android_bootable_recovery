@@ -220,7 +220,7 @@ privileged system app, so it's granted the required permissions to access
 - [x] Add Sample app update state (separate from update_engine status)
 - [x] Add smart update completion detection using onStatusUpdate
 - [x] Add pause/resume demo
-- [x] Verify system partition checksum for package
+- [-] Verify system partition checksum for package
 
 
 ## Running tests
@@ -235,8 +235,8 @@ privileged system app, so it's granted the required permissions to access
 5. Run a test file
    ```
    adb shell am instrument \
-     -w com.example.android.systemupdatersample.tests/android.support.test.runner.AndroidJUnitRunner \
-     -c com.example.android.systemupdatersample.util.PayloadSpecsTest
+     -w -e class com.example.android.systemupdatersample.UpdateManagerTest#applyUpdate_appliesPayloadToUpdateEngine \
+     com.example.android.systemupdatersample.tests/android.support.test.runner.AndroidJUnitRunner
    ```
 
 
