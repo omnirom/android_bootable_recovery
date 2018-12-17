@@ -141,8 +141,9 @@ static int64_t FreeSpaceForFile(const std::string& filename) {
     return -1;
   }
 
-  int64_t free_space = static_cast<int64_t>(sf.f_bsize) * sf.f_bavail;
-  if (sf.f_bsize == 0 || free_space / sf.f_bsize != sf.f_bavail) {
+  auto f_bsize = static_cast<int64_t>(sf.f_bsize);
+  auto free_space = sf.f_bsize * sf.f_bavail;
+  if (f_bsize == 0 || free_space / f_bsize != static_cast<int64_t>(sf.f_bavail)) {
     LOG(ERROR) << "Invalid block size or overflow (sf.f_bsize " << sf.f_bsize << ", sf.f_bavail "
                << sf.f_bavail << ")";
     return -1;
@@ -170,6 +171,13 @@ bool CheckAndFreeSpaceOnCache(size_t bytes) {
 
 bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
                             const std::function<int64_t(const std::string&)>& space_checker) {
+  // The requested size cannot exceed max int64_t.
+  if (static_cast<uint64_t>(bytes_needed) >
+      static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
+    LOG(ERROR) << "Invalid arg of bytes_needed: " << bytes_needed;
+    return false;
+  }
+
   struct stat st;
   if (stat(dirname.c_str(), &st) == -1) {
     PLOG(ERROR) << "Failed to stat " << dirname;
@@ -187,7 +195,7 @@ bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
   }
   LOG(INFO) << free_now << " bytes free on " << dirname << " (" << bytes_needed << " needed)";
 
-  if (free_now >= bytes_needed) {
+  if (free_now >= static_cast<int64_t>(bytes_needed)) {
     return true;
   }
 
@@ -230,7 +238,7 @@ bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
       return false;
     }
     LOG(INFO) << "Deleted " << file << "; now " << free_now << " bytes free";
-    if (free_now >= bytes_needed) {
+    if (free_now >= static_cast<int64_t>(bytes_needed)) {
       return true;
     }
   }
