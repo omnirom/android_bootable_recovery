@@ -30,7 +30,7 @@ import java.net.URLConnection;
  * Downloads chunk of a file from given url using {@code offset} and {@code size},
  * and saves to a given location.
  *
- * In real-life application this helper class should download from HTTP Server,
+ * In a real-life application this helper class should download from HTTP Server,
  * but in this sample app it will only download from a local file.
  */
 public final class FileDownloader {
