@@ -54,7 +54,7 @@ static bool ApplyBSDiffPatchAndStreamOutput(const uint8_t* src_data, size_t src_
                                             const Value& patch, size_t patch_offset,
                                             const char* deflate_header, SinkFn sink) {
   size_t expected_target_length = static_cast<size_t>(Read8(deflate_header + 32));
-  CHECK_GT(expected_target_length, 0);
+  CHECK_GT(expected_target_length, static_cast<size_t>(0));
   int level = Read4(deflate_header + 40);
   int method = Read4(deflate_header + 44);
   int window_bits = Read4(deflate_header + 48);
