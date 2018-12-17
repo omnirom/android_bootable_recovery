@@ -55,7 +55,7 @@ static bool test_bit(size_t bit, unsigned long* array) { // NOLINT
 }
 
 int ev_init(ev_callback input_cb, bool allow_touch_inputs) {
-  g_epoll_fd = epoll_create(MAX_DEVICES + MAX_MISC_FDS);
+  g_epoll_fd = epoll_create1(EPOLL_CLOEXEC);
   if (g_epoll_fd == -1) {
     return -1;
   }
