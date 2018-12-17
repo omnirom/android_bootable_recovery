@@ -21,6 +21,7 @@ import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.UpdateEngine;
 import android.util.Log;
 import android.view.View;
@@ -34,7 +35,6 @@ import com.example.android.systemupdatersample.R;
 import com.example.android.systemupdatersample.UpdateConfig;
 import com.example.android.systemupdatersample.UpdateManager;
 import com.example.android.systemupdatersample.UpdaterState;
-import com.example.android.systemupdatersample.util.PayloadSpecs;
 import com.example.android.systemupdatersample.util.UpdateConfigs;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineStatuses;
@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
     private List<UpdateConfig> mConfigs;
 
     private final UpdateManager mUpdateManager =
-            new UpdateManager(new UpdateEngine(), new PayloadSpecs());
+            new UpdateManager(new UpdateEngine(), new Handler());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
