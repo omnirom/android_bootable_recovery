@@ -294,7 +294,7 @@ bool SetUsbConfig(const std::string& state) {
 
 // Returns the selected filename, or an empty string.
 static std::string browse_directory(const std::string& path, Device* device) {
-  ensure_path_mounted(path.c_str());
+  ensure_path_mounted(path);
 
   std::unique_ptr<DIR, decltype(&closedir)> d(opendir(path.c_str()), closedir);
   if (!d) {
@@ -572,7 +572,7 @@ static void choose_recovery_file(Device* device) {
           log_file += "." + std::to_string(i);
         }
 
-        if (ensure_path_mounted(log_file.c_str()) == 0 && access(log_file.c_str(), R_OK) == 0) {
+        if (ensure_path_mounted(log_file) == 0 && access(log_file.c_str(), R_OK) == 0) {
           entries.push_back(std::move(log_file));
         }
       };
@@ -836,7 +836,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
       }
       case Device::MOUNT_SYSTEM:
         // the system partition is mounted at /mnt/system
-        if (ensure_path_mounted_at(get_system_root().c_str(), "/mnt/system") != -1) {
+        if (ensure_path_mounted_at(get_system_root(), "/mnt/system") != -1) {
           ui->Print("Mounted /system.\n");
         }
         break;

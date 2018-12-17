@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -44,50 +45,48 @@
 
 #include "otautil/mounts.h"
 
-static struct fstab* fstab = nullptr;
+static Fstab fstab;
 
 extern struct selabel_handle* sehandle;
 
 void load_volume_table() {
-  fstab = fs_mgr_read_fstab_default();
-  if (!fstab) {
+  if (!ReadDefaultFstab(&fstab)) {
     LOG(ERROR) << "Failed to read default fstab";
     return;
   }
 
-  int ret = fs_mgr_add_entry(fstab, "/tmp", "ramdisk", "ramdisk");
-  if (ret == -1) {
-    LOG(ERROR) << "Failed to add /tmp entry to fstab";
-    fs_mgr_free_fstab(fstab);
-    fstab = nullptr;
-    return;
-  }
+  fstab.emplace_back(FstabEntry{
+      .mount_point = "/tmp", .fs_type = "ramdisk", .blk_device = "ramdisk", .length = 0 });
 
-  printf("recovery filesystem table\n");
-  printf("=========================\n");
-  for (int i = 0; i < fstab->num_entries; ++i) {
-    const Volume* v = &fstab->recs[i];
-    printf("  %d %s %s %s %" PRId64 "\n", i, v->mount_point, v->fs_type, v->blk_device, v->length);
+  std::cout << "recovery filesystem table" << std::endl << "=========================" << std::endl;
+  for (size_t i = 0; i < fstab.size(); ++i) {
+    const auto& entry = fstab[i];
+    std::cout << "  " << i << " " << entry.mount_point << " "
+              << " " << entry.fs_type << " " << entry.blk_device << " " << entry.length
+              << std::endl;
   }
-  printf("\n");
+  std::cout << std::endl;
 }
 
 Volume* volume_for_mount_point(const std::string& mount_point) {
-  return fs_mgr_get_entry_for_mount_point(fstab, mount_point);
+  auto it = std::find_if(fstab.begin(), fstab.end(), [&mount_point](const auto& entry) {
+    return entry.mount_point == mount_point;
+  });
+  return it == fstab.end() ? nullptr : &*it;
 }
 
 // Mount the volume specified by path at the given mount_point.
-int ensure_path_mounted_at(const char* path, const char* mount_point) {
-  return android::fs_mgr::EnsurePathMounted(fstab, path, mount_point) ? 0 : -1;
+int ensure_path_mounted_at(const std::string& path, const std::string& mount_point) {
+  return android::fs_mgr::EnsurePathMounted(&fstab, path, mount_point) ? 0 : -1;
 }
 
-int ensure_path_mounted(const char* path) {
+int ensure_path_mounted(const std::string& path) {
   // Mount at the default mount point.
-  return android::fs_mgr::EnsurePathMounted(fstab, path) ? 0 : -1;
+  return android::fs_mgr::EnsurePathMounted(&fstab, path) ? 0 : -1;
 }
 
-int ensure_path_unmounted(const char* path) {
-  return android::fs_mgr::EnsurePathUnmounted(fstab, path) ? 0 : -1;
+int ensure_path_unmounted(const std::string& path) {
+  return android::fs_mgr::EnsurePathUnmounted(&fstab, path) ? 0 : -1;
 }
 
 static int exec_cmd(const std::vector<std::string>& args) {
@@ -135,17 +134,17 @@ static int64_t get_file_size(int fd, uint64_t reserve_len) {
   return computed_size;
 }
 
-int format_volume(const char* volume, const char* directory) {
-  const Volume* v = android::fs_mgr::GetEntryForPath(fstab, volume);
+int format_volume(const std::string& volume, const std::string& directory) {
+  const FstabEntry* v = android::fs_mgr::GetEntryForPath(&fstab, volume);
   if (v == nullptr) {
     LOG(ERROR) << "unknown volume \"" << volume << "\"";
     return -1;
   }
-  if (strcmp(v->fs_type, "ramdisk") == 0) {
+  if (v->fs_type == "ramdisk") {
     LOG(ERROR) << "can't format_volume \"" << volume << "\"";
     return -1;
   }
-  if (strcmp(v->mount_point, volume) != 0) {
+  if (v->mount_point != volume) {
     LOG(ERROR) << "can't give path \"" << volume << "\" to format_volume";
     return -1;
   }
@@ -153,16 +152,16 @@ int format_volume(const char* volume, const char* directory) {
     LOG(ERROR) << "format_volume: Failed to unmount \"" << v->mount_point << "\"";
     return -1;
   }
-  if (strcmp(v->fs_type, "ext4") != 0 && strcmp(v->fs_type, "f2fs") != 0) {
+  if (v->fs_type != "ext4" && v->fs_type != "f2fs") {
     LOG(ERROR) << "format_volume: fs_type \"" << v->fs_type << "\" unsupported";
     return -1;
   }
 
   // If there's a key_loc that looks like a path, it should be a block device for storing encryption
   // metadata. Wipe it too.
-  if (v->key_loc != nullptr && v->key_loc[0] == '/') {
+  if (!v->key_loc.empty() && v->key_loc[0] == '/') {
     LOG(INFO) << "Wiping " << v->key_loc;
-    int fd = open(v->key_loc, O_WRONLY | O_CREAT, 0644);
+    int fd = open(v->key_loc.c_str(), O_WRONLY | O_CREAT, 0644);
     if (fd == -1) {
       PLOG(ERROR) << "format_volume: Failed to open " << v->key_loc;
       return -1;
@@ -174,9 +173,8 @@ int format_volume(const char* volume, const char* directory) {
   int64_t length = 0;
   if (v->length > 0) {
     length = v->length;
-  } else if (v->length < 0 ||
-             (v->key_loc != nullptr && strcmp(v->key_loc, "footer") == 0)) {
-    android::base::unique_fd fd(open(v->blk_device, O_RDONLY));
+  } else if (v->length < 0 || v->key_loc == "footer") {
+    android::base::unique_fd fd(open(v->blk_device.c_str(), O_RDONLY));
     if (fd == -1) {
       PLOG(ERROR) << "format_volume: failed to open " << v->blk_device;
       return -1;
@@ -190,7 +188,7 @@ int format_volume(const char* volume, const char* directory) {
     }
   }
 
-  if (strcmp(v->fs_type, "ext4") == 0) {
+  if (v->fs_type == "ext4") {
     static constexpr int kBlockSize = 4096;
     std::vector<std::string> mke2fs_args = {
       "/system/bin/mke2fs", "-F", "-t", "ext4", "-b", std::to_string(kBlockSize),
@@ -213,7 +211,7 @@ int format_volume(const char* volume, const char* directory) {
     }
 
     int result = exec_cmd(mke2fs_args);
-    if (result == 0 && directory != nullptr) {
+    if (result == 0 && !directory.empty()) {
       std::vector<std::string> e2fsdroid_args = {
         "/system/bin/e2fsdroid", "-e", "-f", directory, "-a", volume, v->blk_device,
       };
@@ -242,7 +240,7 @@ int format_volume(const char* volume, const char* directory) {
   }
 
   int result = exec_cmd(make_f2fs_cmd);
-  if (result == 0 && directory != nullptr) {
+  if (result == 0 && !directory.empty()) {
     cmd = "/sbin/sload.f2fs";
     // clang-format off
     std::vector<std::string> sload_f2fs_cmd = {
@@ -261,31 +259,29 @@ int format_volume(const char* volume, const char* directory) {
   return 0;
 }
 
-int format_volume(const char* volume) {
-  return format_volume(volume, nullptr);
+int format_volume(const std::string& volume) {
+  return format_volume(volume, "");
 }
 
 int setup_install_mounts() {
-  if (fstab == nullptr) {
+  if (fstab.empty()) {
     LOG(ERROR) << "can't set up install mounts: no fstab loaded";
     return -1;
   }
-  for (int i = 0; i < fstab->num_entries; ++i) {
-    const Volume* v = fstab->recs + i;
-
+  for (const FstabEntry& entry : fstab) {
     // We don't want to do anything with "/".
-    if (strcmp(v->mount_point, "/") == 0) {
+    if (entry.mount_point == "/") {
       continue;
     }
 
-    if (strcmp(v->mount_point, "/tmp") == 0 || strcmp(v->mount_point, "/cache") == 0) {
-      if (ensure_path_mounted(v->mount_point) != 0) {
-        LOG(ERROR) << "Failed to mount " << v->mount_point;
+    if (entry.mount_point == "/tmp" || entry.mount_point == "/cache") {
+      if (ensure_path_mounted(entry.mount_point) != 0) {
+        LOG(ERROR) << "Failed to mount " << entry.mount_point;
         return -1;
       }
     } else {
-      if (ensure_path_unmounted(v->mount_point) != 0) {
-        LOG(ERROR) << "Failed to unmount " << v->mount_point;
+      if (ensure_path_unmounted(entry.mount_point) != 0) {
+        LOG(ERROR) << "Failed to unmount " << entry.mount_point;
         return -1;
       }
     }

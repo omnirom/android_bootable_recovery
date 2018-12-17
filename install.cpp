@@ -595,9 +595,9 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
 
   if (needs_mount) {
     if (path[0] == '@') {
-      ensure_path_mounted(path.substr(1).c_str());
+      ensure_path_mounted(path.substr(1));
     } else {
-      ensure_path_mounted(path.c_str());
+      ensure_path_mounted(path);
     }
   }
 
