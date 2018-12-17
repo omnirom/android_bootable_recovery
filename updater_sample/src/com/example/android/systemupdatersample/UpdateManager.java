@@ -17,19 +17,18 @@
 package com.example.android.systemupdatersample;
 
 import android.content.Context;
+import android.os.Handler;
 import android.os.UpdateEngine;
 import android.os.UpdateEngineCallback;
 import android.util.Log;
 
-import com.example.android.systemupdatersample.services.PrepareStreamingService;
-import com.example.android.systemupdatersample.util.PayloadSpecs;
+import com.example.android.systemupdatersample.services.PrepareUpdateService;
 import com.example.android.systemupdatersample.util.UpdateEngineErrorCodes;
 import com.example.android.systemupdatersample.util.UpdateEngineProperties;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AtomicDouble;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,11 +49,10 @@ public class UpdateManager {
     private static final String TAG = "UpdateManager";
 
     /** HTTP Header: User-Agent; it will be sent to the server when streaming the payload. */
-    private static final String HTTP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    static final String HTTP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36";
 
     private final UpdateEngine mUpdateEngine;
-    private final PayloadSpecs mPayloadSpecs;
 
     private AtomicInteger mUpdateEngineStatus =
             new AtomicInteger(UpdateEngine.UpdateStatusConstants.IDLE);
@@ -84,9 +82,15 @@ public class UpdateManager {
     private final UpdateManager.UpdateEngineCallbackImpl
             mUpdateEngineCallback = new UpdateManager.UpdateEngineCallbackImpl();
 
-    public UpdateManager(UpdateEngine updateEngine, PayloadSpecs payloadSpecs) {
+    private final Handler mHandler;
+
+    /**
+     * @param updateEngine UpdateEngine instance.
+     * @param handler      Handler for {@link PrepareUpdateService} intent service.
+     */
+    public UpdateManager(UpdateEngine updateEngine, Handler handler) {
         this.mUpdateEngine = updateEngine;
-        this.mPayloadSpecs = payloadSpecs;
+        this.mHandler = handler;
     }
 
     /**
@@ -293,45 +297,17 @@ public class UpdateManager {
             mManualSwitchSlotRequired.set(false);
         }
 
-        if (config.getInstallType() == UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING) {
-            applyAbNonStreamingUpdate(config);
-        } else {
-            applyAbStreamingUpdate(context, config);
-        }
-    }
-
-    private void applyAbNonStreamingUpdate(UpdateConfig config)
-            throws UpdaterState.InvalidTransitionException {
-        UpdateData.Builder builder = UpdateData.builder()
-                .setExtraProperties(prepareExtraProperties(config));
-
-        try {
-            builder.setPayload(mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile()));
-        } catch (IOException e) {
-            Log.e(TAG, "Error creating payload spec", e);
-            setUpdaterState(UpdaterState.ERROR);
-            return;
-        }
-        updateEngineApplyPayload(builder.build());
-    }
-
-    private void applyAbStreamingUpdate(Context context, UpdateConfig config) {
-        UpdateData.Builder builder = UpdateData.builder()
-                .setExtraProperties(prepareExtraProperties(config));
-
-        Log.d(TAG, "Starting PrepareStreamingService");
-        PrepareStreamingService.startService(context, config, (code, payloadSpec) -> {
-            if (code == PrepareStreamingService.RESULT_CODE_SUCCESS) {
-                builder.setPayload(payloadSpec);
-                builder.addExtraProperty("USER_AGENT=" + HTTP_USER_AGENT);
-                config.getAbConfig()
-                        .getAuthorization()
-                        .ifPresent(s -> builder.addExtraProperty("AUTHORIZATION=" + s));
-                updateEngineApplyPayload(builder.build());
-            } else {
-                Log.e(TAG, "PrepareStreamingService failed, result code is " + code);
+        Log.d(TAG, "Starting PrepareUpdateService");
+        PrepareUpdateService.startService(context, config, mHandler, (code, payloadSpec) -> {
+            if (code != PrepareUpdateService.RESULT_CODE_SUCCESS) {
+                Log.e(TAG, "PrepareUpdateService failed, result code is " + code);
                 setUpdaterStateSilent(UpdaterState.ERROR);
+                return;
             }
+            updateEngineApplyPayload(UpdateData.builder()
+                    .setExtraProperties(prepareExtraProperties(config))
+                    .setPayload(payloadSpec)
+                    .build());
         });
     }
 
@@ -342,6 +318,12 @@ public class UpdateManager {
             // Disable switch slot on reboot, which is enabled by default.
             // User will enable it manually by clicking "Switch Slot" button on the screen.
             extraProperties.add(UpdateEngineProperties.PROPERTY_DISABLE_SWITCH_SLOT_ON_REBOOT);
+        }
+        if (config.getInstallType() == UpdateConfig.AB_INSTALL_TYPE_STREAMING) {
+            extraProperties.add("USER_AGENT=" + HTTP_USER_AGENT);
+            config.getAbConfig()
+                    .getAuthorization()
+                    .ifPresent(s -> extraProperties.add("AUTHORIZATION=" + s));
         }
         return extraProperties;
     }
@@ -497,14 +479,14 @@ public class UpdateManager {
      * system/update_engine/binder_service_android.cc in
      * function BinderUpdateEngineAndroidService::bind).
      *
-     * @param status one of {@link UpdateEngine.UpdateStatusConstants}.
+     * @param status   one of {@link UpdateEngine.UpdateStatusConstants}.
      * @param progress a number from 0.0 to 1.0.
      */
     private void onStatusUpdate(int status, float progress) {
         Log.d(TAG, String.format(
-                        "onStatusUpdate invoked, status=%s, progress=%.2f",
-                        status,
-                        progress));
+                "onStatusUpdate invoked, status=%s, progress=%.2f",
+                status,
+                progress));
 
         int previousStatus = mUpdateEngineStatus.get();
         mUpdateEngineStatus.set(status);
@@ -555,7 +537,6 @@ public class UpdateManager {
     }
 
     /**
-     *
      * Contains update data - PayloadSpec and extra properties list.
      *
      * <p>{@code mPayload} contains url, offset and size to {@code PAYLOAD_BINARY_FILE_NAME}.
