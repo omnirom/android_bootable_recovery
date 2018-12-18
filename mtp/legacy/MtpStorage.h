@@ -28,7 +28,7 @@
 #include <pthread.h>
 #include "btree.hpp"
 #include "MtpServer.h"
-#include "../tw_atomic.hpp"
+#include "../../tw_atomic.hpp"
 
 class MtpDatabase;
 struct inotify_event;
