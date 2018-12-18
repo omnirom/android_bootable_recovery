@@ -36,9 +36,7 @@ MtpRequestPacket::~MtpRequestPacket() {
 
 #ifdef MTP_DEVICE
 int MtpRequestPacket::read(int fd) {
-	MTPD("block1 fd: %d\n", fd);
 	int ret = ::read(fd, mBuffer, mBufferSize);
-	MTPD("block2\n");
 	if (ret >= 0)
 		mPacketSize = ret;
 	else
