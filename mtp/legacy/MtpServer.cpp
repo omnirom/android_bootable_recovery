@@ -25,8 +25,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include "../twcommon.h"
-#include "../set_metadata.h"
+#include "../../twcommon.h"
+#include "../../set_metadata.h"
 #include <cutils/properties.h>
 
 #include "MtpTypes.h"
