@@ -15,7 +15,7 @@
 LOCAL_PATH := $(call my-dir)
 commands_TWRP_local_path := $(LOCAL_PATH)
 
-ifneq ($(project-path-for),)
+ifdef project-path-for
     ifeq ($(LOCAL_PATH),$(call project-path-for,recovery))
         PROJECT_PATH_AGREES := true
         BOARD_SEPOLICY_DIRS += $(call project-path-for,recovery)/sepolicy
@@ -210,9 +210,19 @@ ifeq ($(shell git -C $(LOCAL_PATH) diff --quiet; echo $$?),1)
 endif
 LOCAL_CFLAGS += -DTW_GIT_REVISION='"$(tw_git_revision)"'
 
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+ifeq ($(TW_EXCLUDE_MTP),)
+    LOCAL_SHARED_LIBRARIES += libtwrpmtp-ffs
+endif
+else
+ifeq ($(TW_EXCLUDE_MTP),)
+    LOCAL_CFLAGS += -DTW_HAS_LEGACY_MTP
+    LOCAL_SHARED_LIBRARIES += libtwrpmtp-legacy
+endif
+endif
+
 #TWRP Build Flags
 ifeq ($(TW_EXCLUDE_MTP),)
-    LOCAL_SHARED_LIBRARIES += libtwrpmtp
     LOCAL_CFLAGS += -DTW_HAS_MTP
 endif
 ifneq ($(TW_NO_SCREEN_TIMEOUT),)
@@ -775,6 +785,12 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 25; echo $$?),0)
 include $(commands_TWRP_local_path)/bootloader_message/Android.mk
 endif
 
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+    include $(commands_TWRP_local_path)/mtp/ffs/Android.mk
+else
+    include $(commands_TWRP_local_path)/mtp/legacy/Android.mk
+endif
+
 ifeq ($(wildcard system/core/uncrypt/Android.mk),)
     #include $(commands_TWRP_local_path)/uncrypt/Android.mk
 endif
@@ -810,7 +826,6 @@ include $(commands_TWRP_local_path)/injecttwrp/Android.mk \
     $(commands_TWRP_local_path)/openaes/Android.mk \
     $(commands_TWRP_local_path)/toolbox/Android.mk \
     $(commands_TWRP_local_path)/twrpTarMain/Android.mk \
-    $(commands_TWRP_local_path)/mtp/Android.mk \
     $(commands_TWRP_local_path)/minzip/Android.mk \
     $(commands_TWRP_local_path)/dosfstools/Android.mk \
     $(commands_TWRP_local_path)/etc/Android.mk \

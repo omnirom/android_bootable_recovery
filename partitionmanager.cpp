@@ -55,9 +55,15 @@
 #include "adbbu/libtwadbbu.hpp"
 
 #ifdef TW_HAS_MTP
-#include "mtp/mtp_MtpServer.hpp"
-#include "mtp/twrpMtp.hpp"
-#include "mtp/MtpMessage.hpp"
+#ifdef TW_HAS_LEGACY_MTP
+#include "mtp/legacy/mtp_MtpServer.hpp"
+#include "mtp/legacy/twrpMtp.hpp"
+#include "mtp/legacy/MtpMessage.hpp"
+#else
+#include "mtp/ffs/mtp_MtpServer.hpp"
+#include "mtp/ffs/twrpMtp.hpp"
+#include "mtp/ffs/MtpMessage.hpp"
+#endif
 #endif
 
 extern "C" {
