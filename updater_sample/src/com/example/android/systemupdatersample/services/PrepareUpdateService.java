@@ -42,7 +42,9 @@ import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -144,6 +146,13 @@ public class PrepareUpdateService extends IntentService {
     private PayloadSpec execute(UpdateConfig config)
             throws IOException, PreparationFailedException {
 
+        if (config.getAbConfig().getVerifyPayloadMetadata()) {
+            Log.i(TAG, "Verifying payload metadata with UpdateEngine.");
+            if (!verifyPayloadMetadata(config)) {
+                throw new PreparationFailedException("Payload metadata is not compatible");
+            }
+        }
+
         if (config.getInstallType() == UpdateConfig.AB_INSTALL_TYPE_NON_STREAMING) {
             return mPayloadSpecs.forNonStreaming(config.getUpdatePackageFile());
         }
@@ -176,6 +185,48 @@ public class PrepareUpdateService extends IntentService {
                 payloadBinary.get().getOffset(),
                 payloadBinary.get().getSize(),
                 Paths.get(OTA_PACKAGE_DIR, PAYLOAD_PROPERTIES_FILE_NAME).toFile());
+    }
+
+    /**
+     * Downloads only payload_metadata.bin and verifies with
+     * {@link UpdateEngine#verifyPayloadMetadata}.
+     * Returns {@code true} if the payload is verified or the result is unknown because of
+     * exception from UpdateEngine.
+     * By downloading only small portion of the package, it allows to verify if UpdateEngine
+     * will install the update.
+     */
+    private boolean verifyPayloadMetadata(UpdateConfig config) {
+        Optional<UpdateConfig.PackageFile> metadataPackageFile =
+                Arrays.stream(config.getAbConfig().getPropertyFiles())
+                        .filter(p -> p.getFilename().equals(
+                                PackageFiles.PAYLOAD_METADATA_FILE_NAME))
+                        .findFirst();
+        if (!metadataPackageFile.isPresent()) {
+            Log.w(TAG, String.format("ab_config.property_files doesn't contain %s",
+                    PackageFiles.PAYLOAD_METADATA_FILE_NAME));
+            return true;
+        }
+        Path metadataPath = Paths.get(OTA_PACKAGE_DIR, PackageFiles.PAYLOAD_METADATA_FILE_NAME);
+        try {
+            Files.deleteIfExists(metadataPath);
+            FileDownloader d = new FileDownloader(
+                    config.getUrl(),
+                    metadataPackageFile.get().getOffset(),
+                    metadataPackageFile.get().getSize(),
+                    metadataPath.toFile());
+            d.download();
+        } catch (IOException e) {
+            Log.w(TAG, String.format("Downloading %s from %s failed",
+                    PackageFiles.PAYLOAD_METADATA_FILE_NAME,
+                    config.getUrl()), e);
+            return true;
+        }
+        try {
+            return mUpdateEngine.verifyPayloadMetadata(metadataPath.toAbsolutePath().toString());
+        } catch (Exception e) {
+            Log.w(TAG, "UpdateEngine#verifyPayloadMetadata failed", e);
+            return true;
+        }
     }
 
     /**
