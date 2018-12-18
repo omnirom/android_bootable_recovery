@@ -36,7 +36,7 @@
 #include <signal.h>
 #include <sys/inotify.h>
 #include <fcntl.h>
-#include "../tw_atomic.hpp"
+#include "../../tw_atomic.hpp"
 
 #define WATCH_FLAGS ( IN_CREATE | IN_DELETE | IN_MOVE | IN_MODIFY )
 
@@ -110,7 +110,7 @@ int MtpStorage::getAccessCapability() const {
 
 uint64_t MtpStorage::getMaxCapacity() {
 	if (mMaxCapacity == 0) {
-		struct statfs   stat;
+		struct statfs	stat;
 		if (statfs(getPath(), &stat))
 			return -1;
 		mMaxCapacity = (uint64_t)stat.f_blocks * (uint64_t)stat.f_bsize;
@@ -119,7 +119,7 @@ uint64_t MtpStorage::getMaxCapacity() {
 }
 
 uint64_t MtpStorage::getFreeSpace() {
-	struct statfs   stat;
+	struct statfs	stat;
 	if (statfs(getPath(), &stat))
 		return -1;
 	uint64_t freeSpace = (uint64_t)stat.f_bavail * (uint64_t)stat.f_bsize;
@@ -157,7 +157,7 @@ int MtpStorage::createDB() {
 
 MtpObjectHandleList* MtpStorage::getObjectList(MtpStorageID storageID, MtpObjectHandle parent) {
 	MTPD("MtpStorage::getObjectList, parent: %u\n", parent);
-	//append object id  (numerical #s) of database to int array
+	//append object id	(numerical #s) of database to int array
 	MtpObjectHandleList* list = new MtpObjectHandleList();
 	if (parent == MTP_PARENT_ROOT) {
 		MTPD("parent == MTP_PARENT_ROOT\n");
@@ -430,7 +430,7 @@ int MtpStorage::getObjectPropertyList(MtpObjectHandle handle, uint32_t format, u
 	// format == 0 -> all formats, otherwise filter by ObjectFormatCode
 	// property == 0xffffffff -> all properties except those with group code 0xffffffff
 	// if property == 0 then use groupCode
-	//   groupCode == 0 -> return Specification_By_Group_Unsupported
+	//	 groupCode == 0 -> return Specification_By_Group_Unsupported
 	// depth == 0xffffffff -> all objects incl. and below handle
 
 	std::vector<PropEntry> results;
