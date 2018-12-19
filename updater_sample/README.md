@@ -220,7 +220,7 @@ privileged system app, so it's granted the required permissions to access
 - [x] Add Sample app update state (separate from update_engine status)
 - [x] Add smart update completion detection using onStatusUpdate
 - [x] Add pause/resume demo
-- [-] Verify system partition checksum for package
+- [x] Verify system partition checksum for package
 
 
 ## Running tests
