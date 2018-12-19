@@ -39,13 +39,12 @@
 #include <cryptfs.h>
 #include <ext4_utils/wipe.h>
 #include <fs_mgr.h>
+#include <fs_mgr/roots.h>
 #include <fs_mgr_dm_linear.h>
 
 #include "otautil/mounts.h"
 
 static struct fstab* fstab = nullptr;
-static bool did_map_logical_partitions = false;
-static constexpr const char* SYSTEM_ROOT = "/system";
 
 extern struct selabel_handle* sehandle;
 
@@ -77,130 +76,18 @@ Volume* volume_for_mount_point(const std::string& mount_point) {
   return fs_mgr_get_entry_for_mount_point(fstab, mount_point);
 }
 
-// Finds the volume specified by the given path. fs_mgr_get_entry_for_mount_point() does exact match
-// only, so it attempts the prefixes recursively (e.g. "/cache/recovery/last_log",
-// "/cache/recovery", "/cache", "/" for a given path of "/cache/recovery/last_log") and returns the
-// first match or nullptr.
-static Volume* volume_for_path(const char* path) {
-  if (path == nullptr || path[0] == '\0') return nullptr;
-  std::string str(path);
-  while (true) {
-    Volume* result = fs_mgr_get_entry_for_mount_point(fstab, str);
-    if (result != nullptr || str == "/") {
-      return result;
-    }
-    size_t slash = str.find_last_of('/');
-    if (slash == std::string::npos) return nullptr;
-    if (slash == 0) {
-      str = "/";
-    } else {
-      str = str.substr(0, slash);
-    }
-  }
-  return nullptr;
-}
-
 // Mount the volume specified by path at the given mount_point.
 int ensure_path_mounted_at(const char* path, const char* mount_point) {
-  Volume* v = volume_for_path(path);
-  if (v == nullptr) {
-    LOG(ERROR) << "unknown volume for path [" << path << "]";
-    return -1;
-  }
-  if (strcmp(v->fs_type, "ramdisk") == 0) {
-    // The ramdisk is always mounted.
-    return 0;
-  }
-
-  if (!scan_mounted_volumes()) {
-    LOG(ERROR) << "Failed to scan mounted volumes";
-    return -1;
-  }
-
-  if (!mount_point) {
-    mount_point = v->mount_point;
-  }
-
-  // If we can't acquire the block device for a logical partition, it likely
-  // was never created. In that case we try to create it.
-  if (fs_mgr_is_logical(v) && !fs_mgr_update_logical_partition(v)) {
-    if (did_map_logical_partitions) {
-      LOG(ERROR) << "Failed to find block device for partition";
-      return -1;
-    }
-    std::string super_name = fs_mgr_get_super_partition_name();
-    if (!android::fs_mgr::CreateLogicalPartitions(super_name)) {
-      LOG(ERROR) << "Failed to create logical partitions";
-      return -1;
-    }
-    did_map_logical_partitions = true;
-    if (!fs_mgr_update_logical_partition(v)) {
-      LOG(ERROR) << "Failed to find block device for partition";
-      return -1;
-    }
-  }
-
-  const MountedVolume* mv = find_mounted_volume_by_mount_point(mount_point);
-  if (mv != nullptr) {
-    // Volume is already mounted.
-    return 0;
-  }
-
-  mkdir(mount_point, 0755);  // in case it doesn't already exist
-
-  if (strcmp(v->fs_type, "ext4") == 0 || strcmp(v->fs_type, "squashfs") == 0 ||
-      strcmp(v->fs_type, "vfat") == 0 || strcmp(v->fs_type, "f2fs") == 0) {
-    int result = mount(v->blk_device, mount_point, v->fs_type, v->flags, v->fs_options);
-    if (result == -1 && fs_mgr_is_formattable(v)) {
-      PLOG(ERROR) << "Failed to mount " << mount_point << "; formatting";
-      bool crypt_footer = fs_mgr_is_encryptable(v) && !strcmp(v->key_loc, "footer");
-      if (fs_mgr_do_format(v, crypt_footer) == 0) {
-        result = mount(v->blk_device, mount_point, v->fs_type, v->flags, v->fs_options);
-      } else {
-        PLOG(ERROR) << "Failed to format " << mount_point;
-        return -1;
-      }
-    }
-
-    if (result == -1) {
-      PLOG(ERROR) << "Failed to mount " << mount_point;
-      return -1;
-    }
-    return 0;
-  }
-
-  LOG(ERROR) << "unknown fs_type \"" << v->fs_type << "\" for " << mount_point;
-  return -1;
+  return android::fs_mgr::EnsurePathMounted(fstab, path, mount_point) ? 0 : -1;
 }
 
 int ensure_path_mounted(const char* path) {
   // Mount at the default mount point.
-  return ensure_path_mounted_at(path, nullptr);
+  return android::fs_mgr::EnsurePathMounted(fstab, path) ? 0 : -1;
 }
 
 int ensure_path_unmounted(const char* path) {
-  const Volume* v = volume_for_path(path);
-  if (v == nullptr) {
-    LOG(ERROR) << "unknown volume for path [" << path << "]";
-    return -1;
-  }
-  if (strcmp(v->fs_type, "ramdisk") == 0) {
-    // The ramdisk is always mounted; you can't unmount it.
-    return -1;
-  }
-
-  if (!scan_mounted_volumes()) {
-    LOG(ERROR) << "Failed to scan mounted volumes";
-    return -1;
-  }
-
-  MountedVolume* mv = find_mounted_volume_by_mount_point(v->mount_point);
-  if (mv == nullptr) {
-    // Volume is already unmounted.
-    return 0;
-  }
-
-  return unmount_mounted_volume(mv);
+  return android::fs_mgr::EnsurePathUnmounted(fstab, path) ? 0 : -1;
 }
 
 static int exec_cmd(const std::vector<std::string>& args) {
@@ -249,7 +136,7 @@ static int64_t get_file_size(int fd, uint64_t reserve_len) {
 }
 
 int format_volume(const char* volume, const char* directory) {
-  const Volume* v = volume_for_path(volume);
+  const Volume* v = android::fs_mgr::GetEntryForPath(fstab, volume);
   if (v == nullptr) {
     LOG(ERROR) << "unknown volume \"" << volume << "\"";
     return -1;
@@ -407,13 +294,9 @@ int setup_install_mounts() {
 }
 
 bool logical_partitions_mapped() {
-  return did_map_logical_partitions;
+  return android::fs_mgr::LogicalPartitionsMapped();
 }
 
 std::string get_system_root() {
-  if (volume_for_mount_point(SYSTEM_ROOT) == nullptr) {
-    return "/";
-  } else {
-    return SYSTEM_ROOT;
-  }
+  return android::fs_mgr::GetSystemRoot();
 }
