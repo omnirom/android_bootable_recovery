@@ -121,7 +121,7 @@ bool do_fsck_unshare_blocks() {
 
   // Temporarily mount system so we can copy e2fsck_static.
   std::string system_root = get_system_root();
-  bool mounted = ensure_path_mounted_at(system_root.c_str(), "/mnt/system") != -1;
+  bool mounted = ensure_path_mounted_at(system_root, "/mnt/system") != -1;
   partitions.push_back(system_root);
 
   if (!mounted) {
