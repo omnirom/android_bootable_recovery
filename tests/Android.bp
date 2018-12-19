@@ -94,6 +94,7 @@ librecovery_static_libs = [
     "libhidltransport",
     "libhwbinder_noltopgo",
     "libbinderthreadstate",
+    "liblp",
     "libvndksupport",
     "libtinyxml2",
 ]
