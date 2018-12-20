@@ -395,12 +395,8 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   //   update attempt.
   //
 
-  // Convert the vector to a NULL-terminated char* array suitable for execv.
-  const char* chr_args[args.size() + 1];
-  chr_args[args.size()] = nullptr;
-  for (size_t i = 0; i < args.size(); i++) {
-    chr_args[i] = args[i].c_str();
-  }
+  // Convert the std::string vector to a NULL-terminated char* vector suitable for execv.
+  auto chr_args = StringVectorToNullTerminatedArray(args);
 
   pid_t pid = fork();
 
@@ -415,7 +411,7 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   if (pid == 0) {
     umask(022);
     close(pipefd[0]);
-    execv(chr_args[0], const_cast<char**>(chr_args));
+    execv(chr_args[0], chr_args.data());
     // Bug: 34769056
     // We shouldn't use LOG/PLOG in the forked process, since they may cause
     // the child process to hang. This deadlock results from an improperly
