@@ -393,17 +393,20 @@ Value* UnmountFn(const char* name, State* state, const std::vector<std::unique_p
   return StringValue(mount_point);
 }
 
-static int exec_cmd(const char* path, char* const argv[]) {
+static int exec_cmd(const std::vector<std::string>& args) {
+  CHECK(!args.empty());
+  auto argv = StringVectorToNullTerminatedArray(args);
+
   pid_t child;
   if ((child = vfork()) == 0) {
-    execv(path, argv);
+    execv(argv[0], argv.data());
     _exit(EXIT_FAILURE);
   }
 
   int status;
   waitpid(child, &status, 0);
   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    LOG(ERROR) << path << " failed with status " << WEXITSTATUS(status);
+    LOG(ERROR) << args[0] << " failed with status " << WEXITSTATUS(status);
   }
   return WEXITSTATUS(status);
 }
@@ -453,62 +456,52 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
   }
 
   if (fs_type == "ext4") {
-    const char* mke2fs_argv[] = { "/system/bin/mke2fs", "-t",    "ext4", "-b", "4096",
-                                  location.c_str(),     nullptr, nullptr };
-    std::string size_str;
+    std::vector<std::string> mke2fs_args = {
+      "/system/bin/mke2fs", "-t", "ext4", "-b", "4096", location
+    };
     if (size != 0) {
-      size_str = std::to_string(size / 4096LL);
-      mke2fs_argv[6] = size_str.c_str();
+      mke2fs_args.push_back(std::to_string(size / 4096LL));
     }
 
-    int status = exec_cmd(mke2fs_argv[0], const_cast<char**>(mke2fs_argv));
-    if (status != 0) {
+    if (auto status = exec_cmd(mke2fs_args); status != 0) {
       LOG(ERROR) << name << ": mke2fs failed (" << status << ") on " << location;
       return StringValue("");
     }
 
-    const char* e2fsdroid_argv[] = { "/system/bin/e2fsdroid", "-e",   "-a", mount_point.c_str(),
-                                     location.c_str(),        nullptr };
-    status = exec_cmd(e2fsdroid_argv[0], const_cast<char**>(e2fsdroid_argv));
-    if (status != 0) {
+    if (auto status = exec_cmd({ "/system/bin/e2fsdroid", "-e", "-a", mount_point, location });
+        status != 0) {
       LOG(ERROR) << name << ": e2fsdroid failed (" << status << ") on " << location;
       return StringValue("");
     }
     return StringValue(location);
-  } else if (fs_type == "f2fs") {
+  }
+
+  if (fs_type == "f2fs") {
     if (size < 0) {
       LOG(ERROR) << name << ": fs_size can't be negative for f2fs: " << fs_size;
       return StringValue("");
     }
-    std::string num_sectors = std::to_string(size / 512);
-
-    const char* f2fs_path = "/sbin/mkfs.f2fs";
-    const char* f2fs_argv[] = { "mkfs.f2fs",
-                                "-g", "android",
-                                "-w", "512",
-                                location.c_str(),
-                                (size < 512) ? nullptr : num_sectors.c_str(),
-                                nullptr };
-    int status = exec_cmd(f2fs_path, const_cast<char**>(f2fs_argv));
-    if (status != 0) {
+    std::vector<std::string> f2fs_args = {
+      "/sbin/mkfs.f2fs", "-g", "android", "-w", "512", location
+    };
+    if (size >= 512) {
+      f2fs_args.push_back(std::to_string(size / 512));
+    }
+    if (auto status = exec_cmd(f2fs_args); status != 0) {
       LOG(ERROR) << name << ": mkfs.f2fs failed (" << status << ") on " << location;
       return StringValue("");
     }
 
-    const char* sload_argv[] = { "/sbin/sload.f2fs", "-t", mount_point.c_str(), location.c_str(),
-                                 nullptr };
-    status = exec_cmd(sload_argv[0], const_cast<char**>(sload_argv));
-    if (status != 0) {
+    if (auto status = exec_cmd({ "/sbin/sload.f2fs", "-t", mount_point, location }); status != 0) {
       LOG(ERROR) << name << ": sload.f2fs failed (" << status << ") on " << location;
       return StringValue("");
     }
 
     return StringValue(location);
-  } else {
-    LOG(ERROR) << name << ": unsupported fs_type \"" << fs_type << "\" partition_type \""
-               << partition_type << "\"";
   }
 
+  LOG(ERROR) << name << ": unsupported fs_type \"" << fs_type << "\" partition_type \""
+             << partition_type << "\"";
   return nullptr;
 }
 
@@ -675,17 +668,12 @@ Value* RunProgramFn(const char* name, State* state, const std::vector<std::uniqu
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
 
-  char* args2[argv.size() + 1];
-  for (size_t i = 0; i < argv.size(); i++) {
-    args2[i] = &args[i][0];
-  }
-  args2[argv.size()] = nullptr;
-
-  LOG(INFO) << "about to run program [" << args2[0] << "] with " << argv.size() << " args";
+  auto exec_args = StringVectorToNullTerminatedArray(args);
+  LOG(INFO) << "about to run program [" << exec_args[0] << "] with " << argv.size() << " args";
 
   pid_t child = fork();
   if (child == 0) {
-    execv(args2[0], args2);
+    execv(exec_args[0], exec_args.data());
     PLOG(ERROR) << "run_program: execv failed";
     _exit(EXIT_FAILURE);
   }
@@ -909,20 +897,12 @@ Value* Tune2FsFn(const char* name, State* state, const std::vector<std::unique_p
     return ErrorAbort(state, kArgsParsingFailure, "%s() could not read args", name);
   }
 
-  char* args2[argv.size() + 1];
-  // Tune2fs expects the program name as its args[0]
-  args2[0] = const_cast<char*>(name);
-  if (args2[0] == nullptr) {
-    return nullptr;
-  }
-  for (size_t i = 0; i < argv.size(); ++i) {
-    args2[i + 1] = &args[i][0];
-  }
+  // tune2fs expects the program name as its first arg.
+  args.insert(args.begin(), "tune2fs");
+  auto tune2fs_args = StringVectorToNullTerminatedArray(args);
 
-  // tune2fs changes the file system parameters on an ext2 file system; it
-  // returns 0 on success.
-  int result = tune2fs_main(argv.size() + 1, args2);
-  if (result != 0) {
+  // tune2fs changes the filesystem parameters on an ext2 filesystem; it returns 0 on success.
+  if (auto result = tune2fs_main(tune2fs_args.size() - 1, tune2fs_args.data()); result != 0) {
     return ErrorAbort(state, kTune2FsFailure, "%s() returned error code %d", name, result);
   }
   return StringValue("t");
