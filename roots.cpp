@@ -28,7 +28,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -44,6 +43,7 @@
 #include <fs_mgr_dm_linear.h>
 
 #include "otautil/mounts.h"
+#include "otautil/sysutil.h"
 
 static Fstab fstab;
 
@@ -90,12 +90,8 @@ int ensure_path_unmounted(const std::string& path) {
 }
 
 static int exec_cmd(const std::vector<std::string>& args) {
-  CHECK_NE(static_cast<size_t>(0), args.size());
-
-  std::vector<char*> argv(args.size());
-  std::transform(args.cbegin(), args.cend(), argv.begin(),
-                 [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
-  argv.push_back(nullptr);
+  CHECK(!args.empty());
+  auto argv = StringVectorToNullTerminatedArray(args);
 
   pid_t child;
   if ((child = fork()) == 0) {
