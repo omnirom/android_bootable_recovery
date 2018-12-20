@@ -252,6 +252,7 @@ int GraphicMenu::DrawItems(int x, int y, int screen_width, bool long_press) cons
 
     draw_funcs_.SetColor(UIElement::MENU);
   }
+  offset += draw_funcs_.DrawHorizontalRule(y + offset);
 
   return offset;
 }
