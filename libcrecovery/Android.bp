@@ -1,0 +1,18 @@
+cc_library {
+    name: "libcrecovery",
+
+    host_supported: true,
+
+    tags: ["eng"],
+
+    srcs: [
+        "system.c",
+        "popen.c",
+    ],
+
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+}
