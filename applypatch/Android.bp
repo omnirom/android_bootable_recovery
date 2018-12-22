@@ -56,10 +56,18 @@ cc_library_static {
         "libotafault",
         "libotautil",
         "libz",
+        "libbmlutils",
+    ],
+
+    whole_static_libs: [
+        "libmtdutils",
     ],
 
     target: {
         darwin: {
+            enabled: false,
+        },
+        linux_glibc: {
             enabled: false,
         },
     },

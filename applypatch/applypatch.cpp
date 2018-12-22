@@ -38,8 +38,8 @@
 #include <android-base/strings.h>
 #include <openssl/sha.h>
 
-#include "bmlutils/bmlutils.h"
-#include "mtdutils/mtdutils.h"
+#include <bmlutils.h>
+#include <mtdutils.h>
 
 #include "edify/expr.h"
 #include "otafault/ota_io.h"
