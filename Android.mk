@@ -832,7 +832,6 @@ include $(commands_TWRP_local_path)/injecttwrp/Android.mk \
     $(commands_TWRP_local_path)/flashutils/Android.mk \
     $(commands_TWRP_local_path)/pigz/Android.mk \
     $(commands_TWRP_local_path)/libtar/Android.mk \
-    $(commands_TWRP_local_path)/libcrecovery/Android.mk \
     $(commands_TWRP_local_path)/libblkid/Android.mk \
     $(commands_TWRP_local_path)/minuitwrp/Android.mk \
     $(commands_TWRP_local_path)/openaes/Android.mk \
