@@ -515,10 +515,13 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
 endif
 endif
 
+# Only add file_contexts for Android versions N and O
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 27; echo $$?),0)
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     LOCAL_REQUIRED_MODULES += file_contexts_text
 else ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
     LOCAL_ADDITIONAL_DEPENDENCIES += file_contexts_text
+endif
 endif
 
 ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
