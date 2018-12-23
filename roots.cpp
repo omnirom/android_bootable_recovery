@@ -28,7 +28,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <algorithm>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -39,177 +39,59 @@
 #include <cryptfs.h>
 #include <ext4_utils/wipe.h>
 #include <fs_mgr.h>
+#include <fs_mgr/roots.h>
 #include <fs_mgr_dm_linear.h>
 
 #include "otautil/mounts.h"
+#include "otautil/sysutil.h"
 
-static struct fstab* fstab = nullptr;
-static bool did_map_logical_partitions = false;
-static constexpr const char* SYSTEM_ROOT = "/system";
+static Fstab fstab;
 
 extern struct selabel_handle* sehandle;
 
 void load_volume_table() {
-  fstab = fs_mgr_read_fstab_default();
-  if (!fstab) {
+  if (!ReadDefaultFstab(&fstab)) {
     LOG(ERROR) << "Failed to read default fstab";
     return;
   }
 
-  int ret = fs_mgr_add_entry(fstab, "/tmp", "ramdisk", "ramdisk");
-  if (ret == -1) {
-    LOG(ERROR) << "Failed to add /tmp entry to fstab";
-    fs_mgr_free_fstab(fstab);
-    fstab = nullptr;
-    return;
-  }
+  fstab.emplace_back(FstabEntry{
+      .mount_point = "/tmp", .fs_type = "ramdisk", .blk_device = "ramdisk", .length = 0 });
 
-  printf("recovery filesystem table\n");
-  printf("=========================\n");
-  for (int i = 0; i < fstab->num_entries; ++i) {
-    const Volume* v = &fstab->recs[i];
-    printf("  %d %s %s %s %" PRId64 "\n", i, v->mount_point, v->fs_type, v->blk_device, v->length);
+  std::cout << "recovery filesystem table" << std::endl << "=========================" << std::endl;
+  for (size_t i = 0; i < fstab.size(); ++i) {
+    const auto& entry = fstab[i];
+    std::cout << "  " << i << " " << entry.mount_point << " "
+              << " " << entry.fs_type << " " << entry.blk_device << " " << entry.length
+              << std::endl;
   }
-  printf("\n");
+  std::cout << std::endl;
 }
 
 Volume* volume_for_mount_point(const std::string& mount_point) {
-  return fs_mgr_get_entry_for_mount_point(fstab, mount_point);
-}
-
-// Finds the volume specified by the given path. fs_mgr_get_entry_for_mount_point() does exact match
-// only, so it attempts the prefixes recursively (e.g. "/cache/recovery/last_log",
-// "/cache/recovery", "/cache", "/" for a given path of "/cache/recovery/last_log") and returns the
-// first match or nullptr.
-static Volume* volume_for_path(const char* path) {
-  if (path == nullptr || path[0] == '\0') return nullptr;
-  std::string str(path);
-  while (true) {
-    Volume* result = fs_mgr_get_entry_for_mount_point(fstab, str);
-    if (result != nullptr || str == "/") {
-      return result;
-    }
-    size_t slash = str.find_last_of('/');
-    if (slash == std::string::npos) return nullptr;
-    if (slash == 0) {
-      str = "/";
-    } else {
-      str = str.substr(0, slash);
-    }
-  }
-  return nullptr;
+  auto it = std::find_if(fstab.begin(), fstab.end(), [&mount_point](const auto& entry) {
+    return entry.mount_point == mount_point;
+  });
+  return it == fstab.end() ? nullptr : &*it;
 }
 
 // Mount the volume specified by path at the given mount_point.
-int ensure_path_mounted_at(const char* path, const char* mount_point) {
-  Volume* v = volume_for_path(path);
-  if (v == nullptr) {
-    LOG(ERROR) << "unknown volume for path [" << path << "]";
-    return -1;
-  }
-  if (strcmp(v->fs_type, "ramdisk") == 0) {
-    // The ramdisk is always mounted.
-    return 0;
-  }
-
-  if (!scan_mounted_volumes()) {
-    LOG(ERROR) << "Failed to scan mounted volumes";
-    return -1;
-  }
-
-  if (!mount_point) {
-    mount_point = v->mount_point;
-  }
-
-  // If we can't acquire the block device for a logical partition, it likely
-  // was never created. In that case we try to create it.
-  if (fs_mgr_is_logical(v) && !fs_mgr_update_logical_partition(v)) {
-    if (did_map_logical_partitions) {
-      LOG(ERROR) << "Failed to find block device for partition";
-      return -1;
-    }
-    std::string super_name = fs_mgr_get_super_partition_name();
-    if (!android::fs_mgr::CreateLogicalPartitions(super_name)) {
-      LOG(ERROR) << "Failed to create logical partitions";
-      return -1;
-    }
-    did_map_logical_partitions = true;
-    if (!fs_mgr_update_logical_partition(v)) {
-      LOG(ERROR) << "Failed to find block device for partition";
-      return -1;
-    }
-  }
-
-  const MountedVolume* mv = find_mounted_volume_by_mount_point(mount_point);
-  if (mv != nullptr) {
-    // Volume is already mounted.
-    return 0;
-  }
-
-  mkdir(mount_point, 0755);  // in case it doesn't already exist
-
-  if (strcmp(v->fs_type, "ext4") == 0 || strcmp(v->fs_type, "squashfs") == 0 ||
-      strcmp(v->fs_type, "vfat") == 0 || strcmp(v->fs_type, "f2fs") == 0) {
-    int result = mount(v->blk_device, mount_point, v->fs_type, v->flags, v->fs_options);
-    if (result == -1 && fs_mgr_is_formattable(v)) {
-      PLOG(ERROR) << "Failed to mount " << mount_point << "; formatting";
-      bool crypt_footer = fs_mgr_is_encryptable(v) && !strcmp(v->key_loc, "footer");
-      if (fs_mgr_do_format(v, crypt_footer) == 0) {
-        result = mount(v->blk_device, mount_point, v->fs_type, v->flags, v->fs_options);
-      } else {
-        PLOG(ERROR) << "Failed to format " << mount_point;
-        return -1;
-      }
-    }
-
-    if (result == -1) {
-      PLOG(ERROR) << "Failed to mount " << mount_point;
-      return -1;
-    }
-    return 0;
-  }
-
-  LOG(ERROR) << "unknown fs_type \"" << v->fs_type << "\" for " << mount_point;
-  return -1;
+int ensure_path_mounted_at(const std::string& path, const std::string& mount_point) {
+  return android::fs_mgr::EnsurePathMounted(&fstab, path, mount_point) ? 0 : -1;
 }
 
-int ensure_path_mounted(const char* path) {
+int ensure_path_mounted(const std::string& path) {
   // Mount at the default mount point.
-  return ensure_path_mounted_at(path, nullptr);
+  return android::fs_mgr::EnsurePathMounted(&fstab, path) ? 0 : -1;
 }
 
-int ensure_path_unmounted(const char* path) {
-  const Volume* v = volume_for_path(path);
-  if (v == nullptr) {
-    LOG(ERROR) << "unknown volume for path [" << path << "]";
-    return -1;
-  }
-  if (strcmp(v->fs_type, "ramdisk") == 0) {
-    // The ramdisk is always mounted; you can't unmount it.
-    return -1;
-  }
-
-  if (!scan_mounted_volumes()) {
-    LOG(ERROR) << "Failed to scan mounted volumes";
-    return -1;
-  }
-
-  MountedVolume* mv = find_mounted_volume_by_mount_point(v->mount_point);
-  if (mv == nullptr) {
-    // Volume is already unmounted.
-    return 0;
-  }
-
-  return unmount_mounted_volume(mv);
+int ensure_path_unmounted(const std::string& path) {
+  return android::fs_mgr::EnsurePathUnmounted(&fstab, path) ? 0 : -1;
 }
 
 static int exec_cmd(const std::vector<std::string>& args) {
-  CHECK_NE(static_cast<size_t>(0), args.size());
-
-  std::vector<char*> argv(args.size());
-  std::transform(args.cbegin(), args.cend(), argv.begin(),
-                 [](const std::string& arg) { return const_cast<char*>(arg.c_str()); });
-  argv.push_back(nullptr);
+  CHECK(!args.empty());
+  auto argv = StringVectorToNullTerminatedArray(args);
 
   pid_t child;
   if ((child = fork()) == 0) {
@@ -248,17 +130,17 @@ static int64_t get_file_size(int fd, uint64_t reserve_len) {
   return computed_size;
 }
 
-int format_volume(const char* volume, const char* directory) {
-  const Volume* v = volume_for_path(volume);
+int format_volume(const std::string& volume, const std::string& directory) {
+  const FstabEntry* v = android::fs_mgr::GetEntryForPath(&fstab, volume);
   if (v == nullptr) {
     LOG(ERROR) << "unknown volume \"" << volume << "\"";
     return -1;
   }
-  if (strcmp(v->fs_type, "ramdisk") == 0) {
+  if (v->fs_type == "ramdisk") {
     LOG(ERROR) << "can't format_volume \"" << volume << "\"";
     return -1;
   }
-  if (strcmp(v->mount_point, volume) != 0) {
+  if (v->mount_point != volume) {
     LOG(ERROR) << "can't give path \"" << volume << "\" to format_volume";
     return -1;
   }
@@ -266,16 +148,16 @@ int format_volume(const char* volume, const char* directory) {
     LOG(ERROR) << "format_volume: Failed to unmount \"" << v->mount_point << "\"";
     return -1;
   }
-  if (strcmp(v->fs_type, "ext4") != 0 && strcmp(v->fs_type, "f2fs") != 0) {
+  if (v->fs_type != "ext4" && v->fs_type != "f2fs") {
     LOG(ERROR) << "format_volume: fs_type \"" << v->fs_type << "\" unsupported";
     return -1;
   }
 
   // If there's a key_loc that looks like a path, it should be a block device for storing encryption
   // metadata. Wipe it too.
-  if (v->key_loc != nullptr && v->key_loc[0] == '/') {
+  if (!v->key_loc.empty() && v->key_loc[0] == '/') {
     LOG(INFO) << "Wiping " << v->key_loc;
-    int fd = open(v->key_loc, O_WRONLY | O_CREAT, 0644);
+    int fd = open(v->key_loc.c_str(), O_WRONLY | O_CREAT, 0644);
     if (fd == -1) {
       PLOG(ERROR) << "format_volume: Failed to open " << v->key_loc;
       return -1;
@@ -287,9 +169,8 @@ int format_volume(const char* volume, const char* directory) {
   int64_t length = 0;
   if (v->length > 0) {
     length = v->length;
-  } else if (v->length < 0 ||
-             (v->key_loc != nullptr && strcmp(v->key_loc, "footer") == 0)) {
-    android::base::unique_fd fd(open(v->blk_device, O_RDONLY));
+  } else if (v->length < 0 || v->key_loc == "footer") {
+    android::base::unique_fd fd(open(v->blk_device.c_str(), O_RDONLY));
     if (fd == -1) {
       PLOG(ERROR) << "format_volume: failed to open " << v->blk_device;
       return -1;
@@ -303,7 +184,7 @@ int format_volume(const char* volume, const char* directory) {
     }
   }
 
-  if (strcmp(v->fs_type, "ext4") == 0) {
+  if (v->fs_type == "ext4") {
     static constexpr int kBlockSize = 4096;
     std::vector<std::string> mke2fs_args = {
       "/system/bin/mke2fs", "-F", "-t", "ext4", "-b", std::to_string(kBlockSize),
@@ -326,7 +207,7 @@ int format_volume(const char* volume, const char* directory) {
     }
 
     int result = exec_cmd(mke2fs_args);
-    if (result == 0 && directory != nullptr) {
+    if (result == 0 && !directory.empty()) {
       std::vector<std::string> e2fsdroid_args = {
         "/system/bin/e2fsdroid", "-e", "-f", directory, "-a", volume, v->blk_device,
       };
@@ -355,7 +236,7 @@ int format_volume(const char* volume, const char* directory) {
   }
 
   int result = exec_cmd(make_f2fs_cmd);
-  if (result == 0 && directory != nullptr) {
+  if (result == 0 && !directory.empty()) {
     cmd = "/sbin/sload.f2fs";
     // clang-format off
     std::vector<std::string> sload_f2fs_cmd = {
@@ -374,31 +255,29 @@ int format_volume(const char* volume, const char* directory) {
   return 0;
 }
 
-int format_volume(const char* volume) {
-  return format_volume(volume, nullptr);
+int format_volume(const std::string& volume) {
+  return format_volume(volume, "");
 }
 
 int setup_install_mounts() {
-  if (fstab == nullptr) {
+  if (fstab.empty()) {
     LOG(ERROR) << "can't set up install mounts: no fstab loaded";
     return -1;
   }
-  for (int i = 0; i < fstab->num_entries; ++i) {
-    const Volume* v = fstab->recs + i;
-
+  for (const FstabEntry& entry : fstab) {
     // We don't want to do anything with "/".
-    if (strcmp(v->mount_point, "/") == 0) {
+    if (entry.mount_point == "/") {
       continue;
     }
 
-    if (strcmp(v->mount_point, "/tmp") == 0 || strcmp(v->mount_point, "/cache") == 0) {
-      if (ensure_path_mounted(v->mount_point) != 0) {
-        LOG(ERROR) << "Failed to mount " << v->mount_point;
+    if (entry.mount_point == "/tmp" || entry.mount_point == "/cache") {
+      if (ensure_path_mounted(entry.mount_point) != 0) {
+        LOG(ERROR) << "Failed to mount " << entry.mount_point;
         return -1;
       }
     } else {
-      if (ensure_path_unmounted(v->mount_point) != 0) {
-        LOG(ERROR) << "Failed to unmount " << v->mount_point;
+      if (ensure_path_unmounted(entry.mount_point) != 0) {
+        LOG(ERROR) << "Failed to unmount " << entry.mount_point;
         return -1;
       }
     }
@@ -407,13 +286,9 @@ int setup_install_mounts() {
 }
 
 bool logical_partitions_mapped() {
-  return did_map_logical_partitions;
+  return android::fs_mgr::LogicalPartitionsMapped();
 }
 
 std::string get_system_root() {
-  if (volume_for_mount_point(SYSTEM_ROOT) == nullptr) {
-    return "/";
-  } else {
-    return SYSTEM_ROOT;
-  }
+  return android::fs_mgr::GetSystemRoot();
 }
