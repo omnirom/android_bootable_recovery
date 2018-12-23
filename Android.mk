@@ -515,8 +515,10 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
 endif
 endif
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
-    TWRP_REQUIRED_MODULES += file_contexts_text
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 27; echo $$?),0)
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
+        TWRP_REQUIRED_MODULES += file_contexts_text
+    endif
 endif
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
