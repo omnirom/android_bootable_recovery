@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
 
 #ifndef TW_OEM_BUILD
 	// Check if system has never been changed
-	TWPartition* sys = PartitionManager.Find_Partition_By_Path("/system");
+	TWPartition* sys = PartitionManager.Find_Partition_By_Path(PartitionManager.Get_Android_Root_Path());
 	TWPartition* ven = PartitionManager.Find_Partition_By_Path("/vendor");
 
 	if (sys) {
