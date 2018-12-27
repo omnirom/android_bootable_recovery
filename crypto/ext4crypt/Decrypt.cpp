@@ -1319,11 +1319,11 @@ bool Decrypt_User(const userid_t user_id, const std::string& Password) {
     ret = gk_device->verify(gk_device, user_id, 0, (const uint8_t *)handle.c_str(), st.st_size,
                 (const uint8_t *)Password.c_str(), (uint32_t)Password.size(), &auth_token, &auth_token_len,
                 &should_reenroll);
+#endif
     if (ret !=0) {
-		printf("failed to verify\n");
+		printf("failed to verify, ret=%d\n", ret);
 		return false;
 	}
-#endif
 	char token_hex[(auth_token_len*2)+1];
 	token_hex[(auth_token_len*2)] = 0;
 	uint32_t i;
@@ -1336,7 +1336,7 @@ bool Decrypt_User(const userid_t user_id, const std::string& Password) {
 		printf("e4crypt_unlock_user_key returned fail\n");
 		return false;
 	}
-	if (!e4crypt_prepare_user_storage(nullptr, user_id, 0, flags)) {
+	if (!e4crypt_prepare_user_storage("", user_id, 0, flags)) {
 		printf("failed to e4crypt_prepare_user_storage\n");
 		return false;
 	}
