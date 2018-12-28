@@ -193,7 +193,7 @@ static bool update_binary_has_legacy_properties(const char *binary) {
 
 	void *data = mmap(NULL, finfo.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (data == MAP_FAILED) {
-		LOGINFO("has_legacy_properties: mmap (size=%zu) failed: %s!\n", finfo.st_size, strerror(errno));
+		LOGINFO("has_legacy_properties: mmap (size=%lld) failed: %s!\n", finfo.st_size, strerror(errno));
 	} else {
 		if (memmem(data, finfo.st_size, str_to_match, len_to_match)) {
 			LOGINFO("has_legacy_properties: Found legacy property match!\n");
