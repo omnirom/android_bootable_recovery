@@ -74,6 +74,7 @@ namespace {
 #define LOGERROR(...) do { printf(__VA_ARGS__); if (fp_kmsg) { fprintf(fp_kmsg, "[VOLD_DECRYPT]E:" __VA_ARGS__); fflush(fp_kmsg); } } while (0)
 
 FILE *fp_kmsg = NULL;
+int sdkver = 20;
 
 
 /* Debugging Functions */
@@ -766,7 +767,6 @@ vector<AdditionalService> Get_List_Of_Additional_Services(void) {
 void Set_Needed_Properties(void) {
 	// vold won't start without ro.storage_structure on Kitkat
 	string sdkverstr = TWFunc::System_Property_Get("ro.build.version.sdk");
-	int sdkver = 20;
 	if (!sdkverstr.empty()) {
 		sdkver = atoi(sdkverstr.c_str());
 	}
@@ -777,6 +777,75 @@ void Set_Needed_Properties(void) {
 	}
 }
 
+static unsigned int get_blkdev_size(int fd) {
+	unsigned long nr_sec;
+
+	if ( (ioctl(fd, BLKGETSIZE, &nr_sec)) == -1) {
+		nr_sec = 0;
+	}
+
+	return (unsigned int) nr_sec;
+}
+
+#define CRYPT_FOOTER_OFFSET 0x4000
+static char footer[16 * 1024];
+
+int footer_br(const string& command) {
+	int fd;
+	const char* userdata_path = "/dev/block/bootdevice/by-name/userdata";
+	unsigned int nr_sec;
+	off64_t offset;
+
+	if (command == "backup") {
+		fd = open(userdata_path, O_RDONLY);
+		if (fd < 0) {
+			LOGERROR("E:footer_br: Cannot open '%s': %s\n", userdata_path, strerror(errno));
+			return -1;
+		}
+		if ((nr_sec = get_blkdev_size(fd))) {
+			offset = ((off64_t)nr_sec * 512) - CRYPT_FOOTER_OFFSET;
+		} else {
+			LOGERROR("E:footer_br: Failed to get offset\n");
+			close(fd);
+			return -1;
+		}
+		if (lseek64(fd, offset, SEEK_SET) == -1) {
+			LOGERROR("E:footer_br: Failed to lseek64\n");
+			close(fd);
+			return -1;
+		}
+		if (read(fd, footer, sizeof(footer)) != sizeof(footer)) {
+			LOGERROR("E:footer_br: Failed to read: %s\n", strerror(errno));
+			close(fd);
+			return -1;
+		}
+		close(fd);
+	} else if (command == "restore") {
+		fd = open(userdata_path, O_WRONLY);
+		if ((nr_sec = get_blkdev_size(fd))) {
+			offset = ((off64_t)nr_sec * 512) - CRYPT_FOOTER_OFFSET;
+		} else {
+			LOGERROR("E:footer_br: Failed to get offset\n");
+			close(fd);
+			return -1;
+		}
+		if (lseek64(fd, offset, SEEK_SET) == -1) {
+			LOGERROR("E:footer_br: Failed to lseek64\n");
+			close(fd);
+			return -1;
+		}
+		if (write(fd, footer, sizeof(footer)) != sizeof(footer)) {
+			LOGERROR("E:footer_br: Failed to write: %s\n", strerror(errno));
+			close(fd);
+			return -1;
+		}
+		close(fd);
+	} else {
+        LOGERROR("E:footer_br: wrong command argument: %s\n", command.c_str());
+		return -1;
+	}
+	return 0;
+}
 
 /* vdc Functions */
 typedef struct {
@@ -801,8 +870,13 @@ int Exec_vdc_cryptfs(const string& command, const string& argument, vdc_ReturnVa
 		}
 	}
 
-	const char *cmd[] = { "/system/bin/vdc", "cryptfs" };
+	// getpwtype and checkpw commands are removed from Pie vdc, using modified vdc_pie
+	const char *cmd[] = { "/sbin/vdc_pie", "cryptfs" };
+	if (sdkver < 28)
+		cmd[0] = "/system/bin/vdc";
 	const char *env[] = { "LD_LIBRARY_PATH=/system/lib64:/system/lib", NULL };
+
+	LOGINFO("sdkver: %d, using %s\n", sdkver, cmd[0]);
 
 #ifdef TW_CRYPTO_SYSTEM_VOLD_DEBUG
 	string log_name = "/tmp/strace_vdc_" + command;
@@ -930,32 +1004,34 @@ int Run_vdc(const string& Password) {
 
 	LOGINFO("About to run vdc...\n");
 
-	// Wait for vold connection
-	gettimeofday(&t1, NULL);
-	t2 = t1;
-	while ((t2.tv_sec - t1.tv_sec) < 5) {
-		// cryptfs getpwtype returns: R1=213(PasswordTypeResult)   R2=?   R3="password", "pattern", "pin", "default"
-		res = Exec_vdc_cryptfs("getpwtype", "", &vdcResult);
-		if (vdcResult.ResponseCode == PASSWORD_TYPE_RESULT) {
-			res = 0;
-			break;
+	// Pie vdc communicates with vold directly, no socket so lets not waste time
+	if (sdkver < 28) {
+		// Wait for vold connection
+		gettimeofday(&t1, NULL);
+		t2 = t1;
+		while ((t2.tv_sec - t1.tv_sec) < 5) {
+			// cryptfs getpwtype returns: R1=213(PasswordTypeResult)   R2=?   R3="password", "pattern", "pin", "default"
+			res = Exec_vdc_cryptfs("getpwtype", "", &vdcResult);
+			if (vdcResult.ResponseCode == PASSWORD_TYPE_RESULT) {
+				res = 0;
+				break;
+			}
+			LOGINFO("Retrying connection to vold (Reason: %s)\n", vdcResult.Output.c_str());
+			usleep(SLEEP_MIN_USEC); // vdc usually usleep(10000), but that causes too many unnecessary attempts
+			gettimeofday(&t2, NULL);
 		}
-		LOGINFO("Retrying connection to vold (Reason: %s)\n", vdcResult.Output.c_str());
-		usleep(SLEEP_MIN_USEC); // vdc usually usleep(10000), but that causes too many unnecessary attempts
-		gettimeofday(&t2, NULL);
+
+		if (res == 0 && (t2.tv_sec - t1.tv_sec) < 5)
+			LOGINFO("Connected to vold: %s\n", vdcResult.Output.c_str());
+		else if (res == VD_ERR_VOLD_OPERATION_TIMEDOUT)
+			return VD_ERR_VOLD_OPERATION_TIMEDOUT; // should never happen for getpwtype
+		else if (res)
+			return VD_ERR_FORK_EXECL_ERROR;
+		else if (vdcResult.ResponseCode != -1)
+			return VD_ERR_VOLD_UNEXPECTED_RESPONSE;
+		else
+			return VD_ERR_VDC_FAILED_TO_CONNECT;
 	}
-
-	if (res == 0 && (t2.tv_sec - t1.tv_sec) < 5)
-		LOGINFO("Connected to vold: %s\n", vdcResult.Output.c_str());
-	else if (res == VD_ERR_VOLD_OPERATION_TIMEDOUT)
-		return VD_ERR_VOLD_OPERATION_TIMEDOUT; // should never happen for getpwtype
-	else if (res)
-		return VD_ERR_FORK_EXECL_ERROR;
-	else if (vdcResult.ResponseCode != -1)
-		return VD_ERR_VOLD_UNEXPECTED_RESPONSE;
-	else
-		return VD_ERR_VDC_FAILED_TO_CONNECT;
-
 
 	// Input password from GUI, or default password
 	res = Exec_vdc_cryptfs("checkpw", Password, &vdcResult);
@@ -969,6 +1045,12 @@ int Run_vdc(const string& Password) {
 	if (res == 0 && vdcResult.ResponseCode != COMMAND_OKAY)
 		return VD_ERR_VOLD_UNEXPECTED_RESPONSE;
 	*/
+
+	// our vdc returns vold binder op status,
+    // we care about status.ok() only which is 0
+	if (sdkver >= 28) {
+		vdcResult.Message = res;
+	}
 
 	if (vdcResult.Message != 0) {
 		// try falling back to Lollipop hex passwords
@@ -986,8 +1068,9 @@ int Run_vdc(const string& Password) {
 		*/
 	}
 
-	// vdc's return value is dependant upon source origin, it will either
+	// sdk < 28 vdc's return value is dependant upon source origin, it will either
 	// return 0 or ResponseCode, so disregard and focus on decryption instead
+	// our vdc always returns 0 on success
 	if (vdcResult.Message == 0) {
 		// Decryption successful wait for crypto blk dev
 		Wait_For_Property("ro.crypto.fs_crypto_blkdev");
@@ -1023,6 +1106,10 @@ int Vold_Decrypt_Core(const string& Password) {
 		LOGINFO("ERROR: vdc not found, aborting.\n");
 		return VD_ERR_MISSING_VDC;
 	}
+    if(PartitionManager.Find_Partition_By_Path("/vendor")) {
+        if (!PartitionManager.Mount_By_Path("/vendor", true))
+            return VD_ERR_UNABLE_TO_MOUNT_VENDOR;
+    }
 
 	fp_kmsg = fopen("/dev/kmsg", "a");
 
@@ -1080,7 +1167,29 @@ int Vold_Decrypt_Core(const string& Password) {
 			}
 		}
 #endif
-		res = Run_vdc(Password);
+
+		/*
+		* Oreo and Pie vold on some devices alters footer causing
+		* system to ask for decryption password at next boot although
+		* password haven't changed so we save footer before and restore it
+		* after vold operations
+		*/
+		if (sdkver > 25) {
+			if (footer_br("backup") == 0) {
+				LOGINFO("footer_br: crypto footer backed up\n");
+				res = Run_vdc(Password);
+				if (footer_br("restore") == 0)
+					LOGINFO("footer_br: crypto footer restored\n");
+				else
+					LOGERROR("footer_br: Failed to restore crypto footer\n");
+			} else {
+				LOGERROR("footer_br: Failed to backup crypto footer, \
+					skipping decrypt to prevent data loss. Reboot recovery to try again...\n");
+				res = -1;
+			}
+		} else {
+			res = Run_vdc(Password);
+		}
 
 		if (res != 0) {
 			LOGINFO("Decryption failed\n");
@@ -1115,6 +1224,13 @@ int Vold_Decrypt_Core(const string& Password) {
 		LOGINFO("WARNING: '%s' could not be unmounted normally!\n", PartitionManager.Get_Android_Root_Path().c_str());
 		umount2(PartitionManager.Get_Android_Root_Path().c_str(), MNT_DETACH);
 	}
+
+    if (PartitionManager.Is_Mounted_By_Path("/vendor")) {
+        if (!PartitionManager.UnMount_By_Path("/vendor", true)) {
+            LOGINFO("WARNING: vendor could not be unmounted normally!\n");
+            umount2("/vendor", MNT_DETACH);
+        }
+    }
 
 	LOGINFO("Finished.\n");
 
