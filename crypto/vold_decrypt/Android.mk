@@ -101,5 +101,33 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         LOCAL_SHARED_LIBRARIES := libcutils
         include $(BUILD_STATIC_LIBRARY)
 
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+            include $(CLEAR_VARS)
+
+            LOCAL_MODULE := vdc_pie
+            LOCAL_SRC_FILES := vdc_pie.cpp
+            LOCAL_MODULE_TAGS := eng optional
+            LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+            LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+            LOCAL_CLANG := true
+            LOCAL_TIDY := true
+            LOCAL_TIDY_FLAGS := -warnings-as-errors=clang-analyzer-security*,cert-*
+            LOCAL_TIDY_CHECKS := -*,cert-*,clang,-analyzer-security*
+            LOCAL_STATIC_LIBRARIES := libvold_binder
+            LOCAL_SHARED_LIBRARIES := libbase libcutils libutils libbinder
+            LOCAL_CFLAGS := -Wall
+            ifneq ($(TARGET_ARCH), arm64)
+                ifneq ($(TARGET_ARCH), x86_64)
+                    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
+                else
+                    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
+                endif
+            else
+                LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
+            endif
+
+            include $(BUILD_EXECUTABLE)
+        endif
+
     endif
 endif
