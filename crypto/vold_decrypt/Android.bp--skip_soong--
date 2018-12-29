@@ -1,0 +1,15 @@
+cc_binary {
+    name: "vdc_pie",
+    defaults: ["vold_default_flags"],
+
+    srcs: ["vdc_pie.cpp"],
+    shared_libs: [
+        "libbase",
+        "libbinder",
+        "libcutils",
+        "libutils",
+    ],
+    static_libs: [
+        "libvold_binder",
+    ],
+}

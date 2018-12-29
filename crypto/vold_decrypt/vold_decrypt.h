@@ -34,6 +34,7 @@ enum {
 	VD_ERR_VOLD_OPERATION_TIMEDOUT  = -8,
 	VD_ERR_FORK_EXECL_ERROR         = -9,
 	VD_ERR_PASSWORD_EMPTY           = -10,
+    VD_ERR_UNABLE_TO_MOUNT_EXTRA   = -11,
 };
 
 

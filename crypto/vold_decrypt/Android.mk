@@ -27,6 +27,12 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             services := $(TW_CRYPTO_USE_SYSTEM_VOLD)
         endif
 
+        # Parse TW_CRYPTO_SYSTEM_VOLD_MOUNT
+        ifneq ($(TW_CRYPTO_SYSTEM_VOLD_MOUNT),)
+            # Per device additional partitions to mount
+            partitions := $(TW_CRYPTO_SYSTEM_VOLD_MOUNT)
+        endif
+
         # List of .rc files for each additional service
         rc_files := $(foreach item,$(services),init.recovery.vold_decrypt.$(item).rc)
 
@@ -86,6 +92,10 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             endif
         endif
 
+        ifneq ($(partitions),)
+            LOCAL_CFLAGS += -DTW_CRYPTO_SYSTEM_VOLD_MOUNT='"$(partitions)"'
+        endif
+
         ifeq ($(TW_CRYPTO_SYSTEM_VOLD_DEBUG),true)
             # Enabling strace will expose the password in the strace logs!!
             LOCAL_CFLAGS += -DTW_CRYPTO_SYSTEM_VOLD_DEBUG
@@ -100,6 +110,36 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         LOCAL_SRC_FILES = vold_decrypt.cpp
         LOCAL_SHARED_LIBRARIES := libcutils
         include $(BUILD_STATIC_LIBRARY)
+
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+            include $(CLEAR_VARS)
+            LOCAL_MODULE := vdc_pie
+            LOCAL_SRC_FILES := vdc_pie.cpp
+            LOCAL_MODULE_TAGS := eng
+            LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+            LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+            LOCAL_CLANG := true
+            LOCAL_TIDY := true
+            LOCAL_TIDY_FLAGS := -warnings-as-errors=clang-analyzer-security*,cert-*
+            LOCAL_TIDY_CHECKS := -*,cert-*,clang,-analyzer-security*
+            LOCAL_STATIC_LIBRARIES := libvold_binder
+            LOCAL_SHARED_LIBRARIES := libbase libcutils libutils libbinder
+            LOCAL_CFLAGS := -Wall
+            ifeq ($(TWRP_INCLUDE_LOGCAT), true)
+                LOCAL_CFLAGS += -DTWRP_INCLUDE_LOGCAT
+            endif
+            ifneq ($(TARGET_ARCH), arm64)
+                ifneq ($(TARGET_ARCH), x86_64)
+                    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
+                else
+                    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
+                endif
+            else
+                LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
+            endif
+
+            include $(BUILD_EXECUTABLE)
+        endif
 
     endif
 endif
