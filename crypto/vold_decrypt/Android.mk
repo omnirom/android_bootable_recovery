@@ -30,6 +30,8 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
         # List of .rc files for each additional service
         rc_files := $(foreach item,$(services),init.recovery.vold_decrypt.$(item).rc)
 
+        # Relink our custom built Pie vdc to out/recovery/root/sbin
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/vdc_pie
 
         include $(CLEAR_VARS)
         LOCAL_MODULE := init.recovery.vold_decrypt.rc

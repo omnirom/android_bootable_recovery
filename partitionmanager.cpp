@@ -1636,6 +1636,8 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 	}
 
 	int pwret = -1;
+// skip twrp built-in dencryption if using system vold to safe time
+#ifndef TW_CRYPTO_USE_SYSTEM_VOLD
 	pid_t pid = fork();
 	if (pid < 0) {
 		LOGERR("fork failed\n");
@@ -1654,6 +1656,7 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 		else
 			pwret = WEXITSTATUS(status) ? -1 : 0;
 	}
+#endif
 
 #ifdef TW_CRYPTO_USE_SYSTEM_VOLD
 	if (pwret != 0) {
