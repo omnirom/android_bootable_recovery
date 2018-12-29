@@ -364,6 +364,9 @@ protected:
 	int mountsystemtoggle(std::string arg);
 	int setlanguage(std::string arg);
 	int togglebacklight(std::string arg);
+#ifdef TW_CRYPTO_USE_SYSTEM_VOLD
+    int volddecryptfinish(std::string arg);
+#endif
 	int twcmd(std::string arg);
 	int setbootslot(std::string arg);
 	int installapp(std::string arg);

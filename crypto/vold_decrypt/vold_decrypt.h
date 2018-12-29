@@ -34,9 +34,11 @@ enum {
 	VD_ERR_VOLD_OPERATION_TIMEDOUT  = -8,
 	VD_ERR_FORK_EXECL_ERROR         = -9,
 	VD_ERR_PASSWORD_EMPTY           = -10,
+    VD_ERR_UNABLE_TO_MOUNT_VENDOR   = -11,
 };
 
 
 int vold_decrypt(const std::string& Password);
+void vold_decrypt_finish();
 
 #endif // _VOLD_DECRYPT_H

@@ -58,6 +58,11 @@ extern "C" {
 #include "objects.hpp"
 #include "../tw_atomic.hpp"
 
+#ifdef TW_CRYPTO_USE_SYSTEM_VOLD
+#include "../crypto/vold_decrypt/vold_decrypt.h"
+bool do_finish = false;
+#endif
+
 GUIAction::mapFunc GUIAction::mf;
 std::set<string> GUIAction::setActionsRunningInCallerThread;
 static string zip_queue[10];
@@ -199,6 +204,9 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(setlanguage);
 		ADD_ACTION(checkforapp);
 		ADD_ACTION(togglebacklight);
+#ifdef TW_CRYPTO_USE_SYSTEM_VOLD
+		ADD_ACTION(volddecryptfinish);
+#endif
 
 		// remember actions that run in the caller thread
 		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
@@ -467,6 +475,10 @@ int GUIAction::doActions()
 
 int GUIAction::doAction(Action action)
 {
+#ifndef TW_CRYPTO_USE_SYSTEM_VOLD
+        if (action.mFunction == "volddecryptfinish")
+            return -1;
+#endif
 	DataManager::GetValue(TW_SIMULATE_ACTIONS, simulate);
 
 	std::string function = gui_parse_text(action.mFunction);
@@ -1880,6 +1892,16 @@ int GUIAction::togglebacklight(std::string arg __unused)
 	blankTimer.toggleBlank();
 	return 0;
 }
+
+#ifdef TW_CRYPTO_USE_SYSTEM_VOLD
+int GUIAction::volddecryptfinish(std::string arg __unused) {
+    if (do_finish) {
+        vold_decrypt_finish();
+        do_finish = false;
+    }
+	return 0;
+}
+#endif
 
 int GUIAction::setbootslot(std::string arg)
 {
