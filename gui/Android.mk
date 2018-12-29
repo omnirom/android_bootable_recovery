@@ -80,6 +80,11 @@ endif
 ifeq ($(TW_ROUND_SCREEN), true)
     LOCAL_CFLAGS += -DTW_ROUND_SCREEN
 endif
+ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),)
+    ifneq ($(TW_CRYPTO_USE_SYSTEM_VOLD),false)
+        LOCAL_CFLAGS += -DTW_CRYPTO_USE_SYSTEM_VOLD
+    endif
+endif
 
 LOCAL_C_INCLUDES += \
     bionic \
