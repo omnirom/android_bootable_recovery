@@ -21,6 +21,8 @@ cc_defaults {
         "-Werror",
     ],
 
+    cpp_std: "experimental",
+
     include_dirs: [
         "system/core/adb",
     ],
