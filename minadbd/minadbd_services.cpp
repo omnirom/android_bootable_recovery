@@ -23,6 +23,7 @@
 
 #include <functional>
 #include <string>
+#include <string_view>
 #include <thread>
 
 #include "adb.h"
@@ -49,14 +50,13 @@ static void sideload_host_service(unique_fd sfd, const std::string& args) {
   exit(result == 0 ? 0 : 1);
 }
 
-unique_fd daemon_service_to_fd(const char* name, atransport* /* transport */) {
-  if (!strncmp(name, "sideload:", 9)) {
-    // this exit status causes recovery to print a special error
-    // message saying to use a newer adb (that supports
-    // sideload-host).
+unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport */) {
+  if (name.starts_with("sideload:")) {
+    // This exit status causes recovery to print a special error message saying to use a newer adb
+    // (that supports sideload-host).
     exit(3);
-  } else if (!strncmp(name, "sideload-host:", 14)) {
-    std::string arg(name + 14);
+  } else if (name.starts_with("sideload-host:")) {
+    std::string arg(name.substr(strlen("sideload-host:")));
     return create_service_thread("sideload-host",
                                  std::bind(sideload_host_service, std::placeholders::_1, arg));
   }
