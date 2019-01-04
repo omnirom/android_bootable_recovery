@@ -34,6 +34,24 @@
       "revId": "192c7cfd327d609fe4ad34e0de042385d91b3656",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5772b875_ab3065e1",
+        "filename": "crypto/vold_decrypt/vdc_pie.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-01-04T21:43:21Z",
+      "side": 1,
+      "message": "Then it shouldn\u0027t say \"logcat\". Please update.",
+      "parentUuid": "af6f8489_56a28622",
+      "revId": "192c7cfd327d609fe4ad34e0de042385d91b3656",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
     }
   ]
 }
