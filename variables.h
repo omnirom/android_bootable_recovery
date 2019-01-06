@@ -161,7 +161,12 @@
 #endif
 
 // For OpenRecoveryScript
+#ifdef AB_OTA_UPDATER
+#define SCRIPT_FILE_CACHE "/data/cache/recovery/openrecoveryscript"
+#else
 #define SCRIPT_FILE_CACHE "/cache/recovery/openrecoveryscript"
+#endif
+
 #define SCRIPT_FILE_TMP "/tmp/openrecoveryscript"
 #define TMP_LOG_FILE "/tmp/recovery.log"
 

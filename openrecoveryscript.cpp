@@ -63,7 +63,7 @@ OpenRecoveryScript::VoidFunction OpenRecoveryScript::call_after_cli_command;
 
 int OpenRecoveryScript::check_for_script_file(void) {
 	if (!PartitionManager.Mount_By_Path(SCRIPT_FILE_CACHE, false)) {
-		LOGINFO("Unable to mount /cache for OpenRecoveryScript support.\n");
+		LOGINFO("Unable to mount %s for OpenRecoveryScript support.\n", SCRIPT_FILE_CACHE);
 		gui_msg(Msg(msg::kError, "unable_to_mount=Unable to mount {1}")(SCRIPT_FILE_CACHE));
 		return 0;
 	}
