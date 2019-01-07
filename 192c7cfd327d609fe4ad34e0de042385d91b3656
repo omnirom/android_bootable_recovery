@@ -124,6 +124,24 @@
       "revId": "192c7cfd327d609fe4ad34e0de042385d91b3656",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2745aa48_0c1650f0",
+        "filename": "crypto/vold_decrypt/vdc_pie.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1001882
+      },
+      "writtenOn": "2019-01-07T22:29:07Z",
+      "side": 1,
+      "message": "logcat is exactly where the details about keymaster fails to decrypt, not kmsg, not recovery... With the latest patch set guarding logcat portion of that message with logcat availability we are good IMO.",
+      "parentUuid": "06a1c184_1b5cf6de",
+      "revId": "192c7cfd327d609fe4ad34e0de042385d91b3656",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
     }
   ]
 }
