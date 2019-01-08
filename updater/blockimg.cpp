@@ -178,14 +178,18 @@ static bool SetPartitionUpdatedMarker(const std::string& marker) {
   return true;
 }
 
-static bool discard_blocks(int fd, off64_t offset, uint64_t size) {
-  // Don't discard blocks unless the update is a retry run.
-  if (!is_retry) {
+static bool discard_blocks(int fd, off64_t offset, uint64_t size, bool force = false) {
+  // Don't discard blocks unless the update is a retry run or force == true
+  if (!is_retry && !force) {
     return true;
   }
 
   uint64_t args[2] = { static_cast<uint64_t>(offset), size };
   if (ioctl(fd, BLKDISCARD, &args) == -1) {
+    // On devices that does not support BLKDISCARD, ignore the error.
+    if (errno == EOPNOTSUPP) {
+      return true;
+    }
     PLOG(ERROR) << "BLKDISCARD ioctl failed";
     return false;
   }
@@ -1448,14 +1452,9 @@ static int PerformCommandErase(CommandParameters& params) {
     LOG(INFO) << " erasing " << tgt.blocks() << " blocks";
 
     for (const auto& [begin, end] : tgt) {
-      uint64_t blocks[2];
-      // offset in bytes
-      blocks[0] = begin * static_cast<uint64_t>(BLOCKSIZE);
-      // length in bytes
-      blocks[1] = (end - begin) * static_cast<uint64_t>(BLOCKSIZE);
-
-      if (ioctl(params.fd, BLKDISCARD, &blocks) == -1) {
-        PLOG(ERROR) << "BLKDISCARD ioctl failed";
+      off64_t offset = static_cast<off64_t>(begin) * BLOCKSIZE;
+      size_t size = (end - begin) * BLOCKSIZE;
+      if (!discard_blocks(params.fd, offset, size, true /* force */)) {
         return -1;
       }
     }
