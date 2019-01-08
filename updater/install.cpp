@@ -482,18 +482,19 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
       return StringValue("");
     }
     std::vector<std::string> f2fs_args = {
-      "/sbin/mkfs.f2fs", "-g", "android", "-w", "512", location
+      "/system/bin/make_f2fs", "-g", "android", "-w", "512", location
     };
     if (size >= 512) {
       f2fs_args.push_back(std::to_string(size / 512));
     }
     if (auto status = exec_cmd(f2fs_args); status != 0) {
-      LOG(ERROR) << name << ": mkfs.f2fs failed (" << status << ") on " << location;
+      LOG(ERROR) << name << ": make_f2fs failed (" << status << ") on " << location;
       return StringValue("");
     }
 
-    if (auto status = exec_cmd({ "/sbin/sload.f2fs", "-t", mount_point, location }); status != 0) {
-      LOG(ERROR) << name << ": sload.f2fs failed (" << status << ") on " << location;
+    if (auto status = exec_cmd({ "/system/bin/sload_f2fs", "-t", mount_point, location });
+        status != 0) {
+      LOG(ERROR) << name << ": sload_f2fs failed (" << status << ") on " << location;
       return StringValue("");
     }
 

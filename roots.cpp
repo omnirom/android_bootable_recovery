@@ -223,34 +223,28 @@ int format_volume(const std::string& volume, const std::string& directory) {
 
   // Has to be f2fs because we checked earlier.
   static constexpr int kSectorSize = 4096;
-  std::string cmd("/sbin/mkfs.f2fs");
-  // clang-format off
   std::vector<std::string> make_f2fs_cmd = {
-    cmd,
-    "-g", "android",
+    "/system/bin/make_f2fs",
+    "-g",
+    "android",
     v->blk_device,
   };
-  // clang-format on
   if (length >= kSectorSize) {
     make_f2fs_cmd.push_back(std::to_string(length / kSectorSize));
   }
 
-  int result = exec_cmd(make_f2fs_cmd);
-  if (result == 0 && !directory.empty()) {
-    cmd = "/sbin/sload.f2fs";
-    // clang-format off
-    std::vector<std::string> sload_f2fs_cmd = {
-      cmd,
-      "-f", directory,
-      "-t", volume,
-      v->blk_device,
-    };
-    // clang-format on
-    result = exec_cmd(sload_f2fs_cmd);
-  }
-  if (result != 0) {
-    PLOG(ERROR) << "format_volume: Failed " << cmd << " on " << v->blk_device;
+  if (exec_cmd(make_f2fs_cmd) != 0) {
+    PLOG(ERROR) << "format_volume: Failed to make_f2fs on " << v->blk_device;
     return -1;
+  }
+  if (!directory.empty()) {
+    std::vector<std::string> sload_f2fs_cmd = {
+      "/system/bin/sload_f2fs", "-f", directory, "-t", volume, v->blk_device,
+    };
+    if (exec_cmd(sload_f2fs_cmd) != 0) {
+      PLOG(ERROR) << "format_volume: Failed to sload_f2fs on " << v->blk_device;
+      return -1;
+    }
   }
   return 0;
 }
