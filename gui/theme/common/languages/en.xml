@@ -98,7 +98,8 @@
 		<string name="successful">Successful</string>
 		<string name="install_failed">Installation Failed</string>
 		<string name="install_successful">Installation Successful</string>
-		<string name="wipe_cache_dalvik_btn">Wipe cache/dalvik</string>
+		<string name="wipe_cache_dalvik_btn">Wipe Cache/Dalvik</string>
+		<string name="wipe_dalvik_btn">Wipe Dalvik</string>
 		<string name="reboot_system_btn">Reboot System</string>
 		<string name="install_sel_target">Select Target Partition</string>
 		<string name="flash_image_select">Select Partition to Flash Image:</string>
@@ -106,8 +107,11 @@
 		<string name="flashing_image">Flashing Image...</string>
 		<string name="image_flashed">Image Flashed</string>
 		<string name="wipe_cache_dalvik_confirm">Wipe Cache &amp; Dalvik?</string>
+		<string name="wipe_dalvik_confirm">Wipe Dalvik?</string>
 		<string name="wiping_cache_dalvik">Wiping Cache &amp; Dalvik...</string>
+		<string name="wiping_dalvik">Wiping Dalvik...</string>
 		<string name="wipe_cache_dalvik_complete">Cache &amp; Dalvik Wipe Complete</string>
+		<string name="wipe_dalvik_complete">Dalvik Wipe Complete</string>
 		<string name="swipe_wipe">Swipe to Wipe</string>
 		<string name="swipe_wipe_s">   Wipe</string>
 		<string name="no_os1">No OS Installed! Are you</string>
@@ -532,9 +536,10 @@
 		<string name="unable_find_part_path">Unable to find partition for path '{1}'</string>
 		<string name="update_part_details">Updating partition details...</string>
 		<string name="update_part_details_done">...done</string>
-		<string name="wiping_dalvik">Wiping Dalvik Cache Directories...</string>
+		<string name="wiping_dalvik">Wiping Dalvik Directories...</string>
 		<string name="cleaned">Cleaned: {1}...</string>
-		<string name="dalvik_done">-- Dalvik Cache Directories Wipe Complete!</string>
+		<string name="cache_dalvik_done">-- Dalvik Cache Directories Wipe Complete!</string>
+		<string name="dalvik_done">-- Dalvik Directory Wipe Complete!</string>
 		<string name="no_andsec">No android secure partitions found.</string>
 		<string name="unable_to_locate">Unable to locate {1}.</string>
 		<string name="wiping_datamedia">Wiping internal storage -- /data/media...</string>

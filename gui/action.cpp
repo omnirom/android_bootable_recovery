@@ -490,6 +490,8 @@ void GUIAction::operation_start(const string operation_name)
 	DataManager::SetValue("tw_operation", operation_name);
 	DataManager::SetValue("tw_operation_state", 0);
 	DataManager::SetValue("tw_operation_status", 0);
+	bool tw_ab_device = TWFunc::get_cache_dir() != NON_AB_CACHE_DIR;
+	DataManager::SetValue("tw_ab_device", tw_ab_device);
 }
 
 void GUIAction::operation_end(const int operation_status)
@@ -1059,7 +1061,6 @@ int GUIAction::wipe(std::string arg)
 {
 	operation_start("Format");
 	DataManager::SetValue("tw_partition", arg);
-
 	int ret_val = false;
 
 	if (simulate) {
