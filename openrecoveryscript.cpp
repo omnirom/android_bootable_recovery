@@ -62,17 +62,21 @@ OpenRecoveryScript::VoidFunction OpenRecoveryScript::call_after_cli_command;
 #define SCRIPT_COMMAND_SIZE 512
 
 int OpenRecoveryScript::check_for_script_file(void) {
-	if (!PartitionManager.Mount_By_Path(SCRIPT_FILE_CACHE, false)) {
-		LOGINFO("Unable to mount /cache for OpenRecoveryScript support.\n");
-		gui_msg(Msg(msg::kError, "unable_to_mount=Unable to mount {1}")(SCRIPT_FILE_CACHE));
-		return 0;
+	std::string cacheDir = TWFunc::get_cache_dir();
+	std::string orsFile = cacheDir + "/openrecoveryscript";
+	if (cacheDir == "/cache/") {
+		if (!PartitionManager.Mount_By_Path(cacheDir, false)) {
+			LOGINFO("Unable to mount %s for OpenRecoveryScript support.\n", cacheDir.c_str());
+			gui_msg(Msg(msg::kError, "unable_to_mount=Unable to mount {1}")(cacheDir.c_str()));
+			return 0;
+		}
 	}
-	if (TWFunc::Path_Exists(SCRIPT_FILE_CACHE)) {
-		LOGINFO("Script file found: '%s'\n", SCRIPT_FILE_CACHE);
+	if (TWFunc::Path_Exists(orsFile)) {
+		LOGINFO("Script file found: '%s'\n", orsFile.c_str());
 		// Copy script file to /tmp
-		TWFunc::copy_file(SCRIPT_FILE_CACHE, SCRIPT_FILE_TMP, 0755);
+		TWFunc::copy_file(orsFile, SCRIPT_FILE_TMP, 0755);
 		// Delete the file from /cache
-		unlink(SCRIPT_FILE_CACHE);
+		unlink(orsFile.c_str());
 		return 1;
 	}
 	return 0;
@@ -655,6 +659,11 @@ void OpenRecoveryScript::Run_CLI_Command(const char* command) {
 		gui_msg("decrypt_cmd=Attempting to decrypt data partition via command line.");
 		if (PartitionManager.Decrypt_Device(pass) == 0) {
 			// set_page_done = 1;  // done by singleaction_page anyway
+			std::string cacheDir = TWFunc::get_cache_dir();
+			std::string orsFile = cacheDir + "/openrecoveryscript";
+			if (TWFunc::Path_Exists(orsFile)) {
+				Run_OpenRecoveryScript_Action();
+			}
 		}
 	} else if (OpenRecoveryScript::Insert_ORS_Command(command)) {
 		OpenRecoveryScript::run_script_file();
