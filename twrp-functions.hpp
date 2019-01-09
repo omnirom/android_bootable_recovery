@@ -99,6 +99,7 @@ public:
 	static void copy_kernel_log(string curr_storage); // Copy Kernel Log to Current Storage (PSTORE/KMSG)
 	static bool isNumber(string strtocheck); // return true if number, false if not a number
 	static int stream_adb_backup(string &Restore_Name); // Tell ADB Backup to Stream to TWRP from GUI selection
+	static std::string get_cache_dir(); // return the cache partition existence
 
 private:
 	static void Copy_Log(string Source, string Destination);

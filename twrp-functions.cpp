@@ -1154,4 +1154,13 @@ int TWFunc::stream_adb_backup(string &Restore_Name) {
 		return -1;
 	return ret;
 }
+
+std::string TWFunc::get_cache_dir() {
+        if (PartitionManager.Find_Partition_By_Path("/cache") == NULL) {
+		return "/data/cache/";
+	}
+	else {
+		return "/cache/";
+	}
+}
 #endif // ndef BUILD_TWRPTAR_MAIN
