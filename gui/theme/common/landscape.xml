@@ -527,8 +527,9 @@
 			<template name="console"/>
 
 			<button style="main_button_half_width">
+				<condition var1="tw_ab_device" var2="0"/>
 				<placement x="%col2_x_left%" y="%row15a_y%"/>
-				<text>{@wipe_cache_dalvik_btn=Wipe cache/dalvik}</text>
+				<text>{@wipe_cache_dalvik_btn=Wipe Cache/Dalvik}</text>
 				<actions>
 					<action function="set">tw_back=flash_done</action>
 					<action function="set">tw_action=wipe</action>
@@ -539,6 +540,22 @@
 					<action function="set">tw_text1={@wipe_cache_dalvik_confirm=Wipe Cache &amp; Dalvik?}</action>
 					<action function="set">tw_action_text1={@wiping_cache_dalvik=Wiping Cache &amp; Dalvik...}</action>
 					<action function="set">tw_complete_text1={@wipe_cache_dalvik_complete=Cache &amp; Dalvik Wipe Complete}</action>
+					<action function="set">tw_slider_text={@swipe_wipe=Swipe to Wipe}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_width">
+				<condition var1="tw_ab_device" var2="1"/>
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>{@wipe_dalvik_btn=Wipe Dalvik}</text>
+				<actions>
+					<action function="set">tw_back=flash_done</action>
+					<action function="set">tw_action=wipe</action>
+					<action function="set">tw_action_param=dalvik</action>
+					<action function="set">tw_text1={@wipe_dalvik_confirm=Wipe Dalvik?}</action>
+					<action function="set">tw_action_text1={@wiping_cache_dalvik=Wiping Dalvik...}</action>
+					<action function="set">tw_complete_text1={@wipe_dalvik_complete=Dalvik Wipe Complete}</action>
 					<action function="set">tw_slider_text={@swipe_wipe=Swipe to Wipe}</action>
 					<action function="page">confirm_action</action>
 				</actions>
