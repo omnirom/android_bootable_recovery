@@ -1031,33 +1031,38 @@ void DataManager::Output_Version(void)
 	string Path;
 	char version[255];
 
-	if (!PartitionManager.Mount_By_Path("/cache", false)) {
-		LOGINFO("Unable to mount '%s' to write version number.\n", Path.c_str());
-		return;
-	}
-	if (!TWFunc::Path_Exists("/cache/recovery/.")) {
-		LOGINFO("Recreating /cache/recovery folder.\n");
-		if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) {
-			LOGERR("DataManager::Output_Version -- Unable to make /cache/recovery\n");
+	std::string cacheDir = TWFunc::get_cache_dir();
+	std::string recoveryCacheDir = cacheDir + "recovery/.";
+
+	if (cacheDir == "/cache") {
+		if (!PartitionManager.Mount_By_Path("/cache", false)) {
+			LOGINFO("Unable to mount '%s' to write version number.\n", Path.c_str());
 			return;
 		}
 	}
-	Path = "/cache/recovery/.version";
-	if (TWFunc::Path_Exists(Path)) {
-		unlink(Path.c_str());
+	if (!TWFunc::Path_Exists(recoveryCacheDir)) {
+		LOGINFO("Recreating %s folder.\n", recoveryCacheDir.c_str());
+		if (mkdir(recoveryCacheDir.c_str(), S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) {
+			LOGERR("DataManager::Output_Version -- Unable to make %s\n", recoveryCacheDir.c_str());
+			return;
+		}
 	}
-	FILE *fp = fopen(Path.c_str(), "w");
+	std::string verPath = recoveryCacheDir + ".version";
+	if (TWFunc::Path_Exists(verPath)) {
+		unlink(verPath.c_str());
+	}
+	FILE *fp = fopen(verPath.c_str(), "w");
 	if (fp == NULL) {
-		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Path)(strerror(errno)));
+		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(verPath)(strerror(errno)));
 		return;
 	}
 	strcpy(version, TW_VERSION_STR);
 	fwrite(version, sizeof(version[0]), strlen(version) / sizeof(version[0]), fp);
 	fclose(fp);
-	TWFunc::copy_file("/etc/recovery.fstab", "/cache/recovery/recovery.fstab", 0644);
+	TWFunc::copy_file("/etc/recovery.fstab", recoveryCacheDir + "recovery.fstab", 0644);
 	PartitionManager.Output_Storage_Fstab();
 	sync();
-	LOGINFO("Version number saved to '%s'\n", Path.c_str());
+	LOGINFO("Version number saved to '%s'\n", verPath.c_str());
 #endif
 }
 
@@ -1070,10 +1075,6 @@ void DataManager::ReadSettingsFile(void)
 
 	GetValue(TW_IS_ENCRYPTED, is_enc);
 	GetValue(TW_HAS_DATA_MEDIA, has_data_media);
-	if (is_enc == 1 && has_data_media == 1) {
-		LOGINFO("Cannot load settings -- encrypted.\n");
-		return;
-	}
 
 	memset(mkdir_path, 0, sizeof(mkdir_path));
 	memset(settings_file, 0, sizeof(settings_file));
@@ -1091,6 +1092,7 @@ void DataManager::ReadSettingsFile(void)
 
 	LOGINFO("Attempt to load settings from settings file...\n");
 	LoadValues(settings_file);
+	LOGINFO("here\n");
 	Output_Version();
 #endif // ifdef TW_OEM_BUILD
 	PartitionManager.Mount_All_Storage();

@@ -2194,10 +2194,12 @@ void TWPartitionManager::Output_Storage_Fstab(void) {
 	std::vector<TWPartition*>::iterator iter;
 	char storage_partition[255];
 	string Temp;
-	FILE *fp = fopen("/cache/recovery/storage.fstab", "w");
+
+	std::string storageFstab = TWFunc::get_cache_dir() + "recovery/storage.fstab";
+	FILE *fp = fopen(storageFstab.c_str(), "w");
 
 	if (fp == NULL) {
-		gui_msg(Msg(msg::kError, "unable_to_open=Unable to open '{1}'.")("/cache/recovery/storage.fstab"));
+		gui_msg(Msg(msg::kError, "unable_to_open=Unable to open '{1}'.")(storageFstab));
 		return;
 	}
 
