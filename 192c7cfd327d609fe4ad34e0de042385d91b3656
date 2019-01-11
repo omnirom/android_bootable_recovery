@@ -142,6 +142,24 @@
       "revId": "192c7cfd327d609fe4ad34e0de042385d91b3656",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0eb52580_e73030fd",
+        "filename": "crypto/vold_decrypt/vdc_pie.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-01-11T19:35:44Z",
+      "side": 1,
+      "message": "Looks fine now.",
+      "parentUuid": "2745aa48_0c1650f0",
+      "revId": "192c7cfd327d609fe4ad34e0de042385d91b3656",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
     }
   ]
 }
