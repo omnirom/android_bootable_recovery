@@ -231,6 +231,8 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(twcmd);
 		ADD_ACTION(setbootslot);
 		ADD_ACTION(installapp);
+		ADD_ACTION(repackimage);
+		ADD_ACTION(fixabrecoverybootloop);
 	}
 
 	// First, get the action
@@ -1196,7 +1198,7 @@ int GUIAction::nandroid(std::string arg)
 			string Backup_Name;
 			DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 			string auto_gen = gui_lookup("auto_generate", "(Auto Generate)");
-			if (Backup_Name == auto_gen || Backup_Name == gui_lookup("curr_date", "(Current Date)") || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(true) == 0) {
+			if (Backup_Name == auto_gen || Backup_Name == gui_lookup("curr_date", "(Current Date)") || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(Backup_Name, true, true) == 0) {
 				ret = PartitionManager.Run_Backup(false);
 				DataManager::SetValue("tw_encrypt_backup", 0); // reset value so we don't encrypt every subsequent backup
 				if (!PartitionManager.stop_backup.get_value()) {
@@ -1472,7 +1474,9 @@ int GUIAction::checkbackupname(std::string arg __unused)
 	if (simulate) {
 		simulate_progress_bar();
 	} else {
-		op_status = PartitionManager.Check_Backup_Name(true);
+		string Backup_Name;
+		DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
+		op_status = PartitionManager.Check_Backup_Name(Backup_Name, true, true);
 		if (op_status != 0)
 			op_status = 1;
 	}
@@ -2051,5 +2055,91 @@ int GUIAction::installapp(std::string arg __unused)
 		simulate_progress_bar();
 exit:
 	operation_end(0);
+	return 0;
+}
+
+int GUIAction::repackimage(std::string arg __unused)
+{
+	int op_status = 1;
+	operation_start("Repack Image");
+	if (!simulate)
+	{
+		std::string path = DataManager::GetStrValue("tw_filename");
+		Repack_Options_struct Repack_Options;
+		Repack_Options.Disable_Verity = false;
+		Repack_Options.Disable_Force_Encrypt = false;
+		Repack_Options.Backup_First = DataManager::GetIntValue("tw_repack_backup_first") != 0;
+		if (DataManager::GetIntValue("tw_repack_kernel") == 1)
+			Repack_Options.Type = REPLACE_KERNEL;
+		else
+			Repack_Options.Type = REPLACE_RAMDISK;
+		if (!PartitionManager.Repack_Images(path, Repack_Options))
+			goto exit;
+	} else
+		simulate_progress_bar();
+	op_status = 0;
+exit:
+	operation_end(op_status);
+	return 0;
+}
+
+int GUIAction::fixabrecoverybootloop(std::string arg __unused)
+{
+	int op_status = 1;
+	operation_start("Repack Image");
+	if (!simulate)
+	{
+		if (!TWFunc::Path_Exists("/sbin/magiskboot")) {
+			LOGERR("Image repacking tool not present in this TWRP build!");
+			goto exit;
+		}
+		DataManager::SetProgress(0);
+		TWPartition* part = PartitionManager.Find_Partition_By_Path("/boot");
+		if (part)
+			gui_msg(Msg("unpacking_image=Unpacking {1}...")(part->Display_Name));
+		else {
+			gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")("/boot"));
+			goto exit;
+		}
+		if (!PartitionManager.Prepare_Repack(part, REPACK_ORIG_DIR, DataManager::GetIntValue("tw_repack_backup_first") != 0, gui_lookup("repack", "Repack")))
+			goto exit;
+		DataManager::SetProgress(.25);
+		gui_msg("fixing_recovery_loop_patch=Patching kernel...");
+		std::string command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot --hexpatch kernel 77616E745F696E697472616D667300 736B69705F696E697472616D667300";
+		if (TWFunc::Exec_Cmd(command) != 0) {
+			gui_msg(Msg(msg::kError, "fix_recovery_loop_patch_error=Error patching kernel."));
+			goto exit;
+		}
+		std::string header_path = REPACK_ORIG_DIR;
+		header_path += "header";
+		if (TWFunc::Path_Exists(header_path)) {
+			command = "cd " REPACK_ORIG_DIR " && sed -i \"s|$(grep '^cmdline=' header | cut -d= -f2-)|$(grep '^cmdline=' header | cut -d= -f2- | sed -e 's/skip_override//' -e 's/  */ /g' -e 's/[ \t]*$//')|\" header";
+			if (TWFunc::Exec_Cmd(command) != 0) {
+				gui_msg(Msg(msg::kError, "fix_recovery_loop_patch_error=Error patching kernel."));
+				goto exit;
+			}
+		}
+		DataManager::SetProgress(.5);
+		gui_msg(Msg("repacking_image=Repacking {1}...")(part->Display_Name));
+		command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot --repack " REPACK_ORIG_DIR "boot.img";
+		if (TWFunc::Exec_Cmd(command) != 0) {
+			gui_msg(Msg(msg::kError, "repack_error=Error repacking image."));
+			goto exit;
+		}
+		DataManager::SetProgress(.75);
+		std::string path = REPACK_ORIG_DIR;
+		std::string file = "new-boot.img";
+		DataManager::SetValue("tw_flash_partition", "/boot;");
+		if (!PartitionManager.Flash_Image(path, file)) {
+			LOGINFO("Error flashing new image\n");
+			goto exit;
+		}
+		DataManager::SetProgress(1);
+		TWFunc::removeDir(REPACK_ORIG_DIR, false);
+	} else
+		simulate_progress_bar();
+	op_status = 0;
+exit:
+	operation_end(op_status);
 	return 0;
 }
