@@ -178,7 +178,7 @@ int OpenRecoveryScript::run_script_file(void) {
 					strncpy(value2, tok, line_len - remove_nl);
 					DataManager::SetValue(TW_BACKUP_NAME, value2);
 					gui_msg(Msg("backup_folder_set=Backup folder set to '{1}'")(value2));
-					if (PartitionManager.Check_Backup_Name(true) != 0) {
+					if (PartitionManager.Check_Backup_Name(value2, true, true) != 0) {
 						ret_val = 1;
 						continue;
 					}
