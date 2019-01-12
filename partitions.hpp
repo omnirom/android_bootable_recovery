@@ -29,6 +29,9 @@
 
 #define MAX_FSTAB_LINE_LENGTH 2048
 
+#define REPACK_ORIG_DIR "/tmp/repackorig/"
+#define REPACK_NEW_DIR "/tmp/repacknew/"
+
 using namespace std;
 
 // BasePartition is used for overriding so we can run custom, device
@@ -300,7 +303,7 @@ public:
 	int Mount_Settings_Storage(bool Display_Error);                           // Mounts the settings file storage location (usually internal)
 	TWPartition* Find_Partition_By_Path(const string& Path);                  // Returns a pointer to a partition based on path
 	TWPartition* Find_Partition_By_Block_Device(const string& Block_Device);  // Returns a pointer to a partition based on block device
-	int Check_Backup_Name(bool Display_Error);                                // Checks the current backup name to ensure that it is valid
+	int Check_Backup_Name(const std::string& Backup_Name, bool Display_Error, bool Must_Be_Unique); // Checks the current backup name to ensure that it is valid and optionally that a backup with that name doesn't already exist
 	int Run_Backup(bool adbbackup);                                           // Initiates a backup in the current storage
 	int Run_Restore(const string& Restore_Name);                              // Restores a backup
 	bool Write_ADB_Stream_Header(uint64_t partition_count);                   // Write ADB header over twrpbu FIFO
@@ -361,6 +364,8 @@ public:
 	void read_uevent();                                                       // Reads uevent data into a buffer
 	void close_uevent();                                                      // Closes the uevent netlink socket
 	void Add_Partition(TWPartition* Part);                                    // Adds a new partition to the Partitions vector
+	bool Prepare_Repack(TWPartition* Part, const std::string& Temp_Folder_Destination, const bool Create_Backup, const std::string& Backup_Name); // Prepares an image for repacking by unpacking it to the temp folder destination
+	bool Prepare_Repack(const std::string& Source_Path, const std::string& Temp_Folder_Destination, const bool Copy_Source, const bool Create_Destination = true); // Prepares an image for repacking by unpacking it to the temp folder destination
 
 private:
 	void Setup_Settings_Storage_Partition(TWPartition* Part);                 // Sets up settings storage
@@ -373,6 +378,7 @@ private:
 	void Post_Decrypt(const string& Block_Device);                            // Completes various post-decrypt tasks
 	void Coldboot_Scan(std::vector<string> *sysfs_entries, const string& Path, int depth); // Scans subfolders to find matches to the paths stored in sysfs_entries so we can trigger the uevent system to "re-add" devices
 	void Coldboot();                                                          // Starts the scan of the /sys/block folder
+	bool Prepare_Empty_Folder(const std::string& Folder);                     // Creates an empty folder at Folder. If the folder already exists, the folder is deleted, then created
 	pid_t mtppid;
 	bool mtp_was_enabled;
 	int mtp_write_fd;

@@ -3398,6 +3398,41 @@
 						<action function="page">confirm_action</action>
 					</actions>
 				</listitem>
+				<listitem name="{@install_twrp_ramdisk=Install Recovery Ramdisk}">
+					<conditions>
+						<condition var1="tw_has_boot_slots" var2="1"/>
+						<condition var1="tw_has_repack_tools" var2="1"/>
+					</conditions>
+					<actions>
+						<action function="set">tw_repack_kernel=0</action>
+						<action function="page">repackselect</action>
+					</actions>
+				</listitem>
+				<listitem name="{@install_kernel=Install Kernel}">
+					<conditions>
+						<condition var1="tw_has_boot_slots" var2="1"/>
+						<condition var1="tw_has_repack_tools" var2="1"/>
+					</conditions>
+					<actions>
+						<action function="set">tw_repack_kernel=1</action>
+						<action function="page">repackselect</action>
+					</actions>
+				</listitem>
+				<listitem name="{@fix_recovery_loop=Fix Recovery Bootloop}">
+					<conditions>
+						<condition var1="tw_has_boot_slots" var2="1"/>
+						<condition var1="tw_has_repack_tools" var2="1"/>
+					</conditions>
+					<actions>
+						<action function="set">tw_back=advanced</action>
+						<action function="set">tw_action=fixabrecoverybootloop</action>
+						<action function="set">tw_text1={@fix_recovery_loop_confirm=Fix Recovery Bootloop?}</action>
+						<action function="set">tw_action_text1={@fixing_recovery_loop=Fixing Recovery Bootloop...}</action>
+						<action function="set">tw_complete_text1={@fix_recovery_loop_complete=Fix Recovery Bootloop Complete}</action>
+						<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+						<action function="page">confirm_action</action>
+					</actions>
+				</listitem>
 			</listbox>
 
 			<action>
@@ -3654,6 +3689,140 @@
 			<action>
 				<touch key="back"/>
 				<action function="page">advanced</action>
+			</action>
+		</page>
+
+		<page name="repackselect">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@repack_image_hdr=Select Image}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@select_file_from_storage=Select File from %tw_storage_display_name% (%tw_storage_free_size% MB)}</text>
+			</text>
+
+			<template name="sort_options"/>
+
+			<fileselector>
+				<placement x="%col1_x_left%" y="%row1a_y%" w="%content_quarter_width%" h="%fileselector_filemanager_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn=".img" folders="1" files="1"/>
+				<path name="tw_zip_location" default="/sdcard"/>
+				<data name="tw_filename"/>
+				<selection name="tw_file"/>
+			</fileselector>
+
+			<button style="main_button_half_width_low">
+				<placement x="%col_button_right%" y="%row16a_y%"/>
+				<text>{@select_storage_btn=Select Storage}</text>
+				<actions>
+					<action function="set">tw_back=install</action>
+					<action function="overlay">select_storage</action>
+				</actions>
+			</button>
+
+			<action>
+				<conditions>
+					<condition var1="tw_filename" op="modified"/>
+				</conditions>
+				<action function="page">repackconfirm</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">advanced</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="repackconfirm">
+			<template name="page"/>
+
+			<text style="text_l">
+				<condition var1="tw_repack_kernel" var2="1"/>
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@repack_kernel_confirm_hdr=Install Kernel}</text>
+			</text>
+
+			<text style="text_l">
+				<condition var1="tw_repack_kernel" var2="0"/>
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@repack_ramdisk_confirm_hdr=Install Recovery}</text>
+			</text>
+
+			<text style="text_m">
+				<condition var1="tw_repack_kernel" var2="1"/>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@repack_kernel_confirm=Install Kernel?}</text>
+			</text>
+
+			<text style="text_m">
+				<condition var1="tw_repack_kernel" var2="0"/>
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@repack_ramdisk_confirm=Install Recovery?}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row2_y%"/>
+				<text>{@folder=Folder:}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row3_y%"/>
+				<text>%tw_zip_location%</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row4_y%"/>
+				<text>{@file=File:}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row5_y%"/>
+				<text>%tw_file%</text>
+			</text>
+
+			<checkbox>
+				<placement x="%indent%" y="%row7_y%"/>
+				<text>{@repack_backup_first=Back up existing image first}</text>
+				<data variable="tw_repack_backup_first"/>
+			</checkbox>
+
+			<button style="main_button_half_width">
+				<placement x="%col1_x_left%" y="%row15a_y%"/>
+				<text>{@install_cancel=Do not Install}</text>
+				<action function="page">repackselect</action>
+			</button>
+
+			<slider style="slider_centered">
+				<text>{@swipe_to_install=Swipe to Install}</text>
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=repackimage</action>
+					<action function="set">tw_action_param=/boot</action>
+					<action function="set">tw_action_text1={@installing=Installing...}</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1={@install_complete=Install Complete}</action>
+					<action function="page">action_page</action>
+				</actions>
+			</slider>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">repackselect</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
 			</action>
 		</page>
 
