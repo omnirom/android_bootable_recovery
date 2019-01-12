@@ -480,6 +480,21 @@
 		<string name="install_cancel">Do Not Install</string>
 		<string name="sel_storage_list">Select Storage</string>
 		<string name="ok_btn">OK</string>
+		<string name="install_twrp_ramdisk">Install Recovery Ramdisk</string>
+		<string name="install_kernel">Install Kernel</string>
+		<string name="repack_kernel_confirm_hdr">Install Kernel</string>
+		<string name="repack_ramdisk_confirm_hdr">Install Recovery</string>
+		<string name="repack_kernel_confirm">Install Kernel?</string>
+		<string name="repack_ramdisk_confirm">Install Recovery?</string>
+		<string name="repack_backup_first">Back up existing image first</string>
+		<string name="swipe_to_install">Swipe to Install</string>
+		<string name="installing">Installing...</string>
+		<string name="install_complete">Install Complete</string>
+		<string name="unpack_error">Error unpacking image.</string>
+		<string name="repack_error">Error repacking image.</string>
+		<string name="unpacking_image">Unpacking {1}...</string>
+		<string name="repacking_image">Repacking {1}...</string>
+		<string name="repack_image_hdr">Select Image</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel does not have support for reading SELinux contexts.</string>
