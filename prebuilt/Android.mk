@@ -230,6 +230,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
 endif
 ifeq ($(AB_OTA_UPDATER), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/bootctl
+    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/magiskboottwrp
     ifneq ($(TW_INCLUDE_CRYPTO), true)
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libhardware.so
     endif
