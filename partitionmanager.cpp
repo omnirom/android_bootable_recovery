@@ -602,16 +602,15 @@ TWPartition* TWPartitionManager::Find_Partition_By_Block_Device(const string& Bl
 	return NULL;
 }
 
-int TWPartitionManager::Check_Backup_Name(bool Display_Error) {
+int TWPartitionManager::Check_Backup_Name(const std::string& Backup_Name, bool Display_Error, bool Must_Be_Unique) {
 	// Check the backup name to ensure that it is the correct size and contains only valid characters
 	// and that a backup with that name doesn't already exist
 	char backup_name[MAX_BACKUP_NAME_LEN];
 	char backup_loc[255], tw_image_dir[255];
 	int copy_size;
 	int index, cur_char;
-	string Backup_Name, Backup_Loc;
+	string Backup_Loc;
 
-	DataManager::GetValue(TW_BACKUP_NAME, Backup_Name);
 	copy_size = Backup_Name.size();
 	// Check size
 	if (copy_size > MAX_BACKUP_NAME_LEN) {
@@ -640,17 +639,20 @@ int TWPartitionManager::Check_Backup_Name(bool Display_Error) {
 		}
 	}
 
-	// Check to make sure that a backup with this name doesn't already exist
-	DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Loc);
-	strcpy(backup_loc, Backup_Loc.c_str());
-	sprintf(tw_image_dir,"%s/%s", backup_loc, Backup_Name.c_str());
-	if (TWFunc::Path_Exists(tw_image_dir)) {
-		if (Display_Error)
-			gui_err("backup_name_exists=A backup with that name already exists!");
+	if (Must_Be_Unique) {
+		// Check to make sure that a backup with this name doesn't already exist
+		DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, Backup_Loc);
+		strcpy(backup_loc, Backup_Loc.c_str());
+		sprintf(tw_image_dir,"%s/%s", backup_loc, Backup_Name.c_str());
+		if (TWFunc::Path_Exists(tw_image_dir)) {
+			if (Display_Error)
+				gui_err("backup_name_exists=A backup with that name already exists!");
 
-		return -4;
+			return -4;
+		}
+		// Backup is unique
 	}
-	// No problems found, return 0
+	// No problems found
 	return 0;
 }
 
@@ -2980,4 +2982,74 @@ void TWPartitionManager::Coldboot() {
 
 	if (sysfs_entries.size() > 0)
 		Coldboot_Scan(&sysfs_entries, "/sys/block", 0);
+}
+
+bool TWPartitionManager::Prepare_Empty_Folder(const std::string& Folder) {
+	if (TWFunc::Path_Exists(Folder))
+		TWFunc::removeDir(Folder, false);
+	return TWFunc::Recursive_Mkdir(Folder);
+}
+
+bool TWPartitionManager::Prepare_Repack(TWPartition* Part, const std::string& Temp_Folder_Destination, const bool Create_Backup, const std::string& Backup_Name) {
+	if (!Part) {
+		LOGERR("Partition was null!\n");
+		return false;
+	}
+	if (!Prepare_Empty_Folder(Temp_Folder_Destination))
+		return false;
+	std::string target_image = Temp_Folder_Destination + "boot.img";
+	PartitionSettings part_settings;
+	part_settings.Part = Part;
+	if (Create_Backup) {
+		if (Check_Backup_Name(Backup_Name, true, false) != 0)
+			return false;
+		DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, part_settings.Backup_Folder);
+		part_settings.Backup_Folder = part_settings.Backup_Folder + "/" + TWFunc::Get_Current_Date() + " " + Backup_Name + "/";
+		if (!TWFunc::Recursive_Mkdir(part_settings.Backup_Folder))
+			return false;
+	} else
+		part_settings.Backup_Folder = Temp_Folder_Destination;
+	part_settings.adbbackup = false;
+	part_settings.generate_digest = false;
+	part_settings.generate_md5 = false;
+	part_settings.PM_Method = PM_BACKUP;
+	part_settings.progress = NULL;
+	pid_t not_a_pid = 0;
+	if (!Part->Backup(&part_settings, &not_a_pid))
+		return false;
+	std::string backed_up_image = part_settings.Backup_Folder;
+	backed_up_image += Part->Backup_FileName;
+	target_image = Temp_Folder_Destination + "boot.img";
+	if (Create_Backup) {
+		std::string source = part_settings.Backup_Folder + Part->Backup_FileName;
+		if (TWFunc::copy_file(source, target_image, 0644) != 0) {
+			LOGERR("Failed to copy backup file '%s' to temp folder target '%s'\n", source.c_str(), target_image.c_str());
+			return false;
+		}
+	} else {
+		if (rename(backed_up_image.c_str(), target_image.c_str()) != 0) {
+			LOGERR("Failed to rename '%s' to '%s'\n", backed_up_image.c_str(), target_image.c_str());
+			return false;
+		}
+	}
+	return Prepare_Repack(target_image, Temp_Folder_Destination, false, false);
+}
+
+bool TWPartitionManager::Prepare_Repack(const std::string& Source_Path, const std::string& Temp_Folder_Destination, const bool Copy_Source, const bool Create_Destination) {
+	if (Create_Destination) {
+		if (!Prepare_Empty_Folder(Temp_Folder_Destination))
+			return false;
+	}
+	if (Copy_Source) {
+		std::string destination = Temp_Folder_Destination + "/boot.img";
+		if (TWFunc::copy_file(Source_Path, destination, 0644))
+			return false;
+	}
+	std::string command = "cd " + Temp_Folder_Destination + " && /sbin/magiskboot --unpack -h " + Source_Path;
+	if (TWFunc::Exec_Cmd(command) != 0) {
+		LOGINFO("Error unpacking %s!\n", Source_Path.c_str());
+		gui_msg(Msg(msg::kError, "unpack_error=Error unpacking image."));
+		return false;
+	}
+	return true;
 }
