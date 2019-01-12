@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "6536e2e7_3af61df2",
+        "filename": "minuitwrp/events.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1002263
+      },
+      "writtenOn": "2019-01-12T04:05:53Z",
+      "side": 1,
+      "message": "This function is not accessible in the minuitwrp module, do we need to add ../twrp-functions.cpp to LOCAL_SRC_FILES in minuitwrp\u0027s makefile?",
+      "parentUuid": "dd6eb862_04b6a7f2",
+      "revId": "99a64873c405158c405dc39535c45a97f0dad7f7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "284294a7_9944fb47",
         "filename": "minuitwrp/events.cpp",
         "patchSetId": 4
