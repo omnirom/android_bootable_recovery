@@ -53,6 +53,7 @@
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
+#include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
 #include "otautil/print_sha1.h"
@@ -878,7 +879,7 @@ static int CreateStash(State* state, size_t maxblocks, const std::string& base) 
   size_t max_stash_size = maxblocks * BLOCKSIZE;
   if (res == -1) {
     LOG(INFO) << "creating stash " << dirname;
-    res = mkdir(dirname.c_str(), STASH_DIRECTORY_MODE);
+    res = mkdir_recursively(dirname, STASH_DIRECTORY_MODE, false, nullptr);
 
     if (res != 0) {
       ErrorAbort(state, kStashCreationFailure, "mkdir \"%s\" failed: %s", dirname.c_str(),
