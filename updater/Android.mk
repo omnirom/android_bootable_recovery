@@ -29,12 +29,14 @@ updater_common_static_libraries := \
     libedify \
     libotautil \
     libext4_utils \
+    libdm \
     libfec \
     libfec_rs \
     libverity_tree \
     libfs_mgr \
     libgtest_prod \
     liblog \
+    liblp \
     libselinux \
     libsparse \
     libsquashfs_utils \
