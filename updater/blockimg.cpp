@@ -70,6 +70,7 @@
 static constexpr size_t BLOCKSIZE = 4096;
 static constexpr mode_t STASH_DIRECTORY_MODE = 0700;
 static constexpr mode_t STASH_FILE_MODE = 0600;
+static constexpr mode_t MARKER_DIRECTORY_MODE = 0700;
 
 static CauseCode failure_type = kNoCause;
 static bool is_retry = false;
@@ -167,15 +168,22 @@ static bool UpdateLastCommandIndex(size_t command_index, const std::string& comm
   return true;
 }
 
-static bool SetPartitionUpdatedMarker(const std::string& marker) {
+bool SetUpdatedMarker(const std::string& marker) {
+  auto dirname = android::base::Dirname(marker);
+  auto res = mkdir(dirname.c_str(), MARKER_DIRECTORY_MODE);
+  if (res == -1 && errno != EEXIST) {
+    PLOG(ERROR) << "Failed to create directory for marker: " << dirname;
+    return false;
+  }
+
   if (!android::base::WriteStringToFile("", marker)) {
     PLOG(ERROR) << "Failed to write to marker file " << marker;
     return false;
   }
-  if (!FsyncDir(android::base::Dirname(marker))) {
+  if (!FsyncDir(dirname)) {
     return false;
   }
-  LOG(INFO) << "Wrote partition updated marker to " << marker;
+  LOG(INFO) << "Wrote updated marker to " << marker;
   return true;
 }
 
@@ -1573,6 +1581,43 @@ using CommandFunction = std::function<int(CommandParameters&)>;
 
 using CommandMap = std::unordered_map<Command::Type, CommandFunction>;
 
+static bool Sha1DevicePath(const std::string& path, uint8_t digest[SHA_DIGEST_LENGTH]) {
+  auto device_name = android::base::Basename(path);
+  auto dm_target_name_path = "/sys/block/" + device_name + "/dm/name";
+
+  struct stat sb;
+  if (stat(dm_target_name_path.c_str(), &sb) == 0) {
+    // This is a device mapper target. Use partition name as part of the hash instead. Do not
+    // include extents as part of the hash, because the size of a partition may be shrunk after
+    // the patches are applied.
+    std::string dm_target_name;
+    if (!android::base::ReadFileToString(dm_target_name_path, &dm_target_name)) {
+      PLOG(ERROR) << "Cannot read " << dm_target_name_path;
+      return false;
+    }
+    SHA1(reinterpret_cast<const uint8_t*>(dm_target_name.data()), dm_target_name.size(), digest);
+    return true;
+  }
+
+  if (errno != ENOENT) {
+    // This is a device mapper target, but its name cannot be retrieved.
+    PLOG(ERROR) << "Cannot get dm target name for " << path;
+    return false;
+  }
+
+  // This doesn't appear to be a device mapper target, but if its name starts with dm-, something
+  // else might have gone wrong.
+  if (android::base::StartsWith(device_name, "dm-")) {
+    LOG(WARNING) << "Device " << path << " starts with dm- but is not mapped by device-mapper.";
+  }
+
+  // Stash directory should be different for each partition to avoid conflicts when updating
+  // multiple partitions at the same time, so we use the hash of the block device name as the base
+  // directory.
+  SHA1(reinterpret_cast<const uint8_t*>(path.data()), path.size(), digest);
+  return true;
+}
+
 static Value* PerformBlockImageUpdate(const char* name, State* state,
                                       const std::vector<std::unique_ptr<Expr>>& argv,
                                       const CommandMap& command_map, bool dryrun) {
@@ -1657,12 +1702,10 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     return StringValue("");
   }
 
-  // Stash directory should be different for each partition to avoid conflicts when updating
-  // multiple partitions at the same time, so we use the hash of the block device name as the base
-  // directory.
   uint8_t digest[SHA_DIGEST_LENGTH];
-  SHA1(reinterpret_cast<const uint8_t*>(blockdev_filename->data.data()),
-       blockdev_filename->data.size(), digest);
+  if (!Sha1DevicePath(blockdev_filename->data, digest)) {
+    return StringValue("");
+  }
   params.stashbase = print_sha1(digest);
 
   // Possibly do return early on retry, by checking the marker. If the update on this partition has
@@ -1884,7 +1927,7 @@ pbiudone:
       // Create a marker on /cache partition, which allows skipping the update on this partition on
       // retry. The marker will be removed once booting into normal boot, or before starting next
       // fresh install.
-      if (!SetPartitionUpdatedMarker(updated_marker)) {
+      if (!SetUpdatedMarker(updated_marker)) {
         LOG(WARNING) << "Failed to set updated marker; continuing";
       }
     }
