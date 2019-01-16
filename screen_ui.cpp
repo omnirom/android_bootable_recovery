@@ -278,12 +278,12 @@ bool GraphicMenu::Validate(size_t max_width, size_t max_height, const GRSurface*
 bool GraphicMenu::ValidateGraphicSurface(size_t max_width, size_t max_height, int y,
                                          const GRSurface* surface) {
   if (!surface) {
-    fprintf(stderr, "Graphic surface can not be null");
+    fprintf(stderr, "Graphic surface can not be null\n");
     return false;
   }
 
   if (surface->pixel_bytes != 1 || surface->width != surface->row_bytes) {
-    fprintf(stderr, "Invalid graphic surface, pixel bytes: %zu, width: %zu row_bytes: %zu",
+    fprintf(stderr, "Invalid graphic surface, pixel bytes: %zu, width: %zu row_bytes: %zu\n",
             surface->pixel_bytes, surface->width, surface->row_bytes);
     return false;
   }
