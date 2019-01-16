@@ -63,14 +63,6 @@ LOCAL_REQUIRED_MODULES += \
 endif
 endif
 
-# e2fsck is needed for adb remount -R.
-ifeq ($(BOARD_EXT4_SHARE_DUP_BLOCKS),true)
-ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
-LOCAL_REQUIRED_MODULES += \
-    e2fsck_static
-endif
-endif
-
 # On A/B devices recovery-persist reads the recovery related file from the persist storage and
 # copies them into /data/misc/recovery. Then, for both A/B and non-A/B devices, recovery-persist
 # parses the last_install file and reports the embedded update metrics. Also, the last_install file
