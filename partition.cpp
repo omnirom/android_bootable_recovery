@@ -3045,7 +3045,9 @@ int TWPartition::Check_Lifetime_Writes() {
 	Mount_Read_Only = true;
 	if (Mount(false)) {
 		Find_Actual_Block_Device();
-		string block = basename(Actual_Block_Device.c_str());
+		string temp = Actual_Block_Device;
+		Find_Real_Block_Device(temp, false);
+		string block = basename(temp.c_str());
 		string file = "/sys/fs/" + Current_File_System + "/" + block + "/lifetime_write_kbytes";
 		string result;
 		if (TWFunc::Path_Exists(file)) {
