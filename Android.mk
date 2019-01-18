@@ -56,11 +56,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := recovery_deps
 
 ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
-ifeq ($(HOST_OS),linux)
 LOCAL_REQUIRED_MODULES += \
     make_f2fs.recovery \
     sload_f2fs.recovery
-endif
 endif
 
 # On A/B devices recovery-persist reads the recovery related file from the persist storage and
