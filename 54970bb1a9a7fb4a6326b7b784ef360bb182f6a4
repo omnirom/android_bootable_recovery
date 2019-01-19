@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6bcef8a4_4ddd41f1",
+        "filename": "prebuilt/Android.mk",
+        "patchSetId": 8
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2019-01-19T15:01:45Z",
+      "side": 0,
+      "message": "We shouldn\u0027t remove hwservicemanager unless you have a really good reason for removing it.",
+      "range": {
+        "startLine": 201,
+        "startChar": 61,
+        "endLine": 201,
+        "endChar": 77
+      },
+      "revId": "54970bb1a9a7fb4a6326b7b784ef360bb182f6a4",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
