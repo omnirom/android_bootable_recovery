@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "248f6ead_4e9e4b93",
+        "filename": "prebuilt/Android.mk",
+        "patchSetId": 8
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-01-19T15:07:09Z",
+      "side": 0,
+      "message": "It is a duplicate of this line.",
+      "revId": "54970bb1a9a7fb4a6326b7b784ef360bb182f6a4",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6bcef8a4_4ddd41f1",
         "filename": "prebuilt/Android.mk",
         "patchSetId": 8
