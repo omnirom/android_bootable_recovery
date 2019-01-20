@@ -29,6 +29,7 @@ cc_defaults {
         "libcutils",
         "liblog",
         "libpng",
+        "libprocessgroup",
         "libselinux",
         "libz",
         "libziparchive",
