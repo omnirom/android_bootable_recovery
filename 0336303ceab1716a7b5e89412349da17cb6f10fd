@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3d6d9c9a_790f0df3",
+        "filename": "crypto/vold_decrypt/Android.mk",
+        "patchSetId": 6
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1001882
+      },
+      "writtenOn": "2019-01-20T20:49:30Z",
+      "side": 1,
+      "message": "Change this to 27 or less and tell if it builds on Oreo",
+      "range": {
+        "startLine": 104,
+        "startChar": 55,
+        "endLine": 104,
+        "endChar": 57
+      },
+      "revId": "0336303ceab1716a7b5e89412349da17cb6f10fd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
