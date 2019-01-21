@@ -22,6 +22,30 @@
       "revId": "0336303ceab1716a7b5e89412349da17cb6f10fd",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "257ef990_74de291b",
+        "filename": "crypto/vold_decrypt/Android.mk",
+        "patchSetId": 6
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-01-21T17:55:20Z",
+      "side": 1,
+      "message": "It doesn\u0027t build on Oreo. First error is missing libvold_binder.",
+      "parentUuid": "3d6d9c9a_790f0df3",
+      "range": {
+        "startLine": 104,
+        "startChar": 55,
+        "endLine": 104,
+        "endChar": 57
+      },
+      "revId": "0336303ceab1716a7b5e89412349da17cb6f10fd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
     }
   ]
 }
