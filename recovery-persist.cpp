@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
       // Collects and reports the non-a/b update metrics from last_install; and removes the file
       // to avoid duplicate report.
       report_metrics_from_last_install(LAST_INSTALL_FILE_IN_CACHE);
-      if (unlink(LAST_INSTALL_FILE_IN_CACHE) == -1) {
+      if (access(LAST_INSTALL_FILE_IN_CACHE, F_OK) && unlink(LAST_INSTALL_FILE_IN_CACHE) == -1) {
         PLOG(ERROR) << "Failed to unlink " << LAST_INSTALL_FILE_IN_CACHE;
       }
 
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
     // /data/misc/recovery from pmsg. Looks for the sideload history only.
     if (!has_cache) {
       report_metrics_from_last_install(LAST_INSTALL_FILE);
-      if (unlink(LAST_INSTALL_FILE) == -1) {
+      if (access(LAST_INSTALL_FILE, F_OK) && unlink(LAST_INSTALL_FILE) == -1) {
         PLOG(ERROR) << "Failed to unlink " << LAST_INSTALL_FILE;
       }
     }
