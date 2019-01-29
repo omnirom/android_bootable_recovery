@@ -34,6 +34,24 @@
       "revId": "e8bb36c0eda7606a58d468d1003d2b94308f9c0f",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c35e2238_13db8cd7",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1206,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-01-29T22:42:38Z",
+      "side": 1,
+      "message": "As expected, this change had no effect on Scenario #4. This isn\u0027t the fault of this code, though, and as such I believe this is currently the best overall solution for most devices.",
+      "parentUuid": "24b56220_edaadbf6",
+      "revId": "e8bb36c0eda7606a58d468d1003d2b94308f9c0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
     }
   ]
 }
