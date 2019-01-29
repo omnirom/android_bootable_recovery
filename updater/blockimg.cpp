@@ -1525,7 +1525,7 @@ static int PerformCommandComputeHashTree(CommandParameters& params) {
 
   // Starts the hash_tree computation.
   HashTreeBuilder builder(BLOCKSIZE, hash_function);
-  if (!builder.Initialize(source_ranges.blocks() * BLOCKSIZE, salt)) {
+  if (!builder.Initialize(static_cast<int64_t>(source_ranges.blocks()) * BLOCKSIZE, salt)) {
     LOG(ERROR) << "Failed to initialize hash tree computation, source " << source_ranges.ToString()
                << ", salt " << salt_hex;
     return -1;
@@ -1915,8 +1915,10 @@ pbiudone:
 
       const char* partition = strrchr(blockdev_filename->data.c_str(), '/');
       if (partition != nullptr && *(partition + 1) != 0) {
-        fprintf(cmd_pipe, "log bytes_written_%s: %zu\n", partition + 1, params.written * BLOCKSIZE);
-        fprintf(cmd_pipe, "log bytes_stashed_%s: %zu\n", partition + 1, params.stashed * BLOCKSIZE);
+        fprintf(cmd_pipe, "log bytes_written_%s: %" PRIu64 "\n", partition + 1,
+                static_cast<uint64_t>(params.written) * BLOCKSIZE);
+        fprintf(cmd_pipe, "log bytes_stashed_%s: %" PRIu64 "\n", partition + 1,
+                static_cast<uint64_t>(params.stashed) * BLOCKSIZE);
         fflush(cmd_pipe);
       }
       // Delete stash only after successfully completing the update, as it may contain blocks needed
