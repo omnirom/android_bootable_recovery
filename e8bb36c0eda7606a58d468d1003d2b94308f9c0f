@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1656615d_6442a48a",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1206,
+      "author": {
+        "id": 1001882
+      },
+      "writtenOn": "2019-01-29T19:52:17Z",
+      "side": 1,
+      "message": "Could you, please test if your device fails good password decryption after wrong password fail first with letting vold_decrypt do its finish job... Replaces this line with\n\nvold_decrypt_finish();\n\nand tell me what you get...",
+      "revId": "e8bb36c0eda7606a58d468d1003d2b94308f9c0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
