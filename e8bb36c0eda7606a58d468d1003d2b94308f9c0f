@@ -16,6 +16,24 @@
       "revId": "e8bb36c0eda7606a58d468d1003d2b94308f9c0f",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "24b56220_edaadbf6",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1206,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-01-29T21:03:59Z",
+      "side": 1,
+      "message": "After making this change, my device decrypts perfectly fine without needing to press \"Cancel\" after an incorrect password is input. This works for both TWRP crypto and vold decrypt - the vold services seem to stop properly after the incorrect password fails, and they appear to start properly once a new password is input, even allowing the TWRP crypto to either succeed, fail or timeout before proceeding to vold decrypt. This solves Scenario #3 on my U11. I\u0027m uploading a test build for my U12+ tester to see if it also fixes Scenario #4, though even if it doesn\u0027t, I don\u0027t believe that\u0027s the fault of this patch.",
+      "parentUuid": "1656615d_6442a48a",
+      "revId": "e8bb36c0eda7606a58d468d1003d2b94308f9c0f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
     }
   ]
 }
