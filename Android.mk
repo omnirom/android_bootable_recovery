@@ -511,9 +511,13 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := file_contexts_text
 LOCAL_MODULE_TAGS := optional
 LOCAL_REQUIRED_MODULES := file_contexts.bin
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
 LOCAL_POST_INSTALL_CMD := \
     $(hide) cp -f $(PRODUCT_OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
-
+else
+LOCAL_POST_INSTALL_CMD := \
+    $(hide) cp -f $(OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
+endif
 include $(BUILD_PHONY_PACKAGE)
 
 ifneq ($(TW_USE_TOOLBOX), true)
