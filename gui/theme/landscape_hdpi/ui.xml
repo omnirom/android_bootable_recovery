@@ -441,6 +441,78 @@
 			</action>
 		</template>
 
+        <template name="page_no_navbar">
+            <background color="%background_color%"/>
+
+            <fill color="%accent_color%">
+                <placement x="0" y="0" w="%screen_width%" h="%header_height%"/>
+            </fill>
+
+            <image>
+                <condition var1="tw_busy" var2="1"/>
+                <image resource="logo"/>
+                <placement x="0" y="0"/>
+            </image>
+
+            <button>
+                <condition var1="tw_busy" var2="0"/>
+                <placement x="0" y="0"/>
+                <image resource="logo"/>
+                <action function="key">home</action>
+            </button>
+
+            <fill color="#00000030">
+                <condition var1="tw_simulate_actions" var2="0"/>
+                <placement x="0" y="0" w="%screen_width%" h="%status_height%"/>
+            </fill>
+
+            <fill color="%text_fail_color%">
+                <condition var1="tw_simulate_actions" var2="1"/>
+                <placement x="0" y="0" w="%screen_width%" h="%status_height%"/>
+            </fill>
+
+            <text color="%text_color%">
+                <condition var1="tw_no_cpu_temp" var2="1"/>
+                <font resource="font_m"/>
+                <placement x="%indent%" y="%row1_header_y%"/>
+                <text>%tw_version%</text>
+            </text>
+
+            <text color="%text_color%">
+                <condition var1="tw_no_cpu_temp" var2="0"/>
+                <font resource="font_m"/>
+                <placement x="%indent%" y="%row1_header_y%"/>
+                <text>{@cpu_temp=CPU: %tw_cpu_temp% °C}</text>
+            </text>
+
+            <text color="%text_color%">
+                <font resource="font_m"/>
+                <placement x="%center_x%" y="%row1_header_y%" placement="5"/>
+                <text>%tw_time%</text>
+            </text>
+
+            <text color="%text_color%">
+                <conditions>
+                    <condition var1="tw_no_battery_percent" var2="0"/>
+                    <condition var1="tw_battery" op="&gt;" var2="0"/>
+                    <condition var1="tw_battery" op="&lt;" var2="101"/>
+                </conditions>
+                <font resource="font_m"/>
+                <placement x="%indent_right%" y="%row1_header_y%" placement="1"/>
+                <text>{@battery_pct=Battery: %tw_battery%}</text>
+            </text>
+
+            <action>
+                <touch key="power"/>
+                <action function="togglebacklight"/>
+            </action>
+
+            <action>
+                <touch key="power+voldown"/>
+                <action function="screenshot"/>
+            </action>
+        </template>
+
 		<template name="progress_bar">
 			<progressbar>
 				<placement x="%progress_x%" y="%row16_y%"/>
