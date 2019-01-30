@@ -19,7 +19,9 @@
 
 #include <string>
 
-typedef struct FstabEntry Volume;
+#include <fstab/fstab.h>
+
+using Volume = android::fs_mgr::FstabEntry;
 
 // Load and parse volume data from /etc/recovery.fstab.
 void load_volume_table();
