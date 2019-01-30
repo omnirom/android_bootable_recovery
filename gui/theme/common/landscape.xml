@@ -498,6 +498,10 @@
 
 			<template name="progress_bar"/>
 
+            <fill color="%background_color%">
+                <placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%"/>
+            </fill>
+
 			<action>
 				<condition var1="tw_operation_state" var2="1"/>
 				<action function="page">flash_done</action>
@@ -815,6 +819,10 @@
 
 			<template name="progress_bar"/>
 
+            <fill color="%background_color%">
+                <placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%"/>
+            </fill>
+
 			<button style="main_button_half_width">
 				<condition var1="tw_has_cancel" var2="1"/>
 				<placement x="%col2_x_right%" y="%row15a_y%"/>
@@ -861,6 +869,10 @@
 			<template name="console"/>
 
 			<template name="progress_bar"/>
+
+            <fill color="%background_color%">
+                <placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%"/>
+            </fill>
 
 			<action>
 				<condition var1="tw_operation_state" var2="1"/>
@@ -2194,6 +2206,10 @@
 			<template name="console"/>
 
 			<template name="progress_bar"/>
+
+            <fill color="%background_color%">
+                <placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%"/>
+            </fill>
 
 			<action>
 				<action function="decrypt_backup"/>
@@ -4289,6 +4305,10 @@
 			<template name="console"/>
 
 			<template name="progress_bar"/>
+
+            <fill color="%background_color%">
+                <placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%"/>
+            </fill>
 
 			<action>
 				<action function="decrypt"/>
