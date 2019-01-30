@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d8ca0f5c_5729a2e0",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1159,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-01-30T16:05:22Z",
+      "side": 1,
+      "message": "This is too long on my devices. changing this to usleep(500) seems to have gotten it working for me. Can you try that on your device(s)? If it doesn\u0027t work for you, we can play with some larger values until we find the sweet spot.",
+      "revId": "31e5331542c8329260aeb4a78d7b2b1512fec399",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    }
+  ]
+}
