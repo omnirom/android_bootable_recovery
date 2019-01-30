@@ -334,6 +334,11 @@
 				<action function="key">back</action>
 			</button>
 
+			<fill color="%background_color%">
+				<condition var1="tw_busy" var2="1"/>
+				<placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%"/>
+			</fill>
+
 			<action>
 				<touch key="power"/>
 				<action function="togglebacklight"/>
