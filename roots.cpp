@@ -45,6 +45,10 @@
 #include "otautil/mounts.h"
 #include "otautil/sysutil.h"
 
+using android::fs_mgr::Fstab;
+using android::fs_mgr::FstabEntry;
+using android::fs_mgr::ReadDefaultFstab;
+
 static Fstab fstab;
 
 extern struct selabel_handle* sehandle;
@@ -69,10 +73,7 @@ void load_volume_table() {
 }
 
 Volume* volume_for_mount_point(const std::string& mount_point) {
-  auto it = std::find_if(fstab.begin(), fstab.end(), [&mount_point](const auto& entry) {
-    return entry.mount_point == mount_point;
-  });
-  return it == fstab.end() ? nullptr : &*it;
+  return android::fs_mgr::GetEntryForMountPoint(&fstab, mount_point);
 }
 
 // Mount the volume specified by path at the given mount_point.
