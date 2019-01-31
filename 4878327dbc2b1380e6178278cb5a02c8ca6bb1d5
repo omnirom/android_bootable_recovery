@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7194b9e8_9c7130e5",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 778,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-01-31T21:29:36Z",
+      "side": 1,
+      "message": "Shouldn\u0027t this only be set if hwservicemanager is an included service based on BoardConfig?",
+      "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5cfa9aa7_5b7637cb",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 780,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-01-31T21:29:36Z",
+      "side": 1,
+      "message": "Shouldn\u0027t these only be set if qseecomd is an included service based on BoardConfig?",
+      "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cd518248_efb89b51",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 798,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-01-31T21:29:36Z",
+      "side": 1,
+      "message": "Should this be configurable? Are we sure that every device that needs vold decrypt sets up a bootdevice symlink in TWRP?",
+      "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    }
+  ]
+}
