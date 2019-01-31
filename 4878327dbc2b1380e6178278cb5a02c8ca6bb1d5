@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "f9e9050f_96760f63",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 778,
+      "author": {
+        "id": 1001882
+      },
+      "writtenOn": "2019-01-31T22:18:47Z",
+      "side": 1,
+      "message": "Doesn\u0027t matter. No harm...",
+      "parentUuid": "7194b9e8_9c7130e5",
+      "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "5cfa9aa7_5b7637cb",
         "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
         "patchSetId": 15
@@ -36,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "981138ef_995373b9",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 780,
+      "author": {
+        "id": 1001882
+      },
+      "writtenOn": "2019-01-31T22:18:47Z",
+      "side": 1,
+      "message": "Doesn\u0027t matter. No harm...",
+      "parentUuid": "5cfa9aa7_5b7637cb",
+      "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "cd518248_efb89b51",
         "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
         "patchSetId": 15
@@ -47,6 +83,24 @@
       "writtenOn": "2019-01-31T21:29:36Z",
       "side": 1,
       "message": "Should this be configurable? Are we sure that every device that needs vold decrypt sets up a bootdevice symlink in TWRP?",
+      "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "930d7e55_9a5951bc",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 798,
+      "author": {
+        "id": 1001882
+      },
+      "writtenOn": "2019-01-31T22:18:47Z",
+      "side": 1,
+      "message": "Pretty much sure this is Android thing, not per device thing.",
+      "parentUuid": "cd518248_efb89b51",
       "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": true
