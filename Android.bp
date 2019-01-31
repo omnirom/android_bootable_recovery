@@ -45,6 +45,7 @@ cc_library {
     static_libs: [
         "libminui",
         "libotautil",
+        "libfstab",
     ],
 
     shared_libs: [
@@ -157,6 +158,7 @@ cc_defaults {
         "libhealthhalutils",
         "libvintf_recovery",
         "libvintf",
+        "libfstab",
     ],
 }
 
@@ -260,6 +262,7 @@ cc_binary {
 
     static_libs: [
         "libotautil",
+        "libfstab",
     ],
 
     init_rc: [
@@ -287,6 +290,7 @@ cc_binary {
 
     static_libs: [
         "libotautil",
+        "libfstab",
     ],
 
     init_rc: [

@@ -29,6 +29,9 @@
 #include <android-base/unique_fd.h>
 #include <fstab/fstab.h>
 
+using android::fs_mgr::Fstab;
+using android::fs_mgr::ReadDefaultFstab;
+
 static std::string get_misc_blk_device(std::string* err) {
   Fstab fstab;
   if (!ReadDefaultFstab(&fstab)) {
