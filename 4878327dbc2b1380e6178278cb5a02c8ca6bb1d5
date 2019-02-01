@@ -104,6 +104,57 @@
       "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3717fa56_9d234f8a",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1115,
+      "author": {
+        "id": 1002365
+      },
+      "writtenOn": "2019-02-01T11:29:34Z",
+      "side": 1,
+      "message": "All Sony devices need to mount /odm to find keymaster, qseecomd etc. binaries",
+      "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2f52ee38_072d4d9a",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1169,
+      "author": {
+        "id": 1002365
+      },
+      "writtenOn": "2019-02-01T11:29:34Z",
+      "side": 1,
+      "message": "Some devices have qseecomd in /sbin because of a prepdecrypt script, so searching for /vendor isn\u0027t a reliable solution imo. All Sony devices(from 2016 onward) use vendor.sys.listeners instead of sys.listeners, regardless of whether they have a vendor partition.\nSee https://github.com/omnirom/android_device_sony_tama-common/blob/android-9.0/recovery/init.recovery.keymaster-4.0.rc#L1",
+      "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "af5328da_cfd78b73",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1270,
+      "author": {
+        "id": 1002365
+      },
+      "writtenOn": "2019-02-01T11:29:34Z",
+      "side": 1,
+      "message": "Same issue with /vendor qseecomd detection here",
+      "revId": "4878327dbc2b1380e6178278cb5a02c8ca6bb1d5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
     }
   ]
 }
