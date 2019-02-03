@@ -119,6 +119,9 @@
 
 #include "otautil/error_code.h"
 
+using android::fs_mgr::Fstab;
+using android::fs_mgr::ReadDefaultFstab;
+
 static constexpr int WINDOW_SIZE = 5;
 static constexpr int FIBMAP_RETRY_LIMIT = 3;
 
