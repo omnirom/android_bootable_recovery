@@ -439,8 +439,8 @@ TEST(InstallTest, CheckPackageMetadata_multiple_serial_number) {
 
   std::vector<std::string> serial_numbers;
   // Creates a dummy serial number string.
-  for (size_t c = 'a'; c <= 'z'; c++) {
-    serial_numbers.emplace_back(c, serialno.size());
+  for (char c = 'a'; c <= 'z'; c++) {
+    serial_numbers.emplace_back(serialno.size(), c);
   }
 
   // No matched serialno found.
