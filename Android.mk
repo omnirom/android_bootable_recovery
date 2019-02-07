@@ -421,6 +421,12 @@ else
     ifneq ($(wildcard external/unzip/Android.mk),)
         LOCAL_REQUIRED_MODULES += unzip
     endif
+    ifneq ($(wildcard external/mksh/Android.mk),)
+        LOCAL_REQUIRED_MODULES += mkshrc
+        LOCAL_POST_INSTALL_CMD := \
+            $(hide) sed 's:data/local/tmp:tmp:' $(TARGET_OUT)/etc/mkshrc > \
+            $(TARGET_RECOVERY_ROOT_OUT)/etc/mkshrc
+    endif
 endif
 
 ifneq ($(TW_NO_EXFAT), true)
