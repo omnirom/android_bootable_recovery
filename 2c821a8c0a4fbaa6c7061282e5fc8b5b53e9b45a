@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "230fdd34_1c7c8b83",
+        "filename": "crypto/vold_decrypt/Android.mk",
+        "patchSetId": 17
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1002365
+      },
+      "writtenOn": "2019-02-07T18:21:48Z",
+      "side": 1,
+      "message": "Doesn\u0027t this have to be \"TW_CRYPTO_SYSTEM_VOLD_SERVICES\"? \"TW_CRYPTO_USE_SYSTEM_VOLD\" should only be true/false, not a list.",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "64f84c57_02db23fc",
+        "filename": "crypto/vold_decrypt/vdc_pie.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1002365
+      },
+      "writtenOn": "2019-02-07T18:21:48Z",
+      "side": 1,
+      "message": "Would be good if these could log to kmsg instead of only printf, helps with debugging",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d1c12447_68ecd60d",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 1002365
+      },
+      "writtenOn": "2019-02-07T18:21:48Z",
+      "side": 1,
+      "message": "This is only used if \"TW_CRYPTO_SYSTEM_VOLD_SERVICES\", need to wrap it in an ifdef or you will have build errors because of unused-function",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6e407e76_906da18e",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1002365
+      },
+      "writtenOn": "2019-02-07T18:21:48Z",
+      "side": 1,
+      "message": "Same here, wrap in \"#ifdef TW_CRYPTO_SYSTEM_VOLD_SERVICES\"",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e75aefd1_93e3414b",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 1002365
+      },
+      "writtenOn": "2019-02-07T18:21:48Z",
+      "side": 1,
+      "message": "Same here, unused if \"TW_CRYPTO_SYSTEM_VOLD_SERVICES\" is not defined:\n\"error: unused function \u0027will_VendorBin_Be_Symlinked\u0027 [-Werror,-Wunused-function]\"",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    }
+  ]
+}
