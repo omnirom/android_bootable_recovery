@@ -1,4 +1,5 @@
 import /init.recovery.logd.rc
+import /init.recovery.mksh.rc
 import /init.recovery.usb.rc
 import /init.recovery.service.rc
 import /init.recovery.vold_decrypt.rc
