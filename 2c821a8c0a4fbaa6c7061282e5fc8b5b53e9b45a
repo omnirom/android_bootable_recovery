@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "24c2e9fc_d093e222",
+        "filename": "crypto/vold_decrypt/Android.mk",
+        "patchSetId": 17
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-02-07T19:29:06Z",
+      "side": 1,
+      "message": "The TW_CRYPTO_USE_SYSTEM_VOLD flag accepts either \"true\" (only vold+vdc will be included) or a list of services - that\u0027s how it was set up.",
+      "parentUuid": "230fdd34_1c7c8b83",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "64f84c57_02db23fc",
         "filename": "crypto/vold_decrypt/vdc_pie.cpp",
         "patchSetId": 17
@@ -53,6 +71,24 @@
     },
     {
       "key": {
+        "uuid": "8753d01f_83c0a5fb",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-02-07T19:29:06Z",
+      "side": 1,
+      "message": "This is needed to confirm that vold is running before running vdc. This is regardless of whether any additional VOLD_SERVICES were specified.",
+      "parentUuid": "d1c12447_68ecd60d",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "6e407e76_906da18e",
         "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
         "patchSetId": 17
@@ -70,6 +106,24 @@
     },
     {
       "key": {
+        "uuid": "5a82a152_94fa8b76",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-02-07T19:29:06Z",
+      "side": 1,
+      "message": "This is needed to confirm that vold is running before running vdc. This is regardless of whether any additional VOLD_SERVICES were specified.",
+      "parentUuid": "6e407e76_906da18e",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "e75aefd1_93e3414b",
         "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
         "patchSetId": 17
@@ -81,6 +135,24 @@
       "writtenOn": "2019-02-07T18:21:48Z",
       "side": 1,
       "message": "Same here, unused if \"TW_CRYPTO_SYSTEM_VOLD_SERVICES\" is not defined:\n\"error: unused function \u0027will_VendorBin_Be_Symlinked\u0027 [-Werror,-Wunused-function]\"",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "193cd23e_fa6ee8da",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-02-07T19:29:06Z",
+      "side": 1,
+      "message": "This is needed to confirm that vold is running before running vdc. This is regardless of whether any additional VOLD_SERVICES were specified.",
+      "parentUuid": "e75aefd1_93e3414b",
       "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": true
