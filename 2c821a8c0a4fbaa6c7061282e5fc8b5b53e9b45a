@@ -89,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "29642b08_3ae7f91b",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-02-07T20:34:46Z",
+      "side": 1,
+      "message": "After reviewing the code, I see that vold uses \"is_vold_running\" and not this function, so your comment stands. Please disregard my previous comment.",
+      "parentUuid": "8753d01f_83c0a5fb",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "6e407e76_906da18e",
         "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
         "patchSetId": 17
@@ -124,6 +142,24 @@
     },
     {
       "key": {
+        "uuid": "2a4df998_c3d9b9ff",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-02-07T20:34:46Z",
+      "side": 1,
+      "message": "After reviewing the code, I see that vold uses \"is_vold_running\" and not this function, so your comment stands. Please disregard my previous comment.",
+      "parentUuid": "5a82a152_94fa8b76",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "e75aefd1_93e3414b",
         "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
         "patchSetId": 17
@@ -153,6 +189,24 @@
       "side": 1,
       "message": "This is needed to confirm that vold is running before running vdc. This is regardless of whether any additional VOLD_SERVICES were specified.",
       "parentUuid": "e75aefd1_93e3414b",
+      "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f57bed47_806d3852",
+        "filename": "crypto/vold_decrypt/vold_decrypt.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 1000092
+      },
+      "writtenOn": "2019-02-07T20:34:46Z",
+      "side": 1,
+      "message": "Actually this one probably should be wrapped, as vold would always be on system, and vendor should never need to be mounted in that case (or symlinked from /system/vendor, in this case). That would explain the unused function error.",
+      "parentUuid": "193cd23e_fa6ee8da",
       "revId": "2c821a8c0a4fbaa6c7061282e5fc8b5b53e9b45a",
       "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
       "unresolved": true
