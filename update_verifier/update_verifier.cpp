@@ -38,6 +38,7 @@
  */
 
 #include "update_verifier/update_verifier.h"
+#include <android/os/IVold.h>
 
 #include <dirent.h>
 #include <errno.h>
@@ -56,6 +57,8 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <android/hardware/boot/1.0/IBootControl.h>
+#include <binder/BinderService.h>
+#include <binder/Status.h>
 #include <cutils/android_reboot.h>
 
 #include "care_map.pb.h"
@@ -376,13 +379,30 @@ int update_verifier(int argc, char** argv) {
       }
     }
 
-    CommandResult cr;
-    module->markBootSuccessful([&cr](CommandResult result) { cr = result; });
-    if (!cr.success) {
-      LOG(ERROR) << "Error marking booted successfully: " << cr.errMsg;
-      return reboot_device();
+    bool supports_checkpoint = false;
+    auto sm = android::defaultServiceManager();
+    android::sp<android::IBinder> binder = sm->getService(android::String16("vold"));
+    if (binder) {
+      auto vold = android::interface_cast<android::os::IVold>(binder);
+      android::binder::Status status = vold->supportsCheckpoint(&supports_checkpoint);
+      if (!status.isOk()) {
+        LOG(ERROR) << "Failed to check if checkpoints supported. Continuing";
+      }
+    } else {
+      LOG(ERROR) << "Failed to obtain vold Binder. Continuing";
     }
-    LOG(INFO) << "Marked slot " << current_slot << " as booted successfully.";
+
+    if (!supports_checkpoint) {
+      CommandResult cr;
+      module->markBootSuccessful([&cr](CommandResult result) { cr = result; });
+      if (!cr.success) {
+        LOG(ERROR) << "Error marking booted successfully: " << cr.errMsg;
+        return reboot_device();
+      }
+      LOG(INFO) << "Marked slot " << current_slot << " as booted successfully.";
+    } else {
+      LOG(INFO) << "Deferred marking slot " << current_slot << " as booted successfully.";
+    }
   }
 
   LOG(INFO) << "Leaving update_verifier.";
