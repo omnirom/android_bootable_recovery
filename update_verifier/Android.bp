@@ -42,12 +42,15 @@ cc_library_static {
 
     static_libs: [
         "libotautil",
+        "libvold_binder",
     ],
 
     shared_libs: [
         "android.hardware.boot@1.0",
         "libbase",
         "libcutils",
+        "libbinder",
+        "libutils",
     ],
 
     proto: {
@@ -70,6 +73,7 @@ cc_binary {
     static_libs: [
         "libupdate_verifier",
         "libotautil",
+        "libvold_binder",
     ],
 
     shared_libs: [
@@ -80,6 +84,7 @@ cc_binary {
         "libhidlbase",
         "liblog",
         "libprotobuf-cpp-lite",
+        "libbinder",
         "libutils",
     ],
 
