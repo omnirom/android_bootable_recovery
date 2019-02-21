@@ -168,13 +168,17 @@ class RecoveryUI {
   virtual size_t ShowPromptWipeDataMenu(const std::vector<std::string>& backup_headers,
                                         const std::vector<std::string>& backup_items,
                                         const std::function<int(int, bool)>& key_handler) = 0;
-
   // Displays the localized wipe data confirmation menu with pre-generated images. Falls back to
   // the text strings upon failures. The initial selection is the 0th item, which returns to the
   // upper level menu.
   virtual size_t ShowPromptWipeDataConfirmationMenu(
       const std::vector<std::string>& backup_headers, const std::vector<std::string>& backup_items,
       const std::function<int(int, bool)>& key_handler) = 0;
+
+  // Set whether or not the fastbootd logo is displayed.
+  void SetEnableFastbootdLogo(bool enable) {
+    fastbootd_logo_enabled_ = enable;
+  }
 
   // Resets the key interrupt status.
   void ResetKeyInterruptStatus() {
@@ -199,6 +203,8 @@ class RecoveryUI {
 
   // Whether we should listen for touch inputs (default: false).
   bool touch_screen_allowed_;
+
+  bool fastbootd_logo_enabled_;
 
  private:
   enum class ScreensaverState {
