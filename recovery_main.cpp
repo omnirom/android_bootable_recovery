@@ -458,6 +458,8 @@ int main(int argc, char** argv) {
       }
     }
 
+    ui->SetEnableFastbootdLogo(fastboot);
+
     auto ret = fastboot ? StartFastboot(device, args) : start_recovery(device, args);
 
     if (ret == Device::KEY_INTERRUPTED) {
