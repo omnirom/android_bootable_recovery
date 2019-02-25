@@ -51,6 +51,7 @@
 #include "otautil/paths.h"
 #include "otautil/sysutil.h"
 #include "otautil/thermalutil.h"
+#include "package.h"
 #include "private/install.h"
 #include "roots.h"
 #include "ui.h"
@@ -585,34 +586,29 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
     }
   }
 
-  MemMapping map;
-  if (!map.MapFile(path)) {
-    LOG(ERROR) << "failed to map file";
+  auto package = Package::CreateMemoryPackage(
+      path, std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
+  if (!package) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kMapFileFailure));
     return INSTALL_CORRUPT;
   }
 
   // Verify package.
-  if (!verify_package(map.addr, map.length)) {
+  if (!verify_package(package.get())) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
     return INSTALL_CORRUPT;
   }
 
   // Try to open the package.
-  ZipArchiveHandle zip;
-  int err = OpenArchiveFromMemory(map.addr, map.length, path.c_str(), &zip);
-  if (err != 0) {
-    LOG(ERROR) << "Can't open " << path << " : " << ErrorCodeString(err);
+  ZipArchiveHandle zip = package->GetZipArchiveHandle();
+  if (!zip) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
-
-    CloseArchive(zip);
     return INSTALL_CORRUPT;
   }
 
   // Additionally verify the compatibility of the package.
   if (!verify_package_compatibility(zip)) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kPackageCompatibilityFailure));
-    CloseArchive(zip);
     return INSTALL_CORRUPT;
   }
 
@@ -626,7 +622,6 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   ui->SetEnableReboot(true);
   ui->Print("\n");
 
-  CloseArchive(zip);
   return result;
 }
 
@@ -705,7 +700,7 @@ int install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
   return result;
 }
 
-bool verify_package(const unsigned char* package_data, size_t package_size) {
+bool verify_package(Package* package) {
   static constexpr const char* CERTIFICATE_ZIP_FILE = "/system/etc/security/otacerts.zip";
   std::vector<Certificate> loaded_keys = LoadKeysFromZipfile(CERTIFICATE_ZIP_FILE);
   if (loaded_keys.empty()) {
@@ -717,8 +712,7 @@ bool verify_package(const unsigned char* package_data, size_t package_size) {
   // Verify package.
   ui->Print("Verifying update package...\n");
   auto t0 = std::chrono::system_clock::now();
-  int err = verify_file(package_data, package_size, loaded_keys,
-                        std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
+  int err = verify_file(package, loaded_keys);
   std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
   ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
   if (err != VERIFY_SUCCESS) {
