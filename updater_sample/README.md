@@ -191,7 +191,7 @@ privileged system app, so it's granted the required permissions to access
     </privapp-permissions>
    ```
    to `frameworks/base/data/etc/privapp-permissions-platform.xml`
-5. Build sample app `mmma -j bootable/recovery/updater_sample`.
+5. Build sample app `make -j SystemUpdaterSample`.
 6. Build Android `make -j`
 7. [Flash the device](https://source.android.com/setup/build/running)
 8. Add update config files; look above at `## Update Config file`;
@@ -225,7 +225,9 @@ privileged system app, so it's granted the required permissions to access
 
 ## Running tests
 
-1. Build `mmma bootable/recovery/updater_sample/`
+The commands are expected to be run from `$ANDROID_BUILD_TOP`.
+
+1. Build `make -j SystemUpdaterSample` and `make -j SystemUpdaterSampleTests`.
 2. Install app
    `adb install $OUT/system/priv-app/SystemUpdaterSample/SystemUpdaterSample.apk`
 3. Install tests
