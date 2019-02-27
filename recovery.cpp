@@ -902,7 +902,17 @@ static bool check_wipe_package(size_t wipe_package_size) {
         } else if (android::base::StartsWith(line, "pre-device=")) {
             std::string device_type = line.substr(strlen("pre-device="));
             std::string real_device_type = android::base::GetProperty("ro.build.product", "");
-            device_type_matched = (device_type == real_device_type);
+
+            std::list assertResults = [x.strip() for x in device_type.split(',')];
+
+            bool device_type_matched = false;
+
+            for(size_t i = 0; i < assertResults.length; i++){
+              if(assertResults(i) == real_device_type) {
+                device_type_matched = true;
+                break;
+              }
+            }
         } else if (android::base::StartsWith(line, "serialno=")) {
             std::string serial_no = line.substr(strlen("serialno="));
             std::string real_serial_no = android::base::GetProperty("ro.serialno", "");
