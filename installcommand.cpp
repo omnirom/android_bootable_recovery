@@ -124,9 +124,23 @@ static int check_newer_ab_build(ZipWrap* zip)
 
     property_get("ro.product.device", value, "");
     const std::string& pkg_device = metadata["pre-device"];
-    if (pkg_device != value || pkg_device.empty()) {
+
+    std::vector<std::string> assertResults = android::base::Split(pkg_device, ",");
+
+    bool deviceExists = false;
+
+    for(const std::string& deviceAssert : assertResults)
+    {
+        std::string assertName = android::base::Trim(deviceAssert);
+        if (assertName == value && !assertName.empty()) {
+            deviceExists = true;
+            break;
+        }
+    }
+
+    if (!deviceExists) {
         printf("Package is for product %s but expected %s\n",
-             pkg_device.c_str(), value);
+            pkg_device.c_str(), value);
         return INSTALL_ERROR;
     }
 
