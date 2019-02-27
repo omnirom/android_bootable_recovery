@@ -62,6 +62,9 @@ endif
 ifneq ($(TW_NO_SCREEN_TIMEOUT),)
     LOCAL_CFLAGS += -DTW_NO_SCREEN_TIMEOUT
 endif
+ifneq ($(TW_NO_SCREEN),)
+    LOCAL_CFLAGS += -DTW_NO_SCREEN
+endif
 ifeq ($(TW_OEM_BUILD), true)
     LOCAL_CFLAGS += -DTW_OEM_BUILD
 endif

@@ -109,8 +109,10 @@ int main(int argc, char **argv) {
 
 	// Load default values to set DataManager constants and handle ifdefs
 	DataManager::SetDefaultValues();
+#ifndef TW_NO_SCREEN
 	printf("Starting the UI...\n");
 	gui_init();
+#endif
 	printf("=> Linking mtab\n");
 	symlink("/proc/mounts", "/etc/mtab");
 	std::string fstab_filename = "/etc/twrp.fstab";
@@ -261,7 +263,9 @@ int main(int argc, char **argv) {
 	TWFunc::Update_Log_File();
 	DataManager::ReadSettingsFile();
 	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
+#ifndef TW_NO_SCREEN
 	GUIConsole::Translate_Now();
+#endif
 
 	// Run any outstanding OpenRecoveryScript
 	std::string cacheDir = TWFunc::get_cache_dir();

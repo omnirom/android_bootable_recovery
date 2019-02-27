@@ -91,9 +91,13 @@ static void flip(void)
 		timespec time;
 		clock_gettime(CLOCK_MONOTONIC, &time);
 		write(gRecorder, &time, sizeof(timespec));
+#ifndef TW_NO_SCREEN
 		gr_write_frame_to_file(gRecorder);
+#endif
 	}
+#ifndef TW_NO_SCREEN
 	gr_flip();
+#endif
 }
 
 void rapidxml::parse_error_handler(const char *what, void *where)
@@ -671,7 +675,9 @@ int gui_changePage(std::string newPage)
 {
 	LOGINFO("Set page: '%s'\n", newPage.c_str());
 	PageManager::ChangePage(newPage);
+#ifndef TW_NO_SCREEN
 	gForceRender.set_value(1);
+#endif
 	return 0;
 }
 
@@ -679,7 +685,9 @@ int gui_changeOverlay(std::string overlay)
 {
 	LOGINFO("Set overlay: '%s'\n", overlay.c_str());
 	PageManager::ChangeOverlay(overlay);
+#ifndef TW_NO_SCREEN
 	gForceRender.set_value(1);
+#endif
 	return 0;
 }
 

@@ -229,6 +229,9 @@ endif
 ifneq ($(TW_NO_SCREEN_TIMEOUT),)
     LOCAL_CFLAGS += -DTW_NO_SCREEN_TIMEOUT
 endif
+ifneq ($(TW_NO_SCREEN),)
+    LOCAL_CFLAGS += -DTW_NO_SCREEN
+endif
 ifeq ($(BOARD_HAS_NO_REAL_SDCARD), true)
     LOCAL_CFLAGS += -DBOARD_HAS_NO_REAL_SDCARD
 endif
