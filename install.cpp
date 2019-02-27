@@ -143,7 +143,20 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
 
   std::string value = android::base::GetProperty("ro.product.device", "");
   const std::string& pkg_device = metadata["pre-device"];
-  if (pkg_device != value || pkg_device.empty()) {
+
+  std::list assertResults = [x.strip() for x in pkg_device.split(',')];
+
+  bool deviceExists = false;
+
+  for(size_t i = 0; i < assertResults.length; i++)
+  {
+    if !(assertResult(i) != value && assertResult(i).empty()) {
+      deviceExists = true;
+      break;
+    }
+  }
+
+  if (!deviceExists) {
     LOG(ERROR) << "Package is for product " << pkg_device << " but expected " << value;
     return INSTALL_ERROR;
   }
