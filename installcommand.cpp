@@ -124,9 +124,10 @@ static int check_newer_ab_build(ZipWrap* zip)
 
     property_get("ro.product.device", value, "");
     const std::string& pkg_device = metadata["pre-device"];
-    if (pkg_device != value || pkg_device.empty()) {
+
+    if (pkg_device.find(value) != std::string::npos) {
         printf("Package is for product %s but expected %s\n",
-             pkg_device.c_str(), value);
+            pkg_device.c_str(), value);
         return INSTALL_ERROR;
     }
 
