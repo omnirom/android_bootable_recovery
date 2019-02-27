@@ -143,9 +143,15 @@ static int check_newer_ab_build(ZipArchiveHandle zip) {
 
   std::string value = android::base::GetProperty("ro.product.device", "");
   const std::string& pkg_device = metadata["pre-device"];
-  if (pkg_device != value || pkg_device.empty()) {
+
+  assertResults = [x.strip() for x in pkg_device.split(',')];
+
+  for(size_t i = 0; i < assertResults.length; i++)
+  {
+    if (assertResults(i) != value || assertResults(i).empty()) {
     LOG(ERROR) << "Package is for product " << pkg_device << " but expected " << value;
     return INSTALL_ERROR;
+    }
   }
 
   // We allow the package to not have any serialno; and we also allow it to carry multiple serial

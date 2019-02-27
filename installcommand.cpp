@@ -124,10 +124,16 @@ static int check_newer_ab_build(ZipWrap* zip)
 
     property_get("ro.product.device", value, "");
     const std::string& pkg_device = metadata["pre-device"];
-    if (pkg_device != value || pkg_device.empty()) {
+
+    assertResults = [x.strip() for x in pkg_device.split(',')];
+    
+    for(size_t i = 0; i < assertResults.length; i++)
+    {
+        if (assertResult(i) != value || assertResult(i).empty()) {
         printf("Package is for product %s but expected %s\n",
              pkg_device.c_str(), value);
         return INSTALL_ERROR;
+        }
     }
 
     // We allow the package to not have any serialno, but if it has a non-empty
