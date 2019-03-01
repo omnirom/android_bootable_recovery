@@ -292,6 +292,11 @@ int SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, i
     return INSTALL_ERROR;
   }
 
+  // When executing the update binary contained in the package, the arguments passed are:
+  //   - the version number for this interface
+  //   - an FD to which the program can write in order to update the progress bar.
+  //   - the name of the package zip file.
+  //   - an optional argument "retry" if this update is a retry of a failed update attempt.
   *cmd = {
     binary_path,
     std::to_string(kRecoveryApiVersion),
@@ -334,75 +339,56 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
 
   ReadSourceTargetBuild(metadata, log_buffer);
 
-  int pipefd[2];
-  pipe(pipefd);
+  // The updater in child process writes to the pipe to communicate with recovery.
+  android::base::unique_fd pipe_read, pipe_write;
+  if (!android::base::Pipe(&pipe_read, &pipe_write)) {
+    PLOG(ERROR) << "Failed to create pipe for updater-recovery communication";
+    return INSTALL_CORRUPT;
+  }
+
+  // The updater-recovery communication protocol.
+  //
+  //   progress <frac> <secs>
+  //       fill up the next <frac> part of of the progress bar over <secs> seconds. If <secs> is
+  //       zero, use `set_progress` commands to manually control the progress of this segment of the
+  //       bar.
+  //
+  //   set_progress <frac>
+  //       <frac> should be between 0.0 and 1.0; sets the progress bar within the segment defined by
+  //       the most recent progress command.
+  //
+  //   ui_print <string>
+  //       display <string> on the screen.
+  //
+  //   wipe_cache
+  //       a wipe of cache will be performed following a successful installation.
+  //
+  //   clear_display
+  //       turn off the text display.
+  //
+  //   enable_reboot
+  //       packages can explicitly request that they want the user to be able to reboot during
+  //       installation (useful for debugging packages that don't exit).
+  //
+  //   retry_update
+  //       updater encounters some issue during the update. It requests a reboot to retry the same
+  //       package automatically.
+  //
+  //   log <string>
+  //       updater requests logging the string (e.g. cause of the failure).
+  //
+
   std::vector<std::string> args;
   if (int update_status =
-          is_ab ? SetUpAbUpdateCommands(package, zip, pipefd[1], &args)
-                : SetUpNonAbUpdateCommands(package, zip, retry_count, pipefd[1], &args);
+          is_ab ? SetUpAbUpdateCommands(package, zip, pipe_write.get(), &args)
+                : SetUpNonAbUpdateCommands(package, zip, retry_count, pipe_write.get(), &args);
       update_status != 0) {
-    close(pipefd[0]);
-    close(pipefd[1]);
     log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
     return update_status;
   }
 
-  // When executing the update binary contained in the package, the
-  // arguments passed are:
-  //
-  //   - the version number for this interface
-  //
-  //   - an FD to which the program can write in order to update the
-  //     progress bar.  The program can write single-line commands:
-  //
-  //        progress <frac> <secs>
-  //            fill up the next <frac> part of of the progress bar
-  //            over <secs> seconds.  If <secs> is zero, use
-  //            set_progress commands to manually control the
-  //            progress of this segment of the bar.
-  //
-  //        set_progress <frac>
-  //            <frac> should be between 0.0 and 1.0; sets the
-  //            progress bar within the segment defined by the most
-  //            recent progress command.
-  //
-  //        ui_print <string>
-  //            display <string> on the screen.
-  //
-  //        wipe_cache
-  //            a wipe of cache will be performed following a successful
-  //            installation.
-  //
-  //        clear_display
-  //            turn off the text display.
-  //
-  //        enable_reboot
-  //            packages can explicitly request that they want the user
-  //            to be able to reboot during installation (useful for
-  //            debugging packages that don't exit).
-  //
-  //        retry_update
-  //            updater encounters some issue during the update. It requests
-  //            a reboot to retry the same package automatically.
-  //
-  //        log <string>
-  //            updater requests logging the string (e.g. cause of the
-  //            failure).
-  //
-  //   - the name of the package zip file.
-  //
-  //   - an optional argument "retry" if this update is a retry of a failed
-  //   update attempt.
-  //
-
-  // Convert the std::string vector to a NULL-terminated char* vector suitable for execv.
-  auto chr_args = StringVectorToNullTerminatedArray(args);
-
   pid_t pid = fork();
-
   if (pid == -1) {
-    close(pipefd[0]);
-    close(pipefd[1]);
     PLOG(ERROR) << "Failed to fork update binary";
     log_buffer->push_back(android::base::StringPrintf("error: %d", kForkUpdateBinaryFailure));
     return INSTALL_ERROR;
@@ -410,16 +396,18 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
 
   if (pid == 0) {
     umask(022);
-    close(pipefd[0]);
+    pipe_read.reset();
+
+    // Convert the std::string vector to a NULL-terminated char* vector suitable for execv.
+    auto chr_args = StringVectorToNullTerminatedArray(args);
     execv(chr_args[0], chr_args.data());
-    // Bug: 34769056
-    // We shouldn't use LOG/PLOG in the forked process, since they may cause
-    // the child process to hang. This deadlock results from an improperly
-    // copied mutex in the ui functions.
+    // We shouldn't use LOG/PLOG in the forked process, since they may cause the child process to
+    // hang. This deadlock results from an improperly copied mutex in the ui functions.
+    // (Bug: 34769056)
     fprintf(stdout, "E:Can't run %s (%s)\n", chr_args[0], strerror(errno));
     _exit(EXIT_FAILURE);
   }
-  close(pipefd[1]);
+  pipe_write.reset();
 
   std::atomic<bool> logger_finished(false);
   std::thread temperature_logger(log_max_temperature, max_temperature, std::ref(logger_finished));
@@ -428,7 +416,7 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   bool retry_update = false;
 
   char buffer[1024];
-  FILE* from_child = fdopen(pipefd[0], "r");
+  FILE* from_child = android::base::Fdopen(std::move(pipe_read), "r");
   while (fgets(buffer, sizeof(buffer), from_child) != nullptr) {
     std::string line(buffer);
     size_t space = line.find_first_of(" \n");
