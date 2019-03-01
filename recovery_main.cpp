@@ -217,9 +217,10 @@ static void ListenRecoverySocket(RecoveryUI* ui, std::atomic<Device::BuiltinActi
 }
 
 static void redirect_stdio(const char* filename) {
-  int pipefd[2];
-  if (pipe(pipefd) == -1) {
-    PLOG(ERROR) << "pipe failed";
+  android::base::unique_fd pipe_read, pipe_write;
+  // Create a pipe that allows parent process sending logs over.
+  if (!android::base::Pipe(&pipe_read, &pipe_write)) {
+    PLOG(ERROR) << "Failed to create pipe for redirecting stdio";
 
     // Fall back to traditional logging mode without timestamps. If these fail, there's not really
     // anywhere to complain...
@@ -233,7 +234,7 @@ static void redirect_stdio(const char* filename) {
 
   pid_t pid = fork();
   if (pid == -1) {
-    PLOG(ERROR) << "fork failed";
+    PLOG(ERROR) << "Failed to fork for redirecting stdio";
 
     // Fall back to traditional logging mode without timestamps. If these fail, there's not really
     // anywhere to complain...
@@ -246,8 +247,8 @@ static void redirect_stdio(const char* filename) {
   }
 
   if (pid == 0) {
-    /// Close the unused write end.
-    close(pipefd[1]);
+    // Child process reads the incoming logs and doesn't write to the pipe.
+    pipe_write.reset();
 
     auto start = std::chrono::steady_clock::now();
 
@@ -255,15 +256,13 @@ static void redirect_stdio(const char* filename) {
     FILE* log_fp = fopen(filename, "ae");
     if (log_fp == nullptr) {
       PLOG(ERROR) << "fopen \"" << filename << "\" failed";
-      close(pipefd[0]);
       _exit(EXIT_FAILURE);
     }
 
-    FILE* pipe_fp = fdopen(pipefd[0], "r");
+    FILE* pipe_fp = android::base::Fdopen(std::move(pipe_read), "r");
     if (pipe_fp == nullptr) {
       PLOG(ERROR) << "fdopen failed";
       check_and_fclose(log_fp, filename);
-      close(pipefd[0]);
       _exit(EXIT_FAILURE);
     }
 
@@ -283,25 +282,23 @@ static void redirect_stdio(const char* filename) {
 
     PLOG(ERROR) << "getline failed";
 
+    fclose(pipe_fp);
     free(line);
     check_and_fclose(log_fp, filename);
-    close(pipefd[0]);
     _exit(EXIT_FAILURE);
   } else {
     // Redirect stdout/stderr to the logger process. Close the unused read end.
-    close(pipefd[0]);
+    pipe_read.reset();
 
     setbuf(stdout, nullptr);
     setbuf(stderr, nullptr);
 
-    if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+    if (dup2(pipe_write.get(), STDOUT_FILENO) == -1) {
       PLOG(ERROR) << "dup2 stdout failed";
     }
-    if (dup2(pipefd[1], STDERR_FILENO) == -1) {
+    if (dup2(pipe_write.get(), STDERR_FILENO) == -1) {
       PLOG(ERROR) << "dup2 stderr failed";
     }
-
-    close(pipefd[1]);
   }
 }
 
