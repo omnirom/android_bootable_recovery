@@ -101,7 +101,7 @@ int MinuiBackendAdf::DeviceInit(adf_device* dev) {
   err = adf_device_attach(dev, eng_id, intf_id);
   if (err < 0 && err != -EALREADY) return err;
 
-  intf_fd = adf_interface_open(dev, intf_id, O_RDWR);
+  intf_fd = adf_interface_open(dev, intf_id, O_RDWR | O_CLOEXEC);
   if (intf_fd < 0) return intf_fd;
 
   err = InterfaceInit();
