@@ -56,7 +56,7 @@ void MinuiBackendFbdev::SetDisplayedFramebuffer(size_t n) {
 }
 
 GRSurface* MinuiBackendFbdev::Init() {
-  android::base::unique_fd fd(open("/dev/graphics/fb0", O_RDWR));
+  android::base::unique_fd fd(open("/dev/graphics/fb0", O_RDWR | O_CLOEXEC));
   if (fd == -1) {
     perror("cannot open fb0");
     return nullptr;
