@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bb5545a9_18f3fdbb",
+        "filename": "partition.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2043,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-03-03T21:55:36Z",
+      "side": 1,
+      "message": "e2fsdroid isn\u0027t in my ramdisk for marlin by default. I was wondering how you were including it. I checked the TWRP build rules but only see it in the AOSP version of roots.cpp and updater/install.cpp",
+      "revId": "e7ec264bef4c9940777c80549932caa643d46edb",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
