@@ -66,7 +66,7 @@ int ev_init(ev_callback input_cb, bool allow_touch_inputs) {
     dirent* de;
     while ((de = readdir(dir))) {
       if (strncmp(de->d_name, "event", 5)) continue;
-      int fd = openat(dirfd(dir), de->d_name, O_RDONLY);
+      int fd = openat(dirfd(dir), de->d_name, O_RDONLY | O_CLOEXEC);
       if (fd == -1) continue;
 
       // Use unsigned long to match ioctl's parameter type.
