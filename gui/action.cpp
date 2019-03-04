@@ -917,7 +917,7 @@ int GUIAction::getpartitiondetails(std::string arg)
 					DataManager::SetValue("tw_partition_f2fs", 1);
 				else
 					DataManager::SetValue("tw_partition_f2fs", 0);
-				if (TWFunc::Path_Exists("/sbin/mke2fs"))
+				if (TWFunc::Path_Exists("/sbin/mke2fs_static"))
 					DataManager::SetValue("tw_partition_ext", 1);
 				else
 					DataManager::SetValue("tw_partition_ext", 0);

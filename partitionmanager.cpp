@@ -2025,7 +2025,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 	}
 	if (ext > 0) {
 		if (SDext == NULL) {
-			Command = "mke2fs -t " + ext_format + " -m 0 " + format_device + "2";
+			Command = "/sbin/mke2fs_static -t " + ext_format + " -m 0 " + format_device + "2";
 			gui_msg(Msg("format_sdext_as=Formatting sd-ext as {1}...")(ext_format));
 			LOGINFO("Formatting sd-ext after partitioning, command: '%s'\n", Command.c_str());
 			TWFunc::Exec_Cmd(Command);

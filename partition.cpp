@@ -2024,7 +2024,7 @@ void TWPartition::Check_FS_Type() {
 }
 
 bool TWPartition::Wipe_EXTFS(string File_System) {
-	if (!TWFunc::Path_Exists("/sbin/mke2fs") || !TWFunc::Path_Exists("/sbin/e2fsdroid"))
+	if (!TWFunc::Path_Exists("/sbin/mke2fs_static") || !TWFunc::Path_Exists("/sbin/e2fsdroid_static"))
 		return Wipe_RMRF();
 
 	int ret;
@@ -2058,10 +2058,10 @@ bool TWPartition::Wipe_EXTFS(string File_System) {
 	string size_str = to_string(dev_sz / 4096);
 	string Command;
 
-	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mke2fs"));
+	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mke2fs_static"));
 
 	// Execute mke2fs to create empty ext4 filesystem
-	Command = "mke2fs -t " + File_System + " -b 4096 " + Actual_Block_Device + " " + size_str;
+	Command = "/sbin/mke2fs_static -t " + File_System + " -b 4096 " + Actual_Block_Device + " " + size_str;
 	LOGINFO("mke2fs command: %s\n", Command.c_str());
 	ret = TWFunc::Exec_Cmd(Command);
 	if (ret) {
@@ -2070,7 +2070,7 @@ bool TWPartition::Wipe_EXTFS(string File_System) {
 	}
 
 	// Execute e2fsdroid to initialize selinux context
-	Command = "e2fsdroid -e -a " + Mount_Point + " " + Actual_Block_Device;
+	Command = "/sbin/e2fsdroid_static -e -a " + Mount_Point + " " + Actual_Block_Device;
 	LOGINFO("e2fsdroid command: %s\n", Command.c_str());
 	ret = TWFunc::Exec_Cmd(Command);
 	if (ret) {

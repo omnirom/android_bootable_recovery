@@ -382,6 +382,8 @@ LOCAL_REQUIRED_MODULES += \
     dump_image \
     erase_image \
     flash_image \
+    e2fsdroid_static \
+    mke2fs_static \
     mke2fs.conf \
     pigz \
     teamwin \
