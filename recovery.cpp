@@ -497,45 +497,105 @@ static bool secure_wipe_partition(const std::string& partition) {
   return true;
 }
 
-// Check if the wipe package matches expectation:
+static std::string ReadWipePackage(size_t wipe_package_size) {
+  if (wipe_package_size == 0) {
+    LOG(ERROR) << "wipe_package_size is zero";
+    return "";
+  }
+
+  std::string wipe_package;
+  std::string err_str;
+  if (!read_wipe_package(&wipe_package, wipe_package_size, &err_str)) {
+    PLOG(ERROR) << "Failed to read wipe package" << err_str;
+    return "";
+  }
+  return wipe_package;
+}
+
+// Checks if the wipe package matches expectation. If the check passes, reads the list of
+// partitions to wipe from the package. Checks include
 // 1. verify the package.
 // 2. check metadata (ota-type, pre-device and serial number if having one).
-static bool check_wipe_package(size_t wipe_package_size) {
-    if (wipe_package_size == 0) {
-        LOG(ERROR) << "wipe_package_size is zero";
-        return false;
-    }
-    std::string wipe_package;
-    std::string err_str;
-    if (!read_wipe_package(&wipe_package, wipe_package_size, &err_str)) {
-        PLOG(ERROR) << "Failed to read wipe package";
-        return false;
-    }
-    if (!verify_package(reinterpret_cast<const unsigned char*>(wipe_package.data()),
-                        wipe_package.size())) {
-        LOG(ERROR) << "Failed to verify package";
-        return false;
-    }
+static bool CheckWipePackage(const std::string& wipe_package) {
+  if (!verify_package(reinterpret_cast<const unsigned char*>(wipe_package.data()),
+                      wipe_package.size())) {
+    LOG(ERROR) << "Failed to verify package";
+    return false;
+  }
 
-    // Extract metadata
-    ZipArchiveHandle zip;
-    int err = OpenArchiveFromMemory(static_cast<void*>(&wipe_package[0]), wipe_package.size(),
-                                    "wipe_package", &zip);
-    if (err != 0) {
-        LOG(ERROR) << "Can't open wipe package : " << ErrorCodeString(err);
-        return false;
+  // Extract metadata
+  ZipArchiveHandle zip;
+  if (auto err =
+          OpenArchiveFromMemory(const_cast<void*>(static_cast<const void*>(&wipe_package[0])),
+                                wipe_package.size(), "wipe_package", &zip);
+      err != 0) {
+    LOG(ERROR) << "Can't open wipe package : " << ErrorCodeString(err);
+    return false;
+  }
+
+  std::map<std::string, std::string> metadata;
+  if (!ReadMetadataFromPackage(zip, &metadata)) {
+    LOG(ERROR) << "Failed to parse metadata in the zip file";
+    return false;
+  }
+
+  int result = CheckPackageMetadata(metadata, OtaType::BRICK);
+  CloseArchive(zip);
+
+  return result == 0;
+}
+
+std::vector<std::string> GetWipePartitionList(const std::string& wipe_package) {
+  ZipArchiveHandle zip;
+  if (auto err =
+          OpenArchiveFromMemory(const_cast<void*>(static_cast<const void*>(&wipe_package[0])),
+                                wipe_package.size(), "wipe_package", &zip);
+      err != 0) {
+    LOG(ERROR) << "Can't open wipe package : " << ErrorCodeString(err);
+    return {};
+  }
+
+  static constexpr const char* RECOVERY_WIPE_ENTRY_NAME = "recovery.wipe";
+
+  std::string partition_list_content;
+  ZipString path(RECOVERY_WIPE_ENTRY_NAME);
+  ZipEntry entry;
+  if (FindEntry(zip, path, &entry) == 0) {
+    uint32_t length = entry.uncompressed_length;
+    partition_list_content = std::string(length, '\0');
+    if (auto err = ExtractToMemory(
+            zip, &entry, reinterpret_cast<uint8_t*>(partition_list_content.data()), length);
+        err != 0) {
+      LOG(ERROR) << "Failed to extract " << RECOVERY_WIPE_ENTRY_NAME << ": "
+                 << ErrorCodeString(err);
+      CloseArchive(zip);
+      return {};
     }
+  } else {
+    LOG(INFO) << "Failed to find " << RECOVERY_WIPE_ENTRY_NAME
+              << ", falling back to use the partition list on device.";
 
-    std::map<std::string, std::string> metadata;
-    if (!ReadMetadataFromPackage(zip, &metadata)) {
-      LOG(ERROR) << "Failed to parse metadata in the zip file";
-      return false;
+    static constexpr const char* RECOVERY_WIPE_ON_DEVICE = "/etc/recovery.wipe";
+    if (!android::base::ReadFileToString(RECOVERY_WIPE_ON_DEVICE, &partition_list_content)) {
+      PLOG(ERROR) << "failed to read \"" << RECOVERY_WIPE_ON_DEVICE << "\"";
+      CloseArchive(zip);
+      return {};
     }
+  }
 
-    int result = CheckPackageMetadata(metadata, OtaType::BRICK);
-    CloseArchive(zip);
+  std::vector<std::string> result;
+  std::vector<std::string> lines = android::base::Split(partition_list_content, "\n");
+  for (const std::string& line : lines) {
+    std::string partition = android::base::Trim(line);
+    // Ignore '#' comment or empty lines.
+    if (android::base::StartsWith(partition, "#") || partition.empty()) {
+      continue;
+    }
+    result.push_back(line);
+  }
 
-    return result == 0;
+  CloseArchive(zip);
+  return result;
 }
 
 // Wipes the current A/B device, with a secure wipe of all the partitions in RECOVERY_WIPE.
@@ -543,25 +603,23 @@ static bool wipe_ab_device(size_t wipe_package_size) {
   ui->SetBackground(RecoveryUI::ERASING);
   ui->SetProgressType(RecoveryUI::INDETERMINATE);
 
-  if (!check_wipe_package(wipe_package_size)) {
+  std::string wipe_package = ReadWipePackage(wipe_package_size);
+  if (wipe_package.empty()) {
+    return false;
+  }
+
+  if (!CheckWipePackage(wipe_package)) {
     LOG(ERROR) << "Failed to verify wipe package";
     return false;
   }
-  static constexpr const char* RECOVERY_WIPE = "/etc/recovery.wipe";
-  std::string partition_list;
-  if (!android::base::ReadFileToString(RECOVERY_WIPE, &partition_list)) {
-    LOG(ERROR) << "failed to read \"" << RECOVERY_WIPE << "\"";
+
+  std::vector<std::string> partition_list = GetWipePartitionList(wipe_package);
+  if (partition_list.empty()) {
+    LOG(ERROR) << "Empty wipe ab partition list";
     return false;
   }
 
-  std::vector<std::string> lines = android::base::Split(partition_list, "\n");
-  for (const std::string& line : lines) {
-    std::string partition = android::base::Trim(line);
-    // Ignore '#' comment or empty lines.
-    if (android::base::StartsWith(partition, "#") || partition.empty()) {
-      continue;
-    }
-
+  for (const auto& partition : partition_list) {
     // Proceed anyway even if it fails to wipe some partition.
     secure_wipe_partition(partition);
   }
