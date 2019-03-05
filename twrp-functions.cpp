@@ -922,7 +922,7 @@ void TWFunc::Fixup_Time_On_Boot(const string& time_paths /* = "" */)
 
 	std::vector<std::string> paths; // space separated list of paths
 	if (time_paths.empty()) {
-		paths = Split_String("/data/system/time/ /data/time/", " ");
+		paths = Split_String("/data/system/time/ /data/time/ /data/vendor/time/", " ");
 		if (!PartitionManager.Mount_By_Path("/data", false))
 			return;
 	} else {
