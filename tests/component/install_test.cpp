@@ -107,6 +107,29 @@ TEST(InstallTest, read_metadata_from_package_no_entry) {
   CloseArchive(zip);
 }
 
+TEST(InstallTest, read_wipe_ab_partition_list) {
+  std::vector<std::string> partition_list = {
+    "/dev/block/bootdevice/by-name/system_a", "/dev/block/bootdevice/by-name/system_b",
+    "/dev/block/bootdevice/by-name/vendor_a", "/dev/block/bootdevice/by-name/vendor_b",
+    "/dev/block/bootdevice/by-name/userdata", "# Wipe the boot partitions last",
+    "/dev/block/bootdevice/by-name/boot_a",   "/dev/block/bootdevice/by-name/boot_b",
+  };
+  TemporaryFile temp_file;
+  BuildZipArchive({ { "recovery.wipe", android::base::Join(partition_list, '\n') } },
+                  temp_file.release(), kCompressDeflated);
+  std::string wipe_package;
+  ASSERT_TRUE(android::base::ReadFileToString(temp_file.path, &wipe_package));
+
+  std::vector<std::string> read_partition_list = GetWipePartitionList(wipe_package);
+  std::vector<std::string> expected = {
+    "/dev/block/bootdevice/by-name/system_a", "/dev/block/bootdevice/by-name/system_b",
+    "/dev/block/bootdevice/by-name/vendor_a", "/dev/block/bootdevice/by-name/vendor_b",
+    "/dev/block/bootdevice/by-name/userdata", "/dev/block/bootdevice/by-name/boot_a",
+    "/dev/block/bootdevice/by-name/boot_b",
+  };
+  ASSERT_EQ(expected, read_partition_list);
+}
+
 TEST(InstallTest, verify_package_compatibility_with_libvintf_malformed_xml) {
   TemporaryFile compatibility_zip_file;
   std::string malformed_xml = "malformed";

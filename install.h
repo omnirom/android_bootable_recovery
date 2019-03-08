@@ -21,6 +21,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include <ziparchive/zip_archive.h>
 
@@ -52,6 +53,9 @@ bool verify_package(const unsigned char* package_data, size_t package_size);
 // Reads meta data file of the package; parses each line in the format "key=value"; and writes the
 // result to |metadata|. Return true if succeed, otherwise return false.
 bool ReadMetadataFromPackage(ZipArchiveHandle zip, std::map<std::string, std::string>* metadata);
+
+// Reads the "recovery.wipe" entry in the zip archive returns a list of partitions to wipe.
+std::vector<std::string> GetWipePartitionList(const std::string& wipe_package);
 
 // Verifies the compatibility info in a Treble-compatible package. Returns true directly if the
 // entry doesn't exist.
