@@ -175,6 +175,7 @@ cc_library_static {
         "fsck_unshare_blocks.cpp",
         "fuse_sdcard_provider.cpp",
         "install.cpp",
+        "package.cpp",
         "recovery.cpp",
         "roots.cpp",
     ],

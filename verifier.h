@@ -27,6 +27,8 @@
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 
+using HasherUpdateCallback = std::function<void(const uint8_t* addr, uint64_t size)>;
+
 struct RSADeleter {
   void operator()(RSA* rsa) const {
     RSA_free(rsa);
@@ -61,14 +63,28 @@ struct Certificate {
     std::unique_ptr<EC_KEY, ECKEYDeleter> ec;
 };
 
-/*
- * 'addr' and 'length' define an update package file that has been loaded (or mmap'ed, or
- * whatever) into memory. Verifies that the file is signed and the signature matches one of the
- * given keys. It optionally accepts a callback function for posting the progress to. Returns one
- * of the constants of VERIFY_SUCCESS and VERIFY_FAILURE.
- */
-int verify_file(const unsigned char* addr, size_t length, const std::vector<Certificate>& keys,
-                const std::function<void(float)>& set_progress = nullptr);
+class VerifierInterface {
+ public:
+  virtual ~VerifierInterface() = default;
+
+  // Returns the package size in bytes.
+  virtual uint64_t GetPackageSize() const = 0;
+
+  // Reads |byte_count| data starting from |offset|, and puts the result in |buffer|.
+  virtual bool ReadFullyAtOffset(uint8_t* buffer, uint64_t byte_count, uint64_t offset) = 0;
+
+  // Updates the hash contexts for |length| bytes data starting from |start|.
+  virtual bool UpdateHashAtOffset(const std::vector<HasherUpdateCallback>& hashers, uint64_t start,
+                                  uint64_t length) = 0;
+
+  // Updates the progress in fraction during package verification.
+  virtual void SetProgress(float progress) = 0;
+};
+
+//  Looks for an RSA signature embedded in the .ZIP file comment given the path to the zip.
+//  Verifies that it matches one of the given public keys. Returns VERIFY_SUCCESS or
+//  VERIFY_FAILURE (if any error is encountered or no key matches the signature).
+int verify_file(VerifierInterface* package, const std::vector<Certificate>& keys);
 
 // Checks that the RSA key has a modulus of 2048 bits long, and public exponent is 3 or 65537.
 bool CheckRSAKey(const std::unique_ptr<RSA, RSADeleter>& rsa);
