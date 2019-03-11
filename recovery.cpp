@@ -498,41 +498,36 @@ static bool secure_wipe_partition(const std::string& partition) {
   return true;
 }
 
-static std::string ReadWipePackage(size_t wipe_package_size) {
+static std::unique_ptr<Package> ReadWipePackage(size_t wipe_package_size) {
   if (wipe_package_size == 0) {
     LOG(ERROR) << "wipe_package_size is zero";
-    return "";
+    return nullptr;
   }
 
   std::string wipe_package;
   std::string err_str;
   if (!read_wipe_package(&wipe_package, wipe_package_size, &err_str)) {
     PLOG(ERROR) << "Failed to read wipe package" << err_str;
-    return "";
+    return nullptr;
   }
-  return wipe_package;
+
+  return Package::CreateMemoryPackage(
+      std::vector<uint8_t>(wipe_package.begin(), wipe_package.end()), nullptr);
 }
 
 // Checks if the wipe package matches expectation. If the check passes, reads the list of
 // partitions to wipe from the package. Checks include
 // 1. verify the package.
 // 2. check metadata (ota-type, pre-device and serial number if having one).
-static bool CheckWipePackage(const std::string& wipe_package) {
-  auto package = Package::CreateMemoryPackage(
-      std::vector<uint8_t>(wipe_package.begin(), wipe_package.end()), nullptr);
-
-  if (!package || !verify_package(package.get())) {
+static bool CheckWipePackage(Package* wipe_package) {
+  if (!verify_package(wipe_package)) {
     LOG(ERROR) << "Failed to verify package";
     return false;
   }
 
-  // TODO(xunchang) get zip archive from package.
-  ZipArchiveHandle zip;
-  if (auto err =
-          OpenArchiveFromMemory(const_cast<void*>(static_cast<const void*>(&wipe_package[0])),
-                                wipe_package.size(), "wipe_package", &zip);
-      err != 0) {
-    LOG(ERROR) << "Can't open wipe package : " << ErrorCodeString(err);
+  ZipArchiveHandle zip = wipe_package->GetZipArchiveHandle();
+  if (!zip) {
+    LOG(ERROR) << "Failed to get ZipArchiveHandle";
     return false;
   }
 
@@ -542,19 +537,13 @@ static bool CheckWipePackage(const std::string& wipe_package) {
     return false;
   }
 
-  int result = CheckPackageMetadata(metadata, OtaType::BRICK);
-  CloseArchive(zip);
-
-  return result == 0;
+  return CheckPackageMetadata(metadata, OtaType::BRICK) == 0;
 }
 
-std::vector<std::string> GetWipePartitionList(const std::string& wipe_package) {
-  ZipArchiveHandle zip;
-  if (auto err =
-          OpenArchiveFromMemory(const_cast<void*>(static_cast<const void*>(&wipe_package[0])),
-                                wipe_package.size(), "wipe_package", &zip);
-      err != 0) {
-    LOG(ERROR) << "Can't open wipe package : " << ErrorCodeString(err);
+std::vector<std::string> GetWipePartitionList(Package* wipe_package) {
+  ZipArchiveHandle zip = wipe_package->GetZipArchiveHandle();
+  if (!zip) {
+    LOG(ERROR) << "Failed to get ZipArchiveHandle";
     return {};
   }
 
@@ -571,7 +560,6 @@ std::vector<std::string> GetWipePartitionList(const std::string& wipe_package) {
         err != 0) {
       LOG(ERROR) << "Failed to extract " << RECOVERY_WIPE_ENTRY_NAME << ": "
                  << ErrorCodeString(err);
-      CloseArchive(zip);
       return {};
     }
   } else {
@@ -581,7 +569,6 @@ std::vector<std::string> GetWipePartitionList(const std::string& wipe_package) {
     static constexpr const char* RECOVERY_WIPE_ON_DEVICE = "/etc/recovery.wipe";
     if (!android::base::ReadFileToString(RECOVERY_WIPE_ON_DEVICE, &partition_list_content)) {
       PLOG(ERROR) << "failed to read \"" << RECOVERY_WIPE_ON_DEVICE << "\"";
-      CloseArchive(zip);
       return {};
     }
   }
@@ -597,7 +584,6 @@ std::vector<std::string> GetWipePartitionList(const std::string& wipe_package) {
     result.push_back(line);
   }
 
-  CloseArchive(zip);
   return result;
 }
 
@@ -606,17 +592,18 @@ static bool wipe_ab_device(size_t wipe_package_size) {
   ui->SetBackground(RecoveryUI::ERASING);
   ui->SetProgressType(RecoveryUI::INDETERMINATE);
 
-  std::string wipe_package = ReadWipePackage(wipe_package_size);
-  if (wipe_package.empty()) {
+  auto wipe_package = ReadWipePackage(wipe_package_size);
+  if (!wipe_package) {
+    LOG(ERROR) << "Failed to open wipe package";
     return false;
   }
 
-  if (!CheckWipePackage(wipe_package)) {
+  if (!CheckWipePackage(wipe_package.get())) {
     LOG(ERROR) << "Failed to verify wipe package";
     return false;
   }
 
-  std::vector<std::string> partition_list = GetWipePartitionList(wipe_package);
+  auto partition_list = GetWipePartitionList(wipe_package.get());
   if (partition_list.empty()) {
     LOG(ERROR) << "Empty wipe ab partition list";
     return false;
