@@ -64,6 +64,7 @@
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
 #include "otautil/sysutil.h"
+#include "package.h"
 #include "roots.h"
 #include "screen_ui.h"
 #include "ui.h"
@@ -517,13 +518,15 @@ static std::string ReadWipePackage(size_t wipe_package_size) {
 // 1. verify the package.
 // 2. check metadata (ota-type, pre-device and serial number if having one).
 static bool CheckWipePackage(const std::string& wipe_package) {
-  if (!verify_package(reinterpret_cast<const unsigned char*>(wipe_package.data()),
-                      wipe_package.size())) {
+  auto package = Package::CreateMemoryPackage(
+      std::vector<uint8_t>(wipe_package.begin(), wipe_package.end()), nullptr);
+
+  if (!package || !verify_package(package.get())) {
     LOG(ERROR) << "Failed to verify package";
     return false;
   }
 
-  // Extract metadata
+  // TODO(xunchang) get zip archive from package.
   ZipArchiveHandle zip;
   if (auto err =
           OpenArchiveFromMemory(const_cast<void*>(static_cast<const void*>(&wipe_package[0])),
