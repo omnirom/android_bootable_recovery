@@ -179,7 +179,10 @@ int GUICheckbox::NotifyTouch(TOUCH_STATE state, int x __unused, int y __unused)
 		lastState = (lastState == 0) ? 1 : 0;
 		DataManager::SetValue(mVarName, lastState);
 
+#ifndef TW_NO_HAPTICS
 		DataManager::Vibrate("tw_button_vibrate");
+#endif
+
 	}
 	return 0;
 }

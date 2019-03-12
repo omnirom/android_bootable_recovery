@@ -208,7 +208,11 @@ int GUISlider::NotifyTouch(TOUCH_STATE state, int x, int y)
 			return 0;
 
 		if (sCurTouchX >= mRenderX + mRenderW - sTouchW) {
+
+#ifndef TW_NO_HAPTICS
 			DataManager::Vibrate("tw_button_vibrate");
+#endif
+
 			sAction->doActions();
 		}
 
