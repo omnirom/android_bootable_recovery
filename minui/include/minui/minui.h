@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <android-base/macros.h>
+#include <android-base/unique_fd.h>
 
 //
 // Graphics.
@@ -153,7 +154,7 @@ using ev_set_key_callback = std::function<int(int code, int value)>;
 
 int ev_init(ev_callback input_cb, bool allow_touch_inputs = false);
 void ev_exit();
-int ev_add_fd(int fd, ev_callback cb);
+int ev_add_fd(android::base::unique_fd&& fd, ev_callback cb);
 void ev_iterate_available_keys(const std::function<void(int)>& f);
 void ev_iterate_touch_inputs(const std::function<void(int)>& action);
 int ev_sync_key_state(const ev_set_key_callback& set_key_cb);
