@@ -36,6 +36,7 @@
 
 #include "common/test_constants.h"
 #include "otautil/sysutil.h"
+#include "package.h"
 #include "verifier.h"
 
 using namespace std::string_literals;
@@ -47,15 +48,22 @@ static void LoadKeyFromFile(const std::string& file_name, Certificate* cert) {
       std::vector<uint8_t>(testkey_string.begin(), testkey_string.end()), cert));
 }
 
+static void VerifyFile(const std::string& content, const std::vector<Certificate>& keys,
+                       int expected) {
+  auto package =
+      Package::CreateMemoryPackage(std::vector<uint8_t>(content.begin(), content.end()), nullptr);
+  ASSERT_NE(nullptr, package);
+
+  ASSERT_EQ(expected, verify_file(package.get(), keys));
+}
+
 static void VerifyPackageWithCertificates(const std::string& name,
                                           const std::vector<Certificate>& certs) {
-  std::string package = from_testdata_base(name);
-  MemMapping memmap;
-  if (!memmap.MapFile(package)) {
-    FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
-  }
+  std::string path = from_testdata_base(name);
+  auto package = Package::CreateMemoryPackage(path, nullptr);
+  ASSERT_NE(nullptr, package);
 
-  ASSERT_EQ(VERIFY_SUCCESS, verify_file(memmap.addr, memmap.length, certs));
+  ASSERT_EQ(VERIFY_SUCCESS, verify_file(package.get(), certs));
 }
 
 static void VerifyPackageWithSingleCertificate(const std::string& name, Certificate&& cert) {
@@ -231,20 +239,19 @@ class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
  protected:
   void SetUp() override {
     std::vector<std::string> args = GetParam();
-    std::string package = from_testdata_base(args[0]);
-    if (!memmap.MapFile(package)) {
-      FAIL() << "Failed to mmap " << package << ": " << strerror(errno) << "\n";
-    }
+    std::string path = from_testdata_base(args[0]);
+    package_ = Package::CreateMemoryPackage(path, nullptr);
+    ASSERT_NE(nullptr, package_);
 
     for (auto it = ++args.cbegin(); it != args.cend(); ++it) {
       std::string public_key_file = from_testdata_base("testkey_" + *it + ".x509.pem");
-      certs.emplace_back(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
-      LoadKeyFromFile(public_key_file, &certs.back());
+      certs_.emplace_back(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+      LoadKeyFromFile(public_key_file, &certs_.back());
     }
   }
 
-  MemMapping memmap;
-  std::vector<Certificate> certs;
+  std::unique_ptr<Package> package_;
+  std::vector<Certificate> certs_;
 };
 
 class VerifierSuccessTest : public VerifierTest {
@@ -264,9 +271,7 @@ TEST(VerifierTest, BadPackage_AlteredFooter) {
 
   // Alter the footer.
   package[package.size() - 5] = '\x05';
-  ASSERT_EQ(VERIFY_FAILURE,
-            verify_file(reinterpret_cast<const unsigned char*>(package.data()), package.size(),
-                        certs));
+  VerifyFile(package, certs, VERIFY_FAILURE);
 }
 
 TEST(VerifierTest, BadPackage_AlteredContent) {
@@ -281,15 +286,11 @@ TEST(VerifierTest, BadPackage_AlteredContent) {
   // Alter the content.
   std::string altered1(package);
   altered1[50] += 1;
-  ASSERT_EQ(VERIFY_FAILURE,
-            verify_file(reinterpret_cast<const unsigned char*>(altered1.data()), altered1.size(),
-                        certs));
+  VerifyFile(altered1, certs, VERIFY_FAILURE);
 
   std::string altered2(package);
   altered2[10] += 1;
-  ASSERT_EQ(VERIFY_FAILURE,
-            verify_file(reinterpret_cast<const unsigned char*>(altered2.data()), altered2.size(),
-                        certs));
+  VerifyFile(altered2, certs, VERIFY_FAILURE);
 }
 
 TEST(VerifierTest, BadPackage_SignatureStartOutOfBounds) {
@@ -299,16 +300,15 @@ TEST(VerifierTest, BadPackage_SignatureStartOutOfBounds) {
 
   // Signature start is 65535 (0xffff) while comment size is 0 (Bug: 31914369).
   std::string package = "\x50\x4b\x05\x06"s + std::string(12, '\0') + "\xff\xff\xff\xff\x00\x00"s;
-  ASSERT_EQ(VERIFY_FAILURE, verify_file(reinterpret_cast<const unsigned char*>(package.data()),
-                                        package.size(), certs));
+  VerifyFile(package, certs, VERIFY_FAILURE);
 }
 
 TEST_P(VerifierSuccessTest, VerifySucceed) {
-  ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs, nullptr), VERIFY_SUCCESS);
+  ASSERT_EQ(VERIFY_SUCCESS, verify_file(package_.get(), certs_));
 }
 
 TEST_P(VerifierFailureTest, VerifyFailure) {
-  ASSERT_EQ(verify_file(memmap.addr, memmap.length, certs, nullptr), VERIFY_FAILURE);
+  ASSERT_EQ(VERIFY_FAILURE, verify_file(package_.get(), certs_));
 }
 
 INSTANTIATE_TEST_CASE_P(SingleKeySuccess, VerifierSuccessTest,
