@@ -3518,6 +3518,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="tw_disable_haptics" var2="0"/>
 				<placement x="%col1_x_right%" y="%row6_y%"/>
 				<text>{@settings_vibration_btn=Vibration}</text>
 				<action function="page">settings_vibration</action>

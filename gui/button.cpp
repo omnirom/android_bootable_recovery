@@ -248,7 +248,10 @@ int GUIButton::NotifyTouch(TOUCH_STATE state, int x, int y)
 	} else {
 		if (last_state == 0) {
 			last_state = 1;
+
+#ifndef TW_NO_HAPTICS
 			DataManager::Vibrate("tw_button_vibrate");
+#endif
 			if (mButtonLabel != NULL)
 				mButtonLabel->isHighlighted = true;
 			if (mButtonImg != NULL)

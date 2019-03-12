@@ -318,6 +318,7 @@
 		<string name="settings_tz_btn">Time Zone</string>
 		<string name="settings_screen_btn">Screen</string>
 		<string name="settings_screen_bright_btn">Screen Brightness</string>
+		<string name="vibration_disabled">Vibration is disabled for this device</string>
 		<string name="settings_vibration_btn">Vibration</string>
 		<string name="settings_language_btn">Language</string>
 		<string name="time_zone_hdr">Time Zone</string>

@@ -516,8 +516,12 @@ void GUIAction::operation_end(const int operation_status)
 	blankTimer.resetTimerAndUnblank();
 	property_set("twrp.action_complete", "1");
 	time(&Stop);
+
+#ifndef TW_NO_HAPTICS
 	if ((int) difftime(Stop, Start) > 10)
 		DataManager::Vibrate("tw_action_vibrate");
+#endif
+
 	LOGINFO("operation_end - status=%d\n", operation_status);
 }
 
