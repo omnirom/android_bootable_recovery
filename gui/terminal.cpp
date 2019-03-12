@@ -530,7 +530,11 @@ private:
 		switch (ch)
 		{
 			case 7: // BEL
+
+#ifndef TW_NO_HAPTICS
 				DataManager::Vibrate("tw_button_vibrate");
+#endif
+
 				break;
 			case 8: // BS
 				left();
