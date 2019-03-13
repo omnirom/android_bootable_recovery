@@ -120,7 +120,10 @@ TEST(InstallTest, read_wipe_ab_partition_list) {
   std::string wipe_package;
   ASSERT_TRUE(android::base::ReadFileToString(temp_file.path, &wipe_package));
 
-  std::vector<std::string> read_partition_list = GetWipePartitionList(wipe_package);
+  auto package = Package::CreateMemoryPackage(
+      std::vector<uint8_t>(wipe_package.begin(), wipe_package.end()), nullptr);
+
+  auto read_partition_list = GetWipePartitionList(package.get());
   std::vector<std::string> expected = {
     "/dev/block/bootdevice/by-name/system_a", "/dev/block/bootdevice/by-name/system_b",
     "/dev/block/bootdevice/by-name/vendor_a", "/dev/block/bootdevice/by-name/vendor_b",
