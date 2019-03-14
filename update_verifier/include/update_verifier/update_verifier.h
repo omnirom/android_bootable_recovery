@@ -50,9 +50,6 @@ class UpdateVerifier {
 
  private:
   friend class UpdateVerifierTest;
-  // Parses the legacy care_map.txt in plain text format.
-  bool ParseCareMapPlainText(const std::string& content);
-
   // Finds all the dm-enabled partitions, and returns a map of <partition_name, block_device>.
   std::map<std::string, std::string> FindDmPartitions();
 
