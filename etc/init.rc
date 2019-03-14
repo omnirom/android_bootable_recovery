@@ -73,7 +73,7 @@ service ueventd /system/bin/ueventd
     critical
     seclabel u:r:ueventd:s0
 
-service charger /charger -r
+service charger /system/bin/charger
     critical
     seclabel u:r:charger:s0
 
