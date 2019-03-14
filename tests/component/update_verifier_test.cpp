@@ -98,7 +98,7 @@ TEST_F(UpdateVerifierTest, verify_image_no_care_map) {
   ASSERT_FALSE(verifier_.ParseCareMap());
 }
 
-TEST_F(UpdateVerifierTest, verify_image_smoke) {
+TEST_F(UpdateVerifierTest, verify_image_text_format) {
   // This test relies on dm-verity support.
   if (!verity_supported) {
     GTEST_LOG_(INFO) << "Test skipped on devices without dm-verity support.";
@@ -107,49 +107,11 @@ TEST_F(UpdateVerifierTest, verify_image_smoke) {
 
   std::string content = "system\n2,0,1";
   ASSERT_TRUE(android::base::WriteStringToFile(content, care_map_txt_));
-  ASSERT_TRUE(verifier_.ParseCareMap());
-  ASSERT_TRUE(verifier_.VerifyPartitions());
-
-  // Leading and trailing newlines should be accepted.
-  ASSERT_TRUE(android::base::WriteStringToFile("\n" + content + "\n\n", care_map_txt_));
-  ASSERT_TRUE(verifier_.ParseCareMap());
-  ASSERT_TRUE(verifier_.VerifyPartitions());
+  // CareMap in text format is no longer supported.
+  ASSERT_FALSE(verifier_.ParseCareMap());
 }
 
 TEST_F(UpdateVerifierTest, verify_image_empty_care_map) {
-  ASSERT_FALSE(verifier_.ParseCareMap());
-}
-
-TEST_F(UpdateVerifierTest, verify_image_wrong_lines) {
-  // The care map file can have only 2 / 4 / 6 lines.
-  ASSERT_TRUE(android::base::WriteStringToFile("line1", care_map_txt_));
-  ASSERT_FALSE(verifier_.ParseCareMap());
-
-  ASSERT_TRUE(android::base::WriteStringToFile("line1\nline2\nline3", care_map_txt_));
-  ASSERT_FALSE(verifier_.ParseCareMap());
-}
-
-TEST_F(UpdateVerifierTest, verify_image_malformed_care_map) {
-  // This test relies on dm-verity support.
-  if (!verity_supported) {
-    GTEST_LOG_(INFO) << "Test skipped on devices without dm-verity support.";
-    return;
-  }
-
-  std::string content = "system\n2,1,0";
-  ASSERT_TRUE(android::base::WriteStringToFile(content, care_map_txt_));
-  ASSERT_FALSE(verifier_.ParseCareMap());
-}
-
-TEST_F(UpdateVerifierTest, verify_image_legacy_care_map) {
-  // This test relies on dm-verity support.
-  if (!verity_supported) {
-    GTEST_LOG_(INFO) << "Test skipped on devices without dm-verity support.";
-    return;
-  }
-
-  std::string content = "/dev/block/bootdevice/by-name/system\n2,1,0";
-  ASSERT_TRUE(android::base::WriteStringToFile(content, care_map_txt_));
   ASSERT_FALSE(verifier_.ParseCareMap());
 }
 

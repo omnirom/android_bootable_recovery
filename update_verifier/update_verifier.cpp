@@ -71,6 +71,7 @@ using android::hardware::boot::V1_0::IBootControl;
 using android::hardware::boot::V1_0::BoolResult;
 using android::hardware::boot::V1_0::CommandResult;
 
+// TODO(xunchang) remove the prefix and use a default path instead.
 constexpr const char* kDefaultCareMapPrefix = "/data/ota_package/care_map";
 
 // Find directories in format of "/sys/block/dm-X".
@@ -199,51 +200,13 @@ bool UpdateVerifier::VerifyPartitions() {
   return true;
 }
 
-bool UpdateVerifier::ParseCareMapPlainText(const std::string& content) {
-  // care_map file has up to six lines, where every two lines make a pair. Within each pair, the
-  // first line has the partition name (e.g. "system"), while the second line holds the ranges of
-  // all the blocks to verify.
-  auto lines = android::base::Split(android::base::Trim(content), "\n");
-  if (lines.size() != 2 && lines.size() != 4 && lines.size() != 6) {
-    LOG(WARNING) << "Invalid lines in care_map: found " << lines.size()
-                 << " lines, expecting 2 or 4 or 6 lines.";
-    return false;
-  }
-
-  for (size_t i = 0; i < lines.size(); i += 2) {
-    const std::string& partition_name = lines[i];
-    const std::string& range_str = lines[i + 1];
-    // We're seeing an N care_map.txt. Skip the verification since it's not compatible with O
-    // update_verifier (the last few metadata blocks can't be read via device mapper).
-    if (android::base::StartsWith(partition_name, "/dev/block/")) {
-      LOG(WARNING) << "Found legacy care_map.txt; skipped.";
-      return false;
-    }
-
-    // For block range string, first integer 'count' equals 2 * total number of valid ranges,
-    // followed by 'count' number comma separated integers. Every two integers reprensent a
-    // block range with the first number included in range but second number not included.
-    // For example '4,64536,65343,74149,74150' represents: [64536,65343) and [74149,74150).
-    RangeSet ranges = RangeSet::Parse(range_str);
-    if (!ranges) {
-      LOG(WARNING) << "Error parsing RangeSet string " << range_str;
-      return false;
-    }
-
-    partition_map_.emplace(partition_name, ranges);
-  }
-
-  return true;
-}
-
 bool UpdateVerifier::ParseCareMap() {
   partition_map_.clear();
 
   std::string care_map_name = care_map_prefix_ + ".pb";
   if (access(care_map_name.c_str(), R_OK) == -1) {
-    LOG(WARNING) << care_map_name
-                 << " doesn't exist, falling back to read the care_map in plain text format.";
-    care_map_name = care_map_prefix_ + ".txt";
+    LOG(ERROR) << care_map_name << " doesn't exist";
+    return false;
   }
 
   android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
@@ -264,10 +227,6 @@ bool UpdateVerifier::ParseCareMap() {
   if (file_content.empty()) {
     LOG(WARNING) << "Unexpected empty care map";
     return false;
-  }
-
-  if (android::base::EndsWith(care_map_name, ".txt")) {
-    return ParseCareMapPlainText(file_content);
   }
 
   recovery_update_verifier::CareMap care_map;
