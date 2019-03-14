@@ -38,17 +38,19 @@
  */
 
 #include "update_verifier/update_verifier.h"
-#include <android/os/IVold.h>
 
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <algorithm>
 #include <future>
+#include <thread>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
@@ -57,6 +59,7 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <android/hardware/boot/1.0/IBootControl.h>
+#include <android/os/IVold.h>
 #include <binder/BinderService.h>
 #include <binder/Status.h>
 #include <cutils/android_reboot.h>
