@@ -17,10 +17,12 @@
 #include "package.h"
 
 #include <string.h>
+#include <unistd.h>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <openssl/sha.h>
+#include <android-base/unique_fd.h>
 
 #include "otautil/error_code.h"
 #include "otautil/sysutil.h"
@@ -67,13 +69,37 @@ class MemoryPackage : public Package {
   ZipArchiveHandle zip_handle_;
 };
 
-// TODO(xunchang) Implement the PackageFromFd.
-
 void Package::SetProgress(float progress) {
   if (set_progress_) {
     set_progress_(progress);
   }
 }
+
+class FilePackage : public Package {
+ public:
+  FilePackage(android::base::unique_fd&& fd, uint64_t file_size, const std::string& path,
+              const std::function<void(float)>& set_progress);
+
+  ~FilePackage() override;
+
+  uint64_t GetPackageSize() const override {
+    return package_size_;
+  }
+
+  bool ReadFullyAtOffset(uint8_t* buffer, uint64_t byte_count, uint64_t offset) override;
+
+  ZipArchiveHandle GetZipArchiveHandle() override;
+
+  bool UpdateHashAtOffset(const std::vector<HasherUpdateCallback>& hashers, uint64_t start,
+                          uint64_t length) override;
+
+ private:
+  android::base::unique_fd fd_;  // The underlying fd to the open package.
+  uint64_t package_size_;
+  std::string path_;  // The physical path to the package.
+
+  ZipArchiveHandle zip_handle_;
+};
 
 std::unique_ptr<Package> Package::CreateMemoryPackage(
     const std::string& path, const std::function<void(float)>& set_progress) {
@@ -84,6 +110,23 @@ std::unique_ptr<Package> Package::CreateMemoryPackage(
   }
 
   return std::make_unique<MemoryPackage>(path, std::move(mmap), set_progress);
+}
+
+std::unique_ptr<Package> Package::CreateFilePackage(
+    const std::string& path, const std::function<void(float)>& set_progress) {
+  android::base::unique_fd fd(open(path.c_str(), O_RDONLY));
+  if (fd == -1) {
+    PLOG(ERROR) << "Failed to open " << path;
+    return nullptr;
+  }
+
+  off64_t file_size = lseek64(fd.get(), 0, SEEK_END);
+  if (file_size == -1) {
+    PLOG(ERROR) << "Failed to get the package size";
+    return nullptr;
+  }
+
+  return std::make_unique<FilePackage>(std::move(fd), file_size, path, set_progress);
 }
 
 std::unique_ptr<Package> Package::CreateMemoryPackage(
@@ -146,6 +189,71 @@ ZipArchiveHandle MemoryPackage::GetZipArchiveHandle() {
   if (auto err = OpenArchiveFromMemory(const_cast<uint8_t*>(addr_), package_size_, path_.c_str(),
                                        &zip_handle_);
       err != 0) {
+    LOG(ERROR) << "Can't open package" << path_ << " : " << ErrorCodeString(err);
+    return nullptr;
+  }
+
+  return zip_handle_;
+}
+
+FilePackage::FilePackage(android::base::unique_fd&& fd, uint64_t file_size, const std::string& path,
+                         const std::function<void(float)>& set_progress)
+    : fd_(std::move(fd)), package_size_(file_size), path_(path), zip_handle_(nullptr) {
+  set_progress_ = set_progress;
+}
+
+FilePackage::~FilePackage() {
+  if (zip_handle_) {
+    CloseArchive(zip_handle_);
+  }
+}
+
+bool FilePackage::ReadFullyAtOffset(uint8_t* buffer, uint64_t byte_count, uint64_t offset) {
+  if (byte_count > package_size_ || offset > package_size_ - byte_count) {
+    LOG(ERROR) << "Out of bound read, offset: " << offset << ", size: " << byte_count
+               << ", total package_size: " << package_size_;
+    return false;
+  }
+
+  if (!android::base::ReadFullyAtOffset(fd_.get(), buffer, byte_count, offset)) {
+    PLOG(ERROR) << "Failed to read " << byte_count << " bytes data at offset " << offset;
+    return false;
+  }
+
+  return true;
+}
+
+bool FilePackage::UpdateHashAtOffset(const std::vector<HasherUpdateCallback>& hashers,
+                                     uint64_t start, uint64_t length) {
+  if (length > package_size_ || start > package_size_ - length) {
+    LOG(ERROR) << "Out of bound read, offset: " << start << ", size: " << length
+               << ", total package_size: " << package_size_;
+    return false;
+  }
+
+  uint64_t so_far = 0;
+  while (so_far < length) {
+    uint64_t read_size = std::min<uint64_t>(length - so_far, 16 * MiB);
+    std::vector<uint8_t> buffer(read_size);
+    if (!ReadFullyAtOffset(buffer.data(), read_size, start + so_far)) {
+      return false;
+    }
+
+    for (const auto& hasher : hashers) {
+      hasher(buffer.data(), read_size);
+    }
+    so_far += read_size;
+  }
+
+  return true;
+}
+
+ZipArchiveHandle FilePackage::GetZipArchiveHandle() {
+  if (zip_handle_) {
+    return zip_handle_;
+  }
+
+  if (auto err = OpenArchiveFd(fd_.get(), path_.c_str(), &zip_handle_); err != 0) {
     LOG(ERROR) << "Can't open package" << path_ << " : " << ErrorCodeString(err);
     return nullptr;
   }

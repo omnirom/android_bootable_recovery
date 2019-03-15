@@ -39,8 +39,6 @@
 #include "asn1_decoder.h"
 #include "otautil/print_sha1.h"
 
-static constexpr size_t MiB = 1024 * 1024;
-
 /*
  * Simple version of PKCS#7 SignedData extraction. This extracts the
  * signature OCTET STRING to be used for signature verification.

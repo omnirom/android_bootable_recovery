@@ -27,6 +27,8 @@
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 
+constexpr size_t MiB = 1024 * 1024;
+
 using HasherUpdateCallback = std::function<void(const uint8_t* addr, uint64_t size)>;
 
 struct RSADeleter {
