@@ -32,6 +32,13 @@
 // interface for both packages loaded in memory and packages read from fd.
 class Package : public VerifierInterface {
  public:
+  static std::unique_ptr<Package> CreateMemoryPackage(
+      const std::string& path, const std::function<void(float)>& set_progress);
+  static std::unique_ptr<Package> CreateMemoryPackage(
+      std::vector<uint8_t> content, const std::function<void(float)>& set_progress);
+  static std::unique_ptr<Package> CreateFilePackage(const std::string& path,
+                                                    const std::function<void(float)>& set_progress);
+
   virtual ~Package() = default;
 
   // Opens the package as a zip file and returns the ZipArchiveHandle.
@@ -39,12 +46,6 @@ class Package : public VerifierInterface {
 
   // Updates the progress in fraction during package verification.
   void SetProgress(float progress) override;
-
-  static std::unique_ptr<Package> CreateMemoryPackage(
-      const std::string& path, const std::function<void(float)>& set_progress);
-
-  static std::unique_ptr<Package> CreateMemoryPackage(
-      std::vector<uint8_t> content, const std::function<void(float)>& set_progress);
 
  protected:
   // An optional function to update the progress.
