@@ -37,7 +37,7 @@ class FuseDataProvider {
     return fuse_block_size_;
   }
 
-  explicit operator bool() const {
+  bool Valid() const {
     return fd_ != -1;
   }
 

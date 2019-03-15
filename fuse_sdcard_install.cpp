@@ -20,26 +20,21 @@
 #include <unistd.h>
 
 #include <functional>
+#include <memory>
 
 #include "fuse_provider.h"
 #include "fuse_sideload.h"
 
 bool start_sdcard_fuse(const char* path) {
-  FuseFileDataProvider file_data_reader(path, 65536);
+  auto file_data_reader = std::make_unique<FuseFileDataProvider>(path, 65536);
 
-  if (!file_data_reader) {
+  if (!file_data_reader->Valid()) {
     return false;
   }
-
-  provider_vtab vtab;
-  vtab.read_block = std::bind(&FuseFileDataProvider::ReadBlockAlignedData, &file_data_reader,
-                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_1);
-  vtab.close = [&file_data_reader]() { file_data_reader.Close(); };
 
   // The installation process expects to find the sdcard unmounted. Unmount it with MNT_DETACH so
   // that our open file continues to work but new references see it as unmounted.
   umount2("/sdcard", MNT_DETACH);
 
-  return run_fuse_sideload(vtab, file_data_reader.file_size(),
-                           file_data_reader.fuse_block_size()) == 0;
+  return run_fuse_sideload(std::move(file_data_reader)) == 0;
 }

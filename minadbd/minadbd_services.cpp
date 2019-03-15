@@ -22,6 +22,7 @@
 #include <unistd.h>
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -30,6 +31,7 @@
 #include "adb_unique_fd.h"
 #include "fdevent.h"
 #include "fuse_adb_provider.h"
+#include "fuse_sideload.h"
 #include "services.h"
 #include "sysdeps.h"
 
@@ -44,7 +46,9 @@ static void sideload_host_service(unique_fd sfd, const std::string& args) {
 
   printf("sideload-host file size %" PRId64 " block size %d\n", file_size, block_size);
 
-  int result = run_adb_fuse(std::move(sfd), file_size, block_size);
+  auto adb_data_reader =
+      std::make_unique<FuseAdbDataProvider>(std::move(sfd), file_size, block_size);
+  int result = run_fuse_sideload(std::move(adb_data_reader));
 
   printf("sideload_host finished\n");
   exit(result == 0 ? 0 : 1);
