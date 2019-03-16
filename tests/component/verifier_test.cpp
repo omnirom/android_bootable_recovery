@@ -240,8 +240,10 @@ class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
   void SetUp() override {
     std::vector<std::string> args = GetParam();
     std::string path = from_testdata_base(args[0]);
-    package_ = Package::CreateMemoryPackage(path, nullptr);
-    ASSERT_NE(nullptr, package_);
+    memory_package_ = Package::CreateMemoryPackage(path, nullptr);
+    ASSERT_NE(nullptr, memory_package_);
+    file_package_ = Package::CreateFilePackage(path, nullptr);
+    ASSERT_NE(nullptr, file_package_);
 
     for (auto it = ++args.cbegin(); it != args.cend(); ++it) {
       std::string public_key_file = from_testdata_base("testkey_" + *it + ".x509.pem");
@@ -250,7 +252,8 @@ class VerifierTest : public testing::TestWithParam<std::vector<std::string>> {
     }
   }
 
-  std::unique_ptr<Package> package_;
+  std::unique_ptr<Package> memory_package_;
+  std::unique_ptr<Package> file_package_;
   std::vector<Certificate> certs_;
 };
 
@@ -304,11 +307,13 @@ TEST(VerifierTest, BadPackage_SignatureStartOutOfBounds) {
 }
 
 TEST_P(VerifierSuccessTest, VerifySucceed) {
-  ASSERT_EQ(VERIFY_SUCCESS, verify_file(package_.get(), certs_));
+  ASSERT_EQ(VERIFY_SUCCESS, verify_file(memory_package_.get(), certs_));
+  ASSERT_EQ(VERIFY_SUCCESS, verify_file(file_package_.get(), certs_));
 }
 
 TEST_P(VerifierFailureTest, VerifyFailure) {
-  ASSERT_EQ(VERIFY_FAILURE, verify_file(package_.get(), certs_));
+  ASSERT_EQ(VERIFY_FAILURE, verify_file(memory_package_.get(), certs_));
+  ASSERT_EQ(VERIFY_FAILURE, verify_file(file_package_.get(), certs_));
 }
 
 INSTANTIATE_TEST_CASE_P(SingleKeySuccess, VerifierSuccessTest,

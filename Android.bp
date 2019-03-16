@@ -151,6 +151,7 @@ cc_defaults {
     static_libs: [
         "librecovery_fastboot",
         "libminui",
+        "libpackage",
         "libverifier",
         "libotautil",
 
@@ -175,7 +176,6 @@ cc_library_static {
         "fsck_unshare_blocks.cpp",
         "fuse_sdcard_provider.cpp",
         "install.cpp",
-        "package.cpp",
         "recovery.cpp",
         "roots.cpp",
     ],
@@ -202,6 +202,29 @@ cc_library_static {
         "libbase",
         "libcrypto",
         "libcrypto_utils",
+        "libziparchive",
+    ],
+
+    static_libs: [
+        "libotautil",
+    ],
+}
+
+cc_library_static {
+    name: "libpackage",
+    recovery_available: true,
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "package.cpp",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "libcrypto",
         "libziparchive",
     ],
 
