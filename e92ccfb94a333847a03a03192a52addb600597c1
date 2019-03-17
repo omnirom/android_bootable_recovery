@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8905532c_6c9c29f9",
+        "filename": "data.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 592,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2019-03-17T14:53:21Z",
+      "side": 1,
+      "message": "Usually we only log flags that are set",
+      "revId": "e92ccfb94a333847a03a03192a52addb600597c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "40698d7b_5c5fa1ba",
+        "filename": "data.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 596,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2019-03-17T14:53:21Z",
+      "side": 1,
+      "message": "tw_disable_haptics should be a mConst and not a mPersist",
+      "revId": "e92ccfb94a333847a03a03192a52addb600597c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6074ae87_37ff1e9b",
+        "filename": "data.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 598,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2019-03-17T14:53:21Z",
+      "side": 1,
+      "message": "And when we log flags that are set, we usually do it as TW_NO_HAPTICS :\u003d true",
+      "revId": "e92ccfb94a333847a03a03192a52addb600597c1",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
