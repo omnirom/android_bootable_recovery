@@ -198,7 +198,6 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.gatekeeper@1.0.so
             RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/hwservicemanager
             RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/avbctl
-            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/hwservicemanager
             RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/keystore
             RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/keystore_cli
             RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/servicemanager
@@ -240,6 +239,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     endif
 endif
 ifeq ($(AB_OTA_UPDATER), true)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.boot@1.0.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/bootctl
     ifneq ($(TW_INCLUDE_CRYPTO), true)
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libhardware.so
