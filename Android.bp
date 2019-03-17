@@ -174,7 +174,7 @@ cc_library_static {
     srcs: [
         "adb_install.cpp",
         "fsck_unshare_blocks.cpp",
-        "fuse_sdcard_provider.cpp",
+        "fuse_sdcard_install.cpp",
         "install.cpp",
         "recovery.cpp",
         "roots.cpp",
