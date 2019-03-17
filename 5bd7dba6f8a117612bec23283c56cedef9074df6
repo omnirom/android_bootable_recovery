@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "734e322a_b6e2c9fa",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2019-03-17T15:08:56Z",
+      "side": 1,
+      "message": "I think you could simplify this code. Mount_By_Path was written to handle mounting full paths. For example, if you do a Mount_By_Path(\"/cache/recovery/openrecoveryscript\"), the function will know to mount /cache. Likewise it would mount /data/cache/recovery/openrecoveryscript and no matter where the \"cache\" partition is located, it would need to be mounted. I think it would be better to just Mount_By_Path(orsFile) and not check if the cache dir is a NON_AB_CACHE_DIR.",
+      "revId": "5bd7dba6f8a117612bec23283c56cedef9074df6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "61513c48_b89cd3d1",
+        "filename": "twrp.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2019-03-17T15:08:56Z",
+      "side": 1,
+      "message": "Use tab instead of spaces in this file",
+      "revId": "5bd7dba6f8a117612bec23283c56cedef9074df6",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
