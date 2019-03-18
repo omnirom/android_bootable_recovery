@@ -17,7 +17,6 @@
 #include "recovery.h"
 
 #include <ctype.h>
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -31,7 +30,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -57,7 +55,6 @@
 #include "device.h"
 #include "fsck_unshare_blocks.h"
 #include "fuse_sdcard_install.h"
-#include "fuse_sideload.h"
 #include "install.h"
 #include "logging.h"
 #include "otautil/dirutil.h"
@@ -78,7 +75,6 @@ static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";
 static constexpr const char* CACHE_ROOT = "/cache";
 static constexpr const char* DATA_ROOT = "/data";
 static constexpr const char* METADATA_ROOT = "/metadata";
-static constexpr const char* SDCARD_ROOT = "/sdcard";
 
 // We define RECOVERY_API_VERSION in Android.mk, which will be picked up by build system and packed
 // into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
@@ -136,16 +132,6 @@ const char* reason = nullptr;
 
 bool is_ro_debuggable() {
     return android::base::GetBoolProperty("ro.debuggable", false);
-}
-
-// Set the BCB to reboot back into recovery (it won't resume the install from
-// sdcard though).
-static void set_sdcard_update_bootloader_message() {
-  std::vector<std::string> options;
-  std::string err;
-  if (!update_bootloader_message(options, &err)) {
-    LOG(ERROR) << "Failed to set BCB message: " << err;
-  }
 }
 
 // Clear the recovery command and prepare to boot a (hopefully working) system,
@@ -291,72 +277,6 @@ static bool erase_volume(const char* volume) {
 bool SetUsbConfig(const std::string& state) {
   android::base::SetProperty("sys.usb.config", state);
   return android::base::WaitForProperty("sys.usb.state", state);
-}
-
-// Returns the selected filename, or an empty string.
-static std::string browse_directory(const std::string& path, Device* device) {
-  ensure_path_mounted(path);
-
-  std::unique_ptr<DIR, decltype(&closedir)> d(opendir(path.c_str()), closedir);
-  if (!d) {
-    PLOG(ERROR) << "error opening " << path;
-    return "";
-  }
-
-  std::vector<std::string> dirs;
-  std::vector<std::string> entries{ "../" };  // "../" is always the first entry.
-
-  dirent* de;
-  while ((de = readdir(d.get())) != nullptr) {
-    std::string name(de->d_name);
-
-    if (de->d_type == DT_DIR) {
-      // Skip "." and ".." entries.
-      if (name == "." || name == "..") continue;
-      dirs.push_back(name + "/");
-    } else if (de->d_type == DT_REG && android::base::EndsWithIgnoreCase(name, ".zip")) {
-      entries.push_back(name);
-    }
-  }
-
-  std::sort(dirs.begin(), dirs.end());
-  std::sort(entries.begin(), entries.end());
-
-  // Append dirs to the entries list.
-  entries.insert(entries.end(), dirs.begin(), dirs.end());
-
-  std::vector<std::string> headers{ "Choose a package to install:", path };
-
-  size_t chosen_item = 0;
-  while (true) {
-    chosen_item = ui->ShowMenu(
-        headers, entries, chosen_item, true,
-        std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
-
-    // Return if WaitKey() was interrupted.
-    if (chosen_item == static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED)) {
-      return "";
-    }
-
-    const std::string& item = entries[chosen_item];
-    if (chosen_item == 0) {
-      // Go up but continue browsing (if the caller is browse_directory).
-      return "";
-    }
-
-    std::string new_path = path + "/" + item;
-    if (new_path.back() == '/') {
-      // Recurse down into a subdirectory.
-      new_path.pop_back();
-      std::string result = browse_directory(new_path, device);
-      if (!result.empty()) return result;
-    } else {
-      // Selected a zip file: return the path to the caller.
-      return new_path;
-    }
-  }
-
-  // Unreachable.
 }
 
 static bool yes_no(Device* device, const char* question1, const char* question2) {
@@ -709,85 +629,6 @@ static void run_graphics_test() {
   ui->ShowText(true);
 }
 
-// TODO(xunchang) move apply_from_sdcard() to fuse_sdcard_install.cpp
-// How long (in seconds) we wait for the fuse-provided package file to
-// appear, before timing out.
-#define SDCARD_INSTALL_TIMEOUT 10
-
-static int apply_from_sdcard(Device* device, bool* wipe_cache) {
-    modified_flash = true;
-
-    if (ensure_path_mounted(SDCARD_ROOT) != 0) {
-        ui->Print("\n-- Couldn't mount %s.\n", SDCARD_ROOT);
-        return INSTALL_ERROR;
-    }
-
-    std::string path = browse_directory(SDCARD_ROOT, device);
-    if (path.empty()) {
-        ui->Print("\n-- No package file selected.\n");
-        ensure_path_unmounted(SDCARD_ROOT);
-        return INSTALL_ERROR;
-    }
-
-    ui->Print("\n-- Install %s ...\n", path.c_str());
-    set_sdcard_update_bootloader_message();
-
-    // We used to use fuse in a thread as opposed to a process. Since accessing
-    // through fuse involves going from kernel to userspace to kernel, it leads
-    // to deadlock when a page fault occurs. (Bug: 26313124)
-    pid_t child;
-    if ((child = fork()) == 0) {
-        bool status = start_sdcard_fuse(path.c_str());
-
-        _exit(status ? EXIT_SUCCESS : EXIT_FAILURE);
-    }
-
-    // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the fuse in child
-    // process is ready.
-    int result = INSTALL_ERROR;
-    int status;
-    bool waited = false;
-    for (int i = 0; i < SDCARD_INSTALL_TIMEOUT; ++i) {
-        if (waitpid(child, &status, WNOHANG) == -1) {
-            result = INSTALL_ERROR;
-            waited = true;
-            break;
-        }
-
-        struct stat sb;
-        if (stat(FUSE_SIDELOAD_HOST_PATHNAME, &sb) == -1) {
-            if (errno == ENOENT && i < SDCARD_INSTALL_TIMEOUT-1) {
-                sleep(1);
-                continue;
-            } else {
-                LOG(ERROR) << "Timed out waiting for the fuse-provided package.";
-                result = INSTALL_ERROR;
-                kill(child, SIGKILL);
-                break;
-            }
-        }
-
-        result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, false, 0 /*retry_count*/);
-        break;
-    }
-
-    if (!waited) {
-        // Calling stat() on this magic filename signals the fuse
-        // filesystem to shut down.
-        struct stat sb;
-        stat(FUSE_SIDELOAD_HOST_EXIT_PATHNAME, &sb);
-
-        waitpid(child, &status, 0);
-    }
-
-    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        LOG(ERROR) << "Error exit from the fuse process: " << WEXITSTATUS(status);
-    }
-
-    ensure_path_unmounted(SDCARD_ROOT);
-    return result;
-}
-
 // Returns REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER. Returning NO_ACTION means to take the default,
 // which is to reboot or shutdown depending on if the --shutdown_after flag was passed to recovery.
 static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
@@ -849,32 +690,32 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         break;
 
       case Device::APPLY_ADB_SIDELOAD:
-      case Device::APPLY_SDCARD:
-        {
-          bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
-          if (adb) {
-            status = apply_from_adb(&should_wipe_cache);
-          } else {
-            status = apply_from_sdcard(device, &should_wipe_cache);
-          }
+      case Device::APPLY_SDCARD: {
+        modified_flash = true;
+        bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
+        if (adb) {
+          status = apply_from_adb(&should_wipe_cache);
+        } else {
+          status = ApplyFromSdcard(device, &should_wipe_cache, ui);
+        }
 
-          if (status == INSTALL_SUCCESS && should_wipe_cache) {
-            if (!wipe_cache(false, device)) {
-              status = INSTALL_ERROR;
-            }
-          }
-
-          if (status != INSTALL_SUCCESS) {
-            ui->SetBackground(RecoveryUI::ERROR);
-            ui->Print("Installation aborted.\n");
-            copy_logs(modified_flash, has_cache);
-          } else if (!ui->IsTextVisible()) {
-            return Device::NO_ACTION;  // reboot if logs aren't visible
-          } else {
-            ui->Print("\nInstall from %s complete.\n", adb ? "ADB" : "SD card");
+        if (status == INSTALL_SUCCESS && should_wipe_cache) {
+          if (!wipe_cache(false, device)) {
+            status = INSTALL_ERROR;
           }
         }
+
+        if (status != INSTALL_SUCCESS) {
+          ui->SetBackground(RecoveryUI::ERROR);
+          ui->Print("Installation aborted.\n");
+          copy_logs(modified_flash, has_cache);
+        } else if (!ui->IsTextVisible()) {
+          return Device::NO_ACTION;  // reboot if logs aren't visible
+        } else {
+          ui->Print("\nInstall from %s complete.\n", adb ? "ADB" : "SD card");
+        }
         break;
+      }
 
       case Device::VIEW_RECOVERY_LOGS:
         choose_recovery_file(device);
