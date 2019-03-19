@@ -16,14 +16,17 @@ cc_library {
     name: "libfusesideload",
     recovery_available: true,
 
+    defaults: [
+        "recovery_defaults",
+    ],
+
     cflags: [
         "-D_XOPEN_SOURCE",
         "-D_GNU_SOURCE",
-        "-Wall",
-        "-Werror",
     ],
 
     srcs: [
+        "fuse_provider.cpp",
         "fuse_sideload.cpp",
     ],
 
