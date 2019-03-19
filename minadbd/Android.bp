@@ -66,6 +66,7 @@ cc_test {
 
     static_libs: [
         "libminadbd_services",
+        "libfusesideload",
         "libadbd",
     ],
 

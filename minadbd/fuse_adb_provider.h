@@ -19,14 +19,22 @@
 
 #include <stdint.h>
 
-struct adb_data {
-  int sfd;  // file descriptor for the adb channel
+#include "android-base/unique_fd.h"
 
-  uint64_t file_size;
-  uint32_t block_size;
+#include "fuse_provider.h"
+
+// This class reads data from adb server.
+class FuseAdbDataProvider : public FuseDataProvider {
+ public:
+  FuseAdbDataProvider(android::base::unique_fd&& fd, uint64_t file_size, uint32_t block_size)
+      : FuseDataProvider(std::move(fd), file_size, block_size) {}
+
+  bool ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
+                            uint32_t start_block) const override;
+
+  void Close() override;
 };
 
-int read_block_adb(const adb_data& ad, uint32_t block, uint8_t* buffer, uint32_t fetch_size);
-int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size);
+int run_adb_fuse(android::base::unique_fd&& sfd, uint64_t file_size, uint32_t block_size);
 
 #endif
