@@ -244,8 +244,9 @@ static int fetch_block(fuse_data* fd, uint32_t block) {
     memset(fd->block_data + fetch_size, 0, fd->block_size - fetch_size);
   }
 
-  int result = fd->vtab.read_block(block, fd->block_data, fetch_size);
-  if (result < 0) return result;
+  if (!fd->vtab.read_block(block, fd->block_data, fetch_size)) {
+    return -EIO;
+  }
 
   fd->curr_block = block;
 

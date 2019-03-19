@@ -28,7 +28,7 @@ static constexpr const char* FUSE_SIDELOAD_HOST_EXIT_PATHNAME = "/sideload/exit"
 
 struct provider_vtab {
   // read a block
-  std::function<int(uint32_t block, uint8_t* buffer, uint32_t fetch_size)> read_block;
+  std::function<bool(uint32_t block, uint8_t* buffer, uint32_t fetch_size)> read_block;
 
   // close down
   std::function<void(void)> close;

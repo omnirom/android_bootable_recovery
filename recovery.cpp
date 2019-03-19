@@ -56,7 +56,7 @@
 #include "common.h"
 #include "device.h"
 #include "fsck_unshare_blocks.h"
-#include "fuse_sdcard_provider.h"
+#include "fuse_sdcard_install.h"
 #include "fuse_sideload.h"
 #include "install.h"
 #include "logging.h"
@@ -709,6 +709,7 @@ static void run_graphics_test() {
   ui->ShowText(true);
 }
 
+// TODO(xunchang) move apply_from_sdcard() to fuse_sdcard_install.cpp
 // How long (in seconds) we wait for the fuse-provided package file to
 // appear, before timing out.
 #define SDCARD_INSTALL_TIMEOUT 10
