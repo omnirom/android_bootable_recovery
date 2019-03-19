@@ -113,18 +113,18 @@ int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width, in
 void gr_clip(int x, int y, int w, int h)
 {
     GGLContext *gl = gr_context;
-    int x0_disp, y0_disp, x1_disp, y1_disp;
-    int l_disp, r_disp, t_disp, b_disp;
 
-    x0_disp = ROTATION_X_DISP(x, y, gr_draw);
-    y0_disp = ROTATION_Y_DISP(x, y, gr_draw);
-    x1_disp = ROTATION_X_DISP(x + w, y + h, gr_draw);
-    y1_disp = ROTATION_Y_DISP(x + w, y + h, gr_draw);
-    l_disp = std::min(x0_disp, x1_disp);
-    r_disp = std::max(x0_disp, x1_disp);
-    t_disp = std::min(y0_disp, y1_disp);
-    b_disp = std::max(y0_disp, y1_disp);
-    gl->scissor(gl, l_disp, t_disp, r_disp, b_disp);
+#if TW_ROTATION == 0
+    gl->scissor(gl, x, y, w, h);
+#elif TW_ROTATION == 90
+    gl->scissor(gl, gr_draw->width - y - h, x, h, w);
+#elif TW_ROTATION == 270
+    gl->scissor(gl, y, gr_draw->height - x - w, h, w);
+#else
+    int t_disp = gr_draw->height - y - h;
+    int l_disp = gr_draw->width - x - w;
+    gl->scissor(gl, l_disp, t_disp, w, h);
+#endif
     gl->enable(gl, GGL_SCISSOR_TEST);
 }
 
