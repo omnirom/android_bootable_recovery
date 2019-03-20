@@ -35,6 +35,4 @@ class FuseAdbDataProvider : public FuseDataProvider {
   void Close() override;
 };
 
-int run_adb_fuse(android::base::unique_fd&& sfd, uint64_t file_size, uint32_t block_size);
-
 #endif
