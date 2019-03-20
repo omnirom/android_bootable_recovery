@@ -1995,6 +1995,7 @@ void TWPartition::Check_FS_Type() {
 	if (blkid_do_fullprobe(pr)) {
 		blkid_free_probe(pr);
 		LOGINFO("Can't probe device %s\n", Actual_Block_Device.c_str());
+		Current_File_System = "";
 		return;
 	}
 
