@@ -53,9 +53,9 @@ TEST(SideloadTest, run_fuse_sideload) {
   provider_vtab vtab;
   vtab.close = [](void) {};
   vtab.read_block = [&blocks](uint32_t block, uint8_t* buffer, uint32_t fetch_size) {
-    if (block >= 4) return -1;
+    if (block >= 4) return false;
     blocks[block].copy(reinterpret_cast<char*>(buffer), fetch_size);
-    return 0;
+    return true;
   };
 
   TemporaryDir mount_point;

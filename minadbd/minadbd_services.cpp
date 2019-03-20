@@ -44,7 +44,7 @@ static void sideload_host_service(unique_fd sfd, const std::string& args) {
 
   printf("sideload-host file size %" PRId64 " block size %d\n", file_size, block_size);
 
-  int result = run_adb_fuse(sfd, file_size, block_size);
+  int result = run_adb_fuse(std::move(sfd), file_size, block_size);
 
   printf("sideload_host finished\n");
   exit(result == 0 ? 0 : 1);
