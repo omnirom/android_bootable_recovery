@@ -16,4 +16,7 @@
 
 #pragma once
 
-bool start_sdcard_fuse(const char* path);
+#include "device.h"
+#include "ui.h"
+
+int ApplyFromSdcard(Device* device, bool* wipe_cache, RecoveryUI* ui);
