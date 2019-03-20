@@ -18,14 +18,10 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-
-#include <functional>
 
 #include "adb.h"
 #include "adb_io.h"
-#include "fuse_sideload.h"
 
 bool FuseAdbDataProvider::ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
                                                uint32_t start_block) const {
@@ -44,15 +40,4 @@ bool FuseAdbDataProvider::ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_s
 
 void FuseAdbDataProvider::Close() {
   WriteFdExactly(fd_, "DONEDONE");
-}
-
-int run_adb_fuse(android::base::unique_fd&& sfd, uint64_t file_size, uint32_t block_size) {
-  FuseAdbDataProvider adb_data_reader(std::move(sfd), file_size, block_size);
-
-  provider_vtab vtab;
-  vtab.read_block = std::bind(&FuseAdbDataProvider::ReadBlockAlignedData, &adb_data_reader,
-                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_1);
-  vtab.close = [&adb_data_reader]() { adb_data_reader.Close(); };
-
-  return run_fuse_sideload(vtab, file_size, block_size);
 }
