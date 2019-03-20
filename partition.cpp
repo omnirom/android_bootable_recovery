@@ -44,6 +44,14 @@
 #include "set_metadata.h"
 #include "gui/gui.hpp"
 #include "adbbu/libtwadbbu.hpp"
+#ifdef TW_INCLUDE_CRYPTO
+	#include "crypto/fde/cryptfs.h"
+	#ifdef TW_INCLUDE_FBE
+		#include "crypto/ext4crypt/Decrypt.h"
+	#endif
+#else
+	#define CRYPT_FOOTER_OFFSET 0x4000
+#endif
 extern "C" {
 	#include "mtdutils/mtdutils.h"
 	#include "mtdutils/mounts.h"
@@ -51,15 +59,8 @@ extern "C" {
 	// #include "make_ext4fs.h" TODO need ifdef for android8
 	#include <ext4_utils/make_ext4fs.h>
 #endif
-
 #ifdef TW_INCLUDE_CRYPTO
-	#include "crypto/lollipop/cryptfs.h"
 	#include "gpt/gpt.h"
-	#ifdef TW_INCLUDE_FBE
-		#include "crypto/ext4crypt/Decrypt.h"
-	#endif
-#else
-	#define CRYPT_FOOTER_OFFSET 0x4000
 #endif
 }
 #include <selinux/selinux.h>

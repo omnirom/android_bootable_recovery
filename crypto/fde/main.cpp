@@ -24,9 +24,24 @@
 #include "cutils/properties.h"
 #include "crypto_scrypt.h"
 
-int main() {
-	set_partition_data("/dev/block/platform/sdhci-tegra.3/by-name/UDA", "/dev/block/platform/sdhci-tegra.3/by-name/MD1", "f2fs");
+void usage() {
+	printf("  Usage:\n");
+	printf("    twrpdec /path/to/userdata /path/to/metadata filesystem password\n");
+	printf("\n");
+	printf("  The metadata path is the path to the footer. If no metadata\n");
+	printf("  partition is present then use footer for this argument.\n");
+	printf("\n");
+	printf("  Example:\n");
+	printf("    twrpdec /dev/block/bootdevice/by-name/userdata footer ext4 0000\n");
+}
+
+int main(int argc, char **argv) {
+	if (argc != 5) {
+		usage();
+		return -1;
+	}
+	set_partition_data(argv[1], argv[2], argv[3]);
 	//int ret = cryptfs_check_passwd("30303030");
-	int ret = cryptfs_check_passwd("0000");
+	int ret = cryptfs_check_passwd(argv[4]);
 	return 0;
 }
