@@ -189,7 +189,7 @@ endif
 LOCAL_CLANG := true
 
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
-LOCAL_SHARED_LIBRARIES += libft2 libz libc libcutils libpng libutils
+LOCAL_SHARED_LIBRARIES += libft2 libz libc libcutils libpng libutils libc++
 ifneq ($(TW_INCLUDE_JPEG),)
     LOCAL_SHARED_LIBRARIES += libjpeg
 endif
