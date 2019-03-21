@@ -76,7 +76,7 @@ using SHA256Digest = std::array<uint8_t, SHA256_DIGEST_LENGTH>;
 struct fuse_data {
   android::base::unique_fd ffd;  // file descriptor for the fuse socket
 
-  provider_vtab vtab;
+  FuseDataProvider* provider;  // Provider of the source data.
 
   uint64_t file_size;  // bytes
 
@@ -236,7 +236,7 @@ static int fetch_block(fuse_data* fd, uint32_t block) {
     return 0;
   }
 
-  size_t fetch_size = fd->block_size;
+  uint32_t fetch_size = fd->block_size;
   if (block * fd->block_size + fetch_size > fd->file_size) {
     // If we're reading the last (partial) block of the file, expect a shorter response from the
     // host, and pad the rest of the block with zeroes.
@@ -244,7 +244,7 @@ static int fetch_block(fuse_data* fd, uint32_t block) {
     memset(fd->block_data + fetch_size, 0, fd->block_size - fetch_size);
   }
 
-  if (!fd->vtab.read_block(block, fd->block_data, fetch_size)) {
+  if (!fd->provider->ReadBlockAlignedData(fd->block_data, fetch_size, block)) {
     return -EIO;
   }
 
@@ -341,11 +341,13 @@ static int handle_read(void* data, fuse_data* fd, const fuse_in_header* hdr) {
   return NO_STATUS;
 }
 
-int run_fuse_sideload(const provider_vtab& vtab, uint64_t file_size, uint32_t block_size,
-                      const char* mount_point) {
+int run_fuse_sideload(std::unique_ptr<FuseDataProvider>&& provider, const char* mount_point) {
   // If something's already mounted on our mountpoint, try to remove it. (Mostly in case of a
   // previous abnormal exit.)
   umount2(mount_point, MNT_FORCE);
+
+  uint64_t file_size = provider->file_size();
+  uint32_t block_size = provider->fuse_block_size();
 
   // fs/fuse/inode.c in kernel code uses the greater of 4096 and the passed-in max_read.
   if (block_size < 4096) {
@@ -358,7 +360,7 @@ int run_fuse_sideload(const provider_vtab& vtab, uint64_t file_size, uint32_t bl
   }
 
   fuse_data fd = {};
-  fd.vtab = vtab;
+  fd.provider = provider.get();
   fd.file_size = file_size;
   fd.block_size = block_size;
   fd.file_blocks = (file_size == 0) ? 0 : (((file_size - 1) / block_size) + 1);
@@ -480,7 +482,7 @@ int run_fuse_sideload(const provider_vtab& vtab, uint64_t file_size, uint32_t bl
   }
 
 done:
-  fd.vtab.close();
+  provider->Close();
 
   if (umount2(mount_point, MNT_DETACH) == -1) {
     fprintf(stderr, "fuse_sideload umount failed: %s\n", strerror(errno));
