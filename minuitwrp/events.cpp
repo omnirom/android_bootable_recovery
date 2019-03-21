@@ -127,12 +127,14 @@ int write_to_file(const std::string& fn, const std::string& line) {
 int vibrate(int timeout_ms)
 {
     if (timeout_ms > 10000) timeout_ms = 1000;
+    char tout[6];
+    sprintf(tout, "%i", timeout_ms);
 
     if (std::ifstream(LEDS_HAPTICS_ACTIVATE_FILE).good()) {
-        write_to_file(LEDS_HAPTICS_DURATION_FILE, std::to_string(timeout_ms));
+        write_to_file(LEDS_HAPTICS_DURATION_FILE, tout);
         write_to_file(LEDS_HAPTICS_ACTIVATE_FILE, "1");
     } else
-        write_to_file(VIBRATOR_TIMEOUT_FILE, std::to_string(timeout_ms));
+        write_to_file(VIBRATOR_TIMEOUT_FILE, tout);
 
     return 0;
 }
