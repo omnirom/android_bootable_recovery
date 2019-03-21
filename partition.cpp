@@ -2281,7 +2281,11 @@ bool TWPartition::Wipe_F2FS() {
 			command += " " + Actual_Block_Device;
 		} else {
 			unsigned long long size = IOCTL_Get_Block_Size() + Length;
-			command = "mkfs.f2fs -d1 -f -O encrypt -O quota -O verity -w 4096 " + Actual_Block_Device + " " + std::to_string(size / 4096) + " && sload.f2fs -t /data " + Actual_Block_Device;
+			char temp[PATH_MAX];
+			sprintf(temp, "%llu", size / 4096);
+			command = "mkfs.f2fs -d1 -f -O encrypt -O quota -O verity -w 4096 " + Actual_Block_Device + " ";
+			command += temp;
+			command += " && sload.f2fs -t /data " + Actual_Block_Device;
 		}
 		if (TWFunc::Exec_Cmd(command) == 0) {
 			Recreate_AndSec_Folder();
