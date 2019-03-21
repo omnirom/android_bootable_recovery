@@ -2061,7 +2061,11 @@ bool TWPartition::Wipe_EXTFS(string File_System) {
 	if (NeedPreserveFooter)
 		Length < 0 ? dev_sz += Length : dev_sz -= CRYPT_FOOTER_OFFSET;
 
-	string size_str = to_string(dev_sz / 4096);
+	char dout[16];
+	sprintf(dout, "%llu", dev_sz / 4096);
+
+	//string size_str =to_string(dev_sz / 4096);
+	string size_str = dout;
 	string Command;
 
 	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mke2fs"));
