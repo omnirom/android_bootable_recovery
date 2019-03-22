@@ -53,8 +53,8 @@
 #include "otautil/thermalutil.h"
 #include "package.h"
 #include "private/install.h"
+#include "recovery_ui/ui.h"
 #include "roots.h"
-#include "ui.h"
 #include "verifier.h"
 
 using namespace std::chrono_literals;
