@@ -32,7 +32,7 @@
 #include "common.h"
 #include "fuse_sideload.h"
 #include "install.h"
-#include "ui.h"
+#include "recovery_ui/ui.h"
 
 int apply_from_adb(bool* wipe_cache) {
   // Save the usb state to restore after the sideload operation.

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "device.h"
-#include "ui.h"
+#include "recovery_ui/device.h"
+#include "recovery_ui/ui.h"
 
 int ApplyFromSdcard(Device* device, bool* wipe_cache, RecoveryUI* ui);

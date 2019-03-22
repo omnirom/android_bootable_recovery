@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "device.h"
+#include "recovery_ui/device.h"
 
 #include <algorithm>
 #include <string>
@@ -23,7 +23,7 @@
 
 #include <android-base/logging.h>
 
-#include "ui.h"
+#include "recovery_ui/ui.h"
 
 static std::vector<std::pair<std::string, Device::BuiltinAction>> g_menu_actions{
   { "Reboot system now", Device::REBOOT },
