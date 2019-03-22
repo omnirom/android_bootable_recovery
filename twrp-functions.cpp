@@ -77,7 +77,7 @@ int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 	return ret;
 }
 
-int TWFunc::Exec_Cmd(const string& cmd) {
+int TWFunc::Exec_Cmd(const string& cmd, bool Show_Errors) {
 	pid_t pid;
 	int status;
 	switch(pid = fork())
@@ -91,7 +91,7 @@ int TWFunc::Exec_Cmd(const string& cmd) {
 			break;
 		default:
 		{
-			if (TWFunc::Wait_For_Child(pid, &status, cmd) != 0)
+			if (TWFunc::Wait_For_Child(pid, &status, cmd, Show_Errors) != 0)
 				return -1;
 			else
 				return 0;
@@ -121,18 +121,20 @@ string TWFunc::Get_Path(const string& Path) {
 		return Path;
 }
 
-int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name) {
+int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name, bool Show_Errors) {
 	pid_t rc_pid;
 
 	rc_pid = waitpid(pid, status, 0);
 	if (rc_pid > 0) {
 		if (WIFSIGNALED(*status)) {
-			gui_msg(Msg(msg::kError, "pid_signal={1} process ended with signal: {2}")(Child_Name)(WTERMSIG(*status))); // Seg fault or some other non-graceful termination
+			if (Show_Errors)
+				gui_msg(Msg(msg::kError, "pid_signal={1} process ended with signal: {2}")(Child_Name)(WTERMSIG(*status))); // Seg fault or some other non-graceful termination
 			return -1;
 		} else if (WEXITSTATUS(*status) == 0) {
 			LOGINFO("%s process ended with RC=%d\n", Child_Name.c_str(), WEXITSTATUS(*status)); // Success
 		} else {
-			gui_msg(Msg(msg::kError, "pid_error={1} process ended with ERROR: {2}")(Child_Name)(WEXITSTATUS(*status))); // Graceful exit, but there was an error
+			if (Show_Errors)
+				gui_msg(Msg(msg::kError, "pid_error={1} process ended with ERROR: {2}")(Child_Name)(WEXITSTATUS(*status))); // Graceful exit, but there was an error
 			return -1;
 		}
 	} else { // no PID returned

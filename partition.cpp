@@ -2275,17 +2275,45 @@ bool TWPartition::Wipe_F2FS() {
 			NeedPreserveFooter = false;
 		}
 
-		unsigned long long dev_sz = TWFunc::IOCTL_Get_Block_Size(Actual_Block_Device.c_str());
-		if (!dev_sz)
-			return false;
-
-		if (NeedPreserveFooter)
-			Length < 0 ? dev_sz += Length : dev_sz -= CRYPT_FOOTER_OFFSET;
-
 		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkfs.f2fs"));
-		command = "mkfs.f2fs -d1 -f -O encrypt -O quota -O verity -w 4096 " + Actual_Block_Device + " " + to_string(dev_sz / 4096);
-		if (TWFunc::Path_Exists("/sbin/sload.f2fs")) {
-			command += " && sload.f2fs -t /data " + Actual_Block_Device;
+		// First determine if we have the old mkfs.f2fs that uses "-r reserved_bytes"
+		// or the new mkfs.f2fs that expects the number of sectors as the optional last argument
+		// Note: some 7.1 trees have the old and some have the new.
+		command = "mkfs.f2fs | grep \"reserved\" > /tmp/f2fsversiontest";
+		TWFunc::Exec_Cmd(command, false); // no help argument so printing usage exits with an error code
+		if (!TWFunc::Path_Exists("/tmp/f2fsversiontest")) {
+			LOGINFO("Error determining mkfs.f2fs version\n");
+			return false;
+		}
+		if (TWFunc::Get_File_Size("/tmp/f2fsversiontest") <= 0) {
+			LOGINFO("Using newer mkfs.f2fs\n");
+			unsigned long long dev_sz = TWFunc::IOCTL_Get_Block_Size(Actual_Block_Device.c_str());
+			if (!dev_sz)
+				return false;
+
+			if (NeedPreserveFooter)
+				Length < 0 ? dev_sz += Length : dev_sz -= CRYPT_FOOTER_OFFSET;
+
+			char dev_sz_str[48];
+			sprintf(dev_sz_str, "%llu", (dev_sz / 4096));
+			command = "mkfs.f2fs -d1 -f -O encrypt -O quota -O verity -w 4096 " + Actual_Block_Device + " " + dev_sz_str;
+			if (TWFunc::Path_Exists("/sbin/sload.f2fs")) {
+				command += " && sload.f2fs -t /data " + Actual_Block_Device;
+			}
+		} else {
+			LOGINFO("Using older mkfs.f2fs\n");
+			command = "mkfs.f2fs -t 0";
+			if (NeedPreserveFooter) {
+				// Only use length if we're not decrypted
+				char len[32];
+				int mod_length = Length;
+				if (Length < 0)
+					mod_length *= -1;
+				sprintf(len, "%i", mod_length);
+				command += " -r ";
+				command += len;
+			}
+			command += " " + Actual_Block_Device;
 		}
 		LOGINFO("mkfs.f2fs command: %s\n", command.c_str());
 		if (TWFunc::Exec_Cmd(command) == 0) {
