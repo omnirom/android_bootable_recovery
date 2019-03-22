@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "screen_ui.h"
+#include "recovery_ui/screen_ui.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -42,10 +42,10 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
-#include "device.h"
 #include "minui/minui.h"
 #include "otautil/paths.h"
-#include "ui.h"
+#include "recovery_ui/device.h"
+#include "recovery_ui/ui.h"
 
 // Return the current time as a double (including fractions of a second).
 static double now() {
@@ -388,10 +388,10 @@ int ScreenRecoveryUI::PixelsFromDp(int dp) const {
 enum Layout { PORTRAIT = 0, PORTRAIT_LARGE = 1, LANDSCAPE = 2, LANDSCAPE_LARGE = 3, LAYOUT_MAX };
 enum Dimension { TEXT = 0, ICON = 1, DIMENSION_MAX };
 static constexpr int kLayouts[LAYOUT_MAX][DIMENSION_MAX] = {
-  { 32,  68, },  // PORTRAIT
-  { 32,  68, },  // PORTRAIT_LARGE
-  { 26,  56, },  // LANDSCAPE
-  { 52, 112, },  // LANDSCAPE_LARGE
+  { 32, 68 },   // PORTRAIT
+  { 32, 68 },   // PORTRAIT_LARGE
+  { 26, 56 },   // LANDSCAPE
+  { 52, 112 },  // LANDSCAPE_LARGE
 };
 
 int ScreenRecoveryUI::GetAnimationBaseline() const {
@@ -1042,7 +1042,7 @@ void ScreenRecoveryUI::Print(const char* fmt, ...) {
   va_end(ap);
 }
 
-void ScreenRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
+void ScreenRecoveryUI::PrintOnScreenOnly(const char* fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   PrintV(fmt, false, ap);

@@ -68,7 +68,7 @@ class Device {
 
   // Called when recovery starts up (after the UI has been obtained and initialized and after the
   // arguments have been parsed, but before anything else).
-  virtual void StartRecovery() {};
+  virtual void StartRecovery() {}
 
   // Called from the main thread when recovery is at the main menu and waiting for input, and a key
   // is pressed. (Note that "at" the main menu does not necessarily mean the menu is visible;
