@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef RECOVERY_ROOTS_H_
-#define RECOVERY_ROOTS_H_
+#pragma once
 
 #include <string>
 
@@ -58,5 +57,3 @@ int setup_install_mounts();
 bool logical_partitions_mapped();
 
 std::string get_system_root();
-
-#endif  // RECOVERY_ROOTS_H_

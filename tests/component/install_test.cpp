@@ -32,9 +32,9 @@
 #include <ziparchive/zip_archive.h>
 #include <ziparchive/zip_writer.h>
 
-#include "install.h"
+#include "install/install.h"
 #include "otautil/paths.h"
-#include "private/install.h"
+#include "private/setup_commands.h"
 
 static void BuildZipArchive(const std::map<std::string, std::string>& file_map, int fd,
                             int compression_type) {

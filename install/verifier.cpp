@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "verifier.h"
+#include "install/verifier.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -36,8 +36,8 @@
 #include <openssl/rsa.h>
 #include <ziparchive/zip_archive.h>
 
-#include "asn1_decoder.h"
 #include "otautil/print_sha1.h"
+#include "private/asn1_decoder.h"
 
 /*
  * Simple version of PKCS#7 SignedData extraction. This extracts the
@@ -82,10 +82,8 @@ static bool read_pkcs7(const uint8_t* pkcs7_der, size_t pkcs7_der_len,
   }
 
   std::unique_ptr<asn1_context> signed_data_seq(signed_data_app->asn1_sequence_get());
-  if (signed_data_seq == nullptr ||
-      !signed_data_seq->asn1_sequence_next() ||
-      !signed_data_seq->asn1_sequence_next() ||
-      !signed_data_seq->asn1_sequence_next() ||
+  if (signed_data_seq == nullptr || !signed_data_seq->asn1_sequence_next() ||
+      !signed_data_seq->asn1_sequence_next() || !signed_data_seq->asn1_sequence_next() ||
       !signed_data_seq->asn1_constructed_skip_all()) {
     return false;
   }
@@ -96,11 +94,8 @@ static bool read_pkcs7(const uint8_t* pkcs7_der, size_t pkcs7_der_len,
   }
 
   std::unique_ptr<asn1_context> sig_seq(sig_set->asn1_sequence_get());
-  if (sig_seq == nullptr ||
-      !sig_seq->asn1_sequence_next() ||
-      !sig_seq->asn1_sequence_next() ||
-      !sig_seq->asn1_sequence_next() ||
-      !sig_seq->asn1_sequence_next()) {
+  if (sig_seq == nullptr || !sig_seq->asn1_sequence_next() || !sig_seq->asn1_sequence_next() ||
+      !sig_seq->asn1_sequence_next() || !sig_seq->asn1_sequence_next()) {
     return false;
   }
 
@@ -152,8 +147,8 @@ int verify_file(VerifierInterface* package, const std::vector<Certificate>& keys
             << " bytes from end";
 
   if (signature_start > comment_size) {
-    LOG(ERROR) << "signature start: " << signature_start << " is larger than comment size: "
-               << comment_size;
+    LOG(ERROR) << "signature start: " << signature_start
+               << " is larger than comment size: " << comment_size;
     return VERIFY_FAILURE;
   }
 
@@ -189,8 +184,8 @@ int verify_file(VerifierInterface* package, const std::vector<Certificate>& keys
     return VERIFY_FAILURE;
   }
 
-  for (size_t i = 4; i < eocd_size-3; ++i) {
-    if (eocd[i] == 0x50 && eocd[i+1] == 0x4b && eocd[i+2] == 0x05 && eocd[i+3] == 0x06) {
+  for (size_t i = 4; i < eocd_size - 3; ++i) {
+    if (eocd[i] == 0x50 && eocd[i + 1] == 0x4b && eocd[i + 2] == 0x05 && eocd[i + 3] == 0x06) {
       // If the sequence $50 $4b $05 $06 appears anywhere after the real one, libziparchive will
       // find the later (wrong) one, which could be exploitable. Fail the verification if this
       // sequence occurs anywhere after the real one.
@@ -203,8 +198,12 @@ int verify_file(VerifierInterface* package, const std::vector<Certificate>& keys
   bool need_sha256 = false;
   for (const auto& key : keys) {
     switch (key.hash_len) {
-      case SHA_DIGEST_LENGTH: need_sha1 = true; break;
-      case SHA256_DIGEST_LENGTH: need_sha256 = true; break;
+      case SHA_DIGEST_LENGTH:
+        need_sha1 = true;
+        break;
+      case SHA256_DIGEST_LENGTH:
+        need_sha256 = true;
+        break;
     }
   }
 
@@ -247,8 +246,8 @@ int verify_file(VerifierInterface* package, const std::vector<Certificate>& keys
   const uint8_t* signature = eocd + eocd_size - signature_start;
   size_t signature_size = signature_start - FOOTER_SIZE;
 
-  LOG(INFO) << "signature (offset: " << std::hex << (length - signature_start) << ", length: "
-            << signature_size << "): " << print_hex(signature, signature_size);
+  LOG(INFO) << "signature (offset: " << std::hex << (length - signature_start)
+            << ", length: " << signature_size << "): " << print_hex(signature, signature_size);
 
   std::vector<uint8_t> sig_der;
   if (!read_pkcs7(signature, signature_size, &sig_der)) {

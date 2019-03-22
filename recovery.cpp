@@ -50,20 +50,20 @@
 #include <healthhalutils/HealthHalUtils.h>
 #include <ziparchive/zip_archive.h>
 
-#include "adb_install.h"
 #include "common.h"
 #include "fsck_unshare_blocks.h"
-#include "fuse_sdcard_install.h"
-#include "install.h"
+#include "install/adb_install.h"
+#include "install/fuse_sdcard_install.h"
+#include "install/install.h"
+#include "install/package.h"
 #include "logging.h"
 #include "otautil/dirutil.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
+#include "otautil/roots.h"
 #include "otautil/sysutil.h"
-#include "package.h"
 #include "recovery_ui/screen_ui.h"
 #include "recovery_ui/ui.h"
-#include "roots.h"
 
 static constexpr const char* CACHE_LOG_DIR = "/cache/recovery";
 static constexpr const char* COMMAND_FILE = "/cache/recovery/command";
@@ -79,7 +79,7 @@ static constexpr const char* METADATA_ROOT = "/metadata";
 // into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
 static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
 
-bool modified_flash = false;
+static bool modified_flash = false;
 std::string stage;
 const char* reason = nullptr;
 
@@ -439,7 +439,7 @@ static std::unique_ptr<Package> ReadWipePackage(size_t wipe_package_size) {
 // 1. verify the package.
 // 2. check metadata (ota-type, pre-device and serial number if having one).
 static bool CheckWipePackage(Package* wipe_package) {
-  if (!verify_package(wipe_package)) {
+  if (!verify_package(wipe_package, ui)) {
     LOG(ERROR) << "Failed to verify package";
     return false;
   }
@@ -693,7 +693,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         modified_flash = true;
         bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
         if (adb) {
-          status = apply_from_adb(&should_wipe_cache);
+          status = apply_from_adb(&should_wipe_cache, ui);
         } else {
           status = ApplyFromSdcard(device, &should_wipe_cache, ui);
         }
@@ -1030,7 +1030,8 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         set_retry_bootloader_message(retry_count + 1, args);
       }
 
-      status = install_package(update_package, &should_wipe_cache, true, retry_count);
+      modified_flash = true;
+      status = install_package(update_package, &should_wipe_cache, true, retry_count, ui);
       if (status == INSTALL_SUCCESS && should_wipe_cache) {
         wipe_cache(false, device);
       }
@@ -1096,7 +1097,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     if (!sideload_auto_reboot) {
       ui->ShowText(true);
     }
-    status = apply_from_adb(&should_wipe_cache);
+    status = apply_from_adb(&should_wipe_cache, ui);
     if (status == INSTALL_SUCCESS && should_wipe_cache) {
       if (!wipe_cache(false, device)) {
         status = INSTALL_ERROR;

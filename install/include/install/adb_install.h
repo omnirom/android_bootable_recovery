@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _ADB_INSTALL_H
-#define _ADB_INSTALL_H
+#pragma once
 
-int apply_from_adb(bool* wipe_cache);
+#include <recovery_ui/ui.h>
 
-#endif
+int apply_from_adb(bool* wipe_cache, RecoveryUI* ui);

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef RECOVERY_INSTALL_H_
-#define RECOVERY_INSTALL_H_
+#pragma once
 
 #include <stddef.h>
 
@@ -26,6 +25,7 @@
 #include <ziparchive/zip_archive.h>
 
 #include "package.h"
+#include "recovery_ui/ui.h"
 
 enum InstallResult {
   INSTALL_SUCCESS,
@@ -45,12 +45,12 @@ enum class OtaType {
 
 // Installs the given update package. If INSTALL_SUCCESS is returned and *wipe_cache is true on
 // exit, caller should wipe the cache partition.
-int install_package(const std::string& package, bool* wipe_cache, bool needs_mount,
-                    int retry_count);
+int install_package(const std::string& package, bool* wipe_cache, bool needs_mount, int retry_count,
+                    RecoveryUI* ui);
 
 // Verifies the package by ota keys. Returns true if the package is verified successfully,
 // otherwise returns false.
-bool verify_package(Package* package);
+bool verify_package(Package* package, RecoveryUI* ui);
 
 // Reads meta data file of the package; parses each line in the format "key=value"; and writes the
 // result to |metadata|. Return true if succeed, otherwise return false.
@@ -67,5 +67,3 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip);
 // Mandatory checks: ota-type, pre-device and serial number(if presents)
 // AB OTA specific checks: pre-build version, fingerprint, timestamp.
 int CheckPackageMetadata(const std::map<std::string, std::string>& metadata, OtaType ota_type);
-
-#endif  // RECOVERY_INSTALL_H_
