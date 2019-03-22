@@ -18,6 +18,7 @@
 
 #include <stddef.h>
 
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -48,6 +49,12 @@ class RangeSet {
   // Returns whether the current RangeSet overlaps with other. RangeSet has half-closed half-open
   // bounds. For example, "3,5" contains blocks 3 and 4. So "3,5" and "5,7" are not overlapped.
   bool Overlaps(const RangeSet& other) const;
+
+  // Returns a subset of ranges starting from |start_index| with respect to the original range. The
+  // output range will have |num_of_blocks| blocks in size. Returns std::nullopt if the input is
+  // invalid. e.g. RangeSet({{0, 5}, {10, 15}}).GetSubRanges(1, 5) returns
+  // RangeSet({{1, 5}, {10, 11}}).
+  std::optional<RangeSet> GetSubRanges(size_t start_index, size_t num_of_blocks) const;
 
   // Returns a vector of RangeSets that contain the same set of blocks represented by the current
   // RangeSet. The RangeSets in the vector contain similar number of blocks, with a maximum delta

@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <limits>
+#include <optional>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -246,6 +247,29 @@ TEST(RangeSetTest, ToString) {
   ASSERT_EQ("2,1,6", RangeSet::Parse("2,1,6").ToString());
   ASSERT_EQ("4,1,5,8,10", RangeSet::Parse("4,1,5,8,10").ToString());
   ASSERT_EQ("6,1,3,4,6,15,22", RangeSet::Parse("6,1,3,4,6,15,22").ToString());
+}
+
+TEST(RangeSetTest, GetSubRanges_invalid) {
+  RangeSet range0({ { 1, 11 }, { 20, 30 } });
+  ASSERT_FALSE(range0.GetSubRanges(0, 21));  // too many blocks
+  ASSERT_FALSE(range0.GetSubRanges(21, 1));  // start block OOB
+}
+
+TEST(RangeSetTest, GetSubRanges_empty) {
+  RangeSet range0({ { 1, 11 }, { 20, 30 } });
+  ASSERT_EQ(RangeSet{}, range0.GetSubRanges(1, 0));  // empty num_of_blocks
+}
+
+TEST(RangeSetTest, GetSubRanges_smoke) {
+  RangeSet range0({ { 10, 11 } });
+  ASSERT_EQ(RangeSet({ { 10, 11 } }), range0.GetSubRanges(0, 1));
+
+  RangeSet range1({ { 10, 11 }, { 20, 21 }, { 30, 31 } });
+  ASSERT_EQ(range1, range1.GetSubRanges(0, 3));
+  ASSERT_EQ(RangeSet({ { 20, 21 } }), range1.GetSubRanges(1, 1));
+
+  RangeSet range2({ { 1, 11 }, { 20, 25 }, { 30, 35 } });
+  ASSERT_EQ(RangeSet({ { 10, 11 }, { 20, 25 }, { 30, 31 } }), range2.GetSubRanges(9, 7));
 }
 
 TEST(SortedRangeSetTest, Insert) {
