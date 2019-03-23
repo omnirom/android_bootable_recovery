@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "vr_ui.h"
+#include "recovery_ui/vr_ui.h"
 
 #include <android-base/properties.h>
 

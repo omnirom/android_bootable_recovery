@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2009 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include "device.h"
-#include "wear_ui.h"
+#include "recovery_ui/device.h"
+#include "recovery_ui/screen_ui.h"
 
 Device* make_device() {
-  return new Device(new WearRecoveryUI);
+  return new Device(new ScreenRecoveryUI);
 }
-

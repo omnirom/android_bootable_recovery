@@ -27,8 +27,7 @@
 #include <android-base/properties.h>
 #include <bootloader_message/bootloader_message.h>
 
-#include "device.h"
-#include "ui.h"
+#include "recovery_ui/ui.h"
 
 static const std::vector<std::pair<std::string, Device::BuiltinAction>> kFastbootMenuActions{
   { "Reboot system now", Device::REBOOT },

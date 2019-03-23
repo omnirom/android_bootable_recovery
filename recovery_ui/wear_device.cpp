@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include "device.h"
-#include "vr_ui.h"
+#include "recovery_ui/device.h"
+#include "recovery_ui/wear_ui.h"
 
 Device* make_device() {
-    return new Device(new VrRecoveryUI);
+  return new Device(new WearRecoveryUI);
 }
-
