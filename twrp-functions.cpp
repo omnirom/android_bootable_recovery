@@ -535,7 +535,7 @@ void TWFunc::Update_Log_File(void) {
 
 	if (!TWFunc::Path_Exists(recoveryDir)) {
 		LOGINFO("Recreating %s folder.\n", recoveryDir.c_str());
-		if (mkdir(recoveryDir.c_str(),  S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) {
+		if (!Create_Dir_Recursive(recoveryDir,  S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, 0, 0)) {
 			LOGINFO("Unable to create %s folder.\n", recoveryDir.c_str());
 		}
 	}
@@ -1171,7 +1171,15 @@ int TWFunc::stream_adb_backup(string &Restore_Name) {
 
 std::string TWFunc::get_cache_dir() {
 	if (PartitionManager.Find_Partition_By_Path(NON_AB_CACHE_DIR) == NULL) {
-		return AB_CACHE_DIR;
+		if (PartitionManager.Find_Partition_By_Path(NON_AB_CACHE_DIR) == NULL) {
+			if (PartitionManager.Find_Partition_By_Path(PERSIST_CACHE_DIR) == NULL) {
+				LOGINFO("Unable to find a directory to store TWRP logs.");
+				return "";
+			}
+			return PERSIST_CACHE_DIR;
+		} else {
+			return AB_CACHE_DIR;
+		}
 	}
 	else {
 		return NON_AB_CACHE_DIR;

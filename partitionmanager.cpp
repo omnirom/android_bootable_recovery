@@ -2222,7 +2222,13 @@ int TWPartitionManager::Fstab_Processed(void) {
 void TWPartitionManager::Output_Storage_Fstab(void) {
 	std::vector<TWPartition*>::iterator iter;
 	char storage_partition[255];
-	string Temp;
+	std::string Temp;
+	std::string cacheDir = TWFunc::get_cache_dir();
+
+	if (cacheDir.empty()) {
+		LOGINFO("Unable to find cache directory\n");
+		return;
+	}
 
 	std::string storageFstab = TWFunc::get_cache_dir() + "recovery/storage.fstab";
 	FILE *fp = fopen(storageFstab.c_str(), "w");
