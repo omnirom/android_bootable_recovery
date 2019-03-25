@@ -110,7 +110,10 @@ int GUICheckbox::Render(void)
 
 	int ret = 0;
 	int lastState = 0;
-	DataManager::GetValue(mVarName, lastState);
+	if (DataManager::GetValue(mVarName, lastState) != 0) {
+		lastState = 0;
+		DataManager::SetValue(mVarName, lastState);
+	}
 
 	if (lastState)
 	{
