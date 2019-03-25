@@ -147,14 +147,12 @@ else
     TW_EXCLUDE_MTP := true
 endif
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
-ifneq ($(TW_EXCLUDE_MTP), true)
+ifeq ($(TW_EXCLUDE_MTP),)
+ifeq ($(TW_HAS_LEGACY_MTP), true)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libtwrpmtp-legacy.so
+else
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libtwrpmtp-ffs.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libasyncio.so
-endif
-else
-ifneq ($(TW_EXCLUDE_MTP), true)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libtwrpmtp-legacy.so
 endif
 endif
 

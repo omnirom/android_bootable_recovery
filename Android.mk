@@ -207,20 +207,18 @@ ifeq ($(shell git -C $(LOCAL_PATH) diff --quiet; echo $$?),1)
 endif
 LOCAL_CFLAGS += -DTW_GIT_REVISION='"$(tw_git_revision)"'
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
-ifeq ($(TW_EXCLUDE_MTP),)
-    LOCAL_SHARED_LIBRARIES += libtwrpmtp-ffs
-endif
-else
-ifeq ($(TW_EXCLUDE_MTP),)
-    LOCAL_CFLAGS += -DTW_HAS_LEGACY_MTP
-    LOCAL_SHARED_LIBRARIES += libtwrpmtp-legacy
-endif
-endif
-
 #TWRP Build Flags
 ifeq ($(TW_EXCLUDE_MTP),)
     LOCAL_CFLAGS += -DTW_HAS_MTP
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+        TW_HAS_LEGACY_MTP := true
+    endif
+    ifeq ($(TW_HAS_LEGACY_MTP), true)
+        LOCAL_CFLAGS += -DTW_HAS_LEGACY_MTP
+        LOCAL_SHARED_LIBRARIES += libtwrpmtp-legacy
+    else
+        LOCAL_SHARED_LIBRARIES += libtwrpmtp-ffs
+    endif
 endif
 ifneq ($(TW_NO_SCREEN_TIMEOUT),)
     LOCAL_CFLAGS += -DTW_NO_SCREEN_TIMEOUT
@@ -790,10 +788,10 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 25; echo $$?),0)
 include $(commands_TWRP_local_path)/bootloader_message/Android.mk
 endif
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
-    include $(commands_TWRP_local_path)/mtp/ffs/Android.mk
-else
+ifeq ($(TW_HAS_LEGACY_MTP), true)
     include $(commands_TWRP_local_path)/mtp/legacy/Android.mk
+else
+    include $(commands_TWRP_local_path)/mtp/ffs/Android.mk
 endif
 
 ifeq ($(wildcard system/core/uncrypt/Android.mk),)
