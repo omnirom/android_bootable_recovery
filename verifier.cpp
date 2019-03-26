@@ -373,8 +373,8 @@ bool CheckRSAKey(const std::unique_ptr<RSA, RSADeleter>& rsa) {
   const BIGNUM* out_e;
   RSA_get0_key(rsa.get(), &out_n, &out_e, nullptr /* private exponent */);
   auto modulus_bits = BN_num_bits(out_n);
-  if (modulus_bits != 2048) {
-    LOG(ERROR) << "Modulus should be 2048 bits long, actual: " << modulus_bits;
+  if (modulus_bits != 2048 && modulus_bits != 4096) {
+    LOG(ERROR) << "Modulus should be 2048 or 4096 bits long, actual: " << modulus_bits;
     return false;
   }
 
