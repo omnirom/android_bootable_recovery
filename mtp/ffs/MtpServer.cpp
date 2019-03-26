@@ -123,7 +123,7 @@ MtpServer::MtpServer(IMtpDatabase* database, int controlFd, bool ptp,
 		mHandle = aio_compat ? new MtpFfsCompatHandle(controlFd) : new MtpFfsHandle(controlFd);
 		mHandle->writeDescriptors(mPtp);
 	} else {
-		mHandle = new MtpDevHandle();
+		mHandle = new MtpDevHandle(controlFd);
 	}
 }
 
