@@ -25,7 +25,7 @@ private:
 	android::base::unique_fd mFd;
 
 public:
-	MtpDevHandle();
+	MtpDevHandle(int controlFd);
 	~MtpDevHandle();
 	int read(void *data, size_t len);
 	int write(const void *data, size_t len);

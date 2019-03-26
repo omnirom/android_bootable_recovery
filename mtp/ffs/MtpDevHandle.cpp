@@ -33,8 +33,9 @@
 
 constexpr char mtp_dev_path[] = "/dev/mtp_usb";
 
-MtpDevHandle::MtpDevHandle()
-	: mFd(-1) {};
+MtpDevHandle::MtpDevHandle(int controlFd) {
+	mFd.reset(controlFd);
+}
 
 MtpDevHandle::~MtpDevHandle() {}
 
