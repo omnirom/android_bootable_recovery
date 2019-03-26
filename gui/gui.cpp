@@ -86,14 +86,17 @@ extern "C" void gr_write_frame_to_file(int fd);
 
 static void flip(void)
 {
-	if (gRecorder != -1)
-	{
-		timespec time;
-		clock_gettime(CLOCK_MONOTONIC, &time);
-		write(gRecorder, &time, sizeof(timespec));
-		gr_write_frame_to_file(gRecorder);
+	if(DataManager::GetIntValue("is_gui_mode")){
+		if (gRecorder != -1)
+		{
+			timespec time;
+			clock_gettime(CLOCK_MONOTONIC, &time);
+			write(gRecorder, &time, sizeof(timespec));
+			gr_write_frame_to_file(gRecorder);
+		}
+		gr_flip();
 	}
-	gr_flip();
+
 }
 
 void rapidxml::parse_error_handler(const char *what, void *where)
@@ -893,7 +896,13 @@ extern "C" int gui_startPage(const char *page_name, const int allow_commands, in
 	return runPages(page_name, stop_on_page_done);
 }
 
-
+extern "C" int gui_stop(void)
+{
+	gGuiRunning = 0;
+	sleep(3);
+	gr_exit();
+	return 0;
+}
 extern "C" void set_scale_values(float w, float h)
 {
 	scale_theme_w = w;

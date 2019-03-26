@@ -109,6 +109,7 @@ int main(int argc, char **argv) {
 
 	// Load default values to set DataManager constants and handle ifdefs
 	DataManager::SetDefaultValues();
+	DataManager::SetValue("is_gui_mode", 1);
 	printf("Starting the UI...\n");
 	gui_init();
 	printf("=> Linking mtab\n");

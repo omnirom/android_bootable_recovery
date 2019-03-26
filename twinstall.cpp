@@ -275,19 +275,19 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 			int seconds_float = strtol(seconds_char, NULL, 10);
 
 			if (zip_verify)
-				DataManager::ShowProgress(fraction_float * (1 - VERIFICATION_PROGRESS_FRAC), seconds_float);
+				if (DataManager::GetIntValue("is_gui_mode")) DataManager::ShowProgress(fraction_float * (1 - VERIFICATION_PROGRESS_FRAC), seconds_float);
 			else
-				DataManager::ShowProgress(fraction_float, seconds_float);
+				if (DataManager::GetIntValue("is_gui_mode")) DataManager::ShowProgress(fraction_float, seconds_float);
 		} else if (strcmp(command, "set_progress") == 0) {
 			char* fraction_char = strtok(NULL, " \n");
 			float fraction_float = strtof(fraction_char, NULL);
-			DataManager::SetProgress(fraction_float);
+			if (DataManager::GetIntValue("is_gui_mode")) DataManager::SetProgress(fraction_float);
 		} else if (strcmp(command, "ui_print") == 0) {
 			char* display_value = strtok(NULL, "\n");
 			if (display_value) {
-				gui_print("%s", display_value);
+				if (DataManager::GetIntValue("is_gui_mode")) gui_print("%s", display_value);
 			} else {
-				gui_print("\n");
+				if (DataManager::GetIntValue("is_gui_mode")) gui_print("\n");
 			}
 		} else if (strcmp(command, "wipe_cache") == 0) {
 			*wipe_cache = 1;
@@ -302,6 +302,11 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 	fclose(child_data);
 
 	int waitrc = TWFunc::Wait_For_Child(pid, &status, "Updater");
+	if (DataManager::GetIntValue("is_gui_mode")==0){
+		gui_init();
+		gui_start();
+		DataManager::SetValue("is_gui_mode", 1);
+	}
 
 #ifndef TW_NO_LEGACY_PROPS
 	/* Unset legacy properties */
@@ -328,7 +333,7 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 		return INSTALL_CORRUPT;
 	}
 
-	gui_msg(Msg("installing_zip=Installing zip file '{1}'")(path));
+	if (DataManager::GetIntValue("is_gui_mode")) gui_msg(Msg("installing_zip=Installing zip file '{1}'")(path));
 	if (strlen(path) < 9 || strncmp(path, "/sideload", 9) != 0) {
 		string digest_str;
 		string Full_Filename = path;
@@ -342,9 +347,9 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 			digest_file += ".md5";
 		}
 
-		gui_msg("check_for_digest=Checking for Digest file...");
+		if (DataManager::GetIntValue("is_gui_mode")) gui_msg("check_for_digest=Checking for Digest file...");
 		if (!TWFunc::Path_Exists(digest_file)) {
-			gui_msg("no_digest=Skipping Digest check: no Digest file found");
+			if (DataManager::GetIntValue("is_gui_mode")) gui_msg("no_digest=Skipping Digest check: no Digest file found");
 		}
 		else {
 			if (TWFunc::read_file(digest_file, digest_str) != 0) {
@@ -358,7 +363,7 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 				}
 				string digest_check = digest->return_digest_string();
 				if (digest_str == digest_check) {
-					gui_msg(Msg("digest_matched=Digest matched for '{1}'.")(path));
+					if (DataManager::GetIntValue("is_gui_mode")) gui_msg(Msg("digest_matched=Digest matched for '{1}'.")(path));
 				}
 				else {
 					LOGERR("Aborting zip install: Digest verification failed\n");
@@ -373,7 +378,7 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 #ifndef TW_OEM_BUILD
 	DataManager::GetValue(TW_SIGNED_ZIP_VERIFY_VAR, zip_verify);
 #endif
-	DataManager::SetProgress(0);
+	if (DataManager::GetIntValue("is_gui_mode")) DataManager::SetProgress(0);
 
 	MemMapping map;
 #ifdef USE_MINZIP
@@ -381,19 +386,19 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 #else
 	if (!map.MapFile(path)) {
 #endif
-		gui_msg(Msg(msg::kError, "fail_sysmap=Failed to map file '{1}'")(path));
+		if (DataManager::GetIntValue("is_gui_mode")) gui_msg(Msg(msg::kError, "fail_sysmap=Failed to map file '{1}'")(path));
 		return -1;
 	}
 
 	if (zip_verify) {
-		gui_msg("verify_zip_sig=Verifying zip signature...");
+		if (DataManager::GetIntValue("is_gui_mode")) gui_msg("verify_zip_sig=Verifying zip signature...");
 #ifdef USE_OLD_VERIFIER
 		ret_val = verify_file(map.addr, map.length);
 #else
 		std::vector<Certificate> loadedKeys;
 		if (!load_keys("/res/keys", loadedKeys)) {
 			LOGINFO("Failed to load keys");
-			gui_err("verify_zip_fail=Zip signature verification failed!");
+			if (DataManager::GetIntValue("is_gui_mode")) gui_err("verify_zip_fail=Zip signature verification failed!");
 #ifdef USE_MINZIP
 			sysReleaseMap(&map);
 #endif
@@ -403,18 +408,18 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 #endif
 		if (ret_val != VERIFY_SUCCESS) {
 			LOGINFO("Zip signature verification failed: %i\n", ret_val);
-			gui_err("verify_zip_fail=Zip signature verification failed!");
+			if (DataManager::GetIntValue("is_gui_mode")) gui_err("verify_zip_fail=Zip signature verification failed!");
 #ifdef USE_MINZIP
 			sysReleaseMap(&map);
 #endif
 			return -1;
 		} else {
-			gui_msg("verify_zip_done=Zip signature verified successfully.");
+			if (DataManager::GetIntValue("is_gui_mode")) gui_msg("verify_zip_done=Zip signature verified successfully.");
 		}
 	}
 	ZipWrap Zip;
 	if (!Zip.Open(path, &map)) {
-		gui_err("zip_corrupt=Zip file is corrupt!");
+		if (DataManager::GetIntValue("is_gui_mode")) gui_err("zip_corrupt=Zip file is corrupt!");
 #ifdef USE_MINZIP
 			sysReleaseMap(&map);
 #endif
@@ -427,7 +432,7 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 		LOGINFO("Update binary zip\n");
 		// Additionally verify the compatibility of the package.
 		if (!verify_package_compatibility(&Zip)) {
-			gui_err("zip_compatible_err=Zip Treble compatibility error!");
+			if (DataManager::GetIntValue("is_gui_mode")) gui_err("zip_compatible_err=Zip Treble compatibility error!");
 			Zip.Close();
 #ifdef USE_MINZIP
 			sysReleaseMap(&map);
@@ -436,11 +441,24 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 		} else {
 			ret_val = Prepare_Update_Binary(path, &Zip, wipe_cache);
 			if (ret_val == INSTALL_SUCCESS)
+				if (Zip.EntryExists("META-INF/com/google/android/aroma-config")){
+					DataManager::SetValue("is_gui_mode", 0);
+					sleep(3);
+					gui_stop();
+					sleep(3);
+				}
 				ret_val = Run_Update_Binary(path, &Zip, wipe_cache, UPDATE_BINARY_ZIP_TYPE);
 		}
 	} else {
 		if (Zip.EntryExists(AB_OTA)) {
 			LOGINFO("AB zip\n");
+			if (ret_val == INSTALL_SUCCESS)
+				if (Zip.EntryExists("META-INF/com/google/android/aroma-config")){
+					DataManager::SetValue("is_gui_mode", 0);
+					sleep(3);
+					gui_stop();
+					sleep(3);
+				}
 			ret_val = Run_Update_Binary(path, &Zip, wipe_cache, AB_OTA_ZIP_TYPE);
 		} else {
 			if (Zip.EntryExists("ui.xml")) {
@@ -455,7 +473,7 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 	time(&stop);
 	int total_time = (int) difftime(stop, start);
 	if (ret_val == INSTALL_CORRUPT) {
-		gui_err("invalid_zip_format=Invalid zip file format!");
+		if (DataManager::GetIntValue("is_gui_mode")) gui_err("invalid_zip_format=Invalid zip file format!");
 	} else {
 		LOGINFO("Install took %i second(s).\n", total_time);
 	}
