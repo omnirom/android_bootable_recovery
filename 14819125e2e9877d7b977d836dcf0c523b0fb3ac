@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d19ced8d_e9e64efb",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1002447
+      },
+      "writtenOn": "2019-03-26T05:39:54Z",
+      "side": 1,
+      "message": "C",
+      "revId": "14819125e2e9877d7b977d836dcf0c523b0fb3ac",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
