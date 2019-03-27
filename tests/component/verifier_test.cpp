@@ -158,6 +158,17 @@ TEST(VerifierTest, LoadCertificateFromBuffer_sha256_ec256bits) {
   VerifyPackageWithSingleCertificate("otasigned_v5.zip", std::move(cert));
 }
 
+TEST(VerifierTest, LoadCertificateFromBuffer_sha256_rsa4096_bits) {
+  Certificate cert(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_4096bits.x509.pem"), &cert);
+
+  ASSERT_EQ(SHA256_DIGEST_LENGTH, cert.hash_len);
+  ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
+  ASSERT_EQ(nullptr, cert.ec);
+
+  VerifyPackageWithSingleCertificate("otasigned_4096bits.zip", std::move(cert));
+}
+
 TEST(VerifierTest, LoadCertificateFromBuffer_check_rsa_keys) {
   std::unique_ptr<RSA, RSADeleter> rsa(RSA_new());
   std::unique_ptr<BIGNUM, decltype(&BN_free)> exponent(BN_new(), BN_free);
