@@ -17,8 +17,10 @@
 #include <string>
 
 #include <android-base/file.h>
+#include <android-base/strings.h>
 #include <gtest/gtest.h>
 
+#include "otautil/rangeset.h"
 #include "otautil/sysutil.h"
 
 TEST(SysUtilTest, InvalidArgs) {
@@ -26,6 +28,65 @@ TEST(SysUtilTest, InvalidArgs) {
 
   // Invalid argument.
   ASSERT_FALSE(mapping.MapFile(""));
+}
+
+TEST(SysUtilTest, ParseBlockMapFile_smoke) {
+  std::vector<std::string> content = {
+    "/dev/abc", "49652 4096", "3", "1000 1008", "2100 2102", "30 33",
+  };
+
+  TemporaryFile temp_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(android::base::Join(content, '\n'), temp_file.path));
+
+  auto block_map_data = BlockMapData::ParseBlockMapFile(temp_file.path);
+  ASSERT_EQ("/dev/abc", block_map_data.path());
+  ASSERT_EQ(49652, block_map_data.file_size());
+  ASSERT_EQ(4096, block_map_data.block_size());
+  ASSERT_EQ(RangeSet(std::vector<Range>{
+                { 1000, 1008 },
+                { 2100, 2102 },
+                { 30, 33 },
+            }),
+            block_map_data.block_ranges());
+}
+
+TEST(SysUtilTest, ParseBlockMapFile_invalid_line_count) {
+  std::vector<std::string> content = {
+    "/dev/abc", "49652 4096", "2", "1000 1008", "2100 2102", "30 33",
+  };
+
+  TemporaryFile temp_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(android::base::Join(content, '\n'), temp_file.path));
+
+  auto block_map_data1 = BlockMapData::ParseBlockMapFile(temp_file.path);
+  ASSERT_FALSE(block_map_data1);
+}
+
+TEST(SysUtilTest, ParseBlockMapFile_invalid_size) {
+  std::vector<std::string> content = {
+    "/dev/abc",
+    "42949672950 4294967295",
+    "1",
+    "0 9",
+  };
+
+  TemporaryFile temp_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(android::base::Join(content, '\n'), temp_file.path));
+
+  auto block_map_data = BlockMapData::ParseBlockMapFile(temp_file.path);
+  ASSERT_EQ("/dev/abc", block_map_data.path());
+  ASSERT_EQ(42949672950, block_map_data.file_size());
+  ASSERT_EQ(4294967295, block_map_data.block_size());
+
+  content[1] = "42949672950 4294967296";
+  ASSERT_TRUE(android::base::WriteStringToFile(android::base::Join(content, '\n'), temp_file.path));
+  auto large_block_size = BlockMapData::ParseBlockMapFile(temp_file.path);
+  ASSERT_FALSE(large_block_size);
+
+  content[1] = "4294967296 1";
+  ASSERT_TRUE(android::base::WriteStringToFile(android::base::Join(content, '\n'), temp_file.path));
+  auto too_many_blocks = BlockMapData::ParseBlockMapFile(temp_file.path);
+  ASSERT_FALSE(too_many_blocks);
 }
 
 TEST(SysUtilTest, MapFileRegularFile) {
