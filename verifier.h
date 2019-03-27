@@ -88,7 +88,8 @@ class VerifierInterface {
 //  VERIFY_FAILURE (if any error is encountered or no key matches the signature).
 int verify_file(VerifierInterface* package, const std::vector<Certificate>& keys);
 
-// Checks that the RSA key has a modulus of 2048 bits long, and public exponent is 3 or 65537.
+// Checks that the RSA key has a modulus of 2048 or 4096 bits long, and public exponent is 3 or
+// 65537.
 bool CheckRSAKey(const std::unique_ptr<RSA, RSADeleter>& rsa);
 
 // Checks that the field size of the curve for the EC key is 256 bits.
