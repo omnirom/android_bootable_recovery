@@ -51,8 +51,6 @@ using android::fs_mgr::ReadDefaultFstab;
 
 static Fstab fstab;
 
-extern struct selabel_handle* sehandle;
-
 void load_volume_table() {
   if (!ReadDefaultFstab(&fstab)) {
     LOG(ERROR) << "Failed to read default fstab";
