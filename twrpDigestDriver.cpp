@@ -33,7 +33,7 @@
 #include "twrpDigest/twrpSHA.hpp"
 
 
-bool twrpDigestDriver::Check_Restore_File_Digest(const string& Filename) {
+bool twrpDigestDriver::Check_File_Digest(const string& Filename) {
 	twrpDigest *digest;
 	string digestfile = Filename, file_name = Filename;
 	string digest_str;
@@ -47,9 +47,14 @@ bool twrpDigestDriver::Check_Restore_File_Digest(const string& Filename) {
 		use_sha2 = true;
 	}
 	else {
-		digest = new twrpMD5();
-		digestfile = Filename + ".md5";
-
+		digestfile = Filename + ".sha256";
+		if (TWFunc::Path_Exists(digestfile)) {
+			digest = new twrpSHA256();
+			use_sha2 = true;
+		} else {
+			digest = new twrpMD5();
+			digestfile = Filename + ".md5";
+		}
 	}
 #else
 	digest = new twrpMD5();
@@ -58,7 +63,9 @@ bool twrpDigestDriver::Check_Restore_File_Digest(const string& Filename) {
 #endif
 
 	if (!TWFunc::Path_Exists(digestfile)) {
-		gui_msg(Msg(msg::kError, "no_digest_found=No digest file found for '{1}'. Please unselect Enable Digest verification to restore.")(Filename));
+		if (Filename.find(".zip") == std::string::npos) {
+			gui_msg(Msg(msg::kError, "no_digest_found=No digest file found for '{1}'. Please unselect Enable Digest verification to restore.")(Filename));
+		}
 		delete digest;
 		return false;
 	}
@@ -80,6 +87,7 @@ bool twrpDigestDriver::Check_Restore_File_Digest(const string& Filename) {
 			LOGINFO("SHA2 Digest: %s  %s\n", digest_str.c_str(), TWFunc::Get_Filename(Filename).c_str());
 		else
 			LOGINFO("MD5 Digest: %s  %s\n", digest_str.c_str(), TWFunc::Get_Filename(Filename).c_str());
+		gui_msg(Msg("digest_matched=Digest matched for '{1}'.")(Filename));
 		delete digest;
 		return true;
 	}
@@ -87,7 +95,6 @@ bool twrpDigestDriver::Check_Restore_File_Digest(const string& Filename) {
 	gui_msg(Msg(msg::kError, "digest_fail_match=Digest failed to match on '{1}'.")(Filename));
 	delete digest;
 	return false;
-
 }
 
 bool twrpDigestDriver::Check_Digest(string Full_Filename) {
@@ -103,13 +110,13 @@ bool twrpDigestDriver::Check_Digest(string Full_Filename) {
 			if (!TWFunc::Path_Exists(split_filename))
 				break;
 				LOGINFO("split_filename: %s\n", split_filename);
-				if (!Check_Restore_File_Digest(split_filename))
+				if (!Check_File_Digest(split_filename))
 					return false;
 				index++;
 		}
 		return true;
 	}
-	return Check_Restore_File_Digest(Full_Filename); // Single file archive
+	return Check_File_Digest(Full_Filename); // Single file archive
 }
 
 bool twrpDigestDriver::Write_Digest(string Full_Filename) {
