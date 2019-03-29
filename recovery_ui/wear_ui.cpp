@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "wear_ui.h"
+#include "recovery_ui/wear_ui.h"
 
 #include <string.h>
 

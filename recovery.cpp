@@ -52,7 +52,6 @@
 
 #include "adb_install.h"
 #include "common.h"
-#include "device.h"
 #include "fsck_unshare_blocks.h"
 #include "fuse_sdcard_install.h"
 #include "install.h"
@@ -62,9 +61,9 @@
 #include "otautil/paths.h"
 #include "otautil/sysutil.h"
 #include "package.h"
+#include "recovery_ui/screen_ui.h"
+#include "recovery_ui/ui.h"
 #include "roots.h"
-#include "screen_ui.h"
-#include "ui.h"
 
 static constexpr const char* CACHE_LOG_DIR = "/cache/recovery";
 static constexpr const char* COMMAND_FILE = "/cache/recovery/command";

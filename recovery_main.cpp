@@ -49,16 +49,16 @@
 #include <selinux/selinux.h>
 
 #include "common.h"
-#include "device.h"
 #include "fastboot/fastboot.h"
 #include "logging.h"
 #include "minadbd/minadbd.h"
 #include "otautil/paths.h"
 #include "otautil/sysutil.h"
 #include "recovery.h"
+#include "recovery_ui/device.h"
+#include "recovery_ui/stub_ui.h"
+#include "recovery_ui/ui.h"
 #include "roots.h"
-#include "stub_ui.h"
-#include "ui.h"
 
 static constexpr const char* COMMAND_FILE = "/cache/recovery/command";
 static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";

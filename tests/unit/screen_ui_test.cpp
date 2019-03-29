@@ -30,11 +30,11 @@
 #include <gtest/gtest_prod.h>
 
 #include "common/test_constants.h"
-#include "device.h"
 #include "minui/minui.h"
 #include "otautil/paths.h"
 #include "private/resources.h"
-#include "screen_ui.h"
+#include "recovery_ui/device.h"
+#include "recovery_ui/screen_ui.h"
 
 static const std::vector<std::string> HEADERS{ "header" };
 static const std::vector<std::string> ITEMS{ "item1", "item2", "item3", "item4", "1234567890" };
