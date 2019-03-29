@@ -33,7 +33,7 @@
 #include "common.h"
 #include "otautil/dirutil.h"
 #include "otautil/paths.h"
-#include "roots.h"
+#include "otautil/roots.h"
 
 static constexpr const char* LOG_FILE = "/cache/recovery/log";
 static constexpr const char* LAST_INSTALL_FILE = "/cache/recovery/last_install";
