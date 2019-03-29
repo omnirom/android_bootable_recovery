@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef _RECOVERY_VERIFIER_H
-#define _RECOVERY_VERIFIER_H
+#pragma once
 
 #include <stdint.h>
 
@@ -44,25 +43,20 @@ struct ECKEYDeleter {
 };
 
 struct Certificate {
-    typedef enum {
-        KEY_TYPE_RSA,
-        KEY_TYPE_EC,
-    } KeyType;
+  typedef enum {
+    KEY_TYPE_RSA,
+    KEY_TYPE_EC,
+  } KeyType;
 
-    Certificate(int hash_len_,
-                KeyType key_type_,
-                std::unique_ptr<RSA, RSADeleter>&& rsa_,
-                std::unique_ptr<EC_KEY, ECKEYDeleter>&& ec_)
-        : hash_len(hash_len_),
-          key_type(key_type_),
-          rsa(std::move(rsa_)),
-          ec(std::move(ec_)) {}
+  Certificate(int hash_len_, KeyType key_type_, std::unique_ptr<RSA, RSADeleter>&& rsa_,
+              std::unique_ptr<EC_KEY, ECKEYDeleter>&& ec_)
+      : hash_len(hash_len_), key_type(key_type_), rsa(std::move(rsa_)), ec(std::move(ec_)) {}
 
-    // SHA_DIGEST_LENGTH (SHA-1) or SHA256_DIGEST_LENGTH (SHA-256)
-    int hash_len;
-    KeyType key_type;
-    std::unique_ptr<RSA, RSADeleter> rsa;
-    std::unique_ptr<EC_KEY, ECKEYDeleter> ec;
+  // SHA_DIGEST_LENGTH (SHA-1) or SHA256_DIGEST_LENGTH (SHA-256)
+  int hash_len;
+  KeyType key_type;
+  std::unique_ptr<RSA, RSADeleter> rsa;
+  std::unique_ptr<EC_KEY, ECKEYDeleter> ec;
 };
 
 class VerifierInterface {
@@ -103,7 +97,5 @@ bool LoadCertificateFromBuffer(const std::vector<uint8_t>& pem_content, Certific
 // certificates. Returns an empty list if we fail to parse any of the entries.
 std::vector<Certificate> LoadKeysFromZipfile(const std::string& zip_name);
 
-#define VERIFY_SUCCESS        0
-#define VERIFY_FAILURE        1
-
-#endif  /* _RECOVERY_VERIFIER_H */
+#define VERIFY_SUCCESS 0
+#define VERIFY_FAILURE 1
