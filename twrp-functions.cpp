@@ -1206,7 +1206,7 @@ void TWFunc::check_selinux_support() {
 		}
 		if (TWFunc::Path_Exists(se_context_check)) {
 			ret = lgetfilecon(se_context_check.c_str(), &contexts);
-			if (ret > 0) {
+			if (ret < 0) {
 				lsetfilecon(se_context_check.c_str(), "test");
 				lgetfilecon(se_context_check.c_str(), &contexts);
 			} else {
