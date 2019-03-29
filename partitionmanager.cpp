@@ -907,10 +907,18 @@ int TWPartitionManager::Run_Backup(bool adbbackup) {
 	part_settings.file_bytes_remaining = part_settings.file_bytes;
 
 	gui_msg("backup_started=[BACKUP STARTED]");
-	gui_msg(Msg("backup_folder= * Backup Folder: {1}")(part_settings.Backup_Folder));
-	if (!TWFunc::Recursive_Mkdir(part_settings.Backup_Folder)) {
-		gui_err("fail_backup_folder=Failed to make backup folder.");
-		return false;
+
+	int is_decrypted = 0;
+	int is_encrypted = 0;
+
+	DataManager::GetValue(TW_IS_DECRYPTED, is_decrypted);
+	DataManager::GetValue(TW_IS_ENCRYPTED, is_encrypted);
+	if (!adbbackup || (!is_encrypted || (is_encrypted && is_decrypted))) {
+		gui_msg(Msg("backup_folder= * Backup Folder: {1}")(part_settings.Backup_Folder));
+		if (!TWFunc::Recursive_Mkdir(part_settings.Backup_Folder)) {
+			gui_err("fail_backup_folder=Failed to make backup folder.");
+			return false;
+		}
 	}
 
 	DataManager::SetProgress(0.0);
