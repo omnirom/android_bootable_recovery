@@ -26,7 +26,7 @@
 #include <ziparchive/zip_writer.h>
 
 #include "common/test_constants.h"
-#include "package.h"
+#include "install/package.h"
 
 class PackageTest : public ::testing::Test {
  protected:
