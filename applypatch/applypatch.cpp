@@ -76,7 +76,7 @@ static bool ReadPartitionToBuffer(const Partition& partition, FileContents* out,
   }
 
   android::base::unique_fd dev(open(partition.name.c_str(), O_RDONLY));
-  if (!dev) {
+  if (dev == -1) {
     PLOG(ERROR) << "Failed to open eMMC partition \"" << partition << "\"";
   } else {
     std::vector<unsigned char> buffer(partition.size);
