@@ -24,7 +24,6 @@
 #include <limits.h>
 #include <linux/fs.h>
 #include <linux/input.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -744,20 +743,6 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
 
 static void print_property(const char* key, const char* name, void* /* cookie */) {
   printf("%s=%s\n", key, name);
-}
-
-void ui_print(const char* format, ...) {
-    std::string buffer;
-    va_list ap;
-    va_start(ap, format);
-    android::base::StringAppendV(&buffer, format, ap);
-    va_end(ap);
-
-    if (ui != nullptr) {
-        ui->Print("%s", buffer.c_str());
-    } else {
-        fputs(buffer.c_str(), stdout);
-    }
 }
 
 static bool is_battery_ok(int* required_battery_level) {
