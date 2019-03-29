@@ -1206,10 +1206,7 @@ void TWFunc::check_selinux_support() {
 		}
 		if (TWFunc::Path_Exists(se_context_check)) {
 			ret = lgetfilecon(se_context_check.c_str(), &contexts);
-			if (ret > 0) {
-				lsetfilecon(se_context_check.c_str(), "test");
-				lgetfilecon(se_context_check.c_str(), &contexts);
-			} else {
+			if (ret < 0) {
 				LOGINFO("Could not check %s SELinux contexts, using /sbin/teamwin instead which may be inaccurate.\n", se_context_check.c_str());
 				lgetfilecon("/sbin/teamwin", &contexts);
 			}
