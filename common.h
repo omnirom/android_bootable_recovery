@@ -36,5 +36,3 @@ extern std::string stage;
 extern const char* reason;
 
 bool is_ro_debuggable();
-
-bool SetUsbConfig(const std::string& state);

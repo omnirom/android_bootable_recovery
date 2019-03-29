@@ -271,12 +271,6 @@ static bool erase_volume(const char* volume) {
   return (result == 0);
 }
 
-// Sets the usb config to 'state'
-bool SetUsbConfig(const std::string& state) {
-  android::base::SetProperty("sys.usb.config", state);
-  return android::base::WaitForProperty("sys.usb.state", state);
-}
-
 static bool yes_no(Device* device, const char* question1, const char* question2) {
   std::vector<std::string> headers{ question1, question2 };
   std::vector<std::string> items{ " No", " Yes" };
