@@ -342,7 +342,9 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
 
   // The updater in child process writes to the pipe to communicate with recovery.
   android::base::unique_fd pipe_read, pipe_write;
-  if (!android::base::Pipe(&pipe_read, &pipe_write)) {
+  // Explicitly disable O_CLOEXEC using 0 as the flags (last) parameter to Pipe
+  // so that the child updater process will recieve a non-closed fd.
+  if (!android::base::Pipe(&pipe_read, &pipe_write, 0)) {
     PLOG(ERROR) << "Failed to create pipe for updater-recovery communication";
     return INSTALL_CORRUPT;
   }
