@@ -63,32 +63,18 @@ cc_defaults {
         "libbootloader_message",
         "libcrypto",
         "libcutils",
-        "libext4_utils",
         "libfs_mgr",
-        "libfusesideload",
-        "libhidl-gen-utils",
-        "libhidlbase",
-        "libhidltransport",
         "liblog",
-        "libpng",
-        "libselinux",
-        "libtinyxml2",
-        "libutils",
-        "libz",
         "libziparchive",
     ],
 
     static_libs: [
         "librecovery_fastboot",
         "libminui",
-        "libpackage",
-        "libverifier",
         "libotautil",
 
         // external dependencies
         "libhealthhalutils",
-        "libvintf_recovery",
-        "libvintf",
         "libfstab",
     ],
 }
@@ -102,68 +88,13 @@ cc_library_static {
     ],
 
     srcs: [
-        "adb_install.cpp",
         "fsck_unshare_blocks.cpp",
-        "fuse_sdcard_install.cpp",
-        "install.cpp",
         "recovery.cpp",
-        "roots.cpp",
     ],
 
     shared_libs: [
+        "libinstall",
         "librecovery_ui",
-    ],
-
-    include_dirs: [
-        "system/vold",
-    ],
-}
-
-cc_library_static {
-    name: "libverifier",
-    recovery_available: true,
-
-    defaults: [
-        "recovery_defaults",
-    ],
-
-    srcs: [
-        "asn1_decoder.cpp",
-        "verifier.cpp",
-    ],
-
-    shared_libs: [
-        "libbase",
-        "libcrypto",
-        "libcrypto_utils",
-        "libziparchive",
-    ],
-
-    static_libs: [
-        "libotautil",
-    ],
-}
-
-cc_library_static {
-    name: "libpackage",
-    recovery_available: true,
-
-    defaults: [
-        "recovery_defaults",
-    ],
-
-    srcs: [
-        "package.cpp",
-    ],
-
-    shared_libs: [
-        "libbase",
-        "libcrypto",
-        "libziparchive",
-    ],
-
-    static_libs: [
-        "libotautil",
     ],
 }
 
@@ -172,6 +103,7 @@ cc_binary {
     recovery: true,
 
     defaults: [
+        "libinstall_defaults",
         "librecovery_defaults",
     ],
 
@@ -181,6 +113,7 @@ cc_binary {
     ],
 
     shared_libs: [
+        "libinstall",
         "libminadbd_services",
         "librecovery_ui",
     ],

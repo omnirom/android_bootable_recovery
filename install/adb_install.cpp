@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "adb_install.h"
+#include "install/adb_install.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -29,12 +29,16 @@
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 
-#include "common.h"
 #include "fuse_sideload.h"
-#include "install.h"
+#include "install/install.h"
 #include "recovery_ui/ui.h"
 
-int apply_from_adb(bool* wipe_cache) {
+static bool SetUsbConfig(const std::string& state) {
+  android::base::SetProperty("sys.usb.config", state);
+  return android::base::WaitForProperty("sys.usb.state", state);
+}
+
+int apply_from_adb(bool* wipe_cache, RecoveryUI* ui) {
   // Save the usb state to restore after the sideload operation.
   std::string usb_state = android::base::GetProperty("sys.usb.state", "none");
   // Clean up state and stop adbd.
@@ -85,7 +89,7 @@ int apply_from_adb(bool* wipe_cache) {
         break;
       }
     }
-    result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, false, 0);
+    result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, false, 0, ui);
     break;
   }
 

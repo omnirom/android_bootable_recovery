@@ -76,9 +76,9 @@ libapplypatch_static_libs = [
 librecovery_static_libs = [
     "librecovery",
     "librecovery_fastboot",
+    "libinstall",
+    "librecovery_ui",
     "libminui",
-    "libpackage",
-    "libverifier",
     "libotautil",
 
     "libhealthhalutils",
@@ -116,10 +116,9 @@ cc_test {
     ],
 
     static_libs: libapplypatch_static_libs + [
+        "libinstall",
         "librecovery_ui",
         "libminui",
-        "libpackage",
-        "libverifier",
         "libotautil",
         "libupdater",
         "libgtest_prod",
