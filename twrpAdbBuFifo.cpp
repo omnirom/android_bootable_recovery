@@ -274,7 +274,6 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 					Backup_FileName = Restore_Name.substr(pos + 1, Restore_Name.size());
 					part_settings.Part = PartitionManager.Find_Partition_By_Path(path);
 					part_settings.Backup_Folder = path;
-					PartitionManager.Set_Restore_Files(path);
 					part_settings.partition_count = partition_count;
 					part_settings.adbbackup = true;
 					part_settings.adb_compression = twimghdr.compressed;
