@@ -178,6 +178,12 @@ static std::string load_locale_from_cache() {
   return android::base::Trim(content);
 }
 
+// Sets the usb config to 'state'.
+static bool SetUsbConfig(const std::string& state) {
+  android::base::SetProperty("sys.usb.config", state);
+  return android::base::WaitForProperty("sys.usb.state", state);
+}
+
 static void ListenRecoverySocket(RecoveryUI* ui, std::atomic<Device::BuiltinAction>& action) {
   android::base::unique_fd sock_fd(android_get_control_socket("recovery"));
   if (sock_fd < 0) {
