@@ -177,7 +177,6 @@ bool twrpAdbBuFifo::Restore_ADB_Backup(void) {
 	part_settings.total_restore_size = 0;
 
 	PartitionManager.Mount_All_Storage();
-	DataManager::SetValue(TW_SKIP_DIGEST_CHECK_VAR, 0);
 	LOGINFO("opening TW_ADB_BU_CONTROL\n");
 	adb_control_bu_fd = open(TW_ADB_BU_CONTROL, O_WRONLY | O_NONBLOCK);
 	LOGINFO("opening TW_ADB_TWRP_CONTROL\n");
