@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6509693a_88f9254a",
+        "filename": "twrpDigestDriver.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1001478
+      },
+      "writtenOn": "2019-03-30T15:32:55Z",
+      "side": 1,
+      "message": "This line is duplicated!",
+      "revId": "31c1a9fb7ff406c2461772d8c9e9a92873790b4f",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
