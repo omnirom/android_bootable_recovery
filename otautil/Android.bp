@@ -42,12 +42,23 @@ cc_library_static {
                 "dirutil.cpp",
                 "mounts.cpp",
                 "parse_install_logs.cpp",
+                "roots.cpp",
                 "sysutil.cpp",
                 "thermalutil.cpp",
             ],
 
+            include_dirs: [
+                "system/vold",
+            ],
+
+            static_libs: [
+                "libfstab",
+            ],
+
             shared_libs: [
                 "libcutils",
+                "libext4_utils",
+                "libfs_mgr",
                 "libselinux",
             ],
         },

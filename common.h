@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef RECOVERY_COMMON_H
-#define RECOVERY_COMMON_H
-
-#include <stdarg.h>
-#include <stdio.h>
+#pragma once
 
 #include <string>
 
@@ -31,7 +27,6 @@ struct selabel_handle;
 
 extern struct selabel_handle* sehandle;
 extern RecoveryUI* ui;
-extern bool modified_flash;
 extern bool has_cache;
 
 // The current stage, e.g. "1/2".
@@ -40,9 +35,4 @@ extern std::string stage;
 // The reason argument provided in "--reason=".
 extern const char* reason;
 
-void ui_print(const char* format, ...) __printflike(1, 2);
-
 bool is_ro_debuggable();
-
-bool SetUsbConfig(const std::string& state);
-#endif  // RECOVERY_COMMON_H

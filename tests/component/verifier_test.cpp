@@ -35,9 +35,9 @@
 #include <ziparchive/zip_writer.h>
 
 #include "common/test_constants.h"
+#include "install/package.h"
+#include "install/verifier.h"
 #include "otautil/sysutil.h"
-#include "package.h"
-#include "verifier.h"
 
 using namespace std::string_literals;
 

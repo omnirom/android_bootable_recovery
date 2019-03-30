@@ -17,6 +17,7 @@
 #ifndef ASN1_DECODER_H_
 #define ASN1_DECODER_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 class asn1_context {

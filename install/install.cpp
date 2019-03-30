@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "install.h"
+#include "install/install.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -46,18 +46,21 @@
 #include <android-base/unique_fd.h>
 #include <vintf/VintfObjectRecovery.h>
 
-#include "common.h"
+#include "install/package.h"
+#include "install/verifier.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
+#include "otautil/roots.h"
 #include "otautil/sysutil.h"
 #include "otautil/thermalutil.h"
-#include "package.h"
-#include "private/install.h"
+#include "private/setup_commands.h"
 #include "recovery_ui/ui.h"
-#include "roots.h"
-#include "verifier.h"
 
 using namespace std::chrono_literals;
+
+static constexpr int kRecoveryApiVersion = 3;
+// Assert the version defined in code and in Android.mk are consistent.
+static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
 
 // Default allocation of progress bar segments to operations
 static constexpr int VERIFICATION_PROGRESS_TIME = 60;
@@ -323,7 +326,7 @@ static void log_max_temperature(int* max_temperature, const std::atomic<bool>& l
 // If the package contains an update binary, extract it and run it.
 static int try_update_binary(const std::string& package, ZipArchiveHandle zip, bool* wipe_cache,
                              std::vector<std::string>* log_buffer, int retry_count,
-                             int* max_temperature) {
+                             int* max_temperature, RecoveryUI* ui) {
   std::map<std::string, std::string> metadata;
   if (!ReadMetadataFromPackage(zip, &metadata)) {
     LOG(ERROR) << "Failed to parse metadata in the zip file";
@@ -342,7 +345,9 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
 
   // The updater in child process writes to the pipe to communicate with recovery.
   android::base::unique_fd pipe_read, pipe_write;
-  if (!android::base::Pipe(&pipe_read, &pipe_write)) {
+  // Explicitly disable O_CLOEXEC using 0 as the flags (last) parameter to Pipe
+  // so that the child updater process will recieve a non-closed fd.
+  if (!android::base::Pipe(&pipe_read, &pipe_write, 0)) {
     PLOG(ERROR) << "Failed to create pipe for updater-recovery communication";
     return INSTALL_CORRUPT;
   }
@@ -567,7 +572,7 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
 
 static int really_install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
                                   std::vector<std::string>* log_buffer, int retry_count,
-                                  int* max_temperature) {
+                                  int* max_temperature, RecoveryUI* ui) {
   ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
   ui->Print("Finding update package...\n");
   // Give verification half the progress bar...
@@ -594,7 +599,7 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   }
 
   // Verify package.
-  if (!verify_package(package.get())) {
+  if (!verify_package(package.get(), ui)) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
     return INSTALL_CORRUPT;
   }
@@ -618,18 +623,19 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
     ui->Print("Retry attempt: %d\n", retry_count);
   }
   ui->SetEnableReboot(false);
-  int result = try_update_binary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature);
+  int result =
+      try_update_binary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature, ui);
   ui->SetEnableReboot(true);
   ui->Print("\n");
 
   return result;
 }
 
-int install_package(const std::string& path, bool* wipe_cache, bool needs_mount, int retry_count) {
+int install_package(const std::string& path, bool* wipe_cache, bool needs_mount, int retry_count,
+                    RecoveryUI* ui) {
   CHECK(!path.empty());
   CHECK(wipe_cache != nullptr);
 
-  modified_flash = true;
   auto start = std::chrono::system_clock::now();
 
   int start_temperature = GetMaxValueFromThermalZone();
@@ -642,7 +648,7 @@ int install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
     result = INSTALL_ERROR;
   } else {
     result = really_install_package(path, wipe_cache, needs_mount, &log_buffer, retry_count,
-                                    &max_temperature);
+                                    &max_temperature, ui);
   }
 
   // Measure the time spent to apply OTA update in seconds.
@@ -700,7 +706,7 @@ int install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
   return result;
 }
 
-bool verify_package(Package* package) {
+bool verify_package(Package* package, RecoveryUI* ui) {
   static constexpr const char* CERTIFICATE_ZIP_FILE = "/system/etc/security/otacerts.zip";
   std::vector<Certificate> loaded_keys = LoadKeysFromZipfile(CERTIFICATE_ZIP_FILE);
   if (loaded_keys.empty()) {
