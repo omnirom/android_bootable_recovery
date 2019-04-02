@@ -32,6 +32,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <cutils/properties.h>
 
 #include "twcommon.h"
 #include "mtdutils/mounts.h"
@@ -154,7 +155,21 @@ static int Install_Theme(const char* path, ZipWrap *Zip) {
 }
 
 static int Prepare_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache) {
-	if (!Zip->ExtractEntry(ASSUMED_UPDATE_BINARY_NAME, TMP_UPDATER_BINARY_PATH, 0755)) {
+	char arch[100];
+	std::string binary_name = ASSUMED_UPDATE_BINARY_NAME;
+	property_get("ro.product.cpu.abi", arch, "error");
+	if (strncmp(arch, "arm64", 5) == 0) {
+		if (Zip->EntryExists(ASSUMED_UPDATE_BINARY_NAME "arm64"))
+			binary_name += "arm64";
+	} else if (strncmp(arch, "arm", 3) == 0 && Zip->EntryExists(ASSUMED_UPDATE_BINARY_NAME "arm")) {
+		binary_name += "arm";
+	} else if (strncmp(arch, "x86_64", 6) == 0 && Zip->EntryExists(ASSUMED_UPDATE_BINARY_NAME "x86_64")) {
+		binary_name += "x86_64";
+	} else if (strncmp(arch, "x86", 3) == 0 && Zip->EntryExists(ASSUMED_UPDATE_BINARY_NAME "x86")) {
+		binary_name += "x86";
+	}
+	LOGINFO("Extracting updater binary '%s'\n", binary_name.c_str());
+	if (!Zip->ExtractEntry(binary_name.c_str(), TMP_UPDATER_BINARY_PATH, 0755)) {
 		Zip->Close();
 		LOGERR("Could not extract '%s'\n", ASSUMED_UPDATE_BINARY_NAME);
 		return INSTALL_ERROR;
