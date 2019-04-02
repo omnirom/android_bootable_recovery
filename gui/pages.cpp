@@ -55,13 +55,14 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "blanktimer.hpp"
+#include "../tw_atomic.hpp"
 
 // version 2 requires theme to handle power button as action togglebacklight
 #define TW_THEME_VERSION 3
 
 #define TW_THEME_VER_ERR -2
 
-extern int gGuiRunning;
+extern TWAtomicInt gGuiRunning;
 
 std::map<std::string, PageSet*> PageManager::mPageSets;
 PageSet* PageManager::mCurrentSet;
@@ -524,6 +525,8 @@ bool Page::ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates, in
 
 int Page::Render(void)
 {
+	if (gGuiRunning.get_value() == 0) return 0;
+
 	// Render background
 	gr_color(mBackground.red, mBackground.green, mBackground.blue, mBackground.alpha);
 	gr_fill(0, 0, gr_fb_width(), gr_fb_height());
@@ -540,6 +543,8 @@ int Page::Render(void)
 
 int Page::Update(void)
 {
+	if (gGuiRunning.get_value() == 0) return 0;
+
 	int retCode = 0;
 
 	std::vector<RenderObject*>::iterator iter;
@@ -557,6 +562,8 @@ int Page::Update(void)
 
 int Page::NotifyTouch(TOUCH_STATE state, int x, int y)
 {
+	if (gGuiRunning.get_value() == 0) return 0;
+
 	// By default, return 1 to ignore further touches if nobody is listening
 	int ret = 1;
 
@@ -595,6 +602,8 @@ int Page::NotifyTouch(TOUCH_STATE state, int x, int y)
 
 int Page::NotifyKey(int key, bool down)
 {
+	if (gGuiRunning.get_value() == 0) return 0;
+
 	std::vector<ActionObject*>::reverse_iterator iter;
 
 	int ret = 1;
@@ -1703,7 +1712,7 @@ void PageManager::AddStringResource(std::string resource_source, std::string res
 
 extern "C" void gui_notifyVarChange(const char *name, const char* value)
 {
-	if (!gGuiRunning)
+	if (gGuiRunning.get_value() == 0)
 		return;
 
 	PageManager::NotifyVarChange(name, value);

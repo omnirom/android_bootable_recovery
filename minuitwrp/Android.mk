@@ -34,7 +34,7 @@ else
   LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minuitwrp/include
   # The header files required for adf graphics can cause compile errors
   # with adf graphics.
-  ifneq ($(wildcard system/core/adf/Android.*),)
+  ifneq ($(wildcard system/core/adf/Android.mk),)
     LOCAL_CFLAGS += -DHAS_ADF
     LOCAL_SRC_FILES += graphics_adf.cpp
     LOCAL_WHOLE_STATIC_LIBRARIES += libadf
@@ -45,7 +45,7 @@ ifeq ($(TW_NEW_ION_HEAP), true)
   LOCAL_CFLAGS += -DNEW_ION_HEAP
 endif
 
-ifneq ($(wildcard external/libdrm/Android.*),)
+ifneq ($(wildcard external/libdrm/Android.mk),)
   LOCAL_CFLAGS += -DHAS_DRM
   LOCAL_SRC_FILES += graphics_drm.cpp
   ifneq ($(wildcard external/libdrm/Android.common.mk),)
