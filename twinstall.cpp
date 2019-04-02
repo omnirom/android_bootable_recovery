@@ -302,6 +302,7 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 	fclose(child_data);
 
 	int waitrc = TWFunc::Wait_For_Child(pid, &status, "Updater");
+	gui_resume();
 
 #ifndef TW_NO_LEGACY_PROPS
 	/* Unset legacy properties */
@@ -336,8 +337,8 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 		gui_msg("check_for_digest=Checking for Digest file...");
 
 		if (!twrpDigestDriver::Check_File_Digest(Full_Filename)) {
-					LOGERR("Aborting zip install: Digest verification failed\n");
-					return INSTALL_CORRUPT;
+			LOGERR("Aborting zip install: Digest verification failed\n");
+			return INSTALL_CORRUPT;
 		}
 	}
 
@@ -406,8 +407,13 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 			ret_val = INSTALL_CORRUPT;
 		} else {
 			ret_val = Prepare_Update_Binary(path, &Zip, wipe_cache);
-			if (ret_val == INSTALL_SUCCESS)
+			if (ret_val == INSTALL_SUCCESS) {
+				if (Zip.EntryExists("META-INF/com/google/android/aroma-config")){
+					gui_pause();
+					sleep(3);
+				}
 				ret_val = Run_Update_Binary(path, &Zip, wipe_cache, UPDATE_BINARY_ZIP_TYPE);
+			}
 		}
 	} else {
 		if (Zip.EntryExists(AB_OTA)) {

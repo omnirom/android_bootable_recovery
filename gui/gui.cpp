@@ -73,7 +73,7 @@ static float scale_theme_w = 1;
 static float scale_theme_h = 1;
 
 // Needed by pages.cpp too
-int gGuiRunning = 0;
+TWAtomicInt gGuiRunning;
 
 int g_pty_fd = -1;  // set by terminal on init
 void terminal_pty_read();
@@ -86,6 +86,7 @@ extern "C" void gr_write_frame_to_file(int fd);
 
 static void flip(void)
 {
+	if (gGuiRunning.get_value() == 0) return;
 	if (gRecorder != -1)
 	{
 		timespec time;
@@ -559,7 +560,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 		gui_changePage(page_name);
 	}
 
-	gGuiRunning = 1;
+	gGuiRunning.set_value(1);
 
 	DataManager::SetValue("tw_loaded", 1);
 
@@ -657,7 +658,7 @@ static int runPages(const char *page_name, const int stop_on_page_done)
 		close(ors_read_fd);
 	ors_read_fd = -1;
 	set_select_fd();
-	gGuiRunning = 0;
+	gGuiRunning.set_value(0);
 	return 0;
 }
 
@@ -867,6 +868,27 @@ error:
 extern "C" int gui_start(void)
 {
 	return gui_startPage("main", 1, 0);
+}
+
+extern "C" void gui_pause()
+{
+	gGuiRunning.set_value(0);
+#ifndef TW_NO_SCREEN_TIMEOUT
+	blankTimer.setTime(0);
+	blankTimer.resetTimerAndUnblank();
+#endif
+	gr_exit();
+}
+
+extern "C" void gui_resume()
+{
+	gr_init();
+	gGuiRunning.set_value(1);
+#ifndef TW_NO_SCREEN_TIMEOUT
+	blankTimer.setTime(DataManager::GetIntValue("tw_screen_timeout_secs"));
+	blankTimer.resetTimerAndUnblank();
+#endif
+	gui_forceRender();
 }
 
 extern "C" int gui_startPage(const char *page_name, const int allow_commands, int stop_on_page_done)
