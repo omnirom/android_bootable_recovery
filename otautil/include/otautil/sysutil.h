@@ -22,6 +22,57 @@
 #include <string>
 #include <vector>
 
+#include "rangeset.h"
+
+// This class holds the content of a block map file.
+class BlockMapData {
+ public:
+  // A "block map" which looks like this (from uncrypt/uncrypt.cpp):
+  //
+  //   /dev/block/platform/msm_sdcc.1/by-name/userdata     # block device
+  //   49652 4096                                          # file size in bytes, block size
+  //   3                                                   # count of block ranges
+  //   1000 1008                                           # block range 0
+  //   2100 2102                                           # ... block range 1
+  //   30 33                                               # ... block range 2
+  //
+  // Each block range represents a half-open interval; the line "30 33" reprents the blocks
+  // [30, 31, 32].
+  static BlockMapData ParseBlockMapFile(const std::string& block_map_path);
+
+  explicit operator bool() const {
+    return !path_.empty();
+  }
+
+  std::string path() const {
+    return path_;
+  }
+  uint64_t file_size() const {
+    return file_size_;
+  }
+  uint32_t block_size() const {
+    return block_size_;
+  }
+  RangeSet block_ranges() const {
+    return block_ranges_;
+  }
+
+ private:
+  BlockMapData() = default;
+
+  BlockMapData(const std::string& path, uint64_t file_size, uint32_t block_size,
+               RangeSet block_ranges)
+      : path_(path),
+        file_size_(file_size),
+        block_size_(block_size),
+        block_ranges_(std::move(block_ranges)) {}
+
+  std::string path_;
+  uint64_t file_size_ = 0;
+  uint32_t block_size_ = 0;
+  RangeSet block_ranges_;
+};
+
 /*
  * Use this to keep track of mapped segments.
  */

@@ -392,7 +392,7 @@ int run_fuse_sideload(std::unique_ptr<FuseDataProvider>&& provider, const char* 
   }
 
   fd.ffd.reset(open("/dev/fuse", O_RDWR));
-  if (!fd.ffd) {
+  if (fd.ffd == -1) {
     perror("open /dev/fuse");
     result = -1;
     goto done;

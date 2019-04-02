@@ -53,12 +53,12 @@
 #include "logging.h"
 #include "minadbd/minadbd.h"
 #include "otautil/paths.h"
+#include "otautil/roots.h"
 #include "otautil/sysutil.h"
 #include "recovery.h"
 #include "recovery_ui/device.h"
 #include "recovery_ui/stub_ui.h"
 #include "recovery_ui/ui.h"
-#include "roots.h"
 
 static constexpr const char* COMMAND_FILE = "/cache/recovery/command";
 static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";
@@ -176,6 +176,12 @@ static std::string load_locale_from_cache() {
   }
 
   return android::base::Trim(content);
+}
+
+// Sets the usb config to 'state'.
+static bool SetUsbConfig(const std::string& state) {
+  android::base::SetProperty("sys.usb.config", state);
+  return android::base::WaitForProperty("sys.usb.state", state);
 }
 
 static void ListenRecoverySocket(RecoveryUI* ui, std::atomic<Device::BuiltinAction>& action) {

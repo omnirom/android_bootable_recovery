@@ -35,9 +35,9 @@
 #include <ziparchive/zip_writer.h>
 
 #include "common/test_constants.h"
+#include "install/package.h"
+#include "install/verifier.h"
 #include "otautil/sysutil.h"
-#include "package.h"
-#include "verifier.h"
 
 using namespace std::string_literals;
 
@@ -156,6 +156,17 @@ TEST(VerifierTest, LoadCertificateFromBuffer_sha256_ec256bits) {
   ASSERT_EQ(nullptr, cert.rsa);
 
   VerifyPackageWithSingleCertificate("otasigned_v5.zip", std::move(cert));
+}
+
+TEST(VerifierTest, LoadCertificateFromBuffer_sha256_rsa4096_bits) {
+  Certificate cert(0, Certificate::KEY_TYPE_RSA, nullptr, nullptr);
+  LoadKeyFromFile(from_testdata_base("testkey_4096bits.x509.pem"), &cert);
+
+  ASSERT_EQ(SHA256_DIGEST_LENGTH, cert.hash_len);
+  ASSERT_EQ(Certificate::KEY_TYPE_RSA, cert.key_type);
+  ASSERT_EQ(nullptr, cert.ec);
+
+  VerifyPackageWithSingleCertificate("otasigned_4096bits.zip", std::move(cert));
 }
 
 TEST(VerifierTest, LoadCertificateFromBuffer_check_rsa_keys) {

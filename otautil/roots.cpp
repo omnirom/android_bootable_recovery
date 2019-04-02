@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "roots.h"
+#include "otautil/roots.h"
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -50,8 +50,6 @@ using android::fs_mgr::FstabEntry;
 using android::fs_mgr::ReadDefaultFstab;
 
 static Fstab fstab;
-
-extern struct selabel_handle* sehandle;
 
 void load_volume_table() {
   if (!ReadDefaultFstab(&fstab)) {
@@ -176,11 +174,9 @@ int format_volume(const std::string& volume, const std::string& directory) {
       PLOG(ERROR) << "format_volume: failed to open " << v->blk_device;
       return -1;
     }
-    length =
-        get_file_size(fd.get(), v->length ? -v->length : CRYPT_FOOTER_OFFSET);
+    length = get_file_size(fd.get(), v->length ? -v->length : CRYPT_FOOTER_OFFSET);
     if (length <= 0) {
-      LOG(ERROR) << "get_file_size: invalid size " << length << " for "
-                 << v->blk_device;
+      LOG(ERROR) << "get_file_size: invalid size " << length << " for " << v->blk_device;
       return -1;
     }
   }
