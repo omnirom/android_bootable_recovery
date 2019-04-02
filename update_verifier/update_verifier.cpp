@@ -115,6 +115,15 @@ std::map<std::string, std::string> UpdateVerifier::FindDmPartitions() {
       // AVB is using 'vroot' for the root block device but we're expecting 'system'.
       if (dm_block_name == "vroot") {
         dm_block_name = "system";
+      } else if (android::base::EndsWith(dm_block_name, "-verity")) {
+        auto npos = dm_block_name.rfind("-verity");
+        dm_block_name = dm_block_name.substr(0, npos);
+      } else if (!android::base::GetProperty("ro.boot.avb_version", "").empty()) {
+        // Verified Boot 1.0 doesn't add a -verity suffix. On AVB 2 devices,
+        // if DAP is enabled, then a -verity suffix must be used to
+        // differentiate between dm-linear and dm-verity devices. If we get
+        // here, we're AVB 2 and looking at a non-verity partition.
+        continue;
       }
 
       dm_block_devices.emplace(dm_block_name, DEV_PATH + std::string(namelist[n]->d_name));
