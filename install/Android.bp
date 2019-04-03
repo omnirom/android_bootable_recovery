@@ -43,7 +43,6 @@ cc_defaults {
         // external dependencies
         "libvintf_recovery",
         "libvintf",
-        "libfstab",
     ],
 }
 

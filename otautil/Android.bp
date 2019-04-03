@@ -61,6 +61,10 @@ cc_library_static {
                 "libfs_mgr",
                 "libselinux",
             ],
+
+            export_static_lib_headers: [
+                "libfstab",
+            ],
         },
     },
 }
