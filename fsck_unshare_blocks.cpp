@@ -34,7 +34,6 @@
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android-base/unique_fd.h>
-#include <fstab/fstab.h>
 
 #include "otautil/roots.h"
 
