@@ -24,6 +24,13 @@ else
     ifeq ($(LOCAL_PATH),bootable/recovery)
         PROJECT_PATH_AGREES := true
         BOARD_SEPOLICY_DIRS += bootable/recovery/sepolicy
+    else
+        ifeq ($(LOCAL_PATH),bootable/recovery-twrp)
+            ifeq ($(RECOVERY_VARIANT),twrp)
+                PROJECT_PATH_AGREES := true
+                BOARD_SEPOLICY_DIRS += bootable/recovery-twrp/sepolicy
+            endif
+        endif
     endif
 endif
 
