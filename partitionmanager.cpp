@@ -3088,7 +3088,7 @@ bool TWPartitionManager::Prepare_Repack(const std::string& Source_Path, const st
 		if (TWFunc::copy_file(Source_Path, destination, 0644))
 			return false;
 	}
-	std::string command = "cd " + Temp_Folder_Destination + " && /sbin/magiskboot --unpack -h " + Source_Path;
+	std::string command = "cd " + Temp_Folder_Destination + " && /sbin/magiskboot --unpack -h '" + Source_Path +"'";
 	if (TWFunc::Exec_Cmd(command) != 0) {
 		LOGINFO("Error unpacking %s!\n", Source_Path.c_str());
 		gui_msg(Msg(msg::kError, "unpack_error=Error unpacking image."));
