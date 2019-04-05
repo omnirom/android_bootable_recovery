@@ -19,6 +19,10 @@ cc_defaults {
         "recovery_defaults",
     ],
 
+    header_libs: [
+        "libminadbd_headers",
+    ],
+
     shared_libs: [
         "libbase",
         "libbootloader_message",

@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#ifndef MINADBD_H__
-#define MINADBD_H__
+#pragma once
 
-int minadbd_main();
-
-#endif
+void SetMinadbdSocketFd(int socket_fd);
