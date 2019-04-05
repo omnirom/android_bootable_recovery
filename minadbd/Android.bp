@@ -40,7 +40,6 @@ cc_library {
 
     srcs: [
         "fuse_adb_provider.cpp",
-        "minadbd.cpp",
         "minadbd_services.cpp",
     ],
 
@@ -49,6 +48,36 @@ cc_library {
         "libbase",
         "libcrypto",
         "libfusesideload",
+    ],
+}
+
+cc_library_headers {
+    name: "libminadbd_headers",
+    recovery_available: true,
+    // TODO create a include dir
+    export_include_dirs: [
+        ".",
+    ],
+}
+
+cc_binary {
+    name: "minadbd",
+    recovery: true,
+
+    defaults: [
+        "minadbd_defaults",
+    ],
+
+    srcs: [
+        "minadbd.cpp",
+    ],
+
+    shared_libs: [
+        "libadbd",
+        "libbase",
+        "libcrypto",
+        "libfusesideload",
+        "libminadbd_services",
     ],
 }
 
