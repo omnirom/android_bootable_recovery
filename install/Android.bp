@@ -47,7 +47,7 @@ cc_defaults {
     ],
 }
 
-cc_library {
+cc_library_static {
     name: "libinstall",
     recovery_available: true,
 

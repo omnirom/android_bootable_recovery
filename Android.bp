@@ -69,6 +69,7 @@ cc_defaults {
     ],
 
     static_libs: [
+        "libinstall",
         "librecovery_fastboot",
         "libminui",
         "libotautil",
@@ -93,7 +94,6 @@ cc_library_static {
     ],
 
     shared_libs: [
-        "libinstall",
         "librecovery_ui",
     ],
 }
@@ -113,7 +113,6 @@ cc_binary {
     ],
 
     shared_libs: [
-        "libinstall",
         "libminadbd_services",
         "librecovery_ui",
     ],
