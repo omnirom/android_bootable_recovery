@@ -353,9 +353,9 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 
 		gui_msg("check_for_digest=Checking for Digest file...");
 
-		if (!twrpDigestDriver::Check_File_Digest(Full_Filename)) {
-					LOGERR("Aborting zip install: Digest verification failed\n");
-					return INSTALL_CORRUPT;
+		if (*path != '@' && !twrpDigestDriver::Check_File_Digest(Full_Filename)) {
+			LOGERR("Aborting zip install: Digest verification failed\n");
+			return INSTALL_CORRUPT;
 		}
 	}
 
