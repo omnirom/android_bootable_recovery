@@ -112,7 +112,6 @@ cc_binary {
     ],
 
     shared_libs: [
-        "libminadbd_services",
         "librecovery_ui",
     ],
 
@@ -124,6 +123,7 @@ cc_binary {
     required: [
         "e2fsdroid.recovery",
         "librecovery_ui_ext",
+        "minadbd",
         "mke2fs.conf.recovery",
         "mke2fs.recovery",
         "recovery_deps",
