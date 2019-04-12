@@ -50,7 +50,8 @@
 
 #include "common.h"
 #include "fastboot/fastboot.h"
-#include "logging.h"
+#include "install/wipe_data.h"
+#include "otautil/logging.h"
 #include "otautil/paths.h"
 #include "otautil/roots.h"
 #include "otautil/sysutil.h"
@@ -433,6 +434,8 @@ int main(int argc, char** argv) {
   if (!sehandle) {
     ui->Print("Warning: No file_contexts\n");
   }
+
+  SetWipeDataSehandle(sehandle);
 
   std::atomic<Device::BuiltinAction> action;
   std::thread listener_thread(ListenRecoverySocket, ui, std::ref(action));
