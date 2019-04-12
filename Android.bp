@@ -108,7 +108,6 @@ cc_binary {
     ],
 
     srcs: [
-        "logging.cpp",
         "recovery_main.cpp",
     ],
 
@@ -140,7 +139,6 @@ cc_binary {
     ],
 
     srcs: [
-        "logging.cpp",
         "recovery-persist.cpp",
     ],
 
@@ -169,7 +167,6 @@ cc_binary {
     ],
 
     srcs: [
-        "logging.cpp",
         "recovery-refresh.cpp",
     ],
 

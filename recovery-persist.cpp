@@ -43,7 +43,7 @@
 #include <metricslogger/metrics_logger.h>
 #include <private/android_logger.h> /* private pmsg functions */
 
-#include "logging.h"
+#include "otautil/logging.h"
 #include "otautil/parse_install_logs.h"
 
 constexpr const char* LAST_LOG_FILE = "/data/misc/recovery/last_log";

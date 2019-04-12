@@ -18,4 +18,4 @@
 
 #include <recovery_ui/ui.h>
 
-int apply_from_adb(bool* wipe_cache, RecoveryUI* ui);
+int apply_from_adb(RecoveryUI* ui);
