@@ -51,7 +51,6 @@
 #include "common.h"
 #include "fastboot/fastboot.h"
 #include "logging.h"
-#include "minadbd/minadbd.h"
 #include "otautil/paths.h"
 #include "otautil/roots.h"
 #include "otautil/sysutil.h"
@@ -321,16 +320,6 @@ int main(int argc, char** argv) {
   __android_log_pmsg_file_read(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter, logbasename, &do_rotate);
   // Take action to refresh pmsg contents
   __android_log_pmsg_file_read(LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter, logrotate, &do_rotate);
-
-  // If this binary is started with the single argument "--adbd", instead of being the normal
-  // recovery binary, it turns into kind of a stripped-down version of adbd that only supports the
-  // 'sideload' command.  Note this must be a real argument, not anything in the command file or
-  // bootloader control block; the only way recovery should be run with this argument is when it
-  // starts a copy of itself from the apply_from_adb() function.
-  if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
-    minadbd_main();
-    return 0;
-  }
 
   time_t start = time(nullptr);
 
