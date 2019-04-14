@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <language>
 	<display>Русский</display>
-	<!-- Translated by Jemmini; modified by agur4ik, SevenMaxs, S-trace 2017 -->
+	<!-- Translated by Jemmini; modified by agur4ik, SevenMaxs, S-trace 2017, f2065 -->
 
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
@@ -9,6 +9,7 @@
 		<resource filename="RobotoCondensed-Regular.ttf" name="font_m" scale="90" type="fontoverride"/>
 		<resource filename="RobotoCondensed-Regular.ttf" name="font_s" scale="90" type="fontoverride"/>
 		<resource filename="DroidSansMono.ttf" name="fixed" scale="100" type="fontoverride"/>
+
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System Image</string>
@@ -29,6 +30,8 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted Storage</string>
+		<string name="autostorage">Storage</string>
+
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
@@ -47,6 +50,7 @@
 		<string name="tab_screen">ЭКРАН</string>
 		<string name="tab_vibration">ВИБРАЦИЯ</string>
 		<string name="tab_language">ЯЗЫК</string>
+
 		<string name="install_btn">Установка</string>
 		<string name="wipe_btn">Очистка</string>
 		<string name="backup_btn">Резервное коп-ние</string>
@@ -86,7 +90,7 @@
 		<string name="zip_queue">Очередь:</string>
 		<string name="options">Опции:</string>
 		<string name="swipe_confirm">   Подтвердить</string>
-		<string name="zip_add_btn">Добавить еще Zip</string>
+		<string name="zip_add_btn">Добавить ещё Zip</string>
 		<string name="zip_clear_btn">Очистить очередь Zip</string>
 		<string name="install_zip_count_hdr">Установка Zip %tw_zip_index% из %tw_zip_queue_count%</string>
 		<string name="installing_zip_xml">Установка Zip: %tw_file%</string>
@@ -95,6 +99,7 @@
 		<string name="install_failed">Установка не удалась</string>
 		<string name="install_successful">Установка выполнена успешно</string>
 		<string name="wipe_cache_dalvik_btn">Очистка cache/dalvik</string>
+		<string name="wipe_dalvik_btn">Очистка dalvik</string>
 		<string name="reboot_system_btn">Перезагрузка в ОС</string>
 		<string name="install_sel_target">Выбор раздела</string>
 		<string name="flash_image_select">Выберите раздел для прошивки образа:</string>
@@ -102,8 +107,11 @@
 		<string name="flashing_image">Прошивка образа...</string>
 		<string name="image_flashed">Прошивка образа завершена</string>
 		<string name="wipe_cache_dalvik_confirm">Очистить Cache &amp; Dalvik?</string>
+		<string name="wipe_dalvik_confirm">Очистить Dalvik?</string>
 		<string name="wiping_cache_dalvik">Очистка Cache &amp; Dalvik...</string>
+		<string name="wiping_dalvik">Очистка Dalvik...</string>
 		<string name="wipe_cache_dalvik_complete">Очистка Cache &amp; Dalvik завершена</string>
+		<string name="wipe_dalvik_complete">Очистка Dalvik завершена</string>
 		<string name="swipe_wipe">Свайп для очистки</string>
 		<string name="swipe_wipe_s">   Очистка</string>
 		<string name="no_os1">Система не установлена! Вы уверены,</string>
@@ -137,7 +145,7 @@
 		<string name="formatting_data">Форматирование Data...</string>
 		<string name="swipe_format_data">Свайп для форматирования</string>
 		<string name="swipe_format_data_s">   Форматировать Data</string>
-		<string name="factory_reset_complete">Сброс до заводского состояния завершен</string>
+		<string name="factory_reset_complete">Сброс до заводского состояния завершён</string>
 		<string name="sel_part_hdr">Выбор разделов</string>
 		<string name="wipe_sel_confirm">Очистить выбранные разделы?</string>
 		<string name="wiping_part">Очистка разделов...</string>
@@ -166,8 +174,8 @@
 		<string name="part_curr_fs">Файловая система: %tw_partition_file_system%</string>
 		<string name="part_present_yes">Присутствует: да</string>
 		<string name="part_present_no">Присутствует: нет</string>
-		<string name="part_removable_yes">Съемное: да</string>
-		<string name="part_removable_no">Съемное: нет</string>
+		<string name="part_removable_yes">Съёмное: да</string>
+		<string name="part_removable_no">Съёмное: нет</string>
 		<string name="part_size">Размер: %tw_partition_size% МБ</string>
 		<string name="part_used">Использовано: %tw_partition_used% МБ</string>
 		<string name="part_free">Свободно: %tw_partition_free% МБ</string>
@@ -212,7 +220,7 @@
 		<string name="enc_disabled">выключено - установите пароль для включения</string>
 		<string name="enc_enabled">включено</string>
 		<string name="enable_backup_comp_chk">Использовать сжатие</string>
-		<string name="skip_digest_backup_chk" version="2">Пропустить вычисление MD5</string>
+		<string name="skip_digest_backup_chk" version="2">Пропустить вычисление контрольных сумм</string>
 		<string name="disable_backup_space_chk" version="2">Отключить проверку свободного места</string>
 		<string name="current_boot_slot">Текущий слот: %tw_active_slot%</string>
 		<string name="boot_slot_a">Слот A</string>
@@ -225,7 +233,7 @@
 		<string name="backup_name_exists">Резервная копия с таким именем уже существует!</string>
 		<string name="encrypt_backup">Зашифровать вашу резервную копию?</string>
 		<string name="enter_pass">Введите пароль:</string>
-		<string name="enter_pass2">Введите пароль еще раз:</string>
+		<string name="enter_pass2">Введите пароль ещё раз:</string>
 		<string name="pass_not_match">Пароли не совпадают!</string>
 		<string name="partitions">Разделы:</string>
 		<string name="disabled">Выключено</string>
@@ -250,7 +258,7 @@
 		<string name="restore_try_decrypt_s">Попытка расшифровки</string>
 		<string name="restore_backup_date">Резервная копия создана: %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Выбор раздела для восстановления:</string>
-		<string name="restore_enable_digest_chk" version="2">Включить проверку Digest файлов резервной копии</string>
+		<string name="restore_enable_digest_chk" version="2">Включить проверку контрольных сумм резервной копии</string>
 		<string name="restore_complete">Восстановление завершено</string>
 		<string name="swipe_restore">Свайп для восстановления</string>
 		<string name="swipe_restore_s">   Восстановление</string>
@@ -271,7 +279,7 @@
 		<string name="enable_mtp_btn">Включить MTP</string>
 		<string name="mount_usb_storage_btn">Включить UMS</string>
 		<string name="usb_storage_hdr">USB накопитель</string>
-		<string name="usb_stor_mnt1">Режим USB накопителя включен</string>
+		<string name="usb_stor_mnt1">Режим USB накопителя включён</string>
 		<string name="usb_stor_mnt2">Перед отключением вашего устройства от компьютера,</string>
 		<string name="usb_stor_mnt3">выполните размонтирование (выключите UMS)!</string>
 		<string name="unmount_btn">Выключить UMS</string>
@@ -290,11 +298,11 @@
 		<string name="sys_rop2">чтобы сохранить возможность официальных обновлений.</string>
 		<string name="sys_rop3">При этом система сможет вернуть обратно стоковый</string>
 		<string name="sys_rop4">рекавери, а TWRP не будет предлагать установку root.</string>
-		<string name="sys_rop5">Установка zip или работа adb все равно смогут изменять</string>
+		<string name="sys_rop5">Установка zip или работа adb всё равно смогут изменять</string>
 		<string name="sys_rop6">системный раздел.</string>
-		<string name="sys_rol1">TWRP может оставить системный раздел неизменным, чтобы сохранить возможность официальних обновлений.</string>
+		<string name="sys_rol1">TWRP может оставить системный раздел неизменным, чтобы сохранить возможность официальных обновлений.</string>
 		<string name="sys_rol2">При этом система сможет вернуть обратно стоковый рекавери, а TWRP не будет предлагать установку root.</string>
-		<string name="sys_rol3">Установка zip или работа adb все равно смогут изменять системный раздел.</string>
+		<string name="sys_rol3">Установка zip или работа adb всё равно смогут изменять системный раздел.</string>
 		<string name="sys_ro_never_show_chk">Больше не показывать это при загрузке</string>
 		<string name="sys_ro_keep_ro_btn">Только для чтения</string>
 		<string name="swipe_allow_mod">Разрешить изменения</string>
@@ -315,36 +323,37 @@
 		<string name="settings_tz_btn">Часовой пояс</string>
 		<string name="settings_screen_btn">Экран</string>
 		<string name="settings_screen_bright_btn">Яркость</string>
+		<string name="vibration_disabled">Вибрация отключена для этого устройства</string>
 		<string name="settings_vibration_btn">Вибрация</string>
 		<string name="settings_language_btn">Язык</string>
 		<string name="time_zone_hdr">Часовой пояс</string>
 		<string name="sel_tz_list">Выбор часового пояса:</string>
 		<!-- Translator note: if it does not make sense to translate the locations or if it makes more sense,
 			 feel free to change the location listed or drop the location entirely and just call it UTC -6 -->
-		<string name="utcm11">(UTC -11) о. Мидуэй, Самоа</string>
-		<string name="utcm10">(UTC -10) Гавайи</string>
-		<string name="utcm9">(UTC -9) Аляска</string>
-		<string name="utcm8">(UTC -8) Тихоокеанский часовой пояс</string>
-		<string name="utcm7">(UTC -7) Горное время (США и Канада), Аризона</string>
-		<string name="utcm6">(UTC -6) Центральное время (США и Канада), Центральная Америка</string>
-		<string name="utcm5">(UTC -5) Восточное время (США и Канада), Индиана (восток)</string>
-		<string name="utcm4">(UTC -4)  Атлантическое время (Канада), Каракас</string>
-		<string name="utcm3">(UTC -3) Бразилия, Буэнос-Айрес</string>
-		<string name="utcm2">(UTC -2) Среднеатлантическое время</string>
-		<string name="utcm1">(UTC -1) Азорские о-ва, о-ва Зелёного мыса</string>
-		<string name="utc0">(UTC  0) Лондон, Дублин, Лиссабон</string>
-		<string name="utcp1">(UTC +1) Берлин, Брюссель, Париж</string>
-		<string name="utcp2">(UTC +2) Киев, Минск, Рига, Таллин, Стамбул</string>
-		<string name="utcp3">(UTC +3) Москва, Санкт-Петербург, Волгоград, Багдад</string>
-		<string name="utcp4">(UTC +4) Баку, Ереван, Тбилиси, Абу-Даби, Мускат</string>
-		<string name="utcp5">(UTC +5) Ташкент, Исламабад, Карачи</string>
-		<string name="utcp6">(UTC +6) Алматы, Астана, Дхака, Екатеринбург</string>
-		<string name="utcp7">(UTC +7) Омск, Новосибирск, Бангкок, Джакарта, Ханой</string>
-		<string name="utcp8">(UTC +8) Красноярск, Пекин, Улан-Батор, Иркутск</string>
-		<string name="utcp9">(UTC +9) Осака, Саппоро, Токио, Сеул, Якутск</string>
-		<string name="utcp10">(UTC +10) Гуам, Канберра, Мельбурн, Сидней</string>
-		<string name="utcp11">(UTC +11) Владивосток, Сахалин, Соломоновы о-ва</string>
-		<string name="utcp12">(UTC +12) Магадан, Камчатка, Фиджи, Маршаловы о-ва</string>
+		<string name="utcm11">(UTC-11, SST) о.Мидуэй, Самоа</string>
+		<string name="utcm10">(UTC-10, HAST) Гавайи</string>
+		<string name="utcm9">(UTC-9, AKST) Аляска</string>
+		<string name="utcm8">(UTC-8, PST) Тихоокеанское время (США и Канада), Тихуана</string>
+		<string name="utcm7">(UTC-7, MST) Горное время (США и Канада), Аризона</string>
+		<string name="utcm6">(UTC-6, CST) Центральное время (США и Канада), Мехико</string>
+		<string name="utcm5">(UTC-5, EST) Восточное время (США и Канада), Богота, Лима, Кито</string>
+		<string name="utcm4">(UTC-4, AST) Атлантическое время (Канада), Каракас, Ла Пас, Сантьяго</string>
+		<string name="utcm3">(UTC-3) Бразилия, Буэнос-Айрес, Джорджтаун, Гренландия</string>
+		<string name="utcm2">(UTC-2) Среднеатлантическое время</string>
+		<string name="utcm1">(UTC-1) Азорские о-ва, Кабо-Верде (о-ва Зелёного мыса)</string>
+		<string name="utc0">(UTC 0) Лондон, Касабланка, Дублин, Лиссабон</string>
+		<string name="utcp1">(UTC+1, CET) Амстердам, Берлин, Брюссель, Мадрид, Париж, Рим</string>
+		<string name="utcp2">(UTC+2, KALT, EET) Калининград, Киев, Хельсинки, Варшава</string>
+		<string name="utcp3">(UTC+3, MSK) Московское время, Москва, Минск, Эр-Рияд</string>
+		<string name="utcp4">(UTC+4, SAMT) Самарское время, Волгоград, Баку, Тбилиси</string>
+		<string name="utcp5">(UTC+5, YEKT) Екатеринбургское время, Уфа, Челябинск, Ташкент</string>
+		<string name="utcp6">(UTC+6, OMST) Омское время, Алма-Ата, Бишкек</string>
+		<string name="utcp7">(UTC+7, KRAT) Красноярское время, Новосибирск, Томск</string>
+		<string name="utcp8">(UTC+8, IRKT) Иркутское время, Пекин, Гонконг, Сингапур</string>
+		<string name="utcp9">(UTC+9, YAKT) Якутское время, Чита, Токио, Сеул</string>
+		<string name="utcp10">(UTC+10, VLAT) Владивостокское время, Хабаровск, Сидней</string>
+		<string name="utcp11">(UTC+11, MAGT) Магаданское время, Южно-Сахалинск</string>
+		<string name="utcp12">(UTC+12, PETT, WAKT) Камчатское время, Анадырь</string>
 		<string name="sel_tz_offset">Выбор смещения (как правило 0): %tw_time_zone_guioffset%</string>
 		<string name="tz_offset_none">Нет</string>
 		<string name="tz_offset_0">0</string>
@@ -391,8 +400,8 @@
 		<string name="inject_twrp_complete">Интегрирование TWRP завершено</string>
 		<string name="swipe_to_confirm">Свайп для подтверждения</string>
 		<string name="part_sd_hdr">Разметка SD-карты</string>
-		<string name="invalid_partsd_sel">Вы должны выбрать съемное устройство</string>
-		<string name="part_sd_lose">Все файлы на вашей SD-карте будут стерты!</string>
+		<string name="invalid_partsd_sel">Вы должны выбрать съёмное устройство</string>
+		<string name="part_sd_lose">Все файлы на вашей SD-карте будут стёрты!</string>
 		<string name="part_sd_undo">Это действие не может быть отменено!</string>
 		<string name="part_sd_ext_sz">Размер EXT-раздела:</string>
 		<string name="part_sd_swap_sz">Размер swap-раздела:</string>
@@ -452,6 +461,7 @@
 		<string name="decrypt_data_failed_pattern">Шаблон неверный, попробуйте снова!</string>
 		<string name="decrypt_data_enter_pattern">Введите шаблон.</string>
 		<string name="decrypt_data_trying">Попытка расшифровки</string>
+		<string name="decrypt_data_vold_os_missing">Missing files needed for vold decrypt: {1}</string>
 		<string name="term_hdr">Команда терминала</string>
 		<string name="term_s_hdr">Терминал</string>
 		<string name="term_kill_btn">УБИТЬ</string>
@@ -463,7 +473,7 @@
 		<string name="swipe_sideload">   Старт</string>
 		<string name="sideload_confirm">ADB Sideload</string>
 		<string name="sideload_usage">Пример: adb sideload filename.zip</string>
-		<string name="sideload_complete">ADB Sideload завершен</string>
+		<string name="sideload_complete">ADB Sideload завершён</string>
 		<string name="fix_contexts_hdr">Исправление контекста SELinux</string>
 		<string name="fix_contexts_note1">Примечание: исправление контекста SELinux требуется редко.</string>
 		<string name="fix_contexts_note2">Исправление SELinux-контекста может привести</string>
@@ -476,6 +486,29 @@
 		<string name="install_cancel">Не устанавливать</string>
 		<string name="sel_storage_list">Выберите накопитель</string>
 		<string name="ok_btn">OK</string>
+		<string name="install_twrp_ramdisk">Установка рекавери в ramdisk</string>
+		<string name="install_kernel">Установка ядра</string>
+		<string name="repack_kernel_confirm_hdr">Установка ярда</string>
+		<string name="repack_ramdisk_confirm_hdr">Установка рекавери</string>
+		<string name="repack_kernel_confirm">Установить ядро?</string>
+		<string name="repack_ramdisk_confirm">Установить рекавери?</string>
+		<string name="repack_backup_first">Сначала сделайте резервную копию текущего образа</string>
+		<string name="repack">Перепаковка</string>
+		<string name="swipe_to_install">Свайп для установки</string>
+		<string name="installing">Установка...</string>
+		<string name="install_complete">Установка завершена</string>
+		<string name="unpack_error">Ошибка распаковки образа.</string>
+		<string name="repack_error">Ошибка перепаковки образа.</string>
+		<string name="unpacking_image">Распаковка {1}...</string>
+		<string name="repacking_image">Перепаковка {1}...</string>
+		<string name="repack_image_hdr">Выбор образа</string>
+		<string name="fix_recovery_loop">Исправить циклическую перезагрузку рекавери</string>
+		<string name="fix_recovery_loop_confirm">Исправить циклическую перезагрузку рекавери?</string>
+		<string name="fixing_recovery_loop">Исправление циклической перезагрузки рекавери...</string>
+		<string name="fix_recovery_loop_complete">Исправление циклической перезагрузки рекавери завершено</string>
+		<string name="fixing_recovery_loop_patch">Патчинг ядра...</string>
+		<string name="fix_recovery_loop_patch_error">Ошибка патчинга ядра.</string>
+
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Чтение SELinux-контекста не поддерживается ядром.</string>
 		<string name="full_selinux">Присутствует полная поддержка SELinux.</string>
@@ -484,24 +517,24 @@
 		<string name="mtp_crash">Сбой MTP: MTP не запущен при загрузке.</string>
 		<string name="decrypt_success">Расшифровка выполнена успешно с паролем по умолчанию.</string>
 		<string name="unable_to_decrypt">Невозможно расшифровать с паролем по умолчанию. Возможно потребуется выполнить форматирование Data.</string>
-		<string name="generating_digest1" version="2">Вычисление Digest</string>
+		<string name="generating_digest1" version="2">Вычисление контрольной суммы</string>
 		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_digest2" version="2"> * Вычисление Digest...</string>
-		<string name="digest_created" version="2"> * Digest создана.</string>
-		<string name="digest_error" version="2"> * Ошибка Digest!</string>
-		<string name="digest_compute_error" version="2"> * Ошибка вычисления Digest.</string>
+		<string name="generating_digest2" version="2"> * Вычисление контрольной суммы...</string>
+		<string name="digest_created" version="2"> * Контрольная сумма создана.</string>
+		<string name="digest_error" version="2"> * Ошибка контрольной суммы!</string>
+		<string name="digest_compute_error" version="2"> * Ошибка вычисления контрольной суммы.</string>
 		<string name="current_date">(Текущая дата)</string>
 		<string name="auto_generate">(Создать автоматически)</string>
-		<string name="unable_to_locate_partition">Не удается найти '{1}' раздел для расчета копирования.</string>
+		<string name="unable_to_locate_partition">Не удаётся найти '{1}' раздел для расчёта копирования.</string>
 		<string name="no_partition_selected">Не выбраны разделы для резервного копирования.</string>
 		<string name="total_partitions_backup"> * Общее количество разделов для резервного копирования: {1}</string>
-		<string name="total_backup_size"> * Общий объем данных: {1} МБ</string>
-		<string name="available_space"> * Доступный объем: {1} МБ</string>
-		<string name="unable_locate_storage">Не удается найти накопитель для хранения.</string>
+		<string name="total_backup_size"> * Общий объём данных: {1} МБ</string>
+		<string name="available_space"> * Доступный объём: {1} МБ</string>
+		<string name="unable_locate_storage">Не удаётся найти накопитель для хранения.</string>
 		<string name="no_space">В накопителе для хранения недостаточно свободного места.</string>
 		<string name="backup_started">[РЕЗЕРВНОЕ КОПИРОВАНИЕ НАЧАТО]</string>
 		<string name="backup_folder"> * Папка для резервной копии: {1}</string>
-		<string name="fail_backup_folder">Не удается создать папку для резервной копии.</string>
+		<string name="fail_backup_folder">Не удаётся создать папку для резервной копии.</string>
 		<string name="avg_backup_fs">Средняя скорость копирования для файлов: {1} МБ/сек</string>
 		<string name="avg_backup_img">Средняя скорость копирования для образов: {1} МБ/сек</string>
 		<string name="total_backed_size">[ВСЕГО СКОПИРОВАНО {1} МБ]</string>
@@ -510,11 +543,11 @@
 		<string name="restore_folder">Папка для восстановления: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} выполнено за {2} секунд(ы)]</string>
-		<string name="verifying_digest" version="2">Проверка Digest</string>
-		<string name="skip_digest" version="2">Пропуск проверки Digest согласно настройкам.</string>
+		<string name="verifying_digest" version="2">Проверка контрольной суммы</string>
+		<string name="skip_digest" version="2">Пропуск проверки контрольной суммы согласно настройкам.</string>
 		<string name="calc_restore">Вычисление информации о восстановлении...</string>
 		<string name="restore_read_only">Невозможно восстановить {1} -- смонтировано только для чтения.</string>
-		<string name="restore_unable_locate">Не удается найти '{1}' раздел для восстановления.</string>
+		<string name="restore_unable_locate">Не удаётся найти '{1}' раздел для восстановления.</string>
 		<string name="no_part_restore">Не выбраны разделы для восстановления.</string>
 		<string name="restore_part_count">Восстановление {1} разделов...</string>
 		<string name="total_restore_size">Общий размер для восстановления: {1} МБ</string>
@@ -522,20 +555,21 @@
 		<string name="restore_completed">[ВОССТАНОВЛЕНИЕ ЗАВЕРШЕНО ЗА {1} СЕКУНД(Ы)]</string>
 		<!-- {1} is the path we could not open, {2} is strerror output -->
 		<string name="error_opening_strerr">Ошибка открытия: '{1}' ({2})</string>
-		<string name="unable_locate_part_backup_name">Не удается найти раздел для копирования: '{1}'</string>
-		<string name="unable_find_part_path">Не удается найти раздел по пути '{1}'</string>
+		<string name="unable_locate_part_backup_name">Не удаётся найти раздел для копирования: '{1}'</string>
+		<string name="unable_find_part_path">Не удаётся найти раздел по пути '{1}'</string>
 		<string name="update_part_details">Обновление информации о разделах...</string>
 		<string name="update_part_details_done">...готово</string>
-		<string name="wiping_dalvik">Очистка директорий Dalvik Cache...</string>
+
 		<string name="cleaned">Очищены: {1}...</string>
-		<string name="dalvik_done">-- Очистка директорий Dalvik Cache завершена!</string>
+		<string name="cache_dalvik_done">-- Очистка директорий Dalvik Cache завершена!</string>
+		<string name="dalvik_done">-- Очистка директорий Dalvik завершена!</string>
 		<string name="no_andsec">Не найдены разделы android secure.</string>
 		<string name="unable_to_locate">{1} не найден.</string>
 		<string name="wiping_datamedia">Очистка внутренней памяти -- /data/media...</string>
-		<string name="unable_to_mount">Не удается смонтировать {1}</string>
-		<string name="unable_to_mount_internal">Не удается смонтировать internal_storage</string>
-		<string name="unable_to_mount_storage">Не удается смонтировать накопитель</string>
-		<string name="fail_decrypt">Не удается расшифровать data.</string>
+		<string name="unable_to_mount">Не удаётся смонтировать {1}</string>
+		<string name="unable_to_mount_internal">Не удаётся смонтировать internal_storage</string>
+		<string name="unable_to_mount_storage">Не удаётся смонтировать накопитель</string>
+		<string name="fail_decrypt">Не удаётся расшифровать data.</string>
 		<string name="no_crypto_support">Шифрование не добавлено в эту сборку, пинайте разработчика.</string>
 		<string name="decrypt_success_dev">Раздел Data успешно расшифрован, новое блочное устройство: '{1}'</string>
 		<string name="decrypt_success_nodev">Раздел Data успешно расшифрован</string>
@@ -544,18 +578,18 @@
 		<string name="partition_sd_locate">Не удалось найти устройство для разметки.</string>
 		<string name="ext_swap_size">Размер EXT + Swap превышает размер sdcard.</string>
 		<string name="remove_part_table">Удаление таблицы разделов...</string>
-		<string name="unable_rm_part">Не удается удалить таблицу разделов.</string>
+		<string name="unable_rm_part">Не удаётся удалить таблицу разделов.</string>
 		<string name="create_part">Создание раздела {1}...</string>
-		<string name="unable_to_create_part">Не удается создать раздел {1}.</string>
+		<string name="unable_to_create_part">Не удаётся создать раздел {1}.</string>
 		<string name="format_sdext_as">Форматирование sd-ext в {1}...</string>
 		<string name="part_complete">Разметка завершена.</string>
-		<string name="unable_to_open">Не удается открыть '{1}'.</string>
-		<string name="mtp_already_enabled">MTP уже включен</string>
+		<string name="unable_to_open">Не удаётся открыть '{1}'.</string>
+		<string name="mtp_already_enabled">MTP уже включён</string>
 		<string name="mtp_fail">Не удалось включить MTP</string>
 		<string name="no_mtp">Поддержка MTP отсутствует</string>
 		<string name="image_flash_start">[ПРОШИВКА ОБРАЗА НАЧАТА]</string>
 		<string name="img_to_flash">Образ для прошивки: '{1}'</string>
-		<string name="flash_unable_locate">Не удается найти раздел '{1}'.</string>
+		<string name="flash_unable_locate">Не удаётся найти раздел '{1}'.</string>
 		<string name="no_part_flash">Не выбраны разделы для прошивки.</string>
 		<string name="too_many_flash">Выбрано слишком много разделов для прошивки.</string>
 		<string name="invalid_flash">Указан неверный раздел для прошивки.</string>
@@ -568,17 +602,17 @@
 		<!-- {1} is the folder name that we could not create, {2} is strerror output -->
 		<string name="create_folder_strerr">Невозможно создать папку '{1}' ({2}).</string>
 		<!-- {1} is the folder name that we could not mount, {2} is strerror output -->
-		<string name="fail_mount">Не удается смонтировать '{1}' ({2})</string>
+		<string name="fail_mount">Не удаётся смонтировать '{1}' ({2})</string>
 		<!-- {1} is the folder name that we could not unmount, {2} is strerror output -->
-		<string name="fail_unmount">Не удается размонтировать '{1}' ({2})</string>
+		<string name="fail_unmount">Не удаётся размонтировать '{1}' ({2})</string>
 		<string name="cannot_resize">Невозможно изменить размер {1}.</string>
 		<string name="repair_resize">Восстановление {1} перед изменением размера.</string>
-		<string name="unable_resize">Не удается изменить размер {1}.</string>
-		<string name="no_digest_found" version="2">Отсутствует файл digest для '{1}'. Пожалуйста отмените выбор проверки Digest при восстановлении.</string>
-		<string name="digest_fail_match" version="2">Digest не соответствует '{1}'.</string>
-		<string name="digest_matched" version="2">Digest соответствует '{1}'.</string>
-		<string name="fail_decrypt_tar">Не удается расшифровать tar-файл '{1}'</string>
-		<string name="format_data_msg">Вам, возможно, потребуется перезагрузись рекавери, чтобы иметь возможность использовать /data снова.</string>
+		<string name="unable_resize">Не удаётся изменить размер {1}.</string>
+		<string name="no_digest_found" version="2">Отсутствует файл контрольной суммы для '{1}'. Пожалуйста отмените выбор проверки контрольных сумм при восстановлении.</string>
+		<string name="digest_fail_match" version="2">Контрольная сумма не соответствует '{1}'.</string>
+		<string name="digest_matched" version="2">Контрольная сумма соответствует '{1}'.</string>
+		<string name="fail_decrypt_tar">Не удаётся расшифровать tar-файл '{1}'</string>
+		<string name="format_data_msg">Вам, возможно, потребуется перезагрузить рекавери, чтобы иметь возможность использовать /data снова.</string>
 		<string name="format_data_err">Невозможно отформатировать и удалить шифрование.</string>
 		<string name="formatting_using">Форматирование {1} с помощью {2}...</string>
 		<string name="unable_to_wipe">Невозможно очистить {1}.</string>
@@ -596,10 +630,10 @@
 		<string name="img_size_err">Размер образа больше размера целевого устройства</string>
 		<string name="flashing">Прошивка {1}...</string>
 		<string name="backup_folder_set">Папка для резервной копии установлена в '{1}'</string>
-		<string name="locate_backup_err">Не удается найти резервную копию '{1}'</string>
+		<string name="locate_backup_err">Не удаётся найти резервную копию '{1}'</string>
 		<string name="set_restore_opt">Установки опций восстановления: '{1}':</string>
-		<string name="digest_check_skip" version="2">Пропуск проверки Digest включен</string>
-		<string name="ors_encrypt_restore_err">Не удается использовать OpenRecoveryScript для восстановления зашифрованной резервной копии.</string>
+		<string name="digest_check_skip" version="2">Пропуск проверки контрольных сумм включён</string>
+		<string name="ors_encrypt_restore_err">Не удаётся использовать OpenRecoveryScript для восстановления зашифрованной резервной копии.</string>
 		<string name="mounting">Монтирование</string>
 		<string name="unmounting">Размонтирование</string>
 		<string name="mounted">'{1}' смонтирован</string>
@@ -619,23 +653,23 @@
 		<string name="installing_zip">Установка zip файла '{1}'</string>
 		<string name="select_backup_opt">Установка опций резервного копирования:</string>
 		<string name="compression_on">Сжатие включено</string>
-		<string name="digest_off" version="2">Вычисление Digest выключено</string>
+		<string name="digest_off" version="2">Вычисление контрольных сумм выключено</string>
 		<string name="backup_fail">Ошибка резервного копирования</string>
 		<string name="backup_clean">Ошибка резервного копирования. Очистка папки с резервной копией.</string>
 		<string name="running_recovery_commands">Выполнение команд рекавери</string>
 		<string name="recovery_commands_complete">Команды рекавери завершены</string>
 		<string name="running_ors">Выполнение OpenRecoveryScript</string>
 		<string name="ors_complete">OpenRecoveryScript выполнен</string>
+		<string name="check_for_digest" version="2">Проверка файлов контрольных сумм...</string>
 		<string name="invalid_zip_format">Неверный формат zip файла!</string>
-		<string name="check_for_digest" version="2">Проверка Digest-файлов...</string>
 		<string name="fail_sysmap">Не удалось отобразить в память файл '{1}'</string>
 		<string name="verify_zip_sig">Проверка подписи zip...</string>
 		<string name="verify_zip_fail">Подпись Zip не прошла проверку!</string>
 		<string name="verify_zip_done">Подпись Zip проверена успешно.</string>
-		<string name="zip_corrupt">Zip-файл поврежден!</string>
-		<string name="no_digest" version="2">Пропуск проверки Digest: не найден Digest-файл</string>
-		<string name="digest_fail" version="2">Digest не соответствует</string>
-		<string name="digest_match" version="2">Digest соответствует</string>
+		<string name="zip_corrupt">Zip-файл повреждён!</string>
+		<string name="no_digest" version="2">Пропуск проверки контрольной суммы: не найден файл контрольной суммы</string>
+		<string name="digest_fail" version="2">Контрольная сумма не соответствует</string>
+		<string name="digest_match" version="2">Контрольная сумма соответствует</string>
 		<string name="pid_signal">Процесс {1} завершился с кодом {2}</string>
 		<string name="pid_error">Процесс {1} завершился с ОШИБКОЙ: {2}</string>
 		<string name="install_dumlock">Установка HTC Dumlock в систему...</string>
@@ -659,7 +693,7 @@
 		<string name="copy_log">recovery.log скопирован в {1}.</string>
 		<string name="max_queue">Максимум zip в очереди достигнут!</string>
 		<string name="min_queue">Минимум zip в очереди достигнут!</string>
-		<string name="screenshot_saved">Скриншот сохранен в {1}</string>
+		<string name="screenshot_saved">Скриншот сохранён в {1}</string>
 		<string name="screenshot_err">Не удалось сделать скриншот!</string>
 		<string name="zip_wipe_cache">Один или более zip запрашивают очистку cache -- Очистка cache...</string>
 		<string name="and_sec_wipe_err">Невозможно очистить android secure</string>
@@ -677,9 +711,10 @@
 		<string name="adbbackup_error">Ошибка резервного копирования по ADB. Выход...</string>
 		<string name="adbbackup_control_error">Невозможно записать в канал управления ADB.</string>
 		<string name="twrp_adbbu_option">-- эта опция позволяет делать резервное копирование по adb</string>
-		<string name="partition_not_found">путь: {1} отсутсвует в списке разделов.</string>
+		<string name="partition_not_found">путь: {1} отсутствует в списке разделов.</string>
 		<string name="copy_kernel_log">Kernel Log скопирован в {1}</string>
 		<string name="include_kernel_log">Добавить Kernel Log</string>
+		<string name="sha2_chk">Использовать SHA2 для контрольных сумм (иначе - MD5)</string>
 		<string name="unable_set_boot_slot">Ошибка смены слота загрузки bootloader на {1}</string>
 	</resources>
 </language>
