@@ -16,14 +16,11 @@
 
 #include "install/wipe_data.h"
 
-#include <dirent.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 
 #include <functional>
-#include <memory>
 #include <vector>
 
 #include <android-base/file.h>
@@ -39,20 +36,6 @@ constexpr const char* CACHE_ROOT = "/cache";
 constexpr const char* DATA_ROOT = "/data";
 constexpr const char* METADATA_ROOT = "/metadata";
 
-constexpr const char* CACHE_LOG_DIR = "/cache/recovery";
-
-static struct selabel_handle* sehandle;
-
-void SetWipeDataSehandle(selabel_handle* handle) {
-  sehandle = handle;
-}
-
-struct saved_log_file {
-  std::string name;
-  struct stat sb;
-  std::string data;
-};
-
 static bool EraseVolume(const char* volume, RecoveryUI* ui, bool convert_fbe) {
   bool is_cache = (strcmp(volume, CACHE_ROOT) == 0);
   bool is_data = (strcmp(volume, DATA_ROOT) == 0);
@@ -61,43 +44,10 @@ static bool EraseVolume(const char* volume, RecoveryUI* ui, bool convert_fbe) {
   ui->SetProgressType(RecoveryUI::INDETERMINATE);
 
   std::vector<saved_log_file> log_files;
-
   if (is_cache) {
-    // If we're reformatting /cache, we load any past logs
-    // (i.e. "/cache/recovery/last_*") and the current log
-    // ("/cache/recovery/log") into memory, so we can restore them after
-    // the reformat.
-
-    ensure_path_mounted(volume);
-
-    struct dirent* de;
-    std::unique_ptr<DIR, decltype(&closedir)> d(opendir(CACHE_LOG_DIR), closedir);
-    if (d) {
-      while ((de = readdir(d.get())) != nullptr) {
-        if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0) {
-          std::string path = android::base::StringPrintf("%s/%s", CACHE_LOG_DIR, de->d_name);
-
-          struct stat sb;
-          if (stat(path.c_str(), &sb) == 0) {
-            // truncate files to 512kb
-            if (sb.st_size > (1 << 19)) {
-              sb.st_size = 1 << 19;
-            }
-
-            std::string data(sb.st_size, '\0');
-            FILE* f = fopen(path.c_str(), "rbe");
-            fread(&data[0], 1, data.size(), f);
-            fclose(f);
-
-            log_files.emplace_back(saved_log_file{ path, sb, data });
-          }
-        }
-      }
-    } else {
-      if (errno != ENOENT) {
-        PLOG(ERROR) << "Failed to opendir " << CACHE_LOG_DIR;
-      }
-    }
+    // If we're reformatting /cache, we load any past logs (i.e. "/cache/recovery/last_*") and the
+    // current log ("/cache/recovery/log") into memory, so we can restore them after the reformat.
+    log_files = ReadLogFilesToMemory();
   }
 
   ui->Print("Formatting %s...\n", volume);
@@ -128,24 +78,7 @@ static bool EraseVolume(const char* volume, RecoveryUI* ui, bool convert_fbe) {
   }
 
   if (is_cache) {
-    // Re-create the log dir and write back the log entries.
-    if (ensure_path_mounted(CACHE_LOG_DIR) == 0 &&
-        mkdir_recursively(CACHE_LOG_DIR, 0777, false, sehandle) == 0) {
-      for (const auto& log : log_files) {
-        if (!android::base::WriteStringToFile(log.data, log.name, log.sb.st_mode, log.sb.st_uid,
-                                              log.sb.st_gid)) {
-          PLOG(ERROR) << "Failed to write to " << log.name;
-        }
-      }
-    } else {
-      PLOG(ERROR) << "Failed to mount / create " << CACHE_LOG_DIR;
-    }
-
-    // Any part of the log we'd copied to cache is now gone.
-    // Reset the pointer so we copy from the beginning of the temp
-    // log.
-    reset_tmplog_offset();
-    copy_logs(true /* save_current_log */, true /* has_cache */, sehandle);
+    RestoreLogFilesAfterFormat(log_files);
   }
 
   return (result == 0);

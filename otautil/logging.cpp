@@ -16,17 +16,22 @@
 
 #include "otautil/logging.h"
 
+#include <dirent.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/klog.h>
 #include <sys/types.h>
 
+#include <algorithm>
+#include <memory>
 #include <string>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
+#include <android-base/unique_fd.h>
 #include <private/android_filesystem_config.h> /* for AID_SYSTEM */
 #include <private/android_logger.h>            /* private pmsg functions */
 #include <selinux/label.h>
@@ -35,13 +40,21 @@
 #include "otautil/paths.h"
 #include "otautil/roots.h"
 
-static constexpr const char* LOG_FILE = "/cache/recovery/log";
-static constexpr const char* LAST_INSTALL_FILE = "/cache/recovery/last_install";
-static constexpr const char* LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
-static constexpr const char* LAST_LOG_FILE = "/cache/recovery/last_log";
+constexpr const char* LOG_FILE = "/cache/recovery/log";
+constexpr const char* LAST_INSTALL_FILE = "/cache/recovery/last_install";
+constexpr const char* LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
+constexpr const char* LAST_LOG_FILE = "/cache/recovery/last_log";
 
-static const std::string LAST_KMSG_FILTER = "recovery/last_kmsg";
-static const std::string LAST_LOG_FILTER = "recovery/last_log";
+constexpr const char* LAST_KMSG_FILTER = "recovery/last_kmsg";
+constexpr const char* LAST_LOG_FILTER = "recovery/last_log";
+
+constexpr const char* CACHE_LOG_DIR = "/cache/recovery";
+
+static struct selabel_handle* logging_sehandle;
+
+void SetLoggingSehandle(selabel_handle* handle) {
+  logging_sehandle = handle;
+}
 
 // fopen(3)'s the given file, by mounting volumes and making parent dirs as necessary. Returns the
 // file pointer, or nullptr on error.
@@ -74,8 +87,8 @@ void check_and_fclose(FILE* fp, const std::string& name) {
 ssize_t logbasename(log_id_t /* id */, char /* prio */, const char* filename, const char* /* buf */,
                     size_t len, void* arg) {
   bool* do_rotate = static_cast<bool*>(arg);
-  if (LAST_KMSG_FILTER.find(filename) != std::string::npos ||
-      LAST_LOG_FILTER.find(filename) != std::string::npos) {
+  if (std::string(LAST_KMSG_FILTER).find(filename) != std::string::npos ||
+      std::string(LAST_LOG_FILTER).find(filename) != std::string::npos) {
     *do_rotate = true;
   }
   return len;
@@ -92,8 +105,8 @@ ssize_t logrotate(log_id_t id, char prio, const char* filename, const char* buf,
   size_t dot = name.find_last_of('.');
   std::string sub = name.substr(0, dot);
 
-  if (LAST_KMSG_FILTER.find(sub) == std::string::npos &&
-      LAST_LOG_FILTER.find(sub) == std::string::npos) {
+  if (std::string(LAST_KMSG_FILTER).find(sub) == std::string::npos &&
+      std::string(LAST_LOG_FILTER).find(sub) == std::string::npos) {
     return __android_log_pmsg_file_write(id, prio, filename, buf, len);
   }
 
@@ -242,4 +255,71 @@ void save_kernel_log(const char* destination) {
   }
   buffer.resize(n);
   android::base::WriteStringToFile(buffer, destination);
+}
+
+std::vector<saved_log_file> ReadLogFilesToMemory() {
+  ensure_path_mounted("/cache");
+
+  struct dirent* de;
+  std::unique_ptr<DIR, decltype(&closedir)> d(opendir(CACHE_LOG_DIR), closedir);
+  if (!d) {
+    if (errno != ENOENT) {
+      PLOG(ERROR) << "Failed to opendir " << CACHE_LOG_DIR;
+    }
+    return {};
+  }
+
+  std::vector<saved_log_file> log_files;
+  while ((de = readdir(d.get())) != nullptr) {
+    if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0) {
+      std::string path = android::base::StringPrintf("%s/%s", CACHE_LOG_DIR, de->d_name);
+
+      struct stat sb;
+      if (stat(path.c_str(), &sb) != 0) {
+        PLOG(ERROR) << "Failed to stat " << path;
+        continue;
+      }
+      // Truncate files to 512kb
+      size_t read_size = std::min<size_t>(sb.st_size, 1 << 19);
+      std::string data(read_size, '\0');
+
+      android::base::unique_fd log_fd(TEMP_FAILURE_RETRY(open(path.c_str(), O_RDONLY)));
+      if (log_fd == -1 || !android::base::ReadFully(log_fd, data.data(), read_size)) {
+        PLOG(ERROR) << "Failed to read log file " << path;
+        continue;
+      }
+
+      log_files.emplace_back(saved_log_file{ path, sb, data });
+    }
+  }
+
+  return log_files;
+}
+
+bool RestoreLogFilesAfterFormat(const std::vector<saved_log_file>& log_files) {
+  // Re-create the log dir and write back the log entries.
+  if (ensure_path_mounted(CACHE_LOG_DIR) != 0) {
+    PLOG(ERROR) << "Failed to mount " << CACHE_LOG_DIR;
+    return false;
+  }
+
+  if (mkdir_recursively(CACHE_LOG_DIR, 0777, false, logging_sehandle) != 0) {
+    PLOG(ERROR) << "Failed to create " << CACHE_LOG_DIR;
+    return false;
+  }
+
+  for (const auto& log : log_files) {
+    if (!android::base::WriteStringToFile(log.data, log.name, log.sb.st_mode, log.sb.st_uid,
+                                          log.sb.st_gid)) {
+      PLOG(ERROR) << "Failed to write to " << log.name;
+    }
+  }
+
+  // Any part of the log we'd copied to cache is now gone.
+  // Reset the pointer so we copy from the beginning of the temp
+  // log.
+  reset_tmplog_offset();
+  copy_logs(true /* save_current_log */, true /* has_cache */, logging_sehandle);
+
+  return true;
 }

@@ -23,8 +23,6 @@
 
 struct selabel_handle;
 
-void SetWipeDataSehandle(selabel_handle* handle);
-
 // Returns true on success.
 bool WipeCache(RecoveryUI* ui, const std::function<bool()>& confirm);
 
