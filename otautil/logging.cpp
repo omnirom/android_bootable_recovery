@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "logging.h"
+#include "otautil/logging.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -29,8 +29,8 @@
 #include <android-base/stringprintf.h>
 #include <private/android_filesystem_config.h> /* for AID_SYSTEM */
 #include <private/android_logger.h>            /* private pmsg functions */
+#include <selinux/label.h>
 
-#include "common.h"
 #include "otautil/dirutil.h"
 #include "otautil/paths.h"
 #include "otautil/roots.h"
@@ -45,7 +45,7 @@ static const std::string LAST_LOG_FILTER = "recovery/last_log";
 
 // fopen(3)'s the given file, by mounting volumes and making parent dirs as necessary. Returns the
 // file pointer, or nullptr on error.
-static FILE* fopen_path(const std::string& path, const char* mode) {
+static FILE* fopen_path(const std::string& path, const char* mode, const selabel_handle* sehandle) {
   if (ensure_path_mounted(path) != 0) {
     LOG(ERROR) << "Can't mount " << path;
     return nullptr;
@@ -165,8 +165,9 @@ void reset_tmplog_offset() {
   tmplog_offset = 0;
 }
 
-void copy_log_file(const std::string& source, const std::string& destination, bool append) {
-  FILE* dest_fp = fopen_path(destination, append ? "ae" : "we");
+static void copy_log_file(const std::string& source, const std::string& destination, bool append,
+                          const selabel_handle* sehandle) {
+  FILE* dest_fp = fopen_path(destination, append ? "ae" : "we", sehandle);
   if (dest_fp == nullptr) {
     PLOG(ERROR) << "Can't open " << destination;
   } else {
@@ -189,11 +190,11 @@ void copy_log_file(const std::string& source, const std::string& destination, bo
   }
 }
 
-void copy_logs(bool modified_flash, bool has_cache) {
-  // We only rotate and record the log of the current session if there are actual attempts to modify
-  // the flash, such as wipes, installs from BCB or menu selections. This is to avoid unnecessary
+void copy_logs(bool save_current_log, bool has_cache, const selabel_handle* sehandle) {
+  // We only rotate and record the log of the current session if explicitly requested. This usually
+  // happens after wipes, installation from BCB or menu selections. This is to avoid unnecessary
   // rotation (and possible deletion) of log files, if it does not do anything loggable.
-  if (!modified_flash) {
+  if (!save_current_log) {
     return;
   }
 
@@ -211,9 +212,9 @@ void copy_logs(bool modified_flash, bool has_cache) {
   rotate_logs(LAST_LOG_FILE, LAST_KMSG_FILE);
 
   // Copy logs to cache so the system can find out what happened.
-  copy_log_file(Paths::Get().temporary_log_file(), LOG_FILE, true);
-  copy_log_file(Paths::Get().temporary_log_file(), LAST_LOG_FILE, false);
-  copy_log_file(Paths::Get().temporary_install_file(), LAST_INSTALL_FILE, false);
+  copy_log_file(Paths::Get().temporary_log_file(), LOG_FILE, true, sehandle);
+  copy_log_file(Paths::Get().temporary_log_file(), LAST_LOG_FILE, false, sehandle);
+  copy_log_file(Paths::Get().temporary_install_file(), LAST_INSTALL_FILE, false, sehandle);
   save_kernel_log(LAST_KMSG_FILE);
   chmod(LOG_FILE, 0600);
   chown(LOG_FILE, AID_SYSTEM, AID_SYSTEM);

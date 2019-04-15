@@ -81,7 +81,7 @@ static bool WriteStatusToFd(MinadbdCommandStatus status, int fd) {
 }
 
 // Installs the package from FUSE. Returns true if the installation succeeds, and false otherwise.
-static bool AdbInstallPackageHandler(bool* wipe_cache, RecoveryUI* ui, int* result) {
+static bool AdbInstallPackageHandler(RecoveryUI* ui, int* result) {
   // How long (in seconds) we wait for the package path to be ready. It doesn't need to be too long
   // because the minadbd service has already issued an install command. FUSE_SIDELOAD_HOST_PATHNAME
   // will start to exist once the host connects and starts serving a package. Poll for its
@@ -99,7 +99,7 @@ static bool AdbInstallPackageHandler(bool* wipe_cache, RecoveryUI* ui, int* resu
         break;
       }
     }
-    *result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, wipe_cache, false, 0, ui);
+    *result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, false, false, 0, ui);
     break;
   }
 
@@ -280,7 +280,7 @@ static void CreateMinadbdServiceAndExecuteCommands(
   signal(SIGPIPE, SIG_DFL);
 }
 
-int apply_from_adb(bool* wipe_cache, RecoveryUI* ui) {
+int apply_from_adb(RecoveryUI* ui) {
   // Save the usb state to restore after the sideload operation.
   std::string usb_state = android::base::GetProperty("sys.usb.state", "none");
   // Clean up state and stop adbd.
@@ -295,8 +295,7 @@ int apply_from_adb(bool* wipe_cache, RecoveryUI* ui) {
 
   int install_result = INSTALL_ERROR;
   std::map<MinadbdCommands, CommandFunction> command_map{
-    { MinadbdCommands::kInstall,
-      std::bind(&AdbInstallPackageHandler, wipe_cache, ui, &install_result) },
+    { MinadbdCommands::kInstall, std::bind(&AdbInstallPackageHandler, ui, &install_result) },
   };
 
   CreateMinadbdServiceAndExecuteCommands(command_map);

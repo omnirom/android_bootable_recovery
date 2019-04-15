@@ -48,6 +48,7 @@
 
 #include "install/package.h"
 #include "install/verifier.h"
+#include "install/wipe_data.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
 #include "otautil/roots.h"
@@ -631,10 +632,9 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   return result;
 }
 
-int install_package(const std::string& path, bool* wipe_cache, bool needs_mount, int retry_count,
-                    RecoveryUI* ui) {
+int install_package(const std::string& path, bool should_wipe_cache, bool needs_mount,
+                    int retry_count, RecoveryUI* ui) {
   CHECK(!path.empty());
-  CHECK(wipe_cache != nullptr);
 
   auto start = std::chrono::system_clock::now();
 
@@ -647,8 +647,10 @@ int install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
     LOG(ERROR) << "failed to set up expected mounts for install; aborting";
     result = INSTALL_ERROR;
   } else {
-    result = really_install_package(path, wipe_cache, needs_mount, &log_buffer, retry_count,
-                                    &max_temperature, ui);
+    bool updater_wipe_cache = false;
+    result = really_install_package(path, &updater_wipe_cache, needs_mount, &log_buffer,
+                                    retry_count, &max_temperature, ui);
+    should_wipe_cache = should_wipe_cache || updater_wipe_cache;
   }
 
   // Measure the time spent to apply OTA update in seconds.
@@ -702,6 +704,12 @@ int install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
 
   // Write a copy into last_log.
   LOG(INFO) << log_content;
+
+  if (result == INSTALL_SUCCESS && should_wipe_cache) {
+    if (!WipeCache(ui, nullptr)) {
+      result = INSTALL_ERROR;
+    }
+  }
 
   return result;
 }
