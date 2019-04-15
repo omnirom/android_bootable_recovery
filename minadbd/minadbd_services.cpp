@@ -102,8 +102,7 @@ static void sideload_host_service(unique_fd sfd, const std::string& args) {
     exit(kMinadbdSocketIOError);
   }
 
-  auto adb_data_reader =
-      std::make_unique<FuseAdbDataProvider>(std::move(sfd), file_size, block_size);
+  auto adb_data_reader = std::make_unique<FuseAdbDataProvider>(sfd, file_size, block_size);
   if (int result = run_fuse_sideload(std::move(adb_data_reader)); result != 0) {
     LOG(ERROR) << "Failed to start fuse";
     exit(kMinadbdFuseStartError);
