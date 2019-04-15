@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -55,30 +54,27 @@
 #include "install/fuse_sdcard_install.h"
 #include "install/install.h"
 #include "install/package.h"
-#include "logging.h"
-#include "otautil/dirutil.h"
+#include "install/wipe_data.h"
 #include "otautil/error_code.h"
+#include "otautil/logging.h"
 #include "otautil/paths.h"
 #include "otautil/roots.h"
 #include "otautil/sysutil.h"
 #include "recovery_ui/screen_ui.h"
 #include "recovery_ui/ui.h"
 
-static constexpr const char* CACHE_LOG_DIR = "/cache/recovery";
 static constexpr const char* COMMAND_FILE = "/cache/recovery/command";
 static constexpr const char* LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
 static constexpr const char* LAST_LOG_FILE = "/cache/recovery/last_log";
 static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";
 
 static constexpr const char* CACHE_ROOT = "/cache";
-static constexpr const char* DATA_ROOT = "/data";
-static constexpr const char* METADATA_ROOT = "/metadata";
 
 // We define RECOVERY_API_VERSION in Android.mk, which will be picked up by build system and packed
 // into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
 static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
 
-static bool modified_flash = false;
+static bool save_current_log = false;
 std::string stage;
 const char* reason = nullptr;
 
@@ -148,7 +144,7 @@ static void finish_recovery() {
     }
   }
 
-  copy_logs(modified_flash, has_cache);
+  copy_logs(save_current_log, has_cache, sehandle);
 
   // Reset to normal system boot so recovery won't cycle indefinitely.
   std::string err;
@@ -165,110 +161,6 @@ static void finish_recovery() {
   }
 
   sync();  // For good measure.
-}
-
-struct saved_log_file {
-  std::string name;
-  struct stat sb;
-  std::string data;
-};
-
-static bool erase_volume(const char* volume) {
-  bool is_cache = (strcmp(volume, CACHE_ROOT) == 0);
-  bool is_data = (strcmp(volume, DATA_ROOT) == 0);
-
-  ui->SetBackground(RecoveryUI::ERASING);
-  ui->SetProgressType(RecoveryUI::INDETERMINATE);
-
-  std::vector<saved_log_file> log_files;
-
-  if (is_cache) {
-    // If we're reformatting /cache, we load any past logs
-    // (i.e. "/cache/recovery/last_*") and the current log
-    // ("/cache/recovery/log") into memory, so we can restore them after
-    // the reformat.
-
-    ensure_path_mounted(volume);
-
-    struct dirent* de;
-    std::unique_ptr<DIR, decltype(&closedir)> d(opendir(CACHE_LOG_DIR), closedir);
-    if (d) {
-      while ((de = readdir(d.get())) != nullptr) {
-        if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0) {
-          std::string path = android::base::StringPrintf("%s/%s", CACHE_LOG_DIR, de->d_name);
-
-          struct stat sb;
-          if (stat(path.c_str(), &sb) == 0) {
-            // truncate files to 512kb
-            if (sb.st_size > (1 << 19)) {
-              sb.st_size = 1 << 19;
-            }
-
-            std::string data(sb.st_size, '\0');
-            FILE* f = fopen(path.c_str(), "rbe");
-            fread(&data[0], 1, data.size(), f);
-            fclose(f);
-
-            log_files.emplace_back(saved_log_file{ path, sb, data });
-          }
-        }
-      }
-    } else {
-      if (errno != ENOENT) {
-        PLOG(ERROR) << "Failed to opendir " << CACHE_LOG_DIR;
-      }
-    }
-  }
-
-  ui->Print("Formatting %s...\n", volume);
-
-  ensure_path_unmounted(volume);
-
-  int result;
-  if (is_data && reason && strcmp(reason, "convert_fbe") == 0) {
-    static constexpr const char* CONVERT_FBE_DIR = "/tmp/convert_fbe";
-    static constexpr const char* CONVERT_FBE_FILE = "/tmp/convert_fbe/convert_fbe";
-    // Create convert_fbe breadcrumb file to signal init to convert to file based encryption, not
-    // full disk encryption.
-    if (mkdir(CONVERT_FBE_DIR, 0700) != 0) {
-      PLOG(ERROR) << "Failed to mkdir " << CONVERT_FBE_DIR;
-      return false;
-    }
-    FILE* f = fopen(CONVERT_FBE_FILE, "wbe");
-    if (!f) {
-      PLOG(ERROR) << "Failed to convert to file encryption";
-      return false;
-    }
-    fclose(f);
-    result = format_volume(volume, CONVERT_FBE_DIR);
-    remove(CONVERT_FBE_FILE);
-    rmdir(CONVERT_FBE_DIR);
-  } else {
-    result = format_volume(volume);
-  }
-
-  if (is_cache) {
-    // Re-create the log dir and write back the log entries.
-    if (ensure_path_mounted(CACHE_LOG_DIR) == 0 &&
-        mkdir_recursively(CACHE_LOG_DIR, 0777, false, sehandle) == 0) {
-      for (const auto& log : log_files) {
-        if (!android::base::WriteStringToFile(log.data, log.name, log.sb.st_mode, log.sb.st_uid,
-                                              log.sb.st_gid)) {
-          PLOG(ERROR) << "Failed to write to " << log.name;
-        }
-      }
-    } else {
-      PLOG(ERROR) << "Failed to mount / create " << CACHE_LOG_DIR;
-    }
-
-    // Any part of the log we'd copied to cache is now gone.
-    // Reset the pointer so we copy from the beginning of the temp
-    // log.
-    reset_tmplog_offset();
-    copy_logs(modified_flash, has_cache);
-  }
-
-  return (result == 0);
 }
 
 static bool yes_no(Device* device, const char* question1, const char* question2) {
@@ -290,28 +182,6 @@ static bool ask_to_wipe_data(Device* device) {
       std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
   return (chosen_item == 1);
-}
-
-// Return true on success.
-static bool wipe_data(Device* device) {
-    modified_flash = true;
-
-    ui->Print("\n-- Wiping data...\n");
-    bool success = device->PreWipeData();
-    if (success) {
-      success &= erase_volume(DATA_ROOT);
-      if (has_cache) {
-        success &= erase_volume(CACHE_ROOT);
-      }
-      if (volume_for_mount_point(METADATA_ROOT) != nullptr) {
-        success &= erase_volume(METADATA_ROOT);
-      }
-    }
-    if (success) {
-      success &= device->PostWipeData();
-    }
-    ui->Print("Data wipe %s.\n", success ? "complete" : "failed");
-    return success;
 }
 
 static InstallResult prompt_and_wipe_data(Device* device) {
@@ -341,32 +211,14 @@ static InstallResult prompt_and_wipe_data(Device* device) {
     }
 
     if (ask_to_wipe_data(device)) {
-      if (wipe_data(device)) {
+      bool convert_fbe = reason && strcmp(reason, "convert_fbe") == 0;
+      if (WipeData(device, convert_fbe)) {
         return INSTALL_SUCCESS;
       } else {
         return INSTALL_ERROR;
       }
     }
   }
-}
-
-// Return true on success.
-static bool wipe_cache(bool should_confirm, Device* device) {
-    if (!has_cache) {
-        ui->Print("No /cache partition found.\n");
-        return false;
-    }
-
-    if (should_confirm && !yes_no(device, "Wipe cache?", "  THIS CAN NOT BE UNDONE!")) {
-        return false;
-    }
-
-    modified_flash = true;
-
-    ui->Print("\n-- Wiping cache...\n");
-    bool success = erase_volume("/cache");
-    ui->Print("Cache wipe %s.\n", success ? "complete" : "failed");
-    return success;
 }
 
 // Secure-wipe a given partition. It uses BLKSECDISCARD, if supported. Otherwise, it goes with
@@ -653,7 +505,6 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
             ? Device::REBOOT
             : device->InvokeMenuItem(chosen_item);
 
-    bool should_wipe_cache = false;
     switch (chosen_action) {
       case Device::NO_ACTION:
         break;
@@ -666,41 +517,40 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         return chosen_action;
 
       case Device::WIPE_DATA:
+        save_current_log = true;
         if (ui->IsTextVisible()) {
           if (ask_to_wipe_data(device)) {
-            wipe_data(device);
+            WipeData(device, false);
           }
         } else {
-          wipe_data(device);
+          WipeData(device, false);
           return Device::NO_ACTION;
         }
         break;
 
-      case Device::WIPE_CACHE:
-        wipe_cache(ui->IsTextVisible(), device);
+      case Device::WIPE_CACHE: {
+        save_current_log = true;
+        std::function<bool()> confirm_func = [&device]() {
+          return yes_no(device, "Wipe cache?", "  THIS CAN NOT BE UNDONE!");
+        };
+        WipeCache(ui, ui->IsTextVisible() ? confirm_func : nullptr);
         if (!ui->IsTextVisible()) return Device::NO_ACTION;
         break;
-
+      }
       case Device::APPLY_ADB_SIDELOAD:
       case Device::APPLY_SDCARD: {
-        modified_flash = true;
+        save_current_log = true;
         bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
         if (adb) {
-          status = apply_from_adb(&should_wipe_cache, ui);
+          status = apply_from_adb(ui);
         } else {
-          status = ApplyFromSdcard(device, &should_wipe_cache, ui);
-        }
-
-        if (status == INSTALL_SUCCESS && should_wipe_cache) {
-          if (!wipe_cache(false, device)) {
-            status = INSTALL_ERROR;
-          }
+          status = ApplyFromSdcard(device, ui);
         }
 
         if (status != INSTALL_SUCCESS) {
           ui->SetBackground(RecoveryUI::ERROR);
           ui->Print("Installation aborted.\n");
-          copy_logs(modified_flash, has_cache);
+          copy_logs(save_current_log, has_cache, sehandle);
         } else if (!ui->IsTextVisible()) {
           return Device::NO_ACTION;  // reboot if logs aren't visible
         } else {
@@ -987,7 +837,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   if (update_package != nullptr) {
     // It's not entirely true that we will modify the flash. But we want
     // to log the update attempt since update_package is non-NULL.
-    modified_flash = true;
+    save_current_log = true;
 
     int required_battery_level;
     if (retry_count == 0 && !is_battery_ok(&required_battery_level)) {
@@ -1009,11 +859,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         set_retry_bootloader_message(retry_count + 1, args);
       }
 
-      modified_flash = true;
-      status = install_package(update_package, &should_wipe_cache, true, retry_count, ui);
-      if (status == INSTALL_SUCCESS && should_wipe_cache) {
-        wipe_cache(false, device);
-      }
+      status = install_package(update_package, should_wipe_cache, true, retry_count, ui);
       if (status != INSTALL_SUCCESS) {
         ui->Print("Installation aborted.\n");
 
@@ -1021,7 +867,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         // RETRY_LIMIT times before we abandon this OTA update.
         static constexpr int RETRY_LIMIT = 4;
         if (status == INSTALL_RETRY && retry_count < RETRY_LIMIT) {
-          copy_logs(modified_flash, has_cache);
+          copy_logs(save_current_log, has_cache, sehandle);
           retry_count += 1;
           set_retry_bootloader_message(retry_count, args);
           // Print retry count on screen.
@@ -1045,12 +891,14 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
       }
     }
   } else if (should_wipe_data) {
-    if (!wipe_data(device)) {
+    save_current_log = true;
+    bool convert_fbe = reason && strcmp(reason, "convert_fbe") == 0;
+    if (!WipeData(device, convert_fbe)) {
       status = INSTALL_ERROR;
     }
   } else if (should_prompt_and_wipe_data) {
     // Trigger the logging to capture the cause, even if user chooses to not wipe data.
-    modified_flash = true;
+    save_current_log = true;
 
     ui->ShowText(true);
     ui->SetBackground(RecoveryUI::ERROR);
@@ -1059,7 +907,8 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
       ui->ShowText(false);
     }
   } else if (should_wipe_cache) {
-    if (!wipe_cache(false, device)) {
+    save_current_log = true;
+    if (!WipeCache(ui, nullptr)) {
       status = INSTALL_ERROR;
     }
   } else if (should_wipe_ab) {
@@ -1073,15 +922,11 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     // sideload finishes even if there are errors. Unless one turns on the
     // text display during the installation. This is to enable automated
     // testing.
+    save_current_log = true;
     if (!sideload_auto_reboot) {
       ui->ShowText(true);
     }
-    status = apply_from_adb(&should_wipe_cache, ui);
-    if (status == INSTALL_SUCCESS && should_wipe_cache) {
-      if (!wipe_cache(false, device)) {
-        status = INSTALL_ERROR;
-      }
-    }
+    status = apply_from_adb(ui);
     ui->Print("\nInstall from ADB complete (status: %d).\n", status);
     if (sideload_auto_reboot) {
       ui->Print("Rebooting automatically.\n");

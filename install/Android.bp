@@ -65,6 +65,7 @@ cc_library_static {
         "install.cpp",
         "package.cpp",
         "verifier.cpp",
+        "wipe_data.cpp",
     ],
 
     shared_libs: [
