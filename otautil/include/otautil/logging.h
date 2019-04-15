@@ -26,6 +26,8 @@
 
 static constexpr int KEEP_LOG_COUNT = 10;
 
+struct selabel_handle;
+
 ssize_t logbasename(log_id_t id, char prio, const char* filename, const char* buf, size_t len,
                     void* arg);
 
@@ -41,8 +43,7 @@ void rotate_logs(const char* last_log_file, const char* last_kmsg_file);
 void check_and_fclose(FILE* fp, const std::string& name);
 
 void copy_log_file_to_pmsg(const std::string& source, const std::string& destination);
-void copy_log_file(const std::string& source, const std::string& destination, bool append);
-void copy_logs(bool modified_flash, bool has_cache);
+void copy_logs(bool save_current_log, bool has_cache, const selabel_handle* sehandle);
 void reset_tmplog_offset();
 
 void save_kernel_log(const char* destination);
