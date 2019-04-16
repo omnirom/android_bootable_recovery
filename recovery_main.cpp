@@ -435,7 +435,7 @@ int main(int argc, char** argv) {
     ui->Print("Warning: No file_contexts\n");
   }
 
-  SetWipeDataSehandle(sehandle);
+  SetLoggingSehandle(sehandle);
 
   std::atomic<Device::BuiltinAction> action;
   std::thread listener_thread(ListenRecoverySocket, ui, std::ref(action));

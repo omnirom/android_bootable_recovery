@@ -18,15 +18,25 @@
 #define _LOGGING_H
 
 #include <stddef.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #include <string>
+#include <vector>
 
 #include <log/log_id.h>
 
 static constexpr int KEEP_LOG_COUNT = 10;
 
 struct selabel_handle;
+
+struct saved_log_file {
+  std::string name;
+  struct stat sb;
+  std::string data;
+};
+
+void SetLoggingSehandle(selabel_handle* handle);
 
 ssize_t logbasename(log_id_t id, char prio, const char* filename, const char* buf, size_t len,
                     void* arg);
@@ -47,5 +57,9 @@ void copy_logs(bool save_current_log, bool has_cache, const selabel_handle* seha
 void reset_tmplog_offset();
 
 void save_kernel_log(const char* destination);
+
+std::vector<saved_log_file> ReadLogFilesToMemory();
+
+bool RestoreLogFilesAfterFormat(const std::vector<saved_log_file>& log_files);
 
 #endif  //_LOGGING_H
