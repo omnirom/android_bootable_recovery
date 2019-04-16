@@ -25,8 +25,8 @@
 // This is the base class to read data from source and provide the data to FUSE.
 class FuseDataProvider {
  public:
-  FuseDataProvider(android::base::unique_fd&& fd, uint64_t file_size, uint32_t block_size)
-      : fd_(std::move(fd)), file_size_(file_size), fuse_block_size_(block_size) {}
+  FuseDataProvider(uint64_t file_size, uint32_t block_size)
+      : file_size_(file_size), fuse_block_size_(block_size) {}
 
   virtual ~FuseDataProvider() = default;
 
@@ -37,21 +37,15 @@ class FuseDataProvider {
     return fuse_block_size_;
   }
 
-  bool Valid() const {
-    return fd_ != -1;
-  }
-
   // Reads |fetch_size| bytes data starting from |start_block|. Puts the result in |buffer|.
   virtual bool ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
                                     uint32_t start_block) const = 0;
 
-  virtual void Close() = 0;
+  virtual void Close() {}
 
  protected:
   FuseDataProvider() = default;
 
-  // The underlying source to read data from.
-  android::base::unique_fd fd_;
   // Size in bytes of the file to read.
   uint64_t file_size_ = 0;
   // Block size passed to the fuse, this is different from the block size of the block device.
@@ -61,13 +55,18 @@ class FuseDataProvider {
 // This class reads data from a file.
 class FuseFileDataProvider : public FuseDataProvider {
  public:
-  FuseFileDataProvider(android::base::unique_fd&& fd, uint64_t file_size, uint32_t block_size)
-      : FuseDataProvider(std::move(fd), file_size, block_size) {}
-
   FuseFileDataProvider(const std::string& path, uint32_t block_size);
 
   bool ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
                             uint32_t start_block) const override;
 
+  bool Valid() const {
+    return fd_ != -1;
+  }
+
   void Close() override;
+
+ private:
+  // The underlying source to read data from.
+  android::base::unique_fd fd_;
 };
