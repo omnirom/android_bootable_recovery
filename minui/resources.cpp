@@ -414,12 +414,18 @@ int res_create_localized_alpha_surface(const char* name,
     __unused int len = row[4];
     char* loc = reinterpret_cast<char*>(&row[5]);
 
-    if (y + 1 + h >= height || matches_locale(loc, locale)) {
+    // We need to include one additional line for the metadata of the localized image.
+    if (y + 1 + h > height) {
+      printf("Read exceeds the image boundary, y %u, h %d, height %u\n", y, h, height);
+      return -8;
+    }
+
+    if (matches_locale(loc, locale)) {
       printf("  %20s: %s (%d x %d @ %d)\n", name, loc, w, h, y);
 
       auto surface = GRSurface::Create(w, h, w, 1);
       if (!surface) {
-        return -8;
+        return -9;
       }
 
       for (int i = 0; i < h; ++i, ++y) {
@@ -428,7 +434,7 @@ int res_create_localized_alpha_surface(const char* name,
       }
 
       *pSurface = surface.release();
-      break;
+      return 0;
     }
 
     for (int i = 0; i < h; ++i, ++y) {
@@ -436,7 +442,7 @@ int res_create_localized_alpha_surface(const char* name,
     }
   }
 
-  return 0;
+  return -10;
 }
 
 void res_free_surface(GRSurface* surface) {
