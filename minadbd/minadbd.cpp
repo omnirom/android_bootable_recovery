@@ -31,10 +31,13 @@
 #include "minadbd_services.h"
 #include "minadbd_types.h"
 
+using namespace std::string_literals;
+
 int main(int argc, char** argv) {
   android::base::InitLogging(argv, &android::base::StderrLogger);
   // TODO(xunchang) implement a command parser
-  if (argc != 3 || strcmp("--socket_fd", argv[1]) != 0) {
+  if ((argc != 3 && argc != 4) || argv[1] != "--socket_fd"s ||
+      (argc == 4 && argv[3] != "--rescue"s)) {
     LOG(ERROR) << "minadbd has invalid arguments, argc: " << argc;
     exit(kMinadbdArgumentsParsingError);
   }
@@ -50,7 +53,12 @@ int main(int argc, char** argv) {
   }
   SetMinadbdSocketFd(socket_fd);
 
-  adb_device_banner = "sideload";
+  if (argc == 4) {
+    SetMinadbdRescueMode(true);
+    adb_device_banner = "rescue";
+  } else {
+    adb_device_banner = "sideload";
+  }
 
   signal(SIGPIPE, SIG_IGN);
 
