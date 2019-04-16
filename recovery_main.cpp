@@ -423,6 +423,10 @@ int main(int argc, char** argv) {
     device->RemoveMenuItemForAction(Device::ENTER_FASTBOOT);
   }
 
+  if (!is_ro_debuggable()) {
+    device->RemoveMenuItemForAction(Device::ENTER_RESCUE);
+  }
+
   ui->SetBackground(RecoveryUI::NONE);
   if (show_text) ui->ShowText(true);
 

@@ -45,8 +45,14 @@
 #include "sysdeps.h"
 
 static int minadbd_socket = -1;
+static bool rescue_mode = false;
+
 void SetMinadbdSocketFd(int socket_fd) {
   minadbd_socket = socket_fd;
+}
+
+void SetMinadbdRescueMode(bool rescue) {
+  rescue_mode = rescue;
 }
 
 static bool WriteCommandToFd(MinadbdCommands cmd, int fd) {
