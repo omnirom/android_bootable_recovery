@@ -40,6 +40,7 @@ cc_library_static {
         android: {
             srcs: [
                 "dirutil.cpp",
+                "logging.cpp",
                 "mounts.cpp",
                 "parse_install_logs.cpp",
                 "roots.cpp",

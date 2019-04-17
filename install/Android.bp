@@ -19,6 +19,10 @@ cc_defaults {
         "recovery_defaults",
     ],
 
+    header_libs: [
+        "libminadbd_headers",
+    ],
+
     shared_libs: [
         "libbase",
         "libbootloader_message",
@@ -47,7 +51,7 @@ cc_defaults {
     ],
 }
 
-cc_library {
+cc_library_static {
     name: "libinstall",
     recovery_available: true,
 
@@ -62,6 +66,7 @@ cc_library {
         "install.cpp",
         "package.cpp",
         "verifier.cpp",
+        "wipe_data.cpp",
     ],
 
     shared_libs: [

@@ -69,6 +69,7 @@ cc_defaults {
     ],
 
     static_libs: [
+        "libinstall",
         "librecovery_fastboot",
         "libminui",
         "libotautil",
@@ -93,7 +94,6 @@ cc_library_static {
     ],
 
     shared_libs: [
-        "libinstall",
         "librecovery_ui",
     ],
 }
@@ -108,13 +108,10 @@ cc_binary {
     ],
 
     srcs: [
-        "logging.cpp",
         "recovery_main.cpp",
     ],
 
     shared_libs: [
-        "libinstall",
-        "libminadbd_services",
         "librecovery_ui",
     ],
 
@@ -126,6 +123,7 @@ cc_binary {
     required: [
         "e2fsdroid.recovery",
         "librecovery_ui_ext",
+        "minadbd",
         "mke2fs.conf.recovery",
         "mke2fs.recovery",
         "recovery_deps",
@@ -141,7 +139,6 @@ cc_binary {
     ],
 
     srcs: [
-        "logging.cpp",
         "recovery-persist.cpp",
     ],
 
@@ -170,7 +167,6 @@ cc_binary {
     ],
 
     srcs: [
-        "logging.cpp",
         "recovery-refresh.cpp",
     ],
 

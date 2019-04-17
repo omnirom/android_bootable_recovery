@@ -16,7 +16,15 @@
 
 #pragma once
 
+#include <functional>
+
 #include "recovery_ui/device.h"
 #include "recovery_ui/ui.h"
 
-int ApplyFromSdcard(Device* device, RecoveryUI* ui);
+struct selabel_handle;
+
+// Returns true on success.
+bool WipeCache(RecoveryUI* ui, const std::function<bool()>& confirm);
+
+// Returns true on success.
+bool WipeData(Device* device, bool convert_fbe);
