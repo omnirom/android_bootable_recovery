@@ -90,12 +90,14 @@ cc_test {
 
     srcs: [
         "fuse_adb_provider_test.cpp",
+        "minadbd_services_test.cpp",
     ],
 
     static_libs: [
         "libminadbd_services",
         "libfusesideload",
         "libadbd",
+        "libcrypto",
     ],
 
     shared_libs: [
