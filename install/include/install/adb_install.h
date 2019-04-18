@@ -18,4 +18,4 @@
 
 #include <recovery_ui/ui.h>
 
-int apply_from_adb(RecoveryUI* ui);
+int ApplyFromAdb(RecoveryUI* ui, bool rescue_mode);
