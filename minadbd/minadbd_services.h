@@ -17,3 +17,5 @@
 #pragma once
 
 void SetMinadbdSocketFd(int socket_fd);
+
+void SetMinadbdRescueMode(bool);

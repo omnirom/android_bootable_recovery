@@ -538,12 +538,20 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         break;
       }
       case Device::APPLY_ADB_SIDELOAD:
-      case Device::APPLY_SDCARD: {
+      case Device::APPLY_SDCARD:
+      case Device::ENTER_RESCUE: {
         save_current_log = true;
-        bool adb = (chosen_action == Device::APPLY_ADB_SIDELOAD);
-        if (adb) {
-          status = apply_from_adb(ui);
+
+        bool adb = true;
+        if (chosen_action == Device::ENTER_RESCUE) {
+          // Switch to graphics screen.
+          ui->ShowText(false);
+          status = ApplyFromAdb(ui, true /* rescue_mode */);
+          ui->ShowText(true);
+        } else if (chosen_action == Device::APPLY_ADB_SIDELOAD) {
+          status = ApplyFromAdb(ui, false /* rescue_mode */);
         } else {
+          adb = false;
           status = ApplyFromSdcard(device, ui);
         }
 
@@ -926,7 +934,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     if (!sideload_auto_reboot) {
       ui->ShowText(true);
     }
-    status = apply_from_adb(ui);
+    status = ApplyFromAdb(ui, false /* rescue_mode */);
     ui->Print("\nInstall from ADB complete (status: %d).\n", status);
     if (sideload_auto_reboot) {
       ui->Print("Rebooting automatically.\n");

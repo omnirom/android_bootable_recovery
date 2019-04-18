@@ -50,6 +50,7 @@ class Device {
     KEY_INTERRUPTED = 13,
     ENTER_FASTBOOT = 14,
     ENTER_RECOVERY = 15,
+    ENTER_RESCUE = 16,
   };
 
   explicit Device(RecoveryUI* ui);
