@@ -31,6 +31,7 @@
 #include <atomic>
 #include <functional>
 #include <map>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
@@ -42,6 +43,7 @@
 #include "fuse_sideload.h"
 #include "install/install.h"
 #include "minadbd_types.h"
+#include "otautil/sysutil.h"
 #include "recovery_ui/ui.h"
 
 using CommandFunction = std::function<bool()>;
@@ -228,7 +230,7 @@ static void ListenAndExecuteMinadbdCommands(
 //                               b11. exit the listening loop
 //
 static void CreateMinadbdServiceAndExecuteCommands(
-    const std::map<MinadbdCommands, CommandFunction>& command_map) {
+    const std::map<MinadbdCommands, CommandFunction>& command_map, bool rescue_mode) {
   signal(SIGPIPE, SIG_IGN);
 
   android::base::unique_fd recovery_socket;
@@ -245,9 +247,16 @@ static void CreateMinadbdServiceAndExecuteCommands(
   }
   if (child == 0) {
     recovery_socket.reset();
-    execl("/system/bin/minadbd", "minadbd", "--socket_fd",
-          std::to_string(minadbd_socket.release()).c_str(), nullptr);
-
+    std::vector<std::string> minadbd_commands = {
+      "/system/bin/minadbd",
+      "--socket_fd",
+      std::to_string(minadbd_socket.release()),
+    };
+    if (rescue_mode) {
+      minadbd_commands.push_back("--rescue");
+    }
+    auto exec_args = StringVectorToNullTerminatedArray(minadbd_commands);
+    execv(exec_args[0], exec_args.data());
     _exit(EXIT_FAILURE);
   }
 
@@ -280,7 +289,7 @@ static void CreateMinadbdServiceAndExecuteCommands(
   signal(SIGPIPE, SIG_DFL);
 }
 
-int apply_from_adb(RecoveryUI* ui) {
+int ApplyFromAdb(RecoveryUI* ui, bool rescue_mode) {
   // Save the usb state to restore after the sideload operation.
   std::string usb_state = android::base::GetProperty("sys.usb.state", "none");
   // Clean up state and stop adbd.
@@ -289,16 +298,20 @@ int apply_from_adb(RecoveryUI* ui) {
     return INSTALL_ERROR;
   }
 
-  ui->Print(
-      "\n\nNow send the package you want to apply\n"
-      "to the device with \"adb sideload <filename>\"...\n");
+  if (!rescue_mode) {
+    ui->Print(
+        "\n\nNow send the package you want to apply\n"
+        "to the device with \"adb sideload <filename>\"...\n");
+  } else {
+    ui->Print("\n\nWaiting for rescue commands...\n");
+  }
 
   int install_result = INSTALL_ERROR;
   std::map<MinadbdCommands, CommandFunction> command_map{
     { MinadbdCommands::kInstall, std::bind(&AdbInstallPackageHandler, ui, &install_result) },
   };
 
-  CreateMinadbdServiceAndExecuteCommands(command_map);
+  CreateMinadbdServiceAndExecuteCommands(command_map, rescue_mode);
 
   // Clean up before switching to the older state, for example setting the state
   // to none sets sys/class/android_usb/android0/enable to 0.
