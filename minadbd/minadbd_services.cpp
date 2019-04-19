@@ -64,7 +64,7 @@ void SetSideloadMountPoint(const std::string& path) {
   sideload_mount_point = path;
 }
 
-static bool WriteCommandToFd(MinadbdCommands cmd, int fd) {
+static bool WriteCommandToFd(MinadbdCommand cmd, int fd) {
   char message[kMinadbdMessageSize];
   memcpy(message, kMinadbdCommandPrefix, strlen(kMinadbdStatusPrefix));
   android::base::put_unaligned(message + strlen(kMinadbdStatusPrefix), cmd);
@@ -109,7 +109,7 @@ static MinadbdErrorCode RunAdbFuseSideload(int sfd, const std::string& args,
 
   LOG(INFO) << "sideload-host file size " << file_size << ", block size " << block_size;
 
-  if (!WriteCommandToFd(MinadbdCommands::kInstall, minadbd_socket)) {
+  if (!WriteCommandToFd(MinadbdCommand::kInstall, minadbd_socket)) {
     return kMinadbdSocketIOError;
   }
 
@@ -175,7 +175,45 @@ static void RescueGetpropHostService(unique_fd sfd, const std::string& prop) {
   }
 }
 
+// Reboots into the given target. We don't reboot directly from minadbd, but going through recovery
+// instead. This allows recovery to finish all the pending works (clear BCB, save logs etc) before
+// the reboot.
+static void RebootHostService(unique_fd /* sfd */, const std::string& target) {
+  MinadbdCommand command;
+  if (target == "bootloader") {
+    command = MinadbdCommand::kRebootBootloader;
+  } else if (target == "rescue") {
+    command = MinadbdCommand::kRebootRescue;
+  } else if (target == "recovery") {
+    command = MinadbdCommand::kRebootRecovery;
+  } else if (target == "fastboot") {
+    command = MinadbdCommand::kRebootFastboot;
+  } else {
+    command = MinadbdCommand::kRebootAndroid;
+  }
+  if (!WriteCommandToFd(command, minadbd_socket)) {
+    exit(kMinadbdSocketIOError);
+  }
+  MinadbdCommandStatus status;
+  if (!WaitForCommandStatus(minadbd_socket, &status)) {
+    exit(kMinadbdMessageFormatError);
+  }
+}
+
 unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport */) {
+  // Common services that are supported both in sideload and rescue modes.
+  if (ConsumePrefix(&name, "reboot:")) {
+    // "reboot:<target>", where target must be one of the following.
+    std::string args(name);
+    if (args.empty() || args == "bootloader" || args == "rescue" || args == "recovery" ||
+        args == "fastboot") {
+      return create_service_thread("reboot",
+                                   std::bind(RebootHostService, std::placeholders::_1, args));
+    }
+    return unique_fd{};
+  }
+
+  // Rescue-specific services.
   if (rescue_mode) {
     if (ConsumePrefix(&name, "rescue-install:")) {
       // rescue-install:<file-size>:<block-size>
@@ -191,6 +229,7 @@ unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport *
     return unique_fd{};
   }
 
+  // Sideload-specific services.
   if (name.starts_with("sideload:")) {
     // This exit status causes recovery to print a special error message saying to use a newer adb
     // (that supports sideload-host).
