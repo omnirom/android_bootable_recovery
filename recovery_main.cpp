@@ -478,6 +478,11 @@ int main(int argc, char** argv) {
         android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,bootloader");
         break;
 
+      case Device::REBOOT_RESCUE:
+        ui->Print("Rebooting to rescue...\n");
+        android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,rescue");
+        break;
+
       case Device::ENTER_FASTBOOT:
         if (logical_partitions_mapped()) {
           ui->Print("Partitions may be mounted - rebooting to enter fastboot.");
