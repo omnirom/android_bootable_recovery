@@ -76,7 +76,6 @@ cc_binary {
         "libadbd",
         "libbase",
         "libcrypto",
-        "libfusesideload",
         "libminadbd_services",
     ],
 }

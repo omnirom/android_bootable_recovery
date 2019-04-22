@@ -29,8 +29,6 @@ class FuseAdbDataProvider : public FuseDataProvider {
   bool ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
                             uint32_t start_block) const override;
 
-  void Close() override;
-
  private:
   // The underlying source to read data from (i.e. the one that talks to the host).
   int fd_;

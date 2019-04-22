@@ -37,7 +37,3 @@ bool FuseAdbDataProvider::ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_s
 
   return true;
 }
-
-void FuseAdbDataProvider::Close() {
-  WriteFdExactly(fd_, "DONEDONE");
-}

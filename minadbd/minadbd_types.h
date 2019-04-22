@@ -35,6 +35,7 @@ enum MinadbdErrorCode : int {
   kMinadbdUnsupportedCommandError = 7,
   kMinadbdCommandExecutionError = 8,
   kMinadbdErrorUnknown = 9,
+  kMinadbdHostSocketIOError = 10,
 };
 
 enum class MinadbdCommandStatus : uint32_t {
