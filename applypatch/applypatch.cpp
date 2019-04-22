@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <sys/types.h>
@@ -38,13 +39,13 @@
 #include <android-base/strings.h>
 #include <openssl/sha.h>
 
-#include "bmlutils/bmlutils.h"
-#include "mtdutils/mtdutils.h"
+#include "../bmlutils/bmlutils.h"
+#include "../mtdutils/mtdutils.h"
 
-#include "edify/expr.h"
-#include "otafault/ota_io.h"
-#include "otautil/cache_location.h"
-#include "otautil/print_sha1.h"
+#include "../edify/include/edify/expr.h"
+#include "../otafault/include/otafault/ota_io.h"
+#include "../otautil/include/otautil/cache_location.h"
+#include "../otautil/include/otautil/print_sha1.h"
 
 static int LoadPartitionContents(const std::string& filename, FileContents* file);
 static size_t FileSink(const unsigned char* data, size_t len, int fd);
