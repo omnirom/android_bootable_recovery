@@ -28,15 +28,19 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <unordered_set>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/memory.h>
+#include <android-base/parseint.h>
+#include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
 #include "adb.h"
 #include "adb_unique_fd.h"
+#include "adb_utils.h"
 #include "fdevent.h"
 #include "fuse_adb_provider.h"
 #include "fuse_sideload.h"
@@ -87,46 +91,109 @@ static bool WaitForCommandStatus(int fd, MinadbdCommandStatus* status) {
   return true;
 }
 
-static void sideload_host_service(unique_fd sfd, const std::string& args) {
+static MinadbdErrorCode RunAdbFuseSideload(int sfd, const std::string& args,
+                                           MinadbdCommandStatus* status) {
+  auto pieces = android::base::Split(args, ":");
   int64_t file_size;
   int block_size;
-  if ((sscanf(args.c_str(), "%" SCNd64 ":%d", &file_size, &block_size) != 2) || file_size <= 0 ||
-      block_size <= 0) {
+  if (pieces.size() != 2 || !android::base::ParseInt(pieces[0], &file_size) || file_size <= 0 ||
+      !android::base::ParseInt(pieces[1], &block_size) || block_size <= 0) {
     LOG(ERROR) << "bad sideload-host arguments: " << args;
-    exit(kMinadbdPackageSizeError);
+    return kMinadbdPackageSizeError;
   }
 
   LOG(INFO) << "sideload-host file size " << file_size << ", block size " << block_size;
 
   if (!WriteCommandToFd(MinadbdCommands::kInstall, minadbd_socket)) {
-    exit(kMinadbdSocketIOError);
+    return kMinadbdSocketIOError;
   }
 
   auto adb_data_reader = std::make_unique<FuseAdbDataProvider>(sfd, file_size, block_size);
   if (int result = run_fuse_sideload(std::move(adb_data_reader)); result != 0) {
     LOG(ERROR) << "Failed to start fuse";
-    exit(kMinadbdFuseStartError);
+    return kMinadbdFuseStartError;
   }
 
+  if (!WaitForCommandStatus(minadbd_socket, status)) {
+    return kMinadbdMessageFormatError;
+  }
+
+  // Signal host-side adb to stop. For sideload mode, we always send kSideloadServiceExitSuccess
+  // (i.e. "DONEDONE") regardless of the install result. For rescue mode, we send failure message on
+  // install error.
+  if (!rescue_mode || *status == MinadbdCommandStatus::kSuccess) {
+    if (!android::base::WriteFully(sfd, kSideloadServiceExitSuccess,
+                                   strlen(kSideloadServiceExitSuccess))) {
+      return kMinadbdHostSocketIOError;
+    }
+  } else {
+    if (!android::base::WriteFully(sfd, kSideloadServiceExitFailure,
+                                   strlen(kSideloadServiceExitFailure))) {
+      return kMinadbdHostSocketIOError;
+    }
+  }
+
+  return kMinadbdSuccess;
+}
+
+// Sideload service always exits after serving an install command.
+static void SideloadHostService(unique_fd sfd, const std::string& args) {
   MinadbdCommandStatus status;
-  if (!WaitForCommandStatus(minadbd_socket, &status)) {
-    exit(kMinadbdMessageFormatError);
-  }
-  LOG(INFO) << "Got command status: " << static_cast<unsigned int>(status);
+  exit(RunAdbFuseSideload(sfd.get(), args, &status));
+}
 
-  LOG(INFO) << "sideload_host finished";
-  exit(kMinadbdSuccess);
+// Rescue service waits for the next command after an install command.
+static void RescueInstallHostService(unique_fd sfd, const std::string& args) {
+  MinadbdCommandStatus status;
+  if (auto result = RunAdbFuseSideload(sfd.get(), args, &status); result != kMinadbdSuccess) {
+    exit(result);
+  }
+}
+
+static void RescueGetpropHostService(unique_fd sfd, const std::string& prop) {
+  static const std::unordered_set<std::string> kGetpropAllowedProps = {
+    "ro.build.fingerprint",
+    "ro.build.date.utc",
+  };
+  auto allowed = kGetpropAllowedProps.find(prop) != kGetpropAllowedProps.end();
+  if (!allowed) {
+    return;
+  }
+
+  auto result = android::base::GetProperty(prop, "");
+  if (result.empty()) {
+    return;
+  }
+  if (!android::base::WriteFully(sfd, result.data(), result.size())) {
+    exit(kMinadbdHostSocketIOError);
+  }
 }
 
 unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport */) {
+  if (rescue_mode) {
+    if (ConsumePrefix(&name, "rescue-install:")) {
+      // rescue-install:<file-size>:<block-size>
+      std::string args(name);
+      return create_service_thread(
+          "rescue-install", std::bind(RescueInstallHostService, std::placeholders::_1, args));
+    } else if (ConsumePrefix(&name, "rescue-getprop:")) {
+      // rescue-getprop:<prop>
+      std::string args(name);
+      return create_service_thread(
+          "rescue-getprop", std::bind(RescueGetpropHostService, std::placeholders::_1, args));
+    }
+    return unique_fd{};
+  }
+
   if (name.starts_with("sideload:")) {
     // This exit status causes recovery to print a special error message saying to use a newer adb
     // (that supports sideload-host).
     exit(kMinadbdAdbVersionError);
-  } else if (name.starts_with("sideload-host:")) {
-    std::string arg(name.substr(strlen("sideload-host:")));
+  } else if (ConsumePrefix(&name, "sideload-host:")) {
+    // sideload-host:<file-size>:<block-size>
+    std::string args(name);
     return create_service_thread("sideload-host",
-                                 std::bind(sideload_host_service, std::placeholders::_1, arg));
+                                 std::bind(SideloadHostService, std::placeholders::_1, args));
   }
   return unique_fd{};
 }
