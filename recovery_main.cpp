@@ -155,9 +155,11 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
   }
 
   // Finally, if no arguments were specified, check whether we should boot
-  // into fastboot.
+  // into fastboot or rescue mode.
   if (args.size() == 1 && boot_command == "boot-fastboot") {
     args.emplace_back("--fastboot");
+  } else if (args.size() == 1 && boot_command == "boot-rescue") {
+    args.emplace_back("--rescue");
   }
 
   return args;
@@ -470,6 +472,7 @@ int main(int argc, char** argv) {
     switch (ret) {
       case Device::SHUTDOWN:
         ui->Print("Shutting down...\n");
+        // TODO: Move all the reboots to reboot(), which should conditionally set quiescent flag.
         android::base::SetProperty(ANDROID_RB_PROPERTY, "shutdown,");
         break;
 
@@ -478,10 +481,31 @@ int main(int argc, char** argv) {
         android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,bootloader");
         break;
 
-      case Device::REBOOT_RESCUE:
-        ui->Print("Rebooting to rescue...\n");
-        android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,rescue");
+      case Device::REBOOT_FASTBOOT:
+        ui->Print("Rebooting to recovery/fastboot...\n");
+        android::base::SetProperty(ANDROID_RB_PROPERTY, "reboot,fastboot");
         break;
+
+      case Device::REBOOT_RECOVERY:
+        ui->Print("Rebooting to recovery...\n");
+        reboot("reboot,recovery");
+        break;
+
+      case Device::REBOOT_RESCUE: {
+        // Not using `reboot("reboot,rescue")`, as it requires matching support in kernel and/or
+        // bootloader.
+        bootloader_message boot = {};
+        strlcpy(boot.command, "boot-rescue", sizeof(boot.command));
+        std::string err;
+        if (!write_bootloader_message(boot, &err)) {
+          LOG(ERROR) << "Failed to write bootloader message: " << err;
+          // Stay under recovery on failure.
+          continue;
+        }
+        ui->Print("Rebooting to recovery/rescue...\n");
+        reboot("reboot,recovery");
+        break;
+      }
 
       case Device::ENTER_FASTBOOT:
         if (logical_partitions_mapped()) {
