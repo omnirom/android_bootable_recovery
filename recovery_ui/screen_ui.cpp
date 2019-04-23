@@ -817,12 +817,22 @@ std::unique_ptr<GRSurface> ScreenRecoveryUI::LoadBitmap(const std::string& filen
 
 std::unique_ptr<GRSurface> ScreenRecoveryUI::LoadLocalizedBitmap(const std::string& filename) {
   GRSurface* surface;
-  if (auto result = res_create_localized_alpha_surface(filename.c_str(), locale_.c_str(), &surface);
-      result < 0) {
-    LOG(ERROR) << "Failed to load bitmap " << filename << " (error " << result << ")";
-    return nullptr;
+  auto result = res_create_localized_alpha_surface(filename.c_str(), locale_.c_str(), &surface);
+  if (result == 0) {
+    return std::unique_ptr<GRSurface>(surface);
   }
-  return std::unique_ptr<GRSurface>(surface);
+  // TODO(xunchang) create a error code enum to refine the retry condition.
+  LOG(WARNING) << "Failed to load bitmap " << filename << " for locale " << locale_ << " (error "
+               << result << "). Falling back to use default locale.";
+
+  result = res_create_localized_alpha_surface(filename.c_str(), DEFAULT_LOCALE, &surface);
+  if (result == 0) {
+    return std::unique_ptr<GRSurface>(surface);
+  }
+
+  LOG(ERROR) << "Failed to load bitmap " << filename << " for locale " << DEFAULT_LOCALE
+             << " (error " << result << ")";
+  return nullptr;
 }
 
 static char** Alloc2d(size_t rows, size_t cols) {

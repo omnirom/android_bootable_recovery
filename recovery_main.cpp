@@ -373,7 +373,6 @@ int main(int argc, char** argv) {
     }
 
     if (locale.empty()) {
-      static constexpr const char* DEFAULT_LOCALE = "en-US";
       locale = DEFAULT_LOCALE;
     }
   }
