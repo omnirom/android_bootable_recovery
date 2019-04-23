@@ -646,7 +646,7 @@
 		<string name="dumlock_restore">Ripristino del Boot originale...</string>
 		<string name="dumlock_reflash">Reinstallazione della Recovery in Boot...</string>
 		<string name="run_script">Esecuzione dello script {1}...</string>
-		<string name="rename_stock">Il file della Recovery stock, in System, è stato rinominato per prevenire la sostituzione di TWRP da paete della ROM.</string>
+		<string name="rename_stock">Il file della Recovery stock, in System, è stato rinominato per prevenire la sostituzione di TWRP da parte della ROM.</string>
 		<string name="split_backup">Divisione del backup in archivi multipli...</string>
 		<string name="backup_error">Errore nella creazione del backup.</string>
 		<string name="restore_error">Errore durante il ripristino.</string>
