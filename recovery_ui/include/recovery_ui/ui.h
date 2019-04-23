@@ -27,6 +27,8 @@
 #include <thread>
 #include <vector>
 
+static constexpr const char* DEFAULT_LOCALE = "en-US";
+
 // Abstract class for controlling the user interface during recovery.
 class RecoveryUI {
  public:
