@@ -27,7 +27,7 @@ TEST(LocaleTest, Misc) {
   EXPECT_FALSE(matches_locale("en-GB", "en"));
   EXPECT_FALSE(matches_locale("en-GB", "en-US"));
   EXPECT_FALSE(matches_locale("en-US", ""));
-  // Empty locale prefix in the PNG file will match the input locale.
-  EXPECT_TRUE(matches_locale("", "en-US"));
+  // Empty locale prefix in the PNG file should not match the input locale.
+  EXPECT_FALSE(matches_locale("", "en-US"));
   EXPECT_TRUE(matches_locale("sr-Latn", "sr-Latn-BA"));
 }
