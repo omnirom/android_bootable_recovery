@@ -1336,7 +1336,11 @@ bool Decrypt_User(const userid_t user_id, const std::string& Password) {
 		printf("e4crypt_unlock_user_key returned fail\n");
 		return false;
 	}
-	if (!e4crypt_prepare_user_storage(nullptr, user_id, 0, flags)) {
+#ifdef USE_KEYSTORAGE_4
+		if (!e4crypt_prepare_user_storage("", user_id, 0, flags)) {
+#else
+		if (!e4crypt_prepare_user_storage(nullptr, user_id, 0, flags)) {
+#endif
 		printf("failed to e4crypt_prepare_user_storage\n");
 		return false;
 	}
