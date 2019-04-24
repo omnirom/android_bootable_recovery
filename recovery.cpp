@@ -512,6 +512,7 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
       case Device::REBOOT:
       case Device::SHUTDOWN:
       case Device::REBOOT_BOOTLOADER:
+      case Device::REBOOT_RESCUE:
       case Device::ENTER_FASTBOOT:
       case Device::ENTER_RECOVERY:
         return chosen_action;
@@ -537,22 +538,28 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         if (!ui->IsTextVisible()) return Device::NO_ACTION;
         break;
       }
+
       case Device::APPLY_ADB_SIDELOAD:
       case Device::APPLY_SDCARD:
       case Device::ENTER_RESCUE: {
         save_current_log = true;
 
         bool adb = true;
+        Device::BuiltinAction reboot_action;
         if (chosen_action == Device::ENTER_RESCUE) {
           // Switch to graphics screen.
           ui->ShowText(false);
-          status = ApplyFromAdb(ui, true /* rescue_mode */);
-          ui->ShowText(true);
+          status = ApplyFromAdb(ui, true /* rescue_mode */, &reboot_action);
         } else if (chosen_action == Device::APPLY_ADB_SIDELOAD) {
-          status = ApplyFromAdb(ui, false /* rescue_mode */);
+          status = ApplyFromAdb(ui, false /* rescue_mode */, &reboot_action);
         } else {
           adb = false;
           status = ApplyFromSdcard(device, ui);
+        }
+
+        ui->Print("\nInstall from %s completed with status %d.\n", adb ? "ADB" : "SD card", status);
+        if (status == INSTALL_REBOOT) {
+          return reboot_action;
         }
 
         if (status != INSTALL_SUCCESS) {
@@ -561,8 +568,6 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
           copy_logs(save_current_log, has_cache, sehandle);
         } else if (!ui->IsTextVisible()) {
           return Device::NO_ACTION;  // reboot if logs aren't visible
-        } else {
-          ui->Print("\nInstall from %s complete.\n", adb ? "ADB" : "SD card");
         }
         break;
       }
@@ -841,6 +846,9 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   ui->Print("Supported API: %d\n", kRecoveryApiVersion);
 
   int status = INSTALL_SUCCESS;
+  // next_action indicates the next target to reboot into upon finishing the install. It could be
+  // overridden to a different reboot target per user request.
+  Device::BuiltinAction next_action = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
 
   if (update_package != nullptr) {
     // It's not entirely true that we will modify the flash. But we want
@@ -924,19 +932,18 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
       status = INSTALL_ERROR;
     }
   } else if (sideload) {
-    // 'adb reboot sideload' acts the same as user presses key combinations
-    // to enter the sideload mode. When 'sideload-auto-reboot' is used, text
-    // display will NOT be turned on by default. And it will reboot after
-    // sideload finishes even if there are errors. Unless one turns on the
-    // text display during the installation. This is to enable automated
+    // 'adb reboot sideload' acts the same as user presses key combinations to enter the sideload
+    // mode. When 'sideload-auto-reboot' is used, text display will NOT be turned on by default. And
+    // it will reboot after sideload finishes even if there are errors. This is to enable automated
     // testing.
     save_current_log = true;
     if (!sideload_auto_reboot) {
       ui->ShowText(true);
     }
-    status = ApplyFromAdb(ui, false /* rescue_mode */);
+    status = ApplyFromAdb(ui, false /* rescue_mode */, &next_action);
     ui->Print("\nInstall from ADB complete (status: %d).\n", status);
     if (sideload_auto_reboot) {
+      status = INSTALL_REBOOT;
       ui->Print("Rebooting automatically.\n");
     }
   } else if (fsck_unshare_blocks) {
@@ -961,23 +968,26 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     }
   }
 
-  Device::BuiltinAction after = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
-  // 1. If the recovery menu is visible, prompt and wait for commands.
-  // 2. If the state is INSTALL_NONE, wait for commands. (i.e. In user build, manually reboot into
-  //    recovery to sideload a package.)
-  // 3. sideload_auto_reboot is an option only available in user-debug build, reboot the device
-  //    without waiting.
-  // 4. In all other cases, reboot the device. Therefore, normal users will observe the device
-  //    reboot after it shows the "error" screen for 5s.
-  if ((status == INSTALL_NONE && !sideload_auto_reboot) || ui->IsTextVisible()) {
-    Device::BuiltinAction temp = prompt_and_wait(device, status);
-    if (temp != Device::NO_ACTION) {
-      after = temp;
+  // Determine the next action.
+  //  - If the state is INSTALL_REBOOT, device will reboot into the target as specified in
+  //    `next_action`.
+  //  - If the recovery menu is visible, prompt and wait for commands.
+  //  - If the state is INSTALL_NONE, wait for commands (e.g. in user build, one manually boots
+  //    into recovery to sideload a package or to wipe the device).
+  //  - In all other cases, reboot the device. Therefore, normal users will observe the device
+  //    rebooting a) immediately upon successful finish (INSTALL_SUCCESS); or b) an "error" screen
+  //    for 5s followed by an automatic reboot.
+  if (status != INSTALL_REBOOT) {
+    if (status == INSTALL_NONE || ui->IsTextVisible()) {
+      Device::BuiltinAction temp = prompt_and_wait(device, status);
+      if (temp != Device::NO_ACTION) {
+        next_action = temp;
+      }
     }
   }
 
   // Save logs and clean up before rebooting or shutting down.
   finish_recovery();
 
-  return after;
+  return next_action;
 }
