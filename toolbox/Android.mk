@@ -42,12 +42,19 @@ endif
 
 ifeq ($(TW_USE_TOOLBOX), true)
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
+            BSD_TOOLS += \
+                dd \
         # These are the only toolbox tools in M. The rest are now in toybox.
         BSD_TOOLS := \
             $(if $(filter $(PLATFORM_SDK_VERSION), 23 24), du)
 
         OUR_TOOLS := \
             newfs_msdos
+
+        ifneq (,$(filter $(PLATFORM_SDK_VERSION), 26 27))
+            BSD_TOOLS += \
+                dd
+        endif
 
         ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 26; echo $$?),0)
             OUR_TOOLS += \
@@ -160,11 +167,14 @@ ifeq ($(TW_USE_TOOLBOX), true)
     endif
 endif
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 28; echo $$?),0)
     # Special rules for 9.0
     OUR_TOOLS += getevent
     LOCAL_C_INCLUDES += $(TWRP_TOOLBOX_PATH)
-    LOCAL_WHOLE_STATIC_LIBRARIES += libtoolbox_dd
+endif
+
+ifneq (,$(filter $(PLATFORM_SDK_VERSION), 26 27))
+    LOCAL_WHOLE_STATIC_LIBRARIES += libtoolbox_dd_twrp
     ifneq ($(TW_USE_TOOLBOX), true)
         OUR_TOOLS += newfs_msdos
     endif
@@ -273,6 +283,32 @@ LOCAL_CFLAGS += -Wno-unused-parameter -Wno-unused-const-variable
 
 # Including this will define $(intermediates) below
 include $(BUILD_EXECUTABLE)
+
+ifneq (,$(filter $(PLATFORM_SDK_VERSION), 26 27))
+    include $(CLEAR_VARS)
+    LOCAL_MODULE := libtoolbox_dd_twrp
+    LOCAL_MODULE_TAGS := optional
+    LOCAL_CFLAGS := -include bsd-compatibility.h -Dmain=dd_main
+    LOCAL_C_INCLUDES := system/core/toolbox/upstream-netbsd/include/ system/core/toolbox/upstream-netbsd/bin/dd system/core/toolbox
+
+    LOCAL_SHARED_LIBRARIES := \
+	    libcutils \
+
+    LOCAL_SRC_FILES += \
+        upstream-netbsd/bin/dd/args.c \
+        upstream-netbsd/bin/dd/conv.c \
+        upstream-netbsd/bin/dd/dd.c \
+        upstream-netbsd/bin/dd/dd_hostops.c \
+        upstream-netbsd/bin/dd/misc.c \
+        upstream-netbsd/bin/dd/position.c \
+        upstream-netbsd/lib/libc/gen/getbsize.c \
+        upstream-netbsd/lib/libc/gen/humanize_number.c \
+        upstream-netbsd/lib/libc/stdlib/strsuftoll.c \
+        upstream-netbsd/lib/libc/string/swab.c \
+        upstream-netbsd/lib/libutil/raise_default_signal.c
+
+    include $(BUILD_STATIC_LIBRARY)
+endif
 
 $(LOCAL_PATH)/toolbox.c: $(intermediates)/tools.h
 

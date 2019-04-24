@@ -566,18 +566,18 @@ endif
 endif
 
 # Install the symlinks.
-LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf toybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)
+#LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf toybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)
 
 include $(BUILD_EXECUTABLE)
 
 # Make /sbin/toolbox launchers for each tool
-SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(ALL_TOOLS))
-$(SYMLINKS): TOYBOX_BINARY := $(LOCAL_MODULE_STEM)
-$(SYMLINKS): $(LOCAL_INSTALLED_MODULE) $(LOCAL_PATH)/Android.mk
-	@echo "Symlink: $@ -> $(TOYBOX_BINARY)"
-	@mkdir -p $(dir $@)
-	@rm -rf $@
-	$(hide) ln -sf $(TOYBOX_BINARY) $@
+#SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(ALL_TOOLS))
+#$(SYMLINKS): TOYBOX_BINARY := $(LOCAL_MODULE_STEM)
+##$(SYMLINKS): $(LOCAL_INSTALLED_MODULE) $(LOCAL_PATH)/Android.mk
+#	@echo "Symlink: $@ -> $(TOYBOX_BINARY)"
+#	@mkdir -p $(dir $@)
+#	@rm -rf $@
+#	$(hide) ln -sf $(TOYBOX_BINARY) $@
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := toybox_symlinks
