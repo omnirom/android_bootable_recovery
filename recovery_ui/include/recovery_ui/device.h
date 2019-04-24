@@ -50,7 +50,11 @@ class Device {
     KEY_INTERRUPTED = 13,
     ENTER_FASTBOOT = 14,
     ENTER_RECOVERY = 15,
+    // ENTER vs REBOOT: The latter will trigger a reboot that uses `rescue` as the reboot target.
+    // So it goes from rescue -> bootloader -> rescue, whereas ENTER_RESCUE switches from recovery
+    // -> rescue directly.
     ENTER_RESCUE = 16,
+    REBOOT_RESCUE = 17,
   };
 
   explicit Device(RecoveryUI* ui);
