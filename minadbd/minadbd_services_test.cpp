@@ -62,7 +62,7 @@ class MinadbdServicesTest : public ::testing::Test {
     signal(SIGPIPE, SIG_DFL);
   }
 
-  void ReadAndCheckCommandMessage(int fd, MinadbdCommands expected_command) {
+  void ReadAndCheckCommandMessage(int fd, MinadbdCommand expected_command) {
     std::vector<uint8_t> received(kMinadbdMessageSize, '\0');
     ASSERT_TRUE(android::base::ReadFully(fd, received.data(), kMinadbdMessageSize));
 
@@ -147,7 +147,7 @@ TEST_F(MinadbdServicesTest, SideloadHostService_wrong_command_format) {
     unique_fd fd = daemon_service_to_fd(command, nullptr);
     ASSERT_NE(-1, fd);
     WaitForFusePath();
-    ReadAndCheckCommandMessage(recovery_socket_, MinadbdCommands::kInstall);
+    ReadAndCheckCommandMessage(recovery_socket_, MinadbdCommand::kInstall);
 
     struct stat sb;
     ASSERT_EQ(0, stat(exit_flag_.c_str(), &sb));
@@ -188,7 +188,7 @@ TEST_F(MinadbdServicesTest, SideloadHostService_read_data_from_fuse) {
 
     unique_fd fd = daemon_service_to_fd("sideload-host:4096:4096", nullptr);
     ASSERT_NE(-1, fd);
-    ReadAndCheckCommandMessage(recovery_socket_, MinadbdCommands::kInstall);
+    ReadAndCheckCommandMessage(recovery_socket_, MinadbdCommand::kInstall);
 
     // Mimic the response from adb host.
     std::string adb_message(8, '\0');
