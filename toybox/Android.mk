@@ -485,7 +485,6 @@ ALL_TOOLS += \
     arp \
     base64 \
     chattr \
-    dd \
     df \
     diff \
     flock \
@@ -547,7 +546,7 @@ ALL_TOOLS += \
     gzip \
     gunzip \
     zcat
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 25; echo $$?),0)
 ALL_TOOLS += \
     fmt \
     start \
