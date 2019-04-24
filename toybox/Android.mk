@@ -478,7 +478,6 @@ ALL_TOOLS += \
     arp \
     base64 \
     chattr \
-    dd \
     df \
     diff \
     egrep \
