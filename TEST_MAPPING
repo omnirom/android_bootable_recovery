@@ -1,0 +1,13 @@
+{
+  "presubmit": [
+    {
+      "name": "minadbd_test"
+    },
+    {
+      "name": "recovery_unit_test"
+    },
+    {
+      "name": "recovery_component_test"
+    }
+  ]
+}
