@@ -481,15 +481,12 @@ ALL_TOOLS += \
     dd \
     df \
     diff \
-    egrep \
-    fgrep \
     flock \
     freeramdisk \
     fsfreeze \
     fstype \
     ftpget \
     ftpput \
-    grep \
     help \
     install \
     ionice \
