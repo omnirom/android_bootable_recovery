@@ -509,12 +509,14 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
       case Device::NO_ACTION:
         break;
 
-      case Device::REBOOT:
-      case Device::SHUTDOWN:
-      case Device::REBOOT_BOOTLOADER:
-      case Device::REBOOT_RESCUE:
       case Device::ENTER_FASTBOOT:
       case Device::ENTER_RECOVERY:
+      case Device::REBOOT:
+      case Device::REBOOT_BOOTLOADER:
+      case Device::REBOOT_FASTBOOT:
+      case Device::REBOOT_RECOVERY:
+      case Device::REBOOT_RESCUE:
+      case Device::SHUTDOWN:
         return chosen_action;
 
       case Device::WIPE_DATA:
@@ -728,6 +730,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     { "locale", required_argument, nullptr, 0 },
     { "prompt_and_wipe_data", no_argument, nullptr, 0 },
     { "reason", required_argument, nullptr, 0 },
+    { "rescue", no_argument, nullptr, 0 },
     { "retry_count", required_argument, nullptr, 0 },
     { "security", no_argument, nullptr, 0 },
     { "show_text", no_argument, nullptr, 't' },
@@ -750,6 +753,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   size_t wipe_package_size = 0;
   bool sideload = false;
   bool sideload_auto_reboot = false;
+  bool rescue = false;
   bool just_exit = false;
   bool shutdown_after = false;
   bool fsck_unshare_blocks = false;
@@ -783,6 +787,8 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
           should_prompt_and_wipe_data = true;
         } else if (option == "reason") {
           reason = optarg;
+        } else if (option == "rescue") {
+          rescue = true;
         } else if (option == "retry_count") {
           android::base::ParseInt(optarg, &retry_count, 0);
         } else if (option == "security") {
@@ -946,6 +952,10 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
       status = INSTALL_REBOOT;
       ui->Print("Rebooting automatically.\n");
     }
+  } else if (rescue) {
+    save_current_log = true;
+    status = ApplyFromAdb(ui, true /* rescue_mode */, &next_action);
+    ui->Print("\nInstall from ADB complete (status: %d).\n", status);
   } else if (fsck_unshare_blocks) {
     if (!do_fsck_unshare_blocks()) {
       status = INSTALL_ERROR;

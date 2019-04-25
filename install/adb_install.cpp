@@ -121,19 +121,20 @@ static auto AdbInstallPackageHandler(RecoveryUI* ui, int* result) {
 
 static auto AdbRebootHandler(MinadbdCommand command, int* result,
                              Device::BuiltinAction* reboot_action) {
+  // Use Device::REBOOT_{FASTBOOT,RECOVERY,RESCUE}, instead of the ones with ENTER_. This allows
+  // rebooting back into fastboot/recovery/rescue mode through bootloader, which may use a newly
+  // installed bootloader/recovery image.
   switch (command) {
     case MinadbdCommand::kRebootBootloader:
       *reboot_action = Device::REBOOT_BOOTLOADER;
       break;
     case MinadbdCommand::kRebootFastboot:
-      *reboot_action = Device::ENTER_FASTBOOT;
+      *reboot_action = Device::REBOOT_FASTBOOT;
       break;
     case MinadbdCommand::kRebootRecovery:
-      *reboot_action = Device::ENTER_RECOVERY;
+      *reboot_action = Device::REBOOT_RECOVERY;
       break;
     case MinadbdCommand::kRebootRescue:
-      // Use Device::REBOOT_RESCUE instead of Device::ENTER_RESCUE. This allows rebooting back into
-      // rescue mode (potentially using a newly installed recovery image).
       *reboot_action = Device::REBOOT_RESCUE;
       break;
     case MinadbdCommand::kRebootAndroid:
@@ -180,7 +181,7 @@ static bool HandleMessageFromMinadbd(int socket_fd,
 
 // TODO(xunchang) add a wrapper function and kill the minadbd service there.
 static void ListenAndExecuteMinadbdCommands(
-    pid_t minadbd_pid, android::base::unique_fd&& socket_fd,
+    RecoveryUI* ui, pid_t minadbd_pid, android::base::unique_fd&& socket_fd,
     const std::map<MinadbdCommand, CommandFunction>& command_map) {
   android::base::unique_fd epoll_fd(epoll_create1(O_CLOEXEC));
   if (epoll_fd == -1) {
@@ -203,6 +204,10 @@ static void ListenAndExecuteMinadbdCommands(
   // Set the timeout to be 300s when waiting for minadbd commands.
   constexpr int TIMEOUT_MILLIS = 300 * 1000;
   while (true) {
+    // Reset the progress bar and the background image before each command.
+    ui->SetProgressType(RecoveryUI::EMPTY);
+    ui->SetBackground(RecoveryUI::NO_COMMAND);
+
     // Poll for the status change of the socket_fd, and handle the message if the fd is ready to
     // read.
     int event_count =
@@ -266,7 +271,8 @@ static void ListenAndExecuteMinadbdCommands(
 //                               b11. exit the listening loop
 //
 static void CreateMinadbdServiceAndExecuteCommands(
-    const std::map<MinadbdCommand, CommandFunction>& command_map, bool rescue_mode) {
+    RecoveryUI* ui, const std::map<MinadbdCommand, CommandFunction>& command_map,
+    bool rescue_mode) {
   signal(SIGPIPE, SIG_IGN);
 
   android::base::unique_fd recovery_socket;
@@ -305,8 +311,8 @@ static void CreateMinadbdServiceAndExecuteCommands(
     return;
   }
 
-  std::thread listener_thread(ListenAndExecuteMinadbdCommands, child, std::move(recovery_socket),
-                              std::ref(command_map));
+  std::thread listener_thread(ListenAndExecuteMinadbdCommands, ui, child,
+                              std::move(recovery_socket), std::ref(command_map));
   if (listener_thread.joinable()) {
     listener_thread.join();
   }
@@ -357,7 +363,7 @@ int ApplyFromAdb(RecoveryUI* ui, bool rescue_mode, Device::BuiltinAction* reboot
       std::bind(&AdbRebootHandler, MinadbdCommand::kRebootRescue, &install_result, reboot_action) },
   };
 
-  CreateMinadbdServiceAndExecuteCommands(command_map, rescue_mode);
+  CreateMinadbdServiceAndExecuteCommands(ui, command_map, rescue_mode);
 
   // Clean up before switching to the older state, for example setting the state
   // to none sets sys/class/android_usb/android0/enable to 0.

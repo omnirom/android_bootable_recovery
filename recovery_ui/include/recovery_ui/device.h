@@ -33,6 +33,10 @@ class Device {
   static constexpr const int kHighlightDown = -3;
   static constexpr const int kInvokeItem = -4;
 
+  // ENTER vs REBOOT: The latter will trigger a reboot that goes through bootloader, which allows
+  // using a new bootloader / recovery image if applicable. For example, REBOOT_RESCUE goes from
+  // rescue -> bootloader -> rescue, whereas ENTER_RESCUE switches from recovery -> rescue
+  // directly.
   enum BuiltinAction {
     NO_ACTION = 0,
     REBOOT = 1,
@@ -50,11 +54,10 @@ class Device {
     KEY_INTERRUPTED = 13,
     ENTER_FASTBOOT = 14,
     ENTER_RECOVERY = 15,
-    // ENTER vs REBOOT: The latter will trigger a reboot that uses `rescue` as the reboot target.
-    // So it goes from rescue -> bootloader -> rescue, whereas ENTER_RESCUE switches from recovery
-    // -> rescue directly.
     ENTER_RESCUE = 16,
-    REBOOT_RESCUE = 17,
+    REBOOT_FASTBOOT = 17,
+    REBOOT_RECOVERY = 18,
+    REBOOT_RESCUE = 19,
   };
 
   explicit Device(RecoveryUI* ui);
