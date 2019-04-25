@@ -197,6 +197,8 @@ cc_test_host {
         "libz",
     ],
 
+    test_suites: ["general-tests"],
+
     data: ["testdata/*"],
 
     target: {
