@@ -8,6 +8,10 @@
     },
     {
       "name": "recovery_component_test"
+    },
+    {
+      "name": "recovery_host_test",
+      "host": true
     }
   ]
 }
