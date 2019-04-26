@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a175ab3f_d1ae24e5",
+        "filename": "toybox/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 1001478
+      },
+      "writtenOn": "2019-04-26T19:36:55Z",
+      "side": 1,
+      "message": "must be after line 71 \u003e toys/android/setprop.c",
+      "range": {
+        "startLine": 231,
+        "startChar": 4,
+        "endLine": 231,
+        "endChar": 20
+      },
+      "revId": "de24556b97b14a744429d42f15df624c631c99c5",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
