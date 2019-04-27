@@ -79,6 +79,8 @@ librecovery_static_libs = [
     "libinstall",
     "librecovery_ui",
     "libminui",
+    "libfusesideload",
+    "libbootloader_message",
     "libotautil",
 
     "libhealthhalutils",
@@ -87,10 +89,8 @@ librecovery_static_libs = [
 
     "android.hardware.health@2.0",
     "android.hardware.health@1.0",
-    "libbootloader_message",
     "libext4_utils",
     "libfs_mgr",
-    "libfusesideload",
     "libhidl-gen-utils",
     "libhidlbase",
     "libhidltransport",
@@ -107,6 +107,7 @@ cc_test {
 
     defaults: [
         "recovery_test_defaults",
+        "libupdater_defaults",
     ],
 
     test_suites: ["device-tests"],
@@ -115,16 +116,21 @@ cc_test {
         "unit/*.cpp",
     ],
 
-    static_libs: libapplypatch_static_libs + [
-        "libinstall",
+    static_libs: libapplypatch_static_libs + librecovery_static_libs + [
         "librecovery_ui",
         "libminui",
         "libotautil",
         "libupdater",
+        "libupdate_verifier",
+
         "libgtest_prod",
+        "libprotobuf-cpp-lite",
     ],
 
-    data: ["testdata/*"],
+    data: [
+        "testdata/*",
+        ":res-testdata",
+    ],
 }
 
 cc_test {
@@ -142,33 +148,6 @@ cc_test {
     ],
 }
 
-cc_test {
-    name: "recovery_component_test",
-    isolated: true,
-
-    defaults: [
-        "recovery_test_defaults",
-        "libupdater_defaults",
-    ],
-
-    test_suites: ["device-tests"],
-
-    srcs: [
-        "component/*.cpp",
-    ],
-
-    static_libs: libapplypatch_static_libs + librecovery_static_libs + [
-        "libupdater",
-        "libupdate_verifier",
-        "libprotobuf-cpp-lite",
-    ],
-
-    data: [
-        "testdata/*",
-        ":res-testdata",
-    ],
-}
-
 cc_test_host {
     name: "recovery_host_test",
     isolated: true,
@@ -178,7 +157,7 @@ cc_test_host {
     ],
 
     srcs: [
-        "component/imgdiff_test.cpp",
+        "unit/imgdiff_test.cpp",
     ],
 
     static_libs: [

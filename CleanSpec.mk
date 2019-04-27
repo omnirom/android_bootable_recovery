@@ -51,6 +51,10 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/recovery/root/sbin)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/SHARED_LIBRARIES/libinstall.recovery_intermediates)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/recovery/root/system/lib64/libinstall.so)
 
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/data/nativetest/recovery_component_test)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/data/nativetest64/recovery_component_test)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/testcases/recovery_component_test)
+
 # ************************************************
 # NEWER CLEAN STEPS MUST BE AT THE END OF THE LIST
 # ************************************************
