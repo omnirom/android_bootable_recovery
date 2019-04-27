@@ -33,6 +33,7 @@
 #include <ziparchive/zip_writer.h>
 
 #include "install/install.h"
+#include "install/wipe_device.h"
 #include "otautil/paths.h"
 #include "private/setup_commands.h"
 
