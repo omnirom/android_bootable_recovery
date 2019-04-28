@@ -77,6 +77,8 @@ extern "C" {
 	#include "gui/pages.hpp"
 	#ifdef TW_INCLUDE_FBE
 		#include "crypto/ext4crypt/Decrypt.h"
+		#include "gui/pages.hpp"
+		#include "gui/rapidxml.hpp"
 		#ifdef TW_INCLUDE_FBE_METADATA_DECRYPT
 			#include "crypto/ext4crypt/MetadataCrypt.h"
 		#endif
@@ -92,6 +94,7 @@ extern "C" {
 #endif
 
 extern bool datamedia;
+std::vector<users_struct> Users_List;
 
 TWPartitionManager::TWPartitionManager(void) {
 	mtp_was_enabled = false;
@@ -1653,7 +1656,54 @@ void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 		LOGERR("Unable to locate data partition.\n");
 }
 
-int TWPartitionManager::Decrypt_Device(string Password) {
+void TWPartitionManager::Process_Users() {
+	#ifdef TW_INCLUDE_FBE
+		DataManager::SetValue("tw_has_fbe", 1);
+		// Parse list of available user ids
+		char* xmlFile = PageManager::LoadFileToBuffer("/data/system/users/userlist.xml", NULL);
+		if (xmlFile == NULL) {
+			LOGERR("Unable to load users");
+		}
+		xml_document<> *usersDoc = new xml_document<>();
+		usersDoc->parse<0>(xmlFile);
+		xml_node<>* usersNode = usersDoc->first_node("users");
+		xml_node<>* userNode = usersNode->first_node("user");
+		while (userNode) {
+			xml_attribute<>* userAttr = userNode->first_attribute("id");
+			if (userAttr) {
+				struct users_struct user;
+				string user_id(userAttr->value());
+				char* nameFile = PageManager::LoadFileToBuffer("/data/system/users/" + user_id + ".xml", NULL);
+				xml_document<> *nameDoc = new xml_document<>();
+				nameDoc->parse<0>(nameFile);
+				xml_node<>* usernameNode = nameDoc->first_node("user");
+				xml_node<>* nameNode = usernameNode->first_node("name");
+				if (nameNode) {
+					user.userName = nameNode->value();
+				} else {
+					user.userName = userAttr->value();
+				}
+				user.userId = userAttr->value();
+				string filename;
+				int type = Get_Password_Type(stoi(userAttr->value()), filename);
+				user.type = type;
+				Users_List.push_back(user);
+				nameDoc->clear();
+				delete nameDoc;
+				free(nameFile);
+			} else
+				LOGERR("Could not find user ID");
+			userNode = userNode->next_sibling("user");
+		}
+		usersDoc->clear();
+		delete usersDoc;
+		free(xmlFile);
+	#else
+		DataManager::SetValue("tw_has_fbe", 0);
+	#endif
+}
+
+int TWPartitionManager::Decrypt_Device(string Password, int user_id) {
 #ifdef TW_INCLUDE_CRYPTO
 	char crypto_state[PROPERTY_VALUE_MAX], crypto_blkdev[PROPERTY_VALUE_MAX];
 	std::vector<TWPartition*>::iterator iter;
@@ -1680,7 +1730,6 @@ int TWPartitionManager::Decrypt_Device(string Password) {
 		int retry_count = 10;
 		while (!TWFunc::Path_Exists("/data/system/users/gatekeeper.password.key") && --retry_count)
 			usleep(2000); // A small sleep is needed after mounting /data to ensure reliable decrypt... maybe because of DE?
-		int user_id = DataManager::GetIntValue("tw_decrypt_user_id");
 		LOGINFO("Decrypting FBE for user %i\n", user_id);
 		if (Decrypt_User(user_id, Password)) {
 			Post_Decrypt("");
