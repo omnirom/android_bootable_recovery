@@ -782,9 +782,6 @@ include $(BUILD_STATIC_LIBRARY)
 
 commands_recovery_local_path := $(LOCAL_PATH)
 
-#    $(LOCAL_PATH)/edify/Android.mk
-#    $(LOCAL_PATH)/otafault/Android.mk
-#    $(LOCAL_PATH)/bootloader_message/Android.mk
 include \
     $(commands_TWRP_local_path)/boot_control/Android.mk \
     $(commands_TWRP_local_path)/tests/Android.mk \
@@ -793,8 +790,12 @@ include \
     $(commands_TWRP_local_path)/update_verifier/Android.mk \
     $(commands_TWRP_local_path)/bootloader_message_twrp/Android.mk
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 25; echo $$?),0)
-include $(commands_TWRP_local_path)/bootloader_message/Android.mk
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 27; echo $$?),0)
+    include $(commands_TWRP_local_path)/applypatch/Android.mk
+    include $(commands_TWRP_local_path)/bootloader_message/Android.mk
+    include $(commands_TWRP_local_path)/edify/Android.mk
+    include $(commands_TWRP_local_path)/otafault/Android.mk
+    include $(commands_TWRP_local_path)/otautil/Android.mk
 endif
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
