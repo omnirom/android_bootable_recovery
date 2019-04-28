@@ -32,8 +32,8 @@ bool e4crypt_unlock_user_key(userid_t user_id, int serial, const std::string& to
                              const std::string& secret);
 //bool e4crypt_lock_user_key(userid_t user_id);
 
-bool e4crypt_prepare_user_storage(const std::string& volume_uuid, userid_t user_id, int serial,
-                                  int flags);
+/*bool e4crypt_prepare_user_storage(const std::string& volume_uuid, userid_t user_id, int serial,
+                                  int flags);*/
 /*bool e4crypt_destroy_user_storage(const std::string& volume_uuid, userid_t user_id, int flags);
 
 bool e4crypt_destroy_volume_keys(const std::string& volume_uuid);*/
