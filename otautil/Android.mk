@@ -13,29 +13,41 @@
 # limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
-include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := \
+libotautil_src_files := \
     SysUtil.cpp \
     DirUtil.cpp \
     ZipUtil.cpp \
     ThermalUtil.cpp
 
-LOCAL_STATIC_LIBRARIES := \
+libotautil_static_libraries := \
     libselinux \
     libbase
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 26; echo $$?),0)
-# Android 8.1 header
-LOCAL_C_INCLUDES += \
-    system/core/libziparchive/include
-endif
-
-LOCAL_MODULE := libotautil
-LOCAL_CFLAGS := \
+libotautil_cflags := \
     -Werror \
     -Wall
 
-LOCAL_C_INCLUDES := include
+libotautil_c_includes := include
 
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 26; echo $$?),0)
+# Android 8.1 header
+libotautil_c_includes += \
+    system/core/libziparchive/include
+endif
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libotautil
+LOCAL_C_INCLUDES := $(libotautil_c_includes)
+LOCAL_CFLAGS := $(libotautil_cflags)
+LOCAL_SRC_FILES := $(libotautil_src_files)
+LOCAL_STATIC_LIBRARIES := $(libotautil_static_libraries)
 include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libotautil
+LOCAL_C_INCLUDES := $(libotautil_c_includes)
+LOCAL_CFLAGS := $(libotautil_cflags)
+LOCAL_SRC_FILES := $(libotautil_src_files)
+LOCAL_STATIC_LIBRARIES := $(libotautil_static_libraries)
+include $(BUILD_HOST_STATIC_LIBRARY)
