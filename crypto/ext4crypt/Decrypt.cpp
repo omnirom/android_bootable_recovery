@@ -549,7 +549,8 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 	std::string disk_decryption_secret_key = "";
 
 	std::string keystore_alias_subid;
-	if (!Find_Keystore_Alias_SubID_And_Prep_Files(user_id, keystore_alias_subid, handle_str)) {
+	// Can be stored in user 0, so check for both.
+	if (!Find_Keystore_Alias_SubID_And_Prep_Files(user_id, keystore_alias_subid, handle_str) && !Find_Keystore_Alias_SubID_And_Prep_Files(0, keystore_alias_subid, handle_str)) {
 		printf("failed to scan keystore alias subid and prep keystore files\n");
 		return disk_decryption_secret_key;
 	}
