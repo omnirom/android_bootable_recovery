@@ -82,6 +82,31 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 					data.selected = 0;
 				mListItems.push_back(data);
 			}
+		} else if (mVariable == "tw_crypto_userid") {
+			// Parse list of available user ids
+			char* xmlFile = PageManager::LoadFileToBuffer("/data/system/users/userlist.xml", NULL);
+			if (xmlFile == NULL) {
+				LOGERR("Unable to load users");
+			}
+			xml_document<> *usersDoc = new xml_document<>();
+			usersDoc->parse<0>(xmlFile);
+			xml_node<>* usersNode = usersDoc->first_node("users");
+			xml_node<>* userNode= FindNode(usersNode, "user");
+			while (userNode) {
+				xml_attribute<>* userAttr = userNode->first_attribute("id");
+				if (userAttr) { ListItem data;
+				data.displayName = userAttr->value();
+				data.variableValue = userAttr->value();
+				data.action = NULL;
+				if (currentValue == userAttr->value()) {
+					data.selected = 1;
+				} else
+					data.selected = 0;
+				mListItems.push_back(data);
+				} else
+					LOGERR("Could not find user ID");
+				userNode = userNode->next_sibling("user");
+			}
 		}
 	}
 	else
