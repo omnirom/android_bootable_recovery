@@ -924,6 +924,13 @@ void DataManager::SetDefaultValues()
 		mConst.SetValue("tw_has_repack_tools", "0");
 
 	pthread_mutex_unlock(&m_valuesLock);
+
+#ifdef TW_INCLUDE_FBE
+	LOGINFO("TW_INCLUDE_FBE := true\n");
+	mConst.SetValue("tw_has_fbe", "1");
+#else
+	mConst.SetValue("tw_has_fbe", "0");
+#endif
 }
 
 // Magic Values
