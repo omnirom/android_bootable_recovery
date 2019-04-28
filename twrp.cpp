@@ -122,6 +122,7 @@ int main(int argc, char **argv) {
 		LOGERR("Failing out of recovery due to problem with fstab.\n");
 		return -1;
 	}
+	PartitionManager.Process_Users();
 	PartitionManager.Output_Partition_Logging();
 	// Load up all the resources
 	gui_loadResources();
