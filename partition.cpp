@@ -680,6 +680,7 @@ bool TWPartition::Decrypt_FBE_DE() {
 if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
 		LOGINFO("File Based Encryption is present\n");
 #ifdef TW_INCLUDE_FBE
+		DataManager::SetValue("tw_has_fbe", "1");
 		ExcludeAll(Mount_Point + "/convert_fbe");
 		ExcludeAll(Mount_Point + "/unencrypted");
 		//ExcludeAll(Mount_Point + "/system/users/0"); // we WILL need to retain some of this if multiple users are present or we just need to delete more folders for the extra users somewhere else
@@ -709,13 +710,7 @@ if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
 			Is_FBE = true;
 			DataManager::SetValue(TW_IS_FBE, 1);
 			DataManager::SetValue(TW_IS_ENCRYPTED, 1);
-			string filename;
-			int pwd_type = Get_Password_Type(0, filename);
-			if (pwd_type < 0) {
-				LOGERR("This TWRP does not have synthetic password decrypt support\n");
-				pwd_type = 0; // default password
-			}
-			DataManager::SetValue(TW_CRYPTO_PWTYPE, pwd_type);
+			DataManager::SetValue(TW_CRYPTO_PWTYPE, 3);
 			DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
 			DataManager::SetValue("tw_crypto_display", "");
 			return true;
