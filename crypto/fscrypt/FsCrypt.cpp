@@ -427,6 +427,9 @@ static bool load_all_de_keys() {
             if (!android::vold::installKey(key, &raw_ref)) return false;
             s_de_key_raw_refs[user_id] = raw_ref;
             LOG(DEBUG) << "Installed de key for user " << user_id;
+
+            std::string user_prop = "twrp.user." + std::to_string(user_id) + ".decrypt";
+            property_set(user_prop.c_str(), "0");
         }
     }
     // fscrypt:TODO: go through all DE directories, ensure that all user dirs have the

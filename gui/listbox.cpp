@@ -26,6 +26,7 @@ extern "C" {
 #include "rapidxml.hpp"
 #include "objects.hpp"
 #include "../data.hpp"
+#include "../partitions.hpp"
 #include "pages.hpp"
 
 extern std::vector<language_struct> Language_List;
@@ -82,10 +83,28 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 					data.selected = 0;
 				mListItems.push_back(data);
 			}
+		} else if (mVariable == "tw_crypto_user_id") {
+			std::vector<users_struct>::iterator iter;
+			std::vector<users_struct>* Users_List = PartitionManager.Get_Users_List();
+			for (iter = Users_List->begin(); iter != Users_List->end(); iter++) {
+				if (!(*iter).isDecrypted) {
+					ListItem data;
+					data.displayName = (*iter).userName;
+					data.variableValue = (*iter).userId;
+					data.action = NULL;
+					DataManager::GetValue("tw_crypto_user_id", currentValue);
+					if (currentValue == (*iter).userId || currentValue == "") {
+						data.selected = 1;
+						DataManager::SetValue("tw_crypto_user_id", (*iter).userId);
+						DataManager::SetValue("tw_crypto_pwtype", (*iter).type);
+					} else
+						data.selected = 0;
+					mListItems.push_back(data);
+				}
+			}
 		}
-	}
-	else
-		allowSelection = false;		// allows using listbox as a read-only list or menu
+	} else
+		allowSelection = false;  // allows using listbox as a read-only list or menu
 
 	// Get the data for the list
 	child = FindNode(node, "listitem");
@@ -94,16 +113,14 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		ListItem item;
 
 		attr = child->first_attribute("name");
-		if (!attr)
-			continue;
+		if (!attr) continue;
 		// We will parse display names when we get page focus to ensure that translating takes place
 		item.displayName = attr->value();
 		item.variableValue = gui_parse_text(child->value());
 		item.selected = (child->value() == currentValue);
 		item.action = NULL;
 		xml_node<>* action = child->first_node("action");
-		if (!action)
-			action = child->first_node("actions");
+		if (!action) action = child->first_node("actions");
 		if (action) {
 			item.action = new GUIAction(child);
 			allowSelection = true;
@@ -122,7 +139,7 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		LoadConditions(child, item.mConditions);
 
 		mListItems.push_back(item);
-		mVisibleItems.push_back(mListItems.size()-1);
+		mVisibleItems.push_back(mListItems.size() - 1);
 
 		child = child->next_sibling("listitem");
 	}
@@ -136,6 +153,33 @@ int GUIListBox::Update(void)
 {
 	if (!isConditionTrue())
 		return 0;
+
+	if (mVariable == "tw_crypto_user_id") {
+		mListItems.clear();
+		std::vector<users_struct>::iterator iter;
+		std::vector<users_struct>* Users_List = PartitionManager.Get_Users_List();
+		for (iter = Users_List->begin(); iter != Users_List->end(); iter++) {
+			if (!(*iter).isDecrypted) {
+				ListItem data;
+				data.displayName = (*iter).userName;
+				data.variableValue = (*iter).userId;
+				data.action = NULL;
+				DataManager::GetValue("tw_crypto_user_id", currentValue);
+				if (currentValue == (*iter).userId || currentValue == "") {
+					data.selected = 1;
+					DataManager::SetValue("tw_crypto_user_id", (*iter).userId);
+					DataManager::SetValue("tw_crypto_pwtype", (*iter).type);
+				} else
+				data.selected = 0;
+				mListItems.push_back(data);
+			}
+		}
+		mVisibleItems.clear();
+		for (size_t i = 0; i < mListItems.size(); i++) {
+			mVisibleItems.push_back(i);
+		}
+		mUpdate = 1;
+	}
 
 	GUIScrollList::Update();
 

@@ -559,7 +559,10 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 	android::ProcessState::self()->startThreadPool();
 
 	std::string keystore_alias_subid;
-	if (!Find_Keystore_Alias_SubID_And_Prep_Files(user_id, keystore_alias_subid, handle_str)) {
+	// Can be stored in user 0, so check for both.
+	if (!Find_Keystore_Alias_SubID_And_Prep_Files(user_id, keystore_alias_subid, handle_str) &&
+		!Find_Keystore_Alias_SubID_And_Prep_Files(0, keystore_alias_subid, handle_str))
+	{
 		printf("failed to scan keystore alias subid and prep keystore files\n");
 		return disk_decryption_secret_key;
 	}
@@ -1011,7 +1014,7 @@ bool Decrypt_User_Synth_Pass(const userid_t user_id, const std::string& Password
 		printf("failed to fscrypt_prepare_user_storage\n");
 		return Free_Return(retval, weaver_key, &pwd);
 	}
-	printf("Decrypted Successfully!\n");
+	printf("User %i Decrypted Successfully!\n", user_id);
 	retval = true;
 	return Free_Return(retval, weaver_key, &pwd);
 }
@@ -1097,7 +1100,7 @@ bool Decrypt_User(const userid_t user_id, const std::string& Password) {
 			printf("failed to fscrypt_prepare_user_storage\n");
 			return false;
 		}
-		printf("Decrypted Successfully!\n");
+		printf("User %i Decrypted Successfully!\n", user_id);
 		return true;
 	}
 	if (stat("/data/system_de/0/spblob", &st) == 0) {
@@ -1164,6 +1167,6 @@ bool Decrypt_User(const userid_t user_id, const std::string& Password) {
 		printf("failed to fscrypt_prepare_user_storage\n");
 		return false;
 	}
-	printf("Decrypted Successfully!\n");
+	printf("User %i Decrypted Successfully!\n", user_id);
 	return true;
 }
