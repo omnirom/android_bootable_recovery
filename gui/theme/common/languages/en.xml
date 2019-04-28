@@ -511,6 +511,9 @@
 		<string name="fix_recovery_loop_complete">Fix Recovery Bootloop Complete</string>
 		<string name="fixing_recovery_loop_patch">Patching kernel...</string>
 		<string name="fix_recovery_loop_patch_error">Error patching kernel.</string>
+		<string name="decrypt_user">Decrypt User</string>
+		<string name="decrypt_user1">Select a user ID to decrypt</string>
+		<string name="select_user">Select User</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel does not have support for reading SELinux contexts.</string>

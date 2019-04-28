@@ -27,6 +27,7 @@ extern "C" {
 #include "objects.hpp"
 #include "../data.hpp"
 #include "pages.hpp"
+#include "../partitions.hpp"
 
 extern std::vector<language_struct> Language_List;
 
@@ -82,9 +83,26 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 					data.selected = 0;
 				mListItems.push_back(data);
 			}
+		} else if (mVariable == "tw_crypto_userid") {
+			std::vector<users_struct>::iterator iter;
+			std::vector<users_struct>* Users_List = PartitionManager.Get_Users_List();
+			for (iter = Users_List->begin(); iter != Users_List->end(); iter++) {
+				if (!(*iter).isDecrypted) {
+					ListItem data;
+					data.displayName = (*iter).userName;
+					data.variableValue = (*iter).userId;
+					data.action = NULL;
+					DataManager::GetValue("tw_crypto_userid", currentValue);
+					if (currentValue == (*iter).userId || currentValue == "") {
+						data.selected = 1;
+						DataManager::SetValue("tw_crypto_userid", (*iter).userId);
+					} else
+						data.selected = 0;
+					mListItems.push_back(data);
+			}
+			}
 		}
-	}
-	else
+	} else
 		allowSelection = false;		// allows using listbox as a read-only list or menu
 
 	// Get the data for the list
@@ -136,6 +154,32 @@ int GUIListBox::Update(void)
 {
 	if (!isConditionTrue())
 		return 0;
+
+	if (mVariable == "tw_crypto_userid") {
+		mListItems.clear();
+		std::vector<users_struct>::iterator iter;
+		std::vector<users_struct>* Users_List = PartitionManager.Get_Users_List();
+		for (iter = Users_List->begin(); iter != Users_List->end(); iter++) {
+			if (!(*iter).isDecrypted) {
+				ListItem data;
+				data.displayName = (*iter).userName;
+				data.variableValue = (*iter).userId;
+				data.action = NULL;
+				DataManager::GetValue("tw_crypto_userid", currentValue);
+				if (currentValue == (*iter).userId || currentValue == "") {
+					data.selected = 1;
+					DataManager::SetValue("tw_crypto_userid", (*iter).userId);
+				} else
+					data.selected = 0;
+				mListItems.push_back(data);
+			}
+		}
+		mVisibleItems.clear();
+		for (size_t i = 0; i < mListItems.size(); i++) {
+			mVisibleItems.push_back(i);
+		}
+		mUpdate = 1;
+	}
 
 	GUIScrollList::Update();
 
