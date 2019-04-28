@@ -395,14 +395,18 @@ int OpenRecoveryScript::run_script_file(void) {
 				if (ret_val != 0)
 					ret_val = 1; // failure
 			} else if (strcmp(command, "decrypt") == 0) {
-				if (*value) {
-					ret_val = PartitionManager.Decrypt_Device(value);
-					if (ret_val != 0)
+					size_t len = strlen(value);
+					tok = strtok(value, " ");
+					strcpy(value1, tok);
+					if (len > strlen(value1) + 1) {
+						char *val2 = value + strlen(value1) + 1;
+						ret_val = PartitionManager.Decrypt_Device(value, atoi(val2));
+					} else {
+						ret_val = PartitionManager.Decrypt_Device(value);
+					}
+					if (ret_val != 0) {
 						ret_val = 1; // failure
-				} else {
-					gui_err("no_pwd=No password provided.");
-					ret_val = 1; // failure
-				}
+					}
 			} else {
 				LOGERR("Unrecognized script command: '%s'\n", command);
 				ret_val = 1;
@@ -654,13 +658,30 @@ void OpenRecoveryScript::Run_CLI_Command(const char* command) {
 		DataManager::GetValue(varname, value);
 		gui_print("%s = %s\n", varname, value.c_str());
 	} else if (strlen(command) > 9 && strncmp(command, "decrypt", 7) == 0) {
-		const char* pass = command + 8;
+		const char* args = command + 8;
+		char value[SCRIPT_COMMAND_SIZE], value1[SCRIPT_COMMAND_SIZE];
+		strcpy(value, args);
+		size_t len = strlen(value);
+		char *val_start, *tok;
+		tok = strtok(value, " ");
+		strcpy(value1, tok);
 		gui_msg("decrypt_cmd=Attempting to decrypt data partition via command line.");
-		if (PartitionManager.Decrypt_Device(pass) == 0) {
-			// set_page_done = 1;  // done by singleaction_page anyway
-			std::string orsFile = TWFunc::get_cache_dir() + "/openrecoveryscript";
-			if (TWFunc::Path_Exists(orsFile)) {
-				Run_OpenRecoveryScript_Action();
+		if (len > strlen(value1) + 1) {
+			char *val2 = value + strlen(value1) + 1;
+			if (PartitionManager.Decrypt_Device(value1, atoi(val2)) == 0) {
+				// set_page_done = 1;  // done by singleaction_page anyway
+				std::string orsFile = TWFunc::get_cache_dir() + "/openrecoveryscript";
+				if (TWFunc::Path_Exists(orsFile)) {
+					Run_OpenRecoveryScript_Action();
+				}
+			}
+		} else {
+			if (PartitionManager.Decrypt_Device(value1, DataManager::GetIntValue("tw_decrypt_user_id")) == 0) {
+				// set_page_done = 1;  // done by singleaction_page anyway
+				std::string orsFile = TWFunc::get_cache_dir() + "/openrecoveryscript";
+				if (TWFunc::Path_Exists(orsFile)) {
+					Run_OpenRecoveryScript_Action();
+				}
 			}
 		}
 	} else if (OpenRecoveryScript::Insert_ORS_Command(command)) {
