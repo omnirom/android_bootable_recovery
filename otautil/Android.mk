@@ -18,7 +18,9 @@ libotautil_src_files := \
     SysUtil.cpp \
     DirUtil.cpp \
     ZipUtil.cpp \
-    ThermalUtil.cpp
+    ThermalUtil.cpp \
+    cache_location.cpp \
+    rangeset.cpp
 
 libotautil_static_libraries := \
     libselinux \
