@@ -29,6 +29,7 @@ extern "C" {
 #include "pages.hpp"
 
 extern std::vector<language_struct> Language_List;
+extern std::vector<users_struct> Users_List;
 
 GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 {
@@ -82,9 +83,21 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 					data.selected = 0;
 				mListItems.push_back(data);
 			}
+		} else if (mVariable == "tw_crypto_userid") {
+			std::vector<users_struct>::iterator iter;
+			for (iter = Users_List.begin(); iter != Users_List.end(); iter++) {
+				ListItem data;
+				data.displayName = (*iter).userName;
+				data.variableValue = (*iter).userId;
+				data.action = NULL;
+				if (currentValue == (*iter).userId) {
+					data.selected = 1;
+				} else
+					data.selected = 0;
+				mListItems.push_back(data);
+			}
 		}
-	}
-	else
+	} else
 		allowSelection = false;		// allows using listbox as a read-only list or menu
 
 	// Get the data for the list

@@ -121,6 +121,14 @@ enum Backup_Method_enum {
 	BM_FLASH_UTILS = 3,
 };
 
+struct users_struct {
+	std::string userId;
+	std::string userName;
+	int type;
+};
+
+extern std::vector<users_struct> Users_List;
+
 // Partition class
 class TWPartition
 {
@@ -334,7 +342,8 @@ public:
 	int Repair_By_Path(string Path, bool Display_Error);                      // Repairs a partition based on path
 	int Resize_By_Path(string Path, bool Display_Error);                      // Resizes a partition based on path
 	void Update_System_Details();                                             // Updates fstab, file systems, sizes, etc.
-	int Decrypt_Device(string Password);                                      // Attempt to decrypt any encrypted partitions
+	int Decrypt_Device(string Password, int user_id = 0);                     // Attempt to decrypt any encrypted partitions
+	void Parse_Users();                                                       // Parse FBE users
 	int usb_storage_enable(void);                                             // Enable USB storage mode
 	int usb_storage_disable(void);                                            // Disable USB storage mode
 	void Mount_All_Storage(void);                                             // Mounts all storage locations
