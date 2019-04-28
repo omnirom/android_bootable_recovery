@@ -327,6 +327,7 @@ protected:
 	int screenshot(std::string arg);
 	int setbrightness(std::string arg);
 	int checkforapp(std::string arg);
+	int getpasswordtype(std::string arg);
 
 	// (originally) threaded actions
 	int fileexists(std::string arg);

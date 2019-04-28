@@ -199,6 +199,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(setlanguage);
 		ADD_ACTION(checkforapp);
 		ADD_ACTION(togglebacklight);
+		ADD_ACTION(getpasswordtype);
 
 		// remember actions that run in the caller thread
 		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
@@ -1494,30 +1495,62 @@ int GUIAction::decrypt(std::string arg __unused)
 		simulate_progress_bar();
 	} else {
 		string Password;
+		string userID;
 		DataManager::GetValue("tw_crypto_password", Password);
-		op_status = PartitionManager.Decrypt_Device(Password);
-		if (op_status != 0)
-			op_status = 1;
-		else {
+		DataManager::GetValue("tw_crypto_userid", userID);
 
-			DataManager::SetValue(TW_IS_ENCRYPTED, 0);
+		if (userID != "") {
+			op_status = PartitionManager.Decrypt_Device(Password, stoi(userID));
+			if (op_status != 0)
+				op_status = 1;
+			operation_end(op_status);
+			return 0;
+		} else {
+			op_status = PartitionManager.Decrypt_Device(Password);
+			if (op_status != 0)
+				op_status = 1;
+			else {
 
-			int has_datamedia;
+				DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 
-			// Check for a custom theme and load it if exists
-			DataManager::GetValue(TW_HAS_DATA_MEDIA, has_datamedia);
-			if (has_datamedia != 0) {
-				if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
-					LOGINFO("Failed to get default contexts and file mode for storage files.\n");
-				} else {
-					LOGINFO("Got default contexts and file mode for storage files.\n");
+				int has_datamedia;
+
+				// Check for a custom theme and load it if exists
+				DataManager::GetValue(TW_HAS_DATA_MEDIA, has_datamedia);
+				if (has_datamedia != 0) {
+					if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
+						LOGINFO("Failed to get default contexts and file mode for storage files.\n");
+					} else {
+						LOGINFO("Got default contexts and file mode for storage files.\n");
+					}
 				}
+				PartitionManager.Decrypt_Adopted();
 			}
-			PartitionManager.Decrypt_Adopted();
 		}
 	}
 
 	operation_end(op_status);
+	return 0;
+}
+
+int GUIAction::getpasswordtype(std::string arg __unused)
+{
+	operation_start("GetPasswordType");
+	if (simulate) {
+		simulate_progress_bar();
+		operation_end(0);
+	} else {
+		string userID;
+		int pwd_type;
+		DataManager::GetValue("tw_crypto_userid", userID);
+			string filename;
+			if (userID != "") {
+				pwd_type = PartitionManager.GetPasswordType(stoi(userID), filename);
+			} else {
+				pwd_type = PartitionManager.GetPasswordType(0, filename);
+			}
+			DataManager::SetValue("tw_crypto_pwtype", pwd_type);		
+	}
 	return 0;
 }
 
