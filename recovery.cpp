@@ -734,8 +734,8 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
           // Print retry count on screen.
           ui->Print("Retry attempt %d\n", retry_count);
 
-          // Reboot and retry the update
-          if (!reboot("reboot,recovery")) {
+          // Reboot back into recovery to retry the update.
+          if (!Reboot("recovery")) {
             ui->Print("Reboot failed\n");
           } else {
             while (true) {

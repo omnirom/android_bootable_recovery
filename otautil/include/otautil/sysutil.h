@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef _OTAUTIL_SYSUTIL
-#define _OTAUTIL_SYSUTIL
+#pragma once
 
 #include <sys/types.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "rangeset.h"
@@ -101,13 +101,14 @@ class MemMapping {
   std::vector<MappedRange> ranges_;
 };
 
-// Wrapper function to trigger a reboot, by additionally handling quiescent reboot mode. The
-// command should start with "reboot," (e.g. "reboot,bootloader" or "reboot,").
-bool reboot(const std::string& command);
+// Reboots the device into the specified target, by additionally handling quiescent reboot mode.
+// 'target' can be an empty string, which indicates booting into Android.
+bool Reboot(std::string_view target);
+
+// Triggers a shutdown.
+bool Shutdown();
 
 // Returns a null-terminated char* array, where the elements point to the C-strings in the given
 // vector, plus an additional nullptr at the end. This is a helper function that facilitates
 // calling C functions (such as getopt(3)) that expect an array of C-strings.
 std::vector<char*> StringVectorToNullTerminatedArray(const std::vector<std::string>& args);
-
-#endif  // _OTAUTIL_SYSUTIL
