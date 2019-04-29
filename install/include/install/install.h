@@ -58,9 +58,6 @@ bool verify_package(Package* package, RecoveryUI* ui);
 // result to |metadata|. Return true if succeed, otherwise return false.
 bool ReadMetadataFromPackage(ZipArchiveHandle zip, std::map<std::string, std::string>* metadata);
 
-// Reads the "recovery.wipe" entry in the zip archive returns a list of partitions to wipe.
-std::vector<std::string> GetWipePartitionList(Package* wipe_package);
-
 // Verifies the compatibility info in a Treble-compatible package. Returns true directly if the
 // entry doesn't exist.
 bool verify_package_compatibility(ZipArchiveHandle package_zip);
