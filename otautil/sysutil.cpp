@@ -214,12 +214,19 @@ MemMapping::~MemMapping() {
   ranges_.clear();
 }
 
-bool reboot(const std::string& command) {
-  std::string cmd = command;
-  if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
+bool Reboot(std::string_view target) {
+  std::string cmd = "reboot," + std::string(target);
+  // Honor the quiescent mode if applicable.
+  if (target != "bootloader" && target != "fastboot" &&
+      android::base::GetBoolProperty("ro.boot.quiescent", false)) {
     cmd += ",quiescent";
   }
   return android::base::SetProperty(ANDROID_RB_PROPERTY, cmd);
+}
+
+bool Shutdown() {
+  // "shutdown" doesn't need a "reason" arg nor a comma.
+  return android::base::SetProperty(ANDROID_RB_PROPERTY, "shutdown");
 }
 
 std::vector<char*> StringVectorToNullTerminatedArray(const std::vector<std::string>& args) {
