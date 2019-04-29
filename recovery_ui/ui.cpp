@@ -375,7 +375,7 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
 
       case RecoveryUI::REBOOT:
         if (reboot_enabled) {
-          reboot("reboot,");
+          Reboot("");
           while (true) {
             pause();
           }
