@@ -551,9 +551,9 @@ static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
         if (chosen_action == Device::ENTER_RESCUE) {
           // Switch to graphics screen.
           ui->ShowText(false);
-          status = ApplyFromAdb(ui, true /* rescue_mode */, &reboot_action);
+          status = ApplyFromAdb(device, true /* rescue_mode */, &reboot_action);
         } else if (chosen_action == Device::APPLY_ADB_SIDELOAD) {
-          status = ApplyFromAdb(ui, false /* rescue_mode */, &reboot_action);
+          status = ApplyFromAdb(device, false /* rescue_mode */, &reboot_action);
         } else {
           adb = false;
           status = ApplyFromSdcard(device, ui);
@@ -946,7 +946,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     if (!sideload_auto_reboot) {
       ui->ShowText(true);
     }
-    status = ApplyFromAdb(ui, false /* rescue_mode */, &next_action);
+    status = ApplyFromAdb(device, false /* rescue_mode */, &next_action);
     ui->Print("\nInstall from ADB complete (status: %d).\n", status);
     if (sideload_auto_reboot) {
       status = INSTALL_REBOOT;
@@ -954,7 +954,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     }
   } else if (rescue) {
     save_current_log = true;
-    status = ApplyFromAdb(ui, true /* rescue_mode */, &next_action);
+    status = ApplyFromAdb(device, true /* rescue_mode */, &next_action);
     ui->Print("\nInstall from ADB complete (status: %d).\n", status);
   } else if (fsck_unshare_blocks) {
     if (!do_fsck_unshare_blocks()) {
