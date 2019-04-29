@@ -122,7 +122,7 @@ class MinadbdServicesTest : public ::testing::Test {
 
 TEST_F(MinadbdServicesTest, SideloadHostService_wrong_size_argument) {
   ASSERT_EXIT(ExecuteCommandAndWaitForExit("sideload-host:abc:4096"),
-              ::testing::ExitedWithCode(kMinadbdPackageSizeError), "");
+              ::testing::ExitedWithCode(kMinadbdHostCommandArgumentError), "");
 }
 
 TEST_F(MinadbdServicesTest, SideloadHostService_wrong_block_size) {
