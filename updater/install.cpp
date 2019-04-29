@@ -778,7 +778,7 @@ Value* RebootNowFn(const char* name, State* state, const std::vector<std::unique
     return StringValue("");
   }
 
-  reboot("reboot," + property);
+  Reboot(property);
 
   sleep(5);
   return ErrorAbort(state, kRebootFailure, "%s() failed to reboot", name);
