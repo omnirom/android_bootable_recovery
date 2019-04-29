@@ -43,6 +43,7 @@
 
 #include "fuse_sideload.h"
 #include "install/install.h"
+#include "install/wipe_data.h"
 #include "minadbd_types.h"
 #include "otautil/sysutil.h"
 #include "recovery_ui/device.h"
@@ -330,7 +331,7 @@ static void CreateMinadbdServiceAndExecuteCommands(
   signal(SIGPIPE, SIG_DFL);
 }
 
-int ApplyFromAdb(RecoveryUI* ui, bool rescue_mode, Device::BuiltinAction* reboot_action) {
+int ApplyFromAdb(Device* device, bool rescue_mode, Device::BuiltinAction* reboot_action) {
   // Save the usb state to restore after the sideload operation.
   std::string usb_state = android::base::GetProperty("sys.usb.state", "none");
   // Clean up state and stop adbd.
@@ -339,13 +340,7 @@ int ApplyFromAdb(RecoveryUI* ui, bool rescue_mode, Device::BuiltinAction* reboot
     return INSTALL_ERROR;
   }
 
-  if (!rescue_mode) {
-    ui->Print(
-        "\n\nNow send the package you want to apply\n"
-        "to the device with \"adb sideload <filename>\"...\n");
-  } else {
-    ui->Print("\n\nWaiting for rescue commands...\n");
-  }
+  RecoveryUI* ui = device->GetUI();
 
   int install_result = INSTALL_ERROR;
   std::map<MinadbdCommand, CommandFunction> command_map{
@@ -362,6 +357,18 @@ int ApplyFromAdb(RecoveryUI* ui, bool rescue_mode, Device::BuiltinAction* reboot
     { MinadbdCommand::kRebootRescue,
       std::bind(&AdbRebootHandler, MinadbdCommand::kRebootRescue, &install_result, reboot_action) },
   };
+
+  if (!rescue_mode) {
+    ui->Print(
+        "\n\nNow send the package you want to apply\n"
+        "to the device with \"adb sideload <filename>\"...\n");
+  } else {
+    ui->Print("\n\nWaiting for rescue commands...\n");
+    command_map.emplace(MinadbdCommand::kWipeData, [&device]() {
+      bool result = WipeData(device, false);
+      return std::make_pair(result, true);
+    });
+  }
 
   CreateMinadbdServiceAndExecuteCommands(ui, command_map, rescue_mode);
 

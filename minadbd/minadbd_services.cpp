@@ -104,7 +104,7 @@ static MinadbdErrorCode RunAdbFuseSideload(int sfd, const std::string& args,
   if (pieces.size() != 2 || !android::base::ParseInt(pieces[0], &file_size) || file_size <= 0 ||
       !android::base::ParseInt(pieces[1], &block_size) || block_size <= 0) {
     LOG(ERROR) << "bad sideload-host arguments: " << args;
-    return kMinadbdPackageSizeError;
+    return kMinadbdHostCommandArgumentError;
   }
 
   LOG(INFO) << "sideload-host file size " << file_size << ", block size " << block_size;
@@ -124,17 +124,17 @@ static MinadbdErrorCode RunAdbFuseSideload(int sfd, const std::string& args,
     return kMinadbdMessageFormatError;
   }
 
-  // Signal host-side adb to stop. For sideload mode, we always send kSideloadServiceExitSuccess
+  // Signal host-side adb to stop. For sideload mode, we always send kMinadbdServicesExitSuccess
   // (i.e. "DONEDONE") regardless of the install result. For rescue mode, we send failure message on
   // install error.
   if (!rescue_mode || *status == MinadbdCommandStatus::kSuccess) {
-    if (!android::base::WriteFully(sfd, kSideloadServiceExitSuccess,
-                                   strlen(kSideloadServiceExitSuccess))) {
+    if (!android::base::WriteFully(sfd, kMinadbdServicesExitSuccess,
+                                   strlen(kMinadbdServicesExitSuccess))) {
       return kMinadbdHostSocketIOError;
     }
   } else {
-    if (!android::base::WriteFully(sfd, kSideloadServiceExitFailure,
-                                   strlen(kSideloadServiceExitFailure))) {
+    if (!android::base::WriteFully(sfd, kMinadbdServicesExitFailure,
+                                   strlen(kMinadbdServicesExitFailure))) {
       return kMinadbdHostSocketIOError;
     }
   }
@@ -200,6 +200,34 @@ static void RebootHostService(unique_fd /* sfd */, const std::string& target) {
   }
 }
 
+static void WipeDeviceService(unique_fd fd, const std::string& args) {
+  auto pieces = android::base::Split(args, ":");
+  if (pieces.size() != 2 || pieces[0] != "userdata") {
+    LOG(ERROR) << "Failed to parse wipe device command arguments " << args;
+    exit(kMinadbdHostCommandArgumentError);
+  }
+
+  size_t message_size;
+  if (!android::base::ParseUint(pieces[1], &message_size) ||
+      message_size < strlen(kMinadbdServicesExitSuccess)) {
+    LOG(ERROR) << "Failed to parse wipe device message size in " << args;
+    exit(kMinadbdHostCommandArgumentError);
+  }
+
+  WriteCommandToFd(MinadbdCommand::kWipeData, minadbd_socket);
+  MinadbdCommandStatus status;
+  if (!WaitForCommandStatus(minadbd_socket, &status)) {
+    exit(kMinadbdMessageFormatError);
+  }
+
+  std::string response = (status == MinadbdCommandStatus::kSuccess) ? kMinadbdServicesExitSuccess
+                                                                    : kMinadbdServicesExitFailure;
+  response += std::string(message_size - response.size(), '\0');
+  if (!android::base::WriteFully(fd, response.c_str(), response.size())) {
+    exit(kMinadbdHostSocketIOError);
+  }
+}
+
 unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport */) {
   // Common services that are supported both in sideload and rescue modes.
   if (ConsumePrefix(&name, "reboot:")) {
@@ -225,7 +253,13 @@ unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport *
       std::string args(name);
       return create_service_thread(
           "rescue-getprop", std::bind(RescueGetpropHostService, std::placeholders::_1, args));
+    } else if (ConsumePrefix(&name, "rescue-wipe:")) {
+      // rescue-wipe:target:<message-size>
+      std::string args(name);
+      return create_service_thread("rescue-wipe",
+                                   std::bind(WipeDeviceService, std::placeholders::_1, args));
     }
+
     return unique_fd{};
   }
 
