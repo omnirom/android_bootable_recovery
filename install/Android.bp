@@ -66,6 +66,7 @@ cc_library_static {
         "package.cpp",
         "verifier.cpp",
         "wipe_data.cpp",
+        "wipe_device.cpp",
     ],
 
     shared_libs: [
