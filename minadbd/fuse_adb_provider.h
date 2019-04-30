@@ -14,25 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef __FUSE_ADB_PROVIDER_H
-#define __FUSE_ADB_PROVIDER_H
+#pragma once
 
 #include <stdint.h>
-
-#include "android-base/unique_fd.h"
 
 #include "fuse_provider.h"
 
 // This class reads data from adb server.
 class FuseAdbDataProvider : public FuseDataProvider {
  public:
-  FuseAdbDataProvider(android::base::unique_fd&& fd, uint64_t file_size, uint32_t block_size)
-      : FuseDataProvider(std::move(fd), file_size, block_size) {}
+  FuseAdbDataProvider(int fd, uint64_t file_size, uint32_t block_size)
+      : FuseDataProvider(file_size, block_size), fd_(fd) {}
 
   bool ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
                             uint32_t start_block) const override;
 
-  void Close() override;
+ private:
+  // The underlying source to read data from (i.e. the one that talks to the host).
+  int fd_;
 };
-
-#endif

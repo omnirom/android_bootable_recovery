@@ -16,4 +16,10 @@
 
 #pragma once
 
+#include <string>
+
 void SetMinadbdSocketFd(int socket_fd);
+
+void SetMinadbdRescueMode(bool);
+
+void SetSideloadMountPoint(const std::string& path);
