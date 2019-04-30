@@ -133,7 +133,7 @@ static bool StartSdcardFuse(const std::string& path) {
   return run_fuse_sideload(std::move(file_data_reader)) == 0;
 }
 
-int ApplyFromSdcard(Device* device, RecoveryUI* ui) {
+InstallResult ApplyFromSdcard(Device* device, RecoveryUI* ui) {
   if (ensure_path_mounted(SDCARD_ROOT) != 0) {
     LOG(ERROR) << "\n-- Couldn't mount " << SDCARD_ROOT << ".\n";
     return INSTALL_ERROR;
@@ -159,9 +159,8 @@ int ApplyFromSdcard(Device* device, RecoveryUI* ui) {
     _exit(status ? EXIT_SUCCESS : EXIT_FAILURE);
   }
 
-  // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the fuse in child
-  // process is ready.
-  int result = INSTALL_ERROR;
+  // FUSE_SIDELOAD_HOST_PATHNAME will start to exist once the fuse in child process is ready.
+  InstallResult result = INSTALL_ERROR;
   int status;
   bool waited = false;
   for (int i = 0; i < SDCARD_INSTALL_TIMEOUT; ++i) {
@@ -184,7 +183,7 @@ int ApplyFromSdcard(Device* device, RecoveryUI* ui) {
       }
     }
 
-    result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, false, false, 0 /*retry_count*/, ui);
+    result = InstallPackage(FUSE_SIDELOAD_HOST_PATHNAME, false, false, 0 /* retry_count */, ui);
     break;
   }
 

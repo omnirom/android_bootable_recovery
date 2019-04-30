@@ -47,8 +47,8 @@ enum class OtaType {
 // Installs the given update package. This function should also wipe the cache partition after a
 // successful installation if |should_wipe_cache| is true or an updater command asks to wipe the
 // cache.
-int install_package(const std::string& package, bool should_wipe_cache, bool needs_mount,
-                    int retry_count, RecoveryUI* ui);
+InstallResult InstallPackage(const std::string& package, bool should_wipe_cache, bool needs_mount,
+                             int retry_count, RecoveryUI* ui);
 
 // Verifies the package by ota keys. Returns true if the package is verified successfully,
 // otherwise returns false.

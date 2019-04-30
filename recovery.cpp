@@ -113,12 +113,12 @@ const char* reason = nullptr;
  * 3. main system reboots into recovery
  * 4. get_args() writes BCB with "boot-recovery" and "--update_package=..."
  *    -- after this, rebooting will attempt to reinstall the update --
- * 5. install_package() attempts to install the update
+ * 5. InstallPackage() attempts to install the update
  *    NOTE: the package install must itself be restartable from any point
  * 6. finish_recovery() erases BCB
  *    -- after this, rebooting will (try to) restart the main system --
  * 7. ** if install failed **
- *    7a. prompt_and_wait() shows an error icon and waits for the user
+ *    7a. PromptAndWait() shows an error icon and waits for the user
  *    7b. the user reboots (pulling the battery, etc) into the main system
  */
 
@@ -312,20 +312,30 @@ static void run_graphics_test() {
   ui->ShowText(true);
 }
 
-// Returns REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER. Returning NO_ACTION means to take the default,
-// which is to reboot or shutdown depending on if the --shutdown_after flag was passed to recovery.
-static Device::BuiltinAction prompt_and_wait(Device* device, int status) {
+// Shows the recovery UI and waits for user input. Returns one of the device builtin actions, such
+// as REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER. Returning NO_ACTION means to take the default, which
+// is to reboot or shutdown depending on if the --shutdown_after flag was passed to recovery.
+static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status) {
   for (;;) {
     finish_recovery();
     switch (status) {
       case INSTALL_SUCCESS:
       case INSTALL_NONE:
+      case INSTALL_SKIPPED:
+      case INSTALL_RETRY:
+      case INSTALL_KEY_INTERRUPTED:
         ui->SetBackground(RecoveryUI::NO_COMMAND);
         break;
 
       case INSTALL_ERROR:
       case INSTALL_CORRUPT:
         ui->SetBackground(RecoveryUI::ERROR);
+        break;
+
+      case INSTALL_REBOOT:
+        // All the reboots should have been handled prior to entering PromptAndWait() or immediately
+        // after installing a package.
+        LOG(FATAL) << "Invalid status code of INSTALL_REBOOT";
         break;
     }
     ui->SetProgressType(RecoveryUI::EMPTY);
@@ -690,7 +700,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
 
   ui->Print("Supported API: %d\n", kRecoveryApiVersion);
 
-  int status = INSTALL_SUCCESS;
+  InstallResult status = INSTALL_SUCCESS;
   // next_action indicates the next target to reboot into upon finishing the install. It could be
   // overridden to a different reboot target per user request.
   Device::BuiltinAction next_action = shutdown_after ? Device::SHUTDOWN : Device::REBOOT;
@@ -720,7 +730,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         set_retry_bootloader_message(retry_count + 1, args);
       }
 
-      status = install_package(update_package, should_wipe_cache, true, retry_count, ui);
+      status = InstallPackage(update_package, should_wipe_cache, true, retry_count, ui);
       if (status != INSTALL_SUCCESS) {
         ui->Print("Installation aborted.\n");
 
@@ -828,7 +838,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   //    for 5s followed by an automatic reboot.
   if (status != INSTALL_REBOOT) {
     if (status == INSTALL_NONE || ui->IsTextVisible()) {
-      Device::BuiltinAction temp = prompt_and_wait(device, status);
+      auto temp = PromptAndWait(device, status);
       if (temp != Device::NO_ACTION) {
         next_action = temp;
       }

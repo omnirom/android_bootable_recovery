@@ -324,9 +324,9 @@ static void log_max_temperature(int* max_temperature, const std::atomic<bool>& l
 }
 
 // If the package contains an update binary, extract it and run it.
-static int try_update_binary(const std::string& package, ZipArchiveHandle zip, bool* wipe_cache,
-                             std::vector<std::string>* log_buffer, int retry_count,
-                             int* max_temperature, RecoveryUI* ui) {
+static InstallResult TryUpdateBinary(const std::string& package, ZipArchiveHandle zip,
+                                     bool* wipe_cache, std::vector<std::string>* log_buffer,
+                                     int retry_count, int* max_temperature, RecoveryUI* ui) {
   std::map<std::string, std::string> metadata;
   if (!ReadMetadataFromPackage(zip, &metadata)) {
     LOG(ERROR) << "Failed to parse metadata in the zip file";
@@ -569,9 +569,10 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
   return false;
 }
 
-static int really_install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
-                                  std::vector<std::string>* log_buffer, int retry_count,
-                                  int* max_temperature, RecoveryUI* ui) {
+static InstallResult VerifyAndInstallPackage(const std::string& path, bool* wipe_cache,
+                                             bool needs_mount, std::vector<std::string>* log_buffer,
+                                             int retry_count, int* max_temperature,
+                                             RecoveryUI* ui) {
   ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
   ui->Print("Finding update package...\n");
   // Give verification half the progress bar...
@@ -622,16 +623,16 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
     ui->Print("Retry attempt: %d\n", retry_count);
   }
   ui->SetEnableReboot(false);
-  int result =
-      try_update_binary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature, ui);
+  auto result =
+      TryUpdateBinary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature, ui);
   ui->SetEnableReboot(true);
   ui->Print("\n");
 
   return result;
 }
 
-int install_package(const std::string& path, bool should_wipe_cache, bool needs_mount,
-                    int retry_count, RecoveryUI* ui) {
+InstallResult InstallPackage(const std::string& path, bool should_wipe_cache, bool needs_mount,
+                             int retry_count, RecoveryUI* ui) {
   CHECK(!path.empty());
 
   auto start = std::chrono::system_clock::now();
@@ -639,15 +640,15 @@ int install_package(const std::string& path, bool should_wipe_cache, bool needs_
   int start_temperature = GetMaxValueFromThermalZone();
   int max_temperature = start_temperature;
 
-  int result;
+  InstallResult result;
   std::vector<std::string> log_buffer;
   if (setup_install_mounts() != 0) {
     LOG(ERROR) << "failed to set up expected mounts for install; aborting";
     result = INSTALL_ERROR;
   } else {
     bool updater_wipe_cache = false;
-    result = really_install_package(path, &updater_wipe_cache, needs_mount, &log_buffer,
-                                    retry_count, &max_temperature, ui);
+    result = VerifyAndInstallPackage(path, &updater_wipe_cache, needs_mount, &log_buffer,
+                                     retry_count, &max_temperature, ui);
     should_wipe_cache = should_wipe_cache || updater_wipe_cache;
   }
 
