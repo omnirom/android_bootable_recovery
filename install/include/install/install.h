@@ -62,7 +62,7 @@ bool ReadMetadataFromPackage(ZipArchiveHandle zip, std::map<std::string, std::st
 // entry doesn't exist.
 bool verify_package_compatibility(ZipArchiveHandle package_zip);
 
-// Checks if the the metadata in the OTA package has expected values. Returns 0 on success.
-// Mandatory checks: ota-type, pre-device and serial number(if presents)
-// AB OTA specific checks: pre-build version, fingerprint, timestamp.
-int CheckPackageMetadata(const std::map<std::string, std::string>& metadata, OtaType ota_type);
+// Checks if the metadata in the OTA package has expected values. Mandatory checks: ota-type,
+// pre-device and serial number (if presents). A/B OTA specific checks: pre-build version,
+// fingerprint, timestamp.
+bool CheckPackageMetadata(const std::map<std::string, std::string>& metadata, OtaType ota_type);
