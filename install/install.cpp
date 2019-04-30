@@ -139,14 +139,14 @@ static void ReadSourceTargetBuild(const std::map<std::string, std::string>& meta
 // Checks the build version, fingerprint and timestamp in the metadata of the A/B package.
 // Downgrading is not allowed unless explicitly enabled in the package and only for
 // incremental packages.
-static int CheckAbSpecificMetadata(const std::map<std::string, std::string>& metadata) {
+static bool CheckAbSpecificMetadata(const std::map<std::string, std::string>& metadata) {
   // Incremental updates should match the current build.
   auto device_pre_build = android::base::GetProperty("ro.build.version.incremental", "");
   auto pkg_pre_build = get_value(metadata, "pre-build-incremental");
   if (!pkg_pre_build.empty() && pkg_pre_build != device_pre_build) {
     LOG(ERROR) << "Package is for source build " << pkg_pre_build << " but expected "
                << device_pre_build;
-    return INSTALL_ERROR;
+    return false;
   }
 
   auto device_fingerprint = android::base::GetProperty("ro.build.fingerprint", "");
@@ -154,7 +154,7 @@ static int CheckAbSpecificMetadata(const std::map<std::string, std::string>& met
   if (!pkg_pre_build_fingerprint.empty() && pkg_pre_build_fingerprint != device_fingerprint) {
     LOG(ERROR) << "Package is for source build " << pkg_pre_build_fingerprint << " but expected "
                << device_fingerprint;
-    return INSTALL_ERROR;
+    return false;
   }
 
   // Check for downgrade version.
@@ -172,36 +172,36 @@ static int CheckAbSpecificMetadata(const std::map<std::string, std::string>& met
                     "newer than timestamp "
                  << build_timestamp << " but package has timestamp " << pkg_post_timestamp
                  << " and downgrade not allowed.";
-      return INSTALL_ERROR;
+      return false;
     }
     if (pkg_pre_build_fingerprint.empty()) {
       LOG(ERROR) << "Downgrade package must have a pre-build version set, not allowed.";
-      return INSTALL_ERROR;
+      return false;
     }
   }
 
-  return 0;
+  return true;
 }
 
-int CheckPackageMetadata(const std::map<std::string, std::string>& metadata, OtaType ota_type) {
+bool CheckPackageMetadata(const std::map<std::string, std::string>& metadata, OtaType ota_type) {
   auto package_ota_type = get_value(metadata, "ota-type");
   auto expected_ota_type = OtaTypeToString(ota_type);
   if (ota_type != OtaType::AB && ota_type != OtaType::BRICK) {
     LOG(INFO) << "Skip package metadata check for ota type " << expected_ota_type;
-    return 0;
+    return true;
   }
 
   if (package_ota_type != expected_ota_type) {
     LOG(ERROR) << "Unexpected ota package type, expects " << expected_ota_type << ", actual "
                << package_ota_type;
-    return INSTALL_ERROR;
+    return false;
   }
 
   auto device = android::base::GetProperty("ro.product.device", "");
   auto pkg_device = get_value(metadata, "pre-device");
   if (pkg_device != device || pkg_device.empty()) {
     LOG(ERROR) << "Package is for product " << pkg_device << " but expected " << device;
-    return INSTALL_ERROR;
+    return false;
   }
 
   // We allow the package to not have any serialno; and we also allow it to carry multiple serial
@@ -218,7 +218,7 @@ int CheckPackageMetadata(const std::map<std::string, std::string>& metadata, Ota
     }
     if (!serial_number_match) {
       LOG(ERROR) << "Package is for serial " << pkg_serial_no;
-      return INSTALL_ERROR;
+      return false;
     }
   }
 
@@ -226,11 +226,11 @@ int CheckPackageMetadata(const std::map<std::string, std::string>& metadata, Ota
     return CheckAbSpecificMetadata(metadata);
   }
 
-  return 0;
+  return true;
 }
 
-int SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int status_fd,
-                          std::vector<std::string>* cmd) {
+bool SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int status_fd,
+                           std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
 
   // For A/B updates we extract the payload properties to a buffer and obtain the RAW payload offset
@@ -240,7 +240,7 @@ int SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int 
   ZipEntry properties_entry;
   if (FindEntry(zip, property_name, &properties_entry) != 0) {
     LOG(ERROR) << "Failed to find " << AB_OTA_PAYLOAD_PROPERTIES;
-    return INSTALL_CORRUPT;
+    return false;
   }
   uint32_t properties_entry_length = properties_entry.uncompressed_length;
   std::vector<uint8_t> payload_properties(properties_entry_length);
@@ -248,7 +248,7 @@ int SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int 
       ExtractToMemory(zip, &properties_entry, payload_properties.data(), properties_entry_length);
   if (err != 0) {
     LOG(ERROR) << "Failed to extract " << AB_OTA_PAYLOAD_PROPERTIES << ": " << ErrorCodeString(err);
-    return INSTALL_CORRUPT;
+    return false;
   }
 
   static constexpr const char* AB_OTA_PAYLOAD = "payload.bin";
@@ -256,7 +256,7 @@ int SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int 
   ZipEntry payload_entry;
   if (FindEntry(zip, payload_name, &payload_entry) != 0) {
     LOG(ERROR) << "Failed to find " << AB_OTA_PAYLOAD;
-    return INSTALL_CORRUPT;
+    return false;
   }
   long payload_offset = payload_entry.offset;
   *cmd = {
@@ -266,11 +266,11 @@ int SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int 
     "--headers=" + std::string(payload_properties.begin(), payload_properties.end()),
     android::base::StringPrintf("--status_fd=%d", status_fd),
   };
-  return 0;
+  return true;
 }
 
-int SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int retry_count,
-                             int status_fd, std::vector<std::string>* cmd) {
+bool SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int retry_count,
+                              int status_fd, std::vector<std::string>* cmd) {
   CHECK(cmd != nullptr);
 
   // In non-A/B updates we extract the update binary from the package.
@@ -279,7 +279,7 @@ int SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, i
   ZipEntry binary_entry;
   if (FindEntry(zip, binary_name, &binary_entry) != 0) {
     LOG(ERROR) << "Failed to find update binary " << UPDATE_BINARY_NAME;
-    return INSTALL_CORRUPT;
+    return false;
   }
 
   const std::string binary_path = Paths::Get().temporary_update_binary();
@@ -288,13 +288,12 @@ int SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, i
       open(binary_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0755));
   if (fd == -1) {
     PLOG(ERROR) << "Failed to create " << binary_path;
-    return INSTALL_ERROR;
+    return false;
   }
 
-  int32_t error = ExtractEntryToFile(zip, &binary_entry, fd);
-  if (error != 0) {
+  if (auto error = ExtractEntryToFile(zip, &binary_entry, fd); error != 0) {
     LOG(ERROR) << "Failed to extract " << UPDATE_BINARY_NAME << ": " << ErrorCodeString(error);
-    return INSTALL_ERROR;
+    return false;
   }
 
   // When executing the update binary contained in the package, the arguments passed are:
@@ -311,7 +310,7 @@ int SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, i
   if (retry_count > 0) {
     cmd->push_back("retry");
   }
-  return 0;
+  return true;
 }
 
 static void log_max_temperature(int* max_temperature, const std::atomic<bool>& logger_finished) {
@@ -325,9 +324,9 @@ static void log_max_temperature(int* max_temperature, const std::atomic<bool>& l
 }
 
 // If the package contains an update binary, extract it and run it.
-static int try_update_binary(const std::string& package, ZipArchiveHandle zip, bool* wipe_cache,
-                             std::vector<std::string>* log_buffer, int retry_count,
-                             int* max_temperature, RecoveryUI* ui) {
+static InstallResult TryUpdateBinary(const std::string& package, ZipArchiveHandle zip,
+                                     bool* wipe_cache, std::vector<std::string>* log_buffer,
+                                     int retry_count, int* max_temperature, RecoveryUI* ui) {
   std::map<std::string, std::string> metadata;
   if (!ReadMetadataFromPackage(zip, &metadata)) {
     LOG(ERROR) << "Failed to parse metadata in the zip file";
@@ -335,11 +334,10 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   }
 
   bool is_ab = android::base::GetBoolProperty("ro.build.ab_update", false);
-  // Verifies against the metadata in the package first.
-  if (int check_status = is_ab ? CheckPackageMetadata(metadata, OtaType::AB) : 0;
-      check_status != 0) {
+  // Verify against the metadata in the package first.
+  if (is_ab && !CheckPackageMetadata(metadata, OtaType::AB)) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
-    return check_status;
+    return INSTALL_ERROR;
   }
 
   ReadSourceTargetBuild(metadata, log_buffer);
@@ -386,12 +384,12 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
   //
 
   std::vector<std::string> args;
-  if (int update_status =
+  if (auto setup_result =
           is_ab ? SetUpAbUpdateCommands(package, zip, pipe_write.get(), &args)
                 : SetUpNonAbUpdateCommands(package, zip, retry_count, pipe_write.get(), &args);
-      update_status != 0) {
+      !setup_result) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
-    return update_status;
+    return INSTALL_CORRUPT;
   }
 
   pid_t pid = fork();
@@ -571,9 +569,10 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
   return false;
 }
 
-static int really_install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
-                                  std::vector<std::string>* log_buffer, int retry_count,
-                                  int* max_temperature, RecoveryUI* ui) {
+static InstallResult VerifyAndInstallPackage(const std::string& path, bool* wipe_cache,
+                                             bool needs_mount, std::vector<std::string>* log_buffer,
+                                             int retry_count, int* max_temperature,
+                                             RecoveryUI* ui) {
   ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
   ui->Print("Finding update package...\n");
   // Give verification half the progress bar...
@@ -624,16 +623,16 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
     ui->Print("Retry attempt: %d\n", retry_count);
   }
   ui->SetEnableReboot(false);
-  int result =
-      try_update_binary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature, ui);
+  auto result =
+      TryUpdateBinary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature, ui);
   ui->SetEnableReboot(true);
   ui->Print("\n");
 
   return result;
 }
 
-int install_package(const std::string& path, bool should_wipe_cache, bool needs_mount,
-                    int retry_count, RecoveryUI* ui) {
+InstallResult InstallPackage(const std::string& path, bool should_wipe_cache, bool needs_mount,
+                             int retry_count, RecoveryUI* ui) {
   CHECK(!path.empty());
 
   auto start = std::chrono::system_clock::now();
@@ -641,15 +640,15 @@ int install_package(const std::string& path, bool should_wipe_cache, bool needs_
   int start_temperature = GetMaxValueFromThermalZone();
   int max_temperature = start_temperature;
 
-  int result;
+  InstallResult result;
   std::vector<std::string> log_buffer;
   if (setup_install_mounts() != 0) {
     LOG(ERROR) << "failed to set up expected mounts for install; aborting";
     result = INSTALL_ERROR;
   } else {
     bool updater_wipe_cache = false;
-    result = really_install_package(path, &updater_wipe_cache, needs_mount, &log_buffer,
-                                    retry_count, &max_temperature, ui);
+    result = VerifyAndInstallPackage(path, &updater_wipe_cache, needs_mount, &log_buffer,
+                                     retry_count, &max_temperature, ui);
     should_wipe_cache = should_wipe_cache || updater_wipe_cache;
   }
 

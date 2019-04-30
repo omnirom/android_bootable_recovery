@@ -16,7 +16,8 @@
 
 #pragma once
 
+#include "install/install.h"
 #include "recovery_ui/device.h"
 #include "recovery_ui/ui.h"
 
-int ApplyFromSdcard(Device* device, RecoveryUI* ui);
+InstallResult ApplyFromSdcard(Device* device, RecoveryUI* ui);
