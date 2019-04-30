@@ -22,11 +22,9 @@ Running the tests
 
     # 32-bit device
     adb shell /data/nativetest/recovery_unit_test/recovery_unit_test
-    adb shell /data/nativetest/recovery_component_test/recovery_component_test
 
     # Or 64-bit device
     adb shell /data/nativetest64/recovery_unit_test/recovery_unit_test
-    adb shell /data/nativetest64/recovery_component_test/recovery_component_test
 
 Running the manual tests
 ------------------------
