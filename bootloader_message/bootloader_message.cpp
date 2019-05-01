@@ -29,6 +29,10 @@
 #include <android-base/unique_fd.h>
 #include <fstab/fstab.h>
 
+#ifndef __ANDROID__
+#include <cutils/memory.h>  // for strlcpy
+#endif
+
 using android::fs_mgr::Fstab;
 using android::fs_mgr::ReadDefaultFstab;
 
@@ -194,13 +198,15 @@ bool update_bootloader_message_in_struct(bootloader_message* boot,
   memset(boot->recovery, 0, sizeof(boot->recovery));
 
   strlcpy(boot->command, "boot-recovery", sizeof(boot->command));
-  strlcpy(boot->recovery, "recovery\n", sizeof(boot->recovery));
+
+  std::string recovery = "recovery\n";
   for (const auto& s : options) {
-    strlcat(boot->recovery, s.c_str(), sizeof(boot->recovery));
+    recovery += s;
     if (s.back() != '\n') {
-      strlcat(boot->recovery, "\n", sizeof(boot->recovery));
+      recovery += '\n';
     }
   }
+  strlcpy(boot->recovery, recovery.c_str(), sizeof(boot->recovery));
   return true;
 }
 
