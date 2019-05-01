@@ -27,13 +27,13 @@
 // |zip| located at |package|. Stores the command line that should be called into |cmd|. The
 // |status_fd| is the file descriptor the child process should use to report back the progress of
 // the update.
-int SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int retry_count,
-                             int status_fd, std::vector<std::string>* cmd);
+bool SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int retry_count,
+                              int status_fd, std::vector<std::string>* cmd);
 
 // Sets up the commands for an A/B update. Extracts the needed entries from the open zip archive
 // |zip| located at |package|. Stores the command line that should be called into |cmd|. The
 // |status_fd| is the file descriptor the child process should use to report back the progress of
 // the update. Note that since this applies to the sideloading flow only, it takes one less
 // parameter |retry_count| than the non-A/B version.
-int SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int status_fd,
-                          std::vector<std::string>* cmd);
+bool SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int status_fd,
+                           std::vector<std::string>* cmd);
