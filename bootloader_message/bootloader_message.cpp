@@ -168,6 +168,14 @@ bool write_bootloader_message(const std::vector<std::string>& options, std::stri
   return write_bootloader_message(boot, err);
 }
 
+bool write_bootloader_message_to(const std::vector<std::string>& options,
+                                 const std::string& misc_blk_device, std::string* err) {
+  bootloader_message boot = {};
+  update_bootloader_message_in_struct(&boot, options);
+
+  return write_bootloader_message_to(boot, misc_blk_device, err);
+}
+
 bool update_bootloader_message(const std::vector<std::string>& options, std::string* err) {
   bootloader_message boot;
   if (!read_bootloader_message(&boot, err)) {
