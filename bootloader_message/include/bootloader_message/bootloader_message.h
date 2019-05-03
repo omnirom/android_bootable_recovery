@@ -207,6 +207,11 @@ bool write_bootloader_message_to(const bootloader_message& boot,
 // set the command and recovery fields, and reset the rest.
 bool write_bootloader_message(const std::vector<std::string>& options, std::string* err);
 
+// Write bootloader message (boots into recovery with the options) to the specific BCB device. Will
+// set the command and recovery fields, and reset the rest.
+bool write_bootloader_message_to(const std::vector<std::string>& options,
+                                 const std::string& misc_blk_device, std::string* err);
+
 // Update bootloader message (boots into recovery with the options) to BCB. Will
 // only update the command and recovery fields.
 bool update_bootloader_message(const std::vector<std::string>& options, std::string* err);
