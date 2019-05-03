@@ -17,6 +17,7 @@
 cc_library {
     name: "libbootloader_message",
     recovery_available: true,
+    host_supported: true,
     srcs: ["bootloader_message.cpp"],
     cflags: [
         "-Wall",
@@ -24,7 +25,22 @@ cc_library {
     ],
     shared_libs: [
         "libbase",
-        "libfs_mgr",
     ],
     export_include_dirs: ["include"],
+
+    target: {
+        android: {
+            shared_libs: [
+                "libfs_mgr",
+            ],
+        },
+        host: {
+            shared_libs: [
+                "libcutils", // for strlcpy
+            ],
+            static_libs: [
+                "libfstab",
+            ],
+        }
+    }
 }
