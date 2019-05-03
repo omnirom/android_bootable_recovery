@@ -43,6 +43,10 @@ cc_library {
         "minadbd_services.cpp",
     ],
 
+    static_libs: [
+        "libotautil",
+    ],
+
     shared_libs: [
         "libadbd",
         "libbase",
@@ -96,6 +100,7 @@ cc_test {
     static_libs: [
         "libminadbd_services",
         "libfusesideload",
+        "libotautil",
         "libadbd",
         "libcrypto",
     ],

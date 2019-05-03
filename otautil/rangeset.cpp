@@ -184,6 +184,58 @@ bool RangeSet::Overlaps(const RangeSet& other) const {
   return false;
 }
 
+std::optional<RangeSet> RangeSet::GetSubRanges(size_t start_index, size_t num_of_blocks) const {
+  size_t end_index = start_index + num_of_blocks;  // The index of final block to read plus one
+  if (start_index > end_index || end_index > blocks_) {
+    LOG(ERROR) << "Failed to get the sub ranges for start_index " << start_index
+               << " num_of_blocks " << num_of_blocks
+               << " total number of blocks the range contains is " << blocks_;
+    return std::nullopt;
+  }
+
+  if (num_of_blocks == 0) {
+    LOG(WARNING) << "num_of_blocks is zero when calling GetSubRanges()";
+    return RangeSet();
+  }
+
+  RangeSet result;
+  size_t current_index = 0;
+  for (const auto& [range_start, range_end] : ranges_) {
+    CHECK_LT(range_start, range_end);
+    size_t blocks_in_range = range_end - range_start;
+    // Linear search to skip the ranges until we reach start_block.
+    if (current_index + blocks_in_range <= start_index) {
+      current_index += blocks_in_range;
+      continue;
+    }
+
+    size_t trimmed_range_start = range_start;
+    // We have found the first block range to read, trim the heading blocks.
+    if (current_index < start_index) {
+      trimmed_range_start += start_index - current_index;
+    }
+    // Trim the trailing blocks if the last range has more blocks than desired; also return the
+    // result.
+    if (current_index + blocks_in_range >= end_index) {
+      size_t trimmed_range_end = range_end - (current_index + blocks_in_range - end_index);
+      if (!result.PushBack({ trimmed_range_start, trimmed_range_end })) {
+        return std::nullopt;
+      }
+
+      return result;
+    }
+
+    if (!result.PushBack({ trimmed_range_start, range_end })) {
+      return std::nullopt;
+    }
+    current_index += blocks_in_range;
+  }
+
+  LOG(ERROR) << "Failed to construct byte ranges to read, start_block: " << start_index
+             << ", num_of_blocks: " << num_of_blocks << " total number of blocks: " << blocks_;
+  return std::nullopt;
+}
+
 // Ranges in the the set should be mutually exclusive; and they're sorted by the start block.
 SortedRangeSet::SortedRangeSet(std::vector<Range>&& pairs) : RangeSet(std::move(pairs)) {
   std::sort(ranges_.begin(), ranges_.end());
