@@ -94,6 +94,11 @@ BlockMapData BlockMapData::ParseBlockMapFile(const std::string& block_map_path) 
     remaining_blocks -= range_blocks;
   }
 
+  if (remaining_blocks != 0) {
+    LOG(ERROR) << "Invalid ranges: remaining blocks " << remaining_blocks;
+    return {};
+  }
+
   return BlockMapData(block_dev, file_size, blksize, std::move(ranges));
 }
 

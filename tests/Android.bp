@@ -118,6 +118,7 @@ cc_test {
 
     static_libs: libapplypatch_static_libs + librecovery_static_libs + [
         "librecovery_ui",
+        "libfusesideload",
         "libminui",
         "libotautil",
         "libupdater",
