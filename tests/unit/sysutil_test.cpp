@@ -67,7 +67,7 @@ TEST(SysUtilTest, ParseBlockMapFile_invalid_size) {
     "/dev/abc",
     "42949672950 4294967295",
     "1",
-    "0 9",
+    "0 10",
   };
 
   TemporaryFile temp_file;
