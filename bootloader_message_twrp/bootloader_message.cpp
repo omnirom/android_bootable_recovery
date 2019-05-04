@@ -220,6 +220,9 @@ bool clear_bootloader_message(void* err) {
 
 bool clear_bootloader_message(std::string* err) {
   bootloader_message boot = {};
+  if (BOOTLOADER_MESSAGE_OFFSET_IN_MISC < sizeof(bootloader_message)) {
+      return write_misc_partition(&boot, sizeof(boot), 0 /* offset */, err);
+  }
   return write_bootloader_message(boot, err);
 }
 
