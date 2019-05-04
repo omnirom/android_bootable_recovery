@@ -230,7 +230,7 @@ static void WipeDeviceService(unique_fd fd, const std::string& args) {
 
 unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport */) {
   // Common services that are supported both in sideload and rescue modes.
-  if (ConsumePrefix(&name, "reboot:")) {
+  if (android::base::ConsumePrefix(&name, "reboot:")) {
     // "reboot:<target>", where target must be one of the following.
     std::string args(name);
     if (args.empty() || args == "bootloader" || args == "rescue" || args == "recovery" ||
@@ -243,17 +243,17 @@ unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport *
 
   // Rescue-specific services.
   if (rescue_mode) {
-    if (ConsumePrefix(&name, "rescue-install:")) {
+    if (android::base::ConsumePrefix(&name, "rescue-install:")) {
       // rescue-install:<file-size>:<block-size>
       std::string args(name);
       return create_service_thread(
           "rescue-install", std::bind(RescueInstallHostService, std::placeholders::_1, args));
-    } else if (ConsumePrefix(&name, "rescue-getprop:")) {
+    } else if (android::base::ConsumePrefix(&name, "rescue-getprop:")) {
       // rescue-getprop:<prop>
       std::string args(name);
       return create_service_thread(
           "rescue-getprop", std::bind(RescueGetpropHostService, std::placeholders::_1, args));
-    } else if (ConsumePrefix(&name, "rescue-wipe:")) {
+    } else if (android::base::ConsumePrefix(&name, "rescue-wipe:")) {
       // rescue-wipe:target:<message-size>
       std::string args(name);
       return create_service_thread("rescue-wipe",
@@ -268,7 +268,7 @@ unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport *
     // This exit status causes recovery to print a special error message saying to use a newer adb
     // (that supports sideload-host).
     exit(kMinadbdAdbVersionError);
-  } else if (ConsumePrefix(&name, "sideload-host:")) {
+  } else if (android::base::ConsumePrefix(&name, "sideload-host:")) {
     // sideload-host:<file-size>:<block-size>
     std::string args(name);
     return create_service_thread("sideload-host",
