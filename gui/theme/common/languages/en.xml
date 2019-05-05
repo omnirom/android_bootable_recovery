@@ -109,7 +109,6 @@
 		<string name="wipe_cache_dalvik_confirm">Wipe Cache &amp; Dalvik?</string>
 		<string name="wipe_dalvik_confirm">Wipe Dalvik?</string>
 		<string name="wiping_cache_dalvik">Wiping Cache &amp; Dalvik...</string>
-		<string name="wiping_dalvik">Wiping Dalvik...</string>
 		<string name="wipe_cache_dalvik_complete">Cache &amp; Dalvik Wipe Complete</string>
 		<string name="wipe_dalvik_complete">Dalvik Wipe Complete</string>
 		<string name="swipe_wipe">Swipe to Wipe</string>
