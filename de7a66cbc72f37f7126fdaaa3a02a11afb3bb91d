@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c734f016_2797c691",
+        "filename": "gui/action.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1552,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-05-05T23:10:26Z",
+      "side": 1,
+      "message": "remove extra white space.",
+      "revId": "de7a66cbc72f37f7126fdaaa3a02a11afb3bb91d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "30079dbc_62095659",
+        "filename": "partitions.hpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 338,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-05-05T23:10:26Z",
+      "side": 1,
+      "message": "remove extra white space.",
+      "revId": "de7a66cbc72f37f7126fdaaa3a02a11afb3bb91d",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    }
+  ]
+}
