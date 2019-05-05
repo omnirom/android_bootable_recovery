@@ -742,6 +742,9 @@
 -				<listitem name="Enable No-KEXEC Workaround">
 					<data variable="tw_multirom_no_kexec"/>
 				</listitem>
+-				<listitem name="Boot into secondary without reboot">
+					<data variable="tw_multirom_use_primary_kernel"/>
+				</listitem>
 			</listbox>
 
 			<action>

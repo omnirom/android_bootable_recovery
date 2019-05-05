@@ -133,6 +133,7 @@ public:
 		int rotation;
 		int force_generic_fb;
 		int anim_duration_coef_pct;
+		int use_primary_kernel;
 
 		std::string unrecognized_opts;
 	};
