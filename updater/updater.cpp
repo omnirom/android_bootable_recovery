@@ -101,9 +101,8 @@ int main(int argc, char** argv) {
     return 3;
   }
 
-  ZipString script_name(SCRIPT_NAME);
   ZipEntry script_entry;
-  int find_err = FindEntry(za, script_name, &script_entry);
+  int find_err = FindEntry(za, SCRIPT_NAME, &script_entry);
   if (find_err != 0) {
     LOG(ERROR) << "failed to find " << SCRIPT_NAME << " in " << package_filename << ": "
                << ErrorCodeString(find_err);
