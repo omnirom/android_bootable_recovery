@@ -41,6 +41,9 @@ cc_library {
             static_libs: [
                 "libfstab",
             ],
-        }
+        },
+        darwin: {
+            enabled: false,
+        },
     }
 }
