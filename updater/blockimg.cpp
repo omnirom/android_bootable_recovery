@@ -1680,7 +1680,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     return StringValue("");
   }
 
-  ZipString path_data(patch_data_fn->data.c_str());
+  std::string_view path_data(patch_data_fn->data);
   ZipEntry patch_entry;
   if (FindEntry(za, path_data, &patch_entry) != 0) {
     LOG(ERROR) << name << "(): no file \"" << patch_data_fn->data << "\" in package";
@@ -1688,7 +1688,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   }
 
   params.patch_start = ui->package_zip_addr + patch_entry.offset;
-  ZipString new_data(new_data_fn->data.c_str());
+  std::string_view new_data(new_data_fn->data);
   ZipEntry new_entry;
   if (FindEntry(za, new_data, &new_entry) != 0) {
     LOG(ERROR) << name << "(): no file \"" << new_data_fn->data << "\" in package";
