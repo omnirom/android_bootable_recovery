@@ -73,9 +73,8 @@ bool ReadMetadataFromPackage(ZipArchiveHandle zip, std::map<std::string, std::st
   CHECK(metadata != nullptr);
 
   static constexpr const char* METADATA_PATH = "META-INF/com/android/metadata";
-  ZipString path(METADATA_PATH);
   ZipEntry entry;
-  if (FindEntry(zip, path, &entry) != 0) {
+  if (FindEntry(zip, METADATA_PATH, &entry) != 0) {
     LOG(ERROR) << "Failed to find " << METADATA_PATH;
     return false;
   }
@@ -236,9 +235,8 @@ bool SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int
   // For A/B updates we extract the payload properties to a buffer and obtain the RAW payload offset
   // in the zip file.
   static constexpr const char* AB_OTA_PAYLOAD_PROPERTIES = "payload_properties.txt";
-  ZipString property_name(AB_OTA_PAYLOAD_PROPERTIES);
   ZipEntry properties_entry;
-  if (FindEntry(zip, property_name, &properties_entry) != 0) {
+  if (FindEntry(zip, AB_OTA_PAYLOAD_PROPERTIES, &properties_entry) != 0) {
     LOG(ERROR) << "Failed to find " << AB_OTA_PAYLOAD_PROPERTIES;
     return false;
   }
@@ -252,9 +250,8 @@ bool SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int
   }
 
   static constexpr const char* AB_OTA_PAYLOAD = "payload.bin";
-  ZipString payload_name(AB_OTA_PAYLOAD);
   ZipEntry payload_entry;
-  if (FindEntry(zip, payload_name, &payload_entry) != 0) {
+  if (FindEntry(zip, AB_OTA_PAYLOAD, &payload_entry) != 0) {
     LOG(ERROR) << "Failed to find " << AB_OTA_PAYLOAD;
     return false;
   }
@@ -275,9 +272,8 @@ bool SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, 
 
   // In non-A/B updates we extract the update binary from the package.
   static constexpr const char* UPDATE_BINARY_NAME = "META-INF/com/google/android/update-binary";
-  ZipString binary_name(UPDATE_BINARY_NAME);
   ZipEntry binary_entry;
-  if (FindEntry(zip, binary_name, &binary_entry) != 0) {
+  if (FindEntry(zip, UPDATE_BINARY_NAME, &binary_entry) != 0) {
     LOG(ERROR) << "Failed to find update binary " << UPDATE_BINARY_NAME;
     return false;
   }
@@ -508,9 +504,8 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
   LOG(INFO) << "Verifying package compatibility...";
 
   static constexpr const char* COMPATIBILITY_ZIP_ENTRY = "compatibility.zip";
-  ZipString compatibility_entry_name(COMPATIBILITY_ZIP_ENTRY);
   ZipEntry compatibility_entry;
-  if (FindEntry(package_zip, compatibility_entry_name, &compatibility_entry) != 0) {
+  if (FindEntry(package_zip, COMPATIBILITY_ZIP_ENTRY, &compatibility_entry) != 0) {
     LOG(INFO) << "Package doesn't contain " << COMPATIBILITY_ZIP_ENTRY << " entry";
     return true;
   }
