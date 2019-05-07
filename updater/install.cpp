@@ -130,9 +130,8 @@ Value* PackageExtractFileFn(const char* name, State* state,
     const std::string& dest_path = args[1];
 
     ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
-    ZipString zip_string_path(zip_path.c_str());
     ZipEntry entry;
-    if (FindEntry(za, zip_string_path, &entry) != 0) {
+    if (FindEntry(za, zip_path, &entry) != 0) {
       LOG(ERROR) << name << ": no " << zip_path << " in package";
       return StringValue("");
     }
@@ -174,9 +173,8 @@ Value* PackageExtractFileFn(const char* name, State* state,
     const std::string& zip_path = args[0];
 
     ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
-    ZipString zip_string_path(zip_path.c_str());
     ZipEntry entry;
-    if (FindEntry(za, zip_string_path, &entry) != 0) {
+    if (FindEntry(za, zip_path, &entry) != 0) {
       return ErrorAbort(state, kPackageExtractFileFailure, "%s(): no %s in package", name,
                         zip_path.c_str());
     }
