@@ -675,7 +675,7 @@ bool ZipModeImage::Initialize(const std::string& filename) {
 // Iterate the zip entries and compose the image chunks accordingly.
 bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandle handle) {
   void* cookie;
-  int ret = StartIteration(handle, &cookie, nullptr, nullptr);
+  int ret = StartIteration(handle, &cookie);
   if (ret != 0) {
     LOG(ERROR) << "Failed to iterate over entries in " << filename << ": " << ErrorCodeString(ret);
     return false;
