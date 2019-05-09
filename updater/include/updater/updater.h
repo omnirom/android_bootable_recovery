@@ -14,22 +14,75 @@
  * limitations under the License.
  */
 
-#ifndef _UPDATER_UPDATER_H_
-#define _UPDATER_UPDATER_H_
+#pragma once
 
+#include <stdint.h>
 #include <stdio.h>
+
+#include <memory>
+#include <string>
+
 #include <ziparchive/zip_archive.h>
 
-typedef struct {
-    FILE* cmd_pipe;
-    ZipArchiveHandle package_zip;
-    int version;
-
-    uint8_t* package_zip_addr;
-    size_t package_zip_len;
-} UpdaterInfo;
+#include "edify/expr.h"
+#include "otautil/error_code.h"
+#include "otautil/sysutil.h"
 
 struct selabel_handle;
-extern struct selabel_handle *sehandle;
 
-#endif
+class Updater {
+ public:
+  ~Updater();
+
+  // Memory-maps the OTA package and opens it as a zip file. Also sets up the command pipe and
+  // selabel handle. TODO(xunchang) implement a run time environment class and move sehandle there.
+  bool Init(int fd, const std::string& package_filename, bool is_retry,
+            struct selabel_handle* sehandle);
+
+  // Parses and evaluates the updater-script in the OTA package. Reports the error code if the
+  // evaluation fails.
+  bool RunUpdate();
+
+  // Writes the message to command pipe, adds a new line in the end.
+  void WriteToCommandPipe(const std::string& message, bool flush = false) const;
+
+  // Sends over the message to recovery to print it on the screen.
+  void UiPrint(const std::string& message) const;
+
+  ZipArchiveHandle package_handle() const {
+    return package_handle_;
+  }
+  struct selabel_handle* sehandle() const {
+    return sehandle_;
+  }
+  std::string result() const {
+    return result_;
+  }
+
+  uint8_t* GetMappedPackageAddress() const {
+    return mapped_package_.addr;
+  }
+
+ private:
+  friend class UpdaterTestBase;
+  friend class UpdaterTest;
+  // Where in the package we expect to find the edify script to execute.
+  // (Note it's "updateR-script", not the older "update-script".)
+  static constexpr const char* SCRIPT_NAME = "META-INF/com/google/android/updater-script";
+
+  // Reads the entry |name| in the zip archive and put the result in |content|.
+  bool ReadEntryToString(ZipArchiveHandle za, const std::string& entry_name, std::string* content);
+
+  // Parses the error code embedded in state->errmsg; and reports the error code and cause code.
+  void ParseAndReportErrorCode(State* state);
+
+  MemMapping mapped_package_;
+  ZipArchiveHandle package_handle_{ nullptr };
+  std::string updater_script_;
+
+  bool is_retry_{ false };
+  std::unique_ptr<FILE, decltype(&fclose)> cmd_pipe_{ nullptr, fclose };
+  struct selabel_handle* sehandle_{ nullptr };
+
+  std::string result_;
+};

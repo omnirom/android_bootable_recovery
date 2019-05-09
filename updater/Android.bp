@@ -70,6 +70,7 @@ cc_library_static {
         "commands.cpp",
         "dynamic_partitions.cpp",
         "install.cpp",
+        "updater.cpp",
     ],
 
     include_dirs: [
