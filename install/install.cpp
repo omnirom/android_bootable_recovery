@@ -529,7 +529,7 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
 
   // Iterate all the entries inside COMPATIBILITY_ZIP_ENTRY and read the contents.
   void* cookie;
-  ret = StartIteration(zip_handle, &cookie, nullptr, nullptr);
+  ret = StartIteration(zip_handle, &cookie);
   if (ret != 0) {
     LOG(ERROR) << "Failed to start iterating zip entries: " << ErrorCodeString(ret);
     CloseArchive(zip_handle);
