@@ -64,36 +64,6 @@
 #include "otautil/sysutil.h"
 #include "updater/updater.h"
 
-// Send over the buffer to recovery though the command pipe.
-static void uiPrint(State* state, const std::string& buffer) {
-  UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
-
-  // "line1\nline2\n" will be split into 3 tokens: "line1", "line2" and "".
-  // So skip sending empty strings to UI.
-  std::vector<std::string> lines = android::base::Split(buffer, "\n");
-  for (auto& line : lines) {
-    if (!line.empty()) {
-      fprintf(ui->cmd_pipe, "ui_print %s\n", line.c_str());
-    }
-  }
-
-  // On the updater side, we need to dump the contents to stderr (which has
-  // been redirected to the log file). Because the recovery will only print
-  // the contents to screen when processing pipe command ui_print.
-  LOG(INFO) << buffer;
-}
-
-void uiPrintf(State* _Nonnull state, const char* _Nonnull format, ...) {
-  std::string error_msg;
-
-  va_list ap;
-  va_start(ap, format);
-  android::base::StringAppendV(&error_msg, format, ap);
-  va_end(ap);
-
-  uiPrint(state, error_msg);
-}
-
 // This is the updater side handler for ui_print() in edify script. Contents will be sent over to
 // the recovery side for on-screen display.
 Value* UIPrintFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
@@ -103,7 +73,7 @@ Value* UIPrintFn(const char* name, State* state, const std::vector<std::unique_p
   }
 
   std::string buffer = android::base::Join(args, "");
-  uiPrint(state, buffer);
+  static_cast<Updater*>(state->cookie)->UiPrint(buffer);
   return StringValue(buffer);
 }
 
@@ -129,7 +99,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
     const std::string& zip_path = args[0];
     const std::string& dest_path = args[1];
 
-    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
+    ZipArchiveHandle za = static_cast<Updater*>(state->cookie)->package_handle();
     ZipEntry entry;
     if (FindEntry(za, zip_path, &entry) != 0) {
       LOG(ERROR) << name << ": no " << zip_path << " in package";
@@ -172,7 +142,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
     }
     const std::string& zip_path = args[0];
 
-    ZipArchiveHandle za = static_cast<UpdaterInfo*>(state->cookie)->package_zip;
+    ZipArchiveHandle za = static_cast<Updater*>(state->cookie)->package_handle();
     ZipEntry entry;
     if (FindEntry(za, zip_path, &entry) != 0) {
       return ErrorAbort(state, kPackageExtractFileFailure, "%s(): no %s in package", name,
@@ -311,11 +281,11 @@ Value* MountFn(const char* name, State* state, const std::vector<std::unique_ptr
                       name);
   }
 
+  auto updater = static_cast<Updater*>(state->cookie);
   {
     char* secontext = nullptr;
-
-    if (sehandle) {
-      selabel_lookup(sehandle, &secontext, mount_point.c_str(), 0755);
+    if (updater->sehandle()) {
+      selabel_lookup(updater->sehandle(), &secontext, mount_point.c_str(), 0755);
       setfscreatecon(secontext);
     }
 
@@ -329,8 +299,9 @@ Value* MountFn(const char* name, State* state, const std::vector<std::unique_ptr
 
   if (mount(location.c_str(), mount_point.c_str(), fs_type.c_str(),
             MS_NOATIME | MS_NODEV | MS_NODIRATIME, mount_options.c_str()) < 0) {
-    uiPrintf(state, "%s: Failed to mount %s at %s: %s", name, location.c_str(), mount_point.c_str(),
-             strerror(errno));
+    updater->UiPrint(android::base::StringPrintf("%s: Failed to mount %s at %s: %s", name,
+                                                 location.c_str(), mount_point.c_str(),
+                                                 strerror(errno)));
     return StringValue("");
   }
 
@@ -376,15 +347,18 @@ Value* UnmountFn(const char* name, State* state, const std::vector<std::unique_p
                       "mount_point argument to unmount() can't be empty");
   }
 
+  auto updater = static_cast<Updater*>(state->cookie);
   scan_mounted_volumes();
   MountedVolume* vol = find_mounted_volume_by_mount_point(mount_point.c_str());
   if (vol == nullptr) {
-    uiPrintf(state, "Failed to unmount %s: No such volume", mount_point.c_str());
+    updater->UiPrint(
+        android::base::StringPrintf("Failed to unmount %s: No such volume", mount_point.c_str()));
     return nullptr;
   } else {
     int ret = unmount_mounted_volume(vol);
     if (ret != 0) {
-      uiPrintf(state, "Failed to unmount %s: %s", mount_point.c_str(), strerror(errno));
+      updater->UiPrint(android::base::StringPrintf("Failed to unmount %s: %s", mount_point.c_str(),
+                                                   strerror(errno)));
     }
   }
 
@@ -529,8 +503,8 @@ Value* ShowProgressFn(const char* name, State* state,
                       sec_str.c_str());
   }
 
-  UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
-  fprintf(ui->cmd_pipe, "progress %f %d\n", frac, sec);
+  auto updater = static_cast<Updater*>(state->cookie);
+  updater->WriteToCommandPipe(android::base::StringPrintf("progress %f %d", frac, sec));
 
   return StringValue(frac_str);
 }
@@ -553,8 +527,8 @@ Value* SetProgressFn(const char* name, State* state,
                       frac_str.c_str());
   }
 
-  UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
-  fprintf(ui->cmd_pipe, "set_progress %f\n", frac);
+  auto updater = static_cast<Updater*>(state->cookie);
+  updater->WriteToCommandPipe(android::base::StringPrintf("set_progress %f", frac));
 
   return StringValue(frac_str);
 }
@@ -653,7 +627,8 @@ Value* WipeCacheFn(const char* name, State* state, const std::vector<std::unique
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects no args, got %zu", name,
                       argv.size());
   }
-  fprintf(static_cast<UpdaterInfo*>(state->cookie)->cmd_pipe, "wipe_cache\n");
+
+  static_cast<Updater*>(state->cookie)->WriteToCommandPipe("wipe_cache");
   return StringValue("t");
 }
 
@@ -881,8 +856,7 @@ Value* EnableRebootFn(const char* name, State* state, const std::vector<std::uni
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects no args, got %zu", name,
                       argv.size());
   }
-  UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
-  fprintf(ui->cmd_pipe, "enable_reboot\n");
+  static_cast<Updater*>(state->cookie)->WriteToCommandPipe("enable_reboot");
   return StringValue("t");
 }
 
