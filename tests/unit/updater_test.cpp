@@ -57,16 +57,14 @@ using namespace std::string_literals;
 
 using PackageEntries = std::unordered_map<std::string, std::string>;
 
-struct selabel_handle* sehandle = nullptr;
-
 static void expect(const char* expected, const std::string& expr_str, CauseCode cause_code,
-                   UpdaterInfo* info = nullptr) {
+                   Updater* updater = nullptr) {
   std::unique_ptr<Expr> e;
   int error_count = 0;
   ASSERT_EQ(0, ParseString(expr_str, &e, &error_count));
   ASSERT_EQ(0, error_count);
 
-  State state(expr_str, info);
+  State state(expr_str, updater);
 
   std::string result;
   bool status = Evaluate(&state, e, &result);
@@ -102,38 +100,6 @@ static void BuildUpdatePackage(const PackageEntries& entries, int fd) {
   ASSERT_EQ(0, fclose(zip_file_ptr));
 }
 
-static void RunBlockImageUpdate(bool is_verify, const PackageEntries& entries,
-                                const std::string& image_file, const std::string& result,
-                                CauseCode cause_code = kNoCause) {
-  CHECK(entries.find("transfer_list") != entries.end());
-
-  // Build the update package.
-  TemporaryFile zip_file;
-  BuildUpdatePackage(entries, zip_file.release());
-
-  MemMapping map;
-  ASSERT_TRUE(map.MapFile(zip_file.path));
-  ZipArchiveHandle handle;
-  ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_file.path, &handle));
-
-  // Set up the handler, command_pipe, patch offset & length.
-  UpdaterInfo updater_info;
-  updater_info.package_zip = handle;
-  TemporaryFile temp_pipe;
-  updater_info.cmd_pipe = fdopen(temp_pipe.release(), "wbe");
-  updater_info.package_zip_addr = map.addr;
-  updater_info.package_zip_len = map.length;
-
-  std::string new_data = entries.find("new_data.br") != entries.end() ? "new_data.br" : "new_data";
-  std::string script = is_verify ? "block_image_verify" : "block_image_update";
-  script += R"((")" + image_file + R"(", package_extract_file("transfer_list"), ")" + new_data +
-            R"(", "patch_data"))";
-  expect(result.c_str(), script, cause_code, &updater_info);
-
-  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
-  CloseArchive(handle);
-}
-
 static std::string GetSha1(std::string_view content) {
   uint8_t digest[SHA_DIGEST_LENGTH];
   SHA1(reinterpret_cast<const uint8_t*>(content.data()), content.size(), digest);
@@ -159,14 +125,12 @@ static Value* BlobToString(const char* name, State* state,
   return args[0].release();
 }
 
-class UpdaterTest : public ::testing::Test {
+class UpdaterTestBase {
  protected:
-  void SetUp() override {
+  void SetUp() {
     RegisterBuiltins();
     RegisterInstallFunctions();
     RegisterBlockImageFunctions();
-
-    RegisterFunction("blob_to_string", BlobToString);
 
     // Each test is run in a separate process (isolated mode). Shared temporary files won't cause
     // conflicts.
@@ -174,14 +138,11 @@ class UpdaterTest : public ::testing::Test {
     Paths::Get().set_last_command_file(temp_last_command_.path);
     Paths::Get().set_stash_directory_base(temp_stash_base_.path);
 
-    // Enable a special command "abort" to simulate interruption.
-    Command::abort_allowed_ = true;
-
     last_command_file_ = temp_last_command_.path;
     image_file_ = image_temp_file_.path;
   }
 
-  void TearDown() override {
+  void TearDown() {
     // Clean up the last_command_file if any.
     ASSERT_TRUE(android::base::RemoveFileIfExists(last_command_file_));
 
@@ -191,14 +152,78 @@ class UpdaterTest : public ::testing::Test {
     ASSERT_TRUE(android::base::RemoveFileIfExists(updated_marker));
   }
 
+  void RunBlockImageUpdate(bool is_verify, PackageEntries entries, const std::string& image_file,
+                           const std::string& result, CauseCode cause_code = kNoCause) {
+    CHECK(entries.find("transfer_list") != entries.end());
+    std::string new_data =
+        entries.find("new_data.br") != entries.end() ? "new_data.br" : "new_data";
+    std::string script = is_verify ? "block_image_verify" : "block_image_update";
+    script += R"((")" + image_file + R"(", package_extract_file("transfer_list"), ")" + new_data +
+              R"(", "patch_data"))";
+    entries.emplace(Updater::SCRIPT_NAME, script);
+
+    // Build the update package.
+    TemporaryFile zip_file;
+    BuildUpdatePackage(entries, zip_file.release());
+
+    // Set up the handler, command_pipe, patch offset & length.
+    TemporaryFile temp_pipe;
+    ASSERT_TRUE(updater_.Init(temp_pipe.release(), zip_file.path, false, nullptr));
+    ASSERT_TRUE(updater_.RunUpdate());
+    ASSERT_EQ(result, updater_.result());
+
+    // Parse the cause code written to the command pipe.
+    int received_cause_code = kNoCause;
+    std::string pipe_content;
+    ASSERT_TRUE(android::base::ReadFileToString(temp_pipe.path, &pipe_content));
+    auto lines = android::base::Split(pipe_content, "\n");
+    for (std::string_view line : lines) {
+      if (android::base::ConsumePrefix(&line, "log cause: ")) {
+        ASSERT_TRUE(android::base::ParseInt(line.data(), &received_cause_code));
+      }
+    }
+    ASSERT_EQ(cause_code, received_cause_code);
+  }
+
   TemporaryFile temp_saved_source_;
   TemporaryDir temp_stash_base_;
   std::string last_command_file_;
   std::string image_file_;
 
+  Updater updater_;
+
  private:
   TemporaryFile temp_last_command_;
   TemporaryFile image_temp_file_;
+};
+
+class UpdaterTest : public UpdaterTestBase, public ::testing::Test {
+ protected:
+  void SetUp() override {
+    UpdaterTestBase::SetUp();
+
+    RegisterFunction("blob_to_string", BlobToString);
+    // Enable a special command "abort" to simulate interruption.
+    Command::abort_allowed_ = true;
+  }
+
+  void TearDown() override {
+    UpdaterTestBase::TearDown();
+  }
+
+  void SetUpdaterCmdPipe(int fd) {
+    FILE* cmd_pipe = fdopen(fd, "w");
+    ASSERT_NE(nullptr, cmd_pipe);
+    updater_.cmd_pipe_.reset(cmd_pipe);
+  }
+
+  void SetUpdaterOtaPackageHandle(ZipArchiveHandle handle) {
+    updater_.package_handle_ = handle;
+  }
+
+  void FlushUpdaterCommandPipe() const {
+    fflush(updater_.cmd_pipe_.get());
+  }
 };
 
 TEST_F(UpdaterTest, getprop) {
@@ -317,13 +342,12 @@ TEST_F(UpdaterTest, package_extract_file) {
   ASSERT_EQ(0, OpenArchive(zip_path.c_str(), &handle));
 
   // Need to set up the ziphandle.
-  UpdaterInfo updater_info;
-  updater_info.package_zip = handle;
+  SetUpdaterOtaPackageHandle(handle);
 
   // Two-argument version.
   TemporaryFile temp_file1;
   std::string script("package_extract_file(\"a.txt\", \"" + std::string(temp_file1.path) + "\")");
-  expect("t", script, kNoCause, &updater_info);
+  expect("t", script, kNoCause, &updater_);
 
   // Verify the extracted entry.
   std::string data;
@@ -332,32 +356,30 @@ TEST_F(UpdaterTest, package_extract_file) {
 
   // Now extract another entry to the same location, which should overwrite.
   script = "package_extract_file(\"b.txt\", \"" + std::string(temp_file1.path) + "\")";
-  expect("t", script, kNoCause, &updater_info);
+  expect("t", script, kNoCause, &updater_);
 
   ASSERT_TRUE(android::base::ReadFileToString(temp_file1.path, &data));
   ASSERT_EQ(kBTxtContents, data);
 
   // Missing zip entry. The two-argument version doesn't abort.
   script = "package_extract_file(\"doesntexist\", \"" + std::string(temp_file1.path) + "\")";
-  expect("", script, kNoCause, &updater_info);
+  expect("", script, kNoCause, &updater_);
 
   // Extract to /dev/full should fail.
   script = "package_extract_file(\"a.txt\", \"/dev/full\")";
-  expect("", script, kNoCause, &updater_info);
+  expect("", script, kNoCause, &updater_);
 
   // One-argument version. package_extract_file() gives a VAL_BLOB, which needs to be converted to
   // VAL_STRING for equality test.
   script = "blob_to_string(package_extract_file(\"a.txt\")) == \"" + kATxtContents + "\"";
-  expect("t", script, kNoCause, &updater_info);
+  expect("t", script, kNoCause, &updater_);
 
   script = "blob_to_string(package_extract_file(\"b.txt\")) == \"" + kBTxtContents + "\"";
-  expect("t", script, kNoCause, &updater_info);
+  expect("t", script, kNoCause, &updater_);
 
   // Missing entry. The one-argument version aborts the evaluation.
   script = "package_extract_file(\"doesntexist\")";
-  expect(nullptr, script, kPackageExtractFileFailure, &updater_info);
-
-  CloseArchive(handle);
+  expect(nullptr, script, kPackageExtractFileFailure, &updater_);
 }
 
 TEST_F(UpdaterTest, read_file) {
@@ -563,17 +585,15 @@ TEST_F(UpdaterTest, set_progress) {
   expect(nullptr, "set_progress(\".3.5\")", kArgsParsingFailure);
 
   TemporaryFile tf;
-  UpdaterInfo updater_info;
-  updater_info.cmd_pipe = fdopen(tf.release(), "w");
-  expect(".52", "set_progress(\".52\")", kNoCause, &updater_info);
-  fflush(updater_info.cmd_pipe);
+  SetUpdaterCmdPipe(tf.release());
+  expect(".52", "set_progress(\".52\")", kNoCause, &updater_);
+  FlushUpdaterCommandPipe();
 
   std::string cmd;
   ASSERT_TRUE(android::base::ReadFileToString(tf.path, &cmd));
   ASSERT_EQ(android::base::StringPrintf("set_progress %f\n", .52), cmd);
   // recovery-updater protocol expects 2 tokens ("set_progress <frac>").
   ASSERT_EQ(2U, android::base::Split(cmd, " ").size());
-  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
 }
 
 TEST_F(UpdaterTest, show_progress) {
@@ -588,17 +608,15 @@ TEST_F(UpdaterTest, show_progress) {
   expect(nullptr, "show_progress(\".3\", \"5a\")", kArgsParsingFailure);
 
   TemporaryFile tf;
-  UpdaterInfo updater_info;
-  updater_info.cmd_pipe = fdopen(tf.release(), "w");
-  expect(".52", "show_progress(\".52\", \"10\")", kNoCause, &updater_info);
-  fflush(updater_info.cmd_pipe);
+  SetUpdaterCmdPipe(tf.release());
+  expect(".52", "show_progress(\".52\", \"10\")", kNoCause, &updater_);
+  FlushUpdaterCommandPipe();
 
   std::string cmd;
   ASSERT_TRUE(android::base::ReadFileToString(tf.path, &cmd));
   ASSERT_EQ(android::base::StringPrintf("progress %f %d\n", .52, 10), cmd);
   // recovery-updater protocol expects 3 tokens ("progress <frac> <secs>").
   ASSERT_EQ(3U, android::base::Split(cmd, " ").size());
-  ASSERT_EQ(0, fclose(updater_info.cmd_pipe));
 }
 
 TEST_F(UpdaterTest, block_image_update_parsing_error) {
@@ -993,44 +1011,20 @@ TEST_F(UpdaterTest, last_command_verify) {
   ASSERT_EQ(-1, access(last_command_file_.c_str(), R_OK));
 }
 
-class ResumableUpdaterTest : public testing::TestWithParam<size_t> {
+class ResumableUpdaterTest : public UpdaterTestBase, public testing::TestWithParam<size_t> {
  protected:
   void SetUp() override {
-    RegisterBuiltins();
-    RegisterInstallFunctions();
-    RegisterBlockImageFunctions();
-
-    Paths::Get().set_cache_temp_source(temp_saved_source_.path);
-    Paths::Get().set_last_command_file(temp_last_command_.path);
-    Paths::Get().set_stash_directory_base(temp_stash_base_.path);
-
+    UpdaterTestBase::SetUp();
     // Enable a special command "abort" to simulate interruption.
     Command::abort_allowed_ = true;
-
     index_ = GetParam();
-    image_file_ = image_temp_file_.path;
-    last_command_file_ = temp_last_command_.path;
   }
 
   void TearDown() override {
-    // Clean up the last_command_file if any.
-    ASSERT_TRUE(android::base::RemoveFileIfExists(last_command_file_));
-
-    // Clear partition updated marker if any.
-    std::string updated_marker{ temp_stash_base_.path };
-    updated_marker += "/" + GetSha1(image_temp_file_.path) + ".UPDATED";
-    ASSERT_TRUE(android::base::RemoveFileIfExists(updated_marker));
+    UpdaterTestBase::TearDown();
   }
 
-  TemporaryFile temp_saved_source_;
-  TemporaryDir temp_stash_base_;
-  std::string last_command_file_;
-  std::string image_file_;
   size_t index_;
-
- private:
-  TemporaryFile temp_last_command_;
-  TemporaryFile image_temp_file_;
 };
 
 static std::string g_source_image;

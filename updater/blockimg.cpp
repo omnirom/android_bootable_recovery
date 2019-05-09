@@ -42,6 +42,7 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
+#include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <applypatch/applypatch.h>
@@ -1668,15 +1669,9 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     return StringValue("");
   }
 
-  UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
-  if (ui == nullptr) {
-    return StringValue("");
-  }
-
-  FILE* cmd_pipe = ui->cmd_pipe;
-  ZipArchiveHandle za = ui->package_zip;
-
-  if (cmd_pipe == nullptr || za == nullptr) {
+  auto updater = static_cast<Updater*>(state->cookie);
+  ZipArchiveHandle za = updater->package_handle();
+  if (za == nullptr) {
     return StringValue("");
   }
 
@@ -1686,8 +1681,8 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
     LOG(ERROR) << name << "(): no file \"" << patch_data_fn->data << "\" in package";
     return StringValue("");
   }
+  params.patch_start = updater->GetMappedPackageAddress() + patch_entry.offset;
 
-  params.patch_start = ui->package_zip_addr + patch_entry.offset;
   std::string_view new_data(new_data_fn->data);
   ZipEntry new_entry;
   if (FindEntry(za, new_data, &new_entry) != 0) {
@@ -1887,8 +1882,10 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
         LOG(WARNING) << "Failed to update the last command file.";
       }
 
-      fprintf(cmd_pipe, "set_progress %.4f\n", static_cast<double>(params.written) / total_blocks);
-      fflush(cmd_pipe);
+      updater->WriteToCommandPipe(
+          android::base::StringPrintf("set_progress %.4f",
+                                      static_cast<double>(params.written) / total_blocks),
+          true);
     }
   }
 
@@ -1915,11 +1912,13 @@ pbiudone:
 
       const char* partition = strrchr(blockdev_filename->data.c_str(), '/');
       if (partition != nullptr && *(partition + 1) != 0) {
-        fprintf(cmd_pipe, "log bytes_written_%s: %" PRIu64 "\n", partition + 1,
-                static_cast<uint64_t>(params.written) * BLOCKSIZE);
-        fprintf(cmd_pipe, "log bytes_stashed_%s: %" PRIu64 "\n", partition + 1,
-                static_cast<uint64_t>(params.stashed) * BLOCKSIZE);
-        fflush(cmd_pipe);
+        updater->WriteToCommandPipe(
+            android::base::StringPrintf("log bytes_written_%s: %" PRIu64, partition + 1,
+                                        static_cast<uint64_t>(params.written) * BLOCKSIZE));
+        updater->WriteToCommandPipe(
+            android::base::StringPrintf("log bytes_stashed_%s: %" PRIu64, partition + 1,
+                                        static_cast<uint64_t>(params.stashed) * BLOCKSIZE),
+            true);
       }
       // Delete stash only after successfully completing the update, as it may contain blocks needed
       // to complete the update later.
@@ -2172,8 +2171,11 @@ Value* CheckFirstBlockFn(const char* name, State* state,
   uint16_t mount_count = *reinterpret_cast<uint16_t*>(&block0_buffer[0x400 + 0x34]);
 
   if (mount_count > 0) {
-    uiPrintf(state, "Device was remounted R/W %" PRIu16 " times", mount_count);
-    uiPrintf(state, "Last remount happened on %s", ctime(&mount_time));
+    auto updater = static_cast<Updater*>(state->cookie);
+    updater->UiPrint(
+        android::base::StringPrintf("Device was remounted R/W %" PRIu16 " times", mount_count));
+    updater->UiPrint(
+        android::base::StringPrintf("Last remount happened on %s", ctime(&mount_time)));
   }
 
   return StringValue("t");

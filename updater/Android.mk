@@ -59,7 +59,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := updater
 
 LOCAL_SRC_FILES := \
-    updater.cpp
+    updater_main.cpp
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/include
