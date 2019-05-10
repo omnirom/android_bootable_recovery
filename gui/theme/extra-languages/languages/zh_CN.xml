@@ -30,6 +30,7 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted 存储</string>
+		<string name="autostorage">存储</string>
 
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
@@ -98,6 +99,7 @@
 		<string name="install_failed">安装失败</string>
 		<string name="install_successful">安装成功</string>
 		<string name="wipe_cache_dalvik_btn">清除 Cache/Dalvik</string>
+		<string name="wipe_dalvik_btn">清除 Dalvik</string>
 		<string name="reboot_system_btn">重启系统</string>
 		<string name="install_sel_target">选择目标分区</string>
 		<string name="flash_image_select">选择要刷入镜像的分区：</string>
@@ -105,8 +107,10 @@
 		<string name="flashing_image">正在刷入镜像…</string>
 		<string name="image_flashed">镜像已刷入。</string>
 		<string name="wipe_cache_dalvik_confirm">是否清除 Cache 和 Dalvik？</string>
+		<string name="wipe_dalvik_confirm">是否清除 Dalvik？</string>
 		<string name="wiping_cache_dalvik">正在清除 Cache 和 Dalvik…</string>
 		<string name="wipe_cache_dalvik_complete">Cache 和 Dalvik 清除完成</string>
+		<string name="wipe_dalvik_complete">Dalvik 清除完成</string>
 		<string name="swipe_wipe">滑动按钮确认清除</string>
 		<string name="swipe_wipe_s">   清除</string>
 		<string name="no_os1">没有安装任何系统！</string>
@@ -318,6 +322,7 @@
 		<string name="settings_tz_btn">时区</string>
 		<string name="settings_screen_btn">屏幕</string>
 		<string name="settings_screen_bright_btn">屏幕亮度</string>
+		<string name="vibration_disabled">振动已在本设备上停用</string>
 		<string name="settings_vibration_btn">振动</string>
 		<string name="settings_language_btn">语言</string>
 		<string name="time_zone_hdr">时区</string>
@@ -480,6 +485,28 @@
 		<string name="install_cancel">不，以后再说</string>
 		<string name="sel_storage_list">选择存储位置</string>
 		<string name="ok_btn">确定</string>
+		<string name="install_twrp_ramdisk">安装 Recovery Ramdisk</string>
+		<string name="install_kernel">安装内核</string>
+		<string name="repack_kernel_confirm_hdr">安装内核</string>
+		<string name="repack_ramdisk_confirm_hdr">安装 Recovery</string>
+		<string name="repack_kernel_confirm">是否安装内核？</string>
+		<string name="repack_ramdisk_confirm">是否安装 Recovery？</string>
+		<string name="repack_backup_first">请先备份现有的镜像</string>
+		<string name="repack">重新打包</string>
+		<string name="swipe_to_install">滑动按钮确认安装</string>
+		<string name="installing">正在安装…</string>
+		<string name="install_complete">安装完成</string>
+		<string name="unpack_error">解包镜像错误。</string>
+		<string name="repack_error">重新打包镜像错误。</string>
+		<string name="unpacking_image">正在解包 {1}…</string>
+		<string name="repacking_image">正在打包 {1}…</string>
+		<string name="repack_image_hdr">选择镜像</string>
+		<string name="fix_recovery_loop">修复 Recovery 无限重启</string>
+		<string name="fix_recovery_loop_confirm">是否修复 Recovery 无限重启？</string>
+		<string name="fixing_recovery_loop">正在修复 Recovery 无限重启…</string>
+		<string name="fix_recovery_loop_complete">Recovery 无限重启修复完成</string>
+		<string name="fixing_recovery_loop_patch">正在对内核打补丁…</string>
+		<string name="fix_recovery_loop_patch_error">对内核打补丁时出错。</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">内核不支持读取 SELinux Context。</string>
@@ -531,9 +558,10 @@
 		<string name="unable_find_part_path">找不到分区路径 '{1}'</string>
 		<string name="update_part_details">正在更新分区详情…</string>
 		<string name="update_part_details_done">…完成</string>
-		<string name="wiping_dalvik">正在清除 Dalvik Cache 目录…</string>
+		<string name="wiping_dalvik">正在清除 Dalvik 目录…</string>
 		<string name="cleaned">已清除：{1}…</string>
-		<string name="dalvik_done">-- Dalvik Cache 清除完成！</string>
+		<string name="cache_dalvik_done">-- Dalvik Cache 目录清除完成！</string>
+		<string name="dalvik_done">-- Dalvik 目录清除完成！</string>
 		<string name="no_andsec">未发现 android secure 分区。</string>
 		<string name="unable_to_locate">未找到 {1}。</string>
 		<string name="wiping_datamedia">清除内置存储 -- /data/media…</string>
@@ -600,7 +628,7 @@
 		<string name="recreate_folder_err">无法重新创建 {1} 文件夹。</string>
 		<string name="img_size_err">镜像大小大于目标设备</string>
 		<string name="flashing">正在刷入 {1}…</string>
-		<string name="backup_folder">备份文件夹设置为：'{1}'</string>
+		<string name="backup_folder_set">备份文件夹设置为：'{1}'</string>
 		<string name="locate_backup_err">未找到备份文件 '{1}'</string>
 		<string name="set_restore_opt">设置恢复选项：'{1}'：</string>
 		<string name="digest_check_skip" version="2">跳过校验 Digest 已开启</string>
