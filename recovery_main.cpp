@@ -42,6 +42,7 @@
 #include <android-base/unique_fd.h>
 #include <bootloader_message/bootloader_message.h>
 #include <cutils/sockets.h>
+#include <fs_mgr/roots.h>
 #include <private/android_logger.h> /* private pmsg functions */
 #include <selinux/android.h>
 #include <selinux/label.h>
@@ -505,7 +506,7 @@ int main(int argc, char** argv) {
       }
 
       case Device::ENTER_FASTBOOT:
-        if (logical_partitions_mapped()) {
+        if (android::fs_mgr::LogicalPartitionsMapped()) {
           ui->Print("Partitions may be mounted - rebooting to enter fastboot.");
           Reboot("fastboot");
         } else {
