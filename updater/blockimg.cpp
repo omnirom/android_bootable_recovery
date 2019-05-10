@@ -2018,7 +2018,7 @@ Value* BlockImageVerifyFn(const char* name, State* state,
     // clang-format off
     { Command::Type::ABORT,             PerformCommandAbort },
     { Command::Type::BSDIFF,            PerformCommandDiff },
-    { Command::Type::COMPUTE_HASH_TREE, PerformCommandComputeHashTree },
+    { Command::Type::COMPUTE_HASH_TREE, nullptr },
     { Command::Type::ERASE,             nullptr },
     { Command::Type::FREE,              PerformCommandFree },
     { Command::Type::IMGDIFF,           PerformCommandDiff },
