@@ -311,8 +311,7 @@ int verify_file(VerifierInterface* package, const std::vector<Certificate>& keys
 
 static std::vector<Certificate> IterateZipEntriesAndSearchForKeys(const ZipArchiveHandle& handle) {
   void* cookie;
-  ZipString suffix("x509.pem");
-  int32_t iter_status = StartIteration(handle, &cookie, nullptr, &suffix);
+  int32_t iter_status = StartIteration(handle, &cookie, "", "x509.pem");
   if (iter_status != 0) {
     LOG(ERROR) << "Failed to iterate over entries in the certificate zipfile: "
                << ErrorCodeString(iter_status);
