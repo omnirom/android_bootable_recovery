@@ -41,6 +41,7 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <cutils/properties.h> /* for property_list */
+#include <fs_mgr/roots.h>
 #include <healthhalutils/HealthHalUtils.h>
 #include <ziparchive/zip_archive.h>
 
@@ -437,8 +438,7 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
         break;
       }
       case Device::MOUNT_SYSTEM:
-        // the system partition is mounted at /mnt/system
-        if (ensure_path_mounted_at(get_system_root(), "/mnt/system") != -1) {
+        if (ensure_path_mounted_at(android::fs_mgr::GetSystemRoot(), "/mnt/system") != -1) {
           ui->Print("Mounted /system.\n");
         }
         break;
