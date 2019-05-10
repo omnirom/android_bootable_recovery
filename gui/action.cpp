@@ -231,6 +231,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(twcmd);
 		ADD_ACTION(setbootslot);
 		ADD_ACTION(installapp);
+		ADD_ACTION(uninstalltwrpsystemapp);
 		ADD_ACTION(repackimage);
 		ADD_ACTION(fixabrecoverybootloop);
 	}
@@ -1919,19 +1920,9 @@ int GUIAction::checkforapp(std::string arg __unused)
 			DataManager::SetValue("tw_app_install_status", 1); // 0 = no status, 1 = not installed, 2 = already installed or do not install
 			goto exit;
 		}
-		if (PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), false)) {
-			string base_path = PartitionManager.Get_Android_Root_Path();
-			if (TWFunc::Path_Exists(PartitionManager.Get_Android_Root_Path() + "/system"))
-				base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
-			string install_path = base_path + "/priv-app";
-			if (!TWFunc::Path_Exists(install_path))
-				install_path = base_path + "/app";
-			install_path += "/twrpapp";
-			if (TWFunc::Path_Exists(install_path)) {
-				LOGINFO("App found at '%s'\n", install_path.c_str());
-				DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed or do not install
-				goto exit;
-			}
+		if (TWFunc::Is_TWRP_App_In_System()) {
+			DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed or do not install
+			goto exit;
 		}
 		if (PartitionManager.Mount_By_Path("/data", false)) {
 			const char parent_path[] = "/data/app";
@@ -2050,6 +2041,59 @@ int GUIAction::installapp(std::string arg __unused)
 					}
 				}
 			}
+		}
+	} else
+		simulate_progress_bar();
+exit:
+	operation_end(0);
+	return 0;
+}
+
+int GUIAction::uninstalltwrpsystemapp(std::string arg __unused)
+{
+	int op_status = 1;
+	operation_start("Uninstall TWRP System App");
+	if (!simulate)
+	{
+		int Mount_System_RO = DataManager::GetIntValue("tw_mount_system_ro");
+		TWPartition* Part = PartitionManager.Find_Partition_By_Path(PartitionManager.Get_Android_Root_Path());
+		if (!Part) {
+			LOGERR("Unabled to find system partition.\n");
+			goto exit;
+		}
+		if (!Part->UnMount(true)) {
+			goto exit;
+		}
+		if (Mount_System_RO > 0) {
+			DataManager::SetValue("tw_mount_system_ro", 0);
+			Part->Change_Mount_Read_Only(false);
+		}
+		if (Part->Mount(true)) {
+			string base_path = PartitionManager.Get_Android_Root_Path();
+			if (TWFunc::Path_Exists(PartitionManager.Get_Android_Root_Path() + "/system"))
+				base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
+			string uninstall_path = base_path + "/priv-app";
+			if (!TWFunc::Path_Exists(uninstall_path))
+				uninstall_path = base_path + "/app";
+			uninstall_path += "/twrpapp";
+			if (TWFunc::Path_Exists(uninstall_path)) {
+				LOGINFO("Uninstalling TWRP App from '%s'\n", uninstall_path.c_str());
+				if (TWFunc::removeDir(uninstall_path, false) == 0) {
+					sync();
+					op_status = 0;
+					DataManager::SetValue("tw_app_installed_in_system", 0);
+					DataManager::SetValue("tw_app_install_status", 0);
+				} else {
+					LOGERR("Unable to remove TWRP app from system.\n");
+				}
+			} else {
+				LOGINFO("didn't find TWRP app in '%s'\n", uninstall_path.c_str());
+			}
+		}
+		Part->UnMount(true);
+		if (Mount_System_RO > 0) {
+			DataManager::SetValue("tw_mount_system_ro", Mount_System_RO);
+			Part->Change_Mount_Read_Only(true);
 		}
 	} else
 		simulate_progress_bar();

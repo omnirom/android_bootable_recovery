@@ -126,6 +126,10 @@
 		<string name="reboot_install_app_system">Install as a System App</string>
 		<string name="reboot_installing_app">Installing App...</string>
 		<string name="swipe_to_install_app">Swipe to Install TWRP App</string>
+		<string name="uninstall_twrp_system_app">Uninstall TWRP App from System</string>
+		<string name="uninstall_twrp_system_app_confirm">Uninstall TWRP App from System?</string>
+		<string name="uninstalling_twrp_system_app">Uninstalling TWRP App from System...</string>
+		<string name="uninstall_twrp_system_app_complete">Uninstall TWRP App from System Complete</string>
 		<string name="swipe_flash">Swipe to confirm Flash</string>
 		<string name="confirm_action">Confirm Action</string>
 		<string name="back_cancel">Press back button to cancel.</string>

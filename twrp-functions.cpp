@@ -1228,4 +1228,23 @@ void TWFunc::check_selinux_support() {
 		}
 	}
 }
+
+bool TWFunc::Is_TWRP_App_In_System() {
+	if (PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), false)) {
+		string base_path = PartitionManager.Get_Android_Root_Path();
+		if (TWFunc::Path_Exists(PartitionManager.Get_Android_Root_Path() + "/system"))
+			base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
+		string install_path = base_path + "/priv-app";
+		if (!TWFunc::Path_Exists(install_path))
+			install_path = base_path + "/app";
+		install_path += "/twrpapp";
+		if (TWFunc::Path_Exists(install_path)) {
+			LOGINFO("App found at '%s'\n", install_path.c_str());
+			DataManager::SetValue("tw_app_installed_in_system", 1);
+			return true;
+		}
+	}
+	DataManager::SetValue("tw_app_installed_in_system", 0);
+	return false;
+}
 #endif // ndef BUILD_TWRPTAR_MAIN
