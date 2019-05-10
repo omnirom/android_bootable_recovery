@@ -106,6 +106,7 @@ public:
 	static int stream_adb_backup(string &Restore_Name); // Tell ADB Backup to Stream to TWRP from GUI selection
 	static std::string get_cache_dir(); // return the cache partition existence
 	static void check_selinux_support(); // print whether selinux support is enabled to console
+	static bool Is_TWRP_App_In_System(); // Check if the TWRP app is installed in the system partition
 
 private:
 	static void Copy_Log(string Source, string Destination);
