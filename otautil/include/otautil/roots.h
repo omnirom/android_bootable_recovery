@@ -53,7 +53,3 @@ int format_volume(const std::string& volume, const std::string& directory);
 // Ensure that all and only the volumes that packages expect to find
 // mounted (/tmp and /cache) are mounted.  Returns 0 on success.
 int setup_install_mounts();
-
-bool logical_partitions_mapped();
-
-std::string get_system_root();
