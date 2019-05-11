@@ -275,11 +275,3 @@ int setup_install_mounts() {
   }
   return 0;
 }
-
-bool logical_partitions_mapped() {
-  return android::fs_mgr::LogicalPartitionsMapped();
-}
-
-std::string get_system_root() {
-  return android::fs_mgr::GetSystemRoot();
-}
