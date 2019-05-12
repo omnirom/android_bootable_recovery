@@ -289,6 +289,33 @@ $(TOOLS_H): PRIVATE_CUSTOM_TOOL = echo "/* file generated automatically */" > $@
 $(TOOLS_H):
 	$(transform-generated-source)
 
+# toolbox setenforce is used during init in non-symlink form, so it was
+# required to be included as part of the suite above. if busybox already
+# provides setenforce, we can omit the toolbox symlink
+TEMP_TOOLS := $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(ALL_TOOLS))
+ALL_TOOLS := $(TEMP_TOOLS)
+
+# Make /sbin/toolbox launchers for each tool
+SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(ALL_TOOLS))
+$(SYMLINKS): TOOLBOX_BINARY := $(LOCAL_MODULE_STEM)
+$(SYMLINKS): $(LOCAL_INSTALLED_MODULE)
+	@echo "Symlink: $@ -> $(TOOLBOX_BINARY)"
+	@mkdir -p $(dir $@)
+	@rm -rf $@
+	$(hide) ln -sf $(TOOLBOX_BINARY) $@
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := toolbox_symlinks
+LOCAL_MODULE_TAGS := optional
+LOCAL_ADDITIONAL_DEPENDENCIES := $(SYMLINKS)
+include $(BUILD_PHONY_PACKAGE)
+
+ifneq (,$(filter $(PLATFORM_SDK_VERSION),16 17 18))
+    # Only needed if the build system lacks support for LOCAL_ADDITIONAL_DEPENDENCIES
+    ALL_DEFAULT_INSTALLED_MODULES += $(SYMLINKS)
+    ALL_MODULES.$(LOCAL_MODULE).INSTALLED := \
+        $(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) $(SYMLINKS)
+endif
 
 ifeq ($(TW_USE_TOOLBOX), true)
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
@@ -318,34 +345,6 @@ ifeq ($(TW_USE_TOOLBOX), true)
 
         include $(BUILD_EXECUTABLE)
     endif
-endif
-
-# toolbox setenforce is used during init in non-symlink form, so it was
-# required to be included as part of the suite above. if busybox already
-# provides setenforce, we can omit the toolbox symlink
-TEMP_TOOLS := $(filter-out $(RECOVERY_BUSYBOX_TOOLS), $(ALL_TOOLS))
-ALL_TOOLS := $(TEMP_TOOLS)
-
-# Make /sbin/toolbox launchers for each tool
-SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(ALL_TOOLS))
-$(SYMLINKS): TOOLBOX_BINARY := $(LOCAL_MODULE_STEM)
-$(SYMLINKS): $(LOCAL_INSTALLED_MODULE)
-	@echo "Symlink: $@ -> $(TOOLBOX_BINARY)"
-	@mkdir -p $(dir $@)
-	@rm -rf $@
-	$(hide) ln -sf $(TOOLBOX_BINARY) $@
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := toolbox_symlinks
-LOCAL_MODULE_TAGS := optional
-LOCAL_ADDITIONAL_DEPENDENCIES := $(SYMLINKS)
-include $(BUILD_PHONY_PACKAGE)
-
-ifneq (,$(filter $(PLATFORM_SDK_VERSION),16 17 18))
-    # Only needed if the build system lacks support for LOCAL_ADDITIONAL_DEPENDENCIES
-    ALL_DEFAULT_INSTALLED_MODULES += $(SYMLINKS)
-    ALL_MODULES.$(LOCAL_MODULE).INSTALLED := \
-        $(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) $(SYMLINKS)
 endif
 
 SYMLINKS :=
