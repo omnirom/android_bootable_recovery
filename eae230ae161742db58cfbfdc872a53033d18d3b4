@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e4a8d62c_8feb9a48",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1659,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-05-12T20:10:17Z",
+      "side": 1,
+      "message": "I feel this function should go somewhere outside of TWRPartitionManager since it\u0027s not partition related. Maybe a new class?",
+      "revId": "eae230ae161742db58cfbfdc872a53033d18d3b4",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b34d1421_02a4fe4e",
+        "filename": "partitions.hpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-05-12T20:10:17Z",
+      "side": 1,
+      "message": "Maybe move this to a class with the new decryption functions?",
+      "revId": "eae230ae161742db58cfbfdc872a53033d18d3b4",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    }
+  ]
+}
