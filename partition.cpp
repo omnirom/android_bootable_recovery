@@ -2081,7 +2081,7 @@ bool TWPartition::Wipe_EXTFS(string File_System) {
 
 	if (TWFunc::Path_Exists("/sbin/e2fsdroid")) {
 		// Execute e2fsdroid to initialize selinux context
-		Command = "e2fsdroid -e -a " + Mount_Point + " " + Actual_Block_Device;
+		Command = "e2fsdroid -e -S /file_contexts -a " + Mount_Point + " " + Actual_Block_Device;
 		LOGINFO("e2fsdroid command: %s\n", Command.c_str());
 		ret = TWFunc::Exec_Cmd(Command);
 		if (ret) {
