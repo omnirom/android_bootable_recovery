@@ -21,45 +21,53 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
+#include "edify/updater_interface.h"
 #include "otautil/error_code.h"
 #include "otautil/sysutil.h"
 
-struct selabel_handle;
+class UpdaterRuntime;
 
-class Updater {
+class Updater : public UpdaterInterface {
  public:
-  ~Updater();
+  explicit Updater(std::unique_ptr<UpdaterRuntimeInterface> run_time)
+      : runtime_(std::move(run_time)) {}
+
+  Updater();
+
+  ~Updater() override;
 
   // Memory-maps the OTA package and opens it as a zip file. Also sets up the command pipe and
-  // selabel handle. TODO(xunchang) implement a run time environment class and move sehandle there.
-  bool Init(int fd, const std::string& package_filename, bool is_retry,
-            struct selabel_handle* sehandle);
+  // UpdaterRuntime.
+  bool Init(int fd, const std::string_view package_filename, bool is_retry);
 
   // Parses and evaluates the updater-script in the OTA package. Reports the error code if the
   // evaluation fails.
   bool RunUpdate();
 
   // Writes the message to command pipe, adds a new line in the end.
-  void WriteToCommandPipe(const std::string& message, bool flush = false) const;
+  void WriteToCommandPipe(const std::string_view message, bool flush = false) const override;
 
   // Sends over the message to recovery to print it on the screen.
-  void UiPrint(const std::string& message) const;
+  void UiPrint(const std::string_view message) const override;
 
-  ZipArchiveHandle package_handle() const {
+  std::string FindBlockDeviceName(const std::string_view name) const override;
+
+  UpdaterRuntimeInterface* GetRuntime() const override {
+    return runtime_.get();
+  }
+  ZipArchiveHandle GetPackageHandle() const override {
     return package_handle_;
   }
-  struct selabel_handle* sehandle() const {
-    return sehandle_;
-  }
-  std::string result() const {
+  std::string GetResult() const override {
     return result_;
   }
 
-  uint8_t* GetMappedPackageAddress() const {
+  uint8_t* GetMappedPackageAddress() const override {
     return mapped_package_.addr;
   }
 
@@ -76,13 +84,15 @@ class Updater {
   // Parses the error code embedded in state->errmsg; and reports the error code and cause code.
   void ParseAndReportErrorCode(State* state);
 
+  std::unique_ptr<UpdaterRuntimeInterface> runtime_;
+
   MemMapping mapped_package_;
   ZipArchiveHandle package_handle_{ nullptr };
   std::string updater_script_;
 
   bool is_retry_{ false };
   std::unique_ptr<FILE, decltype(&fclose)> cmd_pipe_{ nullptr, fclose };
-  struct selabel_handle* sehandle_{ nullptr };
 
   std::string result_;
+  std::vector<std::string> skipped_functions_;
 };
