@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2201fcaf_306a5060",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2084,
+      "author": {
+        "id": 1001224
+      },
+      "writtenOn": "2019-05-15T07:14:34Z",
+      "side": 1,
+      "message": "Need to adjust this parameter w.r.t. the generated /file_contexts in sar case",
+      "range": {
+        "startLine": 2084,
+        "startChar": 51,
+        "endLine": 2084,
+        "endChar": 62
+      },
+      "revId": "19e8461ff77da36da5c182b655f57943cf4563cf",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
