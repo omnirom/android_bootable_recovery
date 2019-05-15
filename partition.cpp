@@ -2080,13 +2080,19 @@ bool TWPartition::Wipe_EXTFS(string File_System) {
 	}
 
 	if (TWFunc::Path_Exists("/sbin/e2fsdroid")) {
-		// Execute e2fsdroid to initialize selinux context
-		Command = "e2fsdroid -e -S /file_contexts -a " + Mount_Point + " " + Actual_Block_Device;
-		LOGINFO("e2fsdroid command: %s\n", Command.c_str());
-		ret = TWFunc::Exec_Cmd(Command);
-		if (ret) {
-			gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
-			return false;
+		const string& File_Contexts_Entry = (Mount_Point == "/system_root" ? "/" : Mount_Point);
+		char *secontext = NULL;
+		if (!selinux_handle || selabel_lookup(selinux_handle, &secontext, File_Contexts_Entry.c_str(), S_IFDIR) < 0) {
+			LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
+		} else {
+			// Execute e2fsdroid to initialize selinux context
+			Command = "e2fsdroid -e -S /file_contexts -a " + File_Contexts_Entry + " " + Actual_Block_Device;
+			LOGINFO("e2fsdroid command: %s\n", Command.c_str());
+			ret = TWFunc::Exec_Cmd(Command);
+			if (ret) {
+				gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
+				return false;
+			}
 		}
 	} else {
 		LOGINFO("e2fsdroid not present\n");
