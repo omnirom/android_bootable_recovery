@@ -18,21 +18,8 @@
 
 #include <string>
 
-// Not using the command-line defined macro here because this header could be included by
-// device-specific recovery libraries. We static assert the value consistency in recovery.cpp.
-static constexpr int kRecoveryApiVersion = 3;
-
-class RecoveryUI;
-struct selabel_handle;
-
-extern struct selabel_handle* sehandle;
-extern RecoveryUI* ui;
-extern bool has_cache;
-
 // The current stage, e.g. "1/2".
 extern std::string stage;
 
 // The reason argument provided in "--reason=".
 extern const char* reason;
-
-bool is_ro_debuggable();
