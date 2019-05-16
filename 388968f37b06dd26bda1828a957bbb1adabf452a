@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fcdd6bd0_e35ef3e4",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2019-05-16T21:12:01Z",
+      "side": 1,
+      "message": "I think it would be better to make this a private or possibly public member of TWPartitionManager rather than a global. You could add a Get_Users_List function to request a pointer to the vector.",
+      "revId": "388968f37b06dd26bda1828a957bbb1adabf452a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e6c7f515_d1cecbeb",
+        "filename": "partitions.hpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1000004
+      },
+      "writtenOn": "2019-05-16T21:12:01Z",
+      "side": 1,
+      "message": "It\u0027d probably be worth adding a bool isDecrypted or something and keep track of which users have been decrypted. When a user taps on the Decrypt Users button then we should only display those users that haven\u0027t already been decrypted.\n\nFurther you could create another DataManager variable to keep track of whether additional users are available to be decrypted. Then, add a condition to the xml so that the option to decrypt users only shows if there are users available to decrypt.",
+      "revId": "388968f37b06dd26bda1828a957bbb1adabf452a",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
