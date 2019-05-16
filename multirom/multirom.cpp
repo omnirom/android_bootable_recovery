@@ -1500,6 +1500,7 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	// unblank here is necessary; if we don't bring the screen back up and the zip has an AROMA
 	// Installer, it will take over the screen and buttons and we won't be able to manually wake the screen
 	blankTimer.resetTimerAndUnblank();
+    system_args("busybox mv /system/etc/selinux/plat_property_contexts /system/etc/selinux/plat_property_contexts.bak");
 
 	dp_keep_busy[0] = opendir("/cache");
 	dp_keep_busy[1] = opendir("/system");
@@ -1511,6 +1512,7 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, 0);
 	status = TWinstall_zip(file.c_str(), &wipe_cache);
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, verify_status);
+    system_args("busybox mv /system/etc/selinux/plat_property_contexts.bak /system/etc/selinux/plat_property_contexts");
 
 	if (dp_keep_busy[0]) closedir(dp_keep_busy[0]);
 	if (dp_keep_busy[1]) closedir(dp_keep_busy[1]);
