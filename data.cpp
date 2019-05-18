@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 to 2016 bigbiff/Dees_Troy TeamWin
+	Copyright 2012 to 2019 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -748,6 +748,7 @@ void DataManager::SetDefaultValues()
 	mPersist.SetValue(TW_INSTALL_REBOOT_VAR, "0");
 	mPersist.SetValue(TW_SIGNED_ZIP_VERIFY_VAR, "0");
 	mPersist.SetValue(TW_DISABLE_FREE_SPACE_VAR, "0");
+	mPersist.SetValue(TW_CHECK_DIGEST_AFTER_BACKUP, "0");
 	mPersist.SetValue(TW_FORCE_DIGEST_CHECK_VAR, "0");
 	mPersist.SetValue(TW_USE_COMPRESSION_VAR, "0");
 	mPersist.SetValue(TW_TIME_ZONE_VAR, "CST6CDT,M3.2.0,M11.1.0");
