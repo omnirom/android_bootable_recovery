@@ -1,5 +1,5 @@
 /*
-	Copyright 2014 to 2017 TeamWin
+	Copyright 2014 to 2019 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -676,6 +676,12 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 		if (!part_settings->adbbackup && part_settings->generate_digest) {
 			if (!twrpDigestDriver::Make_Digest(Full_Filename))
 				goto backup_error;
+
+			int check_digest_after_backup = 0;
+			DataManager::GetValue(TW_CHECK_DIGEST_AFTER_BACKUP, check_digest_after_backup);
+			if (check_digest_after_backup > 0 && !twrpDigestDriver::Check_Digest(Full_Filename)) {
+				goto backup_error;
+			}
 		}
 
 		if (part_settings->Part->Has_SubPartition) {
@@ -693,6 +699,11 @@ bool TWPartitionManager::Backup_Partition(PartitionSettings *part_settings) {
 					string Full_Filename = part_settings->Backup_Folder + "/" + part_settings->Part->Backup_FileName;
 					if (!part_settings->adbbackup && part_settings->generate_digest) {
 						if (!twrpDigestDriver::Make_Digest(Full_Filename)) {
+							goto backup_error;
+						}
+						int check_digest_after_backup = 0;
+						DataManager::GetValue(TW_CHECK_DIGEST_AFTER_BACKUP, check_digest_after_backup);
+						if (check_digest_after_backup > 0 && !twrpDigestDriver::Check_Digest(Full_Filename)) {
 							goto backup_error;
 						}
 					}

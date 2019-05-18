@@ -224,6 +224,7 @@
 		<string name="enc_enabled">enabled</string>
 		<string name="enable_backup_comp_chk">Enable compression</string>
 		<string name="skip_digest_backup_chk" version="2">Skip Digest generation during backup</string>
+		<string name="check_digest_after_backup">Check Digest After Backup</string>
 		<string name="disable_backup_space_chk" version="2">Disable free space check before backup</string>
 		<string name="current_boot_slot">Current Slot: %tw_active_slot%</string>
 		<string name="boot_slot_a">Slot A</string>

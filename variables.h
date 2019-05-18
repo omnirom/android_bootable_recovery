@@ -69,6 +69,7 @@
 #define TW_ZIP_INTERNAL_VAR         "tw_zip_internal"
 #define TW_ZIP_EXTERNAL_VAR         "tw_zip_external"
 #define TW_DISABLE_FREE_SPACE_VAR   "tw_disable_free_space"
+#define TW_CHECK_DIGEST_AFTER_BACKUP "tw_check_digest_after_backup"
 #define TW_FORCE_DIGEST_CHECK_VAR   "tw_force_digest_check"
 #define TW_SKIP_DIGEST_CHECK_VAR    "tw_skip_digest_check"
 #define TW_SKIP_DIGEST_GENERATE_VAR "tw_skip_digest_generate"
