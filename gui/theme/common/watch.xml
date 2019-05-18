@@ -2056,6 +2056,9 @@
 				<listitem name="{@skip_digest_backup_chk=Skip Digest generation during backup}">
 					<data variable="tw_skip_digest_generate"/>
 				</listitem>
+				<listitem>
+					<data variable="check_digest_after_backup"/>
+				</listitem>
 				<listitem name="{@disable_backup_space_chk=Disable free space check before backup}">
 					<data variable="tw_disable_free_space"/>
 				</listitem>

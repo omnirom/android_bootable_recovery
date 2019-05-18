@@ -1738,9 +1738,15 @@
 			</checkbox>
 
 			<checkbox>
-				<placement x="%indent%" y="%row5_y%"/>
+				<placement x="%indent%" y="%row4a_y%"/>
 				<text>{@skip_digest_backup_chk=Skip Digest generation during backup}</text>
 				<data variable="tw_skip_digest_generate"/>
+			</checkbox>
+
+			<checkbox>
+				<placement x="%indent%" y="%row5a_y%"/>
+				<text>{@check_digest_after_backup=Check Digest After Backup}</text>
+				<data variable="tw_check_digest_after_backup"/>
 			</checkbox>
 
 			<checkbox>

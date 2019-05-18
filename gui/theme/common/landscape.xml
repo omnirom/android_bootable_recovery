@@ -1709,6 +1709,12 @@
 			</checkbox>
 
 			<checkbox>
+				<placement x="%col1_x_right%" y="%row8a_y%"/>
+				<text>{@check_digest_after_backup=Check Digest After Backup}</text>
+				<data variable="tw_check_digest_after_backup"/>
+			</checkbox>
+
+			<checkbox>
 				<placement x="%col1_x_right%" y="%row9_y%"/>
 				<text>{@disable_backup_space_chk=Disable free space check before backup}</text>
 				<data variable="tw_disable_free_space"/>
