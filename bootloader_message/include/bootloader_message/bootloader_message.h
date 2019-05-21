@@ -28,8 +28,9 @@
 // 16K - 64K    Used by uncrypt and recovery to store wipe_package for A/B devices
 // Note that these offsets are admitted by bootloader,recovery and uncrypt, so they
 // are not configurable without changing all of them.
-static const size_t BOOTLOADER_MESSAGE_OFFSET_IN_MISC = 0;
-static const size_t WIPE_PACKAGE_OFFSET_IN_MISC = 16 * 1024;
+constexpr size_t BOOTLOADER_MESSAGE_OFFSET_IN_MISC = 0;
+constexpr size_t VENDOR_SPACE_OFFSET_IN_MISC = 2 * 1024;
+constexpr size_t WIPE_PACKAGE_OFFSET_IN_MISC = 16 * 1024;
 
 /* Bootloader Message (2-KiB)
  *
@@ -232,6 +233,14 @@ bool read_wipe_package(std::string* package_data, size_t size, std::string* err)
 
 // Write the wipe package into BCB (to offset WIPE_PACKAGE_OFFSET_IN_MISC).
 bool write_wipe_package(const std::string& package_data, std::string* err);
+
+// Reads data from the vendor space in /misc partition, with the given offset and size. Note that
+// offset is in relative to the start of vendor space.
+bool ReadMiscPartitionVendorSpace(void* data, size_t size, size_t offset, std::string* err);
+
+// Writes the given data to the vendor space in /misc partition, at the given offset. Note that
+// offset is in relative to the start of the vendor space.
+bool WriteMiscPartitionVendorSpace(const void* data, size_t size, size_t offset, std::string* err);
 
 #else
 
