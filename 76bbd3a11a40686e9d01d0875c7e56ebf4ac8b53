@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "36244215_99743a88",
+        "filename": "partitionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1553,
+      "author": {
+        "id": 1001478
+      },
+      "writtenOn": "2019-05-21T06:29:23Z",
+      "side": 1,
+      "message": "Is there another (better) place to call this function!",
+      "revId": "76bbd3a11a40686e9d01d0875c7e56ebf4ac8b53",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
