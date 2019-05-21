@@ -421,5 +421,5 @@ Value* ErrorAbort(State* state, CauseCode cause_code, const char* format, ...) {
   return nullptr;
 }
 
-State::State(const std::string& script, void* cookie)
-    : script(script), cookie(cookie), error_code(kNoError), cause_code(kNoCause) {}
+State::State(const std::string& script, UpdaterInterface* interface)
+    : script(script), updater(interface), error_code(kNoError), cause_code(kNoCause) {}
