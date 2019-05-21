@@ -24,14 +24,17 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "updater/updater_runtime.h"
+
+Updater::Updater() : Updater(std::make_unique<UpdaterRuntime>(nullptr)) {}
+
 Updater::~Updater() {
   if (package_handle_) {
     CloseArchive(package_handle_);
   }
 }
 
-bool Updater::Init(int fd, const std::string& package_filename, bool is_retry,
-                   struct selabel_handle* sehandle) {
+bool Updater::Init(int fd, const std::string_view package_filename, bool is_retry) {
   // Set up the pipe for sending commands back to the parent process.
   cmd_pipe_.reset(fdopen(fd, "wb"));
   if (!cmd_pipe_) {
@@ -41,12 +44,12 @@ bool Updater::Init(int fd, const std::string& package_filename, bool is_retry,
 
   setlinebuf(cmd_pipe_.get());
 
-  if (!mapped_package_.MapFile(package_filename)) {
+  if (!mapped_package_.MapFile(std::string(package_filename))) {
     LOG(ERROR) << "failed to map package " << package_filename;
     return false;
   }
   if (int open_err = OpenArchiveFromMemory(mapped_package_.addr, mapped_package_.length,
-                                           package_filename.c_str(), &package_handle_);
+                                           std::string(package_filename).c_str(), &package_handle_);
       open_err != 0) {
     LOG(ERROR) << "failed to open package " << package_filename << ": "
                << ErrorCodeString(open_err);
@@ -58,14 +61,12 @@ bool Updater::Init(int fd, const std::string& package_filename, bool is_retry,
 
   is_retry_ = is_retry;
 
-  sehandle_ = sehandle;
-  if (!sehandle_) {
-    fprintf(cmd_pipe_.get(), "ui_print Warning: No file_contexts\n");
-  }
   return true;
 }
 
 bool Updater::RunUpdate() {
+  CHECK(runtime_);
+
   // Parse the script.
   std::unique_ptr<Expr> root;
   int error_count = 0;
@@ -86,6 +87,9 @@ bool Updater::RunUpdate() {
     if (result_.empty() && state.cause_code != kNoCause) {
       fprintf(cmd_pipe_.get(), "log cause: %d\n", state.cause_code);
     }
+    for (const auto& func : skipped_functions_) {
+      LOG(WARNING) << "Skipped executing function " << func;
+    }
     return true;
   }
 
@@ -93,17 +97,17 @@ bool Updater::RunUpdate() {
   return false;
 }
 
-void Updater::WriteToCommandPipe(const std::string& message, bool flush) const {
-  fprintf(cmd_pipe_.get(), "%s\n", message.c_str());
+void Updater::WriteToCommandPipe(const std::string_view message, bool flush) const {
+  fprintf(cmd_pipe_.get(), "%s\n", std::string(message).c_str());
   if (flush) {
     fflush(cmd_pipe_.get());
   }
 }
 
-void Updater::UiPrint(const std::string& message) const {
+void Updater::UiPrint(const std::string_view message) const {
   // "line1\nline2\n" will be split into 3 tokens: "line1", "line2" and "".
   // so skip sending empty strings to ui.
-  std::vector<std::string> lines = android::base::Split(message, "\n");
+  std::vector<std::string> lines = android::base::Split(std::string(message), "\n");
   for (const auto& line : lines) {
     if (!line.empty()) {
       fprintf(cmd_pipe_.get(), "ui_print %s\n", line.c_str());
@@ -114,6 +118,10 @@ void Updater::UiPrint(const std::string& message) const {
   // been redirected to the log file). because the recovery will only print
   // the contents to screen when processing pipe command ui_print.
   LOG(INFO) << message;
+}
+
+std::string Updater::FindBlockDeviceName(const std::string_view name) const {
+  return runtime_->FindBlockDeviceName(name);
 }
 
 void Updater::ParseAndReportErrorCode(State* state) {
