@@ -1,5 +1,13 @@
+cc_defaults {
+    name: "libbmlutils_defaults",
+    shared_libs: ["libc"],
+    stl: "none",
+}
+
 cc_library {
     name: "libbmlutils",
+
+    defaults: ["libbmlutils_defaults"],
 
     host_supported: true,
     export_include_dirs: ["."],
@@ -12,7 +20,6 @@ cc_library {
 
     static_libs: [
         "libcrecovery",
-        "libc",
     ],
 
     target: {
