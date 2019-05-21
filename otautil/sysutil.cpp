@@ -229,9 +229,9 @@ bool Reboot(std::string_view target) {
   return android::base::SetProperty(ANDROID_RB_PROPERTY, cmd);
 }
 
-bool Shutdown() {
-  // "shutdown" doesn't need a "reason" arg nor a comma.
-  return android::base::SetProperty(ANDROID_RB_PROPERTY, "shutdown");
+bool Shutdown(std::string_view target) {
+  std::string cmd = "shutdown," + std::string(target);
+  return android::base::SetProperty(ANDROID_RB_PROPERTY, cmd);
 }
 
 std::vector<char*> StringVectorToNullTerminatedArray(const std::vector<std::string>& args) {
