@@ -85,7 +85,7 @@ static void expect(const char* expected, const std::string& expr_str, CauseCode 
 }
 
 static void expect(const char* expected, const std::string& expr_str, CauseCode cause_code) {
-  Updater updater;
+  Updater updater(std::make_unique<UpdaterRuntime>(nullptr));
   expect(expected, expr_str, cause_code, &updater);
 }
 
@@ -133,6 +133,8 @@ static Value* BlobToString(const char* name, State* state,
 
 class UpdaterTestBase {
  protected:
+  UpdaterTestBase() : updater_(std::make_unique<UpdaterRuntime>(nullptr)) {}
+
   void SetUp() {
     RegisterBuiltins();
     RegisterInstallFunctions();

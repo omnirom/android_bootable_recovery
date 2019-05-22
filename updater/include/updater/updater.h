@@ -30,14 +30,10 @@
 #include "otautil/error_code.h"
 #include "otautil/sysutil.h"
 
-class UpdaterRuntime;
-
 class Updater : public UpdaterInterface {
  public:
   explicit Updater(std::unique_ptr<UpdaterRuntimeInterface> run_time)
       : runtime_(std::move(run_time)) {}
-
-  Updater();
 
   ~Updater() override;
 
