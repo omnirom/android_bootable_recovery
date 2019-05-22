@@ -52,13 +52,14 @@
 #include "updater/blockimg.h"
 #include "updater/install.h"
 #include "updater/updater.h"
+#include "updater/updater_runtime.h"
 
 using namespace std::string_literals;
 
 using PackageEntries = std::unordered_map<std::string, std::string>;
 
 static void expect(const char* expected, const std::string& expr_str, CauseCode cause_code,
-                   Updater* updater = nullptr) {
+                   Updater* updater) {
   std::unique_ptr<Expr> e;
   int error_count = 0;
   ASSERT_EQ(0, ParseString(expr_str, &e, &error_count));
@@ -81,6 +82,11 @@ static void expect(const char* expected, const std::string& expr_str, CauseCode 
 
   // Cause code should always be available.
   ASSERT_EQ(cause_code, state.cause_code);
+}
+
+static void expect(const char* expected, const std::string& expr_str, CauseCode cause_code) {
+  Updater updater;
+  expect(expected, expr_str, cause_code, &updater);
 }
 
 static void BuildUpdatePackage(const PackageEntries& entries, int fd) {
@@ -168,9 +174,9 @@ class UpdaterTestBase {
 
     // Set up the handler, command_pipe, patch offset & length.
     TemporaryFile temp_pipe;
-    ASSERT_TRUE(updater_.Init(temp_pipe.release(), zip_file.path, false, nullptr));
+    ASSERT_TRUE(updater_.Init(temp_pipe.release(), zip_file.path, false));
     ASSERT_TRUE(updater_.RunUpdate());
-    ASSERT_EQ(result, updater_.result());
+    ASSERT_EQ(result, updater_.GetResult());
 
     // Parse the cause code written to the command pipe.
     int received_cause_code = kNoCause;

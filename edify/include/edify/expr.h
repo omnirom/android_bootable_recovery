@@ -23,19 +23,20 @@
 #include <string>
 #include <vector>
 
+#include "edify/updater_interface.h"
+
 // Forward declaration to avoid including "otautil/error_code.h".
 enum ErrorCode : int;
 enum CauseCode : int;
 
 struct State {
-  State(const std::string& script, void* cookie);
+  State(const std::string& script, UpdaterInterface* cookie);
 
   // The source of the original script.
   const std::string& script;
 
-  // Optional pointer to app-specific data; the core of edify never
-  // uses this value.
-  void* cookie;
+  // A pointer to app-specific data; the libedify doesn't use this value.
+  UpdaterInterface* updater;
 
   // The error message (if any) returned if the evaluation aborts.
   // Should be empty initially, will be either empty or a string that
