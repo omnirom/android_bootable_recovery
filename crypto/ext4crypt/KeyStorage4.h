@@ -43,7 +43,8 @@ class KeyAuthentication {
 enum class KeyType {
     DE_SYS,
     DE_USER,
-    CE_USER
+    CE_USER,
+    ME
 };
 
 extern const KeyAuthentication kEmptyAuthentication;
