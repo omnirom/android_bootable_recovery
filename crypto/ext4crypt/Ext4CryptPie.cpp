@@ -16,6 +16,7 @@
 
 #include "Ext4CryptPie.h"
 
+#include "Keymaster4.h"
 #include "KeyStorage4.h"
 #include "KeyUtil.h"
 #include "Utils.h"
@@ -68,6 +69,8 @@ using android::base::StringPrintf;
 using android::base::WriteStringToFile;
 using android::vold::kEmptyAuthentication;
 using android::vold::KeyBuffer;
+using android::vold::Keymaster;
+using android::hardware::keymaster::V4_0::KeyFormat;
 
 // Store main DE raw ref / policy
 std::string de_raw_ref;
@@ -204,12 +207,42 @@ static bool read_and_fixate_user_ce_key(userid_t user_id,
     return false;
 }
 
+static bool is_wrapped_key_supported_common(const std::string& mount_point) {
+    LOG(DEBUG) << "Determining wrapped-key support for " << mount_point;
+    std::string wrapped_key_supported = android::base::GetProperty("fbe.data.wrappedkey", "false");
+    LOG(DEBUG) << "fbe.data.wrappedkey = " << wrapped_key_supported;
+    if (mount_point == DATA_MNT_POINT && wrapped_key_supported == "true") {
+        LOG(DEBUG) << "Wrapped key supported on " << mount_point;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool is_wrapped_key_supported() {
+    return is_wrapped_key_supported_common(DATA_MNT_POINT);
+}
+
+bool is_wrapped_key_supported_external() {
+    return false;
+}
+
 static bool read_and_install_user_ce_key(userid_t user_id,
                                          const android::vold::KeyAuthentication& auth) {
     if (s_ce_key_raw_refs.count(user_id) != 0) return true;
     KeyBuffer ce_key;
     if (!read_and_fixate_user_ce_key(user_id, auth, &ce_key)) return false;
     std::string ce_raw_ref;
+
+    if (is_wrapped_key_supported()) {
+        KeyBuffer ephemeral_wrapped_key;
+        if (!getEphemeralWrappedKey(KeyFormat::RAW, ce_key, &ephemeral_wrapped_key)) {
+           LOG(ERROR) << "Failed to export ce key";
+           return false;
+        }
+
+        ce_key = std::move(ephemeral_wrapped_key);
+    }
     if (!android::vold::installKey(ce_key, &ce_raw_ref)) return false;
     s_ce_keys[user_id] = std::move(ce_key);
     s_ce_key_raw_refs[user_id] = ce_raw_ref;
@@ -335,6 +368,14 @@ static bool load_all_de_keys() {
             KeyBuffer key;
             if (!android::vold::retrieveKey(key_path, kEmptyAuthentication, &key)) return false;
             std::string raw_ref;
+            if (is_wrapped_key_supported()) {
+                KeyBuffer ephemeral_wrapped_key;
+                if (!getEphemeralWrappedKey(KeyFormat::RAW, key, &ephemeral_wrapped_key)) {
+                   LOG(ERROR) << "Failed to export de_key in create_and_install_user_keys";
+                   return false;
+                }
+                key = std::move(ephemeral_wrapped_key);
+            }
             if (!android::vold::installKey(key, &raw_ref)) return false;
             s_de_key_raw_refs[user_id] = raw_ref;
             LOG(DEBUG) << "Installed de key for user " << user_id << std::endl;
@@ -347,6 +388,7 @@ static bool load_all_de_keys() {
 
 bool e4crypt_initialize_global_de() {
     LOG(INFO) << "e4crypt_initialize_global_de" << std::endl;
+    bool wrapped_key_supported = false;
 
     if (s_global_de_initialized) {
         LOG(INFO) << "Already initialized" << std::endl;
@@ -354,9 +396,10 @@ bool e4crypt_initialize_global_de() {
     }
 
     PolicyKeyRef device_ref;
+    wrapped_key_supported = is_wrapped_key_supported();
     LOG(INFO) << "calling retrieveAndInstallKey\n";
     if (!android::vold::retrieveAndInstallKey(true, kEmptyAuthentication, device_key_path,
-                                              device_key_temp, &device_ref.key_raw_ref))
+                                              device_key_temp, &device_ref.key_raw_ref, wrapped_key_supported))
         return false;
     get_data_file_encryption_modes(&device_ref);
 
@@ -535,6 +578,7 @@ static bool read_or_create_volkey(const std::string& misc_path, const std::strin
                                   PolicyKeyRef* key_ref) {
     auto secdiscardable_path = volume_secdiscardable_path(volume_uuid);
     std::string secdiscardable_hash;
+    bool wrapped_key_supported = false;
     if (android::vold::pathExists(secdiscardable_path)) {
         if (!android::vold::readSecdiscardable(secdiscardable_path, &secdiscardable_hash))
             return false;
@@ -552,8 +596,9 @@ static bool read_or_create_volkey(const std::string& misc_path, const std::strin
         return false;
     }
     android::vold::KeyAuthentication auth("", secdiscardable_hash);
+    wrapped_key_supported = is_wrapped_key_supported_external();
     if (!android::vold::retrieveAndInstallKey(true, auth, key_path, key_path + "_tmp",
-                                              &key_ref->key_raw_ref))
+                                              &key_ref->key_raw_ref, wrapped_key_supported))
         return false;
     key_ref->contents_mode =
         android::base::GetProperty("ro.crypto.volume.contents_mode", "aes-256-xts");
