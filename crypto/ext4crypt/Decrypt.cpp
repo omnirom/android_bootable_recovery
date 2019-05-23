@@ -244,13 +244,6 @@ bool Find_Handle(const std::string& spblob_path, std::string& handle_str) {
 	return false;
 }
 
-// The password data is stored in big endian and has to be swapped on little endian ARM
-template <class T>
-void endianswap(T *objp) {
-	unsigned char *memp = reinterpret_cast<unsigned char*>(objp);
-	std::reverse(memp, memp + sizeof(T));
-}
-
 /* This is the structure of the data in the password data (*.pwd) file which the structure can be found
  * https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#187 */
 struct password_data_struct {
@@ -442,7 +435,8 @@ sp<IBinder> getKeystoreBinderRetry() {
 namespace keystore {
 
 #define SYNTHETIC_PASSWORD_VERSION_V1 1
-#define SYNTHETIC_PASSWORD_VERSION 2
+#define SYNTHETIC_PASSWORD_VERSION_V2 2
+#define SYNTHETIC_PASSWORD_VERSION_V3 3
 #define SYNTHETIC_PASSWORD_PASSWORD_BASED 0
 #define SYNTHETIC_PASSWORD_KEY_PREFIX "USRSKEY_synthetic_password_"
 #define USR_PRIVATE_KEY_PREFIX "USRPKEY_synthetic_password_"
@@ -579,7 +573,8 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 		return disk_decryption_secret_key;
 	}
 	unsigned char* byteptr = (unsigned char*)spblob_data.data();
-	if (*byteptr != SYNTHETIC_PASSWORD_VERSION && *byteptr != SYNTHETIC_PASSWORD_VERSION_V1) {
+	if (*byteptr != SYNTHETIC_PASSWORD_VERSION_V2 && *byteptr != SYNTHETIC_PASSWORD_VERSION_V1
+			&& *byteptr != SYNTHETIC_PASSWORD_VERSION_V3) {
 		printf("Unsupported synthetic password version %i\n", *byteptr);
 		return disk_decryption_secret_key;
 	}
@@ -772,9 +767,10 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 		}
 		stop_keystore();
 		return disk_decryption_secret_key;
-	} else if (*synthetic_password_version == SYNTHETIC_PASSWORD_VERSION) {
-		printf("spblob v2\n");
-		/* Version 2 of the spblob is basically the same as version 1, but the order of getting the intermediate key and disk decryption key have been flip-flopped
+	} else if (*synthetic_password_version == SYNTHETIC_PASSWORD_VERSION_V2
+			|| *synthetic_password_version == SYNTHETIC_PASSWORD_VERSION_V3) {
+		printf("spblob v2 / v3\n");
+		/* Version 2 / 3 of the spblob is basically the same as version 1, but the order of getting the intermediate key and disk decryption key have been flip-flopped
 		 * as seen in https://android.googlesource.com/platform/frameworks/base/+/5025791ac6d1538224e19189397de8d71dcb1a12
 		 */
 		/* First decrypt call found in
@@ -926,7 +922,12 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 		//printf("secret key:  "); output_hex((const unsigned char*)secret_key, secret_key_real_size); printf("\n");
 		// The payload data from the keystore update is further personalized at https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r23/services/core/java/com/android/server/locksettings/SyntheticPasswordManager.java#153
 		// We now have the disk decryption key!
-		disk_decryption_secret_key = PersonalizedHash(PERSONALIZATION_FBE_KEY, (const char*)secret_key, secret_key_real_size);
+		if (*synthetic_password_version == SYNTHETIC_PASSWORD_VERSION_V3) {
+			// V3 uses SP800 instead of SHA512
+			disk_decryption_secret_key = PersonalizedHashSP800(PERSONALIZATION_FBE_KEY, PERSONALISATION_CONTEXT, (const char*)secret_key, secret_key_real_size);
+		} else {
+			disk_decryption_secret_key = PersonalizedHash(PERSONALIZATION_FBE_KEY, (const char*)secret_key, secret_key_real_size);
+		}
 		//printf("disk_decryption_secret_key: '%s'\n", disk_decryption_secret_key.c_str());
 		free(secret_key);
 		return disk_decryption_secret_key;
