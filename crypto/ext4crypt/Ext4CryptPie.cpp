@@ -227,6 +227,18 @@ bool is_wrapped_key_supported_external() {
     return false;
 }
 
+bool is_metadata_wrapped_key_supported() {
+    LOG(DEBUG) << "Determining metadata wrapped-key support for /metadata";
+    std::string metadata_wrapped_key_supported = android::base::GetProperty("fbe.metadata.wrappedkey", "false");
+    LOG(DEBUG) << "fbe.metadata.wrappedkey = " << metadata_wrapped_key_supported;
+    if (metadata_wrapped_key_supported == "true") {
+        LOG(DEBUG) << "Wrapped key supported on /metadata";
+        return true;
+    } else {
+        return false;
+    }
+}
+
 static bool read_and_install_user_ce_key(userid_t user_id,
                                          const android::vold::KeyAuthentication& auth) {
     if (s_ce_key_raw_refs.count(user_id) != 0) return true;
