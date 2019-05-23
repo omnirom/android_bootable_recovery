@@ -216,6 +216,12 @@ bool is_wrapped_key_supported_external() {
     return false;
 }
 
+bool is_metadata_wrapped_key_supported() {
+    return fs_mgr_is_wrapped_key_supported(
+        fs_mgr_get_entry_for_mount_point(fstab_default, METADATA_MNT_POINT));
+}
+
+
 static bool read_and_install_user_ce_key(userid_t user_id,
                                          const android::vold::KeyAuthentication& auth) {
     if (s_ce_key_raw_refs.count(user_id) != 0) return true;
