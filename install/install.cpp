@@ -539,13 +539,13 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
 
   std::vector<std::string> compatibility_info;
   ZipEntry info_entry;
-  ZipString info_name;
+  std::string info_name;
   while (Next(cookie, &info_entry, &info_name) == 0) {
     std::string content(info_entry.uncompressed_length, '\0');
     int32_t ret = ExtractToMemory(zip_handle, &info_entry, reinterpret_cast<uint8_t*>(&content[0]),
                                   info_entry.uncompressed_length);
     if (ret != 0) {
-      LOG(ERROR) << "Failed to read " << info_name.name << ": " << ErrorCodeString(ret);
+      LOG(ERROR) << "Failed to read " << info_name << ": " << ErrorCodeString(ret);
       CloseArchive(zip_handle);
       return false;
     }
