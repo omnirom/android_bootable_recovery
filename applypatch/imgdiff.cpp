@@ -683,12 +683,11 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
 
   // Create a list of deflated zip entries, sorted by offset.
   std::vector<std::pair<std::string, ZipEntry>> temp_entries;
-  ZipString name;
+  std::string name;
   ZipEntry entry;
   while ((ret = Next(cookie, &entry, &name)) == 0) {
     if (entry.method == kCompressDeflated || limit_ > 0) {
-      std::string entry_name(name.name, name.name + name.name_length);
-      temp_entries.emplace_back(entry_name, entry);
+      temp_entries.emplace_back(name, entry);
     }
   }
 
