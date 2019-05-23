@@ -158,6 +158,7 @@ enum TW_FSTAB_FLAGS {
 	TWFLAG_FORMATTABLE,
 	TWFLAG_RESIZE,
 	TWFLAG_KEYDIRECTORY,
+	TWFLAG_WRAPPEDKEY,
 };
 
 /* Flags without a trailing '=' are considered dual format flags and can be
@@ -202,6 +203,7 @@ const struct flag_list tw_flags[] = {
 	{ "formattable",            TWFLAG_FORMATTABLE },
 	{ "resize",                 TWFLAG_RESIZE },
 	{ "keydirectory=",          TWFLAG_KEYDIRECTORY },
+	{ "wrappedkey",          	TWFLAG_WRAPPEDKEY },
 	{ 0,                        0 },
 };
 
@@ -925,6 +927,7 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 			break;
 		case TWFLAG_KEYDIRECTORY:
 			Key_Directory = str;
+		case TWFLAG_WRAPPEDKEY:
 		default:
 			// Should not get here
 			LOGINFO("Flag identified for processing, but later unmatched: %i\n", flag);

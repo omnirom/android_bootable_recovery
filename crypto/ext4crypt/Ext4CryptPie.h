@@ -27,7 +27,8 @@ bool e4crypt_destroy_user_key(userid_t user_id);
 bool e4crypt_add_user_key_auth(userid_t user_id, int serial, const std::string& token,
                                const std::string& secret);
 bool e4crypt_fixate_newest_user_key_auth(userid_t user_id);*/
-
+bool e4crypt_clear_user_key_auth(userid_t user_id, int serial, const std::string& token_hex,
+                               const std::string& secret_hex);
 bool e4crypt_unlock_user_key(userid_t user_id, int serial, const std::string& token,
                              const std::string& secret);
 //bool e4crypt_lock_user_key(userid_t user_id);
@@ -37,6 +38,8 @@ bool e4crypt_prepare_user_storage(const std::string& volume_uuid, userid_t user_
 /*bool e4crypt_destroy_user_storage(const std::string& volume_uuid, userid_t user_id, int flags);
 
 bool e4crypt_destroy_volume_keys(const std::string& volume_uuid);*/
+bool is_wrapped_key_supported();
+bool is_wrapped_key_supported_external();
 
 bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, userid_t user_id,
                            std::string* raw_ref);
