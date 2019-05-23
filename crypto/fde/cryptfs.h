@@ -175,6 +175,7 @@ struct crypt_mnt_ftr {
 };
 
 #define DATA_MNT_POINT "/data"
+#define METADATA_MNT_POINT "/metadata"
 
 /* Return values for cryptfs_crypto_complete */
 #define CRYPTO_COMPLETE_NOT_ENCRYPTED  1
