@@ -58,8 +58,6 @@ class Device {
     REBOOT_FASTBOOT = 17,
     REBOOT_RECOVERY = 18,
     REBOOT_RESCUE = 19,
-    REBOOT_FROM_FASTBOOT = 20,
-    SHUTDOWN_FROM_FASTBOOT = 21,
   };
 
   explicit Device(RecoveryUI* ui);
