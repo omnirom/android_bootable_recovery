@@ -38,5 +38,8 @@ bool e4crypt_prepare_user_storage(const std::string& volume_uuid, userid_t user_
 
 bool e4crypt_destroy_volume_keys(const std::string& volume_uuid);*/
 
+bool is_wrapped_key_supported();
+bool is_wrapped_key_supported_external();
+
 bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, userid_t user_id,
                            std::string* raw_ref);
