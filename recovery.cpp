@@ -356,8 +356,6 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
             : device->InvokeMenuItem(chosen_item);
 
     switch (chosen_action) {
-      case Device::REBOOT_FROM_FASTBOOT:    // Can not happen
-      case Device::SHUTDOWN_FROM_FASTBOOT:  // Can not happen
       case Device::NO_ACTION:
         break;
 

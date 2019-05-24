@@ -102,11 +102,11 @@ class MemMapping {
 };
 
 // Reboots the device into the specified target, by additionally handling quiescent reboot mode.
-// All unknown targets reboot into Android.
+// 'target' can be an empty string, which indicates booting into Android.
 bool Reboot(std::string_view target);
 
 // Triggers a shutdown.
-bool Shutdown(std::string_view target);
+bool Shutdown();
 
 // Returns a null-terminated char* array, where the elements point to the C-strings in the given
 // vector, plus an additional nullptr at the end. This is a helper function that facilitates
