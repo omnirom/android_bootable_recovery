@@ -49,7 +49,6 @@
 #include <brotli/decode.h>
 #include <fec/io.h>
 #include <openssl/sha.h>
-#include <private/android_filesystem_config.h>
 #include <verity/hash_tree_builder.h>
 #include <ziparchive/zip_archive.h>
 
@@ -63,10 +62,15 @@
 #include "private/commands.h"
 #include "updater/install.h"
 
-// Set this to 0 to interpret 'erase' transfers to mean do a
-// BLKDISCARD ioctl (the normal behavior).  Set to 1 to interpret
-// erase to mean fill the region with zeroes.
+#ifdef __ANDROID__
+#include <private/android_filesystem_config.h>
+// Set this to 0 to interpret 'erase' transfers to mean do a BLKDISCARD ioctl (the normal behavior).
+// Set to 1 to interpret erase to mean fill the region with zeroes.
 #define DEBUG_ERASE  0
+#else
+#define DEBUG_ERASE 1
+#define AID_SYSTEM -1
+#endif  // __ANDROID__
 
 static constexpr size_t BLOCKSIZE = 4096;
 static constexpr mode_t STASH_DIRECTORY_MODE = 0700;
