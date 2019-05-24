@@ -104,6 +104,7 @@ cc_library_static {
     srcs: [
         "dynamic_partitions.cpp",
         "updater_runtime.cpp",
+        "updater_runtime_dynamic_partitions.cpp",
     ],
 
     static_libs: [
@@ -129,6 +130,7 @@ cc_library_host_static {
 
     srcs: [
         "build_info.cpp",
+        "dynamic_partitions.cpp",
         "simulator_runtime.cpp",
         "target_files.cpp",
     ],
