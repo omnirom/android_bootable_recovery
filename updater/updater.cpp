@@ -24,9 +24,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "updater/updater_runtime.h"
-
-Updater::Updater() : Updater(std::make_unique<UpdaterRuntime>(nullptr)) {}
+#include "edify/updater_runtime_interface.h"
 
 Updater::~Updater() {
   if (package_handle_) {

@@ -53,7 +53,6 @@
 #include <openssl/sha.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
-#include <tune2fs.h>
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
@@ -64,6 +63,10 @@
 #include "otautil/mounts.h"
 #include "otautil/print_sha1.h"
 #include "otautil/sysutil.h"
+
+#ifndef __ANDROID__
+#include <cutils/memory.h>  // for strlcpy
+#endif
 
 static bool UpdateBlockDeviceNameForPartition(UpdaterInterface* updater, Partition* partition) {
   CHECK(updater);
