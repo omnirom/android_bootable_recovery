@@ -25,7 +25,6 @@
 #include "edify/updater_runtime_interface.h"
 
 struct selabel_handle;
-struct Partition;
 
 class UpdaterRuntime : public UpdaterRuntimeInterface {
  public:
