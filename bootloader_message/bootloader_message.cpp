@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/file.h>
@@ -32,7 +33,17 @@
 using android::fs_mgr::Fstab;
 using android::fs_mgr::ReadDefaultFstab;
 
+static std::string g_misc_device_for_test;
+
+// Exposed for test purpose.
+void SetMiscBlockDeviceForTest(std::string_view misc_device) {
+  g_misc_device_for_test = misc_device;
+}
+
 static std::string get_misc_blk_device(std::string* err) {
+  if (!g_misc_device_for_test.empty()) {
+    return g_misc_device_for_test;
+  }
   Fstab fstab;
   if (!ReadDefaultFstab(&fstab)) {
     *err = "failed to read default fstab";
@@ -226,6 +237,37 @@ bool write_wipe_package(const std::string& package_data, std::string* err) {
   }
   return write_misc_partition(package_data.data(), package_data.size(), misc_blk_device,
                               WIPE_PACKAGE_OFFSET_IN_MISC, err);
+}
+
+static bool OffsetAndSizeInVendorSpace(size_t offset, size_t size) {
+  auto total_size = WIPE_PACKAGE_OFFSET_IN_MISC - VENDOR_SPACE_OFFSET_IN_MISC;
+  return size <= total_size && offset <= total_size - size;
+}
+
+bool ReadMiscPartitionVendorSpace(void* data, size_t size, size_t offset, std::string* err) {
+  if (!OffsetAndSizeInVendorSpace(offset, size)) {
+    *err = android::base::StringPrintf("Out of bound read (offset %zu size %zu)", offset, size);
+    return false;
+  }
+  auto misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) {
+    return false;
+  }
+  return read_misc_partition(data, size, misc_blk_device, VENDOR_SPACE_OFFSET_IN_MISC + offset,
+                             err);
+}
+
+bool WriteMiscPartitionVendorSpace(const void* data, size_t size, size_t offset, std::string* err) {
+  if (!OffsetAndSizeInVendorSpace(offset, size)) {
+    *err = android::base::StringPrintf("Out of bound write (offset %zu size %zu)", offset, size);
+    return false;
+  }
+  auto misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) {
+    return false;
+  }
+  return write_misc_partition(data, size, misc_blk_device, VENDOR_SPACE_OFFSET_IN_MISC + offset,
+                              err);
 }
 
 extern "C" bool write_reboot_bootloader(void) {
