@@ -103,7 +103,7 @@ class Keymaster {
     // Generate a key in the keymaster from the given params.
     bool generateKey(const km::AuthorizationSet& inParams, std::string* key);
     // Export a key from keymaster.
-    bool exportKey(km::KeyFormat format, KeyBuffer& kmKey, const std::string& clientId,
+    km::ErrorCode exportKey(km::KeyFormat format, KeyBuffer& kmKey, const std::string& clientId,
                    const std::string& appData, std::string* key);
     // If the keymaster supports it, permanently delete a key.
     bool deleteKey(const std::string& key);
