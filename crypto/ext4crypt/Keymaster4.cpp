@@ -142,7 +142,7 @@ bool Keymaster::generateKey(const km::AuthorizationSet& inParams, std::string* k
     return true;
 }
 
-bool Keymaster::exportKey(km::KeyFormat format, KeyBuffer& kmKey, const std::string& clientId,
+km::ErrorCode Keymaster::exportKey(km::KeyFormat format, KeyBuffer& kmKey, const std::string& clientId,
                           const std::string& appData, std::string* key) {
     auto kmKeyBlob = km::support::blob2hidlVec(std::string(kmKey.data(), kmKey.size()));
     auto emptyAssign = NULL;
@@ -159,13 +159,13 @@ bool Keymaster::exportKey(km::KeyFormat format, KeyBuffer& kmKey, const std::str
     auto error = mDevice->exportKey(format, kmKeyBlob, kmClientId, kmAppData, hidlCb);
     if (!error.isOk()) {
         LOG(ERROR) << "export_key failed: " << error.description();
-        return false;
+        return km::ErrorCode::UNKNOWN_ERROR;
     }
     if (km_error != km::ErrorCode::OK) {
         LOG(ERROR) << "export_key failed, code " << int32_t(km_error);
-        return false;
+        return km_error;
     }
-    return true;
+    return km::ErrorCode::OK;
 }
 
 bool Keymaster::deleteKey(const std::string& key) {
