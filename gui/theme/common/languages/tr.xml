@@ -208,7 +208,6 @@
 		<string name="storage_hdr">Depolama: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Yedekle</string>
 		<string name="backup_confirm_hdr">Yedeklemeyi Onayla</string>
-		<string name="encryption_tab">ŞİFRELEME</string>
 		<string name="encryption">Şifreleme:</string>
 		<string name="name">Ad:</string>
 		<string name="sel_part_backup">Yedeklenecek Bölümleri Seç:</string>
@@ -227,7 +226,6 @@
 		<string name="swipe_backup">Yedeklemek için Kaydır</string>
 		<string name="append_date_btn">Tarih Ekle</string>
 		<string name="backup_name_exists">Bu adda bir yedek zaten var!</string>
-		<string name="encrypt_backup">Yedeklemeniz şifrelensin mi?</string>
 		<string name="enter_pass">Şifre Gir:</string>
 		<string name="enter_pass2">Şifreyi Tekrar Girin:</string>
 		<string name="pass_not_match">Şifreler eşleşmiyor!</string>
@@ -241,7 +239,6 @@
 		<string name="sel_backup_hdr">Yedek Seç</string>
 		<string name="restore_sel_store_hdr">%tw_storage_display_name% içinden yedek seç (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Geri Yüklenecek Paketi Seçin:</string>
-		<string name="restore_enc_backup_hdr">Şifreli Yedek</string>
 		<string name="restore_dec_fail">Şifre yanlış, lütfen tekrar deneyin!</string>
 		<string name="del_backup_btn">Yedeği Sil</string>
 		<string name="del_backup_confirm">Yedek Silinsin mi?</string>
@@ -604,7 +601,6 @@
 		<string name="locate_backup_err">'{1}' yedeği bulunamadı</string>
 		<string name="set_restore_opt">Geri yükleme seçeneklerini ayarlama: '{1}':</string>
 		<string name="digest_check_skip" version="2">Digest denetimini atlama açık</string>
-		<string name="ors_encrypt_restore_err">Şifrelenmiş bir yedeklemeyi geri yüklemek için OpenRecoveryScript kullanılamıyor.</string>
 		<string name="mounting">Bağlanıyor</string>
 		<string name="unmounting">Kaldırılıyor</string>
 		<string name="mounted">'{1}' bağlandı</string>

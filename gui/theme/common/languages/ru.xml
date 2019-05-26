@@ -212,7 +212,6 @@
 		<string name="storage_hdr">Текущий накопитель: %tw_storage_display_name% (%tw_storage_free_size% МБ)</string>
 		<string name="backup_hdr">Резервное копирование</string>
 		<string name="backup_confirm_hdr">Подтверждение резервного копирования</string>
-		<string name="encryption_tab">ШИФРОВАНИЕ</string>
 		<string name="encryption">Шифрование:</string>
 		<string name="name">Имя:</string>
 		<string name="sel_part_backup">Выберите разделы для резервного копирования:</string>
@@ -231,7 +230,6 @@
 		<string name="swipe_backup">Свайп для начала</string>
 		<string name="append_date_btn">Добавить дату</string>
 		<string name="backup_name_exists">Резервная копия с таким именем уже существует!</string>
-		<string name="encrypt_backup">Зашифровать вашу резервную копию?</string>
 		<string name="enter_pass">Введите пароль:</string>
 		<string name="enter_pass2">Введите пароль ещё раз:</string>
 		<string name="pass_not_match">Пароли не совпадают!</string>
@@ -245,7 +243,6 @@
 		<string name="sel_backup_hdr">Выбор резервной копии</string>
 		<string name="restore_sel_store_hdr">Текущий накопитель: %tw_storage_display_name% (%tw_storage_free_size% МБ)</string>
 		<string name="restore_sel_pack_fs">Выбор резервной копии для восстановления:</string>
-		<string name="restore_enc_backup_hdr">Зашифрованная резервная копия</string>
 		<string name="restore_dec_fail">Пароль неверный, попробуйте снова!</string>
 		<string name="del_backup_btn">Удаление рез.копии</string>
 		<string name="del_backup_confirm">Удалить резервную копию?</string>
@@ -633,7 +630,6 @@
 		<string name="locate_backup_err">Не удаётся найти резервную копию '{1}'</string>
 		<string name="set_restore_opt">Установки опций восстановления: '{1}':</string>
 		<string name="digest_check_skip" version="2">Пропуск проверки контрольных сумм включён</string>
-		<string name="ors_encrypt_restore_err">Не удаётся использовать OpenRecoveryScript для восстановления зашифрованной резервной копии.</string>
 		<string name="mounting">Монтирование</string>
 		<string name="unmounting">Размонтирование</string>
 		<string name="mounted">'{1}' смонтирован</string>

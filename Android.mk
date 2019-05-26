@@ -364,11 +364,6 @@ endif
 ifneq ($(TW_CUSTOM_CPU_TEMP_PATH),)
 	LOCAL_CFLAGS += -DTW_CUSTOM_CPU_TEMP_PATH=$(TW_CUSTOM_CPU_TEMP_PATH)
 endif
-ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
-    LOCAL_SHARED_LIBRARIES += libopenaes
-else
-    LOCAL_CFLAGS += -DTW_EXCLUDE_ENCRYPTED_BACKUPS
-endif
 ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),)
   ifneq ($(filter msm8226 msm8x26 msm8610 msm8974 msm8x74 msm8084 msm8x84 apq8084 msm8909 msm8916 msm8992 msm8994 msm8952 msm8996 msm8937 msm8953 msm8998,$(TARGET_BOARD_PLATFORM)),)
     LOCAL_CFLAGS += -DQCOM_RTC_FIX
@@ -455,9 +450,6 @@ ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
     else
         TWRP_REQUIRED_MODULES += sgdisk_static
     endif
-endif
-ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
-    TWRP_REQUIRED_MODULES += openaes openaes_license
 endif
 ifeq ($(TW_INCLUDE_DUMLOCK), true)
     TWRP_REQUIRED_MODULES += \
@@ -845,7 +837,6 @@ include $(commands_TWRP_local_path)/injecttwrp/Android.mk \
     $(commands_TWRP_local_path)/libcrecovery/Android.mk \
     $(commands_TWRP_local_path)/libblkid/Android.mk \
     $(commands_TWRP_local_path)/minuitwrp/Android.mk \
-    $(commands_TWRP_local_path)/openaes/Android.mk \
     $(commands_TWRP_local_path)/toolbox/Android.mk \
     $(commands_TWRP_local_path)/twrpTarMain/Android.mk \
     $(commands_TWRP_local_path)/minzip/Android.mk \

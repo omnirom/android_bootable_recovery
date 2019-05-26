@@ -208,7 +208,6 @@
 		<string name="storage_hdr">Armazenamento: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Backup</string>
 		<string name="backup_confirm_hdr">Confirmar o Backup</string>
-		<string name="encryption_tab">ENCRIPTAÇÃO</string>
 		<string name="encryption">Encriptação:</string>
 		<string name="name">Nome:</string>
 		<string name="sel_part_backup">Selecione as partições para o Backup:</string>
@@ -227,7 +226,6 @@
 		<string name="swipe_backup"> Deslize para fazer Backup</string>
 		<string name="append_date_btn">Acrescentar data</string>
 		<string name="backup_name_exists">Já existe um Backup com esse nome!</string>
-		<string name="encrypt_backup">Encriptar o Backup?</string>
 		<string name="enter_pass">Defina uma palavra-passe:</string>
 		<string name="enter_pass2">Digite a palavra-passe novamente:</string>
 		<string name="pass_not_match">As palavra-passes não coincidem!</string>
@@ -241,7 +239,6 @@
 		<string name="sel_backup_hdr">Selecione o Backup</string>
 		<string name="restore_sel_store_hdr">Selecione o Backup do %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Selecione o Backup a restaurar:</string>
-		<string name="restore_enc_backup_hdr">Backup encriptado</string>
 		<string name="restore_dec_fail">Palavra-passe incorrecta, por favor tente novamente!</string>
 		<string name="del_backup_btn">Apagar Backup</string>
 		<string name="del_backup_confirm">Apagar o Backup?</string>
@@ -405,7 +402,6 @@
 		<string name="file_system">Sistema de ficheiros:</string>
 		<string name="swipe_part_sd">    Deslize para particionar</string>
 		<string name="swipe_part_sd_s">Particionar</string>
-		<string name="partitioning_sd">A particionar o cartão SD...</string>
 		<string name="partitioning_sd2">Esta operação demorará algum tempo.</string>
 		<string name="part_sd_complete">Particionamento concluído</string>
 		<string name="dumlock_hdr">HTC Dumlock</string>
@@ -605,7 +601,6 @@
 		<string name="locate_backup_err">Não é possível localizar o Backup '{1}'</string>
 		<string name="set_restore_opt">A definir opções de restauro: '{1}':</string>
 		<string name="digest_check_skip" version="2">O ignorar da verificação MD5 está ativo</string>
-		<string name="ors_encrypt_restore_err">Não foi possível utilizar o OpenRecoveryScript para restaurar um Backup encriptado.</string>
 		<string name="mounting">A montar</string>
 		<string name="unmounting">A desmontar</string>
 		<string name="mounted">'{1}' Montado</string>

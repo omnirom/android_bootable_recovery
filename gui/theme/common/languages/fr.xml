@@ -186,7 +186,6 @@
         <string name="storage_hdr">Stockage : %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
         <string name="backup_hdr">Sauvergarder</string>
         <string name="backup_confirm_hdr">Confirmer la sauvegarde</string>
-        <string name="encryption_tab">CHIFFREMENT</string>
         <string name="encryption">Chiffrement :</string>
         <string name="name">Nom:</string>
         <string name="sel_part_backup">Sélectionner les Partitions à sauvegarder :</string>
@@ -200,7 +199,6 @@
         <string name="swipe_backup">Glisser pour Sauvegarder</string>
         <string name="append_date_btn">Ajouter Date</string>
         <string name="backup_name_exists">Une sauvegarde avec ce nom existe déjà !</string>
-        <string name="encrypt_backup">Chiffrer votre sauvegarde ?</string>
         <string name="enter_pass">Entrez un mot de passe :</string>
         <string name="enter_pass2">Entrez le mot de passe à nouveau :</string>
         <string name="pass_not_match">Les Mots de passe ne correspondent pas !</string>
@@ -215,7 +213,6 @@
         <string name="sel_backup_hdr">Choisir la sauvegarde</string>
         <string name="restore_sel_store_hdr">Sélectionner la Sauvegarde dans %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
         <string name="restore_sel_pack_fs">Sélectionner le Package à restaurer :</string>
-        <string name="restore_enc_backup_hdr">Sauvegarde chiffrée</string>
         <string name="restore_dec_fail">Mot de passe incorrect, Veuillez réessayer !</string>
         <string name="del_backup_btn">Supprimer la sauvegarde</string>
         <string name="del_backup_confirm">Supprimer la sauvegarde ?</string>
@@ -569,7 +566,6 @@
         <string name="locate_backup_err">Impossible de localiser la sauvegarde '{1}'</string>
         <string name="set_restore_opt">Définition des options de restauration: '{1}':</string>
         <string name="digest_check_skip" version="2">La vérification Digest est omise</string>
-        <string name="ors_encrypt_restore_err">Impossible d'utiliser OpenRecoveryScript pour restaurer une sauvegarde chiffrée.</string>
         <string name="mounting">Montage</string>
         <string name="unmounting">Démontage</string>
         <string name="mounted">Monté la partition '{1}'</string>
