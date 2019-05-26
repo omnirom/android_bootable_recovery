@@ -352,7 +352,6 @@ protected:
 	int openrecoveryscript(std::string arg);
 	int installsu(std::string arg);
 	int fixsu(std::string arg);
-	int decrypt_backup(std::string arg);
 	int repair(std::string arg);
 	int resize(std::string arg);
 	int changefilesystem(std::string arg);

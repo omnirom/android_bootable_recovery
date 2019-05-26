@@ -194,7 +194,6 @@
 		<string name="storage_hdr">ストレージ: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">バックアップ</string>
 		<string name="backup_confirm_hdr">バックアップの確認</string>
-		<string name="encryption_tab">暗号化</string>
 		<string name="encryption">暗号化:</string>
 		<string name="name">名前:</string>
 		<string name="sel_part_backup">バックアップするパーティション:</string>
@@ -208,7 +207,6 @@
 		<string name="swipe_backup">スワイプでバックアップ</string>
 		<string name="append_date_btn">日付の追加</string>
 		<string name="backup_name_exists">同じ名前のバックアップが既に存在します!</string>
-		<string name="encrypt_backup">バックアップを暗号化しますか?</string>
 		<string name="enter_pass">パスワードを入力:</string>
 		<string name="enter_pass2">パスワードを再入力:</string>
 		<string name="pass_not_match">パスワードが一致しません!</string>
@@ -222,7 +220,6 @@
 		<string name="sel_backup_hdr">バックアップの選択</string>
 		<string name="restore_sel_store_hdr">%tw_storage_display_name% (%tw_storage_free_size% MB) からバックアップを選択</string>
 		<string name="restore_sel_pack_fs">リストアするパッケージの選択:</string>
-		<string name="restore_enc_backup_hdr">暗号化されたバックアップ</string>
 		<string name="restore_dec_fail">パスワードが間違っているので、入力し直してください!</string>
 		<string name="del_backup_btn">バックアップの削除</string>
 		<string name="del_backup_confirm">バックアップを削除しますか?</string>
@@ -582,7 +579,6 @@
 		<string name="locate_backup_err">バックアップ \'{1}\' が見つかりません</string>
 		<string name="set_restore_opt">リストアオプションの設定中: \'{1}\':</string>
 		<string name="digest_check_skip">Digest チェックのスキップが有効です</string>
-		<string name="ors_encrypt_restore_err">OpenRecoveryScript を使用して暗号化されたバックアップをリストアできません。</string>
 		<string name="mounting">マウント中</string>
 		<string name="unmounting">マウント解除中</string>
 		<string name="mounted">\'{1}\' をマウントしました</string>

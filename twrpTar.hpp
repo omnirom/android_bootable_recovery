@@ -53,12 +53,10 @@ public:
 	void setfn(string fn);
 	void setdir(string dir);
 	void setsize(unsigned long long backup_size);
-	void setpassword(string pass);
 	unsigned long long get_size();
 	void Set_Archive_Type(Archive_Type archive_type);
 
 public:
-	int use_encryption;
 	int userdata_encryption;
 	int use_compression;
 	int split_archives;
@@ -102,7 +100,6 @@ private:
 	string tardir;
 	string tarfn;
 	string basefn;
-	string password;
 
 	std::vector<TarListStruct> *ItemList;
 	int output_fd;                                                                  // this stores the output fd that gzip will read from

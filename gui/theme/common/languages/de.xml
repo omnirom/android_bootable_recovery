@@ -207,7 +207,6 @@
 		<string name="storage_hdr">Speicher: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Sicherung</string>
 		<string name="backup_confirm_hdr">Sicherung bestätigen</string>
-		<string name="encryption_tab">VERSCHLÜSSELUNG</string>
 		<string name="encryption">Verschlüsselung:</string>
 		<string name="name">Name:</string>
 		<string name="sel_part_backup">Zu sichernde Partitionen auswählen:</string>
@@ -226,7 +225,6 @@
 		<string name="swipe_backup">Sicherung erstellen</string>
 		<string name="append_date_btn">Datum anhängen</string>
 		<string name="backup_name_exists">Eine Sicherung mit diesem Namen existiert bereits!</string>
-		<string name="encrypt_backup">Sicherung verschlüsseln?</string>
 		<string name="enter_pass">Passwort eingeben:</string>
 		<string name="enter_pass2">Passwort erneut eingeben:</string>
 		<string name="pass_not_match">Die Passwörter stimmen nicht überein!</string>
@@ -240,7 +238,6 @@
 		<string name="sel_backup_hdr">Sicherung auswählen</string>
 		<string name="restore_sel_store_hdr">Speicher: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Wiederherzustellende Sicherung:</string>
-		<string name="restore_enc_backup_hdr">Verschlüsselte Sicherung</string>
 		<string name="restore_dec_fail">Passwort falsch, bitte erneut versuchen!</string>
 		<string name="del_backup_btn">Sicherung löschen</string>
 		<string name="del_backup_confirm">Sicherung löschen?</string>
@@ -603,7 +600,6 @@
 		<string name="locate_backup_err">Sicherung '{1}' nicht gefunden</string>
 		<string name="set_restore_opt">Setze Wiederherstellungs-Optionen: '{1}':</string>
 		<string name="digest_check_skip" version="2">Digest-Prüfung ist deaktiviert</string>
-		<string name="ors_encrypt_restore_err">Eine verschlüsselte Sicherung kann nicht per OpenRecoveryScript wiederhergestellt werden.</string>
 		<string name="mounting">Einhängen</string>
 		<string name="unmounting">Auswerfen</string>
 		<string name="mounted">'{1}' eingehängt</string>

@@ -223,7 +223,6 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(adbsideload);
 		ADD_ACTION(openrecoveryscript);
 		ADD_ACTION(installsu);
-		ADD_ACTION(decrypt_backup);
 		ADD_ACTION(repair);
 		ADD_ACTION(resize);
 		ADD_ACTION(changefilesystem);
@@ -1201,7 +1200,6 @@ int GUIAction::nandroid(std::string arg)
 			string auto_gen = gui_lookup("auto_generate", "(Auto Generate)");
 			if (Backup_Name == auto_gen || Backup_Name == gui_lookup("curr_date", "(Current Date)") || Backup_Name == "0" || Backup_Name == "(" || PartitionManager.Check_Backup_Name(Backup_Name, true, true) == 0) {
 				ret = PartitionManager.Run_Backup(false);
-				DataManager::SetValue("tw_encrypt_backup", 0); // reset value so we don't encrypt every subsequent backup
 				if (!PartitionManager.stop_backup.get_value()) {
 					if (ret == false)
 						ret = 1; // 1 for failure
@@ -1634,30 +1632,6 @@ int GUIAction::fixsu(std::string arg __unused)
 	} else {
 		LOGERR("Fixing su permissions was deprecated from TWRP.\n");
 		LOGERR("4.3+ ROMs with SELinux will always lose su perms.\n");
-	}
-
-	operation_end(op_status);
-	return 0;
-}
-
-int GUIAction::decrypt_backup(std::string arg __unused)
-{
-	int op_status = 0;
-
-	operation_start("Try Restore Decrypt");
-	if (simulate) {
-		simulate_progress_bar();
-	} else {
-		string Restore_Path, Filename, Password;
-		DataManager::GetValue("tw_restore", Restore_Path);
-		Restore_Path += "/";
-		DataManager::GetValue("tw_restore_password", Password);
-		TWFunc::SetPerformanceMode(true);
-		if (TWFunc::Try_Decrypting_Backup(Restore_Path, Password))
-			op_status = 0; // success
-		else
-			op_status = 1; // fail
-		TWFunc::SetPerformanceMode(false);
 	}
 
 	operation_end(op_status);

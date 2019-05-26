@@ -211,7 +211,6 @@
 		<string name="storage_hdr">存儲位置：%tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">備份</string>
 		<string name="backup_confirm_hdr">確認備份</string>
-		<string name="encryption_tab">加密</string>
 		<string name="encryption">加密：</string>
 		<string name="name">名稱：</string>
 		<string name="sel_part_backup">選擇要備份的分區：</string>
@@ -230,7 +229,6 @@
 		<string name="swipe_backup">滑動按鈕確認備份</string>
 		<string name="append_date_btn">附加日期</string>
 		<string name="backup_name_exists">使用該名稱的備份已經存在！</string>
-		<string name="encrypt_backup">是否加密備份？</string>
 		<string name="enter_pass">請輸入密碼：</string>
 		<string name="enter_pass2">請再輸入一遍：</string>
 		<string name="pass_not_match">密碼不匹配！</string>
@@ -244,7 +242,6 @@
 		<string name="sel_backup_hdr">選擇備份</string>
 		<string name="restore_sel_store_hdr">從 %tw_storage_display_name% (%tw_storage_free_size% MB) 中選擇備份</string>
 		<string name="restore_sel_pack_fs">選擇要恢復的備份包：</string>
-		<string name="restore_enc_backup_hdr">備份已被加密</string>
 		<string name="restore_dec_fail">密碼錯誤，請重試</string>
 		<string name="del_backup_btn">刪除備份</string>
 		<string name="del_backup_confirm">是否刪除備份：</string>
@@ -632,7 +629,6 @@
 		<string name="locate_backup_err">未找到備份檔案 '{1}'</string>
 		<string name="set_restore_opt">設置恢復選項：'{1}'：</string>
 		<string name="digest_check_skip" version="2">跳過校驗 Digest 已開啟</string>
-		<string name="ors_encrypt_restore_err">無法使用 OpenRecoveryScript 腳本恢復加密備份。</string>
 		<string name="mounting">正在掛載</string>
 		<string name="unmounting">正在卸載</string>
 		<string name="mounted">'{1}' 已掛載</string>
