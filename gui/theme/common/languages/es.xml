@@ -192,7 +192,6 @@
 		<string name="storage_hdr">Almacenamiento: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Copia de Seguridad</string>
 		<string name="backup_confirm_hdr">Confirmar Copia de Seguridad</string>
-		<string name="encryption_tab">ENCRIPTACIÓN</string>
 		<string name="encryption">Encriptación:</string>
 		<string name="name">Nombre:</string>
 		<string name="sel_part_backup">Seleccionar Partición(es) para Copia de Seguridad:</string>
@@ -206,7 +205,6 @@
 		<string name="swipe_backup">Desliza para Respaldar</string>
 		<string name="append_date_btn">Ajustar Fecha</string>
 		<string name="backup_name_exists">Ya existe una copia de seguridad con este nombre.</string>
-		<string name="encrypt_backup">Cifrar tú Copia de seguridad?</string>
 		<string name="enter_pass">Introducir tú contraseña:</string>
 		<string name="enter_pass2">Introducir tú contraseña de nuevo:</string>
 		<string name="pass_not_match">Las Contraseñas no coinciden!</string>
@@ -220,7 +218,6 @@
 		<string name="sel_backup_hdr">Selecciona la Copia de Seguridad</string>
 		<string name="restore_sel_store_hdr">Seleccionar Copia de Seguridad de %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Selecciona el Paquete para Restaurar:</string>
-		<string name="restore_enc_backup_hdr">Copia de Seguridad Cifrada</string>
 		<string name="restore_dec_fail">¡Contraseña incorrecta, inténtelo de nuevo!</string>
 		<string name="del_backup_btn">Eliminar Copia de seguridad</string>
 		<string name="del_backup_confirm">Eliminar Copia de Seguridad?</string>
@@ -571,7 +568,6 @@
 		<string name="locate_backup_err">Incapaz de localizar copia de seguridad \'{1}\'</string>
 		<string name="set_restore_opt">Ajustando opciones de restauración: \'{1}\':</string>
 		<string name="digest_check_skip" version="2">El salto de checkeo de Digest está activado</string>
-		<string name="ors_encrypt_restore_err">Incapaz de usar OpenRecoveryScript para restaurar una copia de seguridad encriptada.</string>
 		<string name="mounting">Montando</string>
 		<string name="unmounting">Desmontando</string>
 		<string name="mounted">Montado \'{1}\'</string>

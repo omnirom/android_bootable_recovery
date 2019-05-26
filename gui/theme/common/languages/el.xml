@@ -197,7 +197,6 @@
         <string name="storage_hdr">Αποθ. χώρος: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
         <string name="backup_hdr">Αντίγραφα ασφαλείας</string>
         <string name="backup_confirm_hdr">Επιβεβαίωση Αντιγράφων Ασφαλείας</string>
-        <string name="encryption_tab">ΚΡΥΠΤΟΓΡΑΦΗΣΗ</string>
         <string name="encryption">Κρυπτογράφηση:</string>
         <string name="name">Όνομα:</string>
         <string name="sel_part_backup">Επιλέξτε Τομείς για αντίγραφα ασφαλείας:</string>
@@ -216,7 +215,6 @@
         <string name="swipe_backup">Σύρετε για δημιουργ. Αντιγρ. Ασφαλ.</string>
         <string name="append_date_btn">Προσαρτημένη Ημ/νία</string>
         <string name="backup_name_exists">Ένα αντίγραφο ασφαλείας με αυτό το όνομα υπάρχει ήδη!</string>
-        <string name="encrypt_backup">Κρυπτογράφηση αντιγράφων ασφαλείας;</string>
         <string name="enter_pass">Εισάγετε κωδικό:</string>
         <string name="enter_pass2">Εισάγετε τον κωδικό ξανά:</string>
         <string name="pass_not_match">Οι κωδικοί πρόσβασης δεν ταιριάζουν!</string>
@@ -230,7 +228,6 @@
         <string name="sel_backup_hdr">Επιλέξτε αντίγραφα ασφαλείας</string>
         <string name="restore_sel_store_hdr">Επιλέξτε αρχείο από %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
         <string name="restore_sel_pack_fs">Επιλέξτε πακέτο Επαναφοράς:</string>
-        <string name="restore_enc_backup_hdr">Κρυπτογραφημένο αντίγραφο ασφαλείας</string>
         <string name="restore_dec_fail">Κωδικός απέτυχε, παρακαλώ προσπαθήστε ξανά!</string>
         <string name="del_backup_btn">Διαγραφή αντιγράφου ασφαλείας</string>
         <string name="del_backup_confirm">Διαγραφή αντιγράφου ασφαλείας;</string>
@@ -584,7 +581,6 @@
         <string name="locate_backup_err">Δεν μπόρεσε να εντοπιστεί το αντιγρ. ασφ. '{1}'</string>
         <string name="set_restore_opt">Ρύθμιση επιλογών επαναφοράς: '{1}':</string>
         <string name="digest_check_skip" version="2">Η παράλειψη ελέγχου Digest είναι ενεργή</string>
-        <string name="ors_encrypt_restore_err">Δεν μπορεί να χρησιμοποιηθεί το OpenRecoveryScript για να επαναφέρετε ένα κρυπτογραφημένο αντίγραφο ασφαλείας.</string>
         <string name="mounting">Προσάρτηση</string>
         <string name="unmounting">Αποπροσάρτηση</string>
         <string name="mounted">Προσαρτήθηκε '{1}'</string>

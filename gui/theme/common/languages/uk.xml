@@ -195,7 +195,6 @@
 		<string name="storage_hdr">Сховище: (%tw_storage_display_name% МБ)</string>
 		<string name="backup_hdr">Резервне копіювання</string>
 		<string name="backup_confirm_hdr">Підтвердження Резервування</string>
-		<string name="encryption_tab">ШИФРУВАННЯ</string>
 		<string name="encryption">Шифрування:</string>
 		<string name="name">Ім’я:</string>
 		<string name="sel_part_backup">Вибрати Розділ для Резервування:</string>
@@ -209,7 +208,6 @@
 		<string name="swipe_backup">Резервувати</string>
 		<string name="append_date_btn">Додати дату</string>
 		<string name="backup_name_exists">Резервна копія з такою назвою вже існує!</string>
-		<string name="encrypt_backup">Шифрувати резервну копію?</string>
 		<string name="enter_pass">Введіть пароль:</string>
 		<string name="enter_pass2">Введіть пароль ще раз:</string>
 		<string name="pass_not_match">Паролі не співпадають!</string>
@@ -223,7 +221,6 @@
 		<string name="sel_backup_hdr">Виберіть резервну копію</string>
 		<string name="restore_sel_store_hdr">Оберіть резервну копію з %tw_storage_display_name% (%tw_storage_free_size% МБ)</string>
 		<string name="restore_sel_pack_fs">Виберіть пакунок для відновлення:</string>
-		<string name="restore_enc_backup_hdr">Зашифрована Резервна копія</string>
 		<string name="restore_dec_fail">Неправильний пароль, будь ласка, спробуйте ще раз!</string>
 		<string name="del_backup_btn">Видалити резервну копію</string>
 		<string name="del_backup_confirm">Видалити резервну копію?</string>
@@ -580,7 +577,6 @@
 		<string name="locate_backup_err">Не вдається знайти резервну копію '{1}'</string>
 		<string name="set_restore_opt">Установки опцій відновлення: '{1}':</string>
 		<string name="digest_check_skip" version="2">Пропуск перевірки Digest увімкнено</string>
-		<string name="ors_encrypt_restore_err">Не вдалось використати OpenRecoveryScript для відновлення зашифрованої резервної копії.</string>
 		<string name="mounting">Монтування</string>
 		<string name="unmounting">Розмонтування</string>
 		<string name="mounted">Змонтовано '{1}'</string>

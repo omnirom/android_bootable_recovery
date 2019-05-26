@@ -191,7 +191,6 @@
 		<string name="storage_hdr">Úložisko: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Záloha</string>
 		<string name="backup_confirm_hdr">Potvrdiť zálohu</string>
-		<string name="encryption_tab">ŠIFROVANIE</string>
 		<string name="encryption">Šifrovanie:</string>
 		<string name="name">Názov:</string>
 		<string name="sel_part_backup">Vybrať partície pre zálohovanie:</string>
@@ -205,7 +204,6 @@
 		<string name="swipe_backup">Potiahnite pre zálohu</string>
 		<string name="append_date_btn">Pripojiť dátum</string>
 		<string name="backup_name_exists">Záloha s rovnakým názvom už existuje!</string>
-		<string name="encrypt_backup">Šifrovať zálohu?</string>
 		<string name="enter_pass">Zadajte heslo:</string>
 		<string name="enter_pass2">Zopakujte heslo:</string>
 		<string name="pass_not_match">Heslá sa nezhodujú!</string>
@@ -219,7 +217,6 @@
 		<string name="sel_backup_hdr">Vyberte zálohu</string>
 		<string name="restore_sel_store_hdr">Vyberte zálohu z %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Vyberte balíček pre obnovu:</string>
-		<string name="restore_enc_backup_hdr">Šifrovaná záloha</string>
 		<string name="restore_dec_fail">Heslo je nesprávne, skúste to znova!</string>
 		<string name="del_backup_btn">Vymazať zálohu</string>
 		<string name="del_backup_confirm">Vymazať zálohu?</string>
@@ -558,7 +555,6 @@
 		<string name="locate_backup_err">Zálohu \'{1}\' nie je možné nájsť</string>
 		<string name="set_restore_opt">Nastavenie možností obnovy: \'{1}\':</string>
 		<string name="digest_check_skip" version="2">Vynechanie kontroly Digest zapnuté</string>
-		<string name="ors_encrypt_restore_err">Nie je možné použiť OpenRecoveryScript pre obnovu zašifrovanej zálohy.</string>
 		<string name="mounting">Pripájanie</string>
 		<string name="unmounting">Odpájanie</string>
 		<string name="mounted">\'{1}\' pripojený</string>

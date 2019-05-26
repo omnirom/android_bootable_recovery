@@ -199,7 +199,6 @@
 		<string name="storage_hdr">Opslag: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Back-up</string>
 		<string name="backup_confirm_hdr">Back-up bevestigen</string>
-		<string name="encryption_tab">VERSLEUTELING</string>
 		<string name="encryption">Versleuteling:</string>
 		<string name="name">Naam:</string>
 		<string name="sel_part_backup">Selecteer partities om te back-uppen:</string>
@@ -213,7 +212,6 @@
 		<string name="swipe_backup">Veeg voor back-up</string>
 		<string name="append_date_btn">Datum toevoegen</string>
 		<string name="backup_name_exists">Een back-up met die naam bestaat al!</string>
-		<string name="encrypt_backup">Back-up versleutelen?</string>
 		<string name="enter_pass">Wachtwoord invoeren:</string>
 		<string name="enter_pass2">Wachtwoord opnieuw invoeren:</string>
 		<string name="pass_not_match">Wachtwoorden komen niet overeen!</string>
@@ -227,7 +225,6 @@
 		<string name="sel_backup_hdr">Selecteer back-up</string>
 		<string name="restore_sel_store_hdr">Selecteer back-up van %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Selecteer pakket om te herstellen:</string>
-		<string name="restore_enc_backup_hdr">Versleutelde back-up</string>
 		<string name="restore_dec_fail">Wachtwoord is mislukt, probeer het opnieuw!</string>
 		<string name="del_backup_btn">Back-up verwijderen</string>
 		<string name="del_backup_confirm">Back-up verwijderen?</string>
@@ -588,7 +585,6 @@
 		<string name="locate_backup_err">Kan de back-up niet vinden \'{1}\'</string>
 		<string name="set_restore_opt">Opties voor terugzetten instellen: \'{1}\':</string>
 		<string name="digest_check_skip" version="2">Digest controle overslaan staat aan</string>
-		<string name="ors_encrypt_restore_err">Kan OpenRecoveryScript niet gebruiken om een versleutelde back-up te herstellen.</string>
 		<string name="mounting">Koppelen</string>
 		<string name="unmounting">Ontkoppelen</string>
 		<string name="mounted">Gekoppeld \'{1}\'</string>

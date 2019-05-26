@@ -207,7 +207,6 @@
 		<string name="storage_hdr">Tároló: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Biztonsági mentés</string>
 		<string name="backup_confirm_hdr">Biztonsági mentés megerősítése</string>
-		<string name="encryption_tab">TITKOSÍTÁS</string>
 		<string name="encryption">Titkosítás:</string>
 		<string name="name">Név:</string>
 		<string name="sel_part_backup">Válassza ki a menteni kívánt partíciókat:</string>
@@ -226,7 +225,6 @@
 		<string name="swipe_backup">Csúsztasson a biztonsági mentéshez</string>
 		<string name="append_date_btn">Hozzáadás dátuma</string>
 		<string name="backup_name_exists">Egy biztonsági mentés az adott névvel már létezik!</string>
-		<string name="encrypt_backup">Biztonsági mentését titkosítani szeretné?</string>
 		<string name="enter_pass">Adja meg a jelszót:</string>
 		<string name="enter_pass2">Adja meg a jelszót újra:</string>
 		<string name="pass_not_match">A jelszavak nem egyeznek!</string>
@@ -240,7 +238,6 @@
 		<string name="sel_backup_hdr">Biztonsági mentés kiválasztása</string>
 		<string name="restore_sel_store_hdr">Mentés kiválasztása innen: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Válassza ki a visszaállítandó csomagot:</string>
-		<string name="restore_enc_backup_hdr">Titkosított biztonsági mentés</string>
 		<string name="restore_dec_fail">Jelszó hibás, próbálja meg újra!</string>
 		<string name="del_backup_btn">Biztonsági mentés törlése</string>
 		<string name="del_backup_confirm">Biztonsági mentés törlése?</string>
@@ -603,7 +600,6 @@
 		<string name="locate_backup_err">Nem található a(z) '{1}' biztonsági mentés</string>
 		<string name="set_restore_opt">Visszaállítási beállítások beállítása: '{1}':</string>
 		<string name="digest_check_skip" version="2">Digest ellenőrzés kihagyása bekapcsolva</string>
-		<string name="ors_encrypt_restore_err">Nem sikerült az OpenRecoveryScript futtatása egy titkosított biztonsági mentés visszaállításához.</string>
 		<string name="mounting">Csatolás</string>
 		<string name="unmounting">Leválasztás</string>
 		<string name="mounted">'{1}' csatolva</string>

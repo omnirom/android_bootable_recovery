@@ -215,7 +215,6 @@
 		<string name="storage_hdr">Storage: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Backup</string>
 		<string name="backup_confirm_hdr">Confirm Backup</string>
-		<string name="encryption_tab">ENCRYPTION</string>
 		<string name="encryption">Encryption:</string>
 		<string name="name">Name:</string>
 		<string name="sel_part_backup">Select Partitions to Backup:</string>
@@ -234,7 +233,6 @@
 		<string name="swipe_backup">Swipe to Backup</string>
 		<string name="append_date_btn">Append Date</string>
 		<string name="backup_name_exists">A backup with that name already exists!</string>
-		<string name="encrypt_backup">Encrypt your Backup?</string>
 		<string name="enter_pass">Enter Password:</string>
 		<string name="enter_pass2">Enter Password Again:</string>
 		<string name="pass_not_match">Passwords do not match!</string>
@@ -248,7 +246,6 @@
 		<string name="sel_backup_hdr">Select Backup</string>
 		<string name="restore_sel_store_hdr">Select Backup from %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Select Package to Restore:</string>
-		<string name="restore_enc_backup_hdr">Encrypted Backup</string>
 		<string name="restore_dec_fail">Password failed, please try again!</string>
 		<string name="del_backup_btn">Delete Backup</string>
 		<string name="del_backup_confirm">Delete Backup?</string>
@@ -636,7 +633,6 @@
 		<string name="locate_backup_err">Unable to locate backup '{1}'</string>
 		<string name="set_restore_opt">Setting restore options: '{1}':</string>
 		<string name="digest_check_skip" version="2">Digest check skip is on</string>
-		<string name="ors_encrypt_restore_err">Unable to use OpenRecoveryScript to restore an encrypted backup.</string>
 		<string name="mounting">Mounting</string>
 		<string name="unmounting">Unmounting</string>
 		<string name="mounted">Mounted '{1}'</string>

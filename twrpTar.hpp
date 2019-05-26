@@ -58,7 +58,6 @@ public:
 	void Set_Archive_Type(Archive_Type archive_type);
 
 public:
-	int use_encryption;
 	int userdata_encryption;
 	int use_compression;
 	int split_archives;

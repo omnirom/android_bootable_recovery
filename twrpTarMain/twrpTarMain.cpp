@@ -72,10 +72,6 @@ void usage() {
 	printf(" -t    output file\n");
 	printf(" -m    skip media subfolder (has data media)\n");
 	printf(" -z    compress backup (/sbin/pigz must be present)\n");
-#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	printf(" -e    encrypt/decrypt backup followed by password (/sbin/openaes must be present)\n");
-	printf(" -u    encrypt using userdata encryption (must be used with -e)\n");
-#endif
 	printf("\n\n");
 	printf("Example: twrpTar -c -d /cache -t /sdcard/test.tar\n");
 	printf("         twrpTar -x -d /cache -t /sdcard/test.tar\n");
@@ -89,9 +85,6 @@ int main(int argc, char **argv) {
 	string Directory, Tar_Filename;
 	ProgressTracking progress(1);
 	pid_t tar_fork_pid = 0;
-#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	string Password;
-#endif
 
 	if (argc < 2) {
 		usage();
@@ -127,22 +120,6 @@ int main(int argc, char **argv) {
 			} else {
 				Tar_Filename = argv[i];
 			}
-		} else if (strcmp(argv[i], "-e") == 0) {
-#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-			i++;
-			if (argc <= i) {
-				printf("No argument specified for %s\n", argv[i - 1]);
-				usage();
-				return -1;
-			} else {
-				use_encryption = 1;
-				Password = argv[i];
-			}
-#else
-			printf("Encrypted tar file support not present\n");
-			usage();
-			return -1;
-#endif
 		} else if (strcmp(argv[i], "-m") == 0) {
 			if (action == 2)
 				printf("NOTE: %s option not needed when extracting.\n", argv[i]);
@@ -151,16 +128,6 @@ int main(int argc, char **argv) {
 			if (action == 2)
 				printf("NOTE: %s option not needed when extracting.\n", argv[i]);
 			use_compression = 1;
-		} else if (strcmp(argv[i], "-u") == 0) {
-#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-			if (action == 2)
-				printf("NOTE: %s option not needed when extracting.\n", argv[i]);
-			userdata_encryption = 1;
-#else
-			printf("Encrypted tar file support not present\n");
-			usage();
-			return -1;
-#endif
 		}
 	}
 
@@ -172,20 +139,6 @@ int main(int argc, char **argv) {
 	tar.setsize(exclude.Get_Folder_Size(Directory));
 	tar.use_compression = use_compression;
 	tar.backup_exclusions = &exclude;
-#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	if (userdata_encryption && !use_encryption) {
-		printf("userdata encryption set without encryption option\n");
-		usage();
-		return -1;
-	}
-	if (use_encryption) {
-		tar.use_encryption = use_encryption;
-		tar.userdata_encryption = userdata_encryption;
-		tar.setpassword(Password);
-	} else {
-		use_encryption = false;
-	}
-#endif
 	if (action == 1) {
 		if (tar.createTarFork(&tar_fork_pid) != 0) {
 			sync();
