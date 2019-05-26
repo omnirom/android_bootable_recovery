@@ -792,7 +792,6 @@ void DataManager::SetDefaultValues()
 	mPersist.SetValue("tw_no_screen_timeout", "0");
 #endif
 	mData.SetValue("tw_gui_done", "0");
-	mData.SetValue("tw_encrypt_backup", "0");
 	mData.SetValue("tw_sleep_total", "5");
 	mData.SetValue("tw_sleep", "5");
 
@@ -873,12 +872,6 @@ void DataManager::SetDefaultValues()
 #endif
 	}
 
-#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	mConst.SetValue("tw_include_encrypted_backup", "1");
-#else
-	LOGINFO("TW_EXCLUDE_ENCRYPTED_BACKUPS := true\n");
-	mConst.SetValue("tw_include_encrypted_backup", "0");
-#endif
 #ifdef TW_HAS_MTP
 	mConst.SetValue("tw_has_mtp", "1");
 	mPersist.SetValue("tw_mtp_enabled", "1");

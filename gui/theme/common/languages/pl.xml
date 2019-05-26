@@ -199,7 +199,6 @@
 		<string name="storage_hdr">Pamięć: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Kopia zapasowa</string>
 		<string name="backup_confirm_hdr">Potwierdź kopię zapasową</string>
-		<string name="encryption_tab">SZYFROWANIE</string>
 		<string name="encryption">Szyfrowanie:</string>
 		<string name="name">Nazwa:</string>
 		<string name="sel_part_backup">Wybierz partycje do skopiowania:</string>
@@ -213,7 +212,6 @@
 		<string name="swipe_backup">Przesuń, aby wykonać kopię</string>
 		<string name="append_date_btn">Dodaj datę</string>
 		<string name="backup_name_exists">Kopia zapasowa o takiej nazwie już istnieje!</string>
-		<string name="encrypt_backup">Zaszyfrować kopię zapasową?</string>
 		<string name="enter_pass">Wpisz hasło:</string>
 		<string name="enter_pass2">Wpisz hasło ponownie:</string>
 		<string name="pass_not_match">Hasła się nie zgadzają!</string>
@@ -227,7 +225,6 @@
 		<string name="sel_backup_hdr">Wybierz kopię zapasową</string>
 		<string name="restore_sel_store_hdr">Wybierz kopię zapasową z %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Wybierz zestaw do przywrócenia:</string>
-		<string name="restore_enc_backup_hdr">Szyfrowana kopia</string>
 		<string name="restore_dec_fail">Hasło nieprawidłowe, spróbuj ponownie!</string>
 		<string name="del_backup_btn">Usuń kopię zapasową</string>
 		<string name="del_backup_confirm">Usunąć kopię zapasową?</string>
@@ -588,7 +585,6 @@
 		<string name="locate_backup_err">Nie udało się zlokalizować kopii '{1}'</string>
 		<string name="set_restore_opt">Ustawienia przywracania: '{1}':</string>
 		<string name="digest_check_skip" version="2">Sprawdzanie Digest jest włączone</string>
-		<string name="ors_encrypt_restore_err">Nie można użyć OpenRecoveryScript do przywrócenia zaszyfrowanej kopii zapasowej.</string>
 		<string name="mounting">Montowanie</string>
 		<string name="unmounting">Odmontowywanie</string>
 		<string name="mounted">Zamontowano '{1}'</string>

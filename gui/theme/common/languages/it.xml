@@ -207,7 +207,6 @@
 		<string name="storage_hdr">Archivio: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Backup</string>
 		<string name="backup_confirm_hdr">Conferma Backup</string>
-		<string name="encryption_tab">CRITTOGRAFIA</string>
 		<string name="encryption">Crittografia:</string>
 		<string name="name">Nome:</string>
 		<string name="sel_part_backup">Seleziona le partizioni di cui eseguire un Backup:</string>
@@ -226,7 +225,6 @@
 		<string name="swipe_backup">Scorri per eseguire il backup</string>
 		<string name="append_date_btn">Includi la data</string>
 		<string name="backup_name_exists">Esiste già un backup con lo stesso nome!</string>
-		<string name="encrypt_backup">Crittografare il backup?</string>
 		<string name="enter_pass">Inserisci una password:</string>
 		<string name="enter_pass2">Inserisci nuovamente la password:</string>
 		<string name="pass_not_match">Le password non corrispondono!</string>
@@ -240,7 +238,6 @@
 		<string name="sel_backup_hdr">Scegli backup</string>
 		<string name="restore_sel_store_hdr">Seleziona un backup da %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Scegli i contenuti da ripristinare:</string>
-		<string name="restore_enc_backup_hdr">Backup crittografato</string>
 		<string name="restore_dec_fail">Password errata! Riprova.</string>
 		<string name="del_backup_btn">Elimina backup</string>
 		<string name="del_backup_confirm">Eliminare il backup?</string>
@@ -603,7 +600,6 @@
 		<string name="locate_backup_err">Impossibile localizzare il backup '{1}'</string>
 		<string name="set_restore_opt">Impostazione opzioni di ripristino: '{1}':</string>
 		<string name="digest_check_skip" version="2">Tralascia controllo Digest: attivo</string>
-		<string name="ors_encrypt_restore_err">Impossibile utilizzare OpenRecoveryScript per ripristinare un backup criptato.</string>
 		<string name="mounting">Montaggio</string>
 		<string name="unmounting">Smontaggio</string>
 		<string name="mounted">'{1}' montata</string>

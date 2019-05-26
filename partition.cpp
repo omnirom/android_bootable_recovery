@@ -2484,21 +2484,6 @@ bool TWPartition::Backup_Tar(PartitionSettings *part_settings, pid_t *tar_fork_p
 
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, tar.use_compression);
 
-#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	if (Can_Encrypt_Backup) {
-		DataManager::GetValue("tw_encrypt_backup", tar.use_encryption);
-		if (tar.use_encryption) {
-			if (Use_Userdata_Encryption)
-				tar.userdata_encryption = tar.use_encryption;
-			string Password;
-			DataManager::GetValue("tw_backup_password", Password);
-			tar.setpassword(Password);
-		} else {
-			tar.use_encryption = 0;
-		}
-	}
-#endif
-
 	Backup_FileName = Backup_Name + "." + Current_File_System + ".win";
 	Full_FileName = part_settings->Backup_Folder + "/" + Backup_FileName;
 	if (Has_Data_Media)
@@ -2695,12 +2680,6 @@ unsigned long long TWPartition::Get_Restore_Size(PartitionSettings *part_setting
 	tar.setdir(Backup_Path);
 	tar.setfn(Full_FileName);
 	tar.backup_name = Full_FileName;
-#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	string Password;
-	DataManager::GetValue("tw_restore_password", Password);
-	if (!Password.empty())
-		tar.setpassword(Password);
-#endif
 	tar.partition_name = Backup_Name;
 	tar.backup_folder = part_settings->Backup_Folder;
 	tar.part_settings = part_settings;
@@ -2740,12 +2719,6 @@ bool TWPartition::Restore_Tar(PartitionSettings *part_settings) {
 	tar.setdir(Backup_Path);
 	tar.setfn(Full_FileName);
 	tar.backup_name = Backup_Name;
-#ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	string Password;
-	DataManager::GetValue("tw_restore_password", Password);
-	if (!Password.empty())
-		tar.setpassword(Password);
-#endif
 	part_settings->progress->SetPartitionSize(Get_Restore_Size(part_settings));
 	if (tar.extractTarFork() != 0)
 		ret = false;

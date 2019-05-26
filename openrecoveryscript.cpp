@@ -242,8 +242,6 @@ int OpenRecoveryScript::run_script_file(void) {
 
 				PartitionManager.Set_Restore_Files(folder_path);
 				string Partition_List;
-				int is_encrypted = 0;
-				DataManager::GetValue("tw_restore_encrypted", is_encrypted);
 				DataManager::GetValue("tw_restore_list", Partition_List);
 				if (strlen(partitions) != 0) {
 					string Restore_List;
@@ -284,10 +282,7 @@ int OpenRecoveryScript::run_script_file(void) {
 				} else {
 					DataManager::SetValue("tw_restore_selected", Partition_List);
 				}
-				if (is_encrypted) {
-					gui_err("ors_encrypt_restore_err=Unable to use OpenRecoveryScript to restore an encrypted backup.");
-					ret_val = 1;
-				} else if (!PartitionManager.Run_Restore(folder_path))
+				if (!PartitionManager.Run_Restore(folder_path))
 					ret_val = 1;
 				else
 					gui_msg("done=Done.");

@@ -191,7 +191,6 @@
 		<string name="storage_hdr">Pomnilniška naprava: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Var. kopiraj</string>
 		<string name="backup_confirm_hdr">Potrdite varnostno kopiranje</string>
-		<string name="encryption_tab">ŠIFRIRANJE</string>
 		<string name="encryption">Šifriranje:</string>
 		<string name="name">Ime:</string>
 		<string name="sel_part_backup">Izberite razdelke za varnostno kopiranje:</string>
@@ -205,7 +204,6 @@
 		<string name="swipe_backup">Povlecite za var. kopiranje</string>
 		<string name="append_date_btn">Pripni datum</string>
 		<string name="backup_name_exists">Varnostna kopija z enakim imenom že obstaja!</string>
-		<string name="encrypt_backup">Šifriraj varnostno kopijo?</string>
 		<string name="enter_pass">Vnesite geslo:</string>
 		<string name="enter_pass2">Ponovno vnesite geslo:</string>
 		<string name="pass_not_match">Gesli se ne ujemata!</string>
@@ -219,7 +217,6 @@
 		<string name="sel_backup_hdr">Izberite varnostno kopijo</string>
 		<string name="restore_sel_store_hdr">Izberite varnostno kopijo iz %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Izberite paket za obnovitev:</string>
-		<string name="restore_enc_backup_hdr">Šifrirana varnostna kopija</string>
 		<string name="restore_dec_fail">Geslo je spodletelo, poizkusite znova!</string>
 		<string name="del_backup_btn">Izbriši varnostno kopijo</string>
 		<string name="del_backup_confirm">Izbriši varnostno kopijo?</string>
@@ -558,7 +555,6 @@
 		<string name="locate_backup_err">Varnostne kopije \'{1}\' ni mogoče najti</string>
 		<string name="set_restore_opt">Nastavljanje možnosti za varnostno kopiranje: \'{1}\':</string>
 		<string name="digest_check_skip" version="2">Preskak. preverjanja raz. Digest je vkl.</string>
-		<string name="ors_encrypt_restore_err">OpenRecoveryScript ni mogoče uporabiti za obnavljanje šifriranih varnostnih kopij.</string>
 		<string name="mounting">Priklapljanje</string>
 		<string name="unmounting">Odklapljanje</string>
 		<string name="mounted">\'{1}\' priklopljen</string>
