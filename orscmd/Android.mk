@@ -7,6 +7,12 @@ else
     LOCAL_CFLAGS += -DTW_DEVICE_VERSION='"-0"'
 endif
 
+ifneq ($(TW_LOCAL_VERSION),)
+    LOCAL_CFLAGS += -DTW_LOCAL_VERSION='"-$(TW_LOCAL_VERSION)"'
+else
+    LOCAL_CFLAGS += -DTW_LOCAL_VERSION=''
+endif
+
 LOCAL_SRC_FILES:= \
 	orscmd.cpp
 LOCAL_CFLAGS += -c -W
