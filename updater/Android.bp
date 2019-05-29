@@ -30,7 +30,6 @@ cc_defaults {
         "libfec",
         "libfec_rs",
         "libverity_tree",
-        "libfs_mgr",
         "libgtest_prod",
         "liblog",
         "liblp",
@@ -46,6 +45,14 @@ cc_defaults {
         "libcrypto_utils",
         "libcutils",
         "libutils",
+    ],
+}
+
+cc_defaults {
+    name: "libupdater_device_defaults",
+
+    static_libs: [
+        "libfs_mgr",
         "libtune2fs",
 
         "libext2_com_err",
@@ -54,11 +61,13 @@ cc_defaults {
         "libext2_uuid",
         "libext2_e2p",
         "libext2fs",
-    ],
+    ]
 }
 
 cc_library_static {
-    name: "libupdater",
+    name: "libupdater_core",
+
+    host_supported: true,
 
     defaults: [
         "recovery_defaults",
@@ -68,14 +77,58 @@ cc_library_static {
     srcs: [
         "blockimg.cpp",
         "commands.cpp",
-        "dynamic_partitions.cpp",
         "install.cpp",
         "updater.cpp",
+    ],
+
+    export_include_dirs: [
+        "include",
+    ],
+}
+
+cc_library_static {
+    name: "libupdater_device",
+
+    defaults: [
+        "recovery_defaults",
+        "libupdater_defaults",
+        "libupdater_device_defaults",
+    ],
+
+    srcs: [
+        "dynamic_partitions.cpp",
         "updater_runtime.cpp",
+    ],
+
+    static_libs: [
+        "libupdater_core",
     ],
 
     include_dirs: [
         "external/e2fsprogs/misc",
+    ],
+
+    export_include_dirs: [
+        "include",
+    ],
+}
+
+cc_library_host_static {
+    name: "libupdater_host",
+
+    defaults: [
+        "recovery_defaults",
+        "libupdater_defaults",
+    ],
+
+    srcs: [
+        "simulator_runtime.cpp",
+        "target_files.cpp",
+    ],
+
+    static_libs: [
+        "libupdater_core",
+        "libfstab",
     ],
 
     export_include_dirs: [
