@@ -108,6 +108,7 @@ cc_test {
     defaults: [
         "recovery_test_defaults",
         "libupdater_defaults",
+        "libupdater_device_defaults",
     ],
 
     test_suites: ["device-tests"],
@@ -121,7 +122,8 @@ cc_test {
         "libfusesideload",
         "libminui",
         "libotautil",
-        "libupdater",
+        "libupdater_device",
+        "libupdater_core",
         "libupdate_verifier",
 
         "libgtest_prod",

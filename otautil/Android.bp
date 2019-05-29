@@ -24,12 +24,16 @@ cc_library_static {
 
     // Minimal set of files to support host build.
     srcs: [
+        "dirutil.cpp",
         "paths.cpp",
         "rangeset.cpp",
+        "sysutil.cpp",
     ],
 
     shared_libs: [
         "libbase",
+        "libcutils",
+        "libselinux",
     ],
 
     export_include_dirs: [
@@ -39,12 +43,10 @@ cc_library_static {
     target: {
         android: {
             srcs: [
-                "dirutil.cpp",
                 "logging.cpp",
                 "mounts.cpp",
                 "parse_install_logs.cpp",
                 "roots.cpp",
-                "sysutil.cpp",
                 "thermalutil.cpp",
             ],
 
@@ -57,10 +59,8 @@ cc_library_static {
             ],
 
             shared_libs: [
-                "libcutils",
                 "libext4_utils",
                 "libfs_mgr",
-                "libselinux",
             ],
 
             export_static_lib_headers: [
