@@ -175,7 +175,8 @@ bool Updater::ReadEntryToString(ZipArchiveHandle za, const std::string& entry_na
   int extract_err = ExtractToMemory(za, &entry, reinterpret_cast<uint8_t*>(&content->at(0)),
                                     entry.uncompressed_length);
   if (extract_err != 0) {
-    LOG(ERROR) << "failed to read script from package: " << ErrorCodeString(extract_err);
+    LOG(ERROR) << "failed to read " << entry_name
+               << " from package: " << ErrorCodeString(extract_err);
     return false;
   }
 
