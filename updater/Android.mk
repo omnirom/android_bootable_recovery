@@ -118,6 +118,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := update_host_simulator
+LOCAL_MODULE_HOST_OS := linux
 
 LOCAL_SRC_FILES := \
     update_simulator_main.cpp
