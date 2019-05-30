@@ -81,6 +81,12 @@ cc_library_static {
         "updater.cpp",
     ],
 
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+
     export_include_dirs: [
         "include",
     ],
@@ -130,6 +136,12 @@ cc_library_host_static {
         "libupdater_core",
         "libfstab",
     ],
+
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
 
     export_include_dirs: [
         "include",
