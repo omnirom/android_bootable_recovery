@@ -158,8 +158,15 @@ static void RescueInstallHostService(unique_fd sfd, const std::string& args) {
 
 static void RescueGetpropHostService(unique_fd sfd, const std::string& prop) {
   static const std::unordered_set<std::string> kGetpropAllowedProps = {
-    "ro.build.fingerprint",
     "ro.build.date.utc",
+    "ro.build.fingerprint",
+    "ro.build.flavor",
+    "ro.build.id",
+    "ro.build.product",
+    "ro.build.tags",
+    "ro.build.version.incremental",
+    "ro.product.device",
+    "ro.product.vendor.device",
   };
   auto allowed = kGetpropAllowedProps.find(prop) != kGetpropAllowedProps.end();
   if (!allowed) {
