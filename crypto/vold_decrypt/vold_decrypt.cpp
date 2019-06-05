@@ -366,7 +366,9 @@ int Find_Firmware_Files(const string& Path, vector<string> *FileList) {
 			if (ret < 0)
 				return -1;
 		} else if (de->d_type == DT_REG) {
-			if (fnmatch("keymaste*.*", de->d_name, 0) == 0 || fnmatch("cmnlib.*", de->d_name, 0) == 0) {
+			if (fnmatch("keymaste*.*", de->d_name, 0) == 0 || fnmatch("cmnlib.*", de->d_name, 0) == 0
+					|| fnmatch("mobicore.*", de->d_name, 0) == 0 || fnmatch("mobicore12.*", de->d_name, 0) == 0
+					|| fnmatch("mc_v2.*", de->d_name, 0) == 0) {
 				FileName = Path + "/" + de->d_name;
 				FileList->push_back(FileName);
 			}
