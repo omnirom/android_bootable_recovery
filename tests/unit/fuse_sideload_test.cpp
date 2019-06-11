@@ -40,6 +40,10 @@ class FuseTestDataProvider : public FuseDataProvider {
   bool ReadBlockAlignedData(uint8_t*, uint32_t, uint32_t) const override {
     return true;
   }
+
+  bool Valid() const override {
+    return true;
+  }
 };
 
 TEST(SideloadTest, run_fuse_sideload_wrong_parameters) {

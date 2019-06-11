@@ -44,7 +44,8 @@ TEST(FuseBlockMapTest, CreateFromBlockMap_smoke) {
   ASSERT_TRUE(block_map_data);
   ASSERT_EQ(10000, block_map_data->file_size());
   ASSERT_EQ(4096, block_map_data->fuse_block_size());
-  ASSERT_EQ(RangeSet({ { 10, 11 }, { 20, 21 }, { 22, 23 } }), block_map_data->ranges());
+  ASSERT_EQ(RangeSet({ { 10, 11 }, { 20, 21 }, { 22, 23 } }),
+            static_cast<FuseBlockDataProvider*>(block_map_data.get())->ranges());
 }
 
 TEST(FuseBlockMapTest, ReadBlockAlignedData_smoke) {
