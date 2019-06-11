@@ -28,6 +28,11 @@
 
 #include "verifier.h"
 
+enum class PackageType {
+  kMemory,
+  kFile,
+};
+
 // This class serves as a wrapper for an OTA update package. It aims to provide the common
 // interface for both packages loaded in memory and packages read from fd.
 class Package : public VerifierInterface {
@@ -40,6 +45,10 @@ class Package : public VerifierInterface {
                                                     const std::function<void(float)>& set_progress);
 
   virtual ~Package() = default;
+
+  virtual PackageType GetType() const = 0;
+
+  virtual std::string GetPath() const = 0;
 
   // Opens the package as a zip file and returns the ZipArchiveHandle.
   virtual ZipArchiveHandle GetZipArchiveHandle() = 0;
