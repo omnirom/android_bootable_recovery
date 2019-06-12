@@ -25,10 +25,10 @@
 
 #include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <string_view>
 #include <thread>
-#include <unordered_set>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
@@ -156,19 +156,36 @@ static void RescueInstallHostService(unique_fd sfd, const std::string& args) {
   }
 }
 
+// Answers the query on a given property |prop|, by writing the result to the given |sfd|. The
+// result will be newline-terminated, so nonexistent or nonallowed query will be answered with "\n".
+// If given an empty string, dumps all the supported properties (analogous to `adb shell getprop`)
+// in lines, e.g. "[prop]: [value]".
 static void RescueGetpropHostService(unique_fd sfd, const std::string& prop) {
-  static const std::unordered_set<std::string> kGetpropAllowedProps = {
-    "ro.build.fingerprint",
+  static const std::set<std::string> kGetpropAllowedProps = {
     "ro.build.date.utc",
+    "ro.build.fingerprint",
+    "ro.build.flavor",
+    "ro.build.id",
+    "ro.build.product",
+    "ro.build.tags",
+    "ro.build.version.incremental",
+    "ro.product.device",
+    "ro.product.vendor.device",
   };
-  auto allowed = kGetpropAllowedProps.find(prop) != kGetpropAllowedProps.end();
-  if (!allowed) {
-    return;
+  std::string result;
+  if (prop.empty()) {
+    for (const auto& key : kGetpropAllowedProps) {
+      auto value = android::base::GetProperty(key, "");
+      if (value.empty()) {
+        continue;
+      }
+      result += "[" + key + "]: [" + value + "]\n";
+    }
+  } else if (kGetpropAllowedProps.find(prop) != kGetpropAllowedProps.end()) {
+    result = android::base::GetProperty(prop, "") + "\n";
   }
-
-  auto result = android::base::GetProperty(prop, "");
   if (result.empty()) {
-    return;
+    result = "\n";
   }
   if (!android::base::WriteFully(sfd, result.data(), result.size())) {
     exit(kMinadbdHostSocketIOError);
