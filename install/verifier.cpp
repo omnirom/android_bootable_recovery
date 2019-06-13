@@ -320,7 +320,7 @@ static std::vector<Certificate> IterateZipEntriesAndSearchForKeys(const ZipArchi
 
   std::vector<Certificate> result;
 
-  std::string name;
+  std::string_view name;
   ZipEntry entry;
   while ((iter_status = Next(cookie, &entry, &name)) == 0) {
     std::vector<uint8_t> pem_content(entry.uncompressed_length);
