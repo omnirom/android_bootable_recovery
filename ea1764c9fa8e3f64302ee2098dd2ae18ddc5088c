@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7cb24b9e_214ee84d",
+        "filename": "crypto/ext4crypt/Decrypt.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 577,
+      "author": {
+        "id": 1002109
+      },
+      "writtenOn": "2019-06-13T12:51:25Z",
+      "side": 1,
+      "message": "Wouldn\u0027t be a switch be nicer here?\n\n       switch(*byteptr) {\n       case SYNTHETIC_PASSWORD_VERSION_V1:\n       case SYNTHETIC_PASSWORD_VERSION_V2:\n       case SYNTHETIC_PASSWORD_VERSION_V2:\n               break;\n       default:",
+      "revId": "ea1764c9fa8e3f64302ee2098dd2ae18ddc5088c",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
