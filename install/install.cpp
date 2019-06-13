@@ -539,7 +539,7 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
 
   std::vector<std::string> compatibility_info;
   ZipEntry info_entry;
-  std::string info_name;
+  std::string_view info_name;
   while (Next(cookie, &info_entry, &info_name) == 0) {
     std::string content(info_entry.uncompressed_length, '\0');
     int32_t ret = ExtractToMemory(zip_handle, &info_entry, reinterpret_cast<uint8_t*>(&content[0]),
