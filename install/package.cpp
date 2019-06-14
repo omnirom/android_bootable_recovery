@@ -40,10 +40,18 @@ class MemoryPackage : public Package {
 
   ~MemoryPackage() override;
 
+  PackageType GetType() const override {
+    return PackageType::kMemory;
+  }
+
   // Memory maps the package file if necessary. Initializes the start address and size of the
   // package.
   uint64_t GetPackageSize() const override {
     return package_size_;
+  }
+
+  std::string GetPath() const override {
+    return path_;
   }
 
   bool ReadFullyAtOffset(uint8_t* buffer, uint64_t byte_count, uint64_t offset) override;
@@ -82,8 +90,16 @@ class FilePackage : public Package {
 
   ~FilePackage() override;
 
+  PackageType GetType() const override {
+    return PackageType::kFile;
+  }
+
   uint64_t GetPackageSize() const override {
     return package_size_;
+  }
+
+  std::string GetPath() const override {
+    return path_;
   }
 
   bool ReadFullyAtOffset(uint8_t* buffer, uint64_t byte_count, uint64_t offset) override;
@@ -253,7 +269,7 @@ ZipArchiveHandle FilePackage::GetZipArchiveHandle() {
     return zip_handle_;
   }
 
-  if (auto err = OpenArchiveFd(fd_.get(), path_.c_str(), &zip_handle_); err != 0) {
+  if (auto err = OpenArchiveFd(fd_.get(), path_.c_str(), &zip_handle_, false); err != 0) {
     LOG(ERROR) << "Can't open package" << path_ << " : " << ErrorCodeString(err);
     return nullptr;
   }
