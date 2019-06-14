@@ -732,7 +732,15 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         set_retry_bootloader_message(retry_count + 1, args);
       }
 
-      status = InstallPackage(update_package, should_wipe_cache, true, retry_count, ui);
+      if (update_package[0] == '@') {
+        ensure_path_mounted(update_package + 1);
+      } else {
+        ensure_path_mounted(update_package);
+      }
+      // TODO(xunchang) install package from fuse for large packages on ILP32 builds.
+      auto package = Package::CreateMemoryPackage(
+          update_package, std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
+      status = InstallPackage(package.get(), update_package, should_wipe_cache, retry_count, ui);
       if (status != INSTALL_SUCCESS) {
         ui->Print("Installation aborted.\n");
 
