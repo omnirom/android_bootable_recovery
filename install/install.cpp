@@ -320,16 +320,21 @@ static void log_max_temperature(int* max_temperature, const std::atomic<bool>& l
 }
 
 // If the package contains an update binary, extract it and run it.
-static InstallResult TryUpdateBinary(const std::string& package, ZipArchiveHandle zip,
-                                     bool* wipe_cache, std::vector<std::string>* log_buffer,
-                                     int retry_count, int* max_temperature, RecoveryUI* ui) {
+static InstallResult TryUpdateBinary(Package* package, bool* wipe_cache,
+                                     std::vector<std::string>* log_buffer, int retry_count,
+                                     int* max_temperature, RecoveryUI* ui) {
   std::map<std::string, std::string> metadata;
+  auto zip = package->GetZipArchiveHandle();
   if (!ReadMetadataFromPackage(zip, &metadata)) {
     LOG(ERROR) << "Failed to parse metadata in the zip file";
     return INSTALL_CORRUPT;
   }
 
   bool is_ab = android::base::GetBoolProperty("ro.build.ab_update", false);
+  if (is_ab) {
+    CHECK(package->GetType() == PackageType::kFile);
+  }
+
   // Verify against the metadata in the package first.
   if (is_ab && !CheckPackageMetadata(metadata, OtaType::AB)) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
@@ -379,10 +384,12 @@ static InstallResult TryUpdateBinary(const std::string& package, ZipArchiveHandl
   //       updater requests logging the string (e.g. cause of the failure).
   //
 
+  std::string package_path = package->GetPath();
+
   std::vector<std::string> args;
   if (auto setup_result =
-          is_ab ? SetUpAbUpdateCommands(package, zip, pipe_write.get(), &args)
-                : SetUpNonAbUpdateCommands(package, zip, retry_count, pipe_write.get(), &args);
+          is_ab ? SetUpAbUpdateCommands(package_path, zip, pipe_write.get(), &args)
+                : SetUpNonAbUpdateCommands(package_path, zip, retry_count, pipe_write.get(), &args);
       !setup_result) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
     return INSTALL_CORRUPT;
@@ -484,11 +491,11 @@ static InstallResult TryUpdateBinary(const std::string& package, ZipArchiveHandl
   }
   if (WIFEXITED(status)) {
     if (WEXITSTATUS(status) != EXIT_SUCCESS) {
-      LOG(ERROR) << "Error in " << package << " (status " << WEXITSTATUS(status) << ")";
+      LOG(ERROR) << "Error in " << package_path << " (status " << WEXITSTATUS(status) << ")";
       return INSTALL_ERROR;
     }
   } else if (WIFSIGNALED(status)) {
-    LOG(ERROR) << "Error in " << package << " (killed by signal " << WTERMSIG(status) << ")";
+    LOG(ERROR) << "Error in " << package_path << " (killed by signal " << WTERMSIG(status) << ")";
     return INSTALL_ERROR;
   } else {
     LOG(FATAL) << "Invalid status code " << status;
@@ -497,7 +504,7 @@ static InstallResult TryUpdateBinary(const std::string& package, ZipArchiveHandl
   return INSTALL_SUCCESS;
 }
 
-// Verifes the compatibility info in a Treble-compatible package. Returns true directly if the
+// Verifies the compatibility info in a Treble-compatible package. Returns true directly if the
 // entry doesn't exist. Note that the compatibility info is packed in a zip file inside the OTA
 // package.
 bool verify_package_compatibility(ZipArchiveHandle package_zip) {
@@ -564,37 +571,16 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
   return false;
 }
 
-static InstallResult VerifyAndInstallPackage(const std::string& path, bool* wipe_cache,
-                                             bool needs_mount, std::vector<std::string>* log_buffer,
-                                             int retry_count, int* max_temperature,
-                                             RecoveryUI* ui) {
+static InstallResult VerifyAndInstallPackage(Package* package, bool* wipe_cache,
+                                             std::vector<std::string>* log_buffer, int retry_count,
+                                             int* max_temperature, RecoveryUI* ui) {
   ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
-  ui->Print("Finding update package...\n");
   // Give verification half the progress bar...
   ui->SetProgressType(RecoveryUI::DETERMINATE);
   ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
-  LOG(INFO) << "Update location: " << path;
-
-  // Map the update package into memory.
-  ui->Print("Opening update package...\n");
-
-  if (needs_mount) {
-    if (path[0] == '@') {
-      ensure_path_mounted(path.substr(1));
-    } else {
-      ensure_path_mounted(path);
-    }
-  }
-
-  auto package = Package::CreateMemoryPackage(
-      path, std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
-  if (!package) {
-    log_buffer->push_back(android::base::StringPrintf("error: %d", kMapFileFailure));
-    return INSTALL_CORRUPT;
-  }
 
   // Verify package.
-  if (!verify_package(package.get(), ui)) {
+  if (!verify_package(package, ui)) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
     return INSTALL_CORRUPT;
   }
@@ -618,18 +604,15 @@ static InstallResult VerifyAndInstallPackage(const std::string& path, bool* wipe
     ui->Print("Retry attempt: %d\n", retry_count);
   }
   ui->SetEnableReboot(false);
-  auto result =
-      TryUpdateBinary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature, ui);
+  auto result = TryUpdateBinary(package, wipe_cache, log_buffer, retry_count, max_temperature, ui);
   ui->SetEnableReboot(true);
   ui->Print("\n");
 
   return result;
 }
 
-InstallResult InstallPackage(const std::string& path, bool should_wipe_cache, bool needs_mount,
-                             int retry_count, RecoveryUI* ui) {
-  CHECK(!path.empty());
-
+InstallResult InstallPackage(Package* package, const std::string_view package_id,
+                             bool should_wipe_cache, int retry_count, RecoveryUI* ui) {
   auto start = std::chrono::system_clock::now();
 
   int start_temperature = GetMaxValueFromThermalZone();
@@ -637,13 +620,19 @@ InstallResult InstallPackage(const std::string& path, bool should_wipe_cache, bo
 
   InstallResult result;
   std::vector<std::string> log_buffer;
-  if (setup_install_mounts() != 0) {
+
+  ui->Print("Finding update package...\n");
+  LOG(INFO) << "Update package id: " << package_id;
+  if (!package) {
+    log_buffer.push_back(android::base::StringPrintf("error: %d", kMapFileFailure));
+    result = INSTALL_CORRUPT;
+  } else if (setup_install_mounts() != 0) {
     LOG(ERROR) << "failed to set up expected mounts for install; aborting";
     result = INSTALL_ERROR;
   } else {
     bool updater_wipe_cache = false;
-    result = VerifyAndInstallPackage(path, &updater_wipe_cache, needs_mount, &log_buffer,
-                                     retry_count, &max_temperature, ui);
+    result = VerifyAndInstallPackage(package, &updater_wipe_cache, &log_buffer, retry_count,
+                                     &max_temperature, ui);
     should_wipe_cache = should_wipe_cache || updater_wipe_cache;
   }
 
@@ -671,7 +660,7 @@ InstallResult InstallPackage(const std::string& path, bool should_wipe_cache, bo
 
   // The first two lines need to be the package name and install result.
   std::vector<std::string> log_header = {
-    path,
+    std::string(package_id),
     result == INSTALL_SUCCESS ? "1" : "0",
     "time_total: " + std::to_string(time_total),
     "retry: " + std::to_string(retry_count),

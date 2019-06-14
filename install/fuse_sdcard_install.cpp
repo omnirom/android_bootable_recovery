@@ -182,8 +182,11 @@ InstallResult ApplyFromSdcard(Device* device, RecoveryUI* ui) {
         break;
       }
     }
-
-    result = InstallPackage(FUSE_SIDELOAD_HOST_PATHNAME, false, false, 0 /* retry_count */, ui);
+    auto package =
+        Package::CreateFilePackage(FUSE_SIDELOAD_HOST_PATHNAME,
+                                   std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
+    result =
+        InstallPackage(package.get(), FUSE_SIDELOAD_HOST_PATHNAME, false, 0 /* retry_count */, ui);
     break;
   }
 
