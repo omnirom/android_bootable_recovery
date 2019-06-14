@@ -44,11 +44,12 @@ enum class OtaType {
   BRICK,
 };
 
-// Installs the given update package. This function should also wipe the cache partition after a
-// successful installation if |should_wipe_cache| is true or an updater command asks to wipe the
-// cache.
-InstallResult InstallPackage(const std::string& package, bool should_wipe_cache, bool needs_mount,
-                             int retry_count, RecoveryUI* ui);
+// Installs the given update package. The package_id is a string provided by the caller (e.g. the
+// package path) to identify the package and log to last_install. This function should also wipe the
+// cache partition after a successful installation if |should_wipe_cache| is true or an updater
+// command asks to wipe the cache.
+InstallResult InstallPackage(Package* package, const std::string_view package_id,
+                             bool should_wipe_cache, int retry_count, RecoveryUI* ui);
 
 // Verifies the package by ota keys. Returns true if the package is verified successfully,
 // otherwise returns false.
