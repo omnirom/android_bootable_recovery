@@ -346,7 +346,7 @@ void RecoveryUI::ProcessKey(int key_code, int updown) {
   bool long_press = false;
 
   {
-    std::lock_guard<std::mutex> lg(key_queue_mutex);
+    std::lock_guard<std::mutex> lg(key_press_mutex);
     key_pressed[key_code] = updown;
     if (updown) {
       ++key_down_count;
@@ -393,7 +393,7 @@ void RecoveryUI::TimeKey(int key_code, int count) {
   std::this_thread::sleep_for(750ms);  // 750 ms == "long"
   bool long_press = false;
   {
-    std::lock_guard<std::mutex> lg(key_queue_mutex);
+    std::lock_guard<std::mutex> lg(key_press_mutex);
     if (key_last_down == key_code && key_down_count == count) {
       long_press = key_long_press = true;
     }
@@ -518,13 +518,13 @@ bool RecoveryUI::IsUsbConnected() {
 }
 
 bool RecoveryUI::IsKeyPressed(int key) {
-  std::lock_guard<std::mutex> lg(key_queue_mutex);
+  std::lock_guard<std::mutex> lg(key_press_mutex);
   int pressed = key_pressed[key];
   return pressed;
 }
 
 bool RecoveryUI::IsLongPress() {
-  std::lock_guard<std::mutex> lg(key_queue_mutex);
+  std::lock_guard<std::mutex> lg(key_press_mutex);
   bool result = key_long_press;
   return result;
 }
@@ -548,7 +548,7 @@ void RecoveryUI::FlushKeys() {
 
 RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
   {
-    std::lock_guard<std::mutex> lg(key_queue_mutex);
+    std::lock_guard<std::mutex> lg(key_press_mutex);
     key_long_press = false;
   }
 
@@ -592,6 +592,6 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
 void RecoveryUI::KeyLongPress(int) {}
 
 void RecoveryUI::SetEnableReboot(bool enabled) {
-  std::lock_guard<std::mutex> lg(key_queue_mutex);
+  std::lock_guard<std::mutex> lg(key_press_mutex);
   enable_reboot = enabled;
 }
