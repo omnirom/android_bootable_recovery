@@ -2001,7 +2001,7 @@
 
 			<text style="text_m">
 				<placement x="%col1_x_header%" y="%row4_header_y%"/>
-				<text>%tw_partition% Partition</text>
+				<text>{@backup_part_name=%tw_partition% Partition}</text>
 			</text>
 
 			<template name="console"/>
