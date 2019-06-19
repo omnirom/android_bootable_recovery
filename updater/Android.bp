@@ -44,8 +44,6 @@ cc_defaults {
         "libcrypto",
         "libcrypto_utils",
         "libcutils",
-        "libcgrouprc",
-        "libcgrouprc_format",
         "libutils",
     ],
 }
