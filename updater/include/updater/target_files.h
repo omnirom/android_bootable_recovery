@@ -16,21 +16,56 @@
 
 #pragma once
 
+#include <map>
 #include <string>
+#include <string_view>
+#include <vector>
 
-// This class parses a given target file for the build properties and image files. Then it creates
-// and maintains the temporary files to simulate the block devices on host.
-class TargetFiles {
+#include <android-base/file.h>
+#include <ziparchive/zip_archive.h>
+
+// This class represents the mount information for each line in a fstab file.
+class FstabInfo {
  public:
-  TargetFiles(std::string path, std::string work_dir)
-      : path_(std::move(path)), work_dir_(std::move(work_dir)) {}
+  FstabInfo(std::string blockdev_name, std::string mount_point, std::string fs_type)
+      : blockdev_name(std::move(blockdev_name)),
+        mount_point(std::move(mount_point)),
+        fs_type(std::move(fs_type)) {}
 
-  std::string GetProperty(const std::string_view key, const std::string_view default_value) const;
+  std::string blockdev_name;
+  std::string mount_point;
+  std::string fs_type;
+};
 
-  std::string FindBlockDeviceName(const std::string_view name) const;
+// This class parses a target file from a zip file or an extracted directory. It also provides the
+// function to read the its content for simulation.
+class TargetFile {
+ public:
+  TargetFile(std::string path, bool extracted_input)
+      : path_(std::move(path)), extracted_input_(extracted_input) {}
+
+  // Opens the input target file (or extracted directory) and parses the misc_info.txt.
+  bool Open();
+  // Parses the build properties in all possible locations and save them in |props_map|
+  bool GetBuildProps(std::map<std::string, std::string, std::less<>>* props_map) const;
+  // Parses the fstab and save the information about each partition to mount into |fstab_info_list|.
+  bool ParseFstabInfo(std::vector<FstabInfo>* fstab_info_list) const;
+  // Returns true if the given entry exists in the target file.
+  bool EntryExists(const std::string_view name) const;
+  // Extracts the image file |entry_name|. Returns true on success.
+  bool ExtractImage(const std::string_view entry_name, const FstabInfo& fstab_info,
+                    const std::string_view work_dir, TemporaryFile* image_file) const;
 
  private:
-  std::string path_;  // Path to the target file.
+  // Wrapper functions to read the entry from either the zipped target-file, or the extracted input
+  // directory.
+  bool ReadEntryToString(const std::string_view name, std::string* content) const;
+  bool ExtractEntryToTempFile(const std::string_view name, TemporaryFile* temp_file) const;
 
-  std::string work_dir_;  // A temporary directory to store the extracted image files
+  std::string path_;      // Path to the zipped target-file or an extracted directory.
+  bool extracted_input_;  // True if the target-file has been extracted.
+  ZipArchiveHandle handle_{ nullptr };
+
+  // The properties under META/misc_info.txt
+  std::map<std::string, std::string, std::less<>> misc_info_;
 };

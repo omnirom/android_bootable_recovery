@@ -24,11 +24,11 @@
 #include <vector>
 
 #include "edify/updater_runtime_interface.h"
-#include "updater/target_files.h"
+#include "updater/build_info.h"
 
 class SimulatorRuntime : public UpdaterRuntimeInterface {
  public:
-  explicit SimulatorRuntime(TargetFiles* source) : source_(source) {}
+  explicit SimulatorRuntime(BuildInfo* source) : source_(source) {}
 
   bool IsSimulator() const override {
     return true;
@@ -53,6 +53,6 @@ class SimulatorRuntime : public UpdaterRuntimeInterface {
  private:
   std::string FindBlockDeviceName(const std::string_view name) const override;
 
-  TargetFiles* source_;
+  BuildInfo* source_;
   std::map<std::string, std::string, std::less<>> mounted_partitions_;
 };
