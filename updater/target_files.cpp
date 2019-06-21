@@ -132,6 +132,11 @@ bool TargetFile::ReadEntryToString(const std::string_view name, std::string* con
     return false;
   }
 
+  if (entry.uncompressed_length == 0) {
+    content->clear();
+    return true;
+  }
+
   content->resize(entry.uncompressed_length);
   if (auto extract_err = ExtractToMemory(
           handle_, &entry, reinterpret_cast<uint8_t*>(&content->at(0)), entry.uncompressed_length);
