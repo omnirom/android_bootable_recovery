@@ -136,7 +136,8 @@ LOCAL_STATIC_LIBRARIES := \
     $(TARGET_RECOVERY_UPDATER_HOST_LIBS) \
     $(TARGET_RECOVERY_UPDATER_HOST_EXTRA_LIBS) \
     $(updater_common_static_libraries) \
-    libfstab
+    libfstab \
+    libc++fs
 
 LOCAL_MODULE_CLASS := EXECUTABLES
 inc := $(call local-generated-sources-dir)/register.inc
