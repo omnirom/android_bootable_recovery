@@ -61,7 +61,7 @@ cc_library_static {
     srcs: [
         "adb_install.cpp",
         "asn1_decoder.cpp",
-        "fuse_sdcard_install.cpp",
+        "fuse_install.cpp",
         "install.cpp",
         "package.cpp",
         "verifier.cpp",
