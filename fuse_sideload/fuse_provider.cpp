@@ -49,6 +49,11 @@ FuseFileDataProvider::FuseFileDataProvider(const std::string& path, uint32_t blo
   fuse_block_size_ = block_size;
 }
 
+std::unique_ptr<FuseDataProvider> FuseFileDataProvider::CreateFromFile(const std::string& path,
+                                                                       uint32_t block_size) {
+  return std::make_unique<FuseFileDataProvider>(path, block_size);
+}
+
 bool FuseFileDataProvider::ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
                                                 uint32_t start_block) const {
   uint64_t offset = static_cast<uint64_t>(start_block) * fuse_block_size_;
@@ -127,7 +132,7 @@ bool FuseBlockDataProvider::ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch
   return true;
 }
 
-std::unique_ptr<FuseBlockDataProvider> FuseBlockDataProvider::CreateFromBlockMap(
+std::unique_ptr<FuseDataProvider> FuseBlockDataProvider::CreateFromBlockMap(
     const std::string& block_map_path, uint32_t fuse_block_size) {
   auto block_map = BlockMapData::ParseBlockMapFile(block_map_path);
   if (!block_map) {

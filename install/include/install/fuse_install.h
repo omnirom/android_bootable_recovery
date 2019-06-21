@@ -16,8 +16,15 @@
 
 #pragma once
 
+#include <string_view>
+
 #include "install/install.h"
 #include "recovery_ui/device.h"
 #include "recovery_ui/ui.h"
 
-InstallResult ApplyFromSdcard(Device* device, RecoveryUI* ui);
+// Starts FUSE with the package from |path| as the data source. And installs the package from
+// |FUSE_SIDELOAD_HOST_PATHNAME|. The |path| can point to the location of a package zip file or a
+// block map file with the prefix '@'; e.g. /sdcard/package.zip, @/cache/recovery/block.map.
+InstallResult InstallWithFuseFromPath(std::string_view path, RecoveryUI* ui);
+
+InstallResult ApplyFromSdcard(Device* device);
