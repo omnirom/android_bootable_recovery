@@ -128,6 +128,7 @@ cc_library_host_static {
     ],
 
     srcs: [
+        "build_info.cpp",
         "simulator_runtime.cpp",
         "target_files.cpp",
     ],
@@ -135,6 +136,7 @@ cc_library_host_static {
     static_libs: [
         "libupdater_core",
         "libfstab",
+        "libc++fs",
     ],
 
     target: {

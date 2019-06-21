@@ -22,9 +22,10 @@
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
 #include "updater/blockimg.h"
+#include "updater/build_info.h"
+#include "updater/dynamic_partitions.h"
 #include "updater/install.h"
 #include "updater/simulator_runtime.h"
-#include "updater/target_files.h"
 #include "updater/updater.h"
 
 int main(int argc, char** argv) {
@@ -34,7 +35,7 @@ int main(int argc, char** argv) {
   if (argc != 3 && argc != 4) {
     LOG(ERROR) << "unexpected number of arguments: " << argc << std::endl
                << "Usage: " << argv[0] << " <source_target-file> <ota_package>";
-    return 1;
+    return EXIT_FAILURE;
   }
 
   // TODO(xunchang) implement a commandline parser, e.g. it can take an oem property so that the
@@ -57,17 +58,21 @@ int main(int argc, char** argv) {
   Paths::Get().set_stash_directory_base(temp_stash_base.path);
 
   TemporaryFile cmd_pipe;
-
   TemporaryDir source_temp_dir;
-  TargetFiles source(source_target_file, source_temp_dir.path);
 
-  Updater updater(std::make_unique<SimulatorRuntime>(&source));
+  BuildInfo source_build_info(source_temp_dir.path);
+  if (!source_build_info.ParseTargetFile(source_target_file, false)) {
+    LOG(ERROR) << "Failed to parse the target file " << source_target_file;
+    return EXIT_FAILURE;
+  }
+
+  Updater updater(std::make_unique<SimulatorRuntime>(&source_build_info));
   if (!updater.Init(cmd_pipe.release(), package_name, false)) {
-    return 1;
+    return EXIT_FAILURE;
   }
 
   if (!updater.RunUpdate()) {
-    return 1;
+    return EXIT_FAILURE;
   }
 
   LOG(INFO) << "\nscript succeeded, result: " << updater.GetResult();
