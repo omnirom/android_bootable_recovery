@@ -44,6 +44,8 @@ class FuseDataProvider {
   virtual bool ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
                                     uint32_t start_block) const = 0;
 
+  virtual bool Valid() const = 0;
+
   virtual void Close() {}
 
  protected:
@@ -60,10 +62,13 @@ class FuseFileDataProvider : public FuseDataProvider {
  public:
   FuseFileDataProvider(const std::string& path, uint32_t block_size);
 
+  static std::unique_ptr<FuseDataProvider> CreateFromFile(const std::string& path,
+                                                          uint32_t block_size);
+
   bool ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
                             uint32_t start_block) const override;
 
-  bool Valid() const {
+  bool Valid() const override {
     return fd_ != -1;
   }
 
@@ -78,14 +83,20 @@ class FuseFileDataProvider : public FuseDataProvider {
 class FuseBlockDataProvider : public FuseDataProvider {
  public:
   // Constructs the fuse provider from the block map.
-  static std::unique_ptr<FuseBlockDataProvider> CreateFromBlockMap(
-      const std::string& block_map_path, uint32_t fuse_block_size);
+  static std::unique_ptr<FuseDataProvider> CreateFromBlockMap(const std::string& block_map_path,
+                                                              uint32_t fuse_block_size);
 
   RangeSet ranges() const {
     return ranges_;
   }
+
   bool ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
                             uint32_t start_block) const override;
+
+  bool Valid() const override {
+    return fd_ != -1;
+  }
+
   void Close() override;
 
  private:

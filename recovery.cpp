@@ -49,7 +49,7 @@
 #include "common.h"
 #include "fsck_unshare_blocks.h"
 #include "install/adb_install.h"
-#include "install/fuse_sdcard_install.h"
+#include "install/fuse_install.h"
 #include "install/install.h"
 #include "install/package.h"
 #include "install/wipe_data.h"
@@ -408,7 +408,7 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
           status = ApplyFromAdb(device, false /* rescue_mode */, &reboot_action);
         } else {
           adb = false;
-          status = ApplyFromSdcard(device, ui);
+          status = ApplyFromSdcard(device);
         }
 
         ui->Print("\nInstall from %s completed with status %d.\n", adb ? "ADB" : "SD card", status);
