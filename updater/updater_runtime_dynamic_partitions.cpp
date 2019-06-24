@@ -53,7 +53,7 @@ static bool UnmapPartitionOnDeviceMapper(const std::string& partition_name) {
     return true;
   }
   if (state == DmDeviceState::ACTIVE) {
-    return DestroyLogicalPartition(partition_name, kMapTimeout);
+    return DestroyLogicalPartition(partition_name);
   }
   LOG(ERROR) << "Unknown device mapper state: "
              << static_cast<std::underlying_type_t<DmDeviceState>>(state);
