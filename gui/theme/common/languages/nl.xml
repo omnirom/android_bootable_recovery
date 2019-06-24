@@ -387,7 +387,7 @@
 		<string name="set_language_btn">Taal instellen</string>
 		<string name="advanced_hdr">Geavanceerd</string>
 		<string name="copy_log_confirm">Logbestand naar SD-kaart kopiëren?</string>
-		<string name="copying_log">Logbestand naar SD-kaart kopiëren...</string>
+		<string name="copying_log">Log naar SD-kaart kopiëren...</string>
 		<string name="copy_log_complete">Kopiëren logbestand voltooid</string>
 		<string name="fix_context_btn">Contexten repareren</string>
 		<string name="part_sd_btn">SD-kaart partitioneren</string>
