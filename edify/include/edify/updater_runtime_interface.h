@@ -66,4 +66,9 @@ class UpdaterRuntimeInterface {
 
   // Runs tune2fs with arguments |args|.
   virtual int Tune2Fs(const std::vector<std::string>& args) const = 0;
+
+  // Dynamic partition related functions.
+  virtual bool MapPartitionOnDeviceMapper(const std::string& partition_name, std::string* path) = 0;
+  virtual bool UnmapPartitionOnDeviceMapper(const std::string& partition_name) = 0;
+  virtual bool UpdateDynamicPartitions(const std::string_view op_list_value) = 0;
 };

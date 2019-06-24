@@ -22,6 +22,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <unordered_set>
+
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/properties.h>
@@ -93,5 +95,34 @@ bool SimulatorRuntime::ReadFileToString(const std::string_view filename,
 bool SimulatorRuntime::WriteStringToFile(const std::string_view content,
                                          const std::string_view filename) const {
   LOG(INFO) << "SKip writing " << content.size() << " bytes to file " << filename;
+  return true;
+}
+
+bool SimulatorRuntime::MapPartitionOnDeviceMapper(const std::string& partition_name,
+                                                  std::string* path) {
+  *path = partition_name;
+  return true;
+}
+
+bool SimulatorRuntime::UnmapPartitionOnDeviceMapper(const std::string& partition_name) {
+  LOG(INFO) << "Skip unmapping " << partition_name;
+  return true;
+}
+
+bool SimulatorRuntime::UpdateDynamicPartitions(const std::string_view op_list_value) {
+  const std::unordered_set<std::string> commands{
+    "resize",    "remove",       "add",          "move",
+    "add_group", "resize_group", "remove_group", "remove_all_groups",
+  };
+
+  std::vector<std::string> lines = android::base::Split(std::string(op_list_value), "\n");
+  for (const auto& line : lines) {
+    if (line.empty() || line[0] == '#') continue;
+    auto tokens = android::base::Split(line, " ");
+    if (commands.find(tokens[0]) == commands.end()) {
+      LOG(ERROR) << "Unknown operation in op_list: " << line;
+      return false;
+    }
+  }
   return true;
 }
