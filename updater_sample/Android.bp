@@ -15,7 +15,6 @@
 android_app {
     name: "SystemUpdaterSample",
     sdk_version: "system_current",
-    privileged: true,
 
     srcs: ["src/**/*.java"],
 
