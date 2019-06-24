@@ -55,6 +55,9 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/data/nativetest/recovery_component_
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/data/nativetest64/recovery_component_test)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/testcases/recovery_component_test)
 
+$(call add-clean-step, find $(OUT_DIR) -type f -name "SystemUpdaterSample*" -print0 | xargs -0 rm -f)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/priv-app/SystemUpdaterSample)
+
 # ************************************************
 # NEWER CLEAN STEPS MUST BE AT THE END OF THE LIST
 # ************************************************
