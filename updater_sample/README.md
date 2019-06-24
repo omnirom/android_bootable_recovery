@@ -191,6 +191,8 @@ privileged system app, so it's granted the required permissions to access
     </privapp-permissions>
    ```
    to `frameworks/base/data/etc/privapp-permissions-platform.xml`
+4. Add `privileged: true` to SystemUpdaterSample
+   [building rule](https://android.googlesource.com/platform/bootable/recovery/+/refs/heads/master/updater_sample/Android.bp).
 5. Build sample app `make -j SystemUpdaterSample`.
 6. Build Android `make -j`
 7. [Flash the device](https://source.android.com/setup/build/running)
@@ -229,9 +231,9 @@ The commands are expected to be run from `$ANDROID_BUILD_TOP`.
 
 1. Build `make -j SystemUpdaterSample` and `make -j SystemUpdaterSampleTests`.
 2. Install app
-   `adb install $OUT/system/priv-app/SystemUpdaterSample/SystemUpdaterSample.apk`
+   `adb install $OUT/system/app/SystemUpdaterSample/SystemUpdaterSample.apk`
 3. Install tests
-   `adb install $OUT/testcases/SystemUpdaterSampleTests/SystemUpdaterSampleTests.apk`
+   `adb install $OUT/testcases/SystemUpdaterSampleTests/arm64/SystemUpdaterSampleTests.apk`
 4. Run tests
    `adb shell am instrument -w com.example.android.systemupdatersample.tests/android.support.test.runner.AndroidJUnitRunner`
 5. Run a test file
