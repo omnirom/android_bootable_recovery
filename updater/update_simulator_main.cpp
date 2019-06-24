@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
   RegisterBuiltins();
   RegisterInstallFunctions();
   RegisterBlockImageFunctions();
+  RegisterDynamicPartitionsFunctions();
 
   TemporaryFile temp_saved_source;
   TemporaryFile temp_last_command;

@@ -50,6 +50,10 @@ class SimulatorRuntime : public UpdaterRuntimeInterface {
   int RunProgram(const std::vector<std::string>& args, bool is_vfork) const override;
   int Tune2Fs(const std::vector<std::string>& args) const override;
 
+  bool MapPartitionOnDeviceMapper(const std::string& partition_name, std::string* path) override;
+  bool UnmapPartitionOnDeviceMapper(const std::string& partition_name) override;
+  bool UpdateDynamicPartitions(const std::string_view op_list_value) override;
+
  private:
   std::string FindBlockDeviceName(const std::string_view name) const override;
 
