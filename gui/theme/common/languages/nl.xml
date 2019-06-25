@@ -76,8 +76,8 @@
 		<string name="queue_hdr">Wachtrij</string>
 		<string name="zip_queue_count">%tw_zip_queue_count% van max. 10 bestanden in de wachtrij</string>
 		<string name="zip_queue_count_s">Bestand %tw_zip_queue_count% van 10:</string>
-		<string name="zip_warn1">Deze toepassing kan mogelijk onverenigbare</string>
-		<string name="zip_warn2">software installeren die het apparaat onbruikbaar maakt.</string>
+		<string name="zip_warn1">Deze toepassing kan onverenigbare software</string>
+		<string name="zip_warn2">installeren die het apparaat onbruikbaar maakt.</string>
 		<string name="zip_back_cancel">Klik op Terug om het toevoegen van het zipbestand te annuleren.</string>
 		<string name="zip_back_clear">Klik op Terug om de wachtrij leeg te maken.</string>
 		<string name="folder">Map:</string>
@@ -90,8 +90,8 @@
 		<string name="zip_queue">Wachtrij:</string>
 		<string name="options">Instellingen:</string>
 		<string name="swipe_confirm">   Bevestigen</string>
-		<string name="zip_add_btn">Meer zipbestanden toevoegen</string>
-		<string name="zip_clear_btn">Wachtrij zipbestanden leegmaken</string>
+		<string name="zip_add_btn">Zipbestanden toevoegen</string>
+		<string name="zip_clear_btn">Wachtrij leegmaken</string>
 		<string name="install_zip_count_hdr">Zipbestand %tw_zip_index% van %tw_zip_queue_count% installeren</string>
 		<string name="installing_zip_xml">Zipbestand wordt geïnstalleerd: %tw_file%</string>
 		<string name="failed">Mislukt</string>
@@ -130,7 +130,7 @@
 		<string name="uninstall_twrp_system_app_confirm">TWRP-app deïnstalleren van System?</string>
 		<string name="uninstalling_twrp_system_app">TWRP-app wordt gedeïnstalleerd van System...</string>
 		<string name="uninstall_twrp_system_app_complete">Deïnstallatie TWRP-app van System voltooid</string>
-		<string name="swipe_flash">Veeg om de installatie te bevestigen</string>
+		<string name="swipe_flash">Veeg om te installeren</string>
 		<string name="confirm_action">Actie bevestigen</string>
 		<string name="back_cancel">Klik op Terug om te annuleren.</string>
 		<string name="cancel_btn">Annuleren</string>
