@@ -26,11 +26,19 @@
 #define PERSONALIZATION_FBE_KEY "fbe-key"
 #define PERSONALIZATION_USER_GK_AUTH "user-gk-authentication"
 #define PERSONALISATION_SECDISCARDABLE "secdiscardable-transform"
+#define PERSONALISATION_CONTEXT "android-synthetic-password-personalization-context"
 
 void* PersonalizedHashBinary(const char* prefix, const char* key, const size_t key_size);
 
 std::string PersonalizedHash(const char* prefix, const char* key, const size_t key_size);
 std::string PersonalizedHash(const char* prefix, const std::string& Password);
+std::string PersonalizedHashSP800(const char* label, const char* context, const char* key, const size_t key_size);
 std::string HashPassword(const std::string& Password);
+
+template <class T>
+void endianswap(T *objp) {
+	unsigned char *memp = reinterpret_cast<unsigned char*>(objp);
+	std::reverse(memp, memp + sizeof(T));
+}
 
 #endif
