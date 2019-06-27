@@ -1263,7 +1263,7 @@ size_t ScreenRecoveryUI::ShowMenu(const std::vector<std::string>& headers,
     return initial_selection;
   }
 
-  return ShowMenu(CreateMenu(headers, items, initial_selection), menu_only, key_handler);
+  return ShowMenu(std::move(menu), menu_only, key_handler);
 }
 
 size_t ScreenRecoveryUI::ShowPromptWipeDataMenu(const std::vector<std::string>& backup_headers,
