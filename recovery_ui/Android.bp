@@ -23,6 +23,7 @@ cc_library {
     srcs: [
         "device.cpp",
         "screen_ui.cpp",
+        "stub_ui.cpp",
         "ui.cpp",
         "vr_ui.cpp",
         "wear_ui.cpp",
