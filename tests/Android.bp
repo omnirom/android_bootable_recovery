@@ -157,26 +157,22 @@ cc_test_host {
 
     defaults: [
         "recovery_test_defaults",
+        "libupdater_defaults",
     ],
 
     srcs: [
-        "unit/imgdiff_test.cpp",
+        "unit/host/*",
     ],
 
     static_libs: [
+        "libupdater_host",
+        "libupdater_core",
         "libimgdiff",
-        "libimgpatch",
-        "libotautil",
         "libbsdiff",
-        "libbspatch",
-        "libziparchive",
-        "libutils",
-        "libcrypto",
-        "libbrotli",
-        "libbz",
         "libdivsufsort64",
         "libdivsufsort",
-        "libz",
+        "libfstab",
+        "libc++fs",
     ],
 
     test_suites: ["general-tests"],
