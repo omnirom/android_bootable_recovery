@@ -62,11 +62,9 @@ class StubRecoveryUI : public RecoveryUI {
 
   // menu display
   size_t ShowMenu(const std::vector<std::string>& /* headers */,
-                  const std::vector<std::string>& /* items */, size_t initial_selection,
+                  const std::vector<std::string>& /* items */, size_t /* initial_selection */,
                   bool /* menu_only */,
-                  const std::function<int(int, bool)>& /* key_handler */) override {
-    return initial_selection;
-  }
+                  const std::function<int(int, bool)>& /* key_handler */) override;
 
   size_t ShowPromptWipeDataMenu(const std::vector<std::string>& /* backup_headers */,
                                 const std::vector<std::string>& /* backup_items */,
