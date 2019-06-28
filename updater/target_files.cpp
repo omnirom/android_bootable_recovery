@@ -193,10 +193,10 @@ bool TargetFile::GetBuildProps(std::map<std::string, std::string, std::less<>>* 
     "SYSTEM/build.prop",
     "VENDOR/build.prop",
     "PRODUCT/build.prop",
-    "PRODUCT_SERVICES/build.prop",
+    "SYSTEM_EXT/build.prop",
     "SYSTEM/vendor/build.prop",
     "SYSTEM/product/build.prop",
-    "SYSTEM/product_services/build.prop",
+    "SYSTEM/ext/build.prop",
     "ODM/build.prop",  // legacy
     "ODM/etc/build.prop",
     "VENDOR/odm/build.prop",  // legacy
