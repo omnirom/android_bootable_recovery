@@ -79,7 +79,7 @@ std::string BuildInfo::GetProperty(const std::string_view key,
     "ro.product.name"
   };
   const std::vector<std::string> source_order = {
-    "product", "product_services", "odm", "vendor", "system",
+    "product", "odm", "vendor", "system_ext", "system",
   };
   if (ro_product_props.find(key) != ro_product_props.end()) {
     std::string_view key_suffix(key);
