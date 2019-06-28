@@ -50,12 +50,11 @@ cc_defaults {
     },
 }
 
-// libapplypatch, libapplypatch_modes, libimgdiff, libimgpatch
+// libapplypatch, libapplypatch_modes, libimgpatch
 libapplypatch_static_libs = [
     "libapplypatch_modes",
     "libapplypatch",
     "libedify",
-    "libimgdiff",
     "libimgpatch",
     "libotautil",
     "libbsdiff",

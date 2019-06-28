@@ -114,10 +114,8 @@ cc_binary {
     ],
 }
 
-cc_library_static {
+cc_library_host_static {
     name: "libimgdiff",
-
-    host_supported: true,
 
     defaults: [
         "applypatch_defaults",
