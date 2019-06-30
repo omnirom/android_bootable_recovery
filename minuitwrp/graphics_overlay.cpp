@@ -324,7 +324,7 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.h = gr_fb.height;
             overlayL.alpha = 0xFF;
             // If this worked, life would have been so much easier
-            //switch (TW_ROTATION) {
+            //switch (gr_rotation) {
                 //case   0:  overlayL.flags = MDP_ROT_NOP; break;
                 //case  90:  overlayL.flags = MDP_ROT_90;  break;
                 //case 180:  overlayL.flags = MDP_ROT_180; break;
@@ -368,7 +368,7 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.h = height;
             overlayL.alpha = 0xFF;
             // If this worked, life would have been so much easier
-            //switch (TW_ROTATION) {
+            //switch (gr_rotation) {
                 //case   0:  overlayL.flags = MDP_ROT_NOP; break;
                 //case  90:  overlayL.flags = MDP_ROT_90;  break;
                 //case 180:  overlayL.flags = MDP_ROT_180; break;
@@ -403,7 +403,7 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayR.alpha = 0xFF;
             overlayR.flags = MDSS_MDP_RIGHT_MIXER;
             // If this worked, life would have been so much easier
-            //switch (TW_ROTATION) {
+            //switch (gr_rotation) {
                 //case   0:  overlayR.flags |= MDP_ROT_NOP; break;
                 //case  90:  overlayR.flags |= MDP_ROT_90;  break;
                 //case 180:  overlayR.flags |= MDP_ROT_180; break;
