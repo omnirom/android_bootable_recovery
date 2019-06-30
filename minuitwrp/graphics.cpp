@@ -31,6 +31,7 @@
 
 #include <time.h>
 
+#include <cutils/properties.h>
 #include <pixelflinger/pixelflinger.h>
 #include "../gui/placement.h"
 #include "minui.h"
@@ -59,6 +60,8 @@ GRSurface* gr_draw = NULL;
 static GGLContext *gr_context = 0;
 GGLSurface gr_mem_surface;
 static int gr_is_curr_clr_opaque = 0;
+
+unsigned int gr_rotation = 0;
 
 int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width, int placement, int scale)
 {
@@ -114,17 +117,20 @@ void gr_clip(int x, int y, int w, int h)
 {
     GGLContext *gl = gr_context;
 
-#if TW_ROTATION == 0
-    gl->scissor(gl, x, y, w, h);
-#elif TW_ROTATION == 90
-    gl->scissor(gl, gr_draw->width - y - h, x, h, w);
-#elif TW_ROTATION == 270
-    gl->scissor(gl, y, gr_draw->height - x - w, h, w);
-#else
-    int t_disp = gr_draw->height - y - h;
-    int l_disp = gr_draw->width - x - w;
-    gl->scissor(gl, l_disp, t_disp, w, h);
-#endif
+    switch (gr_rotation) {
+        case 90:
+            gl->scissor(gl, gr_draw->width - y - h, x, h, w);
+            break;
+        case 180:
+            gl->scissor(gl, gr_draw->width - x - w, gr_draw->height - y - h, w, h);
+            break;
+        case 270:
+            gl->scissor(gl, y, gr_draw->height - x - w, h, w);
+            break;
+        default:
+            gl->scissor(gl, x, y, w, h);
+            break;
+    }
     gl->enable(gl, GGL_SCISSOR_TEST);
 }
 
@@ -142,10 +148,10 @@ void gr_line(int x0, int y0, int x1, int y1, int width)
     GGLContext *gl = gr_context;
     int x0_disp, y0_disp, x1_disp, y1_disp;
 
-    x0_disp = ROTATION_X_DISP(x0, y0, gr_draw);
-    y0_disp = ROTATION_Y_DISP(x0, y0, gr_draw);
-    x1_disp = ROTATION_X_DISP(x1, y1, gr_draw);
-    y1_disp = ROTATION_Y_DISP(x1, y1, gr_draw);
+    x0_disp = ROTATION_X_DISP(x0, y0, gr_draw->width);
+    y0_disp = ROTATION_Y_DISP(x0, y0, gr_draw->height);
+    x1_disp = ROTATION_X_DISP(x1, y1, gr_draw->width);
+    y1_disp = ROTATION_Y_DISP(x1, y1, gr_draw->height);
 
     if(gr_is_curr_clr_opaque)
         gl->disable(gl, GGL_BLEND);
@@ -245,10 +251,10 @@ void gr_fill(int x, int y, int w, int h)
     if(gr_is_curr_clr_opaque)
         gl->disable(gl, GGL_BLEND);
 
-    x0_disp = ROTATION_X_DISP(x, y, gr_draw);
-    y0_disp = ROTATION_Y_DISP(x, y, gr_draw);
-    x1_disp = ROTATION_X_DISP(x + w, y + h, gr_draw);
-    y1_disp = ROTATION_Y_DISP(x + w, y + h, gr_draw);
+    x0_disp = ROTATION_X_DISP(x, y, gr_draw->width);
+    y0_disp = ROTATION_Y_DISP(x, y, gr_draw->height);
+    x1_disp = ROTATION_X_DISP(x + w, y + h, gr_draw->width);
+    y1_disp = ROTATION_Y_DISP(x + w, y + h, gr_draw->height);
     l_disp = std::min(x0_disp, x1_disp);
     r_disp = std::max(x0_disp, x1_disp);
     t_disp = std::min(y0_disp, y1_disp);
@@ -275,35 +281,36 @@ void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy)
     int dx0_disp, dy0_disp, dx1_disp, dy1_disp;
     int l_disp, r_disp, t_disp, b_disp;
 
-    // Figuring out display coordinates works for TW_ROTATION == 0 too,
+    // Figuring out display coordinates works for gr_rotation == 0 too,
     // and isn't as expensive as allocating and rotating another surface,
     // so we do this anyway.
-    dx0_disp = ROTATION_X_DISP(dx, dy, gr_draw);
-    dy0_disp = ROTATION_Y_DISP(dx, dy, gr_draw);
-    dx1_disp = ROTATION_X_DISP(dx + w, dy + h, gr_draw);
-    dy1_disp = ROTATION_Y_DISP(dx + w, dy + h, gr_draw);
+    dx0_disp = ROTATION_X_DISP(dx, dy, gr_draw->width);
+    dy0_disp = ROTATION_Y_DISP(dx, dy, gr_draw->height);
+    dx1_disp = ROTATION_X_DISP(dx + w, dy + h, gr_draw->width);
+    dy1_disp = ROTATION_Y_DISP(dx + w, dy + h, gr_draw->height);
     l_disp = std::min(dx0_disp, dx1_disp);
     r_disp = std::max(dx0_disp, dx1_disp);
     t_disp = std::min(dy0_disp, dy1_disp);
     b_disp = std::max(dy0_disp, dy1_disp);
 
-#if TW_ROTATION != 0
-    // Do not perform relatively expensive operation if not needed
     GGLSurface surface_rotated;
-    surface_rotated.version = sizeof(surface_rotated);
-    // Skip the **(TW_ROTATION == 0)** || (TW_ROTATION == 180) check
-    // because we are under a TW_ROTATION != 0 conditional compilation statement
-    surface_rotated.width   = (TW_ROTATION == 180) ? surface->width  : surface->height;
-    surface_rotated.height  = (TW_ROTATION == 180) ? surface->height : surface->width;
-    surface_rotated.stride  = surface_rotated.width;
-    surface_rotated.format  = surface->format;
-    surface_rotated.data    = (GGLubyte*) malloc(surface_rotated.stride * surface_rotated.height * 4);
-    surface_ROTATION_transform((gr_surface) &surface_rotated, (const gr_surface) surface, 4);
+    if (gr_rotation != 0) {
+        // Do not perform relatively expensive operation if not needed
+        surface_rotated.version = sizeof(surface_rotated);
+        // Skip the **(gr_rotation == 0)** || (gr_rotation == 180) check
+        // because we are under a gr_rotation != 0 conditional compilation statement
+        surface_rotated.width   = (gr_rotation == 180) ? surface->width  : surface->height;
+        surface_rotated.height  = (gr_rotation == 180) ? surface->height : surface->width;
+        surface_rotated.stride  = surface_rotated.width;
+        surface_rotated.format  = surface->format;
+        surface_rotated.data    = (GGLubyte*) malloc(surface_rotated.stride * surface_rotated.height * 4);
+        surface_ROTATION_transform((gr_surface) &surface_rotated, (const gr_surface) surface, 4);
 
-    gl->bindTexture(gl, &surface_rotated);
-#else
-    gl->bindTexture(gl, surface);
-#endif
+        gl->bindTexture(gl, &surface_rotated);
+    } else {
+        gl->bindTexture(gl, surface);
+    }
+
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
     gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
     gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
@@ -312,9 +319,8 @@ void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy)
     gl->recti(gl, l_disp, t_disp, r_disp, b_disp);
     gl->disable(gl, GGL_TEXTURE_2D);
 
-#if TW_ROTATION != 0
-    free(surface_rotated.data);
-#endif
+    if (gr_rotation != 0)
+        free(surface_rotated.data);
 
     if(surface->format == GGL_PIXEL_FORMAT_RGBX_8888)
         gl->enable(gl, GGL_BLEND);
@@ -354,6 +360,14 @@ static void get_memory_surface(GGLSurface* ms) {
 int gr_init(void)
 {
     gr_draw = NULL;
+
+    char gr_rotation_string[PROPERTY_VALUE_MAX];
+    char default_rotation[4];
+    snprintf(default_rotation, 4, "%d", TW_ROTATION);
+    property_get("persist.twrp.rotation", gr_rotation_string, default_rotation);
+    gr_rotation = atoi(gr_rotation_string);
+    if (!(gr_rotation == 90 || gr_rotation == 180 || gr_rotation == 270))
+        gr_rotation = 0;
 
 #ifdef MSM_BSP
     gr_backend = open_overlay();
@@ -431,14 +445,14 @@ void gr_exit(void)
 
 int gr_fb_width(void)
 {
-    return (TW_ROTATION == 0 || TW_ROTATION == 180) ?
+    return (gr_rotation == 0 || gr_rotation == 180) ?
             gr_draw->width  - 2 * overscan_offset_x :
             gr_draw->height - 2 * overscan_offset_y;
 }
 
 int gr_fb_height(void)
 {
-    return (TW_ROTATION == 0 || TW_ROTATION == 180) ?
+    return (gr_rotation == 0 || gr_rotation == 180) ?
             gr_draw->height - 2 * overscan_offset_y :
             gr_draw->width  - 2 * overscan_offset_x;
 }
