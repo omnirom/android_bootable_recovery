@@ -26,6 +26,7 @@
 struct fb_var_screeninfo vi;
 extern GGLSurface gr_mem_surface;
 extern GRSurface* gr_draw;
+extern unsigned int gr_rotation;
 
 int gr_save_screenshot(const char *dest)
 {
@@ -123,6 +124,20 @@ exit:
     return res;
 }
 
+int ROTATION_X_DISP(int x, int y, int w) {
+    return ((gr_rotation ==   0) ? (x) :
+            (gr_rotation ==  90) ? (w - (y) - 1) :
+            (gr_rotation == 180) ? (w - (x) - 1) :
+            (gr_rotation == 270) ? (y) : -1);
+}
+
+int ROTATION_Y_DISP(int x, int y, int h) {
+    return ((gr_rotation ==   0) ? (y) :
+            (gr_rotation ==  90) ? (x) :
+            (gr_rotation == 180) ? (h - (y) - 1) :
+            (gr_rotation == 270) ? (h - (x) - 1) : -1);
+}
+
 #define MATRIX_ELEMENT(matrix, row, col, row_size, elem_size) \
     (((uint8_t*) (matrix)) + (((row) * (elem_size)) * (row_size)) + ((col) * (elem_size)))
 
@@ -135,8 +150,8 @@ exit:
             /* input pointer from src->data */                                \
             const uint##bits_per_pixel##_t *ip;                               \
             /* Display coordinates (in dst) corresponding to (x, y) in src */ \
-            size_t x_disp = ROTATION_X_DISP(x, y, dst);                     \
-            size_t y_disp = ROTATION_Y_DISP(x, y, dst);                     \
+            size_t x_disp = ROTATION_X_DISP(x, y, dst->width);                \
+            size_t y_disp = ROTATION_Y_DISP(x, y, dst->height);               \
                                                                               \
             ip = (const uint##bits_per_pixel##_t*)                            \
                  MATRIX_ELEMENT(src->data, y, x,                              \
