@@ -63,7 +63,7 @@
 		<string name="install_select_file_hdr">Вибрати файл</string>
 		<string name="file_selector_folders_hdr">Папки</string>
 		<string name="select_file_from_storage">Виберіть файл з %tw_storage_display_name% (%tw_storage_free_size% МБ)</string>
-		<string name="adb_sideload_btn">ADB завантаження</string>
+		<string name="adb_sideload_btn">Завантаження ADB</string>
 		<string name="install_hdr">Встановлення</string>
 		<string name="select_storage_hdr">Обрати сховище</string>
 		<string name="select_storage_btn">Обрати сховище</string>
@@ -74,7 +74,7 @@
 		<string name="zip_warn2">файли і зламати прошивку.</string>
 		<string name="zip_back_cancel">Натисніть Назад, щоб скасувати додавання цього zip.</string>
 		<string name="zip_back_clear">Натисніть Назад, щоб очистити чергу.</string>
-		<string name="folder">Папка:</string>
+		<string name="folder">Тека:</string>
 		<string name="file">Файл:</string>
 		<string name="zip_sig_chk">Перевірка підпису Zip</string>
 		<string name="install_reboot_chk">Автоматичне перезавантаження після встановлення</string>
@@ -88,7 +88,7 @@
 		<string name="zip_clear_btn">Очистити чергу Zip</string>
 		<string name="install_zip_count_hdr">Встановлення Zip %tw_zip_index% з %tw_zip_queue_count%</string>
 		<string name="installing_zip_xml">Встановлення Zip: %tw_file%</string>
-		<string name="failed">Не вдалося</string>
+		<string name="failed">Невдача</string>
 		<string name="successful">Успішно</string>
 		<string name="install_failed">Помилка встановлення</string>
 		<string name="install_successful">Успішно встановлено</string>
@@ -259,7 +259,7 @@
 		<string name="usb_storage_hdr">USB накопичувач</string>
 		<string name="usb_stor_mnt1">USB накопичувач змонтований</string>
 		<string name="usb_stor_mnt2">Для безпечного від'єднання вашого пристрою</string>
-		<string name="usb_stor_mnt3">від компьютера виконайте розмонтування!</string>
+		<string name="usb_stor_mnt3">від комп'ютера виконайте розмонтування!</string>
 		<string name="unmount_btn">Розмонтувати</string>
 		<string name="rb_system_btn">Система</string>
 		<string name="rb_poweroff_btn">Вимкнення</string>
@@ -279,7 +279,7 @@
 		<string name="sys_rop5">Встановлення zip та робота через adb зможе</string>
 		<string name="sys_rop6">модифікувати системний розділ.</string>
 		<string name="sys_rol1">TWRP може залишити системний розділ незмінним, щоб зберегти можливість отримання офіційних оновлень.</string>
-		<string name="sys_rol2">TWRP не зможе попредити перезапис рекавері офіційною прошивкою та не буде пропонувати отримати привілеї суперкористувача.</string>
+		<string name="sys_rol2">TWRP не зможе попередити перезапис рекавері офіційною прошивкою та не буде пропонувати отримати привілеї суперкористувача.</string>
 		<string name="sys_rol3">Встановлення zip та робота через adb зможе модифікувати системний розділ.</string>
 		<string name="sys_ro_never_show_chk">Більше не показувати при завантаженні</string>
 		<string name="sys_ro_keep_ro_btn">Тільки читання</string>
@@ -290,7 +290,7 @@
 		<string name="settings_gen_s_hdr">Загальні</string>
 		<string name="settings_gen_btn">Загальні</string>
 		<string name="use_rmrf_chk">Використовувати rm -rf замість форматування</string>
-		<string name="use24clock_chk">Використовувати 24-часовий годинник</string>
+		<string name="use24clock_chk">Використовувати 24-годинний формат часу</string>
 		<string name="rev_navbar_chk">Віддзеркалити навігаційні клавіші</string>
 		<string name="simact_chk">Імітувати дії для тестування теми</string>
 		<string name="simfail_chk">Імітація відмови для дій</string>
@@ -307,7 +307,7 @@
 		<string name="sel_tz_list">Виберіть часовий пояс:</string>
 		<!-- Translator note: if it does not make sense to translate the locations or if it makes more sense,
 				feel free to change the location listed or drop the location entirely and just call it UTC -6 -->
-		<string name="utcm11">(UTC -11) о. Мидуей, Самоа</string>
+		<string name="utcm11">(UTC -11) о. Мідвей, Самоа</string>
 		<string name="utcm10">(UTC -10) Гаваї</string>
 		<string name="utcm9">(UTC -9) Аляска</string>
 		<string name="utcm8">(UTC -8) Тихоокеанський часовий пояс</string>
@@ -317,20 +317,20 @@
 		<string name="utcm4">(UTC -4) Атлантичний час (Канада), Каракас</string>
 		<string name="utcm3">(UTC -3) Бразилія, Буенос-Айрес</string>
 		<string name="utcm2">(UTC -2) Середньоатлантичний час</string>
-		<string name="utcm1">(UTC -1) Азорські о-ва, о-ва Зеленого мису</string>
+		<string name="utcm1">(UTC -1) Азорські о-ви, о-ви Зеленого мису</string>
 		<string name="utc0">(UTC  0) Лондон, Дублін, Лісабон</string>
 		<string name="utcp1">(UTC +1) Берлін, Брюсель, Париж</string>
 		<string name="utcp2">(UTC +2) Київ, Мінськ, Рига, Талін, Стамбул</string>
 		<string name="utcp3">(UTC +3) Москва, Санкт-Петербург, Волгоград, Багдад</string>
-		<string name="utcp4">(UTC +4) Баку, Ереван, Тбілісі, Абу-Дабі, Мускат</string>
+		<string name="utcp4">(UTC +4) Баку, Єреван, Тбілісі, Абу-Дабі, Мускат</string>
 		<string name="utcp5">(UTC +5) Ташкент, Ісламабад, Карачі</string>
 		<string name="utcp6">(UTC +6) Алмати, Астана, Дхака, Катеринбург</string>
 		<string name="utcp7">(UTC +7) Омськ, Новосибірськ, Бангкок, Джакарта, Ханой</string>
 		<string name="utcp8">(UTC +8) Красноярськ, Пекін, Улан-Батор, Іркутськ</string>
 		<string name="utcp9">(UTC +9) Осака, Саппоро, Токіо, Сеул, Якутськ</string>
 		<string name="utcp10">(UTC +10) Гуам, Канберра, Мельбурн, Сідней</string>
-		<string name="utcp11">(UTC +11) Владивосток, Сахалін, Соломоновы о-ва</string>
-		<string name="utcp12">(UTC +12) Магадан, Камчатка, Фіджи, Маршалови о-ва</string>
+		<string name="utcp11">(UTC +11) Владивосток, Сахалін, Соломонові о-ви</string>
+		<string name="utcp12">(UTC +12) Магадан, Камчатка, Фіджі, Маршалові о-ви</string>
 		<string name="sel_tz_offset">Вибір зміщення (як правило 0): %tw_time_zone_guioffset%</string>
 		<string name="tz_offset_none">Немає</string>
 		<string name="tz_offset_0">0</string>
@@ -364,8 +364,8 @@
 		<string name="copying_log">Копіювання логу на SD...</string>
 		<string name="copy_log_complete">Копіювання логу завершено</string>
 		<string name="fix_context_btn">Виправити контексти</string>
-		<string name="part_sd_btn">Розмітка SD Card</string>
-		<string name="part_sd_s_btn">SD Card</string>
+		<string name="part_sd_btn">Розмітка SD карти</string>
+		<string name="part_sd_s_btn">SD карта</string>
 		<string name="file_manager_btn">Файл менеджер</string>
 		<string name="language_hdr">Мова</string>
 		<string name="terminal_btn">Термінал</string>
@@ -376,7 +376,7 @@
 		<string name="injecting_twrp">Інтегрування TWRP...</string>
 		<string name="inject_twrp_complete">Інтегрування TWRP завершено</string>
 		<string name="swipe_to_confirm">Підтвердити</string>
-		<string name="part_sd_hdr">Розмітка SD Card</string>
+		<string name="part_sd_hdr">Розмітка SD карти</string>
 		<string name="invalid_partsd_sel">Виберіть знімний пристрій</string>
 		<string name="part_sd_lose">Всі ваші файли на SD карті будуть стерті!</string>
 		<string name="part_sd_undo">Це буде неможливо скасувати!</string>
@@ -404,14 +404,14 @@
 		<string name="swipe_to_unlock">Розблокувати</string>
 		<string name="swipe_unlock">   Разблокування</string>
 		<string name="fm_hdr">Файловий менеджер</string>
-		<string name="fm_sel_file">Вибір Файла або Папки</string>
-		<string name="fm_type_folder">Папка</string>
+		<string name="fm_sel_file">Вибір Файла або Теки</string>
+		<string name="fm_type_folder">Тека</string>
 		<string name="fm_type_file">Файл</string>
 		<string name="fm_choose_act">Вибір дії</string>
 		<string name="fm_selected">%tw_fm_type% обрано:</string>
 		<string name="fm_copy_btn">Копіювати</string>
 		<string name="fm_copy_file_btn">Копіювати Файл</string>
-		<string name="fm_copy_folder_btn">Копіювати Папку</string>
+		<string name="fm_copy_folder_btn">Копіювати Теку</string>
 		<string name="fm_copying">Копіювання</string>
 		<string name="fm_move_btn">Перемістити</string>
 		<string name="fm_moving">Переміщення</string>
@@ -422,10 +422,10 @@
 		<string name="fm_deleting">Видалення</string>
 		<string name="fm_rename_btn">Перейменувати</string>
 		<string name="fm_rename_file_btn">Перейменувати Файл</string>
-		<string name="fm_rename_folder_btn">Перейменувати Папку</string>
+		<string name="fm_rename_folder_btn">Перейменувати Теку</string>
 		<string name="fm_renaming">Перейменування</string>
-		<string name="fm_sel_dest">Обрати цільову Папку</string>
-		<string name="fm_sel_curr_folder">Обрати поточну Папку</string>
+		<string name="fm_sel_dest">Обрати цільову Теку</string>
+		<string name="fm_sel_curr_folder">Обрати поточну Теку</string>
 		<string name="fm_rename_hdr">Перейменувати</string>
 		<string name="fm_set_perms_hdr">Встановити дозволи</string>
 		<string name="fm_perms">Дозволи:</string>
@@ -439,8 +439,8 @@
 		<string name="term_hdr">Команди терміналу</string>
 		<string name="term_s_hdr">Термінал</string>
 		<string name="term_kill_btn">ВБИТИ</string>
-		<string name="term_sel_folder_hdr">Перейти до початкової папки</string>
-		<string name="adb_sideload_hdr">ADB завантаження</string>
+		<string name="term_sel_folder_hdr">Перейти до початкової теки</string>
+		<string name="adb_sideload_hdr">Завантаження ADB</string>
 		<string name="sideload_wipe_dalvik_chk">Очистка Dalvik Cache</string>
 		<string name="sideload_wipe_cache_chk">Очистка Cache</string>
 		<string name="swipe_to_sideload">Почати завантаження</string>
@@ -448,7 +448,7 @@
 		<string name="sideload_confirm">ADB завантаження</string>
 		<string name="sideload_usage">Приклад: adb sideload filename.zip</string>
 		<string name="sideload_complete">ADB завантаження завершено</string>
-		<string name="fix_contexts_hdr">Виправлення контекста SELinux</string>
+		<string name="fix_contexts_hdr">Виправлення контексту SELinux</string>
 		<string name="fix_contexts_note1">Примітка: Виправлення контексту рідко потребується.</string>
 		<string name="fix_contexts_note2">Виправлення SELinux контексту може призвести</string>
 		<string name="fix_contexts_note3">до того, що система не запуститься.</string>
@@ -465,13 +465,13 @@
 		<string name="full_selinux">Присутня повна підтримка SELinux.</string>
 		<string name="no_selinux">Відсутня підтримка SELinux (немає libselinux).</string>
 		<string name="mtp_enabled">MTP Увімкнено</string>
-		<string name="mtp_crash">Збій MTP: MTP не запущений при завантаженні.</string>
+		<string name="mtp_crash">Збій MTP: MTP не запущено при завантаженні.</string>
 		<string name="decrypt_success">Розшифровка виконана успішно з паролем за замовчуванням.</string>
 		<string name="unable_to_decrypt">Неможливо розшифрувати з паролем за замовчуванням. Можливо буде потрібно форматувати Data.</string>
 		<string name="generating_digest1" version="2">Генерація Digest</string>
 		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
 		<string name="generating_digest2" version="2"> * Генерація Digest...</string>
-		<string name="digest_created" version="2"> * Digest сгенеровано.</string>
+		<string name="digest_created" version="2"> * Digest згенеровано.</string>
 		<string name="digest_error" version="2"> * Digest Помилка!</string>
 		<string name="digest_compute_error" version="2"> * Помилка розрахунку Digest.</string>
 		<string name="current_date">(Поточна дата)</string>
@@ -485,34 +485,34 @@
 		<string name="no_space">У сховищі недостатньо місця.</string>
 		<string name="backup_started">[РОЗПОЧАТО РЕЗЕРВНЕ КОПІЮВАННЯ]</string>
 		<string name="backup_folder"> * Папка для резервної копії: {1}</string>
-		<string name="fail_backup_folder">Невдається створити папку для резервної копії.</string>
+		<string name="fail_backup_folder">Не вдається створити теку для резервної копії.</string>
 		<string name="avg_backup_fs">Середня швидкість копіювання файлів: {1} МБ/сек</string>
 		<string name="avg_backup_img">Середня швидкість копіювання образів: {1} МБ/сек</string>
 		<string name="total_backed_size">[{1} MБ ВСЬОГО ЗАРЕЗЕРВОВАНО]</string>
 		<string name="backup_completed">[КОПІЮВАННЯ ВИКОНАНО ЗА {1} СЕКУНД(И)]</string>
 		<string name="restore_started">[ВІДНОВЛЕННЯ РОЗПОЧАТО]</string>
-		<string name="restore_folder">Папка відновлення: '{1}'</string>
+		<string name="restore_folder">Тека відновлення: '{1}'</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} завершено за {2} секунд(и)]</string>
 		<string name="verifying_digest" version="2">Перевірка Digest</string>
-		<string name="skip_digest" version="2">Пропуск перевірки Digest згідно системним налаштуванням.</string>
-		<string name="calc_restore">Розрахування інформації о відновленні...</string>
+		<string name="skip_digest" version="2">Пропуск перевірки Digest згідно з системними налаштуваннями.</string>
+		<string name="calc_restore">Розрахування інформації про відновлення...</string>
 		<string name="restore_read_only">Неможливо відновити {1} -- змонтовано тільки для читання.</string>
-		<string name="restore_unable_locate">Невдається знайти розділ '{1}' для відновлення.</string>
+		<string name="restore_unable_locate">Не вдається знайти розділ '{1}' для відновлення.</string>
 		<string name="no_part_restore">Не обрані розділи для відновлення.</string>
 		<string name="restore_part_count">Відновлення розділу {1} ...</string>
 		<string name="total_restore_size">Загальний обсяг відновлення {1}MБ</string>
-		<string name="updating_system_details">Оновлення інформації о системі</string>
+		<string name="updating_system_details">Оновлення інформації про систему</string>
 		<string name="restore_completed">[ВІДНОВЛЕННЯ ЗАВЕРШЕНО ЗА {1} СЕКУНД(И)]</string>
 		<!-- {1} is the path we could not open, {2} is strerror output -->
 		<string name="error_opening_strerr">Помилка відкриття: '{1}' ({2})</string>
-		<string name="unable_locate_part_backup_name">Невдається знайти розділ для копії: '{1}'</string>
-		<string name="unable_find_part_path">Невдається знайти розділ за шляхом '{1}'</string>
-		<string name="update_part_details">Оновлення інформації о розділах...</string>
+		<string name="unable_locate_part_backup_name">Не вдається знайти розділ для копії: '{1}'</string>
+		<string name="unable_find_part_path">Не вдається знайти розділ за шляхом '{1}'</string>
+		<string name="update_part_details">Оновлення інформації про розділи...</string>
 		<string name="update_part_details_done">...готово</string>
-		<string name="wiping_dalvik">Очищення директорій Dalvik Cache...</string>
+		<string name="wiping_dalvik">Очищення директорій Dalvik та Cache...</string>
 		<string name="cleaned">Очищено: {1}...</string>
-		<string name="dalvik_done">-- Очищення директорій Dalvik Cache завершено!</string>
+		<string name="dalvik_done">-- Очищення директорій Dalvik та Cache завершено!</string>
 		<string name="no_andsec">Розділи android secure не знайдені.</string>
 		<string name="unable_to_locate">Не знайдено {1}.</string>
 		<string name="wiping_datamedia">Очищення внутрішньої пам'яті -- /data/media...</string>
@@ -521,7 +521,7 @@
 		<string name="unable_to_mount_storage">Не вдається змонтувати storage</string>
 		<string name="fail_decrypt">Не вдається розшифрувати data.</string>
 		<string name="no_crypto_support">Шифрування не підтримується у цій версії.</string>
-		<string name="decrypt_success_dev">Data успішно розшифрований, новий блочний пристрій: '{1}'</string>
+		<string name="decrypt_success_dev">Data успішно розшифровано, новий блочний пристрій: '{1}'</string>
 		<string name="done">Готово.</string>
 		<string name="start_partition_sd">Розмітка SD Card...</string>
 		<string name="partition_sd_locate">Не вдалось знайти пристрій для розмітки.</string>
@@ -541,7 +541,7 @@
 		<string name="flash_unable_locate">Не вдається знайти розділ '{1}' для прошивки.</string>
 		<string name="no_part_flash">Не обрані розділи для прошивки.</string>
 		<string name="too_many_flash">Забагато розділів для прошивки.</string>
-		<string name="invalid_flash">Вказан хибний розділ для прошивки.</string>
+		<string name="invalid_flash">Вказано хибний розділ для прошивки.</string>
 		<string name="flash_done">[ПРОШИВКУ РОЗДІЛУ ЗАВЕРШЕНО]</string>
 		<string name="wiping">Очистка {1}</string>
 		<string name="repair_not_exist">{1} не існує! Неможливо відновити!</string>
@@ -549,7 +549,7 @@
 		<string name="unable_repair">Неможливо відновити {1}.</string>
 		<string name="mount_data_footer">Не вдалось змонтувати /data, не знайдено крипто-ключ.</string>
 		<!-- {1} is the folder name that we could not create, {2} is strerror output -->
-		<string name="create_folder_strerr">Не вдалось створити папку '{1}' ({2}).</string>
+		<string name="create_folder_strerr">Не вдалось створити теку '{1}' ({2}).</string>
 		<!-- {1} is the folder name that we could not mount, {2} is strerror output -->
 		<string name="fail_mount">Не вдалось змонтувати '{1}' ({2})</string>
 		<!-- {1} is the folder name that we could not unmount, {2} is strerror output -->
@@ -558,9 +558,9 @@
 		<string name="repair_resize">Відновлення {1} перед розміткою.</string>
 		<string name="unable_resize">Не вдалось розмітити {1}.</string>
 		<string name="no_digest_found" version="2">Відсутній файл md5 для '{1}'. Будь ласка зніміть вибір з перевірки Digest при відновленні.</string>
-		<string name="digest_fail_match" version="2">Digest не співпадає для '{1}'.</string>
+		<string name="digest_fail_match" version="2">Digest не збігається для '{1}'.</string>
 		<string name="fail_decrypt_tar">Не вдалось розшифрувати tar-файл '{1}'</string>
-		<string name="format_data_msg">Можливо вам доведеться перезавантажити рекавері, щоб мати можливість доступу до /data знову.</string>
+		<string name="format_data_msg">Можливо вам доведеться перезавантажити рекавері, щоб знову мати можливість доступу до /data.</string>
 		<string name="format_data_err">Неможливо відформатувати, щоб видалити шифрування.</string>
 		<string name="formatting_using">Форматування {1} з використанням {2}...</string>
 		<string name="unable_to_wipe">Неможливо очистити {1}.</string>
@@ -573,10 +573,10 @@
 		<string name="datamedia_fs_restore">УВАГА: Ця резервна копія /data була зроблена з файловою системою {1}! Резервна копія може не завантажитись, якщо ви не повернетесь на {1}.</string>
 		<string name="restoring">Відновлення {1}...</string>
 		<string name="restoring_hdr">Відновлення</string>
-		<string name="recreate_folder_err">Неможливо створити папку {1} наново.</string>
+		<string name="recreate_folder_err">Неможливо створити теку {1} наново.</string>
 		<string name="img_size_err">Розмір образу більший за цільовий пристрій</string>
 		<string name="flashing">Прошивка {1}...</string>
-		<string name="backup_folder_set">Для резервного копіювавння встановлена папка '{1}'</string>
+		<string name="backup_folder_set">Для резервного копіювавння встановлена тека '{1}'</string>
 		<string name="locate_backup_err">Не вдається знайти резервну копію '{1}'</string>
 		<string name="set_restore_opt">Установки опцій відновлення: '{1}':</string>
 		<string name="digest_check_skip" version="2">Пропуск перевірки Digest увімкнено</string>
@@ -602,7 +602,7 @@
 		<string name="compression_on">Стискання увімкнено</string>
 		<string name="digest_off" version="2">Генерація Digest вимкнена</string>
 		<string name="backup_fail">Помилка резервного копіювання</string>
-		<string name="backup_clean">Помилка резервного копіювання. Очистка папки резервного копіювання.</string>
+		<string name="backup_clean">Помилка резервного копіювання. Очистка теки резервного копіювання.</string>
 		<string name="running_recovery_commands">Запуск команд Recovery</string>
 		<string name="recovery_commands_complete">Команди Recovery виконані</string>
 		<string name="running_ors">Виконання OpenRecoveryScript</string>
@@ -614,8 +614,8 @@
 		<string name="verify_zip_done">Підпис Zip успішно перевірено.</string>
 		<string name="zip_corrupt">Zip файл пошкоджено!</string>
 		<string name="no_digest" version="2">Пропуск перевірки Digest: не знайдено MD5 файл</string>
-		<string name="digest_fail" version="2">Digest не співпадає</string>
-		<string name="digest_match" version="2">Digest співпадає</string>
+		<string name="digest_fail" version="2">Digest не збігається</string>
+		<string name="digest_match" version="2">Digest збігається</string>
 		<string name="pid_signal">{1} процес завершився з кодом: {2}</string>
 		<string name="pid_error">{1} процес завершився з ПОМИЛКОЮ: {2}</string>
 		<string name="install_dumlock">Встановлення HTC Dumlock у систему...</string>
@@ -648,11 +648,11 @@
 		<string name="curr_date">(Поточна дата)</string>
 		<string name="backup_name_len">Ім'я резервної копії надто довге.</string>
 		<string name="backup_name_invalid">Ім'я резервної копії '{1}' має недопустимі символи: '{1}'</string>
-		<string name="no_real_sdcard">Цей пристрій не має реальної SD карти! Відміна!</string>
+		<string name="no_real_sdcard">Цей пристрій не має справжньої SD карти! Відміна!</string>
 		<string name="cancel_sideload">Відміна ADB завантаження...</string>
 		<string name="change_fs_err">Помилка зміни файлової системи.</string>
-		<string name="theme_ver_err">Версія теми не збігається з версією TWRP. Використовується тема за замовченням.</string>
-		<string name="install_reboot">Пристрій буде перезавантажений через 5 секунд.</string>
+		<string name="theme_ver_err">Версія теми не збігається з версією TWRP. Використовується тема за замовчуванням.</string>
+		<string name="install_reboot">Пристрій буде перезавантажено через 5 секунд.</string>
 		<string name="up_a_level">(на рівень уверх)</string>
 		<string name="adbbackup_error">Помилка ADB копіювання. Вихід..."</string>
 		<string name="adbbackup_control_error">Не вдається запис у adb канал контролю</string>
