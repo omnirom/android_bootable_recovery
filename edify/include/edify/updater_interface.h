@@ -44,4 +44,5 @@ class UpdaterInterface {
   virtual ZipArchiveHandle GetPackageHandle() const = 0;
   virtual std::string GetResult() const = 0;
   virtual uint8_t* GetMappedPackageAddress() const = 0;
+  virtual size_t GetMappedPackageLength() const = 0;
 };

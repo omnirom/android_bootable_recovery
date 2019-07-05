@@ -62,9 +62,11 @@ class Updater : public UpdaterInterface {
   std::string GetResult() const override {
     return result_;
   }
-
   uint8_t* GetMappedPackageAddress() const override {
     return mapped_package_.addr;
+  }
+  size_t GetMappedPackageLength() const override {
+    return mapped_package_.length;
   }
 
  private:
