@@ -41,7 +41,6 @@
 #include "adb.h"
 #include "adb_unique_fd.h"
 #include "adb_utils.h"
-#include "fdevent.h"
 #include "fuse_adb_provider.h"
 #include "fuse_sideload.h"
 #include "minadbd_types.h"
