@@ -70,7 +70,6 @@ RecoveryUI::RecoveryUI()
       key_down_count(0),
       enable_reboot(true),
       consecutive_power_keys(0),
-      last_key(-1),
       has_power_key(false),
       has_up_key(false),
       has_down_key(false),
@@ -585,7 +584,6 @@ RecoveryUI::KeyAction RecoveryUI::CheckKey(int key, bool is_long_press) {
     consecutive_power_keys = 0;
   }
 
-  last_key = key;
   return (IsTextVisible() || screensaver_state_ == ScreensaverState::OFF) ? ENQUEUE : IGNORE;
 }
 
