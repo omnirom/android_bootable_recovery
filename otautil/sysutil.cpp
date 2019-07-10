@@ -38,7 +38,7 @@
 BlockMapData BlockMapData::ParseBlockMapFile(const std::string& block_map_path) {
   std::string content;
   if (!android::base::ReadFileToString(block_map_path, &content)) {
-    LOG(ERROR) << "Failed to read " << block_map_path;
+    PLOG(ERROR) << "Failed to read " << block_map_path;
     return {};
   }
 
