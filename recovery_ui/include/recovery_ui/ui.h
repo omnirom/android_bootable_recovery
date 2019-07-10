@@ -230,6 +230,7 @@ class RecoveryUI {
 
   bool InitScreensaver();
   void SetScreensaverState(ScreensaverState state);
+
   // Key event input queue
   std::mutex key_queue_mutex;
   std::condition_variable key_queue_cond;
@@ -243,7 +244,6 @@ class RecoveryUI {
   int rel_sum;
 
   int consecutive_power_keys;
-  int last_key;
 
   bool has_power_key;
   bool has_up_key;
