@@ -128,11 +128,12 @@ static bool StartInstallPackageFuse(std::string_view path) {
 
   constexpr auto FUSE_BLOCK_SIZE = 65536;
   bool is_block_map = android::base::ConsumePrefix(&path, "@");
-  auto file_data_reader =
+  auto fuse_data_provider =
       is_block_map ? FuseBlockDataProvider::CreateFromBlockMap(std::string(path), FUSE_BLOCK_SIZE)
                    : FuseFileDataProvider::CreateFromFile(std::string(path), FUSE_BLOCK_SIZE);
 
-  if (!file_data_reader->Valid()) {
+  if (!fuse_data_provider || !fuse_data_provider->Valid()) {
+    LOG(ERROR) << "Failed to create fuse data provider.";
     return false;
   }
 
@@ -142,7 +143,7 @@ static bool StartInstallPackageFuse(std::string_view path) {
     umount2(SDCARD_ROOT, MNT_DETACH);
   }
 
-  return run_fuse_sideload(std::move(file_data_reader)) == 0;
+  return run_fuse_sideload(std::move(fuse_data_provider)) == 0;
 }
 
 InstallResult InstallWithFuseFromPath(std::string_view path, RecoveryUI* ui) {
