@@ -367,11 +367,13 @@ InstallResult ApplyFromAdb(Device* device, bool rescue_mode, Device::BuiltinActi
         "\n\nNow send the package you want to apply\n"
         "to the device with \"adb sideload <filename>\"...\n");
   } else {
-    ui->Print("\n\nWaiting for rescue commands...\n");
     command_map.emplace(MinadbdCommand::kWipeData, [&device]() {
       bool result = WipeData(device, false);
       return std::make_pair(result, true);
     });
+    command_map.emplace(MinadbdCommand::kNoOp, []() { return std::make_pair(true, true); });
+
+    ui->Print("\n\nWaiting for rescue commands...\n");
   }
 
   CreateMinadbdServiceAndExecuteCommands(ui, command_map, rescue_mode);
