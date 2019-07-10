@@ -189,6 +189,14 @@ static void RescueGetpropHostService(unique_fd sfd, const std::string& prop) {
   if (!android::base::WriteFully(sfd, result.data(), result.size())) {
     exit(kMinadbdHostSocketIOError);
   }
+
+  // Send heartbeat signal to keep the rescue service alive.
+  if (!WriteCommandToFd(MinadbdCommand::kNoOp, minadbd_socket)) {
+    exit(kMinadbdSocketIOError);
+  }
+  if (MinadbdCommandStatus status; !WaitForCommandStatus(minadbd_socket, &status)) {
+    exit(kMinadbdMessageFormatError);
+  }
 }
 
 // Reboots into the given target. We don't reboot directly from minadbd, but going through recovery
