@@ -626,7 +626,7 @@
 		<string name="backup_storage_warning">Van back-ups van {1} zijn uitgezonderd de bestanden in interne opslag, zoals plaatjes en downloads.</string>
 		<string name="backing">Wordt geback-upt</string>
 		<string name="backup_size">Back-upgrootte van '{1}' bedraagt 0 bytes.</string>
-		<string name="datamedia_fs_restore">WAARSCHUWING: Deze back-up van /data is gemaakt met het {1}-bestandssysteem! Mogelijk start dee back-up pas weer op wanneer er naar {1} wordt teruggeschakeld..</string>
+		<string name="datamedia_fs_restore">WAARSCHUWING: Deze back-up van /data is gemaakt met het {1}-bestandssysteem! Mogelijk start de back-up pas weer op wanneer er naar {1} wordt teruggeschakeld..</string>
 		<string name="restoring">{1} wordt hersteld...</string>
 		<string name="restoring_hdr">Wordt hersteld</string>
 		<string name="recreate_folder_err">Kan map {1} niet opnieuw maken.</string>
