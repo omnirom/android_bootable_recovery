@@ -168,35 +168,3 @@ cc_binary_host {
         "libz",
     ],
 }
-
-cc_library_static {
-    name: "libimgpatch",
-
-    // The host module is for recovery_host_test (Linux only).
-    host_supported: true,
-
-    defaults: [
-        "applypatch_defaults",
-    ],
-
-    srcs: [
-        "bspatch.cpp",
-        "imgpatch.cpp",
-    ],
-
-    static_libs: [
-        "libbase",
-        "libbspatch",
-        "libbz",
-        "libcrypto",
-        "libedify",
-        "libotautil",
-        "libz",
-    ],
-
-    target: {
-        darwin: {
-            enabled: false,
-        },
-    },
-}
