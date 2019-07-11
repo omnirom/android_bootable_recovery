@@ -50,12 +50,11 @@ cc_defaults {
     },
 }
 
-// libapplypatch, libapplypatch_modes, libimgpatch
+// libapplypatch, libapplypatch_modes
 libapplypatch_static_libs = [
     "libapplypatch_modes",
     "libapplypatch",
     "libedify",
-    "libimgpatch",
     "libotautil",
     "libbsdiff",
     "libbspatch",
@@ -180,7 +179,7 @@ cc_test_host {
 
     target: {
         darwin: {
-            // libimgdiff is not available on the Mac.
+            // libapplypatch in "libupdater_defaults" is not available on the Mac.
             enabled: false,
         },
     },
