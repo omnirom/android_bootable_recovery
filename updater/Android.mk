@@ -112,8 +112,8 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 include $(BUILD_EXECUTABLE)
 
-
-# update_host_simulator (static executable)
+# TODO(xunchang) move to bp file
+# update_host_simulator (host executable)
 # ===============================
 include $(CLEAR_VARS)
 
@@ -133,21 +133,10 @@ LOCAL_CFLAGS := \
 LOCAL_STATIC_LIBRARIES := \
     libupdater_host \
     libupdater_core \
-    $(TARGET_RECOVERY_UPDATER_HOST_LIBS) \
-    $(TARGET_RECOVERY_UPDATER_HOST_EXTRA_LIBS) \
     $(updater_common_static_libraries) \
     libfstab \
     libc++fs
 
 LOCAL_MODULE_CLASS := EXECUTABLES
-inc := $(call local-generated-sources-dir)/register.inc
-
-$(inc) : libs := $(TARGET_RECOVERY_UPDATER_HOST_LIBS)
-$(inc) :
-	$(call generate-register-inc,$@,$(libs))
-
-LOCAL_GENERATED_SOURCES := $(inc)
-
-inc :=
 
 include $(BUILD_HOST_EXECUTABLE)
