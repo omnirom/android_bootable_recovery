@@ -736,11 +736,14 @@ void DataManager::SetDefaultValues()
 #else
 	mConst.SetValue(TW_SDEXT_DISABLE_EXT4, "0");
 #endif
-
-#ifdef TW_HAS_NO_BOOT_PARTITION
-	mPersist.SetValue("tw_backup_list", "/system;/data;");
+#ifdef TW_DEFAULT_BACKUP_LIST
+	mPersist.SetValue("tw_backup_list", EXPAND(TW_DEFAULT_BACKUP_LIST));
 #else
+  #ifdef TW_HAS_NO_BOOT_PARTITION
+	mPersist.SetValue("tw_backup_list", "/system;/data;");
+  #else
 	mPersist.SetValue("tw_backup_list", "/system;/data;/boot;");
+  #endif
 #endif
 	mConst.SetValue(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE);
 	mData.SetValue(TW_BACKUP_NAME, "(Auto Generate)");

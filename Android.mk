@@ -398,6 +398,9 @@ endif
 ifneq ($(TW_CLOCK_OFFSET),)
 	LOCAL_CFLAGS += -DTW_CLOCK_OFFSET=$(TW_CLOCK_OFFSET)
 endif
+ifneq ($(TW_DEFAULT_BACKUP_LIST),)
+	LOCAL_CFLAGS += -DTW_DEFAULT_BACKUP_LIST=$(TW_DEFAULT_BACKUP_LIST)
+endif
 TWRP_REQUIRED_MODULES += \
     dump_image \
     erase_image \
