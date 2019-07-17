@@ -51,9 +51,18 @@ class BuildInfo {
   // Parses the given target-file, initializes the build properties and extracts the images.
   bool ParseTargetFile(const std::string_view target_file_path, bool extracted_input);
 
+  std::string GetOemSettings() const {
+    return oem_settings_;
+  }
+  void SetOemSettings(const std::string_view oem_settings) {
+    oem_settings_ = oem_settings;
+  }
+
  private:
   // A map to store the system properties during simulation.
   std::map<std::string, std::string, std::less<>> build_props_;
+  // A file that contains the oem properties.
+  std::string oem_settings_;
   // A map from the blockdev_name to the FakeBlockDevice object, which contains the path to the
   // temporary file.
   std::map<std::string, FakeBlockDevice, std::less<>> blockdev_map_;
