@@ -87,7 +87,11 @@ int SimulatorRuntime::WipeBlockDevice(const std::string_view filename, size_t /*
 }
 
 bool SimulatorRuntime::ReadFileToString(const std::string_view filename,
-                                        std::string* /* content */) const {
+                                        std::string* content) const {
+  if (android::base::EndsWith(filename, "oem.prop")) {
+    return android::base::ReadFileToString(source_->GetOemSettings(), content);
+  }
+
   LOG(INFO) << "SKip reading filename " << filename;
   return true;
 }
