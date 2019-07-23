@@ -673,6 +673,19 @@ void ScreenRecoveryUI::SetTitle(const std::vector<std::string>& lines) {
   title_lines_ = lines;
 }
 
+std::vector<std::string> ScreenRecoveryUI::GetMenuHelpMessage() const {
+  // clang-format off
+  static std::vector<std::string> REGULAR_HELP{
+    "Use volume up/down and power.",
+  };
+  static std::vector<std::string> LONG_PRESS_HELP{
+    "Any button cycles highlight.",
+    "Long-press activates.",
+  };
+  // clang-format on
+  return HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP;
+}
+
 // Redraws everything on the screen. Does not flip pages. Should only be called with updateMutex
 // locked.
 void ScreenRecoveryUI::draw_screen_locked() {
@@ -685,16 +698,7 @@ void ScreenRecoveryUI::draw_screen_locked() {
   gr_color(0, 0, 0, 255);
   gr_clear();
 
-  // clang-format off
-  static std::vector<std::string> REGULAR_HELP{
-    "Use volume up/down and power.",
-  };
-  static std::vector<std::string> LONG_PRESS_HELP{
-    "Any button cycles highlight.",
-    "Long-press activates.",
-  };
-  // clang-format on
-  draw_menu_and_text_buffer_locked(HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP);
+  draw_menu_and_text_buffer_locked(GetMenuHelpMessage());
 }
 
 // Draws the menu and text buffer on the screen. Should only be called with updateMutex locked.

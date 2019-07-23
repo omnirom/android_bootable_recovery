@@ -528,7 +528,7 @@ bool RecoveryUI::IsLongPress() {
   return result;
 }
 
-bool RecoveryUI::HasThreeButtons() {
+bool RecoveryUI::HasThreeButtons() const {
   return has_power_key && has_up_key && has_down_key;
 }
 
