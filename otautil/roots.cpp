@@ -51,6 +51,8 @@ using android::fs_mgr::ReadDefaultFstab;
 
 static Fstab fstab;
 
+constexpr const char* CACHE_ROOT = "/cache";
+
 void load_volume_table() {
   if (!ReadDefaultFstab(&fstab)) {
     LOG(ERROR) << "Failed to read default fstab";
@@ -274,4 +276,10 @@ int setup_install_mounts() {
     }
   }
   return 0;
+}
+
+bool HasCache() {
+  CHECK(!fstab.empty());
+  static bool has_cache = volume_for_mount_point(CACHE_ROOT) != nullptr;
+  return has_cache;
 }
