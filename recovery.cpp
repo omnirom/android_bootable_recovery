@@ -69,10 +69,6 @@ static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";
 
 static constexpr const char* CACHE_ROOT = "/cache";
 
-// We define RECOVERY_API_VERSION in Android.mk, which will be picked up by build system and packed
-// into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
-static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
-
 static bool save_current_log = false;
 std::string stage;
 const char* reason = nullptr;
@@ -106,7 +102,7 @@ const char* reason = nullptr;
  *    -- after this, rebooting will restart the erase --
  * 5. erase_volume() reformats /data
  * 6. erase_volume() reformats /cache
- * 7. finish_recovery() erases BCB
+ * 7. FinishRecovery() erases BCB
  *    -- after this, rebooting will restart the main system --
  * 8. main() calls reboot() to boot main system
  *
@@ -118,25 +114,25 @@ const char* reason = nullptr;
  *    -- after this, rebooting will attempt to reinstall the update --
  * 5. InstallPackage() attempts to install the update
  *    NOTE: the package install must itself be restartable from any point
- * 6. finish_recovery() erases BCB
+ * 6. FinishRecovery() erases BCB
  *    -- after this, rebooting will (try to) restart the main system --
  * 7. ** if install failed **
  *    7a. PromptAndWait() shows an error icon and waits for the user
  *    7b. the user reboots (pulling the battery, etc) into the main system
  */
 
-bool is_ro_debuggable() {
-    return android::base::GetBoolProperty("ro.debuggable", false);
+static bool IsRoDebuggable() {
+  return android::base::GetBoolProperty("ro.debuggable", false);
 }
 
 // Clear the recovery command and prepare to boot a (hopefully working) system,
 // copy our log file to cache as well (for the system to read). This function is
 // idempotent: call it as many times as you like.
-static void finish_recovery() {
+static void FinishRecovery(RecoveryUI* ui) {
   std::string locale = ui->GetLocale();
   // Save the locale to cache, so if recovery is next started up without a '--locale' argument
   // (e.g., directly from the bootloader) it will use the last-known locale.
-  if (!locale.empty() && has_cache) {
+  if (!locale.empty() && HasCache()) {
     LOG(INFO) << "Saving locale \"" << locale << "\"";
     if (ensure_path_mounted(LOCALE_FILE) != 0) {
       LOG(ERROR) << "Failed to mount " << LOCALE_FILE;
@@ -145,7 +141,7 @@ static void finish_recovery() {
     }
   }
 
-  copy_logs(save_current_log, has_cache, sehandle);
+  copy_logs(save_current_log);
 
   // Reset to normal system boot so recovery won't cycle indefinitely.
   std::string err;
@@ -154,7 +150,7 @@ static void finish_recovery() {
   }
 
   // Remove the command file, so recovery won't repeat indefinitely.
-  if (has_cache) {
+  if (HasCache()) {
     if (ensure_path_mounted(COMMAND_FILE) != 0 || (unlink(COMMAND_FILE) && errno != ENOENT)) {
       LOG(WARNING) << "Can't unlink " << COMMAND_FILE;
     }
@@ -168,7 +164,7 @@ static bool yes_no(Device* device, const char* question1, const char* question2)
   std::vector<std::string> headers{ question1, question2 };
   std::vector<std::string> items{ " No", " Yes" };
 
-  size_t chosen_item = ui->ShowMenu(
+  size_t chosen_item = device->GetUI()->ShowMenu(
       headers, items, 0, true,
       std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
   return (chosen_item == 1);
@@ -178,7 +174,7 @@ static bool ask_to_wipe_data(Device* device) {
   std::vector<std::string> headers{ "Wipe all user data?", "  THIS CAN NOT BE UNDONE!" };
   std::vector<std::string> items{ " Cancel", " Factory data reset" };
 
-  size_t chosen_item = ui->ShowPromptWipeDataConfirmationMenu(
+  size_t chosen_item = device->GetUI()->ShowPromptWipeDataConfirmationMenu(
       headers, items,
       std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
@@ -200,7 +196,7 @@ static InstallResult prompt_and_wipe_data(Device* device) {
   };
   // clang-format on
   for (;;) {
-    size_t chosen_item = ui->ShowPromptWipeDataMenu(
+    size_t chosen_item = device->GetUI()->ShowPromptWipeDataMenu(
         wipe_data_menu_headers, wipe_data_menu_items,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
     // If ShowMenu() returned RecoveryUI::KeyError::INTERRUPTED, WaitKey() was interrupted.
@@ -224,7 +220,7 @@ static InstallResult prompt_and_wipe_data(Device* device) {
 
 static void choose_recovery_file(Device* device) {
   std::vector<std::string> entries;
-  if (has_cache) {
+  if (HasCache()) {
     for (int i = 0; i < KEEP_LOG_COUNT; i++) {
       auto add_to_entries = [&](const char* filename) {
         std::string log_file(filename);
@@ -258,7 +254,7 @@ static void choose_recovery_file(Device* device) {
 
   size_t chosen_item = 0;
   while (true) {
-    chosen_item = ui->ShowMenu(
+    chosen_item = device->GetUI()->ShowMenu(
         headers, entries, chosen_item, true,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
 
@@ -268,11 +264,11 @@ static void choose_recovery_file(Device* device) {
     }
     if (entries[chosen_item] == "Back") break;
 
-    ui->ShowFile(entries[chosen_item]);
+    device->GetUI()->ShowFile(entries[chosen_item]);
   }
 }
 
-static void run_graphics_test() {
+static void run_graphics_test(RecoveryUI* ui) {
   // Switch to graphics screen.
   ui->ShowText(false);
 
@@ -319,8 +315,9 @@ static void run_graphics_test() {
 // as REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER. Returning NO_ACTION means to take the default, which
 // is to reboot or shutdown depending on if the --shutdown_after flag was passed to recovery.
 static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status) {
+  auto ui = device->GetUI();
   for (;;) {
-    finish_recovery();
+    FinishRecovery(ui);
     switch (status) {
       case INSTALL_SUCCESS:
       case INSTALL_NONE:
@@ -421,7 +418,7 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
         if (status != INSTALL_SUCCESS) {
           ui->SetBackground(RecoveryUI::ERROR);
           ui->Print("Installation aborted.\n");
-          copy_logs(save_current_log, has_cache, sehandle);
+          copy_logs(save_current_log);
         } else if (!ui->IsTextVisible()) {
           return Device::NO_ACTION;  // reboot if logs aren't visible
         }
@@ -433,7 +430,7 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
         break;
 
       case Device::RUN_GRAPHICS_TEST:
-        run_graphics_test();
+        run_graphics_test(ui);
         break;
 
       case Device::RUN_LOCALE_TEST: {
@@ -680,6 +677,8 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   printf("stage is [%s]\n", stage.c_str());
   printf("reason is [%s]\n", reason);
 
+  auto ui = device->GetUI();
+
   // Set background string to "installing security update" for security update,
   // otherwise set it to "installing system update".
   ui->SetSystemUpdateText(security_update);
@@ -705,8 +704,6 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
 
   property_list(print_property, nullptr);
   printf("\n");
-
-  ui->Print("Supported API: %d\n", kRecoveryApiVersion);
 
   InstallResult status = INSTALL_SUCCESS;
   // next_action indicates the next target to reboot into upon finishing the install. It could be
@@ -768,7 +765,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         // RETRY_LIMIT times before we abandon this OTA update.
         static constexpr int RETRY_LIMIT = 4;
         if (status == INSTALL_RETRY && retry_count < RETRY_LIMIT) {
-          copy_logs(save_current_log, has_cache, sehandle);
+          copy_logs(save_current_log);
           retry_count += 1;
           set_retry_bootloader_message(retry_count, args);
           // Print retry count on screen.
@@ -786,7 +783,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         // If this is an eng or userdebug build, then automatically
         // turn the text display on if the script fails so the error
         // message is visible.
-        if (is_ro_debuggable()) {
+        if (IsRoDebuggable()) {
           ui->ShowText(true);
         }
       }
@@ -843,7 +840,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     // If this is an eng or userdebug build, automatically turn on the text display if no command
     // is specified. Note that this should be called before setting the background to avoid
     // flickering the background image.
-    if (is_ro_debuggable()) {
+    if (IsRoDebuggable()) {
       ui->ShowText(true);
     }
     status = INSTALL_NONE;  // No command specified
@@ -876,7 +873,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   }
 
   // Save logs and clean up before rebooting or shutting down.
-  finish_recovery();
+  FinishRecovery(ui);
 
   return next_action;
 }
