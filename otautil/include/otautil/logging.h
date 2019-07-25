@@ -53,7 +53,7 @@ void rotate_logs(const char* last_log_file, const char* last_kmsg_file);
 void check_and_fclose(FILE* fp, const std::string& name);
 
 void copy_log_file_to_pmsg(const std::string& source, const std::string& destination);
-void copy_logs(bool save_current_log, bool has_cache, const selabel_handle* sehandle);
+void copy_logs(bool save_current_log);
 void reset_tmplog_offset();
 
 void save_kernel_log(const char* destination);
