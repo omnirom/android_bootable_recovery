@@ -63,12 +63,11 @@
 static constexpr const char* COMMAND_FILE = "/cache/recovery/command";
 static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";
 
-static constexpr const char* CACHE_ROOT = "/cache";
+static RecoveryUI* ui = nullptr;
 
-bool has_cache = false;
-
-RecoveryUI* ui = nullptr;
-struct selabel_handle* sehandle;
+static bool IsRoDebuggable() {
+  return android::base::GetBoolProperty("ro.debuggable", false);
+}
 
 static void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity,
                      const char* /* tag */, const char* /* file */, unsigned int /* line */,
@@ -131,7 +130,7 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
   }
 
   // --- if that doesn't work, try the command file (if we have /cache).
-  if (args.size() == 1 && has_cache) {
+  if (args.size() == 1 && HasCache()) {
     std::string content;
     if (ensure_path_mounted(COMMAND_FILE) == 0 &&
         android::base::ReadFileToString(COMMAND_FILE, &content)) {
@@ -148,7 +147,7 @@ static std::vector<std::string> get_args(const int argc, char** const argv) {
 
   // Write the arguments (excluding the filename in args[0]) back into the
   // bootloader control block. So the device will always boot into recovery to
-  // finish the pending work, until finish_recovery() is called.
+  // finish the pending work, until FinishRecovery() is called.
   std::vector<std::string> options(args.cbegin() + 1, args.cend());
   if (!update_bootloader_message(options, &err)) {
     LOG(ERROR) << "Failed to set BCB message: " << err;
@@ -331,7 +330,6 @@ int main(int argc, char** argv) {
   redirect_stdio(Paths::Get().temporary_log_file().c_str());
 
   load_volume_table();
-  has_cache = volume_for_mount_point(CACHE_ROOT) != nullptr;
 
   std::vector<std::string> args = get_args(argc, argv);
   auto args_to_parse = StringVectorToNullTerminatedArray(args);
@@ -370,7 +368,7 @@ int main(int argc, char** argv) {
   optind = 1;
 
   if (locale.empty()) {
-    if (has_cache) {
+    if (HasCache()) {
       locale = load_locale_from_cache();
     }
 
@@ -416,7 +414,7 @@ int main(int argc, char** argv) {
   }
   ui = device->GetUI();
 
-  if (!has_cache) {
+  if (!HasCache()) {
     device->RemoveMenuItemForAction(Device::WIPE_CACHE);
   }
 
@@ -424,7 +422,7 @@ int main(int argc, char** argv) {
     device->RemoveMenuItemForAction(Device::ENTER_FASTBOOT);
   }
 
-  if (!is_ro_debuggable()) {
+  if (!IsRoDebuggable()) {
     device->RemoveMenuItemForAction(Device::ENTER_RESCUE);
   }
 
@@ -434,7 +432,7 @@ int main(int argc, char** argv) {
   LOG(INFO) << "Starting recovery (pid " << getpid() << ") on " << ctime(&start);
   LOG(INFO) << "locale is [" << locale << "]";
 
-  sehandle = selinux_android_file_context_handle();
+  auto sehandle = selinux_android_file_context_handle();
   selinux_android_set_sehandle(sehandle);
   if (!sehandle) {
     ui->Print("Warning: No file_contexts\n");
@@ -447,7 +445,7 @@ int main(int argc, char** argv) {
   listener_thread.detach();
 
   while (true) {
-    std::string usb_config = fastboot ? "fastboot" : is_ro_debuggable() ? "adb" : "none";
+    std::string usb_config = fastboot ? "fastboot" : IsRoDebuggable() ? "adb" : "none";
     std::string usb_state = android::base::GetProperty("sys.usb.state", "none");
     if (usb_config != usb_state) {
       if (!SetUsbConfig("none")) {

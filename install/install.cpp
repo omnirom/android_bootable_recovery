@@ -60,7 +60,8 @@
 using namespace std::chrono_literals;
 
 static constexpr int kRecoveryApiVersion = 3;
-// Assert the version defined in code and in Android.mk are consistent.
+// We define RECOVERY_API_VERSION in Android.mk, which will be picked up by build system and packed
+// into target_files.zip. Assert the version defined in code and in Android.mk are consistent.
 static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
 
 // Default allocation of progress bar segments to operations
@@ -620,6 +621,8 @@ InstallResult InstallPackage(Package* package, const std::string_view package_id
 
   InstallResult result;
   std::vector<std::string> log_buffer;
+
+  ui->Print("Supported API: %d\n", kRecoveryApiVersion);
 
   ui->Print("Finding update package...\n");
   LOG(INFO) << "Update package id: " << package_id;
