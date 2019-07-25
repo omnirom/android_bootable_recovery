@@ -53,3 +53,6 @@ int format_volume(const std::string& volume, const std::string& directory);
 // Ensure that all and only the volumes that packages expect to find
 // mounted (/tmp and /cache) are mounted.  Returns 0 on success.
 int setup_install_mounts();
+
+// Returns true if there is /cache in the volumes.
+bool HasCache();
