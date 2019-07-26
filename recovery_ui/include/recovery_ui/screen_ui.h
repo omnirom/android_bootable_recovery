@@ -286,6 +286,9 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
   // selected.
   virtual int SelectMenu(int sel);
 
+  // Returns the help message displayed on top of the menu.
+  virtual std::vector<std::string> GetMenuHelpMessage() const;
+
   virtual void draw_background_locked();
   virtual void draw_foreground_locked();
   virtual void draw_screen_locked();
