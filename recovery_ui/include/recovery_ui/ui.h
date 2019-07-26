@@ -118,7 +118,7 @@ class RecoveryUI {
 
   // Returns true if you have the volume up/down and power trio typical of phones and tablets, false
   // otherwise.
-  virtual bool HasThreeButtons();
+  virtual bool HasThreeButtons() const;
 
   // Returns true if it has a power key.
   virtual bool HasPowerKey() const;
