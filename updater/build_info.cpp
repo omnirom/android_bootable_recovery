@@ -16,6 +16,8 @@
 
 #include "updater/build_info.h"
 
+#include <stdio.h>
+
 #include <set>
 #include <vector>
 
@@ -55,12 +57,23 @@ bool BuildInfo::ParseTargetFile(const std::string_view target_file_path, bool ex
         return false;
       }
 
+      std::string mapped_path = image_file.path;
+      // Rename the images to more readable ones if we want to keep the image.
+      if (keep_images_) {
+        mapped_path = work_dir_ + fstab_info.mount_point + ".img";
+        image_file.release();
+        if (rename(image_file.path, mapped_path.c_str()) != 0) {
+          PLOG(ERROR) << "Failed to rename " << image_file.path << " to " << mapped_path;
+          return false;
+        }
+      }
+
       LOG(INFO) << "Mounted " << fstab_info.mount_point << "\nMapping: " << fstab_info.blockdev_name
-                << " to " << image_file.path;
+                << " to " << mapped_path;
 
       blockdev_map_.emplace(
           fstab_info.blockdev_name,
-          FakeBlockDevice(fstab_info.blockdev_name, fstab_info.mount_point, image_file.path));
+          FakeBlockDevice(fstab_info.blockdev_name, fstab_info.mount_point, mapped_path));
       break;
     }
   }

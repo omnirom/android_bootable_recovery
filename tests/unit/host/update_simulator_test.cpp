@@ -93,7 +93,7 @@ static void RunSimulation(std::string_view src_tf, std::string_view ota_package,
 
   // Run the update simulation and check the result.
   TemporaryDir work_dir;
-  BuildInfo build_info(work_dir.path);
+  BuildInfo build_info(work_dir.path, false);
   ASSERT_TRUE(build_info.ParseTargetFile(src_tf, false));
   Updater updater(std::make_unique<SimulatorRuntime>(&build_info));
   ASSERT_TRUE(updater.Init(cmd_pipe.release(), ota_package, false));
@@ -211,7 +211,7 @@ TEST_F(UpdateSimulatorTest, BuildInfo_ParseTargetFile) {
   AddZipEntries(zip_file.release(), entries);
 
   TemporaryDir temp_dir;
-  BuildInfo build_info(temp_dir.path);
+  BuildInfo build_info(temp_dir.path, false);
   ASSERT_TRUE(build_info.ParseTargetFile(zip_file.path, false));
 
   std::map<string, string> expected_result = {
