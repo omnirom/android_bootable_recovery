@@ -58,12 +58,16 @@ int main(int argc, char** argv) {
   std::string skip_function_file;
   std::string source_target_file;
   std::string package_name;
+  std::string work_dir;
+  bool keep_images = false;
 
   constexpr struct option OPTIONS[] = {
+    { "keep_images", no_argument, nullptr, 0 },
     { "oem_settings", required_argument, nullptr, 0 },
     { "ota_package", required_argument, nullptr, 0 },
     { "skip_functions", required_argument, nullptr, 0 },
     { "source", required_argument, nullptr, 0 },
+    { "work_dir", required_argument, nullptr, 0 },
     { nullptr, 0, nullptr, 0 },
   };
 
@@ -86,6 +90,10 @@ int main(int argc, char** argv) {
       source_target_file = optarg;
     } else if (option_name == "ota_package"s) {
       package_name = optarg;
+    } else if (option_name == "keep_images"s) {
+      keep_images = true;
+    } else if (option_name == "work_dir"s) {
+      work_dir = optarg;
     } else {
       Usage(argv[0]);
       return EXIT_FAILURE;
@@ -129,8 +137,11 @@ int main(int argc, char** argv) {
 
   TemporaryFile cmd_pipe;
   TemporaryDir source_temp_dir;
+  if (work_dir.empty()) {
+    work_dir = source_temp_dir.path;
+  }
 
-  BuildInfo source_build_info(source_temp_dir.path);
+  BuildInfo source_build_info(work_dir, keep_images);
   if (!source_build_info.ParseTargetFile(source_target_file, false)) {
     LOG(ERROR) << "Failed to parse the target file " << source_target_file;
     return EXIT_FAILURE;
