@@ -43,7 +43,8 @@ class FakeBlockDevice {
 // query the information and run the update on host.
 class BuildInfo {
  public:
-  explicit BuildInfo(const std::string_view work_dir) : work_dir_(work_dir) {}
+  BuildInfo(const std::string_view work_dir, bool keep_images)
+      : work_dir_(work_dir), keep_images_(keep_images) {}
   // Returns the value of the build properties.
   std::string GetProperty(const std::string_view key, const std::string_view default_value) const;
   // Returns the path to the mock block device.
@@ -69,4 +70,5 @@ class BuildInfo {
 
   std::list<TemporaryFile> temp_files_;
   std::string work_dir_;  // A temporary directory to store the extracted image files
+  bool keep_images_;
 };
