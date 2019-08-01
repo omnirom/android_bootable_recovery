@@ -113,13 +113,20 @@ Value* PackageExtractFileFn(const char* name, State* state,
                         argv.size());
     }
     const std::string& zip_path = args[0];
-    const std::string& dest_path = args[1];
+    std::string dest_path = args[1];
 
     ZipArchiveHandle za = state->updater->GetPackageHandle();
     ZipEntry entry;
     if (FindEntry(za, zip_path, &entry) != 0) {
       LOG(ERROR) << name << ": no " << zip_path << " in package";
       return StringValue("");
+    }
+
+    // Update the destination of package_extract_file if it's a block device. During simulation the
+    // destination will map to a fake file.
+    if (std::string block_device_name = state->updater->FindBlockDeviceName(dest_path);
+        !block_device_name.empty()) {
+      dest_path = block_device_name;
     }
 
     android::base::unique_fd fd(TEMP_FAILURE_RETRY(
