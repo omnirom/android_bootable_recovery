@@ -99,6 +99,7 @@ librecovery_static_libs = [
     "liblp",
     "libvndksupport",
     "libtinyxml2",
+    "libc++fs",
 ]
 
 cc_test {

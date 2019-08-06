@@ -50,6 +50,7 @@
 
 #include "common.h"
 #include "fsck_unshare_blocks.h"
+#include "fuse_sideload.h"
 #include "install/adb_install.h"
 #include "install/fuse_sdcard_install.h"
 #include "install/install.h"
@@ -881,7 +882,29 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         set_retry_bootloader_message(retry_count + 1, args);
       }
 
-      status = install_package(update_package, should_wipe_cache, true, retry_count, ui);
+      bool should_use_fuse = false;
+      if (!SetupPackageMount(update_package, &should_use_fuse)) {
+        LOG(INFO) << "Failed to set up the package access, skipping installation";
+        status = INSTALL_ERROR;
+      } else if (should_use_fuse) {
+        LOG(INFO) << "Installing package " << update_package << " with fuse";
+        auto file_data_reader = std::make_unique<FuseFileDataProvider>(update_package, 65536);
+        status = run_fuse_sideload(std::move(file_data_reader));
+      } else if (auto memory_package = Package::CreateMemoryPackage(
+                     update_package,
+                     std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
+                 memory_package != nullptr) {
+        status = install_package(update_package, should_wipe_cache, true, retry_count, ui);
+      } else {
+        // We may fail to memory map the package on 32 bit builds for packages with 2GiB+ size.
+        // In such cases, we will try to install the package with fuse. This is not the default
+        // installation method because it introduces a layer of indirection from the kernel space.
+        LOG(WARNING) << "Failed to memory map package " << update_package
+                     << "; falling back to install with fuse";
+        auto file_data_reader = std::make_unique<FuseFileDataProvider>(update_package, 65536);
+        status = run_fuse_sideload(std::move(file_data_reader));
+      }
+
       if (status != INSTALL_SUCCESS) {
         ui->Print("Installation aborted.\n");
 

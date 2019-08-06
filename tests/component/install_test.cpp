@@ -34,6 +34,7 @@
 
 #include "install/install.h"
 #include "otautil/paths.h"
+#include "otautil/roots.h"
 #include "private/setup_commands.h"
 
 static void BuildZipArchive(const std::map<std::string, std::string>& file_map, int fd,
@@ -594,4 +595,31 @@ TEST(InstallTest, CheckPackageMetadata_ab_post_timestamp) {
       },
       "\n");
   test_check_package_metadata(metadata, OtaType::AB, 0);
+}
+
+TEST(InstallTest, SetupPackageMount_package_path) {
+  load_volume_table();
+  bool install_with_fuse;
+
+  // Setup should fail if the input path doesn't exist.
+  ASSERT_FALSE(SetupPackageMount("/does_not_exist", &install_with_fuse));
+
+  // Package should be installed with fuse if it's not in /cache.
+  TemporaryDir temp_dir;
+  TemporaryFile update_package(temp_dir.path);
+  ASSERT_TRUE(SetupPackageMount(update_package.path, &install_with_fuse));
+  ASSERT_TRUE(install_with_fuse);
+
+  // Setup should fail if the input path isn't canonicalized.
+  std::string uncanonical_package_path = android::base::Join(
+      std::vector<std::string>{
+          temp_dir.path,
+          "..",
+          android::base::Basename(temp_dir.path),
+          android::base::Basename(update_package.path),
+      },
+      '/');
+
+  ASSERT_EQ(0, access(uncanonical_package_path.c_str(), R_OK));
+  ASSERT_FALSE(SetupPackageMount(uncanonical_package_path, &install_with_fuse));
 }
