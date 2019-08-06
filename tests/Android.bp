@@ -93,6 +93,7 @@ librecovery_static_libs = [
     "libbinderthreadstate",
     "liblp",
     "libtinyxml2",
+    "libc++fs",
 ]
 
 cc_test {

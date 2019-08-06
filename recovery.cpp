@@ -687,7 +687,11 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         ensure_path_mounted(update_package);
       }
 
-      if (install_with_fuse) {
+      bool should_use_fuse = false;
+      if (!SetupPackageMount(update_package, &should_use_fuse)) {
+        LOG(INFO) << "Failed to set up the package access, skipping installation";
+        status = INSTALL_ERROR;
+      } else if (install_with_fuse || should_use_fuse) {
         LOG(INFO) << "Installing package " << update_package << " with fuse";
         status = InstallWithFuseFromPath(update_package, ui);
       } else if (auto memory_package = Package::CreateMemoryPackage(
