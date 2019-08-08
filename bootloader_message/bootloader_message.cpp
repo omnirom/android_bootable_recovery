@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <string.h>
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -37,7 +38,7 @@
 using android::fs_mgr::Fstab;
 using android::fs_mgr::ReadDefaultFstab;
 
-static std::string g_misc_device_for_test;
+static std::optional<std::string> g_misc_device_for_test;
 
 // Exposed for test purpose.
 void SetMiscBlockDeviceForTest(std::string_view misc_device) {
@@ -45,8 +46,8 @@ void SetMiscBlockDeviceForTest(std::string_view misc_device) {
 }
 
 static std::string get_misc_blk_device(std::string* err) {
-  if (!g_misc_device_for_test.empty()) {
-    return g_misc_device_for_test;
+  if (g_misc_device_for_test.has_value() && !g_misc_device_for_test->empty()) {
+    return *g_misc_device_for_test;
   }
   Fstab fstab;
   if (!ReadDefaultFstab(&fstab)) {
