@@ -59,10 +59,6 @@ bool verify_package(Package* package, RecoveryUI* ui);
 // result to |metadata|. Return true if succeed, otherwise return false.
 bool ReadMetadataFromPackage(ZipArchiveHandle zip, std::map<std::string, std::string>* metadata);
 
-// Verifies the compatibility info in a Treble-compatible package. Returns true directly if the
-// entry doesn't exist.
-bool verify_package_compatibility(ZipArchiveHandle package_zip);
-
 // Checks if the metadata in the OTA package has expected values. Mandatory checks: ota-type,
 // pre-device and serial number (if presents). A/B OTA specific checks: pre-build version,
 // fingerprint, timestamp.
