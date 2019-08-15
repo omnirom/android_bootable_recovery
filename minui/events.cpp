@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <sys/inotify.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -32,6 +33,8 @@
 #include <android-base/unique_fd.h>
 
 #include "minui/minui.h"
+
+constexpr const char* INPUT_DEV_DIR = "/dev/input";
 
 constexpr size_t MAX_DEVICES = 16;
 constexpr size_t MAX_MISC_FDS = 16;
@@ -46,6 +49,8 @@ struct FdInfo {
   ev_callback cb;
 };
 
+static bool g_allow_touch_inputs = true;
+static ev_callback g_saved_input_cb;
 static android::base::unique_fd g_epoll_fd;
 static epoll_event g_polled_events[MAX_DEVICES + MAX_MISC_FDS];
 static int g_polled_events_count;
@@ -60,6 +65,78 @@ static bool test_bit(size_t bit, unsigned long* array) { // NOLINT
   return (array[bit / BITS_PER_LONG] & (1UL << (bit % BITS_PER_LONG))) != 0;
 }
 
+static bool should_add_input_device(int fd, bool allow_touch_inputs) {
+  // Use unsigned long to match ioctl's parameter type.
+  unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];  // NOLINT
+
+  // Read the evbits of the input device.
+  if (ioctl(fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) == -1) {
+    return false;
+  }
+
+  // We assume that only EV_KEY, EV_REL, and EV_SW event types are ever needed. EV_ABS is also
+  // allowed if allow_touch_inputs is set.
+  if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits) && !test_bit(EV_SW, ev_bits)) {
+    if (!allow_touch_inputs || !test_bit(EV_ABS, ev_bits)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+static int inotify_cb(int fd, __unused uint32_t epevents) {
+  if (g_saved_input_cb == nullptr) return -1;
+
+  // The inotify will put one or several complete events.
+  // Should not read part of one event.
+  size_t event_len;
+  int ret = ioctl(fd, FIONREAD, &event_len);
+  if (ret != 0) return -1;
+
+  std::unique_ptr<DIR, decltype(&closedir)> dir(opendir(INPUT_DEV_DIR), closedir);
+  if (!dir) {
+    return -1;
+  }
+
+  std::vector<int8_t> buf(event_len);
+
+  ssize_t r = TEMP_FAILURE_RETRY(read(fd, buf.data(), event_len));
+  if (r != event_len) {
+    return -1;
+  }
+
+  size_t offset = 0;
+  while (offset < event_len) {
+    struct inotify_event* pevent = reinterpret_cast<struct inotify_event*>(buf.data() + offset);
+    if (offset + sizeof(inotify_event) + pevent->len > event_len) {
+      // The pevent->len is too large and buffer will over flow.
+      // In general, should not happen, just make more stable.
+      return -1;
+    }
+    offset += sizeof(inotify_event) + pevent->len;
+
+    pevent->name[pevent->len] = '\0';
+    if (strncmp(pevent->name, "event", 5)) {
+      continue;
+    }
+
+    android::base::unique_fd dfd(openat(dirfd(dir.get()), pevent->name, O_RDONLY));
+    if (dfd == -1) {
+      break;
+    }
+
+    if (!should_add_input_device(dfd, g_allow_touch_inputs)) {
+      continue;
+    }
+
+    // Only add, we assume the user will not plug out and plug in USB device again and again :)
+    ev_add_fd(std::move(dfd), g_saved_input_cb);
+  }
+
+  return 0;
+}
+
 int ev_init(ev_callback input_cb, bool allow_touch_inputs) {
   g_epoll_fd.reset();
 
@@ -68,7 +145,16 @@ int ev_init(ev_callback input_cb, bool allow_touch_inputs) {
     return -1;
   }
 
-  std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/dev/input"), closedir);
+  android::base::unique_fd inotify_fd(inotify_init1(IN_CLOEXEC));
+  if (inotify_fd.get() == -1) {
+    return -1;
+  }
+
+  if (inotify_add_watch(inotify_fd, INPUT_DEV_DIR, IN_CREATE) < 0) {
+    return -1;
+  }
+
+  std::unique_ptr<DIR, decltype(&closedir)> dir(opendir(INPUT_DEV_DIR), closedir);
   if (!dir) {
     return -1;
   }
@@ -80,20 +166,8 @@ int ev_init(ev_callback input_cb, bool allow_touch_inputs) {
     android::base::unique_fd fd(openat(dirfd(dir.get()), de->d_name, O_RDONLY | O_CLOEXEC));
     if (fd == -1) continue;
 
-    // Use unsigned long to match ioctl's parameter type.
-    unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];  // NOLINT
-
-    // Read the evbits of the input device.
-    if (ioctl(fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) == -1) {
+    if (!should_add_input_device(fd, allow_touch_inputs)) {
       continue;
-    }
-
-    // We assume that only EV_KEY, EV_REL, and EV_SW event types are ever needed. EV_ABS is also
-    // allowed if allow_touch_inputs is set.
-    if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits) && !test_bit(EV_SW, ev_bits)) {
-      if (!allow_touch_inputs || !test_bit(EV_ABS, ev_bits)) {
-        continue;
-      }
     }
 
     epoll_event ev;
@@ -116,6 +190,11 @@ int ev_init(ev_callback input_cb, bool allow_touch_inputs) {
   }
 
   g_epoll_fd.reset(epoll_fd.release());
+
+  g_saved_input_cb = input_cb;
+  g_allow_touch_inputs = allow_touch_inputs;
+  ev_add_fd(std::move(inotify_fd), inotify_cb);
+
   return 0;
 }
 
@@ -148,6 +227,7 @@ void ev_exit(void) {
   }
   g_ev_misc_count = 0;
   g_ev_dev_count = 0;
+  g_saved_input_cb = nullptr;
   g_epoll_fd.reset();
 }
 
@@ -170,13 +250,17 @@ void ev_dispatch(void) {
 }
 
 int ev_get_input(int fd, uint32_t epevents, input_event* ev) {
-    if (epevents & EPOLLIN) {
-        ssize_t r = TEMP_FAILURE_RETRY(read(fd, ev, sizeof(*ev)));
-        if (r == sizeof(*ev)) {
-            return 0;
-        }
+  if (epevents & EPOLLIN) {
+    ssize_t r = TEMP_FAILURE_RETRY(read(fd, ev, sizeof(*ev)));
+    if (r == sizeof(*ev)) {
+      return 0;
     }
-    return -1;
+  }
+  if (epevents & EPOLLHUP) {
+    // Delete this watch
+    epoll_ctl(g_epoll_fd, EPOLL_CTL_DEL, fd, nullptr);
+  }
+  return -1;
 }
 
 int ev_sync_key_state(const ev_set_key_callback& set_key_cb) {
