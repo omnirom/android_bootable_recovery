@@ -107,6 +107,7 @@ MultiROM::config::config()
 	enable_kmsg_logging = 0;
 	force_generic_fb = 0;
 	anim_duration_coef_pct = 100;
+	use_primary_kernel = 0;
 }
 
 bool MultiROM::folderExists()
@@ -800,6 +801,8 @@ MultiROM::config MultiROM::loadConfig()
 				cfg.force_generic_fb = atoi(val.c_str());
 			else if(name == "anim_duration_coef_pct")
 				cfg.anim_duration_coef_pct = atoi(val.c_str());
+			else if(name == "use_primary_kernel")
+				cfg.use_primary_kernel = atoi(val.c_str());
 			else
 				cfg.unrecognized_opts += name + "=" + val + "\n";
 		}
@@ -830,6 +833,7 @@ void MultiROM::saveConfig(const MultiROM::config& cfg)
 	fprintf(f, "rotation=%d\n", cfg.rotation);
 	fprintf(f, "force_generic_fb=%d\n", cfg.force_generic_fb);
 	fprintf(f, "anim_duration_coef_pct=%d\n", cfg.anim_duration_coef_pct);
+	fprintf(f, "use_primary_kernel=%d\n", cfg.use_primary_kernel);
 
 	fputs(cfg.unrecognized_opts.c_str(), f);
 	fclose(f);
@@ -1496,6 +1500,7 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	// unblank here is necessary; if we don't bring the screen back up and the zip has an AROMA
 	// Installer, it will take over the screen and buttons and we won't be able to manually wake the screen
 	blankTimer.resetTimerAndUnblank();
+    system_args("busybox mv /system/etc/selinux/plat_property_contexts /system/etc/selinux/plat_property_contexts.bak");
 
 	dp_keep_busy[0] = opendir("/cache");
 	dp_keep_busy[1] = opendir("/system");
@@ -1507,6 +1512,7 @@ bool MultiROM::flashZip(std::string rom, std::string file)
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, 0);
 	status = TWinstall_zip(file.c_str(), &wipe_cache);
 	DataManager::SetValue(TW_SIGNED_ZIP_VERIFY_VAR, verify_status);
+    system_args("busybox mv /system/etc/selinux/plat_property_contexts.bak /system/etc/selinux/plat_property_contexts");
 
 	if (dp_keep_busy[0]) closedir(dp_keep_busy[0]);
 	if (dp_keep_busy[1]) closedir(dp_keep_busy[1]);

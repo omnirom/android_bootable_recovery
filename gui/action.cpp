@@ -429,7 +429,7 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 	}
 
 	if (simulate) {
-		simulate_progress_bar();
+		if (DataManager::GetIntValue("is_gui_mode")) simulate_progress_bar();
 	} else {
 		ret_val = TWinstall_zip(filename.c_str(), wipe_cache);
 
@@ -439,10 +439,10 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 		{
 			DataManager::SetValue("tw_operation", "Configuring TWRP");
 			DataManager::SetValue("tw_partition", "");
-			gui_msg("config_twrp=Configuring TWRP...");
+			if (DataManager::GetIntValue("is_gui_mode")) gui_msg("config_twrp=Configuring TWRP...");
 			if (TWFunc::Exec_Cmd("/sbin/installTwrp reinstall") < 0)
 			{
-				gui_msg("config_twrp_err=Unable to configure TWRP with this kernel.");
+				if (DataManager::GetIntValue("is_gui_mode")) gui_msg("config_twrp_err=Unable to configure TWRP with this kernel.");
 			}
 		}
 	}
@@ -986,6 +986,8 @@ int GUIAction::getpartitiondetails(std::string arg)
 
 int GUIAction::screenshot(std::string arg __unused)
 {
+
+	if (DataManager::GetIntValue("is_gui_mode")){
 	time_t tm;
 	char path[256];
 	int path_len;
@@ -1023,6 +1025,7 @@ int GUIAction::screenshot(std::string arg __unused)
 	} else {
 		gui_err("screenshot_err=Failed to take a screenshot!");
 	}
+}
 	return 0;
 }
 
@@ -1994,6 +1997,7 @@ int GUIAction::multirom_settings(std::string arg __unused)
 	DataManager::SetValue("tw_multirom_rotation", cfg.rotation);
 	DataManager::SetValue("tw_multirom_force_generic_fb", cfg.force_generic_fb);
 	DataManager::SetValue("tw_anim_duration_coef_pct", cfg.anim_duration_coef_pct);
+	DataManager::SetValue("tw_multirom_use_primary_kernel", cfg.use_primary_kernel);
 
 	DataManager::SetValue("tw_multirom_unrecognized_opts", cfg.unrecognized_opts);
 
@@ -2036,6 +2040,7 @@ int GUIAction::multirom_settings_save(std::string arg __unused)
 	cfg.rotation = DataManager::GetIntValue("tw_multirom_rotation");
 	cfg.force_generic_fb = DataManager::GetIntValue("tw_multirom_force_generic_fb");
 	cfg.anim_duration_coef_pct = DataManager::GetIntValue("tw_anim_duration_coef_pct");
+	cfg.use_primary_kernel = DataManager::GetIntValue("tw_multirom_use_primary_kernel");
 
 	cfg.unrecognized_opts = DataManager::GetStrValue("tw_multirom_unrecognized_opts");
 

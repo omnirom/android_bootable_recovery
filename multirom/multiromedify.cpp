@@ -15,6 +15,10 @@ extern "C" {
 
 #define HACKER_IDENT_LINE "# This updater-script has been modified modified by MultiROM and isn't suitable for flashing into primary ROM.\n"
 
+#ifdef MR_CUSTOM_FORBIDDEN_PARTITIONS
+extern const char * const forbidden_images[];
+#endif
+
 EdifyElement::EdifyElement(EdifyElementType type) : m_type(type)
 {
 
@@ -219,11 +223,13 @@ int EdifyFunc::replaceOffendings(std::list<EdifyElement*> **parentList, std::lis
     {
         int st = 0;
 
+#ifndef MR_CUSTOM_FORBIDDEN_PARTITIONS
         static const char * const forbidden_images[] = {
             "radio", "bootloader", "NON-HLOS.bin", "emmc_appsboot.mbn",
             "rpm.mbn", "logo.bin", "sdi.mbn", "tz.mbn", "sbl1.mbn",
             NULL
         };
+#endif
 
         for(std::list<EdifyElement*>::iterator itr = m_args.begin(); itr != m_args.end(); ++itr)
         {

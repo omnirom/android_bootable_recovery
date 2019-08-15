@@ -43,6 +43,7 @@
 #include <minui/minui.h>
 
 #include "common.h"
+#include "data.hpp"
 #include "device.h"
 #include "ui.h"
 
@@ -141,21 +142,28 @@ int ScreenRecoveryUI::GetAnimationBaseline() const {
 }
 
 int ScreenRecoveryUI::GetTextBaseline() const {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   return GetProgressBaseline() - PixelsFromDp(kLayouts[layout_][TEXT]) -
          gr_get_height(installing_text);
+       }
+       return 0;
 }
 
 int ScreenRecoveryUI::GetProgressBaseline() const {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   int elements_sum = gr_get_height(loopFrames[0]) + PixelsFromDp(kLayouts[layout_][ICON]) +
                      gr_get_height(installing_text) + PixelsFromDp(kLayouts[layout_][TEXT]) +
                      gr_get_height(progressBarFill);
   int bottom_gap = (ScreenHeight() - elements_sum) / 2;
   return ScreenHeight() - bottom_gap - gr_get_height(progressBarFill);
 }
+return 0;
+}
 
 // Clear the screen and draw the currently selected background icon (if any).
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::draw_background_locked() {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   pagesIdentical = false;
   gr_color(0, 0, 0, 255);
   gr_clear();
@@ -179,10 +187,12 @@ void ScreenRecoveryUI::draw_background_locked() {
     DrawTextIcon(text_x, text_y, text_surface);
   }
 }
+}
 
 // Draws the animation and progress bar (if any) on the screen. Does not flip pages. Should only be
 // called with updateMutex locked.
 void ScreenRecoveryUI::draw_foreground_locked() {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   if (currentIcon != NONE) {
     GRSurface* frame = GetCurrentFrame();
     int frame_width = gr_get_width(frame);
@@ -228,8 +238,10 @@ void ScreenRecoveryUI::draw_foreground_locked() {
     }
   }
 }
+}
 
 void ScreenRecoveryUI::SetColor(UIElement e) const {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   switch (e) {
     case INFO:
       gr_color(249, 194, 0, 255);
@@ -257,6 +269,99 @@ void ScreenRecoveryUI::SetColor(UIElement e) const {
       gr_color(255, 255, 255, 255);
       break;
   }
+}
+}
+
+void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string>& locales_entries,
+                                                   size_t sel) {
+  if (DataManager::GetIntValue("is_gui_mode")) {
+  SetLocale(locales_entries[sel]);
+  std::vector<std::string> text_name = { "erasing_text", "error_text", "installing_text",
+                                         "installing_security_text", "no_command_text" };
+  std::unordered_map<std::string, std::unique_ptr<GRSurface, decltype(&free)>> surfaces;
+  for (const auto& name : text_name) {
+    GRSurface* text_image = nullptr;
+    LoadLocalizedBitmap(name.c_str(), &text_image);
+    if (!text_image) {
+      Print("Failed to load %s\n", name.c_str());
+      return;
+    }
+    surfaces.emplace(name, std::unique_ptr<GRSurface, decltype(&free)>(text_image, &free));
+  }
+
+  pthread_mutex_lock(&updateMutex);
+  gr_color(0, 0, 0, 255);
+  gr_clear();
+
+  int text_y = kMarginHeight;
+  int text_x = kMarginWidth;
+  int line_spacing = gr_sys_font()->char_height;  // Put some extra space between images.
+  // Write the header and descriptive texts.
+  SetColor(INFO);
+  std::string header = "Show background text image";
+  text_y += DrawTextLine(text_x, text_y, header.c_str(), true);
+  std::string locale_selection = android::base::StringPrintf(
+      "Current locale: %s, %zu/%zu", locales_entries[sel].c_str(), sel, locales_entries.size());
+  const char* instruction[] = { locale_selection.c_str(),
+                                "Use volume up/down to switch locales and power to exit.",
+                                nullptr };
+  text_y += DrawWrappedTextLines(text_x, text_y, instruction);
+
+  // Iterate through the text images and display them in order for the current locale.
+  for (const auto& p : surfaces) {
+    text_y += line_spacing;
+    SetColor(LOG);
+    text_y += DrawTextLine(text_x, text_y, p.first.c_str(), false);
+    gr_color(255, 255, 255, 255);
+    gr_texticon(text_x, text_y, p.second.get());
+    text_y += gr_get_height(p.second.get());
+  }
+  // Update the whole screen.
+  gr_flip();
+  pthread_mutex_unlock(&updateMutex);
+}
+}
+
+void ScreenRecoveryUI::CheckBackgroundTextImages(const std::string& saved_locale) {
+  // Load a list of locales embedded in one of the resource files.
+  if (DataManager::GetIntValue("is_gui_mode")) {
+  std::vector<std::string> locales_entries = get_locales_in_png("installing_text");
+  if (locales_entries.empty()) {
+    Print("Failed to load locales from the resource files\n");
+    return;
+  }
+  size_t selected = 0;
+  SelectAndShowBackgroundText(locales_entries, selected);
+
+  FlushKeys();
+  while (true) {
+    int key = WaitKey();
+    if (key == KEY_POWER || key == KEY_ENTER) {
+      break;
+    } else if (key == KEY_UP || key == KEY_VOLUMEUP) {
+      selected = (selected == 0) ? locales_entries.size() - 1 : selected - 1;
+      SelectAndShowBackgroundText(locales_entries, selected);
+    } else if (key == KEY_DOWN || key == KEY_VOLUMEDOWN) {
+      selected = (selected == locales_entries.size() - 1) ? 0 : selected + 1;
+      SelectAndShowBackgroundText(locales_entries, selected);
+    }
+  }
+
+  SetLocale(saved_locale);
+}
+}
+
+int ScreenRecoveryUI::ScreenWidth() const {
+  return gr_fb_width();
+}
+
+int ScreenRecoveryUI::ScreenHeight() const {
+  return gr_fb_height();
+}
+
+void ScreenRecoveryUI::DrawSurface(GRSurface* surface, int sx, int sy, int w, int h, int dx,
+                                   int dy) const {
+  if (DataManager::GetIntValue("is_gui_mode"))  gr_blit(surface, sx, sy, w, h, dx, dy);
 }
 
 void ScreenRecoveryUI::SelectAndShowBackgroundText(const std::vector<std::string>& locales_entries,
@@ -348,12 +453,20 @@ void ScreenRecoveryUI::DrawSurface(GRSurface* surface, int sx, int sy, int w, in
 }
 
 int ScreenRecoveryUI::DrawHorizontalRule(int y) const {
-  gr_fill(0, y + 4, ScreenWidth(), y + 6);
+  if (DataManager::GetIntValue("is_gui_mode")) gr_fill(0, y + 4, ScreenWidth(), y + 6);
   return 8;
 }
 
 void ScreenRecoveryUI::DrawHighlightBar(int x, int y, int width, int height) const {
-  gr_fill(x, y, x + width, y + height);
+  if (DataManager::GetIntValue("is_gui_mode")) gr_fill(x, y, x + width, y + height);
+}
+
+void ScreenRecoveryUI::DrawFill(int x, int y, int w, int h) const {
+  if (DataManager::GetIntValue("is_gui_mode")) gr_fill(x, y, w, h);
+}
+
+void ScreenRecoveryUI::DrawTextIcon(int x, int y, GRSurface* surface) const {
+  if (DataManager::GetIntValue("is_gui_mode")) gr_texticon(x, y, surface);
 }
 
 void ScreenRecoveryUI::DrawFill(int x, int y, int w, int h) const {
@@ -365,7 +478,7 @@ void ScreenRecoveryUI::DrawTextIcon(int x, int y, GRSurface* surface) const {
 }
 
 int ScreenRecoveryUI::DrawTextLine(int x, int y, const char* line, bool bold) const {
-  gr_text(gr_sys_font(), x, y, line, bold);
+  if (DataManager::GetIntValue("is_gui_mode")) gr_text(gr_sys_font(), x, y, line, bold);
   return char_height_ + 4;
 }
 
@@ -378,7 +491,9 @@ int ScreenRecoveryUI::DrawTextLines(int x, int y, const char* const* lines) cons
 }
 
 int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y, const char* const* lines) const {
+
   int offset = 0;
+    if (DataManager::GetIntValue("is_gui_mode")){
   for (size_t i = 0; lines != nullptr && lines[i] != nullptr; ++i) {
     // The line will be wrapped if it exceeds text_cols_.
     std::string line(lines[i]);
@@ -402,6 +517,7 @@ int ScreenRecoveryUI::DrawWrappedTextLines(int x, int y, const char* const* line
       offset += DrawTextLine(x, y + offset, sub.c_str(), false);
     }
   }
+}
   return offset;
 }
 
@@ -419,6 +535,7 @@ static const char* LONG_PRESS_HELP[] = {
 // Redraws everything on the screen. Does not flip pages. Should only be called with updateMutex
 // locked.
 void ScreenRecoveryUI::draw_screen_locked() {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   if (!show_text) {
     draw_background_locked();
     draw_foreground_locked();
@@ -476,24 +593,29 @@ void ScreenRecoveryUI::draw_screen_locked() {
     if (row < 0) row = text_rows_ - 1;
   }
 }
+}
 
 // Redraw everything on the screen and flip the screen (make it visible).
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::update_screen_locked() {
-  draw_screen_locked();
-  gr_flip();
+  if (DataManager::GetIntValue("is_gui_mode")) {
+    draw_screen_locked();
+    gr_flip();
+  }
 }
 
 // Updates only the progress bar, if possible, otherwise redraws the screen.
 // Should only be called with updateMutex locked.
 void ScreenRecoveryUI::update_progress_locked() {
-  if (show_text || !pagesIdentical) {
-    draw_screen_locked();  // Must redraw the whole screen
-    pagesIdentical = true;
-  } else {
-    draw_foreground_locked();  // Draw only the progress bar and overlays
-  }
-  gr_flip();
+  if (DataManager::GetIntValue("is_gui_mode")) {
+    if (show_text || !pagesIdentical) {
+      draw_screen_locked();  // Must redraw the whole screen
+      pagesIdentical = true;
+    } else {
+      draw_foreground_locked();  // Draw only the progress bar and overlays
+    }
+    gr_flip();
+}|
 }
 
 // Keeps the progress bar updated, even when the process is otherwise busy.
@@ -505,6 +627,8 @@ void* ScreenRecoveryUI::ProgressThreadStartRoutine(void* data) {
 void ScreenRecoveryUI::ProgressThreadLoop() {
   double interval = 1.0 / kAnimationFps;
   while (true) {
+    if (DataManager::GetIntValue("is_gui_mode")){
+      printf("ProgressThreadLoop\n");
     double start = now();
     pthread_mutex_lock(&updateMutex);
 
@@ -549,19 +673,24 @@ void ScreenRecoveryUI::ProgressThreadLoop() {
     usleep(static_cast<useconds_t>(delay * 1000000));
   }
 }
+}
 
 void ScreenRecoveryUI::LoadBitmap(const char* filename, GRSurface** surface) {
+   if (DataManager::GetIntValue("is_gui_mode")){
   int result = res_create_display_surface(filename, surface);
   if (result < 0) {
     LOG(ERROR) << "couldn't load bitmap " << filename << " (error " << result << ")";
   }
 }
+}
 
 void ScreenRecoveryUI::LoadLocalizedBitmap(const char* filename, GRSurface** surface) {
+   if (DataManager::GetIntValue("is_gui_mode")){
   int result = res_create_localized_alpha_surface(filename, locale_.c_str(), surface);
   if (result < 0) {
     LOG(ERROR) << "couldn't load bitmap " << filename << " (error " << result << ")";
   }
+}
 }
 
 static char** Alloc2d(size_t rows, size_t cols) {
@@ -575,6 +704,7 @@ static char** Alloc2d(size_t rows, size_t cols) {
 
 // Choose the right background string to display during update.
 void ScreenRecoveryUI::SetSystemUpdateText(bool security_update) {
+    if (DataManager::GetIntValue("is_gui_mode")){
   if (security_update) {
     LoadLocalizedBitmap("installing_security_text", &installing_text);
   } else {
@@ -582,8 +712,10 @@ void ScreenRecoveryUI::SetSystemUpdateText(bool security_update) {
   }
   Redraw();
 }
+}
 
 bool ScreenRecoveryUI::InitTextParams() {
+   if (DataManager::GetIntValue("is_gui_mode")){
   if (gr_init() < 0) {
     return false;
   }
@@ -592,6 +724,8 @@ bool ScreenRecoveryUI::InitTextParams() {
   text_rows_ = (ScreenHeight() - kMarginHeight * 2) / char_height_;
   text_cols_ = (ScreenWidth() - kMarginWidth * 2) / char_width_;
   return true;
+}
+return false;
 }
 
 bool ScreenRecoveryUI::Init(const std::string& locale) {
@@ -638,6 +772,7 @@ bool ScreenRecoveryUI::Init(const std::string& locale) {
 }
 
 void ScreenRecoveryUI::LoadAnimation() {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/res/images"), closedir);
   dirent* de;
   std::vector<std::string> intro_frame_names;
@@ -673,8 +808,10 @@ void ScreenRecoveryUI::LoadAnimation() {
     LoadBitmap(loop_frame_names.at(i).c_str(), &loopFrames[i]);
   }
 }
+}
 
 void ScreenRecoveryUI::SetBackground(Icon icon) {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   pthread_mutex_lock(&updateMutex);
 
   currentIcon = icon;
@@ -682,8 +819,10 @@ void ScreenRecoveryUI::SetBackground(Icon icon) {
 
   pthread_mutex_unlock(&updateMutex);
 }
+}
 
 void ScreenRecoveryUI::SetProgressType(ProgressType type) {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   pthread_mutex_lock(&updateMutex);
   if (progressBarType != type) {
     progressBarType = type;
@@ -694,20 +833,24 @@ void ScreenRecoveryUI::SetProgressType(ProgressType type) {
   update_progress_locked();
   pthread_mutex_unlock(&updateMutex);
 }
+}
 
 void ScreenRecoveryUI::ShowProgress(float portion, float seconds) {
-  pthread_mutex_lock(&updateMutex);
-  progressBarType = DETERMINATE;
-  progressScopeStart += progressScopeSize;
-  progressScopeSize = portion;
-  progressScopeTime = now();
-  progressScopeDuration = seconds;
-  progress = 0;
-  update_progress_locked();
-  pthread_mutex_unlock(&updateMutex);
+  if (DataManager::GetIntValue("is_gui_mode")) {
+    pthread_mutex_lock(&updateMutex);
+    progressBarType = DETERMINATE;
+    progressScopeStart += progressScopeSize;
+    progressScopeSize = portion;
+    progressScopeTime = now();
+    progressScopeDuration = seconds;
+    progress = 0;
+    update_progress_locked();
+    pthread_mutex_unlock(&updateMutex);
+  }
 }
 
 void ScreenRecoveryUI::SetProgress(float fraction) {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   pthread_mutex_lock(&updateMutex);
   if (fraction < 0.0) fraction = 0.0;
   if (fraction > 1.0) fraction = 1.0;
@@ -722,15 +865,19 @@ void ScreenRecoveryUI::SetProgress(float fraction) {
   }
   pthread_mutex_unlock(&updateMutex);
 }
+}
 
 void ScreenRecoveryUI::SetStage(int current, int max) {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   pthread_mutex_lock(&updateMutex);
   stage = current;
   max_stage = max;
   pthread_mutex_unlock(&updateMutex);
 }
+}
 
 void ScreenRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   std::string str;
   android::base::StringAppendV(&str, fmt, ap);
 
@@ -753,22 +900,28 @@ void ScreenRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) 
   }
   pthread_mutex_unlock(&updateMutex);
 }
+}
 
 void ScreenRecoveryUI::Print(const char* fmt, ...) {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   va_list ap;
   va_start(ap, fmt);
   PrintV(fmt, true, ap);
   va_end(ap);
 }
+}
 
 void ScreenRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   va_list ap;
   va_start(ap, fmt);
   PrintV(fmt, false, ap);
   va_end(ap);
 }
+}
 
 void ScreenRecoveryUI::PutChar(char ch) {
+    if (DataManager::GetIntValue("is_gui_mode")){
   pthread_mutex_lock(&updateMutex);
   if (ch != '\n') text_[text_row_][text_col_++] = ch;
   if (ch == '\n' || text_col_ >= text_cols_) {
@@ -777,8 +930,10 @@ void ScreenRecoveryUI::PutChar(char ch) {
   }
   pthread_mutex_unlock(&updateMutex);
 }
+}
 
 void ScreenRecoveryUI::ClearText() {
+    if (DataManager::GetIntValue("is_gui_mode")){
   pthread_mutex_lock(&updateMutex);
   text_col_ = 0;
   text_row_ = 0;
@@ -787,8 +942,10 @@ void ScreenRecoveryUI::ClearText() {
   }
   pthread_mutex_unlock(&updateMutex);
 }
+}
 
 void ScreenRecoveryUI::ShowFile(FILE* fp) {
+
   std::vector<off_t> offsets;
   offsets.push_back(ftello(fp));
   ClearText();
@@ -798,6 +955,7 @@ void ScreenRecoveryUI::ShowFile(FILE* fp) {
 
   bool show_prompt = false;
   while (true) {
+        if (DataManager::GetIntValue("is_gui_mode")){
     if (show_prompt) {
       PrintOnScreenOnly("--(%d%% of %d bytes)--",
                         static_cast<int>(100 * (double(ftello(fp)) / double(sb.st_size))),
@@ -837,8 +995,9 @@ void ScreenRecoveryUI::ShowFile(FILE* fp) {
     }
   }
 }
-
+}
 void ScreenRecoveryUI::ShowFile(const char* filename) {
+      if (DataManager::GetIntValue("is_gui_mode")){
   FILE* fp = fopen_path(filename, "re");
   if (fp == nullptr) {
     Print("  Unable to open %s: %s\n", filename, strerror(errno));
@@ -860,9 +1019,11 @@ void ScreenRecoveryUI::ShowFile(const char* filename) {
   text_col_ = old_text_col;
   text_row_ = old_text_row;
 }
+}
 
 void ScreenRecoveryUI::StartMenu(const char* const* headers, const char* const* items,
                                  int initial_selection) {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   pthread_mutex_lock(&updateMutex);
   if (text_rows_ > 0 && text_cols_ > 0) {
     menu_headers_ = headers;
@@ -877,8 +1038,10 @@ void ScreenRecoveryUI::StartMenu(const char* const* headers, const char* const* 
   }
   pthread_mutex_unlock(&updateMutex);
 }
+}
 
 int ScreenRecoveryUI::SelectMenu(int sel) {
+
   pthread_mutex_lock(&updateMutex);
   if (show_menu) {
     int old_sel = menu_sel;
@@ -919,17 +1082,21 @@ bool ScreenRecoveryUI::WasTextEverVisible() {
 }
 
 void ScreenRecoveryUI::ShowText(bool visible) {
+      if (DataManager::GetIntValue("is_gui_mode")){
   pthread_mutex_lock(&updateMutex);
   show_text = visible;
   if (show_text) show_text_ever = true;
   update_screen_locked();
   pthread_mutex_unlock(&updateMutex);
 }
+}
 
 void ScreenRecoveryUI::Redraw() {
+  if (DataManager::GetIntValue("is_gui_mode")) {
   pthread_mutex_lock(&updateMutex);
   update_screen_locked();
   pthread_mutex_unlock(&updateMutex);
+}
 }
 
 void ScreenRecoveryUI::KeyLongPress(int) {

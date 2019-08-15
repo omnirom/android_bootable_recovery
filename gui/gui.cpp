@@ -86,6 +86,7 @@ extern "C" void gr_write_frame_to_file(int fd);
 
 static void flip(void)
 {
+	if (DataManager::GetIntValue("is_gui_mode")){
 	if (gRecorder != -1)
 	{
 		timespec time;
@@ -94,6 +95,7 @@ static void flip(void)
 		gr_write_frame_to_file(gRecorder);
 	}
 	gr_flip();
+}
 }
 
 void rapidxml::parse_error_handler(const char *what, void *where)
@@ -759,6 +761,17 @@ extern "C" int gui_init(void)
 	}
 
 	ev_init();
+	return 0;
+}
+
+extern "C" int gui_stop(void)
+{
+	printf("gui_stop\n");
+	gGuiRunning = 0;
+	sleep(3);
+	printf("Exit graphics.\n");
+	gr_exit();
+	printf("TWRP graphics is stopped\n");
 	return 0;
 }
 
