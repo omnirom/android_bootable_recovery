@@ -23,6 +23,7 @@
 
 #include <android-base/logging.h>
 
+#include "otautil/boot_state.h"
 #include "recovery_ui/ui.h"
 
 static std::vector<std::pair<std::string, Device::BuiltinAction>> g_menu_actions{
@@ -94,4 +95,16 @@ int Device::HandleMenuKey(int key, bool visible) {
       // are ignored. Otherwise, any button cycles the highlight.
       return ui_->HasThreeButtons() ? kNoAction : kHighlightDown;
   }
+}
+
+void Device::SetBootState(const BootState* state) {
+  boot_state_ = state;
+}
+
+std::optional<std::string> Device::GetReason() const {
+  return boot_state_ ? std::make_optional(boot_state_->reason()) : std::nullopt;
+}
+
+std::optional<std::string> Device::GetStage() const {
+  return boot_state_ ? std::make_optional(boot_state_->stage()) : std::nullopt;
 }
