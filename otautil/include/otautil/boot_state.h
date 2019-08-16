@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,20 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
-// The current stage, e.g. "1/2".
-extern std::string stage;
+class BootState {
+ public:
+  BootState(std::string_view reason, std::string_view stage) : reason_(reason), stage_(stage) {}
 
-// The reason argument provided in "--reason=".
-extern const char* reason;
+  std::string reason() const {
+    return reason_;
+  }
+  std::string stage() const {
+    return stage_;
+  }
+
+ private:
+  std::string reason_;  // The reason argument provided in "--reason=".
+  std::string stage_;   // The current stage, e.g. "1/2".
+};
