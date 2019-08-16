@@ -46,7 +46,6 @@
 #include <ziparchive/zip_archive.h>
 
 #include "bootloader_message/bootloader_message.h"
-#include "common.h"
 #include "fsck_unshare_blocks.h"
 #include "install/adb_install.h"
 #include "install/fuse_install.h"
@@ -54,6 +53,7 @@
 #include "install/package.h"
 #include "install/wipe_data.h"
 #include "install/wipe_device.h"
+#include "otautil/boot_state.h"
 #include "otautil/error_code.h"
 #include "otautil/logging.h"
 #include "otautil/paths.h"
@@ -70,8 +70,6 @@ static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";
 static constexpr const char* CACHE_ROOT = "/cache";
 
 static bool save_current_log = false;
-std::string stage;
-const char* reason = nullptr;
 
 /*
  * The recovery tool communicates with the main system through /cache files.
@@ -208,7 +206,8 @@ static InstallResult prompt_and_wipe_data(Device* device) {
     }
 
     if (ask_to_wipe_data(device)) {
-      bool convert_fbe = reason && strcmp(reason, "convert_fbe") == 0;
+      CHECK(device->GetReason().has_value());
+      bool convert_fbe = device->GetReason().value() == "convert_fbe";
       if (WipeData(device, convert_fbe)) {
         return INSTALL_SUCCESS;
       } else {
@@ -635,12 +634,10 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
           fsck_unshare_blocks = true;
         } else if (option == "install_with_fuse") {
           install_with_fuse = true;
-        } else if (option == "locale" || option == "fastboot") {
+        } else if (option == "locale" || option == "fastboot" || option == "reason") {
           // Handled in recovery_main.cpp
         } else if (option == "prompt_and_wipe_data") {
           should_prompt_and_wipe_data = true;
-        } else if (option == "reason") {
-          reason = optarg;
         } else if (option == "rescue") {
           rescue = true;
         } else if (option == "retry_count") {
@@ -674,8 +671,8 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   }
   optind = 1;
 
-  printf("stage is [%s]\n", stage.c_str());
-  printf("reason is [%s]\n", reason);
+  printf("stage is [%s]\n", device->GetStage().value_or("").c_str());
+  printf("reason is [%s]\n", device->GetReason().value_or("").c_str());
 
   auto ui = device->GetUI();
 
@@ -684,7 +681,8 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   ui->SetSystemUpdateText(security_update);
 
   int st_cur, st_max;
-  if (!stage.empty() && sscanf(stage.c_str(), "%d/%d", &st_cur, &st_max) == 2) {
+  if (!device->GetStage().has_value() &&
+      sscanf(device->GetStage().value().c_str(), "%d/%d", &st_cur, &st_max) == 2) {
     ui->SetStage(st_cur, st_max);
   }
 
@@ -790,7 +788,8 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     }
   } else if (should_wipe_data) {
     save_current_log = true;
-    bool convert_fbe = reason && strcmp(reason, "convert_fbe") == 0;
+    CHECK(device->GetReason().has_value());
+    bool convert_fbe = device->GetReason().value() == "convert_fbe";
     if (!WipeData(device, convert_fbe)) {
       status = INSTALL_ERROR;
     }
