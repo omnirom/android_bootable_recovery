@@ -35,6 +35,7 @@
 using android::dm::DeviceMapper;
 using android::dm::DmDeviceState;
 using android::fs_mgr::CreateLogicalPartition;
+using android::fs_mgr::CreateLogicalPartitionParams;
 using android::fs_mgr::DestroyLogicalPartition;
 using android::fs_mgr::LpMetadata;
 using android::fs_mgr::MetadataBuilder;
@@ -64,8 +65,14 @@ bool UpdaterRuntime::MapPartitionOnDeviceMapper(const std::string& partition_nam
                                                 std::string* path) {
   auto state = DeviceMapper::Instance().GetState(partition_name);
   if (state == DmDeviceState::INVALID) {
-    return CreateLogicalPartition(GetSuperDevice(), 0 /* metadata slot */, partition_name,
-                                  true /* force writable */, kMapTimeout, path);
+    CreateLogicalPartitionParams params = {
+      .block_device = GetSuperDevice(),
+      .metadata_slot = 0,
+      .partition_name = partition_name,
+      .force_writable = true,
+      .timeout_ms = kMapTimeout,
+    };
+    return CreateLogicalPartition(params, path);
   }
 
   if (state == DmDeviceState::ACTIVE) {
