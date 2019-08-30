@@ -191,9 +191,6 @@ endif
 ifeq ($(TW_INCLUDE_BLOBPACK), true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/blobpack
 endif
-ifeq ($(TW_INCLUDE_INJECTTWRP), true)
-    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/injecttwrp
-endif
 ifeq ($(TW_INCLUDE_DUMLOCK), true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/htcdumlock
 endif
