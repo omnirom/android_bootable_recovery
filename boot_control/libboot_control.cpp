@@ -196,6 +196,10 @@ bool BootControl::Init() {
   // was not set (from either the command line or the device tree), we can later
   // initialize it from the bootloader_control struct.
   std::string suffix_prop = android::base::GetProperty("ro.boot.slot_suffix", "");
+  if (suffix_prop.empty()) {
+    LOG(ERROR) << "Slot suffix property is not set";
+    return false;
+  }
   current_slot_ = SlotSuffixToIndex(suffix_prop.c_str());
 
   std::string err;
