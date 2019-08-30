@@ -218,7 +218,6 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(htcdumlockreflashrecovery);
 		ADD_ACTION(cmd);
 		ADD_ACTION(terminalcommand);
-		ADD_ACTION(reinjecttwrp);
 		ADD_ACTION(decrypt);
 		ADD_ACTION(adbsideload);
 		ADD_ACTION(openrecoveryscript);
@@ -1003,27 +1002,76 @@ int GUIAction::fileexists(std::string arg)
 	return 0;
 }
 
-void GUIAction::reinject_after_flash()
+void GUIAction::backup_before_flash()
 {
-	if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
-		gui_msg("injecttwrp=Injecting TWRP into boot image...");
+    std::string bootmode = TWFunc::System_Property_Get("ro.boot.mode");
+	if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1 && bootmode != "fastboot") {
 		if (simulate) {
 			simulate_progress_bar();
 		} else {
 			TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
-			if (Boot == NULL || Boot->Current_File_System != "emmc")
-				TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
+			std::string target_image = "/tmp/backup_boot_twrp.img";
+			PartitionSettings part_settings;
+			part_settings.Part = Boot;
+			part_settings.Backup_Folder = "/tmp/";
+			part_settings.adbbackup = false;
+			part_settings.generate_digest = false;
+			part_settings.generate_md5 = false;
+			part_settings.PM_Method = PM_BACKUP;
+			part_settings.progress = NULL;
+			pid_t not_a_pid = 0;
+			if (!Boot->Backup(&part_settings, &not_a_pid))
+            {
+            return;
+            }
 			else {
-				string injectcmd = "injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash bd=" + Boot->Actual_Block_Device;
-				TWFunc::Exec_Cmd(injectcmd);
+			    std::string backed_up_image = part_settings.Backup_Folder;
+			    backed_up_image += Boot->Backup_FileName;
+			    target_image = "/tmp/backup_boot_twrp.img";
+			    if (rename(backed_up_image.c_str(), target_image.c_str()) != 0) {
+				    LOGERR("Failed to rename '%s' to '%s'\n", backed_up_image.c_str(), target_image.c_str());
+                }
 			}
-			gui_msg("done=Done.");
 		}
+		gui_msg("done=Done.");
 	}
+}
+
+int GUIAction::reinject_after_flash()
+{
+    std::string bootmode = TWFunc::System_Property_Get("ro.boot.mode");
+	if (DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1 && bootmode != "fastboot") {
+        if (!TWFunc::Path_Exists("/tmp/backup_boot_twrp.img")) {
+            LOGERR("Backup image doesn't exist so TWRP is unable to restore it!");
+            return 0;
+        }
+		gui_msg("injecttwrp=Restoring TWRP in boot image...");
+		int op_status = 1;
+		operation_start("Repack Image");
+		if (!simulate)
+		{
+			std::string path = "/tmp/backup_boot_twrp.img";
+			Repack_Options_struct Repack_Options;
+			Repack_Options.Disable_Verity = false;
+			Repack_Options.Disable_Force_Encrypt = false;
+			Repack_Options.Backup_First = false;
+			Repack_Options.Type = REPLACE_RAMDISK;
+			if (!PartitionManager.Repack_Images(path, Repack_Options))
+				return 0;
+            string cmd = "rm -f " + path;
+		    TWFunc::Exec_Cmd(cmd);
+		} else
+			simulate_progress_bar();
+		op_status = 0;
+		operation_end(op_status);
+        return 1;
+	}
+    return 0;
 }
 
 int GUIAction::flash(std::string arg)
 {
+    backup_before_flash();
 	int i, ret_val = 0, wipe_cache = 0;
 	// We're going to jump to this page first, like a loading page
 	gui_changePage(arg);
@@ -1052,8 +1100,10 @@ int GUIAction::flash(std::string arg)
 		PartitionManager.Wipe_By_Path("/cache");
 	}
 
-	reinject_after_flash();
-	PartitionManager.Update_System_Details();
+	if (reinject_after_flash() == 0) {
+	    PartitionManager.Update_System_Details();
+    }
+
 	operation_end(ret_val);
 	// This needs to be after the operation_end call so we change pages before we change variables that we display on the screen
 	DataManager::SetValue(TW_ZIP_QUEUE_COUNT, zip_queue_index);
@@ -1451,22 +1501,6 @@ int GUIAction::killterminal(std::string arg __unused)
 	return 0;
 }
 
-int GUIAction::reinjecttwrp(std::string arg __unused)
-{
-	int op_status = 0;
-	operation_start("ReinjectTWRP");
-	gui_msg("injecttwrp=Injecting TWRP into boot image...");
-	if (simulate) {
-		simulate_progress_bar();
-	} else {
-		TWFunc::Exec_Cmd("injecttwrp --dump /tmp/backup_recovery_ramdisk.img /tmp/injected_boot.img --flash");
-		gui_msg("done=Done.");
-	}
-
-	operation_end(op_status);
-	return 0;
-}
-
 int GUIAction::checkbackupname(std::string arg __unused)
 {
 	int op_status = 0;
@@ -1566,7 +1600,6 @@ int GUIAction::adbsideload(std::string arg __unused)
 		}
 		property_set("ctl.start", "adbd");
 		TWFunc::Toggle_MTP(mtp_was_enabled);
-		reinject_after_flash();
 		operation_end(ret);
 	}
 	return 0;

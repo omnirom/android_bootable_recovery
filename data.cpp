@@ -714,7 +714,7 @@ void DataManager::SetDefaultValues()
 #ifdef TW_INCLUDE_INJECTTWRP
 	printf("TW_INCLUDE_INJECTTWRP := true\n");
 	mConst.SetValue(TW_HAS_INJECTTWRP, "1");
-	mPersist(TW_INJECT_AFTER_ZIP, "1");
+	mPersist.SetValue(TW_INJECT_AFTER_ZIP, "1");
 #else
 	mConst.SetValue(TW_HAS_INJECTTWRP, "0");
 #endif
