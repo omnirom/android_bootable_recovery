@@ -416,7 +416,7 @@ int OpenRecoveryScript::run_script_file(void) {
 		return 1;
 	}
 
-	if (install_cmd && DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
+/*	if (install_cmd && DataManager::GetIntValue(TW_HAS_INJECTTWRP) == 1 && DataManager::GetIntValue(TW_INJECT_AFTER_ZIP) == 1) {
 		gui_msg("injecttwrp=Injecting TWRP into boot image...");
 		TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
 		if (Boot == NULL || Boot->Current_File_System != "emmc")
@@ -427,6 +427,7 @@ int OpenRecoveryScript::run_script_file(void) {
 		}
 		gui_msg("done=Done.");
 	}
+*/
 	if (sideload)
 		ret_val = 1; // Forces booting to the home page after sideload
 	return ret_val;
