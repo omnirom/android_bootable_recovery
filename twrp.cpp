@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
 	TWFunc::check_and_run_script("/sbin/runatboot.sh", "boot");
 	TWFunc::check_and_run_script("/sbin/postrecoveryboot.sh", "boot");
 
-#ifdef TW_INCLUDE_INJECTTWRP
+/*#ifdef TW_INCLUDE_INJECTTWRP
 	// Back up TWRP Ramdisk if needed:
 	TWPartition* Boot = PartitionManager.Find_Partition_By_Path("/boot");
 	LOGINFO("Backing up TWRP ramdisk...\n");
@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
 	}
 	LOGINFO("Backup of TWRP ramdisk done.\n");
 #endif
-
+*/
 	// Offer to decrypt if the device is encrypted
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
 		if (SkipDecryption) {

@@ -4158,18 +4158,6 @@
 					<condition var1="tw_show_dumlock" var2="1"/>
 					<action function="page">htcdumlock</action>
 				</listitem>
-				<listitem name="{@inject_twrp_btn=Inject TWRP}">
-					<condition var1="tw_has_injecttwrp" var2="1"/>
-					<actions>
-						<action function="set">tw_back=advanced</action>
-						<action function="set">tw_action=reinjecttwrp</action>
-						<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
-						<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
-						<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
-						<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
-						<action function="page">confirm_action</action>
-					</actions>
-				</listitem>
 				<listitem name="{@install_twrp_ramdisk=Install Recovery Ramdisk}">
 					<conditions>
 						<condition var1="tw_has_boot_slots" var2="1"/>
