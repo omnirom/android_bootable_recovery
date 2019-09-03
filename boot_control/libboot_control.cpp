@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <libboot_control/libboot_control.h>
+
 #include <endian.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -26,30 +28,11 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
-#include <hardware/boot_control.h>
-#include <hardware/hardware.h>
 
 #include <bootloader_message/bootloader_message.h>
 
-struct boot_control_private_t {
-  // The base struct needs to be first in the list.
-  boot_control_module_t base;
-
-  // Whether this struct was initialized with data from the bootloader message
-  // that doesn't change until next reboot.
-  bool initialized;
-
-  // The path to the misc_device as reported in the fstab.
-  const char* misc_device;
-
-  // The number of slots present on the device.
-  unsigned int num_slots;
-
-  // The slot where we are running from.
-  unsigned int current_slot;
-};
-
-namespace {
+namespace android {
+namespace bootable {
 
 // The number of boot attempts that should be made from a new slot before
 // rolling back to the previous slot.
@@ -91,8 +74,8 @@ uint32_t BootloaderControlLECRC(const bootloader_control* boot_ctrl) {
       CRC32(reinterpret_cast<const uint8_t*>(boot_ctrl), offsetof(bootloader_control, crc32_le)));
 }
 
-bool LoadBootloaderControl(const char* misc_device, bootloader_control* buffer) {
-  android::base::unique_fd fd(open(misc_device, O_RDONLY));
+bool LoadBootloaderControl(const std::string& misc_device, bootloader_control* buffer) {
+  android::base::unique_fd fd(open(misc_device.c_str(), O_RDONLY));
   if (fd.get() == -1) {
     PLOG(ERROR) << "failed to open " << misc_device;
     return false;
@@ -108,9 +91,9 @@ bool LoadBootloaderControl(const char* misc_device, bootloader_control* buffer) 
   return true;
 }
 
-bool UpdateAndSaveBootloaderControl(const char* misc_device, bootloader_control* buffer) {
+bool UpdateAndSaveBootloaderControl(const std::string& misc_device, bootloader_control* buffer) {
   buffer->crc32_le = BootloaderControlLECRC(buffer);
-  android::base::unique_fd fd(open(misc_device, O_WRONLY | O_SYNC));
+  android::base::unique_fd fd(open(misc_device.c_str(), O_WRONLY | O_SYNC));
   if (fd.get() == -1) {
     PLOG(ERROR) << "failed to open " << misc_device;
     return false;
@@ -126,13 +109,12 @@ bool UpdateAndSaveBootloaderControl(const char* misc_device, bootloader_control*
   return true;
 }
 
-void InitDefaultBootloaderControl(const boot_control_private_t* module,
-                                  bootloader_control* boot_ctrl) {
+void InitDefaultBootloaderControl(BootControl* control, bootloader_control* boot_ctrl) {
   memset(boot_ctrl, 0, sizeof(*boot_ctrl));
 
-  if (module->current_slot < kMaxNumSlots) {
-    strlcpy(boot_ctrl->slot_suffix, kSlotSuffixes[module->current_slot],
-            sizeof(boot_ctrl->slot_suffix));
+  unsigned int current_slot = control->GetCurrentSlot();
+  if (current_slot < kMaxNumSlots) {
+    strlcpy(boot_ctrl->slot_suffix, kSlotSuffixes[current_slot], sizeof(boot_ctrl->slot_suffix));
   }
   boot_ctrl->magic = BOOT_CTRL_MAGIC;
   boot_ctrl->version = BOOT_CTRL_VERSION;
@@ -140,7 +122,7 @@ void InitDefaultBootloaderControl(const boot_control_private_t* module,
   // Figure out the number of slots by checking if the partitions exist,
   // otherwise assume the maximum supported by the header.
   boot_ctrl->nb_slot = kMaxNumSlots;
-  std::string base_path = module->misc_device;
+  std::string base_path = control->misc_device();
   size_t last_path_sep = base_path.rfind('/');
   if (last_path_sep != std::string::npos) {
     // We test the existence of the "boot" partition on each possible slot,
@@ -185,7 +167,7 @@ void InitDefaultBootloaderControl(const boot_control_private_t* module,
     // current slot is successful. The bootloader should repair this situation
     // before booting and write a valid boot_control slot, so if we reach this
     // stage it means that the misc partition was corrupted since boot.
-    if (module->current_slot == slot) {
+    if (current_slot == slot) {
       entry.successful_boot = 1;
     }
 
@@ -207,14 +189,14 @@ int SlotSuffixToIndex(const char* suffix) {
 // Initialize the boot_control_private struct with the information from
 // the bootloader_message buffer stored in |boot_ctrl|. Returns whether the
 // initialization succeeded.
-bool BootControl_lazyInitialization(boot_control_private_t* module) {
-  if (module->initialized) return true;
+bool BootControl::Init() {
+  if (initialized_) return true;
 
   // Initialize the current_slot from the read-only property. If the property
   // was not set (from either the command line or the device tree), we can later
   // initialize it from the bootloader_control struct.
   std::string suffix_prop = android::base::GetProperty("ro.boot.slot_suffix", "");
-  module->current_slot = SlotSuffixToIndex(suffix_prop.c_str());
+  current_slot_ = SlotSuffixToIndex(suffix_prop.c_str());
 
   std::string err;
   std::string device = get_bootloader_message_blk_device(&err);
@@ -224,8 +206,8 @@ bool BootControl_lazyInitialization(boot_control_private_t* module) {
   if (!LoadBootloaderControl(device.c_str(), &boot_ctrl)) return false;
 
   // Note that since there isn't a module unload function this memory is leaked.
-  module->misc_device = strdup(device.c_str());
-  module->initialized = true;
+  misc_device_ = strdup(device.c_str());
+  initialized_ = true;
 
   // Validate the loaded data, otherwise we will destroy it and re-initialize it
   // with the current information.
@@ -233,56 +215,47 @@ bool BootControl_lazyInitialization(boot_control_private_t* module) {
   if (boot_ctrl.crc32_le != computed_crc32) {
     LOG(WARNING) << "Invalid boot control found, expected CRC-32 0x" << std::hex << computed_crc32
                  << " but found 0x" << std::hex << boot_ctrl.crc32_le << ". Re-initializing.";
-    InitDefaultBootloaderControl(module, &boot_ctrl);
+    InitDefaultBootloaderControl(this, &boot_ctrl);
     UpdateAndSaveBootloaderControl(device.c_str(), &boot_ctrl);
   }
 
-  module->num_slots = boot_ctrl.nb_slot;
+  num_slots_ = boot_ctrl.nb_slot;
   return true;
 }
 
-void BootControl_init(boot_control_module_t* module) {
-  BootControl_lazyInitialization(reinterpret_cast<boot_control_private_t*>(module));
+unsigned int BootControl::GetNumberSlots() {
+  return num_slots_;
 }
 
-unsigned int BootControl_getNumberSlots(boot_control_module_t* module) {
-  return reinterpret_cast<boot_control_private_t*>(module)->num_slots;
+unsigned int BootControl::GetCurrentSlot() {
+  return current_slot_;
 }
 
-unsigned int BootControl_getCurrentSlot(boot_control_module_t* module) {
-  return reinterpret_cast<boot_control_private_t*>(module)->current_slot;
-}
-
-int BootControl_markBootSuccessful(boot_control_module_t* module) {
-  boot_control_private_t* const bootctrl_module = reinterpret_cast<boot_control_private_t*>(module);
-
+bool BootControl::MarkBootSuccessful() {
   bootloader_control bootctrl;
-  if (!LoadBootloaderControl(bootctrl_module->misc_device, &bootctrl)) return -1;
+  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return false;
 
-  bootctrl.slot_info[bootctrl_module->current_slot].successful_boot = 1;
+  bootctrl.slot_info[current_slot_].successful_boot = 1;
   // tries_remaining == 0 means that the slot is not bootable anymore, make
   // sure we mark the current slot as bootable if it succeeds in the last
   // attempt.
-  bootctrl.slot_info[bootctrl_module->current_slot].tries_remaining = 1;
-  if (!UpdateAndSaveBootloaderControl(bootctrl_module->misc_device, &bootctrl)) return -1;
-  return 0;
+  bootctrl.slot_info[current_slot_].tries_remaining = 1;
+  return UpdateAndSaveBootloaderControl(misc_device_, &bootctrl);
 }
 
-int BootControl_setActiveBootSlot(boot_control_module_t* module, unsigned int slot) {
-  boot_control_private_t* const bootctrl_module = reinterpret_cast<boot_control_private_t*>(module);
-
-  if (slot >= kMaxNumSlots || slot >= bootctrl_module->num_slots) {
+bool BootControl::SetActiveBootSlot(unsigned int slot) {
+  if (slot >= kMaxNumSlots || slot >= num_slots_) {
     // Invalid slot number.
-    return -1;
+    return false;
   }
 
   bootloader_control bootctrl;
-  if (!LoadBootloaderControl(bootctrl_module->misc_device, &bootctrl)) return -1;
+  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return false;
 
   // Set every other slot with a lower priority than the new "active" slot.
   const unsigned int kActivePriority = 15;
   const unsigned int kActiveTries = 6;
-  for (unsigned int i = 0; i < bootctrl_module->num_slots; ++i) {
+  for (unsigned int i = 0; i < num_slots_; ++i) {
     if (i != slot) {
       if (bootctrl.slot_info[i].priority >= kActivePriority)
         bootctrl.slot_info[i].priority = kActivePriority - 1;
@@ -299,103 +272,57 @@ int BootControl_setActiveBootSlot(boot_control_module_t* module, unsigned int sl
   // used to cancel the pending update. We should only reset the verity_corrpted
   // bit when attempting a new slot, otherwise the verity bit on the current
   // slot would be flip.
-  if (slot != bootctrl_module->current_slot) bootctrl.slot_info[slot].verity_corrupted = 0;
+  if (slot != current_slot_) bootctrl.slot_info[slot].verity_corrupted = 0;
 
-  if (!UpdateAndSaveBootloaderControl(bootctrl_module->misc_device, &bootctrl)) return -1;
-  return 0;
+  return UpdateAndSaveBootloaderControl(misc_device_, &bootctrl);
 }
 
-int BootControl_setSlotAsUnbootable(struct boot_control_module* module, unsigned int slot) {
-  boot_control_private_t* const bootctrl_module = reinterpret_cast<boot_control_private_t*>(module);
-
-  if (slot >= kMaxNumSlots || slot >= bootctrl_module->num_slots) {
+bool BootControl::SetSlotAsUnbootable(unsigned int slot) {
+  if (slot >= kMaxNumSlots || slot >= num_slots_) {
     // Invalid slot number.
-    return -1;
+    return false;
   }
 
   bootloader_control bootctrl;
-  if (!LoadBootloaderControl(bootctrl_module->misc_device, &bootctrl)) return -1;
+  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return false;
 
   // The only way to mark a slot as unbootable, regardless of the priority is to
   // set the tries_remaining to 0.
   bootctrl.slot_info[slot].successful_boot = 0;
   bootctrl.slot_info[slot].tries_remaining = 0;
-  if (!UpdateAndSaveBootloaderControl(bootctrl_module->misc_device, &bootctrl)) return -1;
-  return 0;
+  return UpdateAndSaveBootloaderControl(misc_device_, &bootctrl);
 }
 
-int BootControl_isSlotBootable(struct boot_control_module* module, unsigned int slot) {
-  boot_control_private_t* const bootctrl_module = reinterpret_cast<boot_control_private_t*>(module);
-
-  if (slot >= kMaxNumSlots || slot >= bootctrl_module->num_slots) {
+bool BootControl::IsSlotBootable(unsigned int slot) {
+  if (slot >= kMaxNumSlots || slot >= num_slots_) {
     // Invalid slot number.
-    return -1;
+    return false;
   }
 
   bootloader_control bootctrl;
-  if (!LoadBootloaderControl(bootctrl_module->misc_device, &bootctrl)) return -1;
+  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return false;
 
-  return bootctrl.slot_info[slot].tries_remaining;
+  return bootctrl.slot_info[slot].tries_remaining != 0;
 }
 
-int BootControl_isSlotMarkedSuccessful(struct boot_control_module* module, unsigned int slot) {
-  boot_control_private_t* const bootctrl_module = reinterpret_cast<boot_control_private_t*>(module);
-
-  if (slot >= kMaxNumSlots || slot >= bootctrl_module->num_slots) {
+bool BootControl::IsSlotMarkedSuccessful(unsigned int slot) {
+  if (slot >= kMaxNumSlots || slot >= num_slots_) {
     // Invalid slot number.
-    return -1;
+    return false;
   }
 
   bootloader_control bootctrl;
-  if (!LoadBootloaderControl(bootctrl_module->misc_device, &bootctrl)) return -1;
+  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return false;
 
   return bootctrl.slot_info[slot].successful_boot && bootctrl.slot_info[slot].tries_remaining;
 }
 
-const char* BootControl_getSuffix(boot_control_module_t* module, unsigned int slot) {
-  if (slot >= kMaxNumSlots || slot >= reinterpret_cast<boot_control_private_t*>(module)->num_slots) {
-    return NULL;
+const char* BootControl::GetSuffix(unsigned int slot) {
+  if (slot >= kMaxNumSlots || slot >= num_slots_) {
+    return nullptr;
   }
   return kSlotSuffixes[slot];
 }
 
-static int BootControl_open(const hw_module_t* module __unused, const char* id __unused,
-                            hw_device_t** device __unused) {
-  /* Nothing to do currently. */
-  return 0;
-}
-
-struct hw_module_methods_t BootControl_methods = {
-  .open = BootControl_open,
-};
-
-}  // namespace
-
-boot_control_private_t HAL_MODULE_INFO_SYM = {
-  .base =
-      {
-          .common =
-              {
-                  .tag = HARDWARE_MODULE_TAG,
-                  .module_api_version = BOOT_CONTROL_MODULE_API_VERSION_0_1,
-                  .hal_api_version = HARDWARE_HAL_API_VERSION,
-                  .id = BOOT_CONTROL_HARDWARE_MODULE_ID,
-                  .name = "AOSP reference bootctrl HAL",
-                  .author = "The Android Open Source Project",
-                  .methods = &BootControl_methods,
-              },
-          .init = BootControl_init,
-          .getNumberSlots = BootControl_getNumberSlots,
-          .getCurrentSlot = BootControl_getCurrentSlot,
-          .markBootSuccessful = BootControl_markBootSuccessful,
-          .setActiveBootSlot = BootControl_setActiveBootSlot,
-          .setSlotAsUnbootable = BootControl_setSlotAsUnbootable,
-          .isSlotBootable = BootControl_isSlotBootable,
-          .getSuffix = BootControl_getSuffix,
-          .isSlotMarkedSuccessful = BootControl_isSlotMarkedSuccessful,
-      },
-  .initialized = false,
-  .misc_device = nullptr,
-  .num_slots = 0,
-  .current_slot = 0,
-};
+}  // namespace bootable
+}  // namespace android
