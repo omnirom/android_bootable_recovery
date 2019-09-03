@@ -56,4 +56,5 @@ cc_library_static {
         "libbootloader_message_defaults",
     ],
     vendor: true,
+    recovery_available: true,
 }
