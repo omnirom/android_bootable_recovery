@@ -16,6 +16,7 @@
 
 cc_defaults {
     name: "libboot_control_defaults",
+    vendor: true,
     recovery_available: true,
     relative_install_path: "hw",
 
@@ -28,10 +29,10 @@ cc_defaults {
 
     shared_libs: [
         "libbase",
-        "libbootloader_message",
         "liblog",
     ],
     static_libs: [
+        "libbootloader_message_vendor",
         "libfstab",
     ],
 }
