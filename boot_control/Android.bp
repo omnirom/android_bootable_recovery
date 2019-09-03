@@ -14,12 +14,10 @@
 // limitations under the License.
 //
 
-cc_library_shared {
-    name: "bootctrl.default",
+cc_defaults {
+    name: "libboot_control_defaults",
     recovery_available: true,
     relative_install_path: "hw",
-
-    srcs: ["boot_control.cpp"],
 
     cflags: [
         "-D_FILE_OFFSET_BITS=64",
@@ -31,7 +29,31 @@ cc_library_shared {
     shared_libs: [
         "libbase",
         "libbootloader_message",
-        "libfs_mgr",
         "liblog",
+    ],
+    static_libs: [
+        "libfstab",
+    ],
+}
+
+cc_library_static {
+    name: "libboot_control",
+    defaults: ["libboot_control_defaults"],
+    export_include_dirs: ["include"],
+
+    srcs: ["libboot_control.cpp"],
+}
+
+cc_library_shared {
+    name: "bootctrl.default",
+    defaults: ["libboot_control_defaults"],
+
+    srcs: ["legacy_boot_control.cpp"],
+
+    static_libs: [
+        "libboot_control",
+    ],
+    shared_libs: [
+        "libhardware",
     ],
 }
