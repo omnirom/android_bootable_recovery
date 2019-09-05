@@ -91,8 +91,6 @@ librecovery_static_libs = [
     "libfs_mgr",
     "libhidl-gen-utils",
     "libhidlbase",
-    "libhidltransport",
-    "libhwbinder_noltopgo",
     "libbinderthreadstate",
     "liblp",
     "libvndksupport",
