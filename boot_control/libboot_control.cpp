@@ -204,10 +204,16 @@ bool BootControl::Init() {
 
   std::string err;
   std::string device = get_bootloader_message_blk_device(&err);
-  if (device.empty()) return false;
+  if (device.empty()) {
+    LOG(ERROR) << "Could not find bootloader message block device: " << err;
+    return false;
+  }
 
   bootloader_control boot_ctrl;
-  if (!LoadBootloaderControl(device.c_str(), &boot_ctrl)) return false;
+  if (!LoadBootloaderControl(device.c_str(), &boot_ctrl)) {
+    LOG(ERROR) << "Failed to load bootloader control block";
+    return false;
+  }
 
   // Note that since there isn't a module unload function this memory is leaked.
   misc_device_ = strdup(device.c_str());
