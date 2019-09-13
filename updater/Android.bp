@@ -41,10 +41,13 @@ cc_defaults {
         "libziparchive",
         "libz",
         "libbase",
-        "libcrypto",
         "libcrypto_utils",
         "libcutils",
         "libutils",
+    ],
+
+    shared_libs: [
+        "libcrypto",
     ],
 }
 

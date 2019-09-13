@@ -64,7 +64,6 @@ libapplypatch_static_libs = [
     "libbase",
     "libbrotli",
     "libbz",
-    "libcrypto",
     "libz",
     "libziparchive",
 ]
