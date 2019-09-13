@@ -51,10 +51,13 @@ cc_library_static {
         "libbase",
         "libbspatch",
         "libbz",
-        "libcrypto",
         "libedify",
         "libotautil",
         "libz",
+    ],
+
+    shared_libs: [
+        "libcrypto",
     ],
 
     target: {
@@ -78,9 +81,12 @@ cc_library_static {
     static_libs: [
         "libapplypatch",
         "libbase",
-        "libcrypto",
         "libedify",
         "libotautil",
+    ],
+
+    shared_libs: [
+        "libcrypto",
     ],
 }
 
