@@ -102,11 +102,11 @@ cc_test {
         "libfusesideload",
         "libotautil",
         "libadbd",
-        "libcrypto",
     ],
 
     shared_libs: [
         "libbase",
+        "libcrypto",
         "libcutils",
         "liblog",
     ],
