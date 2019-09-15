@@ -1664,6 +1664,13 @@ int cryptfs_verify_passwd(const char *passwd)
         return -1;
     }
 
+    if (crypt_ftr.flags & CRYPT_DATA_CORRUPT) {
+        /* The cryptfs metadata claims the device is corrupt, log a warning, but try
+         * anyways in case the metadata is mistaken. */
+        SLOGW("Warning: crypto footer claims data is corrupt (CRYPT_DATA_CORRUPT set),"
+              "trying decryption anyways...\n");
+    }
+
     if (crypt_ftr.flags & CRYPT_MNT_KEY_UNENCRYPTED) {
         /* If the device has no password, then just say the password is valid */
         rc = 0;
