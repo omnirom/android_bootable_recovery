@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cb92b959_0be424cf",
+        "filename": "crypto/fde/cryptfs.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1671,
+      "author": {
+        "id": 1002544
+      },
+      "writtenOn": "2019-09-16T06:09:01Z",
+      "side": 1,
+      "message": "I\u0027ve belatedly realized that this calls it the \"crypto footer\" when \"crypt footer\" might better match the variable name.  In case other phrasing\u0027s desired, I\u0027ll leave this as is for the first review.  Pardon the email noise.",
+      "revId": "a825cd8e1bd7541229df151156efda251fc6a2a7",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
