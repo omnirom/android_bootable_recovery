@@ -31,6 +31,7 @@ cc_library_static {
     name: "libapplypatch",
 
     host_supported: true,
+    vendor_available: true,
 
     defaults: [
         "applypatch_defaults",
@@ -69,6 +70,7 @@ cc_library_static {
 
 cc_library_static {
     name: "libapplypatch_modes",
+    vendor_available: true,
 
     defaults: [
         "applypatch_defaults",
@@ -92,6 +94,7 @@ cc_library_static {
 
 cc_binary {
     name: "applypatch",
+    vendor: true,
 
     defaults: [
         "applypatch_defaults",
@@ -119,6 +122,10 @@ cc_binary {
         "liblog",
         "libz",
         "libziparchive",
+    ],
+
+    init_rc: [
+        "vendor_flash_recovery.rc",
     ],
 }
 
