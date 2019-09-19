@@ -99,6 +99,7 @@ librecovery_static_libs = [
 cc_test {
     name: "recovery_unit_test",
     isolated: true,
+    require_root: true,
 
     defaults: [
         "recovery_test_defaults",
