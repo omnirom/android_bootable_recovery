@@ -56,7 +56,7 @@ TEST(InstallTest, verify_package_compatibility_invalid_entry) {
   TemporaryFile temp_file;
   FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
-  ASSERT_EQ(0, writer.StartEntry("compatibility.zip", 0));
+  ASSERT_EQ(0, writer.StartEntry("treble.zip", 0));
   ASSERT_EQ(0, writer.FinishEntry());
   ASSERT_EQ(0, writer.Finish());
   ASSERT_EQ(0, fclose(zip_file));
@@ -132,7 +132,7 @@ TEST(InstallTest, verify_package_compatibility_with_libvintf_malformed_xml) {
   TemporaryFile temp_file;
   FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
-  ASSERT_EQ(0, writer.StartEntry("compatibility.zip", kCompressStored));
+  ASSERT_EQ(0, writer.StartEntry("treble.zip", kCompressStored));
   std::string compatibility_zip_content;
   ASSERT_TRUE(
       android::base::ReadFileToString(compatibility_zip_file.path, &compatibility_zip_content));
@@ -177,7 +177,7 @@ TEST(InstallTest, verify_package_compatibility_with_libvintf_system_manifest_xml
   TemporaryFile temp_file;
   FILE* zip_file = fdopen(temp_file.release(), "w");
   ZipWriter writer(zip_file);
-  ASSERT_EQ(0, writer.StartEntry("compatibility.zip", kCompressStored));
+  ASSERT_EQ(0, writer.StartEntry("treble.zip", kCompressStored));
   std::string compatibility_zip_content;
   ASSERT_TRUE(
       android::base::ReadFileToString(compatibility_zip_file.path, &compatibility_zip_content));

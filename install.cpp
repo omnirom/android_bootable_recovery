@@ -477,7 +477,7 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
 bool verify_package_compatibility(ZipArchiveHandle package_zip) {
   LOG(INFO) << "Verifying package compatibility...";
 
-  static constexpr const char* COMPATIBILITY_ZIP_ENTRY = "compatibility.zip";
+  static constexpr const char* COMPATIBILITY_ZIP_ENTRY = "treble.zip";
   ZipString compatibility_entry_name(COMPATIBILITY_ZIP_ENTRY);
   ZipEntry compatibility_entry;
   if (FindEntry(package_zip, compatibility_entry_name, &compatibility_entry) != 0) {
