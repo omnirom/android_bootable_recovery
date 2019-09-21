@@ -240,7 +240,7 @@ update_binary_command(const char* path, int retry_count,
 
 #ifdef USE_MINZIP
 bool verify_package_compatibility(ZipWrap *package_zip) {
-  if (package_zip->EntryExists("compatibility.zip"))
+  if (package_zip->EntryExists("treble.zip"))
     printf("Cannot verify treble package compatibility, must build TWRP in Oreo tree or higher.\n");
   return true;
 }
@@ -252,7 +252,7 @@ bool verify_package_compatibility(ZipWrap *zw) {
   ZipArchiveHandle package_zip = zw->GetZipArchiveHandle();
   printf("Verifying package compatibility...\n");
 
-  static constexpr const char* COMPATIBILITY_ZIP_ENTRY = "compatibility.zip";
+  static constexpr const char* COMPATIBILITY_ZIP_ENTRY = "treble.zip";
   ZipString compatibility_entry_name(COMPATIBILITY_ZIP_ENTRY);
   ZipEntry compatibility_entry;
   if (FindEntry(package_zip, compatibility_entry_name, &compatibility_entry) != 0) {
