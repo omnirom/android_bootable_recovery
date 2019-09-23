@@ -106,13 +106,15 @@ cc_binary {
         "libapplypatch",
         "libedify",
         "libotautil",
+
+        // External dependencies.
         "libbspatch",
+        "libbrotli",
+        "libbz",
     ],
 
     shared_libs: [
         "libbase",
-        "libbrotli",
-        "libbz",
         "libcrypto",
         "liblog",
         "libz",
