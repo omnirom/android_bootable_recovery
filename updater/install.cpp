@@ -271,7 +271,7 @@ Value* PatchPartitionFn(const char* name, State* state,
     return StringValue("");
   }
 
-  bool result = PatchPartition(target, source, *values[0], nullptr);
+  bool result = PatchPartition(target, source, *values[0], nullptr, true);
   return StringValue(result ? "t" : "");
 }
 
