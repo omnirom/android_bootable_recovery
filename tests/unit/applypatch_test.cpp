@@ -141,7 +141,7 @@ TEST_F(ApplyPatchTest, PatchPartition) {
   ASSERT_TRUE(LoadFileContents(from_testdata_base("bonus.file"), &bonus_fc));
   Value bonus(Value::Type::BLOB, std::string(bonus_fc.data.cbegin(), bonus_fc.data.cend()));
 
-  ASSERT_TRUE(PatchPartition(target_partition, source_partition, patch, &bonus));
+  ASSERT_TRUE(PatchPartition(target_partition, source_partition, patch, &bonus, false));
 }
 
 // Tests patching an eMMC target without a separate bonus file (i.e. recovery-from-boot patch has
@@ -151,7 +151,7 @@ TEST_F(ApplyPatchTest, PatchPartitionWithoutBonusFile) {
   ASSERT_TRUE(LoadFileContents(from_testdata_base("recovery-from-boot-with-bonus.p"), &patch_fc));
   Value patch(Value::Type::BLOB, std::string(patch_fc.data.cbegin(), patch_fc.data.cend()));
 
-  ASSERT_TRUE(PatchPartition(target_partition, source_partition, patch, nullptr));
+  ASSERT_TRUE(PatchPartition(target_partition, source_partition, patch, nullptr, false));
 }
 
 class FreeCacheTest : public ::testing::Test {
