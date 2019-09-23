@@ -58,6 +58,9 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/testcases/recovery_component_test)
 $(call add-clean-step, find $(OUT_DIR) -type f -name "SystemUpdaterSample*" -print0 | xargs -0 rm -f)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/priv-app/SystemUpdaterSample)
 
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib*/libbrotli.so)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib*/libbz.so)
+
 # ************************************************
 # NEWER CLEAN STEPS MUST BE AT THE END OF THE LIST
 # ************************************************
