@@ -87,7 +87,7 @@ static int PatchMode(const std::string& target_emmc, const std::string& source_e
     bonus = std::make_unique<Value>(Value::Type::BLOB, std::move(bonus_contents));
   }
 
-  return PatchPartition(target, source, patch, bonus.get()) ? 0 : 1;
+  return PatchPartition(target, source, patch, bonus.get(), false) ? 0 : 1;
 }
 
 static void Usage() {
