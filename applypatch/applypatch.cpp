@@ -47,7 +47,7 @@
 using namespace std::string_literals;
 
 static bool GenerateTarget(const Partition& target, const FileContents& source_file,
-                           const Value& patch, const Value* bonus_data);
+                           const Value& patch, const Value* bonus_data, bool backup_source);
 
 bool LoadFileContents(const std::string& filename, FileContents* file) {
   // No longer allow loading contents from eMMC partitions.
@@ -266,7 +266,7 @@ int ShowLicenses() {
 }
 
 bool PatchPartition(const Partition& target, const Partition& source, const Value& patch,
-                    const Value* bonus) {
+                    const Value* bonus, bool backup_source) {
   LOG(INFO) << "Patching " << target.name;
 
   // We try to load and check against the target hash first.
@@ -280,7 +280,7 @@ bool PatchPartition(const Partition& target, const Partition& source, const Valu
 
   FileContents source_file;
   if (ReadPartitionToBuffer(source, &source_file, true)) {
-    return GenerateTarget(target, source_file, patch, bonus);
+    return GenerateTarget(target, source_file, patch, bonus, backup_source);
   }
 
   LOG(ERROR) << "Failed to find any match";
@@ -326,7 +326,7 @@ bool FlashPartition(const Partition& partition, const std::string& source_filena
 }
 
 static bool GenerateTarget(const Partition& target, const FileContents& source_file,
-                           const Value& patch, const Value* bonus_data) {
+                           const Value& patch, const Value* bonus_data, bool backup_source) {
   uint8_t expected_sha1[SHA_DIGEST_LENGTH];
   if (ParseSha1(target.hash, expected_sha1) != 0) {
     LOG(ERROR) << "Failed to parse target hash \"" << target.hash << "\"";
@@ -351,11 +351,11 @@ static bool GenerateTarget(const Partition& target, const FileContents& source_f
   }
 
   // We write the original source to cache, in case the partition write is interrupted.
-  if (!CheckAndFreeSpaceOnCache(source_file.data.size())) {
+  if (backup_source && !CheckAndFreeSpaceOnCache(source_file.data.size())) {
     LOG(ERROR) << "Not enough free space on /cache";
     return false;
   }
-  if (!SaveFileContents(Paths::Get().cache_temp_source(), &source_file)) {
+  if (backup_source && !SaveFileContents(Paths::Get().cache_temp_source(), &source_file)) {
     LOG(ERROR) << "Failed to back up source file";
     return false;
   }
@@ -415,7 +415,9 @@ static bool GenerateTarget(const Partition& target, const FileContents& source_f
   }
 
   // Delete the backup copy of the source.
-  unlink(Paths::Get().cache_temp_source().c_str());
+  if (backup_source) {
+    unlink(Paths::Get().cache_temp_source().c_str());
+  }
 
   // Success!
   return true;
