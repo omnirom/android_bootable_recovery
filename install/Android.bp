@@ -32,7 +32,6 @@ cc_defaults {
         "libfusesideload",
         "libhidl-gen-utils",
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libselinux",
         "libtinyxml2",
