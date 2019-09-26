@@ -35,8 +35,8 @@
 #include "adb_io.h"
 #include "fuse_adb_provider.h"
 #include "fuse_sideload.h"
+#include "minadbd/types.h"
 #include "minadbd_services.h"
-#include "minadbd_types.h"
 #include "socket.h"
 
 class MinadbdServicesTest : public ::testing::Test {

@@ -26,6 +26,10 @@ cc_defaults {
     include_dirs: [
         "system/core/adb",
     ],
+
+    header_libs: [
+        "libminadbd_headers",
+    ],
 }
 
 // `libminadbd_services` is analogous to the `libadbd_services` for regular `adbd`, but providing
@@ -58,9 +62,12 @@ cc_library {
 cc_library_headers {
     name: "libminadbd_headers",
     recovery_available: true,
-    // TODO create a include dir
     export_include_dirs: [
-        ".",
+        "include",
+    ],
+    // adb_install.cpp
+    visibility: [
+        "//bootable/recovery/install",
     ],
 }
 
