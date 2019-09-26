@@ -43,7 +43,7 @@
 #include "adb_utils.h"
 #include "fuse_adb_provider.h"
 #include "fuse_sideload.h"
-#include "minadbd_types.h"
+#include "minadbd/types.h"
 #include "services.h"
 #include "sysdeps.h"
 

@@ -19,10 +19,6 @@ cc_defaults {
         "recovery_defaults",
     ],
 
-    header_libs: [
-        "libminadbd_headers",
-    ],
-
     shared_libs: [
         "libbase",
         "libbootloader_message",
@@ -67,6 +63,10 @@ cc_library_static {
         "verifier.cpp",
         "wipe_data.cpp",
         "wipe_device.cpp",
+    ],
+
+    header_libs: [
+        "libminadbd_headers",
     ],
 
     shared_libs: [
