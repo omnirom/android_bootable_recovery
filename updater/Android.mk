@@ -44,7 +44,7 @@ updater_common_static_libraries := \
     libziparchive \
     libz \
     libbase \
-    libcrypto \
+    libcrypto_static \
     libcrypto_utils \
     libcutils \
     libutils
@@ -109,7 +109,6 @@ LOCAL_GENERATED_SOURCES := $(inc)
 inc :=
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
-LOCAL_INJECT_BSSL_HASH := true
 
 include $(BUILD_EXECUTABLE)
 
