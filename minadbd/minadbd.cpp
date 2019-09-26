@@ -28,8 +28,8 @@
 #include "adb_auth.h"
 #include "transport.h"
 
+#include "minadbd/types.h"
 #include "minadbd_services.h"
-#include "minadbd_types.h"
 
 using namespace std::string_literals;
 
