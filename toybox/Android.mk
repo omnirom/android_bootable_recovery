@@ -353,7 +353,7 @@ LOCAL_SHARED_LIBRARIES += libz
 endif
 
 LOCAL_MODULE := toybox_recovery
-LOCAL_MODULE_STEM := toybox
+LOCAL_MODULE_STEM := toybox_static
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 LOCAL_MODULE_TAGS := optional
 
@@ -569,7 +569,7 @@ endif
 endif
 
 # Install the symlinks.
-LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf toybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)
+LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf $(LOCAL_MODULE_STEM) $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)
 
 include $(BUILD_EXECUTABLE)
 

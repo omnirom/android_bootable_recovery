@@ -26,7 +26,7 @@ else
                                     rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; fi; ln -sr $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; \
                                     if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep" ]; then \
                                     rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep; fi; ln -sr $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep;
-        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox_static
         ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
             RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dd
         endif
