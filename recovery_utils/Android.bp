@@ -75,6 +75,7 @@ cc_library_static {
     visibility: [
         "//bootable/recovery",
         "//bootable/recovery/install",
+        "//bootable/recovery/minadbd",
         "//bootable/recovery/tests",
     ],
 }
