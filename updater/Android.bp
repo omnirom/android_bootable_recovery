@@ -81,6 +81,7 @@ cc_library_static {
         "blockimg.cpp",
         "commands.cpp",
         "install.cpp",
+        "mounts.cpp",
         "updater.cpp",
     ],
 

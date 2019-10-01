@@ -60,7 +60,6 @@
 #include "edify/updater_runtime_interface.h"
 #include "otautil/dirutil.h"
 #include "otautil/error_code.h"
-#include "otautil/mounts.h"
 #include "otautil/print_sha1.h"
 #include "otautil/sysutil.h"
 

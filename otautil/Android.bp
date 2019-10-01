@@ -44,7 +44,6 @@ cc_library_static {
         android: {
             srcs: [
                 "logging.cpp",
-                "mounts.cpp",
                 "parse_install_logs.cpp",
                 "roots.cpp",
                 "thermalutil.cpp",
