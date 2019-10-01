@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "41d74602_1031a114",
+        "filename": "Android.mk",
+        "patchSetId": 6
+      },
+      "lineNbr": 478,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-10-01T22:48:55Z",
+      "side": 1,
+      "message": "Can you remove this?",
+      "revId": "b3c437bf437536555e342c7d837639c10ec7b8dd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "80490fd1_32dd0e79",
+        "filename": "gui/objects.hpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 291,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-10-01T22:48:55Z",
+      "side": 1,
+      "message": "tab needed",
+      "revId": "b3c437bf437536555e342c7d837639c10ec7b8dd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "73a64fec_a83b5344",
+        "filename": "openrecoveryscript.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 419,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-10-01T22:48:55Z",
+      "side": 1,
+      "message": "remove commented code.",
+      "revId": "b3c437bf437536555e342c7d837639c10ec7b8dd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4a648601_82f11cb8",
+        "filename": "twrp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 1000024
+      },
+      "writtenOn": "2019-10-01T22:48:55Z",
+      "side": 1,
+      "message": "remove commented code",
+      "revId": "b3c437bf437536555e342c7d837639c10ec7b8dd",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": true
+    }
+  ]
+}
