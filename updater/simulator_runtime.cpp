@@ -32,7 +32,7 @@
 #include <ext4_utils/wipe.h>
 #include <selinux/label.h>
 
-#include "otautil/mounts.h"
+#include "mounts.h"
 #include "otautil/sysutil.h"
 
 std::string SimulatorRuntime::GetProperty(const std::string_view key,
