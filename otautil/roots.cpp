@@ -16,13 +16,10 @@
 
 #include "otautil/roots.h"
 
-#include <ctype.h>
 #include <fcntl.h>
-#include <inttypes.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -33,14 +30,12 @@
 #include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
 #include <cryptfs.h>
 #include <ext4_utils/wipe.h>
 #include <fs_mgr.h>
 #include <fs_mgr/roots.h>
-#include <fs_mgr_dm_linear.h>
 
 #include "otautil/sysutil.h"
 
