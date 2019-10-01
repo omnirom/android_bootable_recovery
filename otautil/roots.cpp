@@ -42,7 +42,6 @@
 #include <fs_mgr/roots.h>
 #include <fs_mgr_dm_linear.h>
 
-#include "otautil/mounts.h"
 #include "otautil/sysutil.h"
 
 using android::fs_mgr::Fstab;
