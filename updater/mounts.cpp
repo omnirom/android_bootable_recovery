@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "otautil/mounts.h"
+#include "mounts.h"
 
 #include <errno.h>
 #include <fcntl.h>

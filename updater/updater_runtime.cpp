@@ -31,7 +31,7 @@
 #include <selinux/label.h>
 #include <tune2fs.h>
 
-#include "otautil/mounts.h"
+#include "mounts.h"
 #include "otautil/sysutil.h"
 
 std::string UpdaterRuntime::GetProperty(const std::string_view key,
