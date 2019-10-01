@@ -37,7 +37,7 @@
 #include "fuse_provider.h"
 #include "fuse_sideload.h"
 #include "install/install.h"
-#include "otautil/roots.h"
+#include "recovery_utils/roots.h"
 
 static constexpr const char* SDCARD_ROOT = "/sdcard";
 // How long (in seconds) we wait for the fuse-provided package file to

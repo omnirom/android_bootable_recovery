@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "otautil/thermalutil.h"
+#include "recovery_utils/thermalutil.h"
 
 #include <dirent.h>
 #include <stdio.h>

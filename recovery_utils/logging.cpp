@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "otautil/logging.h"
+#include "recovery_utils/logging.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -38,7 +38,7 @@
 
 #include "otautil/dirutil.h"
 #include "otautil/paths.h"
-#include "otautil/roots.h"
+#include "recovery_utils/roots.h"
 
 constexpr const char* LOG_FILE = "/cache/recovery/log";
 constexpr const char* LAST_INSTALL_FILE = "/cache/recovery/last_install";
