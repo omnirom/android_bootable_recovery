@@ -36,7 +36,7 @@
 #include <android-base/unique_fd.h>
 #include <fs_mgr/roots.h>
 
-#include "otautil/roots.h"
+#include "recovery_utils/roots.h"
 
 static constexpr const char* SYSTEM_E2FSCK_BIN = "/system/bin/e2fsck_static";
 static constexpr const char* TMP_E2FSCK_BIN = "/tmp/e2fsck.bin";

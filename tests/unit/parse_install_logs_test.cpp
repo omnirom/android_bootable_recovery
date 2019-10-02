@@ -22,7 +22,7 @@
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
 
-#include "otautil/parse_install_logs.h"
+#include "recovery_utils/parse_install_logs.h"
 
 TEST(ParseInstallLogsTest, EmptyFile) {
   TemporaryFile last_install;

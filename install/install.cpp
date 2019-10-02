@@ -51,11 +51,11 @@
 #include "install/wipe_data.h"
 #include "otautil/error_code.h"
 #include "otautil/paths.h"
-#include "otautil/roots.h"
 #include "otautil/sysutil.h"
-#include "otautil/thermalutil.h"
 #include "private/setup_commands.h"
 #include "recovery_ui/ui.h"
+#include "recovery_utils/roots.h"
+#include "recovery_utils/thermalutil.h"
 
 using namespace std::chrono_literals;
 
