@@ -38,11 +38,12 @@
 //
 
 #include <string.h>
+
 #include <string>
 
 #include <private/android_logger.h> /* private pmsg functions */
 
-#include "otautil/logging.h"
+#include "recovery_utils/logging.h"
 
 int main(int argc, char **argv) {
     static const char filter[] = "recovery/";
