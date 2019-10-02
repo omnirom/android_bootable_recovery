@@ -28,9 +28,9 @@
 #include <android-base/stringprintf.h>
 
 #include "otautil/dirutil.h"
-#include "otautil/logging.h"
-#include "otautil/roots.h"
 #include "recovery_ui/ui.h"
+#include "recovery_utils/logging.h"
+#include "recovery_utils/roots.h"
 
 constexpr const char* CACHE_ROOT = "/cache";
 constexpr const char* DATA_ROOT = "/data";

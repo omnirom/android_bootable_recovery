@@ -43,8 +43,8 @@
 #include <metricslogger/metrics_logger.h>
 #include <private/android_logger.h> /* private pmsg functions */
 
-#include "otautil/logging.h"
-#include "otautil/parse_install_logs.h"
+#include "recovery_utils/logging.h"
+#include "recovery_utils/parse_install_logs.h"
 
 constexpr const char* LAST_LOG_FILE = "/data/misc/recovery/last_log";
 constexpr const char* LAST_PMSG_FILE = "/sys/fs/pstore/pmsg-ramoops-0";

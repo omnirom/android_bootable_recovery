@@ -72,6 +72,7 @@ cc_defaults {
         "libinstall",
         "librecovery_fastboot",
         "libminui",
+        "librecovery_utils",
         "libotautil",
 
         // external dependencies
@@ -148,7 +149,7 @@ cc_binary {
     ],
 
     static_libs: [
-        "libotautil",
+        "librecovery_utils",
     ],
 
     init_rc: [
@@ -174,7 +175,7 @@ cc_binary {
     ],
 
     static_libs: [
-        "libotautil",
+        "librecovery_utils",
     ],
 
     init_rc: [

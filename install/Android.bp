@@ -37,6 +37,7 @@ cc_defaults {
     ],
 
     static_libs: [
+        "librecovery_utils",
         "libotautil",
 
         // external dependencies
