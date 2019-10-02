@@ -117,6 +117,7 @@ cc_test {
         "librecovery_ui",
         "libfusesideload",
         "libminui",
+        "librecovery_utils",
         "libotautil",
         "libupdater_device",
         "libupdater_core",

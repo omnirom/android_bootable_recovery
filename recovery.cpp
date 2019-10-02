@@ -55,12 +55,12 @@
 #include "install/wipe_device.h"
 #include "otautil/boot_state.h"
 #include "otautil/error_code.h"
-#include "otautil/logging.h"
 #include "otautil/paths.h"
-#include "otautil/roots.h"
 #include "otautil/sysutil.h"
 #include "recovery_ui/screen_ui.h"
 #include "recovery_ui/ui.h"
+#include "recovery_utils/logging.h"
+#include "recovery_utils/roots.h"
 
 static constexpr const char* COMMAND_FILE = "/cache/recovery/command";
 static constexpr const char* LAST_KMSG_FILE = "/cache/recovery/last_kmsg";
