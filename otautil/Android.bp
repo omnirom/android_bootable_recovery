@@ -39,32 +39,4 @@ cc_library_static {
     export_include_dirs: [
         "include",
     ],
-
-    target: {
-        android: {
-            srcs: [
-                "logging.cpp",
-                "parse_install_logs.cpp",
-                "roots.cpp",
-                "thermalutil.cpp",
-            ],
-
-            include_dirs: [
-                "system/vold",
-            ],
-
-            static_libs: [
-                "libfstab",
-            ],
-
-            shared_libs: [
-                "libext4_utils",
-                "libfs_mgr",
-            ],
-
-            export_static_lib_headers: [
-                "libfstab",
-            ],
-        },
-    },
 }

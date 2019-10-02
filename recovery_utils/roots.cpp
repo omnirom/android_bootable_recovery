@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "otautil/roots.h"
+#include "recovery_utils/roots.h"
 
 #include <fcntl.h>
 #include <stdint.h>
