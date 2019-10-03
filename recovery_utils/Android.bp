@@ -12,6 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+cc_defaults {
+    name: "librecovery_utils_defaults",
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    shared_libs: [
+        "android.hardware.health@2.0",
+        "libbase",
+        "libext4_utils",
+        "libfs_mgr",
+        "libhidlbase",
+        "libselinux",
+        "libutils",
+    ],
+
+    static_libs: [
+        "libotautil",
+
+        // External dependencies.
+        "libfstab",
+        "libhealthhalutils",
+    ],
+}
+
 // A utility lib that's local to recovery (in contrast, libotautil is exposed to device-specific
 // recovery_ui lib as well as device-specific updater).
 cc_library_static {
@@ -20,21 +46,15 @@ cc_library_static {
     recovery_available: true,
 
     defaults: [
-        "recovery_defaults",
+        "librecovery_utils_defaults",
     ],
 
     srcs: [
+        "battery_utils.cpp",
         "logging.cpp",
         "parse_install_logs.cpp",
         "roots.cpp",
         "thermalutil.cpp",
-    ],
-
-    shared_libs: [
-        "libbase",
-        "libext4_utils",
-        "libfs_mgr",
-        "libselinux",
     ],
 
     export_include_dirs: [
@@ -43,13 +63,6 @@ cc_library_static {
 
     include_dirs: [
         "system/vold",
-    ],
-
-    static_libs: [
-        "libotautil",
-
-        // external dependency
-        "libfstab",
     ],
 
     export_static_lib_headers: [
