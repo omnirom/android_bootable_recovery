@@ -58,7 +58,6 @@ cc_defaults {
     ],
 
     shared_libs: [
-        "android.hardware.health@2.0",
         "libbase",
         "libbootloader_message",
         "libcrypto",
@@ -74,9 +73,6 @@ cc_defaults {
         "libminui",
         "librecovery_utils",
         "libotautil",
-
-        // external dependencies
-        "libhealthhalutils",
     ],
 }
 
@@ -105,6 +101,7 @@ cc_binary {
     defaults: [
         "libinstall_defaults",
         "librecovery_defaults",
+        "librecovery_utils_defaults",
     ],
 
     srcs: [
