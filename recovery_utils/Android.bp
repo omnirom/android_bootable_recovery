@@ -57,15 +57,16 @@ cc_library_static {
         "thermalutil.cpp",
     ],
 
+    header_libs: [
+        "libvold_headers",
+    ],
+
     export_include_dirs: [
         "include",
     ],
 
-    include_dirs: [
-        "system/vold",
-    ],
-
     export_static_lib_headers: [
+        // roots.h includes <fstab/fstab.h>.
         "libfstab",
     ],
 
