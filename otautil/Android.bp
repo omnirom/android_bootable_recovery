@@ -16,6 +16,7 @@ cc_library_static {
     name: "libotautil",
 
     host_supported: true,
+    vendor_available: true,
     recovery_available: true,
 
     defaults: [
