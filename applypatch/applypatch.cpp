@@ -279,7 +279,7 @@ bool PatchPartition(const Partition& target, const Partition& source, const Valu
   }
 
   FileContents source_file;
-  if (ReadPartitionToBuffer(source, &source_file, true)) {
+  if (ReadPartitionToBuffer(source, &source_file, backup_source)) {
     return GenerateTarget(target, source_file, patch, bonus, backup_source);
   }
 
