@@ -184,10 +184,7 @@ int TWFunc::Wait_For_Child_Timeout(pid_t pid, int *status, const string& Child_N
 
 bool TWFunc::Path_Exists(string Path) {
 	struct stat st;
-	if (stat(Path.c_str(), &st) != 0)
-		return false;
-	else
-		return true;
+	return stat(Path.c_str(), &st) == 0;
 }
 
 Archive_Type TWFunc::Get_File_Type(string fn) {
@@ -504,24 +501,82 @@ void TWFunc::GUI_Operation_Text(string Read_Value, string Partition_Name, string
 }
 
 void TWFunc::Copy_Log(string Source, string Destination) {
+	int logPipe[2];
+	int pigz_pid;
+	int destination_fd;
+	std::string destLogBuffer;
+
 	PartitionManager.Mount_By_Path(Destination, false);
-	FILE *destination_log = fopen(Destination.c_str(), "a");
-	if (destination_log == NULL) {
-		LOGERR("TWFunc::Copy_Log -- Can't open destination log file: '%s'\n", Destination.c_str());
-	} else {
-		FILE *source_log = fopen(Source.c_str(), "r");
-		if (source_log != NULL) {
-			fseek(source_log, Log_Offset, SEEK_SET);
-			char buffer[4096];
-			while (fgets(buffer, sizeof(buffer), source_log))
-				fputs(buffer, destination_log); // Buffered write of log file
-			Log_Offset = ftell(source_log);
-			fflush(source_log);
-			fclose(source_log);
+
+	size_t extPos = Destination.find(".gz");
+	std::string uncompressedLog(Destination);
+	uncompressedLog.replace(extPos, Destination.length(), "");
+
+	if (Path_Exists(Destination)) {
+		Archive_Type type = Get_File_Type(Destination);
+		if (type == COMPRESSED) {
+			std::string destFileBuffer;
+			std::string getCompressedContents = "pigz -c -d " + Destination;
+			if (Exec_Cmd(getCompressedContents, destFileBuffer) < 0) {
+				LOGINFO("Unable to get destination logfile contents.\n");
+				return;
+			}
+			destLogBuffer.append(destFileBuffer);
 		}
-		fflush(destination_log);
-		fclose(destination_log);
+	} else if (Path_Exists(uncompressedLog)) {
+		std::ifstream uncompressedIfs(uncompressedLog);
+		std::stringstream uncompressedSS;
+		uncompressedSS << uncompressedIfs.rdbuf();
+		uncompressedIfs.close();
+		std::string uncompressedLogBuffer(uncompressedSS.str());
+		destLogBuffer.append(uncompressedLogBuffer);
+		std::remove(uncompressedLog.c_str());
 	}
+
+	std::ifstream ifs(Source);
+	std::stringstream ss;
+	ss << ifs.rdbuf();
+	std::string srcLogBuffer(ss.str());
+	ifs.close();
+
+	if (pipe(logPipe) < 0) {
+		LOGINFO("Unable to open pipe to write to persistent log file: %s\n", Destination.c_str());
+	}
+
+	destination_fd = open(Destination.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+
+	pigz_pid = fork();
+	if (pigz_pid < 0) {
+		LOGINFO("fork() failed\n");
+		close(destination_fd);
+		close(logPipe[0]);
+		close(logPipe[1]);
+	} else if (pigz_pid == 0) {
+		close(logPipe[1]);
+		dup2(logPipe[0], fileno(stdin));
+		dup2(destination_fd, fileno(stdout));
+		if (execlp("pigz", "pigz", "-", NULL) < 0) {
+			close(destination_fd);
+			close(logPipe[0]);
+			_exit(-1);
+		}
+	} else {
+		close(logPipe[0]);
+		if (write(logPipe[1], destLogBuffer.c_str(), destLogBuffer.size()) < 0) {
+			LOGINFO("Unable to append to persistent log: %s\n", Destination.c_str());
+			close(logPipe[1]);
+			close(destination_fd);
+			return;
+		}
+		if (write(logPipe[1], srcLogBuffer.c_str(), srcLogBuffer.size()) < 0) {
+			LOGINFO("Unable to append to persistent log: %s\n", Destination.c_str());
+			close(logPipe[1]);
+			close(destination_fd);
+			return;
+		}
+		close(logPipe[1]);
+	}
+	close(destination_fd);
 }
 
 void TWFunc::Update_Log_File(void) {
@@ -540,8 +595,8 @@ void TWFunc::Update_Log_File(void) {
 		}
 	}
 
-	std::string logCopy = recoveryDir + "log";
-	std::string lastLogCopy = recoveryDir + "last_log";
+	std::string logCopy = recoveryDir + "log.gz";
+	std::string lastLogCopy = recoveryDir + "last_log.gz";
 	copy_file(logCopy, lastLogCopy, 600);
 	Copy_Log(TMP_LOG_FILE, logCopy);
 	chown(logCopy.c_str(), 1000, 1000);
@@ -698,10 +753,23 @@ int TWFunc::removeDir(const string path, bool skipParent) {
 }
 
 int TWFunc::copy_file(string src, string dst, int mode) {
-	LOGINFO("Copying file %s to %s\n", src.c_str(), dst.c_str());
-	ifstream srcfile(src.c_str(), ios::binary);
-	ofstream dstfile(dst.c_str(), ios::binary);
+	PartitionManager.Mount_By_Path(src, false);
+	PartitionManager.Mount_By_Path(dst, false);
+	if (!Path_Exists(src)) {
+		LOGINFO("Unable to find source file %s\n", src.c_str());
+		return -1;
+	}
+	std::ifstream srcfile(src, ios::binary);
+	std::ofstream dstfile(dst, ios::binary);
 	dstfile << srcfile.rdbuf();
+	if (!dstfile.bad()) {
+		LOGINFO("Copied file %s to %s\n", src.c_str(), dst.c_str());
+	}
+	else {
+		LOGINFO("Unable to copy file %s to %s\n", src.c_str(), dst.c_str());
+		return -1;
+	}
+
 	srcfile.close();
 	dstfile.close();
 	if (chmod(dst.c_str(), mode) != 0)
