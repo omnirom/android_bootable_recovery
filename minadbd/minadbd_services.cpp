@@ -44,6 +44,7 @@
 #include "fuse_adb_provider.h"
 #include "fuse_sideload.h"
 #include "minadbd/types.h"
+#include "recovery_utils/battery_utils.h"
 #include "services.h"
 #include "sysdeps.h"
 
@@ -160,7 +161,10 @@ static void RescueInstallHostService(unique_fd sfd, const std::string& args) {
 // If given an empty string, dumps all the supported properties (analogous to `adb shell getprop`)
 // in lines, e.g. "[prop]: [value]".
 static void RescueGetpropHostService(unique_fd sfd, const std::string& prop) {
+  constexpr const char* kRescueBatteryLevelProp = "rescue.battery_level";
   static const std::set<std::string> kGetpropAllowedProps = {
+    // clang-format off
+    kRescueBatteryLevelProp,
     "ro.build.date.utc",
     "ro.build.fingerprint",
     "ro.build.flavor",
@@ -170,18 +174,28 @@ static void RescueGetpropHostService(unique_fd sfd, const std::string& prop) {
     "ro.build.version.incremental",
     "ro.product.device",
     "ro.product.vendor.device",
+    // clang-format on
   };
+
+  auto query_prop = [](const std::string& key) {
+    if (key == kRescueBatteryLevelProp) {
+      auto battery_info = GetBatteryInfo();
+      return std::to_string(battery_info.capacity);
+    }
+    return android::base::GetProperty(key, "");
+  };
+
   std::string result;
   if (prop.empty()) {
     for (const auto& key : kGetpropAllowedProps) {
-      auto value = android::base::GetProperty(key, "");
+      auto value = query_prop(key);
       if (value.empty()) {
         continue;
       }
       result += "[" + key + "]: [" + value + "]\n";
     }
   } else if (kGetpropAllowedProps.find(prop) != kGetpropAllowedProps.end()) {
-    result = android::base::GetProperty(prop, "") + "\n";
+    result = query_prop(prop) + "\n";
   }
   if (result.empty()) {
     result = "\n";
