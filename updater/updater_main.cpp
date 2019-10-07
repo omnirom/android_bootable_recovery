@@ -22,6 +22,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
+#include <openssl/crypto.h>
 #include <selinux/android.h>
 #include <selinux/label.h>
 #include <selinux/selinux.h>
@@ -56,22 +57,28 @@ int main(int argc, char** argv) {
   // (which is redirected to recovery.log).
   android::base::InitLogging(argv, &UpdaterLogger);
 
+  // Run the libcrypto KAT(known answer tests) based self tests.
+  if (BORINGSSL_self_test() != 1) {
+    LOG(ERROR) << "Failed to run the boringssl self tests";
+    return EXIT_FAILURE;
+  }
+
   if (argc != 4 && argc != 5) {
     LOG(ERROR) << "unexpected number of arguments: " << argc;
-    return 1;
+    return EXIT_FAILURE;
   }
 
   char* version = argv[1];
   if ((version[0] != '1' && version[0] != '2' && version[0] != '3') || version[1] != '\0') {
     // We support version 1, 2, or 3.
     LOG(ERROR) << "wrong updater binary API; expected 1, 2, or 3; got " << argv[1];
-    return 1;
+    return EXIT_FAILURE;
   }
 
   int fd;
   if (!android::base::ParseInt(argv[2], &fd)) {
     LOG(ERROR) << "Failed to parse fd in " << argv[2];
-    return 1;
+    return EXIT_FAILURE;
   }
 
   std::string package_name = argv[3];
@@ -82,7 +89,7 @@ int main(int argc, char** argv) {
       is_retry = true;
     } else {
       LOG(ERROR) << "unexpected argument: " << argv[4];
-      return 1;
+      return EXIT_FAILURE;
     }
   }
 
@@ -98,12 +105,12 @@ int main(int argc, char** argv) {
 
   Updater updater(std::make_unique<UpdaterRuntime>(sehandle));
   if (!updater.Init(fd, package_name, is_retry)) {
-    return 1;
+    return EXIT_FAILURE;
   }
 
   if (!updater.RunUpdate()) {
-    return 1;
+    return EXIT_FAILURE;
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
