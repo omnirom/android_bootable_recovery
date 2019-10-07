@@ -40,6 +40,7 @@ cc_library {
 
     defaults: [
         "minadbd_defaults",
+        "librecovery_utils_defaults",
     ],
 
     srcs: [
@@ -48,6 +49,7 @@ cc_library {
     ],
 
     static_libs: [
+        "librecovery_utils",
         "libotautil",
     ],
 
@@ -97,6 +99,7 @@ cc_test {
 
     defaults: [
         "minadbd_defaults",
+        "librecovery_utils_defaults",
     ],
 
     srcs: [
@@ -107,6 +110,7 @@ cc_test {
     static_libs: [
         "libminadbd_services",
         "libfusesideload",
+        "librecovery_utils",
         "libotautil",
         "libadbd",
     ],
