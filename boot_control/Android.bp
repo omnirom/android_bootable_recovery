@@ -28,6 +28,7 @@ cc_defaults {
     ],
 
     shared_libs: [
+        "android.hardware.boot@1.1",
         "libbase",
         "liblog",
     ],
