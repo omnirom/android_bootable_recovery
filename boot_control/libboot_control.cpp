@@ -34,6 +34,8 @@
 namespace android {
 namespace bootable {
 
+using ::android::hardware::boot::V1_1::MergeStatus;
+
 // The number of boot attempts that should be made from a new slot before
 // rolling back to the previous slot.
 constexpr unsigned int kDefaultBootAttempts = 7;
@@ -325,6 +327,25 @@ bool BootControl::IsSlotMarkedSuccessful(unsigned int slot) {
   if (!LoadBootloaderControl(misc_device_, &bootctrl)) return false;
 
   return bootctrl.slot_info[slot].successful_boot && bootctrl.slot_info[slot].tries_remaining;
+}
+
+bool BootControl::IsValidSlot(unsigned int slot) {
+  return slot < kMaxNumSlots && slot < num_slots_;
+}
+
+bool BootControl::SetSnapshotMergeStatus(MergeStatus status) {
+  bootloader_control bootctrl;
+  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return false;
+
+  bootctrl.merge_status = (unsigned int)status;
+  return UpdateAndSaveBootloaderControl(misc_device_, &bootctrl);
+}
+
+MergeStatus BootControl::GetSnapshotMergeStatus() {
+  bootloader_control bootctrl;
+  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return MergeStatus::UNKNOWN;
+
+  return (MergeStatus)bootctrl.merge_status;
 }
 
 const char* BootControl::GetSuffix(unsigned int slot) {

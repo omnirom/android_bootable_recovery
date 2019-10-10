@@ -18,11 +18,15 @@
 
 #include <string>
 
+#include <android/hardware/boot/1.1/IBootControl.h>
+
 namespace android {
 namespace bootable {
 
 // Helper library to implement the IBootControl HAL using the misc partition.
 class BootControl {
+  using MergeStatus = ::android::hardware::boot::V1_1::MergeStatus;
+
  public:
   bool Init();
   unsigned int GetNumberSlots();
@@ -34,6 +38,10 @@ class BootControl {
   bool IsSlotBootable(unsigned int slot);
   const char* GetSuffix(unsigned int slot);
   bool IsSlotMarkedSuccessful(unsigned int slot);
+  bool SetSnapshotMergeStatus(MergeStatus status);
+  MergeStatus GetSnapshotMergeStatus();
+
+  bool IsValidSlot(unsigned int slot);
 
   const std::string& misc_device() const {
     return misc_device_;
