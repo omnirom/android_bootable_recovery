@@ -163,8 +163,10 @@ struct bootloader_control {
     uint8_t nb_slot : 3;
     // Number of times left attempting to boot recovery.
     uint8_t recovery_tries_remaining : 3;
+    // Status of any pending snapshot merge of dynamic partitions.
+    uint8_t merge_status : 3;
     // Ensure 4-bytes alignment for slot_info field.
-    uint8_t reserved0[2];
+    uint8_t reserved0[1];
     // Per-slot information.  Up to 4 slots.
     struct slot_metadata slot_info[4];
     // Reserved for further use.
