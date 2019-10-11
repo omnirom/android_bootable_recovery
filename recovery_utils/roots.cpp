@@ -54,7 +54,11 @@ void load_volume_table() {
   }
 
   fstab.emplace_back(FstabEntry{
-      .mount_point = "/tmp", .fs_type = "ramdisk", .blk_device = "ramdisk", .length = 0 });
+      .blk_device = "ramdisk",
+      .mount_point = "/tmp",
+      .fs_type = "ramdisk",
+      .length = 0,
+  });
 
   std::cout << "recovery filesystem table" << std::endl << "=========================" << std::endl;
   for (size_t i = 0; i < fstab.size(); ++i) {
