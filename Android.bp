@@ -68,6 +68,7 @@ cc_defaults {
     ],
 
     static_libs: [
+        "libc++fs",
         "libinstall",
         "librecovery_fastboot",
         "libminui",
