@@ -168,6 +168,7 @@ public:
 	string Crypto_Key_Location;                                               // Location of the crypto key used for decrypting encrypted data partitions
 	unsigned int MTP_Storage_ID;
 	string Adopted_GUID;
+	unsigned int Adopted_Mount_Delay;
 
 protected:
 	bool Has_Data_Media;                                                      // Indicates presence of /data/media, may affect wiping and backup methods
