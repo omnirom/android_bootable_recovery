@@ -99,6 +99,7 @@
 		<string name="install_failed">A instalação falhou</string>
 		<string name="install_successful">A instalação foi bem sucedida</string>
 		<string name="wipe_cache_dalvik_btn">Limpar cache/dalvik</string>
+		<string name="wipe_dalvik_btn">Limpar Dalvik</string>
 		<string name="reboot_system_btn">Reiniciar</string>
 		<string name="install_sel_target">Selecione a partição de destino</string>
 		<string name="flash_image_select">Selecione a partição para onde instalar a imagem:</string>
@@ -106,8 +107,10 @@
 		<string name="flashing_image">A instalar a imagem...</string>
 		<string name="image_flashed">Imagem instalada</string>
 		<string name="wipe_cache_dalvik_confirm">Apagar a Cache &amp; Dalvik?</string>
+		<string name="wipe_dalvik_confirm">Apagar Dalvik?</string>
 		<string name="wiping_cache_dalvik">A apagar a Cache &amp; Dalvik...</string>
 		<string name="wipe_cache_dalvik_complete">A cache de &amp; Dalvik foi apagada</string>
+		<string name="wipe_dalvik_complete">A cache Dalvik foi apagada</string>
 		<string name="swipe_wipe">        Deslize para apagar</string>
 		<string name="swipe_wipe_s">   Apagar</string>
 		<string name="no_os1">Nenhum SO instalado! Tem a</string>
@@ -123,6 +126,10 @@
 		<string name="reboot_install_app_system">Instalar como App de Sistema</string>
 		<string name="reboot_installing_app">A instalar a App...</string>
 		<string name="swipe_to_install_app">      Deslize para instalar</string>
+		<string name="uninstall_twrp_system_app">Desinstalar a App TWRP do System</string>
+		<string name="uninstall_twrp_system_app_confirm">Desinstalar a App TWRP?</string>
+		<string name="uninstalling_twrp_system_app">A desinstalar a App...</string>
+		<string name="uninstall_twrp_system_app_complete">A desinstalação foi concluída</string>
 		<string name="swipe_flash">      Deslize para instalar</string>
 		<string name="confirm_action">Confirmar a ação</string>
 		<string name="back_cancel">Pressione o botão voltar para cancelar.</string>
@@ -319,6 +326,7 @@
 		<string name="settings_tz_btn">Fuso Horário</string>
 		<string name="settings_screen_btn">Ecrã</string>
 		<string name="settings_screen_bright_btn">Brilho do ecrã</string>
+		<string name="vibration_disabled">A vibração está desativada</string>
 		<string name="settings_vibration_btn">Vibração</string>
 		<string name="settings_language_btn">Idioma</string>
 		<string name="time_zone_hdr">Fuso Horário</string>
@@ -481,6 +489,28 @@
 		<string name="install_cancel">Não instalar</string>
 		<string name="sel_storage_list">Selecionar armazenamento</string>
 		<string name="ok_btn">OK</string>
+		<string name="install_twrp_ramdisk">Instalar a Ramdisk da Recovery</string>
+		<string name="install_kernel">Instalar o Kernel</string>
+		<string name="repack_kernel_confirm_hdr">Instalar Kernel</string>
+		<string name="repack_ramdisk_confirm_hdr">Instalar Recovery</string>
+		<string name="repack_kernel_confirm">Instalar o Kernel?</string>
+		<string name="repack_ramdisk_confirm">Instalar a Recovery?</string>
+		<string name="repack_backup_first">Fazer Backup da imagem existente primeiro</string>
+		<string name="repack">Repack</string>
+		<string name="swipe_to_install">Deslize para instalar</string>
+		<string name="installing">A instalar...</string>
+		<string name="install_complete">Instalação concluída</string>
+		<string name="unpack_error">Erro ao fazer unpack da imagem.</string>
+		<string name="repack_error">Erro ao fazer repack da imagem.</string>
+		<string name="unpacking_image">A fazer Unpack de {1}...</string>
+		<string name="repacking_image">A fazer Repack de {1}...</string>
+		<string name="repack_image_hdr">Selecionar Imagem</string>
+		<string name="fix_recovery_loop">Resolver Bootloop da Recovery</string>
+		<string name="fix_recovery_loop_confirm">Resolver Bootloop?</string>
+		<string name="fixing_recovery_loop"> A Resolver Bootloop...</string>
+		<string name="fix_recovery_loop_complete">Resolução do Bootloop da Recovery concluída</string>
+		<string name="fixing_recovery_loop_patch">A aplicar o patch ao kernel...</string>
+		<string name="fix_recovery_loop_patch_error">Erro ao aplicar o patch ao kernel.</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">O Kernel não tem suporte para leitura de contextos do SELinux.</string>
@@ -534,7 +564,8 @@
 		<string name="update_part_details_done">... concluído</string>
 		<string name="wiping_dalvik">A limpar os diretórios da cache Dalvik...</string>
 		<string name="cleaned">Limpos: {1}...</string>
-		<string name="dalvik_done">-- Diretórios da cache Dalvik limpos!</string>
+		<string name="cache_dalvik_done">-- Diretórios da cache Dalvik limpos!</string>
+		<string name="dalvik_done">-- Diretório Dalvik limpo!</string>
 		<string name="no_andsec">Não foram encontradas partições android secure.</string>
 		<string name="unable_to_locate">Não é possível localizar {1}.</string>
 		<string name="wiping_datamedia">A limpar o armazenamento interno  -- /data/media...</string>
