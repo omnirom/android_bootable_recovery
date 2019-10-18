@@ -974,7 +974,7 @@ int GUIAction::screenshot(std::string arg __unused)
 
 		gui_msg(Msg("screenshot_saved=Screenshot was saved to {1}")(path));
 
-		// blink to notify that the screenshow was taken
+		// blink to notify that the screenshot was taken
 		gr_color(255, 255, 255, 255);
 		gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 		gr_flip();
