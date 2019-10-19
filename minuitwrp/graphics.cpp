@@ -178,7 +178,7 @@ gr_surface gr_render_circle(int radius, unsigned char r, unsigned char g, unsign
     surface->height = diameter;
     surface->stride = diameter;
     surface->data = (GGLubyte*)data;
-#if defined(RECOVERY_BGRA)
+#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
     surface->format = GGL_PIXEL_FORMAT_BGRA_8888;
 #else
     surface->format = GGL_PIXEL_FORMAT_RGBA_8888;
