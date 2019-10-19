@@ -54,7 +54,7 @@ int gr_save_screenshot(const char *dest)
     surface.stride = gr_mem_surface.stride;
     surface.data = img_data;
 
-#if defined(RECOVERY_BGRA)
+#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
     surface.format = GGL_PIXEL_FORMAT_BGRA_8888;
 #else
     surface.format = GGL_PIXEL_FORMAT_RGBA_8888;
