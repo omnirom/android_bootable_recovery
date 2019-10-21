@@ -1,0 +1,2 @@
+on fs
+    export LD_CONFIG_FILE /sbin/ld.config.txt
