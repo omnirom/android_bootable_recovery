@@ -218,7 +218,8 @@ bool BootControl::Init() {
   }
 
   // Note that since there isn't a module unload function this memory is leaked.
-  misc_device_ = strdup(device.c_str());
+  // We use `device` below sometimes, so it's not moved out of here.
+  misc_device_ = device;
   initialized_ = true;
 
   // Validate the loaded data, otherwise we will destroy it and re-initialize it
