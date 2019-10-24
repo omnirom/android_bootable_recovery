@@ -91,6 +91,10 @@ cc_binary {
         "libcrypto",
         "libminadbd_services",
     ],
+
+    required: [
+        "adbd_system_binaries_recovery",
+    ]
 }
 
 cc_test {
