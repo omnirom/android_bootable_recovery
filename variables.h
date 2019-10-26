@@ -122,6 +122,7 @@
 // #define TW_ALWAYS_RMRF              "tw_always_rmrf"
 
 #define TW_SHOW_DUMLOCK             "tw_show_dumlock"
+#define TW_SKIP_COMPATIBILITY_CHECK "tw_skip_compatibility_check"
 #define TW_HAS_INJECTTWRP           "tw_has_injecttwrp"
 #define TW_INJECT_AFTER_ZIP         "tw_inject_after_zip"
 #define TW_HAS_DATADATA             "tw_has_datadata"

@@ -585,7 +585,7 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   }
 
   // Additionally verify the compatibility of the package.
-  if (!verify_package_compatibility(zip)) {
+  if (DataManager::GetIntValue(TW_SKIP_COMPATIBILITY_CHECK) == 0 && !verify_package_compatibility(zip)) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kPackageCompatibilityFailure));
     CloseArchive(zip);
     return INSTALL_CORRUPT;
