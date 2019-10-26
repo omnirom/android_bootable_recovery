@@ -288,6 +288,7 @@ protected:
 	ThreadType getThreadType(const Action& action);
 	void simulate_progress_bar(void);
 	int flash_zip(std::string filename, int* wipe_cache);
+	int ozip_decrypt(std::string zip_path);
 	void reinject_after_flash();
 	void operation_start(const string operation_name);
 	void operation_end(const int operation_status);
