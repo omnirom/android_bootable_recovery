@@ -406,6 +406,7 @@ TWRP_REQUIRED_MODULES += \
     pigz \
     teamwin \
     toolbox_symlinks \
+    ozip_decrypt \
     twrp \
     fsck.fat \
     fatlabel \
@@ -860,6 +861,10 @@ include $(commands_TWRP_local_path)/injecttwrp/Android.mk \
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     include $(commands_TWRP_local_path)/libmincrypt/Android.mk
+endif
+
+ifneq ($(TW_OZIP_DECRYPT_KEY),)
+    include $(commands_TWRP_local_path)/ozip_decrypt/Android.mk
 endif
 
 ifeq ($(TW_INCLUDE_CRYPTO), true)
