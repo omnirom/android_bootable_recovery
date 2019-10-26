@@ -398,7 +398,7 @@
 				<condition var1="tw_selectimage" var2="0"/>
 				<placement x="%indent%" y="%row2_header_y%" w="%content_width%" h="%fileselector_install_height%"/>
 				<text>%tw_zip_location%</text>
-				<filter extn=".zip" folders="1" files="1"/>
+				<filter extn="zip" folders="1" files="1"/>
 				<path name="tw_zip_location" default="/sdcard"/>
 				<data name="tw_filename"/>
 				<selection name="tw_file"/>
