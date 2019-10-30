@@ -1240,7 +1240,7 @@ int TWFunc::stream_adb_backup(string &Restore_Name) {
 
 std::string TWFunc::get_cache_dir() {
 	if (PartitionManager.Find_Partition_By_Path(NON_AB_CACHE_DIR) == NULL) {
-		if (PartitionManager.Find_Partition_By_Path(NON_AB_CACHE_DIR) == NULL) {
+		if (PartitionManager.Find_Partition_By_Path(AB_CACHE_DIR) == NULL) {
 			if (PartitionManager.Find_Partition_By_Path(PERSIST_CACHE_DIR) == NULL) {
 				LOGINFO("Unable to find a directory to store TWRP logs.");
 				return "";
