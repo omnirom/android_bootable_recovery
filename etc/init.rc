@@ -99,6 +99,10 @@ on property:service.adb.root=1
 on fs && property:ro.debuggable=1
     setprop sys.usb.config adb
 
+# Also start adbd on user build with an unlocked bootloader
+on fs && property:ro.debuggable=0 && androidboot.verifiedbootstate=orange
+    setprop sys.usb.config adb
+
 on fs && property:sys.usb.configfs=1
     mount configfs none /config
     mkdir /config/usb_gadget/g1 0770 shell shell
