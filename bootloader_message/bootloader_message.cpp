@@ -250,6 +250,13 @@ bool write_wipe_package(const std::string& package_data, std::string* err) {
   if (misc_blk_device.empty()) {
     return false;
   }
+  static constexpr size_t kMaximumWipePackageSize =
+      SYSTEM_SPACE_OFFSET_IN_MISC - WIPE_PACKAGE_OFFSET_IN_MISC;
+  if (package_data.size() > kMaximumWipePackageSize) {
+    *err = "Wipe package size " + std::to_string(package_data.size()) + " exceeds " +
+           std::to_string(kMaximumWipePackageSize) + " bytes";
+    return false;
+  }
   return write_misc_partition(package_data.data(), package_data.size(), misc_blk_device,
                               WIPE_PACKAGE_OFFSET_IN_MISC, err);
 }
