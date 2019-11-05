@@ -69,6 +69,10 @@ static bool IsRoDebuggable() {
   return android::base::GetBoolProperty("ro.debuggable", false);
 }
 
+static bool IsDeviceUnlocked() {
+  return "orange" == android::base::GetProperty("ro.boot.verifiedbootstate", "");
+}
+
 static void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity,
                      const char* /* tag */, const char* /* file */, unsigned int /* line */,
                      const char* message) {
@@ -463,7 +467,9 @@ int main(int argc, char** argv) {
   listener_thread.detach();
 
   while (true) {
-    std::string usb_config = fastboot ? "fastboot" : IsRoDebuggable() ? "adb" : "none";
+    // We start adbd in recovery for the device with userdebug build or a unlocked bootloader.
+    std::string usb_config =
+        fastboot ? "fastboot" : IsRoDebuggable() || IsDeviceUnlocked() ? "adb" : "none";
     std::string usb_state = android::base::GetProperty("sys.usb.state", "none");
     if (usb_config != usb_state) {
       if (!SetUsbConfig("none")) {
