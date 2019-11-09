@@ -62,5 +62,28 @@ class BootControl {
   unsigned int current_slot_ = 0;
 };
 
+// Helper functions to write the Virtual A/B merge status message. These are
+// separate because BootControl uses bootloader_control_ab in vendor space,
+// whereas the Virtual A/B merge status is in system space. A HAL might not
+// use bootloader_control_ab, but may want to use the AOSP method of maintaining
+// the merge status.
+
+// If the Virtual A/B message has not yet been initialized, then initialize it.
+// This should be called when the BootControl HAL first loads.
+//
+// If the Virtual A/B message in misc was already initialized, true is returned.
+// If initialization was attempted, but failed, false is returned, and the HAL
+// should fail to load.
+bool InitMiscVirtualAbMessageIfNeeded();
+
+// Save the current merge status as well as the current slot.
+bool SetMiscVirtualAbMergeStatus(unsigned int current_slot,
+                                 android::hardware::boot::V1_1::MergeStatus status);
+
+// Return the current merge status. If the saved status is SNAPSHOTTED but the
+// slot hasn't changed, the status returned will be NONE.
+bool GetMiscVirtualAbMergeStatus(unsigned int current_slot,
+                                 android::hardware::boot::V1_1::MergeStatus* status);
+
 }  // namespace bootable
 }  // namespace android
