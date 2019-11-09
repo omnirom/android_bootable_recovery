@@ -232,6 +232,10 @@ bool BootControl::Init() {
     UpdateAndSaveBootloaderControl(device.c_str(), &boot_ctrl);
   }
 
+  if (!InitMiscVirtualAbMessageIfNeeded()) {
+    return false;
+  }
+
   num_slots_ = boot_ctrl.nb_slot;
   return true;
 }
@@ -335,18 +339,15 @@ bool BootControl::IsValidSlot(unsigned int slot) {
 }
 
 bool BootControl::SetSnapshotMergeStatus(MergeStatus status) {
-  bootloader_control bootctrl;
-  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return false;
-
-  bootctrl.merge_status = (unsigned int)status;
-  return UpdateAndSaveBootloaderControl(misc_device_, &bootctrl);
+  return SetMiscVirtualAbMergeStatus(current_slot_, status);
 }
 
 MergeStatus BootControl::GetSnapshotMergeStatus() {
-  bootloader_control bootctrl;
-  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return MergeStatus::UNKNOWN;
-
-  return (MergeStatus)bootctrl.merge_status;
+  MergeStatus status;
+  if (!GetMiscVirtualAbMergeStatus(current_slot_, &status)) {
+    return MergeStatus::UNKNOWN;
+  }
+  return status;
 }
 
 const char* BootControl::GetSuffix(unsigned int slot) {
@@ -354,6 +355,67 @@ const char* BootControl::GetSuffix(unsigned int slot) {
     return nullptr;
   }
   return kSlotSuffixes[slot];
+}
+
+bool InitMiscVirtualAbMessageIfNeeded() {
+  std::string err;
+  misc_virtual_ab_message message;
+  if (!ReadMiscVirtualAbMessage(&message, &err)) {
+    LOG(ERROR) << "Could not read merge status: " << err;
+    return false;
+  }
+
+  if (message.version == MISC_VIRTUAL_AB_MESSAGE_VERSION) {
+    // Already initialized.
+    return true;
+  }
+
+  message = {};
+  message.version = MISC_VIRTUAL_AB_MESSAGE_VERSION;
+  if (!WriteMiscVirtualAbMessage(message, &err)) {
+    LOG(ERROR) << "Could not write merge status: " << err;
+    return false;
+  }
+  return true;
+}
+
+bool SetMiscVirtualAbMergeStatus(unsigned int current_slot,
+                                 android::hardware::boot::V1_1::MergeStatus status) {
+  std::string err;
+  misc_virtual_ab_message message;
+
+  if (!ReadMiscVirtualAbMessage(&message, &err)) {
+    LOG(ERROR) << "Could not read merge status: " << err;
+    return false;
+  }
+
+  message.merge_status = static_cast<uint8_t>(status);
+  message.source_slot = current_slot;
+  if (!WriteMiscVirtualAbMessage(message, &err)) {
+    LOG(ERROR) << "Could not write merge status: " << err;
+    return false;
+  }
+  return true;
+}
+
+bool GetMiscVirtualAbMergeStatus(unsigned int current_slot,
+                                 android::hardware::boot::V1_1::MergeStatus* status) {
+  std::string err;
+  misc_virtual_ab_message message;
+
+  if (!ReadMiscVirtualAbMessage(&message, &err)) {
+    LOG(ERROR) << "Could not read merge status: " << err;
+    return false;
+  }
+
+  // If the slot reverted after having created a snapshot, then the snapshot will
+  // be thrown away at boot. Thus we don't count this as being in a snapshotted
+  // state.
+  *status = static_cast<MergeStatus>(message.merge_status);
+  if (*status == MergeStatus::SNAPSHOTTED && current_slot == message.source_slot) {
+    *status = MergeStatus::NONE;
+  }
+  return true;
 }
 
 }  // namespace bootable
