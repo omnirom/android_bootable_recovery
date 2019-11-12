@@ -280,8 +280,10 @@ endif
 ifeq ($(TW_NO_USB_STORAGE), true)
     LOCAL_CFLAGS += -DTW_NO_USB_STORAGE
 endif
-ifeq ($(TW_INCLUDE_INJECTTWRP), true)
-    LOCAL_CFLAGS += -DTW_INCLUDE_INJECTTWRP
+ifeq ($(AB_OTA_UPDATER),true)
+	ifeq ($(TW_INCLUDE_REPACKTOOLS), true)
+		LOCAL_CFLAGS += -DTW_INCLUDE_INJECTTWRP
+	endif
 endif
 ifeq ($(TW_INCLUDE_BLOBPACK), true)
     LOCAL_CFLAGS += -DTW_INCLUDE_BLOBPACK
@@ -364,11 +366,6 @@ endif
 ifneq ($(TW_CUSTOM_CPU_TEMP_PATH),)
 	LOCAL_CFLAGS += -DTW_CUSTOM_CPU_TEMP_PATH=$(TW_CUSTOM_CPU_TEMP_PATH)
 endif
-ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
-    LOCAL_SHARED_LIBRARIES += libopenaes
-else
-    LOCAL_CFLAGS += -DTW_EXCLUDE_ENCRYPTED_BACKUPS
-endif
 ifeq ($(TARGET_RECOVERY_QCOM_RTC_FIX),)
   ifneq ($(filter msm8226 msm8x26 msm8610 msm8974 msm8x74 msm8084 msm8x84 apq8084 msm8909 msm8916 msm8992 msm8994 msm8952 msm8996 msm8937 msm8953 msm8998,$(TARGET_BOARD_PLATFORM)),)
     LOCAL_CFLAGS += -DQCOM_RTC_FIX
@@ -398,6 +395,10 @@ endif
 ifneq ($(TW_CLOCK_OFFSET),)
 	LOCAL_CFLAGS += -DTW_CLOCK_OFFSET=$(TW_CLOCK_OFFSET)
 endif
+ifeq ($(TW_EXCLUDE_TWRPAPP),true)
+    LOCAL_CFLAGS += -DTW_EXCLUDE_TWRPAPP
+endif
+
 TWRP_REQUIRED_MODULES += \
     dump_image \
     erase_image \
@@ -456,9 +457,6 @@ ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
         TWRP_REQUIRED_MODULES += sgdisk_static
     endif
 endif
-ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
-    TWRP_REQUIRED_MODULES += openaes openaes_license
-endif
 ifeq ($(TW_INCLUDE_DUMLOCK), true)
     TWRP_REQUIRED_MODULES += \
         htcdumlock htcdumlocksys flash_imagesys dump_imagesys libbmlutils.so \
@@ -473,9 +471,9 @@ endif
 ifeq ($(BOARD_USES_BML_OVER_MTD),true)
     TWRP_REQUIRED_MODULES += bml_over_mtd
 endif
-ifeq ($(TW_INCLUDE_INJECTTWRP), true)
-    TWRP_REQUIRED_MODULES += injecttwrp
-endif
+#ifeq ($(TW_INCLUDE_INJECTTWRP), true)
+#    TWRP_REQUIRED_MODULES += injecttwrp
+#endif
 ifneq ($(TW_EXCLUDE_DEFAULT_USB_INIT), true)
     TWRP_REQUIRED_MODULES += init.recovery.usb.rc
 endif
@@ -513,6 +511,20 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
     TWRP_REQUIRED_MODULES += sload.f2fs
 endif
+endif
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
+    ifeq ($(_enforce_vndk_lite_at_runtime),true)
+        TWRP_REQUIRED_MODULES += ld.config.vndk_lite.txt
+        LOCAL_POST_INSTALL_CMD += \
+            sed '0,/^namespace.default.search.paths\s\{1,\}/!b;//a\namespace.default.search.paths += \/sbin' \
+                $(TARGET_OUT_ETC)/ld.config.vndk_lite.txt > $(TARGET_RECOVERY_ROOT_OUT)/sbin/ld.config.txt;
+    else
+        TWRP_REQUIRED_MODULES += ld.config.txt
+        LOCAL_POST_INSTALL_CMD += \
+            sed '0,/^namespace.default.search.paths\s\{1,\}/!b;//a\namespace.default.search.paths += \/sbin' \
+                $(TARGET_OUT_ETC)/ld.config.txt > $(TARGET_RECOVERY_ROOT_OUT)/sbin/ld.config.txt;
+    endif
 endif
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
@@ -832,8 +844,7 @@ endif
 
 #$(commands_TWRP_local_path)/otautil/Android.mk
 #includes for TWRP
-include $(commands_TWRP_local_path)/injecttwrp/Android.mk \
-    $(commands_TWRP_local_path)/htcdumlock/Android.mk \
+include $(commands_TWRP_local_path)/htcdumlock/Android.mk \
     $(commands_TWRP_local_path)/gui/Android.mk \
     $(commands_TWRP_local_path)/mmcutils/Android.mk \
     $(commands_TWRP_local_path)/bmlutils/Android.mk \
@@ -845,7 +856,6 @@ include $(commands_TWRP_local_path)/injecttwrp/Android.mk \
     $(commands_TWRP_local_path)/libcrecovery/Android.mk \
     $(commands_TWRP_local_path)/libblkid/Android.mk \
     $(commands_TWRP_local_path)/minuitwrp/Android.mk \
-    $(commands_TWRP_local_path)/openaes/Android.mk \
     $(commands_TWRP_local_path)/toolbox/Android.mk \
     $(commands_TWRP_local_path)/twrpTarMain/Android.mk \
     $(commands_TWRP_local_path)/minzip/Android.mk \
