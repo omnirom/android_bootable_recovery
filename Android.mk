@@ -515,6 +515,20 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
 endif
 endif
 
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
+    ifeq ($(_enforce_vndk_lite_at_runtime),true)
+        TWRP_REQUIRED_MODULES += ld.config.vndk_lite.txt
+        LOCAL_POST_INSTALL_CMD += \
+            sed '0,/^namespace.default.search.paths\s\{1,\}/!b;//a\namespace.default.search.paths += \/sbin' \
+                $(TARGET_OUT_ETC)/ld.config.vndk_lite.txt > $(TARGET_RECOVERY_ROOT_OUT)/sbin/ld.config.txt;
+    else
+        TWRP_REQUIRED_MODULES += ld.config.txt
+        LOCAL_POST_INSTALL_CMD += \
+            sed '0,/^namespace.default.search.paths\s\{1,\}/!b;//a\namespace.default.search.paths += \/sbin' \
+                $(TARGET_OUT_ETC)/ld.config.txt > $(TARGET_RECOVERY_ROOT_OUT)/sbin/ld.config.txt;
+    endif
+endif
+
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
     TWRP_REQUIRED_MODULES += file_contexts_text
 endif
