@@ -118,37 +118,3 @@ TEST(BootloaderMessageTest, update_bootloader_message_recovery_options_long) {
   ASSERT_EQ(std::string(sizeof(boot.reserved), '\0'),
             std::string(boot.reserved, sizeof(boot.reserved)));
 }
-
-TEST(BootloaderMessageTest, WriteMiscPartitionVendorSpace) {
-  TemporaryFile temp_misc;
-  ASSERT_TRUE(android::base::WriteStringToFile(std::string(4096, '\x00'), temp_misc.path));
-  SetMiscBlockDeviceForTest(temp_misc.path);
-
-  constexpr std::string_view kTestMessage = "kTestMessage";
-  std::string err;
-  ASSERT_TRUE(WriteMiscPartitionVendorSpace(kTestMessage.data(), kTestMessage.size(), 0, &err));
-
-  std::string message;
-  message.resize(kTestMessage.size());
-  ASSERT_TRUE(ReadMiscPartitionVendorSpace(message.data(), message.size(), 0, &err));
-  ASSERT_EQ(kTestMessage, message);
-
-  // Write with an offset.
-  ASSERT_TRUE(WriteMiscPartitionVendorSpace("\x00\x00", 2, 5, &err));
-  ASSERT_TRUE(ReadMiscPartitionVendorSpace(message.data(), message.size(), 0, &err));
-  ASSERT_EQ("kTest\x00\x00ssage"s, message);
-
-  // Write with the right size.
-  auto start_offset =
-      WIPE_PACKAGE_OFFSET_IN_MISC - VENDOR_SPACE_OFFSET_IN_MISC - kTestMessage.size();
-  ASSERT_TRUE(
-      WriteMiscPartitionVendorSpace(kTestMessage.data(), kTestMessage.size(), start_offset, &err));
-
-  // Out-of-bound write.
-  ASSERT_FALSE(WriteMiscPartitionVendorSpace(kTestMessage.data(), kTestMessage.size(),
-                                             start_offset + 1, &err));
-
-  // Message won't fit.
-  std::string long_message(WIPE_PACKAGE_OFFSET_IN_MISC - VENDOR_SPACE_OFFSET_IN_MISC + 1, 'a');
-  ASSERT_FALSE(WriteMiscPartitionVendorSpace(long_message.data(), long_message.size(), 0, &err));
-}

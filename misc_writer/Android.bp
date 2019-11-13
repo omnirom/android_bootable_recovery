@@ -14,14 +14,9 @@
 // limitations under the License.
 //
 
-cc_binary {
-    name: "misc_writer",
+cc_defaults {
+    name: "misc_writer_defaults",
     vendor: true,
-
-    srcs: [
-        "misc_writer.cpp",
-    ],
-
     cpp_std: "experimental",
 
     cflags: [
@@ -37,4 +32,79 @@ cc_binary {
         "libbootloader_message_vendor",
         "libfstab",
     ],
+}
+
+// TODO(xunchang) Remove duplicates after we convert the device specific librecovery_ui to recovery
+// module. Then libmisc_writer can build as a vendor module available in recovery.
+cc_library_static {
+    name: "libmisc_writer",
+    cpp_std: "experimental",
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+
+    shared_libs: [
+        "libbase",
+    ],
+
+    static_libs: [
+        "libbootloader_message",
+        "libfstab",
+    ],
+
+    srcs: [
+        "misc_writer.cpp",
+    ],
+
+    export_include_dirs: [
+        "include",
+    ],
+}
+
+cc_library_static {
+    name: "libmisc_writer_vendor",
+    defaults: [
+        "misc_writer_defaults",
+    ],
+
+    srcs: [
+        "misc_writer.cpp",
+    ],
+
+    export_include_dirs: [
+        "include",
+    ],
+}
+
+cc_binary {
+    name: "misc_writer",
+    defaults: [
+        "misc_writer_defaults",
+    ],
+
+    srcs: [
+        "misc_writer_main.cpp",
+    ],
+
+    static_libs: [
+        "libmisc_writer_vendor",
+    ]
+}
+
+cc_test {
+    name: "misc_writer_test",
+    defaults: [
+        "misc_writer_defaults",
+    ],
+
+    srcs: [
+        "misc_writer_test.cpp",
+    ],
+    test_suites: ["device-tests"],
+
+    static_libs: [
+        "libmisc_writer_vendor",
+    ]
 }
