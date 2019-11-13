@@ -130,7 +130,7 @@ on property:sys.usb.config=fastboot
 
 on property:sys.usb.config=none && property:sys.usb.configfs=0
     stop adbd
-    stop fastboot
+    stop fastbootd
     write /sys/class/android_usb/android0/enable 0
     setprop sys.usb.state ${sys.usb.config}
 
