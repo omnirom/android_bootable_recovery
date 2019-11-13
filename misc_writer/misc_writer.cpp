@@ -14,93 +14,70 @@
  * limitations under the License.
  */
 
-#include <errno.h>
-#include <getopt.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include "misc_writer/misc_writer.h"
 
-#include <iostream>
-#include <string>
-#include <string_view>
-#include <vector>
+#include <string.h>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
-#include <android-base/parseint.h>
+#include <android-base/stringprintf.h>
 #include <bootloader_message/bootloader_message.h>
 
-using namespace std::string_literals;
+namespace android {
+namespace hardware {
+namespace google {
+namespace pixel {
 
-static std::vector<uint8_t> ParseHexString(std::string_view hex_string) {
-  auto length = hex_string.size();
-  if (length % 2 != 0 || length == 0) {
-    return {};
-  }
-
-  std::vector<uint8_t> result(length / 2);
-  for (size_t i = 0; i < length / 2; i++) {
-    auto sub = "0x" + std::string(hex_string.substr(i * 2, 2));
-    if (!android::base::ParseUint(sub, &result[i])) {
-      return {};
-    }
-  }
-  return result;
+bool MiscWriter::OffsetAndSizeInVendorSpace(size_t offset, size_t size) {
+  auto total_size = WIPE_PACKAGE_OFFSET_IN_MISC - VENDOR_SPACE_OFFSET_IN_MISC;
+  return size <= total_size && offset <= total_size - size;
 }
 
-static int Usage(std::string_view name) {
-  std::cerr << name << " usage:\n";
-  std::cerr << name << " [--vendor-space-offset <offset>] --hex-string 0xABCDEF\n";
-  std::cerr << "Writes the given hex string to the specified offset in vendor space in /misc "
-               "partition. Offset defaults to 0 if unspecified.\n";
-  return EXIT_FAILURE;
+bool MiscWriter::WriteMiscPartitionVendorSpace(const void* data, size_t size, size_t offset,
+                                               std::string* err) {
+  if (!OffsetAndSizeInVendorSpace(offset, size)) {
+    *err = android::base::StringPrintf("Out of bound write (offset %zu size %zu)", offset, size);
+    return false;
+  }
+  auto misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) {
+    return false;
+  }
+  return write_misc_partition(data, size, misc_blk_device, VENDOR_SPACE_OFFSET_IN_MISC + offset,
+                              err);
 }
 
-// misc_writer is a vendor tool that writes data to the vendor space in /misc.
-int main(int argc, char** argv) {
-  constexpr struct option OPTIONS[] = {
-    { "vendor-space-offset", required_argument, nullptr, 0 },
-    { "hex-string", required_argument, nullptr, 0 },
-    { nullptr, 0, nullptr, 0 },
-  };
-
-  // Offset defaults to 0 if unspecified.
+bool MiscWriter::PerformAction(std::optional<size_t> override_offset) {
   size_t offset = 0;
-  std::string_view hex_string;
-
-  int arg;
-  int option_index;
-  while ((arg = getopt_long(argc, argv, "", OPTIONS, &option_index)) != -1) {
-    if (arg != 0) {
-      LOG(ERROR) << "Invalid command argument";
-      return Usage(argv[0]);
-    }
-    auto option_name = OPTIONS[option_index].name;
-    if (option_name == "vendor-space-offset"s) {
-      if (!android::base::ParseUint(optarg, &offset)) {
-        LOG(ERROR) << "Failed to parse the offset: " << optarg;
-        return Usage(argv[0]);
-      }
-    } else if (option_name == "hex-string"s) {
-      hex_string = optarg;
-    }
+  std::string content;
+  switch (action_) {
+    case MiscWriterActions::kSetDarkThemeFlag:
+    case MiscWriterActions::kClearDarkThemeFlag:
+      offset = override_offset.value_or(kThemeFlagOffsetInVendorSpace);
+      content = (action_ == MiscWriterActions::kSetDarkThemeFlag)
+                    ? kDarkThemeFlag
+                    : std::string(strlen(kDarkThemeFlag), 0);
+      break;
+    case MiscWriterActions::kSetSotaFlag:
+    case MiscWriterActions::kClearSotaFlag:
+      offset = override_offset.value_or(kSotaFlagOffsetInVendorSpace);
+      content = (action_ == MiscWriterActions::kSetSotaFlag) ? kSotaFlag
+                                                             : std::string(strlen(kSotaFlag), 0);
+      break;
+    case MiscWriterActions::kUnset:
+      LOG(ERROR) << "The misc writer action must be set";
+      return false;
   }
 
-  if (hex_string.starts_with("0x") || hex_string.starts_with("0X")) {
-    hex_string = hex_string.substr(2);
+  if (std::string err;
+      !WriteMiscPartitionVendorSpace(content.data(), content.size(), offset, &err)) {
+    LOG(ERROR) << "Failed to write " << content << " at offset " << offset << " : " << err;
+    return false;
   }
-  if (hex_string.empty()) {
-    LOG(ERROR) << "Invalid input hex string: " << hex_string;
-    return Usage(argv[0]);
-  }
-
-  auto data = ParseHexString(hex_string);
-  if (data.empty()) {
-    LOG(ERROR) << "Failed to parse the input hex string: " << hex_string;
-    return EXIT_FAILURE;
-  }
-  if (std::string err; !WriteMiscPartitionVendorSpace(data.data(), data.size(), offset, &err)) {
-    LOG(ERROR) << "Failed to write to misc partition: " << err;
-    return EXIT_FAILURE;
-  }
-  return EXIT_SUCCESS;
+  return true;
 }
+
+}  // namespace pixel
+}  // namespace google
+}  // namespace hardware
+}  // namespace android

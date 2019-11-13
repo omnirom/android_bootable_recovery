@@ -212,10 +212,17 @@ struct misc_system_space_layout {
 #include <string>
 #include <vector>
 
+// Gets the block device name of /misc partition.
+std::string get_misc_blk_device(std::string* err);
 // Return the block device name for the bootloader message partition and waits
 // for the device for up to 10 seconds. In case of error returns the empty
 // string.
 std::string get_bootloader_message_blk_device(std::string* err);
+
+// Writes |size| bytes of data from buffer |p| to |misc_blk_device| at |offset|. If the write fails,
+// sets the error message in |err|.
+bool write_misc_partition(const void* p, size_t size, const std::string& misc_blk_device,
+                          size_t offset, std::string* err);
 
 // Read bootloader message into boot. Error message will be set in err.
 bool read_bootloader_message(bootloader_message* boot, std::string* err);
@@ -260,14 +267,6 @@ bool read_wipe_package(std::string* package_data, size_t size, std::string* err)
 
 // Write the wipe package into BCB (to offset WIPE_PACKAGE_OFFSET_IN_MISC).
 bool write_wipe_package(const std::string& package_data, std::string* err);
-
-// Reads data from the vendor space in /misc partition, with the given offset and size. Note that
-// offset is in relative to the start of vendor space.
-bool ReadMiscPartitionVendorSpace(void* data, size_t size, size_t offset, std::string* err);
-
-// Writes the given data to the vendor space in /misc partition, at the given offset. Note that
-// offset is in relative to the start of the vendor space.
-bool WriteMiscPartitionVendorSpace(const void* data, size_t size, size_t offset, std::string* err);
 
 // Read or write the Virtual A/B message from system space in /misc.
 bool ReadMiscVirtualAbMessage(misc_virtual_ab_message* message, std::string* err);
