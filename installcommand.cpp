@@ -121,8 +121,12 @@ static int check_newer_ab_build(ZipWrap* zip)
         }
     }
     char value[PROPERTY_VALUE_MAX];
+    char value1[PROPERTY_VALUE_MAX];
+    char value2[PROPERTY_VALUE_MAX];
 
     property_get("ro.product.device", value, "");
+    property_get("ro.product.model", value1, "");
+    property_get("ro.product.name", value2, "");
     const std::string& pkg_device = metadata["pre-device"];
 
     std::vector<std::string> assertResults = android::base::Split(pkg_device, ",");
@@ -132,7 +136,7 @@ static int check_newer_ab_build(ZipWrap* zip)
     for(const std::string& deviceAssert : assertResults)
     {
         std::string assertName = android::base::Trim(deviceAssert);
-        if (assertName == value && !assertName.empty()) {
+        if ((assertName == value || assertName == value1 || assertName == value2 ) && !assertName.empty()) {
             deviceExists = true;
             break;
         }
