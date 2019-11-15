@@ -58,12 +58,16 @@ cc_defaults {
     ],
 
     shared_libs: [
+        "android.hardware.boot@1.0",
+        "android.hardware.boot@1.1",
         "libbase",
         "libbootloader_message",
         "libcrypto",
         "libcutils",
         "libfs_mgr",
+        "liblp",
         "liblog",
+        "libprotobuf-cpp-lite",
         "libziparchive",
     ],
 
@@ -74,6 +78,7 @@ cc_defaults {
         "libminui",
         "librecovery_utils",
         "libotautil",
+        "libsnapshot_nobinder",
     ],
 }
 
