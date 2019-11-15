@@ -27,6 +27,7 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 
+#include "install/snapshot_utils.h"
 #include "otautil/dirutil.h"
 #include "recovery_ui/ui.h"
 #include "recovery_utils/logging.h"
@@ -104,6 +105,12 @@ bool WipeCache(RecoveryUI* ui, const std::function<bool()>& confirm_func) {
 bool WipeData(Device* device, bool convert_fbe) {
   RecoveryUI* ui = device->GetUI();
   ui->Print("\n-- Wiping data...\n");
+
+  if (!FinishPendingSnapshotMerges(device)) {
+    ui->Print("Unable to check update status or complete merge, cannot wipe partitions.\n");
+    return false;
+  }
+
   bool success = device->PreWipeData();
   if (success) {
     success &= EraseVolume(DATA_ROOT, ui, convert_fbe);
