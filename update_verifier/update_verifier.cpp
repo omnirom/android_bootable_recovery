@@ -371,6 +371,10 @@ int update_verifier(int argc, char** argv) {
         return reboot_device();
       }
       LOG(INFO) << "Marked slot " << current_slot << " as booted successfully.";
+      // Clears the warm reset flag for next reboot.
+      if (!android::base::SetProperty("ota.warm_reset", "0")) {
+        LOG(WARNING) << "Failed to reset the warm reset flag";
+      }
     } else {
       LOG(INFO) << "Deferred marking slot " << current_slot << " as booted successfully.";
     }
