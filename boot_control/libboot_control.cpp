@@ -365,13 +365,15 @@ bool InitMiscVirtualAbMessageIfNeeded() {
     return false;
   }
 
-  if (message.version == MISC_VIRTUAL_AB_MESSAGE_VERSION) {
+  if (message.version == MISC_VIRTUAL_AB_MESSAGE_VERSION &&
+      message.magic == MISC_VIRTUAL_AB_MAGIC_HEADER) {
     // Already initialized.
     return true;
   }
 
   message = {};
   message.version = MISC_VIRTUAL_AB_MESSAGE_VERSION;
+  message.magic = MISC_VIRTUAL_AB_MAGIC_HEADER;
   if (!WriteMiscVirtualAbMessage(message, &err)) {
     LOG(ERROR) << "Could not write merge status: " << err;
     return false;
