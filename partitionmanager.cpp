@@ -304,10 +304,17 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 					usleep(500);
 				if (Decrypt_Data->Mount(false)) {
 					if (!Decrypt_Data->Decrypt_FBE_DE()) {
-						LOGINFO("Trying wrapped key.\n");
-						property_set("fbe.data.wrappedkey", "true");
-						if (!Decrypt_Data->Decrypt_FBE_DE()) {
+						char wrappedvalue[PROPERTY_VALUE_MAX];
+						property_get("fbe.data.wrappedkey", wrappedvalue, "");
+						std::string wrappedkeyvalue(wrappedvalue);
+						if (wrappedkeyvalue == "true") {
 							LOGERR("Unable to decrypt FBE device\n");
+						} else {
+							LOGINFO("Trying wrapped key.\n");
+							property_set("fbe.data.wrappedkey", "true");
+							if (!Decrypt_Data->Decrypt_FBE_DE()) {
+								LOGERR("Unable to decrypt FBE device\n");
+							}
 						}
 					}
 
