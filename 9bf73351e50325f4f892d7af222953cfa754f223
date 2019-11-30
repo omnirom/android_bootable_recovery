@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d0959661_83878100",
+        "filename": "partition.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 670,
+      "author": {
+        "id": 1002547
+      },
+      "writtenOn": "2019-11-30T13:32:38Z",
+      "side": 1,
+      "message": "this should be log info as we forcefully doing this and the devices which doesnt support show an error at gui interface",
+      "revId": "9bf73351e50325f4f892d7af222953cfa754f223",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
