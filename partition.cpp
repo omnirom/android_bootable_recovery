@@ -667,7 +667,7 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			LOGINFO("Trying wrapped key.\n");
 			property_set("fbe.data.wrappedkey", "true");
 				if (!Decrypt_FBE_DE()) {
-					LOGERR("Unable to decrypt FBE device\n");
+					LOGINFO("Unable to decrypt device\n");
 				}
 		}
 	}
