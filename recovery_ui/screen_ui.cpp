@@ -941,26 +941,16 @@ void ScreenRecoveryUI::LoadAnimation() {
                                                 closedir);
   dirent* de;
   std::vector<std::string> intro_frame_names;
-  std::vector<std::string> default_loop_frame_names;
-  std::vector<std::string> device_loop_frame_names;
-  // Create string format for device-specific loop animations.
-  std::string deviceformat = android::base::GetProperty("ro.product.product.name", "");
-  deviceformat += "%d%n.png";
+  std::vector<std::string> loop_frame_names;
 
   while ((de = readdir(dir.get())) != nullptr) {
     int value, num_chars;
     if (sscanf(de->d_name, "intro%d%n.png", &value, &num_chars) == 1) {
       intro_frame_names.emplace_back(de->d_name, num_chars);
     } else if (sscanf(de->d_name, "loop%d%n.png", &value, &num_chars) == 1) {
-      default_loop_frame_names.emplace_back(de->d_name, num_chars);
-    } else if (sscanf(de->d_name, deviceformat.c_str(), &value, &num_chars) == 1) {
-      device_loop_frame_names.emplace_back(de->d_name, num_chars);
+      loop_frame_names.emplace_back(de->d_name, num_chars);
     }
   }
-
-  // Favor device-specific loop frames, if they exist.
-  auto& loop_frame_names =
-      device_loop_frame_names.empty() ? default_loop_frame_names : device_loop_frame_names;
 
   size_t intro_frames = intro_frame_names.size();
   size_t loop_frames = loop_frame_names.size();
