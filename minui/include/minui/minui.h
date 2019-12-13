@@ -101,6 +101,7 @@ enum class PixelFormat : int {
   ABGR = 1,
   RGBX = 2,
   BGRA = 3,
+  ARGB = 4,
 };
 
 // Initializes the graphics backend and loads font file. Returns 0 on success, or -1 on error. Note
