@@ -199,7 +199,7 @@ int res_create_display_surface(const char* name, GRSurface** pSurface) {
   }
 
   PixelFormat pixel_format = gr_pixel_format();
-  if (pixel_format == PixelFormat::ABGR || pixel_format == PixelFormat::BGRA) {
+  if (pixel_format == PixelFormat::ARGB || pixel_format == PixelFormat::BGRA) {
     png_set_bgr(png_ptr);
   }
 
@@ -271,7 +271,7 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
     surface[i] = created_surface.release();
   }
 
-  if (gr_pixel_format() == PixelFormat::ABGR || gr_pixel_format() == PixelFormat::BGRA) {
+  if (gr_pixel_format() == PixelFormat::ARGB || gr_pixel_format() == PixelFormat::BGRA) {
     png_set_bgr(png_ptr);
   }
 
@@ -317,7 +317,7 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
   }
 
   PixelFormat pixel_format = gr_pixel_format();
-  if (pixel_format == PixelFormat::ABGR || pixel_format == PixelFormat::BGRA) {
+  if (pixel_format == PixelFormat::ARGB || pixel_format == PixelFormat::BGRA) {
     png_set_bgr(png_ptr);
   }
 
