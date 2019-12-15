@@ -315,6 +315,7 @@ int twrpTar::createTarFork(pid_t *tar_fork_pid) {
 			}
 			/*if (pthread_attr_setstacksize(&tattr, 524288)) {
 				LOGERR("Error setting pthread_attr_setstacksize\n");
+				close(progress_pipe[1]);
 				_exit(-1);
 			}*/
 
@@ -874,10 +875,10 @@ void* twrpTar::extractMulti(void *cookie) {
 int twrpTar::addFilesToExistingTar(vector <string> files, string fn) {
 	char* charTarFile = (char*) fn.c_str();
 
-	if (tar_open(&t, charTarFile, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) == -1)
+	if (tar_open(&t, charTarFile, NULL, O_CLOEXEC | O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) == -1)
 		return -1;
 	removeEOT(charTarFile);
-	if (tar_open(&t, charTarFile, NULL, O_WRONLY | O_APPEND | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) == -1)
+	if (tar_open(&t, charTarFile, NULL, O_CLOEXEC | O_WRONLY | O_APPEND | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) == -1)
 		return -1;
 	for (unsigned int i = 0; i < files.size(); ++i) {
 		char* file = (char*) files.at(i).c_str();
@@ -901,17 +902,17 @@ int twrpTar::createTar() {
 		LOGINFO("Using encryption and compression...\n");
 		int i, pipes[4];
 
-		if (pipe(pipes) < 0) {
+		if (pipe2(pipes, O_CLOEXEC) < 0) {
 			LOGINFO("Error creating first pipe\n");
 			gui_err("backup_error=Error creating backup.");
 			return -1;
 		}
-		if (pipe(pipes + 2) < 0) {
+		if (pipe2(pipes + 2, O_CLOEXEC) < 0) {
 			LOGINFO("Error creating second pipe\n");
 			gui_err("backup_error=Error creating backup.");
 			return -1;
 		}
-		output_fd = open(tarfn.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		output_fd = open(tarfn.c_str(), O_CLOEXEC | O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 		if (output_fd < 0) {
 			gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(tarfn)(strerror(errno)));
 			for (i = 0; i < 4; i++)
@@ -929,20 +930,11 @@ int twrpTar::createTar() {
 			return -1;
 		} else if (pigz_pid == 0) {
 			// pigz Child
-			close(pipes[1]);
-			close(pipes[2]);
-			int stdinfd = fileno(stdin);
-			int stdoutfd = fileno(stdout);
-			close(stdinfd);
-			dup2(pipes[0], stdinfd);
-			close(stdoutfd);
-			dup2(pipes[3], stdoutfd);
+			dup2(pipes[0], STDIN_FILENO);
+			dup2(pipes[3], STDOUT_FILENO);
 			if (execlp("pigz", "pigz", "-", NULL) < 0) {
 				LOGINFO("execlp pigz ERROR!\n");
 				gui_err("backup_error=Error creating backup.");
-				close(output_fd);
-				close(pipes[0]);
-				close(pipes[3]);
 				_exit(-1);
 			}
 		} else {
@@ -958,20 +950,11 @@ int twrpTar::createTar() {
 				return -1;
 			} else if (oaes_pid == 0) {
 				// openaes Child
-				close(pipes[0]);
-				close(pipes[1]);
-				close(pipes[3]);
-				int stdinfd = fileno(stdin);
-				int stdoutfd = fileno(stdout);
-				close(stdinfd);
-				dup2(pipes[2], stdinfd);
-				close(stdoutfd);
-				dup2(output_fd, stdoutfd);
+				dup2(pipes[2], STDIN_FILENO);
+				dup2(output_fd, STDOUT_FILENO);
 				if (execlp("openaes", "openaes", "enc", "--key", password.c_str(), NULL) < 0) {
 					LOGINFO("execlp openaes ERROR!\n");
 					gui_err("backup_error=Error creating backup.");
-					close(pipes[2]);
-					close(output_fd);
 					_exit(-1);
 				}
 			} else {
@@ -982,7 +965,7 @@ int twrpTar::createTar() {
 				fd = pipes[1];
 				init_libtar_no_buffer(progress_pipe_fd);
 				tar_type.writefunc = write_tar_no_buffer;
-				if (tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+				if (tar_fdopen(&t, fd, charRootDir, &tar_type, O_CLOEXEC | O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 					close(fd);
 					LOGINFO("tar_fdopen failed\n");
 					gui_err("backup_error=Error creating backup.");
@@ -1001,15 +984,14 @@ int twrpTar::createTar() {
 			output_fd = open(TW_ADB_BACKUP, O_WRONLY);
 		}
 		else {
-			output_fd = open(tarfn.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+			output_fd = open(tarfn.c_str(), O_CLOEXEC | O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 		}
 		if (output_fd < 0) {
 			gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(tarfn)(strerror(errno)));
-			close(pigzfd[0]);
 			return -1;
 		}
 
-		if (pipe(pigzfd) < 0) {
+		if (pipe2(pigzfd, O_CLOEXEC) < 0) {
 			LOGINFO("Error creating pipe\n");
 			gui_err("backup_error=Error creating backup.");
 			close(output_fd);
@@ -1026,14 +1008,11 @@ int twrpTar::createTar() {
 			return -1;
 		} else if (pigz_pid == 0) {
 			// Child
-			close(pigzfd[1]);   // close unused output pipe
-			dup2(pigzfd[0], fileno(stdin)); // remap stdin
-			dup2(output_fd, fileno(stdout)); // remap stdout to output file
+			dup2(pigzfd[0], STDIN_FILENO); // remap stdin
+			dup2(output_fd, STDOUT_FILENO); // remap stdout to output file
 			if (execlp("pigz", "pigz", "-", NULL) < 0) {
 				LOGINFO("execlp pigz ERROR!\n");
 				gui_err("backup_error=Error creating backup.");
-				close(output_fd);
-				close(pigzfd[0]);
 				_exit(-1);
 			}
 		} else {
@@ -1042,7 +1021,7 @@ int twrpTar::createTar() {
 			fd = pigzfd[1];   // copy parent output
 			init_libtar_no_buffer(progress_pipe_fd);
 			tar_type.writefunc = write_tar_no_buffer;
-			if (tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if (tar_fdopen(&t, fd, charRootDir, &tar_type, O_CLOEXEC | O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				close(fd);
 				LOGINFO("tar_fdopen failed\n");
 				gui_err("backup_error=Error creating backup.");
@@ -1054,12 +1033,12 @@ int twrpTar::createTar() {
 		current_archive_type = ENCRYPTED;
 		LOGINFO("Using encryption...\n");
 		int oaesfd[2];
-		output_fd = open(tarfn.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		output_fd = open(tarfn.c_str(), O_CLOEXEC | O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 		if (output_fd < 0) {
 			gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(tarfn)(strerror(errno)));
 			return -1;
 		}
-		if (pipe(oaesfd) < 0) {
+		if (pipe2(oaesfd, O_CLOEXEC) < 0) {
 			LOGINFO("Error creating pipe\n");
 			gui_err("backup_error=Error creating backup.");
 			close(output_fd);
@@ -1076,14 +1055,11 @@ int twrpTar::createTar() {
 			return -1;
 		} else if (oaes_pid == 0) {
 			// Child
-			close(oaesfd[1]);   // close unused
-			dup2(oaesfd[0], fileno(stdin)); // remap stdin
-			dup2(output_fd, fileno(stdout)); // remap stdout to output file
+			dup2(oaesfd[0], STDIN_FILENO); // remap stdin
+			dup2(output_fd, STDOUT_FILENO); // remap stdout to output file
 			if (execlp("openaes", "openaes", "enc", "--key", password.c_str(), NULL) < 0) {
 				LOGINFO("execlp openaes ERROR!\n");
 				gui_err("backup_error=Error creating backup.");
-				close(output_fd);
-				close(oaesfd[0]);
 				_exit(-1);
 			}
 		} else {
@@ -1092,7 +1068,7 @@ int twrpTar::createTar() {
 			fd = oaesfd[1];   // copy parent output
 			init_libtar_no_buffer(progress_pipe_fd);
 			tar_type.writefunc = write_tar_no_buffer;
-			if (tar_fdopen(&t, fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if (tar_fdopen(&t, fd, charRootDir, &tar_type, O_CLOEXEC | O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				close(fd);
 				LOGINFO("tar_fdopen failed\n");
 				gui_err("backup_error=Error creating backup.");
@@ -1108,7 +1084,7 @@ int twrpTar::createTar() {
 			LOGINFO("Opening TW_ADB_BACKUP uncompressed stream\n");
 			tar_type.writefunc = write_tar_no_buffer;
 			output_fd = open(TW_ADB_BACKUP, O_WRONLY);
-			if(tar_fdopen(&t, output_fd, charRootDir, &tar_type, O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if(tar_fdopen(&t, output_fd, charRootDir, &tar_type, O_CLOEXEC | O_WRONLY | O_CREAT | O_EXCL | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				close(output_fd);
 				LOGERR("tar_fdopen failed\n");
 				return -1;
@@ -1116,7 +1092,7 @@ int twrpTar::createTar() {
 		}
 		else {
 			tar_type.writefunc = write_tar;
-			if (tar_open(&t, charTarFile, &tar_type, O_WRONLY | O_CREAT | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) == -1) {
+			if (tar_open(&t, charTarFile, &tar_type, O_CLOEXEC | O_WRONLY | O_CREAT | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) == -1) {
 				LOGERR("tar_open error opening '%s'\n", tarfn.c_str());
 				gui_err("backup_error=Error creating backup.");
 				return -1;
@@ -1134,19 +1110,19 @@ int twrpTar::openTar() {
 	if (current_archive_type == COMPRESSED_ENCRYPTED) {
 		LOGINFO("Opening encrypted and compressed backup...\n");
 		int i, pipes[4];
-		input_fd = open(tarfn.c_str(), O_RDONLY | O_LARGEFILE);
+		input_fd = open(tarfn.c_str(), O_CLOEXEC | O_RDONLY | O_LARGEFILE);
 		if (input_fd < 0) {
 			gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(tarfn)(strerror(errno)));
 			return -1;
 		}
 
-		if (pipe(pipes) < 0) {
+		if (pipe2(pipes, O_CLOEXEC) < 0) {
 			LOGINFO("Error creating first pipe\n");
 			gui_err("restore_error=Error during restore process.");
 			close(input_fd);
 			return -1;
 		}
-		if (pipe(pipes + 2) < 0) {
+		if (pipe2(pipes + 2, O_CLOEXEC) < 0) {
 			LOGINFO("Error creating second pipe\n");
 			gui_err("restore_error=Error during restore process.");
 			close(pipes[0]);
@@ -1165,20 +1141,11 @@ int twrpTar::openTar() {
 			return -1;
 		} else if (oaes_pid == 0) {
 			// openaes Child
-			close(pipes[0]); // Close pipes that are not used by this child
-			close(pipes[2]);
-			close(pipes[3]);
-			int stdinfd = fileno(stdin);
-			int stdoutfd = fileno(stdout);
-			close(stdinfd);
-			dup2(input_fd, stdinfd);
-			close(stdoutfd);
-			dup2(pipes[1], stdoutfd);
+			dup2(input_fd, STDIN_FILENO);
+			dup2(pipes[1], STDOUT_FILENO);
 			if (execlp("openaes", "openaes", "dec", "--key", password.c_str(), NULL) < 0) {
 				LOGINFO("execlp openaes ERROR!\n");
 				gui_err("restore_error=Error during restore process.");
-				close(input_fd);
-				close(pipes[1]);
 				_exit(-1);
 			}
 		} else {
@@ -1194,20 +1161,11 @@ int twrpTar::openTar() {
 				return -1;
 			} else if (pigz_pid == 0) {
 				// pigz Child
-				close(pipes[1]); // Close pipes not used by this child
-				close(pipes[2]);
-				int stdinfd = fileno(stdin);
-				int stdoutfd = fileno(stdout);
-				close(stdinfd);
-				dup2(pipes[0], stdinfd);
-				close(stdoutfd);
-				dup2(pipes[3], stdoutfd);
+				dup2(pipes[0], STDIN_FILENO);
+				dup2(pipes[3], STDOUT_FILENO);
 				if (execlp("pigz", "pigz", "-d", "-c", NULL) < 0) {
 					LOGINFO("execlp pigz ERROR!\n");
 					gui_err("restore_error=Error during restore process.");
-					close(input_fd);
-					close(pipes[0]);
-					close(pipes[3]);
 					_exit(-1);
 				}
 			} else {
@@ -1216,7 +1174,7 @@ int twrpTar::openTar() {
 				close(pipes[1]);
 				close(pipes[3]);
 				fd = pipes[2];
-				if (tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+				if (tar_fdopen(&t, fd, charRootDir, NULL, O_CLOEXEC | O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 					close(fd);
 					LOGINFO("tar_fdopen failed\n");
 					gui_err("restore_error=Error during restore process.");
@@ -1227,13 +1185,13 @@ int twrpTar::openTar() {
 	} else if (current_archive_type == ENCRYPTED) {
 		LOGINFO("Opening encrypted backup...\n");
 		int oaesfd[2];
-		input_fd = open(tarfn.c_str(), O_RDONLY | O_LARGEFILE);
+		input_fd = open(tarfn.c_str(), O_CLOEXEC | O_RDONLY | O_LARGEFILE);
 		if (input_fd < 0) {
 			gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(tarfn)(strerror(errno)));
 			return -1;
 		}
 
-		if (pipe(oaesfd) < 0) {
+		if (pipe2(oaesfd, O_CLOEXEC) < 0) {
 			LOGINFO("Error creating pipe\n");
 			gui_err("restore_error=Error during restore process.");
 			close(input_fd);
@@ -1250,23 +1208,18 @@ int twrpTar::openTar() {
 			return -1;
 		} else if (oaes_pid == 0) {
 			// Child
-			close(oaesfd[0]); // Close unused pipe
-			int stdinfd = fileno(stdin);
-			close(stdinfd);   // close stdin
-			dup2(oaesfd[1], fileno(stdout)); // remap stdout
-			dup2(input_fd, stdinfd); // remap input fd to stdin
+			dup2(oaesfd[1], STDOUT_FILENO); // remap stdout
+			dup2(input_fd, STDIN_FILENO); // remap input fd to stdin
 			if (execlp("openaes", "openaes", "dec", "--key", password.c_str(), NULL) < 0) {
 				LOGINFO("execlp openaes ERROR!\n");
 				gui_err("restore_error=Error during restore process.");
-				close(input_fd);
-				close(oaesfd[1]);
 				_exit(-1);
 			}
 		} else {
 			// Parent
 			close(oaesfd[1]); // close parent output
 			fd = oaesfd[0];   // copy parent input
-			if (tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if (tar_fdopen(&t, fd, charRootDir, NULL, O_CLOEXEC | O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				close(fd);
 				LOGINFO("tar_fdopen failed\n");
 				gui_err("restore_error=Error during restore process.");
@@ -1279,17 +1232,17 @@ int twrpTar::openTar() {
 		LOGINFO("Opening gzip compressed tar...\n");
 		if (part_settings->adbbackup)  {
 			LOGINFO("opening TW_ADB_RESTORE compressed stream\n");
-			input_fd = open(TW_ADB_RESTORE, O_RDONLY | O_LARGEFILE);
+			input_fd = open(TW_ADB_RESTORE, O_CLOEXEC | O_RDONLY | O_LARGEFILE);
 		}
 		else
-			input_fd = open(tarfn.c_str(), O_RDONLY | O_LARGEFILE);
+			input_fd = open(tarfn.c_str(), O_CLOEXEC | O_RDONLY | O_LARGEFILE);
 
 		if (input_fd < 0) {
 			gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(tarfn)(strerror(errno)));
 			return -1;
 		}
 
-		if (pipe(pigzfd) < 0) {
+		if (pipe2(pigzfd, O_CLOEXEC) < 0) {
 			LOGINFO("Error creating pipe\n");
 			gui_err("restore_error=Error during restore process.");
 			close(input_fd);
@@ -1306,13 +1259,10 @@ int twrpTar::openTar() {
 			return -1;
 		} else if (pigz_pid == 0) {
 			// Child
-			close(pigzfd[0]);
-			dup2(pigzfd[1], fileno(stdout)); // remap stdout
-			dup2(input_fd, fileno(stdin)); // remap input fd to stdin
+			dup2(pigzfd[1], STDOUT_FILENO); // remap stdout
+			dup2(input_fd, STDIN_FILENO); // remap input fd to stdin
 			if (execlp("pigz", "pigz", "-d", "-c", NULL) < 0) {
-				close(pigzfd[1]);
-				close(input_fd);
-				LOGINFO("execlp openaes ERROR!\n");
+				LOGINFO("execlp pigz ERROR!\n");
 				gui_err("restore_error=Error during restore process.");
 				_exit(-1);
 			}
@@ -1320,7 +1270,7 @@ int twrpTar::openTar() {
 			// Parent
 			close(pigzfd[1]); // close parent output
 			fd = pigzfd[0];   // copy parent input
-			if (tar_fdopen(&t, fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if (tar_fdopen(&t, fd, charRootDir, NULL, O_CLOEXEC | O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				close(fd);
 				LOGINFO("tar_fdopen failed\n");
 				gui_err("restore_error=Error during restore process.");
@@ -1331,14 +1281,14 @@ int twrpTar::openTar() {
 		if (part_settings->adbbackup) {
 			LOGINFO("Opening TW_ADB_RESTORE uncompressed stream\n");
 			input_fd = open(TW_ADB_RESTORE, O_RDONLY);
-			if (tar_fdopen(&t, input_fd, charRootDir, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if (tar_fdopen(&t, input_fd, charRootDir, NULL, O_CLOEXEC | O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				LOGERR("Unable to open tar archive '%s'\n", charTarFile);
 				gui_err("restore_error=Error during restore process.");
 				return -1;
 			}
 		}
 		else {
-			if (tar_open(&t, charTarFile, NULL, O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
+			if (tar_open(&t, charTarFile, NULL, O_CLOEXEC | O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, TWTAR_FLAGS) != 0) {
 				LOGERR("Unable to open tar archive '%s'\n", charTarFile);
 				gui_err("restore_error=Error during restore process.");
 				return -1;
@@ -1395,7 +1345,6 @@ int twrpTar::closeTar() {
 		return -1;
 	}
 	if (current_archive_type > 0) {
-		close(fd);
 		int status;
 		if (pigz_pid > 0 && TWFunc::Wait_For_Child(pigz_pid, &status, "pigz") != 0)
 			return -1;
