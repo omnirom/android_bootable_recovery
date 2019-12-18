@@ -42,7 +42,6 @@ cc_defaults {
         "libsnapshot_nobinder",
 
         // external dependencies
-        "libvintf_recovery",
         "libvintf",
     ],
 }
