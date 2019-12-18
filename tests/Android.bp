@@ -81,7 +81,6 @@ librecovery_static_libs = [
     "libotautil",
 
     "libhealthhalutils",
-    "libvintf_recovery",
     "libvintf",
 
     "android.hardware.health@2.0",
