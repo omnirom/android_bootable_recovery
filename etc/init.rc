@@ -4,8 +4,8 @@ on early-init
     # Set the security context of /postinstall if present.
     restorecon /postinstall
 
-    # Generate ld.config.txt for recovery processes
-    exec u:r:linkerconfig:s0 -- /system/bin/linkerconfig --target /linkerconfig/ld.config.txt
+    # Copy prebuilt ld.config.txt into linkerconfig directory
+    copy /system/etc/ld.config.txt /linkerconfig/ld.config.txt
     chmod 444 /linkerconfig/ld.config.txt
 
     start ueventd
