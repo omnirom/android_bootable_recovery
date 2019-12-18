@@ -28,7 +28,6 @@
 #include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
-#include <vintf/VintfObjectRecovery.h>
 #include <ziparchive/zip_archive.h>
 #include <ziparchive/zip_writer.h>
 
@@ -49,29 +48,6 @@ static void BuildZipArchive(const std::map<std::string, std::string>& file_map, 
   }
   ASSERT_EQ(0, writer.Finish());
   ASSERT_EQ(0, fclose(zip_file));
-}
-
-TEST(InstallTest, verify_package_compatibility_no_entry) {
-  TemporaryFile temp_file;
-  // The archive must have something to be opened correctly.
-  BuildZipArchive({ { "dummy_entry", "" } }, temp_file.release(), kCompressStored);
-
-  // Doesn't contain compatibility zip entry.
-  ZipArchiveHandle zip;
-  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
-  ASSERT_TRUE(verify_package_compatibility(zip));
-  CloseArchive(zip);
-}
-
-TEST(InstallTest, verify_package_compatibility_invalid_entry) {
-  TemporaryFile temp_file;
-  BuildZipArchive({ { "compatibility.zip", "" } }, temp_file.release(), kCompressStored);
-
-  // Empty compatibility zip entry.
-  ZipArchiveHandle zip;
-  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
-  ASSERT_FALSE(verify_package_compatibility(zip));
-  CloseArchive(zip);
 }
 
 TEST(InstallTest, read_metadata_from_package_smoke) {
@@ -133,64 +109,6 @@ TEST(InstallTest, read_wipe_ab_partition_list) {
     "/dev/block/bootdevice/by-name/boot_b",
   };
   ASSERT_EQ(expected, read_partition_list);
-}
-
-TEST(InstallTest, verify_package_compatibility_with_libvintf_malformed_xml) {
-  TemporaryFile compatibility_zip_file;
-  std::string malformed_xml = "malformed";
-  BuildZipArchive({ { "system_manifest.xml", malformed_xml } }, compatibility_zip_file.release(),
-                  kCompressDeflated);
-
-  TemporaryFile temp_file;
-  std::string compatibility_zip_content;
-  ASSERT_TRUE(
-      android::base::ReadFileToString(compatibility_zip_file.path, &compatibility_zip_content));
-  BuildZipArchive({ { "compatibility.zip", compatibility_zip_content } }, temp_file.release(),
-                  kCompressStored);
-
-  ZipArchiveHandle zip;
-  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
-  std::vector<std::string> compatibility_info;
-  compatibility_info.push_back(malformed_xml);
-  // Malformed compatibility zip is expected to be rejected by libvintf. But we defer that to
-  // libvintf.
-  std::string err;
-  bool result =
-      android::vintf::VintfObjectRecovery::CheckCompatibility(compatibility_info, &err) == 0;
-  ASSERT_EQ(result, verify_package_compatibility(zip));
-  CloseArchive(zip);
-}
-
-TEST(InstallTest, verify_package_compatibility_with_libvintf_system_manifest_xml) {
-  static constexpr const char* system_manifest_xml_path = "/system/manifest.xml";
-  if (access(system_manifest_xml_path, R_OK) == -1) {
-    GTEST_LOG_(INFO) << "Test skipped on devices w/o /system/manifest.xml.";
-    return;
-  }
-  std::string system_manifest_xml_content;
-  ASSERT_TRUE(
-      android::base::ReadFileToString(system_manifest_xml_path, &system_manifest_xml_content));
-  TemporaryFile compatibility_zip_file;
-  BuildZipArchive({ { "system_manifest.xml", system_manifest_xml_content } },
-                  compatibility_zip_file.release(), kCompressDeflated);
-
-  TemporaryFile temp_file;
-  std::string compatibility_zip_content;
-  ASSERT_TRUE(
-      android::base::ReadFileToString(compatibility_zip_file.path, &compatibility_zip_content));
-  BuildZipArchive({ { "compatibility.zip", compatibility_zip_content } }, temp_file.release(),
-                  kCompressStored);
-
-  ZipArchiveHandle zip;
-  ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
-  std::vector<std::string> compatibility_info;
-  compatibility_info.push_back(system_manifest_xml_content);
-  std::string err;
-  bool result =
-      android::vintf::VintfObjectRecovery::CheckCompatibility(compatibility_info, &err) == 0;
-  // Make sure the result is consistent with libvintf library.
-  ASSERT_EQ(result, verify_package_compatibility(zip));
-  CloseArchive(zip);
 }
 
 TEST(InstallTest, SetUpNonAbUpdateCommands) {

@@ -45,7 +45,6 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
-#include <vintf/VintfObjectRecovery.h>
 
 #include "install/package.h"
 #include "install/verifier.h"
@@ -506,73 +505,6 @@ static InstallResult TryUpdateBinary(Package* package, bool* wipe_cache,
   return INSTALL_SUCCESS;
 }
 
-// Verifies the compatibility info in a Treble-compatible package. Returns true directly if the
-// entry doesn't exist. Note that the compatibility info is packed in a zip file inside the OTA
-// package.
-bool verify_package_compatibility(ZipArchiveHandle package_zip) {
-  LOG(INFO) << "Verifying package compatibility...";
-
-  static constexpr const char* COMPATIBILITY_ZIP_ENTRY = "compatibility.zip";
-  ZipEntry compatibility_entry;
-  if (FindEntry(package_zip, COMPATIBILITY_ZIP_ENTRY, &compatibility_entry) != 0) {
-    LOG(INFO) << "Package doesn't contain " << COMPATIBILITY_ZIP_ENTRY << " entry";
-    return true;
-  }
-
-  std::string zip_content(compatibility_entry.uncompressed_length, '\0');
-  int32_t ret;
-  if ((ret = ExtractToMemory(package_zip, &compatibility_entry,
-                             reinterpret_cast<uint8_t*>(&zip_content[0]),
-                             compatibility_entry.uncompressed_length)) != 0) {
-    LOG(ERROR) << "Failed to read " << COMPATIBILITY_ZIP_ENTRY << ": " << ErrorCodeString(ret);
-    return false;
-  }
-
-  ZipArchiveHandle zip_handle;
-  ret = OpenArchiveFromMemory(static_cast<void*>(const_cast<char*>(zip_content.data())),
-                              zip_content.size(), COMPATIBILITY_ZIP_ENTRY, &zip_handle);
-  if (ret != 0) {
-    LOG(ERROR) << "Failed to OpenArchiveFromMemory: " << ErrorCodeString(ret);
-    return false;
-  }
-
-  // Iterate all the entries inside COMPATIBILITY_ZIP_ENTRY and read the contents.
-  void* cookie;
-  ret = StartIteration(zip_handle, &cookie);
-  if (ret != 0) {
-    LOG(ERROR) << "Failed to start iterating zip entries: " << ErrorCodeString(ret);
-    CloseArchive(zip_handle);
-    return false;
-  }
-  std::unique_ptr<void, decltype(&EndIteration)> guard(cookie, EndIteration);
-
-  std::vector<std::string> compatibility_info;
-  ZipEntry info_entry;
-  std::string_view info_name;
-  while (Next(cookie, &info_entry, &info_name) == 0) {
-    std::string content(info_entry.uncompressed_length, '\0');
-    int32_t ret = ExtractToMemory(zip_handle, &info_entry, reinterpret_cast<uint8_t*>(&content[0]),
-                                  info_entry.uncompressed_length);
-    if (ret != 0) {
-      LOG(ERROR) << "Failed to read " << info_name << ": " << ErrorCodeString(ret);
-      CloseArchive(zip_handle);
-      return false;
-    }
-    compatibility_info.emplace_back(std::move(content));
-  }
-  CloseArchive(zip_handle);
-
-  // VintfObjectRecovery::CheckCompatibility returns zero on success.
-  std::string err;
-  int result = android::vintf::VintfObjectRecovery::CheckCompatibility(compatibility_info, &err);
-  if (result == 0) {
-    return true;
-  }
-
-  LOG(ERROR) << "Failed to verify package compatibility (result " << result << "): " << err;
-  return false;
-}
-
 static InstallResult VerifyAndInstallPackage(Package* package, bool* wipe_cache,
                                              std::vector<std::string>* log_buffer, int retry_count,
                                              int* max_temperature, RecoveryUI* ui) {
@@ -584,19 +516,6 @@ static InstallResult VerifyAndInstallPackage(Package* package, bool* wipe_cache,
   // Verify package.
   if (!verify_package(package, ui)) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
-    return INSTALL_CORRUPT;
-  }
-
-  // Try to open the package.
-  ZipArchiveHandle zip = package->GetZipArchiveHandle();
-  if (!zip) {
-    log_buffer->push_back(android::base::StringPrintf("error: %d", kZipOpenFailure));
-    return INSTALL_CORRUPT;
-  }
-
-  // Additionally verify the compatibility of the package if it's a fresh install.
-  if (retry_count == 0 && !verify_package_compatibility(zip)) {
-    log_buffer->push_back(android::base::StringPrintf("error: %d", kPackageCompatibilityFailure));
     return INSTALL_CORRUPT;
   }
 
