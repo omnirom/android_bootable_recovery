@@ -39,6 +39,7 @@ cc_defaults {
         android: {
             shared_libs: [
                 "libutils",
+                "libvndksupport",
             ],
         },
 
@@ -91,7 +92,6 @@ librecovery_static_libs = [
     "libhidlbase",
     "libbinderthreadstate",
     "liblp",
-    "libvndksupport",
     "libtinyxml2",
     "libc++fs",
 ]
