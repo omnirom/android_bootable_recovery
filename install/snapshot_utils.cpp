@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <libsnapshot/snapshot.h>
 
@@ -22,6 +23,7 @@
 #include "recovery_ui/ui.h"
 #include "recovery_utils/roots.h"
 
+using android::snapshot::CreateResult;
 using android::snapshot::SnapshotManager;
 
 bool FinishPendingSnapshotMerges(Device* device) {
@@ -43,6 +45,29 @@ bool FinishPendingSnapshotMerges(Device* device) {
   };
   if (!sm->HandleImminentDataWipe(callback)) {
     ui->Print("Unable to check merge status and/or complete update merge.\n");
+    return false;
+  }
+  return true;
+}
+
+bool CreateSnapshotPartitions() {
+  if (!android::base::GetBoolProperty("ro.virtual_ab.enabled", false)) {
+    // If the device does not support Virtual A/B, there's no need to create
+    // snapshot devices.
+    return true;
+  }
+
+  auto sm = SnapshotManager::NewForFirstStageMount();
+  if (!sm) {
+    // SnapshotManager could not be created. The device is still in a
+    // consistent state and can continue with the mounting of the existing
+    // devices, but cannot initialize snapshot devices.
+    LOG(WARNING) << "Could not create SnapshotManager";
+    return true;
+  }
+
+  auto ret = sm->RecoveryCreateSnapshotDevices();
+  if (ret == CreateResult::ERROR) {
     return false;
   }
   return true;
