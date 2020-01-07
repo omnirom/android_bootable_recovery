@@ -19,3 +19,12 @@
 #include "recovery_ui/device.h"
 
 bool FinishPendingSnapshotMerges(Device* device);
+
+/*
+ * This function tries to create the snapshotted devices in the case a Virtual
+ * A/B device is updating.
+ * The function returns false in case of critical failure that would prevent
+ * the further mountings of devices, or true in case of success, if either the
+ * devices were created or there was no need to.
+ */
+bool CreateSnapshotPartitions();

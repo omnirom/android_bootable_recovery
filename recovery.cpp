@@ -50,6 +50,7 @@
 #include "install/fuse_install.h"
 #include "install/install.h"
 #include "install/package.h"
+#include "install/snapshot_utils.h"
 #include "install/wipe_data.h"
 #include "install/wipe_device.h"
 #include "otautil/boot_state.h"
@@ -437,7 +438,13 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
         screen_ui->CheckBackgroundTextImages();
         break;
       }
+
       case Device::MOUNT_SYSTEM:
+        // For Virtual A/B, set up the snapshot devices (if exist).
+        if (!CreateSnapshotPartitions()) {
+          ui->Print("Virtual A/B: snapshot partitions creation failed.\n");
+          break;
+        }
         if (ensure_path_mounted_at(android::fs_mgr::GetSystemRoot(), "/mnt/system") != -1) {
           ui->Print("Mounted /system.\n");
         }
