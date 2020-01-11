@@ -2058,6 +2058,22 @@ int GUIAction::installapp(std::string arg __unused)
 							LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 							goto exit;
 						}
+
+						// System apps require their permissions to be pre-set via an XML file in /etc/permissions
+						string permission_path = base_path + "/etc/permissions/privapp-permissions-twrpapp.xml";
+						if (TWFunc::copy_file("/sbin/privapp-permissions-twrpapp.xml", permission_path, 0644)) {
+							LOGERR("Error copying permission file\n");
+							goto exit;
+						}
+						if (chown(permission_path.c_str(), 1000, 1000)) {
+							LOGERR("chown %s error: %s\n", permission_path.c_str(), strerror(errno));
+							goto exit;
+						}
+						if (setfilecon(permission_path.c_str(), (security_context_t)context.c_str()) < 0) {
+							LOGERR("setfilecon %s error: %s\n", permission_path.c_str(), strerror(errno));
+							goto exit;
+						}
+
 						sync();
 						sync();
 						PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
