@@ -90,9 +90,11 @@ static int inotify_cb(int fd, __unused uint32_t epevents) {
 
   // The inotify will put one or several complete events.
   // Should not read part of one event.
-  size_t event_len;
-  int ret = ioctl(fd, FIONREAD, &event_len);
+  int event_len_int;
+  int ret = ioctl(fd, FIONREAD, &event_len_int);
   if (ret != 0) return -1;
+  if (event_len_int < 0) return -1;
+  size_t event_len = event_len_int;
 
   std::unique_ptr<DIR, decltype(&closedir)> dir(opendir(INPUT_DEV_DIR), closedir);
   if (!dir) {
