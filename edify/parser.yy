@@ -72,7 +72,7 @@ static Expr* Build(Function fn, YYLTYPE loc, size_t count, ...) {
 
 %parse-param {std::unique_ptr<Expr>* root}
 %parse-param {int* error_count}
-%error-verbose
+%define parse.error verbose
 
 /* declarations in increasing order of precedence */
 %left ';'
