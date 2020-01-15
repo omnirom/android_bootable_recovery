@@ -13,11 +13,7 @@
 // limitations under the License.
 
 cc_defaults {
-    name: "libupdater_defaults",
-
-    defaults: [
-        "recovery_defaults",
-    ],
+    name: "libupdater_static_libs",
 
     static_libs: [
         "libapplypatch",
@@ -45,6 +41,15 @@ cc_defaults {
         "libcutils",
         "libutils",
     ],
+}
+
+cc_defaults {
+    name: "libupdater_defaults",
+
+    defaults: [
+        "recovery_defaults",
+        "libupdater_static_libs",
+    ],
 
     shared_libs: [
         "libcrypto",
@@ -64,7 +69,7 @@ cc_defaults {
         "libext2_uuid",
         "libext2_e2p",
         "libext2fs",
-    ]
+    ],
 }
 
 cc_library_static {
@@ -154,4 +159,30 @@ cc_library_host_static {
     export_include_dirs: [
         "include",
     ],
+}
+
+cc_binary_host {
+    name: "update_host_simulator",
+    defaults: ["libupdater_static_libs"],
+
+    srcs: ["update_simulator_main.cpp"],
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+
+    static_libs: [
+        "libupdater_host",
+        "libupdater_core",
+        "libcrypto_static",
+        "libfstab",
+        "libc++fs",
+    ],
+
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
 }
