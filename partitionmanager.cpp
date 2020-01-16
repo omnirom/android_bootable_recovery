@@ -2840,10 +2840,9 @@ string TWPartitionManager::Get_Active_Slot_Display() {
 }
 
 string TWPartitionManager::Get_Android_Root_Path() {
-	std::string Android_Root = getenv("ANDROID_ROOT");
-	if (Android_Root == "")
-		Android_Root = "/system";
-	return Android_Root;
+	if (property_get_bool("ro.build.system_root_image", false))
+		return "/system_root";
+	return "/system";
 }
 
 void TWPartitionManager::Remove_Uevent_Devices(const string& Mount_Point) {
