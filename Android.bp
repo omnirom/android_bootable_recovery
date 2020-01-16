@@ -157,7 +157,6 @@ cc_binary {
     shared_libs: [
         "libbase",
         "liblog",
-        "libmetricslogger",
     ],
 
     static_libs: [
