@@ -6,7 +6,7 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Буйрук берилген жок"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Ката!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Коопсуздук жаңыртуусу орнотулууда"</string>
-    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android тутуму жүктөлбөй жатат. Дайындарыңыз бузук болушу мүмкүн. Бул билдирүү дагы деле келе берсе, түзмөктү кайра башынан жөндөп, анда сакталган бардык колдонуучу дайындарын тазалашыңыз керек."</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android тутуму жүктөлбөй жатат. Дайын-даректериңиз бузук болушу мүмкүн. Бул билдирүү дагы деле келе берсе, түзмөктү кайра башынан жөндөп, анда сакталган бардык колдонуучу дайындарын тазалашыңыз керек."</string>
     <string name="recovery_try_again" msgid="7168248750158873496">"Кайталоо"</string>
     <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Кайра башынан жөндөө"</string>
     <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Колдонуучу дайындарынын баары жашырылсынбы?\n\n МУНУ АРТКА КАЙТАРУУ МҮМКҮН ЭМЕС!"</string>
