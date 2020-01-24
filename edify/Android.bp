@@ -17,6 +17,7 @@ cc_library_static {
 
     host_supported: true,
     vendor_available: true,
+    recovery_available: true,
 
     srcs: [
         "expr.cpp",
