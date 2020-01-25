@@ -436,7 +436,10 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error,
 	} else if (Is_File_System(Fstab_File_System)) {
 		Find_Actual_Block_Device();
 		Setup_File_System(Display_Error);
-		if (Mount_Point == PartitionManager.Get_Android_Root_Path()) {
+		if (Mount_Point == "/" || Mount_Point == "/system" || Mount_Point == "/system_root") {
+			Mount_Point = PartitionManager.Get_Android_Root_Path();
+			Backup_Path = Mount_Point;
+			Storage_Path = Mount_Point;
 			Display_Name = "System";
 			Backup_Display_Name = Display_Name;
 			Storage_Name = Display_Name;
