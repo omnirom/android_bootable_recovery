@@ -301,6 +301,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					strcat(mount, value);
 				} else
 					strcpy(mount, value);
+				if (!strcmp(mount, "/system"))
+					strcpy(mount, PartitionManager.Get_Android_Root_Path().c_str());
 				if (PartitionManager.Mount_By_Path(mount, true))
 					gui_msg(Msg("mounted=Mounted '{1}'")(mount));
 			} else if (strcmp(command, "unmount") == 0 || strcmp(command, "umount") == 0) {
@@ -311,6 +313,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					strcat(mount, value);
 				} else
 					strcpy(mount, value);
+				if (!strcmp(mount, "/system"))
+					strcpy(mount, PartitionManager.Get_Android_Root_Path().c_str());
 				if (PartitionManager.UnMount_By_Path(mount, true))
 					gui_msg(Msg("unmounted=Unounted '{1}'")(mount));
 			} else if (strcmp(command, "set") == 0) {
