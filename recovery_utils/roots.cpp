@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
 #include <cryptfs.h>
@@ -152,6 +153,14 @@ int format_volume(const std::string& volume, const std::string& directory) {
     return -1;
   }
 
+  bool needs_casefold = false;
+  bool needs_projid = false;
+
+  if (volume == "/data") {
+    needs_casefold = android::base::GetBoolProperty("ro.emulated_storage.casefold", false);
+    needs_projid = android::base::GetBoolProperty("ro.emulated_storage.projid", false);
+  }
+
   // If there's a key_loc that looks like a path, it should be a block device for storing encryption
   // metadata. Wipe it too.
   if (!v->key_loc.empty() && v->key_loc[0] == '/') {
@@ -186,6 +195,12 @@ int format_volume(const std::string& volume, const std::string& directory) {
     std::vector<std::string> mke2fs_args = {
       "/system/bin/mke2fs", "-F", "-t", "ext4", "-b", std::to_string(kBlockSize),
     };
+
+    // Project ID's require wider inodes. The Quotas themselves are enabled by tune2fs on boot.
+    if (needs_projid) {
+      mke2fs_args.push_back("-I");
+      mke2fs_args.push_back("512");
+    }
 
     int raid_stride = v->logical_blk_size / kBlockSize;
     int raid_stripe_width = v->erase_blk_size / kBlockSize;
@@ -224,8 +239,18 @@ int format_volume(const std::string& volume, const std::string& directory) {
     "/system/bin/make_f2fs",
     "-g",
     "android",
-    v->blk_device,
   };
+  if (needs_projid) {
+    make_f2fs_cmd.push_back("-O");
+    make_f2fs_cmd.push_back("project_quota,extra_attr");
+  }
+  if (needs_casefold) {
+    make_f2fs_cmd.push_back("-O");
+    make_f2fs_cmd.push_back("casefold");
+    make_f2fs_cmd.push_back("-C");
+    make_f2fs_cmd.push_back("utf8");
+  }
+  make_f2fs_cmd.push_back(v->blk_device);
   if (length >= kSectorSize) {
     make_f2fs_cmd.push_back(std::to_string(length / kSectorSize));
   }
