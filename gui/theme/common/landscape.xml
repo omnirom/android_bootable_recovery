@@ -2937,6 +2937,9 @@
 					<condition var1="tw_no_sha2" var2="0"/>
 					<data variable="tw_use_sha2"/>
 				</listitem>
+				<listitem name="{@unmount_sys_install=Unmount System before installing a ZIP}">
+					<data variable="tw_unmount_system"/>
+				</listitem>
 			</listbox>
 
 			<checkbox>
