@@ -178,7 +178,7 @@ protected:
 	void Setup_Data_Media();                                                  // Sets up a partition as a /data/media emulated storage partition
 
 private:
-	bool Process_Fstab_Line(const char *fstab_line, bool Display_Error, std::map<string, Flags_Map> *twrp_flags); // Processes a fstab line
+	bool Process_Fstab_Line(const char *fstab_line, bool Display_Error, std::map<string, Flags_Map> *twrp_flags, bool Sar_Detect); // Processes a fstab line
 	void Setup_Data_Partition(bool Display_Error);                            // Setup data partition after fstab processed
 	void Setup_Cache_Partition(bool Display_Error);                           // Setup cache partition after fstab processed
 	bool Find_Wildcard_Block_Devices(const string& Device);                   // Searches for and finds wildcard block devices
@@ -305,7 +305,7 @@ public:
 	~TWPartitionManager() {}
 
 public:
-	int Process_Fstab(string Fstab_Filename, bool Display_Error);             // Parses the fstab and populates the partitions
+	int Process_Fstab(string Fstab_Filename, bool Display_Error, bool Sar_Detect);             // Parses the fstab and populates the partitions
 	int Write_Fstab();                                                        // Creates /etc/fstab file that's used by the command line for mount commands
 	void Output_Partition_Logging();                                          // Outputs partition information to the log
 	void Output_Partition(TWPartition* Part);                                 // Outputs partition details to the log
