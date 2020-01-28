@@ -229,7 +229,7 @@ KeymasterOperation Keymaster::begin(keymaster_purpose_t purpose, const std::stri
     keymaster_key_param_set_t outParams_set;
     auto error = mDevice->begin(purpose, &keyBlob, &inParams, &outParams_set, &mOpHandle);
     if (error != KM_ERROR_OK) {
-        LOG(ERROR) << "begin failed, code " << error;
+        LOG(ERROR) << "begin failed, code " << error << "\n";
         return KeymasterOperation(nullptr, mOpHandle);
     }
     outParams->Clear();
@@ -244,7 +244,7 @@ KeymasterOperation Keymaster::begin(keymaster_purpose_t purpose, const std::stri
     keymaster_operation_handle_t mOpHandle;
     auto error = mDevice->begin(purpose, &keyBlob, &inParams, nullptr, &mOpHandle);
     if (error != KM_ERROR_OK) {
-        LOG(ERROR) << "begin failed, code " << error;
+        LOG(ERROR) << "begin failed, code " << error << "\n";
         return KeymasterOperation(nullptr, mOpHandle);
     }
     return KeymasterOperation(mDevice, mOpHandle);

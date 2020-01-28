@@ -256,7 +256,7 @@ static int get_keymaster_hw_fde_passwd(const char* passwd, unsigned char* newpw,
 
     if (should_use_keymaster()) {
         if (scrypt_keymaster(passwd, salt, newpw, (void*)ftr)) {
-            SLOGE("scrypt failed");
+            SLOGE("scrypt failed\n");
         } else {
             rc = 0;
         }
@@ -293,7 +293,7 @@ static int verify_and_update_hw_fde_passwd(const char *passwd,
         ++crypt_ftr->failed_decrypt_count;
 
         if (ascii_passwd_updated) {
-            SLOGI("Ascii password was updated");
+            SLOGI("Ascii password was updated\n");
         } else {
             /* Code in else part would execute only once:
              * When device is upgraded from L->M release.
@@ -412,7 +412,7 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
             // so) because we really should be using a proper deterministic
             // RSA padding function, such as PKCS1.
             memcpy(to_sign + 1, object, min((size_t)RSA_KEY_SIZE_BYTES - 1, object_size));
-            SLOGI("Signing safely-padded object");
+            SLOGI("Signing safely-padded object\n");
             break;
         default:
             SLOGE("Unknown KDF type %d", ftr->kdf_type);
@@ -930,8 +930,8 @@ static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr,
            crypt_ftr->crypto_type_name, master_key_ascii,
            real_blk_name, extra_params);
 
-  SLOGI("target_type = %s", tgt->target_type);
-  SLOGI("real_blk_name = %s, extra_params = %s", real_blk_name, extra_params);
+  SLOGI("target_type = %s\n", tgt->target_type);
+  SLOGI("real_blk_name = %s, extra_params = %s\n", real_blk_name, extra_params);
 #else
   convert_key_to_hex_ascii(master_key, crypt_ftr->keysize, master_key_ascii);
   strlcpy(tgt->target_type, "crypt", DM_MAX_TYPE_NAME);
@@ -1342,7 +1342,7 @@ static int test_mount_hw_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
 #ifndef CONFIG_HW_DISK_ENCRYPT_PERF
         if (create_crypto_blk_dev(crypt_ftr, (unsigned char*)&key_index,
                             real_blkdev, crypto_blkdev, label, 0)) {
-          SLOGE("Error creating decrypted block device");
+          SLOGE("Error creating decrypted block device\n");
           rc = -1;
           goto errout;
         }
@@ -1350,7 +1350,7 @@ static int test_mount_hw_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
       } else {
         if (create_crypto_blk_dev(crypt_ftr, decrypted_master_key,
                             real_blkdev, crypto_blkdev, label, 0)) {
-          SLOGE("Error creating decrypted block device");
+          SLOGE("Error creating decrypted block device\n");
           rc = -1;
           goto errout;
         }
@@ -1439,7 +1439,7 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   if (rc == 0 && memcmp(scrypted_intermediate_key,
                         crypt_ftr->scrypted_intermediate_key,
                         sizeof(scrypted_intermediate_key)) == 0) {
-    SLOGI("Password matches");
+    SLOGI("Password matches\n");
     rc = 0;
   } else {
     /* Try mounting the file system anyway, just in case the problem's with
@@ -1454,7 +1454,7 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
       rc = -1;
     } else {
       /* Success! */
-      SLOGI("Password did not match but decrypted drive mounted - continue");
+      SLOGI("Password did not match but decrypted drive mounted - continue\n");
       umount(tmp_mount_point);
       rc = 0;
     }

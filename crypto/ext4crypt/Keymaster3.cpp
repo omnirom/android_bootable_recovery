@@ -181,11 +181,11 @@ KeymasterOperation Keymaster::begin(KeyPurpose purpose, const std::string& key,
 
     auto error = mDevice->begin(purpose, keyBlob, inParams.hidl_data(), hidlCb);
     if (!error.isOk()) {
-        LOG(ERROR) << "begin failed: " << error.description();
+        LOG(ERROR) << "begin failed: " << error.description() << "\n";
         return KeymasterOperation(ErrorCode::UNKNOWN_ERROR);
     }
     if (km_error != ErrorCode::OK) {
-        LOG(ERROR) << "begin failed, code " << int32_t(km_error);
+        LOG(ERROR) << "begin failed, code " << int32_t(km_error) << "\n";
         return KeymasterOperation(km_error);
     }
     return KeymasterOperation(mDevice, mOpHandle);
