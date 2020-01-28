@@ -91,7 +91,6 @@ cc_library_static {
     ],
 
     srcs: [
-        "fsck_unshare_blocks.cpp",
         "recovery.cpp",
     ],
 

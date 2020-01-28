@@ -45,7 +45,6 @@
 #include <ziparchive/zip_archive.h>
 
 #include "bootloader_message/bootloader_message.h"
-#include "fsck_unshare_blocks.h"
 #include "install/adb_install.h"
 #include "install/fuse_install.h"
 #include "install/install.h"
@@ -524,7 +523,6 @@ static void log_failure_code(ErrorCode code, const std::string& update_package) 
 Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args) {
   static constexpr struct option OPTIONS[] = {
     { "fastboot", no_argument, nullptr, 0 },
-    { "fsck_unshare_blocks", no_argument, nullptr, 0 },
     { "install_with_fuse", no_argument, nullptr, 0 },
     { "just_exit", no_argument, nullptr, 'x' },
     { "locale", required_argument, nullptr, 0 },
@@ -557,7 +555,6 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   bool rescue = false;
   bool just_exit = false;
   bool shutdown_after = false;
-  bool fsck_unshare_blocks = false;
   int retry_count = 0;
   bool security_update = false;
   std::string locale;
@@ -580,9 +577,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         break;
       case 0: {
         std::string option = OPTIONS[option_index].name;
-        if (option == "fsck_unshare_blocks") {
-          fsck_unshare_blocks = true;
-        } else if (option == "install_with_fuse") {
+        if (option == "install_with_fuse") {
           install_with_fuse = true;
         } else if (option == "locale" || option == "fastboot" || option == "reason") {
           // Handled in recovery_main.cpp
@@ -777,10 +772,6 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
     save_current_log = true;
     status = ApplyFromAdb(device, true /* rescue_mode */, &next_action);
     ui->Print("\nInstall from ADB complete (status: %d).\n", status);
-  } else if (fsck_unshare_blocks) {
-    if (!do_fsck_unshare_blocks()) {
-      status = INSTALL_ERROR;
-    }
   } else if (!just_exit) {
     // If this is an eng or userdebug build, automatically turn on the text display if no command
     // is specified. Note that this should be called before setting the background to avoid
