@@ -310,6 +310,62 @@ static void run_graphics_test(RecoveryUI* ui) {
   ui->ShowText(true);
 }
 
+static bool AskToReboot(Device* device, Device::BuiltinAction chosen_action, InstallResult status) {
+  switch (status) {
+    case INSTALL_SUCCESS:
+    case INSTALL_NONE:
+    case INSTALL_SKIPPED:
+    case INSTALL_RETRY:
+    case INSTALL_KEY_INTERRUPTED:
+      // okay to reboot; no need to ask.
+      return true;
+    case INSTALL_ERROR:
+    case INSTALL_CORRUPT:
+      // need to ask
+      break;
+    case INSTALL_REBOOT:
+      // All the reboots should have been handled prior to entering AskToReboot() or immediately
+      // after installing a package.
+      LOG(FATAL) << "Invalid status code of INSTALL_REBOOT";
+      break;
+  }
+
+  bool is_non_ab = android::base::GetProperty("ro.boot.slot_suffix", "").empty();
+  bool is_virtual_ab = android::base::GetBoolProperty("ro.virtual_ab.enabled", false);
+  if (!is_non_ab && !is_virtual_ab) {
+    // Only prompt for non-A/B or Virtual A/B devices.
+    return true;
+  }
+
+  std::string header_text;
+  std::string item_text;
+  switch (chosen_action) {
+    case Device::REBOOT:
+      header_text = "reboot";
+      item_text = " Reboot system now";
+      break;
+    case Device::SHUTDOWN:
+      header_text = "power off";
+      item_text = " Power off";
+      break;
+    default:
+      LOG(FATAL) << "Invalid chosen action " << chosen_action;
+      break;
+  }
+
+  std::vector<std::string> headers{ "Previous installation has failed.",
+                                    "  Your device may fail to boot if you " + header_text +
+                                        " now.",
+                                    "  Confirm reboot?" };
+  std::vector<std::string> items{ " Cancel", item_text };
+
+  size_t chosen_item = device->GetUI()->ShowMenu(
+      headers, items, 0, true /* menu_only */,
+      std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
+
+  return (chosen_item == 1);
+}
+
 // Shows the recovery UI and waits for user input. Returns one of the device builtin actions, such
 // as REBOOT, SHUTDOWN, or REBOOT_BOOTLOADER. Returning NO_ACTION means to take the default, which
 // is to reboot or shutdown depending on if the --shutdown_after flag was passed to recovery.
@@ -361,13 +417,18 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
 
       case Device::ENTER_FASTBOOT:
       case Device::ENTER_RECOVERY:
-      case Device::REBOOT:
       case Device::REBOOT_BOOTLOADER:
       case Device::REBOOT_FASTBOOT:
       case Device::REBOOT_RECOVERY:
       case Device::REBOOT_RESCUE:
-      case Device::SHUTDOWN:
         return chosen_action;
+
+      case Device::REBOOT:
+      case Device::SHUTDOWN:
+        if (!ui->IsTextVisible() || AskToReboot(device, chosen_action, status)) {
+          return Device::REBOOT;
+        }
+        break;
 
       case Device::WIPE_DATA:
         save_current_log = true;
