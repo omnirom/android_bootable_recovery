@@ -310,26 +310,14 @@ static void run_graphics_test(RecoveryUI* ui) {
   ui->ShowText(true);
 }
 
-static bool AskToReboot(Device* device, Device::BuiltinAction chosen_action, InstallResult status) {
-  switch (status) {
-    case INSTALL_SUCCESS:
-    case INSTALL_NONE:
-    case INSTALL_SKIPPED:
-    case INSTALL_RETRY:
-    case INSTALL_KEY_INTERRUPTED:
-      // okay to reboot; no need to ask.
-      return true;
-    case INSTALL_ERROR:
-    case INSTALL_CORRUPT:
-      // need to ask
-      break;
-    case INSTALL_REBOOT:
-      // All the reboots should have been handled prior to entering AskToReboot() or immediately
-      // after installing a package.
-      LOG(FATAL) << "Invalid status code of INSTALL_REBOOT";
-      break;
+static void WriteUpdateInProgress() {
+  std::string err;
+  if (!update_bootloader_message({ "--reason=update_in_progress" }, &err)) {
+    LOG(ERROR) << "Failed to WriteUpdateInProgress: " << err;
   }
+}
 
+static bool AskToReboot(Device* device, Device::BuiltinAction chosen_action) {
   bool is_non_ab = android::base::GetProperty("ro.boot.slot_suffix", "").empty();
   bool is_virtual_ab = android::base::GetBoolProperty("ro.virtual_ab.enabled", false);
   if (!is_non_ab && !is_virtual_ab) {
@@ -353,7 +341,7 @@ static bool AskToReboot(Device* device, Device::BuiltinAction chosen_action, Ins
       break;
   }
 
-  std::vector<std::string> headers{ "Previous installation has failed.",
+  std::vector<std::string> headers{ "WARNING: Previous installation has failed.",
                                     "  Your device may fail to boot if you " + header_text +
                                         " now.",
                                     "  Confirm reboot?" };
@@ -371,6 +359,7 @@ static bool AskToReboot(Device* device, Device::BuiltinAction chosen_action, Ins
 // is to reboot or shutdown depending on if the --shutdown_after flag was passed to recovery.
 static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status) {
   auto ui = device->GetUI();
+  bool update_in_progress = (device->GetReason().value_or("") == "update_in_progress");
   for (;;) {
     FinishRecovery(ui);
     switch (status) {
@@ -395,8 +384,14 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
     }
     ui->SetProgressType(RecoveryUI::EMPTY);
 
+    std::vector<std::string> headers;
+    if (update_in_progress) {
+      headers = { "WARNING: Previous installation has failed.",
+                  "  Your device may fail to boot if you reboot or power off now." };
+    }
+
     size_t chosen_item = ui->ShowMenu(
-        {}, device->GetMenuItems(), 0, false,
+        headers, device->GetMenuItems(), 0, false,
         std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
     // Handle Interrupt key
     if (chosen_item == static_cast<size_t>(RecoveryUI::KeyError::INTERRUPTED)) {
@@ -425,7 +420,15 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
 
       case Device::REBOOT:
       case Device::SHUTDOWN:
-        if (!ui->IsTextVisible() || AskToReboot(device, chosen_action, status)) {
+        if (!ui->IsTextVisible()) {
+          return Device::REBOOT;
+        }
+        // okay to reboot; no need to ask.
+        if (!update_in_progress) {
+          return Device::REBOOT;
+        }
+        // An update might have been failed. Ask if user really wants to reboot.
+        if (AskToReboot(device, chosen_action)) {
           return Device::REBOOT;
         }
         break;
@@ -457,6 +460,9 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
       case Device::ENTER_RESCUE: {
         save_current_log = true;
 
+        update_in_progress = true;
+        WriteUpdateInProgress();
+
         bool adb = true;
         Device::BuiltinAction reboot_action;
         if (chosen_action == Device::ENTER_RESCUE) {
@@ -475,12 +481,15 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
           return reboot_action;
         }
 
-        if (status != INSTALL_SUCCESS) {
+        if (status == INSTALL_SUCCESS) {
+          update_in_progress = false;
+          if (!ui->IsTextVisible()) {
+            return Device::NO_ACTION;  // reboot if logs aren't visible
+          }
+        } else {
           ui->SetBackground(RecoveryUI::ERROR);
           ui->Print("Installation aborted.\n");
           copy_logs(save_current_log);
-        } else if (!ui->IsTextVisible()) {
-          return Device::NO_ACTION;  // reboot if logs aren't visible
         }
         break;
       }
