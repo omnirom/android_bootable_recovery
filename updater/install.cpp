@@ -1001,8 +1001,8 @@ static int ApplyParsedPerms(State* state, const char* filename, const struct sta
 static struct perm_parsed_args recursive_parsed_args;
 static State* recursive_state;
 
-static int do_SetMetadataRecursive(const char* filename, const struct stat* statptr, int fileflags,
-                                   struct FTW* pfwt) {
+static int do_SetMetadataRecursive(const char* filename, const struct stat* statptr, int ,
+                                   struct FTW* ) {
   return ApplyParsedPerms(recursive_state, filename, statptr, recursive_parsed_args);
 }
 
@@ -1396,7 +1396,7 @@ Value* EnableRebootFn(const char* name, State* state, const std::vector<std::uni
   return StringValue("t");
 }
 
-Value* Tune2FsFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
+Value* Tune2FsFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& ) {
 #ifdef HAVE_LIBTUNE2FS
   if (argv.empty()) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects args, got %zu", name, argv.size());
