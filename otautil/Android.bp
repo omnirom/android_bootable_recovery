@@ -26,6 +26,10 @@ cc_library_static {
         "rangeset.cpp",
     ],
 
+    include_dirs: [
+        "system/core/libziparchive/include",
+    ],
+
     static_libs: [
         "libselinux",
         "libbase",

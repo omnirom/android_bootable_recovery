@@ -43,6 +43,11 @@ cc_library_static {
         "imgpatch.cpp",
     ],
 
+    include_dirs: [
+        "bootable/recovery/bmlutils",
+        "bootable/recovery/mtdutils",
+    ],
+
     export_include_dirs: [
         "include",
     ],
