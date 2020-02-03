@@ -28,6 +28,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/mount.h>
 #include <unistd.h>
 
 #include <string.h>
@@ -442,7 +443,21 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 	} else {
 		if (Zip.EntryExists(AB_OTA)) {
 			LOGINFO("AB zip\n");
+			// We need this so backuptool can do its magic
+			bool system_mount_state = PartitionManager.Is_Mounted_By_Path(PartitionManager.Get_Android_Root_Path());
+			bool vendor_mount_state = PartitionManager.Is_Mounted_By_Path("/vendor");
+			PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
+			PartitionManager.Mount_By_Path("/vendor", true);
+			TWFunc::Exec_Cmd("cp -f /sbin/sh /tmp/sh");
+			mount("/tmp/sh", "/system/bin/sh", "auto", MS_BIND, NULL);
 			ret_val = Run_Update_Binary(path, &Zip, wipe_cache, AB_OTA_ZIP_TYPE);
+			umount("/system/bin/sh");
+			unlink("/tmp/sh");
+			if (!vendor_mount_state)
+				PartitionManager.UnMount_By_Path("/vendor", true);
+			if (!system_mount_state)
+				PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
+
 		} else {
 			if (Zip.EntryExists("ui.xml")) {
 				LOGINFO("TWRP theme zip\n");
