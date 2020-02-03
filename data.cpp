@@ -510,18 +510,56 @@ int DataManager::SetValue(const string& varName, const unsigned long long& value
 	return SetValue(varName, valStr.str(), persist);
 }
 
+// For legacy code that doesn't set a scope
 int DataManager::SetProgress(const float Fraction) {
-	return SetValue("ui_progress", (float) (Fraction * 100.0));
+	if (SetValue("ui_portion_size", 0) != 0)
+		return -1;
+	if (SetValue("ui_portion_start", 0) != 0)
+		return -1;
+	ShowProgress(1, 0);
+	int res = _SetProgress(Fraction);
+	if (SetValue("ui_portion_size", 0) != 0)
+		return -1;
+	if (SetValue("ui_portion_start", 0) != 0)
+		return -1;
+	return res;
 }
 
-int DataManager::ShowProgress(const float Portion, const float Seconds)
+int DataManager::_SetProgress(float Fraction) {
+	float Portion_Start, Portion_Size;
+	GetValue("ui_portion_size", Portion_Size);
+	GetValue("ui_portion_start", Portion_Start);
+	//LOGINFO("SetProgress(%.2lf): Portion_Size: %.2lf Portion_Start: %.2lf\n", Fraction, Portion_Size, Portion_Start);
+	if (Fraction < 0.0)
+		Fraction = 0;
+	if (Fraction > 1.0)
+		Fraction = 1;
+	if (SetValue("ui_progress", (float) ((Portion_Start + (Portion_Size * Fraction)) * 100.0)) != 0)
+		return -1;
+	return (SetValue("ui_progress_portion", 0) != 0);
+}
+
+int DataManager::ShowProgress(float Portion, const float Seconds)
 {
-	float Starting_Portion;
-	GetValue("ui_progress_portion", Starting_Portion);
-	if (SetValue("ui_progress_portion", (float)(Portion * 100.0) + Starting_Portion) != 0)
+	float Portion_Start, Portion_Size;
+	GetValue("ui_portion_size", Portion_Size);
+	GetValue("ui_portion_start", Portion_Start);
+	Portion_Start += Portion_Size;
+	if(Portion + Portion_Start > 1.0)
+		Portion = 1.0 - Portion_Start;
+	//LOGINFO("ShowProgress(%.2lf, %.2lf): Portion_Start: %.2lf\n", Portion, Seconds, Portion_Start);
+	if (SetValue("ui_portion_start", Portion_Start) != 0)
 		return -1;
-	if (SetValue("ui_progress_frames", Seconds * 30) != 0)
+	if (SetValue("ui_portion_size", Portion) != 0)
 		return -1;
+	if (SetValue("ui_progress", (float)(Portion_Start * 100.0)) != 0)
+		return -1;
+	if(Seconds) {
+		if (SetValue("ui_progress_portion", (float)((Portion * 100.0) + Portion_Start)) != 0)
+			return -1;
+		if (SetValue("ui_progress_frames", Seconds * 48) != 0)
+			return -1;
+	}
 	return 0;
 }
 
