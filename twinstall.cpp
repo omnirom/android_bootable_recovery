@@ -300,7 +300,7 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 		} else if (strcmp(command, "set_progress") == 0) {
 			char* fraction_char = strtok(NULL, " \n");
 			float fraction_float = strtof(fraction_char, NULL);
-			DataManager::SetProgress(fraction_float);
+			DataManager::_SetProgress(fraction_float);
 		} else if (strcmp(command, "ui_print") == 0) {
 			char* display_value = strtok(NULL, "\n");
 			if (display_value) {
