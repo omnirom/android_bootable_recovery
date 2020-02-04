@@ -107,6 +107,12 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             endif
         endif
 
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
+            ifeq ($(TW_INCLUDE_LIBRESETPROP), true)
+                LOCAL_CFLAGS += -DTW_INCLUDE_LIBRESETPROP
+            endif
+        endif
+
         LOCAL_SRC_FILES = vold_decrypt.cpp
         LOCAL_SHARED_LIBRARIES := libcutils
         include $(BUILD_STATIC_LIBRARY)
