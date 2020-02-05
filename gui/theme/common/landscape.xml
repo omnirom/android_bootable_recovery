@@ -4841,6 +4841,11 @@
 					<action function="set">tw_hide_kb=0</action>
 				</actions>
 			</action>
+			
+			<action>
+				<touch key="power"/>
+				<action function="togglebacklight"/>
+			</action>
 
 			<object type="action">
 				<touch key="power+voldown" />
