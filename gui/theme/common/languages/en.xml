@@ -722,5 +722,7 @@
 		<string name="unmount_sys_install">Unmount System before installing a ZIP</string>
 		<string name="unmount_system">Unmounting System...</string>
 		<string name="unmount_system_err">Failed unmounting System</string>
+		<string name="flash_ab_inactive">Flashing A/B zip to inactive slot: {1}</string>
+		<string name="flash_ab_reboot">To flash additional zips, please reboot recovery to switch to the updated slot.</string>
 	</resources>
 </language>
