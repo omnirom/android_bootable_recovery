@@ -147,6 +147,32 @@ int main(int argc, char **argv) {
 				LOGINFO("SAR-DETECT: No build.prop found, falling back to %s\n", fallback_sar ? "SAR" : "Non-SAR");
 				property_set("ro.twrp.sar", fallback_sar ? "1" : "0");
 			}
+
+// We are doing this here during SAR-detection, since we are mounting the system-partition anyway
+// This way we don't need to remount it later, just for overriding properties
+#if defined(TW_INCLUDE_LIBRESETPROP) && defined(TW_OVERRIDE_SYSTEM_PROPS)
+			stringstream override_props(EXPAND(TW_OVERRIDE_SYSTEM_PROPS));
+			string current_prop;
+			while (getline(override_props, current_prop, ';')) {
+				string other_prop;
+				if (current_prop.find("=") != string::npos) {
+					other_prop = current_prop.substr(current_prop.find("=") + 1);
+					current_prop = current_prop.substr(0, current_prop.find("="));
+				} else {
+					other_prop = current_prop;
+				}
+				string sys_val = TWFunc::System_Property_Get(other_prop, SarPartitionManager, "/s");
+				if (!sys_val.empty()) {
+					LOGINFO("Overriding %s with value: \"%s\" from system property %s\n", current_prop.c_str(), sys_val.c_str(), other_prop.c_str());
+					int error = TWFunc::Property_Override(current_prop, sys_val);
+					if (error) {
+						LOGERR("Failed overriding property %s, error_code: %d\n", current_prop.c_str(), error);
+					}
+				} else {
+					LOGINFO("Not overriding %s with empty value from system property %s\n", current_prop.c_str(), other_prop.c_str());
+				}
+			}
+#endif
 			SarPartitionManager.UnMount_By_Path("/s", false);
 		} else {
 			LOGINFO("SAR-DETECT: Could not mount system partition, falling back to %s\n", fallback_sar ? "SAR":"Non-SAR");
