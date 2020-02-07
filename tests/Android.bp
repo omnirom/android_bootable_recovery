@@ -90,7 +90,6 @@ librecovery_static_libs = [
     "libfs_mgr",
     "libhidl-gen-utils",
     "libhidlbase",
-    "libbinderthreadstate",
     "liblp",
     "libtinyxml2",
     "libc++fs",
