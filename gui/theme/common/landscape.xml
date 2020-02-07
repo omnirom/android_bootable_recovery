@@ -572,6 +572,7 @@
 			</button>
 
 			<button style="main_button_half_width">
+				<condition var1="tw_ab_device" var2="0"/>
 				<placement x="%center_x%" y="%row15a_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
@@ -579,6 +580,17 @@
 					<action function="page">reboot_system_routine</action>
 				</actions>
 			</button>
+
+			<button style="main_button_half_width">
+				<condition var1="tw_ab_device" var2="1"/>
+				<placement x="%center_x%" y="%row15a_y%"/>
+				<text>{@reboot_btn=Reboot}</text>
+				<actions>
+					<action function="set">tw_back=main2</action>
+					<action function="page">reboot</action>
+				</actions>
+			</button>
+
 
 			<action>
 				<touch key="back"/>
