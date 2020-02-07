@@ -577,7 +577,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     endif
 endif
 
-ifneq (,$(filter $(TW_INCLUDE_REPACKTOOLS) $(TW_INCLUDE_RESETPROP), true))
+ifneq (,$(filter $(TW_INCLUDE_REPACKTOOLS) $(TW_INCLUDE_RESETPROP) $(TW_INCLUDE_LIBRESETPROP), true))
     ifeq ($(wildcard external/magisk-prebuilt/Android.mk),)
         $(warning Magisk prebuilt tools not found!)
         $(warning Please place https://github.com/TeamWin/external_magisk-prebuilt)

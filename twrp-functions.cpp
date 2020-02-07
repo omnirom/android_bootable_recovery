@@ -59,6 +59,10 @@ extern "C" {
 	#include "libcrecovery/common.h"
 }
 
+#ifdef TW_INCLUDE_LIBRESETPROP
+    #include <resetprop.h>
+#endif
+
 struct selabel_handle *selinux_handle;
 
 /* Execute a command */
@@ -1315,4 +1319,13 @@ bool TWFunc::Is_TWRP_App_In_System() {
 	DataManager::SetValue("tw_app_installed_in_system", 0);
 	return false;
 }
+
+int TWFunc::Property_Override(string Prop_Name, string Prop_Value) {
+#ifdef TW_INCLUDE_LIBRESETPROP
+    return setprop(Prop_Name.c_str(), Prop_Value.c_str(), false);
+#else
+    return -2;
+#endif
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN

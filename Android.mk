@@ -398,6 +398,16 @@ endif
 ifneq ($(TW_CLOCK_OFFSET),)
 	LOCAL_CFLAGS += -DTW_CLOCK_OFFSET=$(TW_CLOCK_OFFSET)
 endif
+ifneq ($(TW_OVERRIDE_SYSTEM_PROPS),)
+    TW_INCLUDE_LIBRESETPROP := true
+    LOCAL_CFLAGS += -DTW_OVERRIDE_SYSTEM_PROPS=$(TW_OVERRIDE_SYSTEM_PROPS)
+endif
+ifneq ($(TW_INCLUDE_LIBRESETPROP),)
+    LOCAL_SHARED_LIBRARIES += libresetprop
+    LOCAL_C_INCLUDES += external/magisk-prebuilt/include
+    LOCAL_CFLAGS += -DTW_INCLUDE_LIBRESETPROP
+endif
+
 TWRP_REQUIRED_MODULES += \
     dump_image \
     erase_image \
