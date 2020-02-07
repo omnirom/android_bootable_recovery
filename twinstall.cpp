@@ -441,6 +441,7 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 	} else {
 		if (Zip.EntryExists(AB_OTA)) {
 			LOGINFO("AB zip\n");
+			gui_msg(Msg(msg::kHighlight, "flash_ab_inactive=Flashing A/B zip to inactive slot: {1}")(PartitionManager.Get_Active_Slot_Display()=="A"?"B":"A"));
 			// We need this so backuptool can do its magic
 			bool system_mount_state = PartitionManager.Is_Mounted_By_Path(PartitionManager.Get_Android_Root_Path());
 			bool vendor_mount_state = PartitionManager.Is_Mounted_By_Path("/vendor");
@@ -455,6 +456,7 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 				PartitionManager.UnMount_By_Path("/vendor", true);
 			if (!system_mount_state)
 				PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
+			gui_warn("flash_ab_reboot=To flash additional zips, please reboot recovery to switch to the updated slot.");
 
 		} else {
 			if (Zip.EntryExists("ui.xml")) {
