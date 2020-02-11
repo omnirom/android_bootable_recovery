@@ -528,7 +528,9 @@ initfail:
             ftr->keymaster_blob, KEYMASTER_BLOB_SIZE, &ftr->keymaster_blob_size);
 #endif //TW_KEYMASTER_MAX_API == 3
 #if TW_KEYMASTER_MAX_API >= 4
-    //for (;;) {
+    for (int c = 1;c <= 20;c++) { // 20 tries are enough for signing keymaster
+        if (c > 2)
+            usleep(5000); // if failed in two tries lets rest
         auto result = keymaster_sign_object_for_cryptfs_scrypt(
             ftr->keymaster_blob, ftr->keymaster_blob_size, KEYMASTER_CRYPTFS_RATE_LIMIT, to_sign,
             to_sign_size, signature, signature_size);
@@ -552,8 +554,7 @@ initfail:
             SLOGE("Failed to write upgraded key to disk\n");
         }*/
         SLOGD("Key upgraded successfully\n");
-        return 0;
-    //}
+    }
 #endif
     return -1;
 }
@@ -912,7 +913,10 @@ static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr,
   tgt->length = crypt_ftr->fs_size;
   crypt_params = buffer + sizeof(struct dm_ioctl) + sizeof(struct dm_target_spec);
   buff_offset = crypt_params - buffer;
-  SLOGI("Extra parameters for dm_crypt: %s\n", extra_params);
+  SLOGI(
+	"Creating crypto dev \"%s\"; cipher=%s, keysize=%u, real_dev=%s, len=%llu, params=\"%s\"\n",
+	name, crypt_ftr->crypto_type_name, crypt_ftr->keysize, real_blk_name, tgt->length * 512,
+	extra_params);
 
 #ifdef CONFIG_HW_DISK_ENCRYPTION
   if(is_hw_disk_encryption((char*)crypt_ftr->crypto_type_name)) {
