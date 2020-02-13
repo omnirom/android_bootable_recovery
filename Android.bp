@@ -72,7 +72,6 @@ cc_defaults {
     ],
 
     static_libs: [
-        "libc++fs",
         "libinstall",
         "librecovery_fastboot",
         "libminui",
@@ -95,7 +94,6 @@ cc_library_static {
     ],
 
     shared_libs: [
-        "libfusesideload",
         "librecovery_ui",
     ],
 }
