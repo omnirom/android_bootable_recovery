@@ -403,9 +403,13 @@ ifneq ($(TW_OVERRIDE_SYSTEM_PROPS),)
     LOCAL_CFLAGS += -DTW_OVERRIDE_SYSTEM_PROPS=$(TW_OVERRIDE_SYSTEM_PROPS)
 endif
 ifneq ($(TW_INCLUDE_LIBRESETPROP),)
-    LOCAL_SHARED_LIBRARIES += libresetprop
-    LOCAL_C_INCLUDES += external/magisk-prebuilt/include
-    LOCAL_CFLAGS += -DTW_INCLUDE_LIBRESETPROP
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
+        $(warning libresetprop is not available for android < 7)
+    else
+        LOCAL_SHARED_LIBRARIES += libresetprop
+        LOCAL_C_INCLUDES += external/magisk-prebuilt/include
+        LOCAL_CFLAGS += -DTW_INCLUDE_LIBRESETPROP
+    endif
 endif
 
 TWRP_REQUIRED_MODULES += \
