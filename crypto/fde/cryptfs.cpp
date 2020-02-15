@@ -1332,6 +1332,13 @@ static int test_mount_hw_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
 
   int key_index = 0;
   if(is_hw_disk_encryption((char*)crypt_ftr->crypto_type_name)) {
+    if (crypt_ftr->flags & CRYPT_FORCE_COMPLETE) {
+       if (decrypt_master_key(passwd, decrypted_master_key, crypt_ftr, 0, 0)) {
+           printf("Failed to decrypt master key\n");
+           rc = -1;
+           goto errout;
+       }
+    }
     key_index = verify_and_update_hw_fde_passwd(passwd, crypt_ftr);
     if (key_index < 0) {
       rc = -1;
@@ -1396,7 +1403,7 @@ static int test_mount_encrypted_fs(struct crypt_mnt_ftr* crypt_ftr,
   //char real_blkdev[MAXPATHLEN];
   char tmp_mount_point[64];
   unsigned int orig_failed_decrypt_count;
-  int rc;
+  int rc = 0;
   int use_keymaster = 0;
   unsigned char* intermediate_key = 0;
   size_t intermediate_key_size = 0;
@@ -1551,7 +1558,7 @@ int check_unmounted_and_get_ftr(struct crypt_mnt_ftr* crypt_ftr)
 int cryptfs_check_passwd_hw(const char* passwd)
 {
     struct crypt_mnt_ftr crypt_ftr;
-    int rc;
+    int rc = 0;
     unsigned char master_key[KEY_LEN_BYTES];
     /* get key */
     if (get_crypt_ftr_and_key(&crypt_ftr)) {
