@@ -130,14 +130,14 @@ bool KeymasterOperation::updateCompletely(const std::string& input, std::string*
         auto error =
             mDevice->update(mOpHandle, nullptr, &inputBlob, &inputConsumed, nullptr, &outputBlob);
         if (error != KM_ERROR_OK) {
-            LOG(ERROR) << "update failed, code " << error;
+            LOG(ERROR) << "update failed, code " << error << "\n";
             mDevice = nullptr;
             return false;
         }
         output->append(reinterpret_cast<const char*>(outputBlob.data), outputBlob.data_length);
         free(const_cast<uint8_t*>(outputBlob.data));
         if (inputConsumed > toRead) {
-            LOG(ERROR) << "update reported too much input consumed";
+            LOG(ERROR) << "update reported too much input consumed\n";
             mDevice = nullptr;
             return false;
         }
@@ -150,7 +150,7 @@ bool KeymasterOperation::finish() {
     auto error = mDevice->finish(mOpHandle, nullptr, nullptr, nullptr, nullptr);
     mDevice = nullptr;
     if (error != KM_ERROR_OK) {
-        LOG(ERROR) << "finish failed, code " << error;
+        LOG(ERROR) << "finish failed, code " << error << "\n";
         return false;
     }
     return true;
@@ -161,7 +161,7 @@ bool KeymasterOperation::finishWithOutput(std::string* output) {
     auto error = mDevice->finish(mOpHandle, nullptr, nullptr, nullptr, &outputBlob);
     mDevice = nullptr;
     if (error != KM_ERROR_OK) {
-        LOG(ERROR) << "finish failed, code " << error;
+        LOG(ERROR) << "finish failed, code " << error << "\n";
         return false;
     }
     output->assign(reinterpret_cast<const char*>(outputBlob.data), outputBlob.data_length);
@@ -174,14 +174,14 @@ Keymaster::Keymaster() {
     const hw_module_t* module;
     int ret = hw_get_module_by_class(KEYSTORE_HARDWARE_MODULE_ID, NULL, &module);
     if (ret != 0) {
-        LOG(ERROR) << "hw_get_module_by_class returned " << ret;
+        LOG(ERROR) << "hw_get_module_by_class returned " << ret << "\n";
         return;
     }
     if (module->module_api_version == KEYMASTER_MODULE_API_VERSION_1_0) {
         keymaster1_device_t* device;
         ret = keymaster1_open(module, &device);
         if (ret != 0) {
-            LOG(ERROR) << "keymaster1_open returned " << ret;
+            LOG(ERROR) << "keymaster1_open returned " << ret << "\n";
             return;
         }
         mDevice = std::make_shared<Keymaster1Device>(device);
@@ -189,12 +189,12 @@ Keymaster::Keymaster() {
         keymaster2_device_t* device;
         ret = keymaster2_open(module, &device);
         if (ret != 0) {
-            LOG(ERROR) << "keymaster2_open returned " << ret;
+            LOG(ERROR) << "keymaster2_open returned " << ret << "\n";
             return;
         }
         mDevice = std::make_shared<Keymaster2Device>(device);
     } else {
-        LOG(ERROR) << "module_api_version is " << module->module_api_version;
+        LOG(ERROR) << "module_api_version is " << module->module_api_version << "\n";
         return;
     }
 }
@@ -203,7 +203,7 @@ Keymaster::Keymaster() {
     keymaster_key_blob_t keyBlob;
     auto error = mDevice->generate_key(&inParams, &keyBlob);
     if (error != KM_ERROR_OK) {
-        LOG(ERROR) << "generate_key failed, code " << error;
+        LOG(ERROR) << "generate_key failed, code " << error << "\n";
         return false;
     }
     key->assign(reinterpret_cast<const char*>(keyBlob.key_material), keyBlob.key_material_size);
@@ -215,7 +215,7 @@ bool Keymaster::deleteKey(const std::string& key) {
     keymaster_key_blob_t keyBlob{reinterpret_cast<const uint8_t*>(key.data()), key.size()};
     auto error = mDevice->delete_key(&keyBlob);
     if (error != KM_ERROR_OK) {
-        LOG(ERROR) << "delete_key failed, code " << error;
+        LOG(ERROR) << "delete_key failed, code " << error << "\n";
         return false;
     }
     return true;
