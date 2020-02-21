@@ -94,6 +94,24 @@ librecovery_static_libs = [
     "libtinyxml2",
 ]
 
+// recovery image for unittests.
+// ========================================================
+genrule {
+    name: "recovery_image",
+    cmd: "cat $(location testdata/recovery_head) <(cat $(location testdata/recovery_body) | $(location minigzip)) $(location testdata/recovery_tail) > $(out)",
+    srcs: [
+        "testdata/recovery_head",
+        "testdata/recovery_body",
+        "testdata/recovery_tail",
+    ],
+    tools: [
+        "minigzip",
+    ],
+    out: [
+        "testdata/recovery.img",
+    ],
+}
+
 cc_test {
     name: "recovery_unit_test",
     isolated: true,
@@ -127,6 +145,7 @@ cc_test {
 
     data: [
         "testdata/*",
+        ":recovery_image",
         ":res-testdata",
     ],
 }
