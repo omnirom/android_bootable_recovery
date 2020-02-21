@@ -202,6 +202,15 @@ int format_volume(const std::string& volume, const std::string& directory) {
       mke2fs_args.push_back("512");
     }
 
+    if (v->fs_mgr_flags.ext_meta_csum) {
+      mke2fs_args.push_back("-O");
+      mke2fs_args.push_back("metadata_csum");
+      mke2fs_args.push_back("-O");
+      mke2fs_args.push_back("64bit");
+      mke2fs_args.push_back("-O");
+      mke2fs_args.push_back("extent");
+    }
+
     int raid_stride = v->logical_blk_size / kBlockSize;
     int raid_stripe_width = v->erase_blk_size / kBlockSize;
     // stride should be the max of 8KB and logical block size
