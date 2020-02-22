@@ -448,7 +448,9 @@ void ScreenRecoveryUI::draw_foreground_locked() {
     int frame_height = gr_get_height(frame);
     int frame_x = (ScreenWidth() - frame_width) / 2;
     int frame_y = GetAnimationBaseline();
-    DrawSurface(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
+    if (frame_x >= 0 && frame_y >= 0 && (frame_x + frame_width) < ScreenWidth() &&
+        (frame_y + frame_height) < ScreenHeight())
+      DrawSurface(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
   }
 
   if (progressBarType != EMPTY) {
