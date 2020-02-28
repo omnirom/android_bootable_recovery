@@ -27,14 +27,12 @@ cc_library {
     srcs: [
         "events.cpp",
         "graphics.cpp",
-        "graphics_adf.cpp",
         "graphics_drm.cpp",
         "graphics_fbdev.cpp",
         "resources.cpp",
     ],
 
     whole_static_libs: [
-        "libadf",
         "libdrm",
         "libsync",
     ],
