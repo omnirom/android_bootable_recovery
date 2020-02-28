@@ -32,6 +32,7 @@ updater_common_static_libraries := \
     libdm \
     libfec \
     libfec_rs \
+    libavb \
     libverity_tree \
     libgtest_prod \
     liblog \
