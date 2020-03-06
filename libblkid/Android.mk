@@ -44,7 +44,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libuuid
 LOCAL_MODULE_TAGS := optional
 #LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-LOCAL_CFLAGS := -D_FILE_OFFSET_BITS=64 -DHAVE_LOFF_T -DHAVE_ERR_H -DHAVE_MEMPCPY -DHAVE_FSYNC
+LOCAL_CFLAGS := -D_FILE_OFFSET_BITS=64 -DHAVE_LOFF_T -DHAVE_ERR_H -DHAVE_MEMPCPY -DHAVE_FSYNC -DHAVE_SYS_FILE_H
 LOCAL_CFLAGS += -Wno-missing-field-initializers -Wno-sign-compare -Wno-unused-parameter -Wno-format -Wno-pointer-arith
 LOCAL_SRC_FILES =	libuuid/src/clear.c \
 			libuuid/src/copy.c \
