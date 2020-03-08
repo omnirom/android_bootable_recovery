@@ -965,7 +965,7 @@ bool ZipModeImage::SplitZipModeImageWithLimit(const ZipModeImage& tgt_image,
         used_src_ranges.Insert(src_ranges);
         split_src_ranges->push_back(std::move(src_ranges));
       }
-      src_ranges.Clear();
+      src_ranges = {};
 
       // We don't have enough space for the current chunk; start a new split image and handle
       // this chunk there.
@@ -1035,7 +1035,7 @@ bool ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
   }
 
   ZipModeImage split_tgt_image(false);
-  split_tgt_image.Initialize(std::move(aligned_tgt_chunks), {});
+  split_tgt_image.Initialize(aligned_tgt_chunks, {});
   split_tgt_image.MergeAdjacentNormalChunks();
 
   // Construct the dummy source file based on the src_ranges.
@@ -1051,7 +1051,7 @@ bool ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
   CHECK(!src_content.empty());
 
   ZipModeImage split_src_image(true);
-  split_src_image.Initialize(split_src_chunks, std::move(src_content));
+  split_src_image.Initialize(split_src_chunks, src_content);
 
   split_tgt_images->push_back(std::move(split_tgt_image));
   split_src_images->push_back(std::move(split_src_image));
