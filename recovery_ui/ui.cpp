@@ -48,6 +48,10 @@ constexpr const char* MAX_BRIGHTNESS_FILE = "/sys/class/leds/lcd-backlight/max_b
 constexpr const char* BRIGHTNESS_FILE_SDM = "/sys/class/backlight/panel0-backlight/brightness";
 constexpr const char* MAX_BRIGHTNESS_FILE_SDM =
     "/sys/class/backlight/panel0-backlight/max_brightness";
+constexpr const char* BRIGHTNESS_FILE_PWM =
+    "/sys/class/backlight/pwm-backlight.0/brightness";
+constexpr const char* MAX_BRIGHTNESS_FILE_PWM =
+    "/sys/class/backlight/pwm-backlight.0/max_brightness";
 
 constexpr int kDefaultTouchLowThreshold = 50;
 constexpr int kDefaultTouchHighThreshold = 90;
@@ -106,10 +110,19 @@ bool RecoveryUI::InitScreensaver() {
     return false;
   }
   if (access(brightness_file_.c_str(), R_OK | W_OK)) {
-    brightness_file_ = BRIGHTNESS_FILE_SDM;
+    if (!access(BRIGHTNESS_FILE_SDM, R_OK | W_OK)) {
+      brightness_file_ = BRIGHTNESS_FILE_SDM;
+    } else {
+      brightness_file_ = BRIGHTNESS_FILE_PWM;
+    }
   }
+
   if (access(max_brightness_file_.c_str(), R_OK)) {
-    max_brightness_file_ = MAX_BRIGHTNESS_FILE_SDM;
+    if (!access(MAX_BRIGHTNESS_FILE_SDM, R_OK)) {
+      max_brightness_file_ = MAX_BRIGHTNESS_FILE_SDM;
+    } else {
+      max_brightness_file_ = MAX_BRIGHTNESS_FILE_PWM;
+    }
   }
   // Set the initial brightness level based on the max brightness. Note that reading the initial
   // value from BRIGHTNESS_FILE doesn't give the actual brightness value (bullhead, sailfish), so
