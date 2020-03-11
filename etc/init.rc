@@ -17,6 +17,10 @@ on early-init
     # Set the security context of /postinstall if present.
     restorecon /postinstall
 
+    # ueventd wants to write to /acct
+    mount cgroup none /acct cpuacct
+    mkdir /acct/uid
+
     start ueventd
 
 service set_permissive /sbin/permissive.sh
@@ -30,9 +34,6 @@ on init
     export ANDROID_ROOT /system
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /sdcard
-
-    mount cgroup none /acct cpuacct
-    mkdir /acct/uid
 
     mkdir /system
     mkdir /data
