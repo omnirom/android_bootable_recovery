@@ -213,7 +213,7 @@
 		<string name="name">Ad:</string>
 		<string name="sel_part_backup">Yedeklenecek Bölümleri Seç:</string>
 		<string name="storage">Depolama:</string>
-		<string name="enc_disabled">devre dışı - etkinleştirmek için bir şifre ayarlayın</string>
+		<string name="enc_disabled">devre dışı - etkinleştirmek için bir parola belirleyin</string>
 		<string name="enc_enabled">etkin</string>
 		<string name="enable_backup_comp_chk">Sıkıştırmayı etkinleştir</string>
 		<string name="skip_digest_backup_chk" version="2">Yedekleme sırasında Digest oluşturmayı geç</string>
@@ -228,9 +228,9 @@
 		<string name="append_date_btn">Tarih Ekle</string>
 		<string name="backup_name_exists">Bu adda bir yedek zaten var!</string>
 		<string name="encrypt_backup">Yedeklemeniz şifrelensin mi?</string>
-		<string name="enter_pass">Şifre Gir:</string>
-		<string name="enter_pass2">Şifreyi Tekrar Girin:</string>
-		<string name="pass_not_match">Şifreler eşleşmiyor!</string>
+		<string name="enter_pass">Parolayı Yazın:</string>
+		<string name="enter_pass2">Parolayı Tekrar Yazın:</string>
+		<string name="pass_not_match">Parolalar eşleşmiyor!</string>
 		<string name="partitions">Bölümler:</string>
 		<string name="disabled">Devre dışı</string>
 		<string name="enabled">Etkin</string>
@@ -242,7 +242,7 @@
 		<string name="restore_sel_store_hdr">%tw_storage_display_name% içinden yedek seç (%tw_storage_free_size% MB)</string>
 		<string name="restore_sel_pack_fs">Geri Yüklenecek Paketi Seçin:</string>
 		<string name="restore_enc_backup_hdr">Şifreli Yedek</string>
-		<string name="restore_dec_fail">Şifre yanlış, lütfen tekrar deneyin!</string>
+		<string name="restore_dec_fail">Parola yanlış, lütfen tekrar deneyin!</string>
 		<string name="del_backup_btn">Yedeği Sil</string>
 		<string name="del_backup_confirm">Yedek Silinsin mi?</string>
 		<string name="del_backup_confirm2">Bu işlem geri alınamaz!</string>
@@ -268,14 +268,14 @@
 		<string name="confirm_hdr">Onayla</string>
 		<string name="mount_hdr">Bağla</string>
 		<string name="mount_sel_part">Bağlanacak Bölümleri Seç:</string>
-		<string name="mount_sys_ro_chk">Sistem bölümünü salt okunur bağla</string>
-		<string name="mount_sys_ro_s_chk">Sistemi RO Bağla</string>
+		<string name="mount_sys_ro_chk">Sistem bölümünü salt okunur olarak bağla</string>
+		<string name="mount_sys_ro_s_chk">Sistemi Salt Okunur Olarak Bağla</string>
 		<string name="decrypt_data_btn">Veri Şifresini Çöz</string>
 		<string name="disable_mtp_btn">MTP'yi Devre Dışı Bırak</string>
 		<string name="enable_mtp_btn">MTP'yi Etkinleştir</string>
-		<string name="mount_usb_storage_btn">USB Depolamayı Bağla</string>
-		<string name="usb_storage_hdr">USB Depolama</string>
-		<string name="usb_stor_mnt1">USB Depolama Bağlandı</string>
+		<string name="mount_usb_storage_btn">USB Depolamasını Bağla</string>
+		<string name="usb_storage_hdr">USB Depolaması</string>
+		<string name="usb_stor_mnt1">USB Depolaması Bağlandı</string>
 		<string name="usb_stor_mnt2">Çıkarmadan önce cihazınızı bilgisayarınızdan</string>
 		<string name="usb_stor_mnt3">güvenle çıkardığınızdan emin olun!</string>
 		<string name="unmount_btn">Çıkar</string>
@@ -292,12 +292,12 @@
 		<string name="sys_ro_keep">Sistem bölümü salt okunur kalsın mı?</string>
 		<string name="sys_rop1">TWRP resmi güncellemeleri almanızı kolaylaştırmak</string>
 		<string name="sys_rop2">için sistem bölümünüzü değiştirmeyebilir.</string>
-		<string name="sys_rop3">TWRP stock ROM'un kendisini değiştirmesini</string>
+		<string name="sys_rop3">TWRP, stok ROM'un TWRP'yi değiştirmesini</string>
 		<string name="sys_rop4">engelleyemeyecek ve cihazınızı rootlamanızı istemeyecek.</string>
 		<string name="sys_rop5">Zip yüklemek veya adb işlemleri gerçekleştirmek</string>
 		<string name="sys_rop6">sistem bölümünü değiştirebilir.</string>
 		<string name="sys_rol1">TWRP resmi güncellemeleri almanızı kolaylaştırmak için sistem bölümünüzü değiştirmeyebilir.</string>
-		<string name="sys_rol2">TWRP stock ROM'un kendisini değiştirmesini engelleyemeyecek ve cihazınızı rootlamanızı istemeyecek.</string>
+		<string name="sys_rol2">TWRP, stok ROM'un TWRP'yi değiştirmesini engelleyemeyecek ve cihazınızı rootlamanızı istemeyecek.</string>
 		<string name="sys_rol3">Zip yüklemek veya adb işlemleri gerçekleştirmek sistem bölümünü değiştirebilir.</string>
 		<string name="sys_ro_never_show_chk">Bu ekranı açılış sırasında tekrar gösterme</string>
 		<string name="sys_ro_keep_ro_btn">Salt Okunur Bırak</string>
@@ -647,7 +647,7 @@
 		<string name="dumlock_restore">Boot geri yükleniyor...</string>
 		<string name="dumlock_reflash">Boot için recovery yeniden flashlanıyor...</string>
 		<string name="run_script">{1} komut dosyası çalıştırılıyor...</string>
-		<string name="rename_stock">Stok ROM'un TWRP'yi değiştirmesini önlemek için /systemde stok kurtarma dosyası yeniden adlandırıldı.</string>
+		<string name="rename_stock">Stok ROM'un TWRP'yi değiştirmesini önlemek için /system'deki stok kurtarma dosyası yeniden adlandırıldı.</string>
 		<string name="split_backup">Yedek dosyayı birden fazla arşiv haline getirme...</string>
 		<string name="backup_error">Yedekleme hatası oluştu.</string>
 		<string name="restore_error">Geri yükleme işlemi sırasında hata oluştu.</string>
@@ -655,15 +655,15 @@
 		<!-- These 2 items are saved in the data manager instead of resource manager, so %llu, etc is correct instead of {1} -->
 		<string name="file_progress">%llu / %llu dosya, %i%%</string>
 		<string name="size_progress">%lluMB / %lluMB, %i%%</string>
-		<string name="decrypt_cmd">Komut satırıyla veri bölümünün şifresi çözmeye çalışılıyor.</string>
+		<string name="decrypt_cmd">Komut satırıyla veri bölümünün şifresi çözülmeye çalışılıyor.</string>
 		<string name="base_pkg_err">Temel paketler yüklenemedi.</string>
 		<string name="simulating">Eylemler taklit ediliyor...</string>
 		<string name="backup_cancel">Yedekleme İptal Edildi</string>
 		<string name="config_twrp">TWRP'yi yapılandırma...</string>
 		<string name="config_twrp_err">Bu kernel ile TWRP yapılandırılamadı.</string>
 		<string name="copy_log">Recovery kaydı şuraya kopyalandı: {1}.</string>
-		<string name="max_queue">Maksimum zip kuyruğuna ulaşıldı!</string>
-		<string name="min_queue">Minimum zip kuyruğuna ulaşıldı!</string>
+		<string name="max_queue">Azami zip kuyruğuna ulaşıldı!</string>
+		<string name="min_queue">Asgari zip kuyruğuna ulaşıldı!</string>
 		<string name="screenshot_saved">Ekran görüntüsü şuraya kaydedildi: {1}</string>
 		<string name="screenshot_err">Ekran görüntüsü alınamadı!</string>
 		<string name="zip_wipe_cache">Bir veya daha fazla zip, bir önbellek silme isteğinde bulundu - Şimdi önbellek siliniyor.</string>
@@ -678,7 +678,7 @@
 		<string name="change_fs_err">Dosya sistemi değiştirilemiyor.</string>
 		<string name="theme_ver_err">Özel tema sürümü TWRP sürümü ile eşleşmiyor. Stok tema kullanılıyor.</string>
 		<string name="up_a_level">(Üst Dizin)</string>
-		<string name="install_reboot" version="2">%tw_sleep% saniye içinde yeniden başlatılıyor</string>
+		<string name="install_reboot" version="2">%tw_sleep% saniye içinde yeniden başlatılacak</string>
 		<string name="adbbackup_error">ADB Yedekleme Hatası. Çıkılıyor..."</string>
 		<string name="adbbackup_control_error">Adb kontrol kanalına yazılamıyor</string>
 		<string name="twrp_adbbu_option">--twrp adb yedeklemeyi etkinleştirmek için twrp seçeneği gerekiyor</string>
