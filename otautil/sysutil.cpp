@@ -219,14 +219,18 @@ MemMapping::~MemMapping() {
   ranges_.clear();
 }
 
-bool Reboot(std::string_view target) {
+void Reboot(std::string_view target) {
   std::string cmd = "reboot," + std::string(target);
   // Honor the quiescent mode if applicable.
   if (target != "bootloader" && target != "fastboot" &&
       android::base::GetBoolProperty("ro.boot.quiescent", false)) {
     cmd += ",quiescent";
   }
-  return android::base::SetProperty(ANDROID_RB_PROPERTY, cmd);
+  if (!android::base::SetProperty(ANDROID_RB_PROPERTY, cmd)) {
+    LOG(FATAL) << "Reboot failed";
+  }
+
+  while (true) pause();
 }
 
 bool Shutdown(std::string_view target) {
