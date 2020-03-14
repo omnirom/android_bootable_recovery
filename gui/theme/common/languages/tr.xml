@@ -98,16 +98,19 @@
 		<string name="successful">Başarılı</string>
 		<string name="install_failed">Yükleme Başarısız</string>
 		<string name="install_successful">Yükleme Başarılı</string>
-		<string name="wipe_cache_dalvik_btn">Cache/dalvik temizle</string>
+		<string name="wipe_cache_dalvik_btn">Önbellek/Dalvik Temizle</string>
+		<string name="wipe_dalvik_btn">Dalvik Temizle</string>
 		<string name="reboot_system_btn">Sistemi Yeniden Başlat</string>
 		<string name="install_sel_target">Hedef Bölümü Seç</string>
-		<string name="flash_image_select">İmajı Flashlamak için Bölüm Seç:</string>
+		<string name="flash_image_select">İmajı Flashlamak için Bölüm Seçin:</string>
 		<string name="target_partition">Hedef Bölüm:</string>
 		<string name="flashing_image">İmaj Flashlanıyor...</string>
 		<string name="image_flashed">İmaj Flashlandı</string>
 		<string name="wipe_cache_dalvik_confirm">Önbellek ve Dalvik temizlensin mi?</string>
+		<string name="wipe_dalvik_confirm">Dalvik temizlensin mi?</string>
 		<string name="wiping_cache_dalvik">Önbellek ve Dalvik temizleniyor...</string>
 		<string name="wipe_cache_dalvik_complete">Önbellek ve Dalvik temizliği tamamlandı</string>
+		<string name="wipe_dalvik_complete">Dalvik Temizliği Tamamlandı</string>
 		<string name="swipe_wipe">Temizlemek için Kaydır</string>
 		<string name="swipe_wipe_s">   Temizle</string>
 		<string name="no_os1">İşletim Sistemi yüklü değil!</string>
@@ -119,9 +122,13 @@
 		<string name="reboot_install_app_hdr">TWRP Uygulaması yüklensin mi?</string>
 		<string name="reboot_install_app1">Resmi TWRP Uygulamasını yüklemek ister misiniz?</string>
 		<string name="reboot_install_app2">Uygulama, yeni TWRP sürümlerini kontrol edebilir.</string>
-		<string name="reboot_install_app_prompt_install">Yüklü değilse, TWRP uygulamasını yüklemek için sor</string>
+		<string name="reboot_install_app_prompt_install">Yüklü değilse TWRP uygulamasını yüklemeyi sor</string>
 		<string name="reboot_install_app_system">Sistem Uygulaması olarak yükle</string>
 		<string name="reboot_installing_app">Uygulama yükleniyor...</string>
+		<string name="uninstall_twrp_system_app">TWRP Uygulamasını Sistemden kaldır</string>
+		<string name="uninstall_twrp_system_app_confirm">TWRP Uygulaması Sistemden kaldırılsın mı?</string>
+		<string name="uninstalling_twrp_system_app">TWRP Uygulaması Sistemden kaldırılıyor...</string>
+		<string name="uninstall_twrp_system_app_complete">TWRP Uygulamasını Sistemden Kaldırma Tamamlandı</string>
 		<string name="swipe_to_install_app">TWRP Uygulamasını yüklemek için kaydır</string>
 		<string name="swipe_flash">Flashlamayı onaylamak için kaydır</string>
 		<string name="confirm_action">Eylemi Onayla</string>
@@ -130,7 +137,7 @@
 		<string name="wipe_hdr">Temizle</string>
 		<string name="factory_reset_hdr">Sıfırla</string>
 		<string name="factory_reset_btn">Sıfırla</string>
-		<string name="factory_reset1">Veriyi, Önbelleği, ve Dalvik'i temizler</string>
+		<string name="factory_reset1">Veriyi, Önbelleği ve Dalvik'i temizler</string>
 		<string name="factory_reset2">(dahili depolama hariç)</string>
 		<string name="factory_reset3">Çoğu zaman ihtiyacınız olan</string>
 		<string name="factory_reset4">tek temizlik budur.</string>
@@ -151,10 +158,10 @@
 		<string name="format_data_hdr">Veriyi Biçimlendir</string>
 		<string name="format_data_btn">Veriyi Biçimlendir</string>
 		<string name="format_data_ptr1">Veriyi biçimlendirmek tüm uygulamalarınızı,</string>
-		<string name="format_data_ptr2">yedeklerinizi, resimlerinizi, videolarınızı, medyanızı, temizleyecek ve</string>
+		<string name="format_data_ptr2">yedeklerinizi, resimlerinizi, videolarınızı, medyanızı temizleyecek ve</string>
 		<string name="format_data_ptr3">dahili depolama üzerindeki şifrelemeyi kaldıracak.</string>
 		<string name="format_data_adopted">Kabul Edilen Depolama Dahil</string>
-		<string name="format_data_lcp1">Veriyi biçimlendirmek tüm uygulamalarınızı, yedeklerinizi, resimlerinizi, videolarınızı, medyanızı, temizleyecek ve</string>
+		<string name="format_data_lcp1">Veriyi biçimlendirmek tüm uygulamalarınızı, yedeklerinizi, resimlerinizi, videolarınızı, medyanızı temizleyecek ve</string>
 		<string name="format_data_lcp2">dahili depolama üzerindeki şifrelemeyi kaldıracak.</string>
 		<string name="format_data_wtc1">Veriyi biçimlendirmek tüm uygulamalarınızı,</string>
 		<string name="format_data_wtc2">yedeklerinizi ve medyanızı temizleyecek. Bu işlem geri alınamaz.</string>
@@ -211,13 +218,13 @@
 		<string name="encryption_tab">ŞİFRELEME</string>
 		<string name="encryption">Şifreleme:</string>
 		<string name="name">Ad:</string>
-		<string name="sel_part_backup">Yedeklenecek Bölümleri Seç:</string>
+		<string name="sel_part_backup">Yedeklenecek Bölümleri Seçin:</string>
 		<string name="storage">Depolama:</string>
 		<string name="enc_disabled">devre dışı - etkinleştirmek için bir şifre ayarlayın</string>
 		<string name="enc_enabled">etkin</string>
 		<string name="enable_backup_comp_chk">Sıkıştırmayı etkinleştir</string>
 		<string name="skip_digest_backup_chk" version="2">Yedekleme sırasında Digest oluşturmayı geç</string>
-		<string name="disable_backup_space_chk" version="2">Yedeklemeden önce boş alan denetimini devre dışı bırak</string>
+		<string name="disable_backup_space_chk" version="2">Yedeklemeden önce boş alan kontrolünü devre dışı bırak</string>
 		<string name="current_boot_slot">Geçerli Yuva: %tw_active_slot%</string>
 		<string name="boot_slot_a">A Yuvası</string>
 		<string name="boot_slot_b">B Yuvası</string>
@@ -228,7 +235,7 @@
 		<string name="append_date_btn">Tarih Ekle</string>
 		<string name="backup_name_exists">Bu adda bir yedek zaten var!</string>
 		<string name="encrypt_backup">Yedeklemeniz şifrelensin mi?</string>
-		<string name="enter_pass">Şifre Gir:</string>
+		<string name="enter_pass">Şifreyi Girin:</string>
 		<string name="enter_pass2">Şifreyi Tekrar Girin:</string>
 		<string name="pass_not_match">Şifreler eşleşmiyor!</string>
 		<string name="partitions">Bölümler:</string>
@@ -253,7 +260,7 @@
 		<string name="restore_try_decrypt">Şifreli Yedek - Çözülmeye Çalışılıyor</string>
 		<string name="restore_try_decrypt_s">Çözülmeye Çalışılıyor</string>
 		<string name="restore_backup_date">Yedek tarihi: %tw_restore_file_date%</string>
-		<string name="restore_sel_part">Geri Yüklenecek Bölümleri Seç:</string>
+		<string name="restore_sel_part">Geri Yüklenecek Bölümleri Seçin:</string>
 		<string name="restore_enable_digest_chk" version="2">Yedek Dosyalarının Digest Doğrulamasını etkinleştir</string>
 		<string name="restore_complete">Geri Yükleme Tamamlandı</string>
 		<string name="swipe_restore">Geri Yüklemek için Kaydır</string>
@@ -267,7 +274,7 @@
 		<string name="swipe_rename">   Yeniden Adlandır</string>
 		<string name="confirm_hdr">Onayla</string>
 		<string name="mount_hdr">Bağla</string>
-		<string name="mount_sel_part">Bağlanacak Bölümleri Seç:</string>
+		<string name="mount_sel_part">Bağlanacak Bölümleri Seçin:</string>
 		<string name="mount_sys_ro_chk">Sistem bölümünü salt okunur bağla</string>
 		<string name="mount_sys_ro_s_chk">Sistemi RO Bağla</string>
 		<string name="decrypt_data_btn">Veri Şifresini Çöz</string>
@@ -319,10 +326,11 @@
 		<string name="settings_tz_btn">Zaman Dilimi</string>
 		<string name="settings_screen_btn">Ekran</string>
 		<string name="settings_screen_bright_btn">Ekran Parlaklığı</string>
+		<string name="vibration_disabled">Bu cihaz için titreşim devre dışı</string>
 		<string name="settings_vibration_btn">Titreşim</string>
 		<string name="settings_language_btn">Dil</string>
 		<string name="time_zone_hdr">Zaman Dilimi</string>
-		<string name="sel_tz_list">Zaman Dilimi Seç:</string>
+		<string name="sel_tz_list">Zaman Dilimi Seçin:</string>
 		<!-- Translator note: if it does not make sense to translate the locations or if it makes more sense,
 				feel free to change the location listed or drop the location entirely and just call it UTC -6 -->
 		<string name="utcm11">(UTC -11) Samoa, Midway Adası</string>
@@ -374,7 +382,7 @@
 		<string name="button_vibration">Düğme Titreşimi:</string>
 		<string name="kb_vibration">Klavye Titreşimi:</string>
 		<string name="act_vibration">Eylem Titreşimi:</string>
-		<string name="select_language">Dil Seç:</string>
+		<string name="select_language">Dil Seçin:</string>
 		<string name="sel_lang_btn">Dil Seç</string>
 		<string name="set_language_btn">Dili Ayarla</string>
 		<string name="advanced_hdr">Gelişmiş</string>
@@ -424,10 +432,10 @@
 		<string name="swipe_to_unlock">Kilidi Açmak için Kaydır</string>
 		<string name="swipe_unlock">   Kilidi Aç</string>
 		<string name="fm_hdr">Dosya Yöneticisi</string>
-		<string name="fm_sel_file">Bir Dosya veya Klasör Seçin</string>
+		<string name="fm_sel_file">Bir Dosya veya Klasör Seç</string>
 		<string name="fm_type_folder">Klasör</string>
 		<string name="fm_type_file">Dosya</string>
-		<string name="fm_choose_act">Eylem Seçin</string>
+		<string name="fm_choose_act">Eylem Seç</string>
 		<string name="fm_selected">%tw_fm_type% seçili:</string>
 		<string name="fm_copy_btn">Kopyala</string>
 		<string name="fm_copy_file_btn">Dosyayı Kopyala</string>
@@ -444,7 +452,7 @@
 		<string name="fm_rename_file_btn">Dosyayı Yeniden Adlandır</string>
 		<string name="fm_rename_folder_btn">Klasörü Yeniden Adlandır</string>
 		<string name="fm_renaming">Yeniden Adlandır</string>
-		<string name="fm_sel_dest">Hedef Klasörü Seçin</string>
+		<string name="fm_sel_dest">Hedef Klasörü Seç</string>
 		<string name="fm_sel_curr_folder">Geçerli Klasörü Seç</string>
 		<string name="fm_rename_hdr">Yeniden Adlandır</string>
 		<string name="fm_set_perms_hdr">İzinleri Ayarla</string>
@@ -481,6 +489,28 @@
 		<string name="install_cancel">Yükleme</string>
 		<string name="sel_storage_list">Depolama Seç</string>
 		<string name="ok_btn">Tamam</string>
+		<string name="install_twrp_ramdisk">Recovery Ramdisk Yükle</string>
+		<string name="install_kernel">Kernel Yükle</string>
+		<string name="repack_kernel_confirm_hdr">Kernel Yükle</string>
+		<string name="repack_ramdisk_confirm_hdr">Recovery Yükle</string>
+		<string name="repack_kernel_confirm">Kernel Yüklensin mi?</string>
+		<string name="repack_ramdisk_confirm">Recovery Yüklensin mi?</string>
+		<string name="repack_backup_first">Önce geçerli imajı yedekle</string>
+		<string name="repack">Yeniden paketle</string>
+		<string name="swipe_to_install">Yüklemek için Kaydır</string>
+		<string name="installing">Yükleniyor...</string>
+		<string name="install_complete">Yükleme Tamamlandı</string>
+		<string name="unpack_error">İmaj açılırken hata oluştu.</string>
+		<string name="repack_error">İmajı yeniden paketleme hatası.</string>
+		<string name="unpacking_image">{1} açılıyor...</string>
+		<string name="repacking_image">{1} yeniden paketleniyor...</string>
+		<string name="repack_image_hdr">İmaj Seç</string>
+		<string name="fix_recovery_loop">Recovery Bootloop'unu Onar</string>
+		<string name="fix_recovery_loop_confirm">Recovery Bootloop'u Onarılsın mı?</string>
+		<string name="fixing_recovery_loop">Recovery Bootloop'u Onarılıyor...</string>
+		<string name="fix_recovery_loop_complete">Recovery Bootloop'unu Onarma Tamamlandı</string>
+		<string name="fixing_recovery_loop_patch">Kernel yamalanıyor...</string>
+		<string name="fix_recovery_loop_patch_error">Kernel yamalama hatası.</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel SELinux içeriklerini okuma desteğine sahip değil.</string>
@@ -510,7 +540,7 @@
 		<string name="backup_folder"> * Yedekleme Klasörü: {1}</string>
 		<string name="fail_backup_folder">Yedekleme klasörü oluşturulamadı.</string>
 		<string name="avg_backup_fs">Dosya sistemleri için ortalama yedekleme hızı: {1} MB/sn</string>
-		<string name="avg_backup_img">Görüntülü sürücüler için ortalama yedekleme hızı: {1} MB/sn</string>
+		<string name="avg_backup_img">İmajlı sürücüler için ortalama yedekleme hızı: {1} MB/sn</string>
 		<string name="total_backed_size">[{1} MB YEDEKLENDİ]</string>
 		<string name="backup_completed">[YEDEKLEME {1} SANİYEDE TAMAMLANDI]</string>
 		<string name="restore_started">[GERİ YÜKLEME BAŞLATILDI]</string>
@@ -518,7 +548,7 @@
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} bitti ({2} saniye)]</string>
 		<string name="verifying_digest" version="2">Digest Doğrulanıyor</string>
-		<string name="skip_digest" version="2">Kullanıcı ayarına göre Digest denetimi geçiliyor.</string>
+		<string name="skip_digest" version="2">Kullanıcı ayarına göre Digest kontrolü geçiliyor.</string>
 		<string name="calc_restore">Geri yükleme ayrıntıları hesaplanıyor...</string>
 		<string name="restore_read_only">{1} geri yüklenemiyor -- salt okunur bağlanmış.</string>
 		<string name="restore_unable_locate">Geri yüklemek için \'{1}\' bölümü bulunamıyor.</string>
@@ -533,9 +563,10 @@
 		<string name="unable_find_part_path">\'{1}\' yolu için bölüm bulunamıyor</string>
 		<string name="update_part_details">Bölüm ayrıntıları güncelleniyor...</string>
 		<string name="update_part_details_done">...bitti</string>
-		<string name="wiping_dalvik">Dalvik Önbelleği Dizinleri Temizleniyor...</string>
+		<string name="wiping_dalvik">Dalvik Dizinleri Temizleniyor...</string>
 		<string name="cleaned">Temizlendi: {1}...</string>
-		<string name="dalvik_done">-- Dalvik Önbelleği Dizinleri Temizleme Tamamlandı!</string>
+		<string name="cache_dalvik_done">-- Dalvik Önbelleği Dizinleri Temizleme Tamamlandı!</string>
+		<string name="dalvik_done">-- Dalvik Dizinleri Temizleme Tamamlandı!</string>
 		<string name="no_andsec">Android secure bölümü yok.</string>
 		<string name="unable_to_locate">{1} bulunamıyor.</string>
 		<string name="wiping_datamedia">Dahili depolama temizleniyor -- /data/media...</string>
@@ -603,7 +634,7 @@
 		<string name="backup_folder_set">Yedekleme klasörü '{1}' olarak ayarlandı</string>
 		<string name="locate_backup_err">'{1}' yedeği bulunamadı</string>
 		<string name="set_restore_opt">Geri yükleme seçeneklerini ayarlama: '{1}':</string>
-		<string name="digest_check_skip" version="2">Digest denetimini atlama açık</string>
+		<string name="digest_check_skip" version="2">Digest kontrolünü atlama açık</string>
 		<string name="ors_encrypt_restore_err">Şifrelenmiş bir yedeklemeyi geri yüklemek için OpenRecoveryScript kullanılamıyor.</string>
 		<string name="mounting">Bağlanıyor</string>
 		<string name="unmounting">Kaldırılıyor</string>
@@ -638,7 +669,7 @@
 		<string name="verify_zip_fail">Zip imzası doğrulama başarısız oldu!</string>
 		<string name="verify_zip_done">Zip imzası başarıyla doğrulandı.</string>
 		<string name="zip_corrupt">Zip dosyası bozuk!</string>
-		<string name="no_digest" version="2">Digest denetimi geçiliyor: Digest dosyası bulunamadı</string>
+		<string name="no_digest" version="2">Digest kontrolü geçiliyor: Digest dosyası bulunamadı</string>
 		<string name="digest_fail" version="2">Digest eşleşmiyor</string>
 		<string name="digest_match" version="2">Digest eşleşti</string>
 		<string name="pid_signal">{1} process ended with signal: {2}</string>
