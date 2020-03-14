@@ -783,13 +783,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
           ui->Print("Retry attempt %d\n", retry_count);
 
           // Reboot back into recovery to retry the update.
-          if (!Reboot("recovery")) {
-            ui->Print("Reboot failed\n");
-          } else {
-            while (true) {
-              pause();
-            }
-          }
+          Reboot("recovery");
         }
         // If this is an eng or userdebug build, then automatically
         // turn the text display on if the script fails so the error

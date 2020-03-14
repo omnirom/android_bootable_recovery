@@ -103,7 +103,7 @@ class MemMapping {
 
 // Reboots the device into the specified target, by additionally handling quiescent reboot mode.
 // All unknown targets reboot into Android.
-bool Reboot(std::string_view target);
+[[noreturn]] void Reboot(std::string_view target);
 
 // Triggers a shutdown.
 bool Shutdown(std::string_view target);
