@@ -43,10 +43,62 @@ std::string UpdaterRuntime::FindBlockDeviceName(const std::string_view name) con
   return std::string(name);
 }
 
+static struct {
+  const char* name;
+  unsigned flag;
+} mount_flags_list[] = {
+  { "noatime", MS_NOATIME },
+  { "noexec", MS_NOEXEC },
+  { "nosuid", MS_NOSUID },
+  { "nodev", MS_NODEV },
+  { "nodiratime", MS_NODIRATIME },
+  { "ro", MS_RDONLY },
+  { "rw", 0 },
+  { "remount", MS_REMOUNT },
+  { "bind", MS_BIND },
+  { "rec", MS_REC },
+  { "unbindable", MS_UNBINDABLE },
+  { "private", MS_PRIVATE },
+  { "slave", MS_SLAVE },
+  { "shared", MS_SHARED },
+  { "defaults", 0 },
+  { 0, 0 },
+};
+
+static bool setMountFlag(const std::string& flag, unsigned* mount_flags) {
+  for (const auto& [name, value] : mount_flags_list) {
+    if (flag == name) {
+      *mount_flags |= value;
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool parseMountFlags(const std::string& flags, unsigned* mount_flags,
+                            std::string* fs_options) {
+  bool is_flag_set = false;
+  std::vector<std::string> flag_list;
+  for (const auto& flag : android::base::Split(flags, ",")) {
+    if (!setMountFlag(flag, mount_flags)) {
+      // Unknown flag, so it must be a filesystem specific option.
+      flag_list.push_back(flag);
+    } else {
+      is_flag_set = true;
+    }
+  }
+  *fs_options = android::base::Join(flag_list, ',');
+  return is_flag_set;
+}
+
 int UpdaterRuntime::Mount(const std::string_view location, const std::string_view mount_point,
                           const std::string_view fs_type, const std::string_view mount_options) {
   std::string mount_point_string(mount_point);
+  std::string mount_options_string(mount_options);
   char* secontext = nullptr;
+  unsigned mount_flags = 0;
+  std::string fs_options;
+
   if (sehandle_) {
     selabel_lookup(sehandle_, &secontext, mount_point_string.c_str(), 0755);
     setfscreatecon(secontext);
@@ -59,9 +111,13 @@ int UpdaterRuntime::Mount(const std::string_view location, const std::string_vie
     setfscreatecon(nullptr);
   }
 
+  if (!parseMountFlags(mount_options_string, &mount_flags, &fs_options)) {
+    // Fall back to default
+    mount_flags = MS_NOATIME | MS_NODEV | MS_NODIRATIME;
+  }
+
   return mount(std::string(location).c_str(), mount_point_string.c_str(),
-               std::string(fs_type).c_str(), MS_NOATIME | MS_NODEV | MS_NODIRATIME,
-               std::string(mount_options).c_str());
+               std::string(fs_type).c_str(), mount_flags, fs_options.c_str());
 }
 
 bool UpdaterRuntime::IsMounted(const std::string_view mount_point) const {
