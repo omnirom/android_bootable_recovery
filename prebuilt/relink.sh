@@ -1,9 +1,14 @@
-#!/bin/bash -x
+#!/bin/bash
 
 process_file()
 {
     dst=$1/$(basename $2)
     src=$2
+
+    if [ ! -e $src ]; then
+      return
+    fi
+
     if [ $dst == $src ]; then
       cp -f -p $src $src.tmp
       src=$2.tmp
