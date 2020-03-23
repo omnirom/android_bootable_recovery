@@ -52,10 +52,12 @@
 #include <sys/types.h>
 #include <fstream>
 
-#include <ext4_utils/ext4_crypt.h>
+#include "ext4_crypt.h"
 
 #ifdef USE_KEYSTORAGE_4
-#include <android/security/IKeystoreService.h>
+#include <android/hardware/confirmationui/1.0/types.h>
+#include <android/security/BnConfirmationPromptCallback.h>
+#include <android/security/keystore/IKeystoreService.h>
 #else
 #include <keystore/IKeystoreService.h>
 #include <keystore/authorization_set.h>
@@ -81,6 +83,10 @@ extern "C" {
 #include "HashPassword.h"
 
 #include <android-base/file.h>
+
+#ifdef USE_KEYSTORAGE_4
+using android::security::keystore::IKeystoreService;
+#endif
 
 // Store main DE raw ref / policy
 extern std::string de_raw_ref;
@@ -551,7 +557,7 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 	// First get the keystore service
     sp<IBinder> binder = getKeystoreBinderRetry();
 #ifdef USE_KEYSTORAGE_4
-	sp<security::IKeystoreService> service = interface_cast<security::IKeystoreService>(binder);
+	sp<IKeystoreService> service = interface_cast<IKeystoreService>(binder);
 #else
 	sp<IKeystoreService> service = interface_cast<IKeystoreService>(binder);
 #endif

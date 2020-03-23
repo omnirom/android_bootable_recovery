@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 bigbiff/Dees_Troy TeamWin
+ * Copyright (C) TeamWin
  * This file is part of TWRP/TeamWin Recovery Project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,8 @@
 #include "minzip/SysUtil.h"
 #else
 #include <ziparchive/zip_archive.h>
-#include "otautil/ZipUtil.h"
-#include "otautil/SysUtil.h"
+#include "ZipUtil.h"
+#include "otautil/sysutil.h"
 #endif
 
 ZipWrap::ZipWrap() {

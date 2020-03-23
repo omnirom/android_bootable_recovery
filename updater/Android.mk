@@ -57,40 +57,6 @@ updater_common_static_libraries := \
     libtune2fs \
     $(tune2fs_static_libraries)
 
-<<<<<<< HEAD
-# libupdater (static library)
-# ===============================
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libupdater
-
-LOCAL_SRC_FILES := \
-    install.cpp \
-    blockimg.cpp
-
-LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/.. \
-    $(LOCAL_PATH)/include \
-    external/e2fsprogs/misc
-
-LOCAL_CFLAGS := \
-    -Wall \
-    -Werror
-
-ifeq ($(BOARD_SUPPRESS_EMMC_WIPE),true)
-    LOCAL_CFLAGS += -DSUPPRESS_EMMC_WIPE
-endif
-
-LOCAL_EXPORT_C_INCLUDE_DIRS := \
-    $(LOCAL_PATH)/include
-
-LOCAL_STATIC_LIBRARIES := \
-    $(updater_common_static_libraries)
-
-include $(BUILD_STATIC_LIBRARY)
-
-=======
->>>>>>> android-10.0.0_r25
 # updater (static executable)
 # ===============================
 include $(CLEAR_VARS)

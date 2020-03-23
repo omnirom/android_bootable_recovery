@@ -22,11 +22,6 @@
 
 #include <android-base/file.h>
 #include <gtest/gtest.h>
-<<<<<<< HEAD
-#include <otautil/SysUtil.h>
-#include <otautil/ZipUtil.h>
-=======
->>>>>>> android-10.0.0_r25
 #include <ziparchive/zip_archive.h>
 
 #include "common/test_constants.h"

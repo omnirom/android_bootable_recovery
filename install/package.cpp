@@ -32,11 +32,10 @@
 class MemoryPackage : public Package {
  public:
   // Constructs the class from a file. We will memory maps the file later.
-  MemoryPackage(const std::string& path, std::unique_ptr<MemMapping> map,
-                const std::function<void(float)>& set_progress);
+  MemoryPackage(const std::string& path, std::unique_ptr<MemMapping> map);
 
   // Constructs the class from the package bytes in |content|.
-  MemoryPackage(std::vector<uint8_t> content, const std::function<void(float)>& set_progress);
+  MemoryPackage(std::vector<uint8_t> content);
 
   ~MemoryPackage() override;
 
@@ -102,14 +101,14 @@ class FilePackage : public Package {
 };
 
 std::unique_ptr<Package> Package::CreateMemoryPackage(
-    const std::string& path, const std::function<void(float)>& set_progress) {
+    const std::string& path) {
   std::unique_ptr<MemMapping> mmap = std::make_unique<MemMapping>();
   if (!mmap->MapFile(path)) {
     LOG(ERROR) << "failed to map file";
     return nullptr;
   }
 
-  return std::make_unique<MemoryPackage>(path, std::move(mmap), set_progress);
+  return std::make_unique<MemoryPackage>(path, std::move(mmap));
 }
 
 std::unique_ptr<Package> Package::CreateFilePackage(
@@ -130,25 +129,21 @@ std::unique_ptr<Package> Package::CreateFilePackage(
 }
 
 std::unique_ptr<Package> Package::CreateMemoryPackage(
-    std::vector<uint8_t> content, const std::function<void(float)>& set_progress) {
-  return std::make_unique<MemoryPackage>(std::move(content), set_progress);
+    std::vector<uint8_t> content) {
+  return std::make_unique<MemoryPackage>(std::move(content));
 }
 
-MemoryPackage::MemoryPackage(const std::string& path, std::unique_ptr<MemMapping> map,
-                             const std::function<void(float)>& set_progress)
+MemoryPackage::MemoryPackage(const std::string& path, std::unique_ptr<MemMapping> map)
     : map_(std::move(map)), path_(path), zip_handle_(nullptr) {
   addr_ = map_->addr;
   package_size_ = map_->length;
-  set_progress_ = set_progress;
 }
 
-MemoryPackage::MemoryPackage(std::vector<uint8_t> content,
-                             const std::function<void(float)>& set_progress)
+MemoryPackage::MemoryPackage(std::vector<uint8_t> content)
     : package_content_(std::move(content)), zip_handle_(nullptr) {
   CHECK(!package_content_.empty());
   addr_ = package_content_.data();
   package_size_ = package_content_.size();
-  set_progress_ = set_progress;
 }
 
 MemoryPackage::~MemoryPackage() {

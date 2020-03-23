@@ -22,9 +22,9 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include "ui.h"
 // Forward declaration to avoid including "ui.h".
-class RecoveryUI;
+// class RecoveryUI;
 
 class Device {
  public:

@@ -16,17 +16,7 @@
 
 #pragma once
 
-<<<<<<< HEAD:adb_install.h
-#include <sys/types.h>
-
-//class RecoveryUI;
-
-//static void set_usb_driver(bool enabled);
-//static void maybe_restart_adbd();
-int apply_from_adb(const char* install_file, pid_t* child_pid);
-=======
 #include "recovery_ui/device.h"
 #include "recovery_ui/ui.h"
->>>>>>> android-10.0.0_r25:install/include/install/fuse_sdcard_install.h
 
 int ApplyFromSdcard(Device* device, RecoveryUI* ui);

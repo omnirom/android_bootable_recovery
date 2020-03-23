@@ -164,7 +164,9 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
     # Special rules for 9.0
     OUR_TOOLS += getevent
     LOCAL_C_INCLUDES += $(TWRP_TOOLBOX_PATH)
-    LOCAL_WHOLE_STATIC_LIBRARIES += libtoolbox_dd
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
+        LOCAL_WHOLE_STATIC_LIBRARIES += libtoolbox_dd
+    endif
 
     ifneq ($(TW_USE_TOOLBOX), true)
         OUR_TOOLS += newfs_msdos
@@ -286,7 +288,7 @@ endif
 TOOLS_H := $(intermediates)/tools.h
 $(TOOLS_H): PRIVATE_TOOLS := $(ALL_TOOLS)
 $(TOOLS_H): PRIVATE_CUSTOM_TOOL = echo "/* file generated automatically */" > $@ ; for t in $(PRIVATE_TOOLS) ; do echo "TOOL($$t)" >> $@ ; done
-$(TOOLS_H):
+$(TOOLS_H): 
 	$(transform-generated-source)
 
 # toolbox setenforce is used during init in non-symlink form, so it was

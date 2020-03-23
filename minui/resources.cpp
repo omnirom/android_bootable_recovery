@@ -33,12 +33,7 @@
 #include <string>
 #include <vector>
 
-<<<<<<< HEAD
-//#include <android-base/stringprintf.h> // does not exist in 6.0
-//#include <android-base/strings.h> // does not exist in 6.0
-=======
 #include <android-base/strings.h>
->>>>>>> android-10.0.0_r25
 #include <png.h>
 
 #include "minui/minui.h"
@@ -68,13 +63,6 @@ std::unique_ptr<GRSurface> GRSurface::Clone() const {
   return result;
 }
 
-<<<<<<< HEAD
-PngHandler::PngHandler(const std::string& name) : error_code_(0), png_fp_(nullptr, fclose) {
-  char res_path[PATH_MAX];
-  sprintf(res_path, "/res/images/%s.png", name.c_str());
-  //std::string res_path = sprintf("/res/images/%s.png", name.c_str());
-  png_fp_.reset(fopen(res_path, "rbe"));
-=======
 PngHandler::PngHandler(const std::string& name) {
   std::string res_path = g_resource_dir + "/" + name + ".png";
   png_fp_.reset(fopen(res_path.c_str(), "rbe"));
@@ -82,7 +70,6 @@ PngHandler::PngHandler(const std::string& name) {
   if (!png_fp_) {
     png_fp_.reset(fopen(name.c_str(), "rbe"));
   }
->>>>>>> android-10.0.0_r25
   if (!png_fp_) {
     error_code_ = -1;
     return;

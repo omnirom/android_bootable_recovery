@@ -40,8 +40,9 @@
 #include "../twrp-functions.hpp"
 #include "../openrecoveryscript.hpp"
 
-#include "../adb_install.h"
-#include "../fuse_sideload.h"
+#include "install/adb_install.h"
+
+#include "fuse_sideload.h"
 #include "blanktimer.hpp"
 #include "../twinstall.h"
 
@@ -49,14 +50,14 @@ extern "C" {
 #include "../twcommon.h"
 #include "../variables.h"
 #include "cutils/properties.h"
-#include "../adb_install.h"
+#include "install/adb_install.h"
 };
-#include "../set_metadata.h"
+#include "set_metadata.h"
 #include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
-#include "../tw_atomic.hpp"
+#include "tw_atomic.hpp"
 
 GUIAction::mapFunc GUIAction::mf;
 std::set<string> GUIAction::setActionsRunningInCallerThread;
@@ -1533,7 +1534,9 @@ int GUIAction::adbsideload(std::string arg __unused)
 		bool mtp_was_enabled = TWFunc::Toggle_MTP(false);
 
 		// wait for the adb connection
-		int ret = apply_from_adb("/", &sideload_child_pid);
+		// int ret = apply_from_adb("/", &sideload_child_pid);
+		Device::BuiltinAction reboot_action = Device::REBOOT_BOOTLOADER;
+		int ret = ApplyFromAdb("/", &reboot_action);
 		DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui now that the zip install is going to start
 
 		if (ret != 0) {

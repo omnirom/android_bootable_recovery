@@ -48,11 +48,11 @@ enum class OtaType {
 // successful installation if |should_wipe_cache| is true or an updater command asks to wipe the
 // cache.
 int install_package(const std::string& package, bool should_wipe_cache, bool needs_mount,
-                    int retry_count, RecoveryUI* ui);
+                    int retry_count);
 
 // Verifies the package by ota keys. Returns true if the package is verified successfully,
 // otherwise returns false.
-bool verify_package(Package* package, RecoveryUI* ui);
+bool verify_package(Package* package);
 
 // Reads meta data file of the package; parses each line in the format "key=value"; and writes the
 // result to |metadata|. Return true if succeed, otherwise return false.

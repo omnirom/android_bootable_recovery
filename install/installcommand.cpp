@@ -37,7 +37,7 @@
 #ifdef USE_OLD_VERIFIER
 #include "verifier24/verifier.h"
 #else
-#include "verifier.h"
+#include "install/install.h"
 #endif
 
 #ifdef AB_OTA_UPDATER
@@ -124,23 +124,9 @@ static int check_newer_ab_build(ZipWrap* zip)
 
     property_get("ro.product.device", value, "");
     const std::string& pkg_device = metadata["pre-device"];
-
-    std::vector<std::string> assertResults = android::base::Split(pkg_device, ",");
-
-    bool deviceExists = false;
-
-    for(const std::string& deviceAssert : assertResults)
-    {
-        std::string assertName = android::base::Trim(deviceAssert);
-        if (assertName == value && !assertName.empty()) {
-            deviceExists = true;
-            break;
-        }
-    }
-
-    if (!deviceExists) {
+    if (pkg_device != value || pkg_device.empty()) {
         printf("Package is for product %s but expected %s\n",
-            pkg_device.c_str(), value);
+             pkg_device.c_str(), value);
         return INSTALL_ERROR;
     }
 

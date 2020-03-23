@@ -1,5 +1,5 @@
 /*
-	Copyright 2013 bigbiff/Dees_Troy TeamWin
+    Copyright 2012 to 2020 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -22,6 +22,7 @@ extern "C" {
 #include "../twcommon.h"
 }
 #include "../minuitwrp/minui.h"
+#include "../minuitwrp/truetype.hpp"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
@@ -633,7 +634,7 @@ bool GUIScrollList::AddLines(std::vector<std::string>* origText, std::vector<std
 		if (origColor)
 			curr_color = origColor->at(i);
 		for (;;) {
-			size_t line_char_width = gr_ttf_maxExW(curr_line.c_str(), mFont->GetResource(), mRenderW);
+			size_t line_char_width = twrpTruetype::gr_ttf_maxExW(curr_line.c_str(), mFont->GetResource(), mRenderW);
 			if (line_char_width < curr_line.size()) {
 				//string left = curr_line.substr(0, line_char_width);
 				size_t wrap_pos = curr_line.find_last_of(" ,./:-_;", line_char_width - 1);

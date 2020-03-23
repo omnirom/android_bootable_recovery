@@ -68,13 +68,8 @@ int main(int argc, char** argv) {
   init_transport_registration();
   usb_init();
 
-<<<<<<< HEAD
     //VLOG(ADB) << "Event loop starting";
     fdevent_loop();
-=======
-  VLOG(ADB) << "Event loop starting";
-  fdevent_loop();
->>>>>>> android-10.0.0_r25
 
   return 0;
 }

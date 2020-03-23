@@ -41,14 +41,16 @@
 #ifdef USE_MINZIP
 #include "minzip/SysUtil.h"
 #else
-#include "otautil/SysUtil.h"
+#include "otautil/sysutil.h"
 #include <ziparchive/zip_archive.h>
 #endif
 #include "zipwrap.hpp"
 #ifdef USE_OLD_VERIFIER
 #include "verifier24/verifier.h"
+#elif USE_28_VERIFIER
+#include "verifier28/verifier.h"
 #else
-#include "verifier.h"
+#include "install/verifier.h"
 #endif
 #include "variables.h"
 #include "data.hpp"

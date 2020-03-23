@@ -9,7 +9,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
 		$(commands_recovery_local_path)/openaes/inc
 	LOCAL_CFLAGS:= -g -c -W
 	LOCAL_MODULE:=openaes
-	LOCAL_MODULE_TAGS:= eng
+	LOCAL_MODULE_TAGS:= optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 	LOCAL_SHARED_LIBRARIES = libopenaes libc
@@ -18,7 +18,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
 	# Build shared library
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := libopenaes
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_C_INCLUDES := \
 		$(commands_recovery_local_path)/openaes/src/isaac \
 		$(commands_recovery_local_path)/openaes/inc
@@ -29,7 +29,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
 	# Build static library
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := libopenaes_static
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_C_INCLUDES := \
 		$(commands_recovery_local_path)/openaes/src/isaac \
 		$(commands_recovery_local_path)/openaes/inc

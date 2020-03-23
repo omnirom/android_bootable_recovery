@@ -37,6 +37,7 @@
 #include "graphics.h"
 // For std::min and std::max
 #include <algorithm>
+#include "truetype.hpp"
 
 struct GRFont {
     GRSurface* texture;
@@ -70,25 +71,25 @@ int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width, in
     if (!s || strlen(s) == 0 || !font)
         return 0;
 
-    measured_height = gr_ttf_getMaxFontHeight(font);
+    measured_height = twrpTruetype::gr_ttf_getMaxFontHeight(font);
 
     if (scale) {
-        measured_width = gr_ttf_measureEx(s, vfont);
+        measured_width = twrpTruetype::gr_ttf_measureEx(s, vfont);
         if (measured_width > max_width) {
             // Adjust font size down until the text fits
-            void *new_font = gr_ttf_scaleFont(vfont, max_width, measured_width);
+            void *new_font = twrpTruetype::gr_ttf_scaleFont(vfont, max_width, measured_width);
             if (!new_font) {
                 printf("gr_textEx_scaleW new_font is NULL\n");
                 return 0;
             }
-            measured_width = gr_ttf_measureEx(s, new_font);
+            measured_width = twrpTruetype::gr_ttf_measureEx(s, new_font);
             // These next 2 lines adjust the y point based on the new font's height
-            new_height = gr_ttf_getMaxFontHeight(new_font);
+            new_height = twrpTruetype::gr_ttf_getMaxFontHeight(new_font);
             y_scale = (measured_height - new_height) / 2;
             vfont = new_font;
         }
     } else
-        measured_width = gr_ttf_measureEx(s, vfont);
+        measured_width = twrpTruetype::gr_ttf_measureEx(s, vfont);
 
     int x_adj = measured_width;
     if (measured_width > max_width)
@@ -107,7 +108,7 @@ int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width, in
         else if (placement == BOTTOM_LEFT || placement == BOTTOM_RIGHT)
             y -= measured_height;
     }
-    return gr_ttf_textExWH(gl, x, y + y_scale, s, vfont, measured_width + x, -1, gr_draw);
+    return twrpTruetype::gr_ttf_textExWH(gl, x, y + y_scale, s, vfont, measured_width + x, -1, gr_draw);
 }
 
 void gr_clip(int x, int y, int w, int h)

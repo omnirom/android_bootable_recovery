@@ -1540,11 +1540,6 @@ static int PerformCommandComputeHashTree(CommandParameters& params) {
       return -1;
     }
 
-<<<<<<< HEAD
-#ifndef SUPPRESS_EMMC_WIPE
-      if (ioctl(params.fd, BLKDISCARD, &blocks) == -1) {
-        PLOG(ERROR) << "BLKDISCARD ioctl failed";
-=======
     for (size_t i = begin; i < end; i++) {
       if (!android::base::ReadFully(params.fd, buffer, BLOCKSIZE)) {
         failure_type = errno == EIO ? kEioFailure : kFreadFailure;
@@ -1554,7 +1549,6 @@ static int PerformCommandComputeHashTree(CommandParameters& params) {
 
       if (!builder.Update(reinterpret_cast<unsigned char*>(buffer), BLOCKSIZE)) {
         LOG(ERROR) << "Failed to update hash tree builder";
->>>>>>> android-10.0.0_r25
         return -1;
       }
 #endif

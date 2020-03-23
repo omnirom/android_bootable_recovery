@@ -23,18 +23,8 @@
 
 #include <memory>
 
-<<<<<<< HEAD
-#ifdef BOARD_USE_CUSTOM_RECOVERY_FONT
-#include BOARD_USE_CUSTOM_RECOVERY_FONT
-#else
-#include "font_10x18.h"
-#endif
-
-#ifndef MSM_BSP
-=======
 #include <android-base/properties.h>
 
->>>>>>> android-10.0.0_r25
 #include "graphics_adf.h"
 #endif
 #include "graphics_drm.h"
@@ -222,29 +212,7 @@ static inline uint32_t pixel_blend(uint8_t alpha, uint32_t pix) {
   return (out_r & 0xff) | (out_g & 0xff00) | (out_b & 0xff0000) | (gr_current & 0xff000000);
 }
 
-<<<<<<< HEAD
-// increments pixel pointer right, with current rotation.
-static void incr_x16(uint16_t** p, int row_pixels) {
-  if (rotation % 2) {
-    *p = *p + (rotation == 1 ? 1 : -1) * row_pixels;
-  } else {
-    *p = *p + (rotation ? -1 : 1);
-  }
-}
-
-// increments pixel pointer down, with current rotation.
-static void incr_y16(uint16_t** p, int row_pixels) {
-  if (rotation % 2) {
-    *p = *p + (rotation == 1 ? -1 : 1);
-  } else {
-    *p = *p + (rotation ? -1 : 1) * row_pixels;
-  }
-}
-
-// increments pixel pointer right, with current rotation.
-=======
 // Increments pixel pointer right, with current rotation.
->>>>>>> android-10.0.0_r25
 static void incr_x(uint32_t** p, int row_pixels) {
   if (rotation == GRRotation::LEFT) {
     *p = *p - row_pixels;
@@ -270,31 +238,8 @@ static void incr_y(uint32_t** p, int row_pixels) {
   }
 }
 
-<<<<<<< HEAD
-// returns pixel pointer at given coordinates with rotation adjustment.
-static uint16_t* pixel_at16(GRSurface* surf, int x, int y, int row_pixels) {
-  switch (rotation) {
-    case ROTATION_NONE:
-      return reinterpret_cast<uint16_t*>(surf->data) + y * row_pixels + x;
-    case ROTATION_RIGHT:
-      return reinterpret_cast<uint16_t*>(surf->data) + x * row_pixels + (surf->width - y);
-    case ROTATION_DOWN:
-      return reinterpret_cast<uint16_t*>(surf->data) + (surf->height - 1 - y) * row_pixels +
-             (surf->width - 1 - x);
-    case ROTATION_LEFT:
-      return reinterpret_cast<uint16_t*>(surf->data) + (surf->height - 1 - x) * row_pixels + y;
-    default:
-      printf("invalid rotation %d", rotation);
-  }
-  return nullptr;
-}
-
-// returns pixel pointer at given coordinates with rotation adjustment.
-static uint32_t* pixel_at(GRSurface* surf, int x, int y, int row_pixels) {
-=======
 // Returns pixel pointer at given coordinates with rotation adjustment.
 static uint32_t* PixelAt(GRSurface* surface, int x, int y, int row_pixels) {
->>>>>>> android-10.0.0_r25
   switch (rotation) {
     case GRRotation::NONE:
       return reinterpret_cast<uint32_t*>(surface->data()) + y * row_pixels + x;
@@ -312,29 +257,8 @@ static uint32_t* PixelAt(GRSurface* surface, int x, int y, int row_pixels) {
   return nullptr;
 }
 
-<<<<<<< HEAD
-static void text_blend16(uint8_t* src_p, int src_row_bytes, uint16_t* dst_p, int dst_row_pixels,
-                       int width, int height) {
-  uint8_t alpha_current = static_cast<uint8_t>((alpha_mask & gr_current) >> 24);
-  for (int j = 0; j < height; ++j) {
-    uint8_t* sx = src_p;
-    uint16_t* px = dst_p;
-    for (int i = 0; i < width; ++i, incr_x16(&px, dst_row_pixels)) {
-      uint8_t a = *sx++;
-      if (alpha_current < 255) a = (static_cast<uint32_t>(a) * alpha_current) / 255;
-      *px = pixel_blend16(a, *px);
-    }
-    src_p += src_row_bytes;
-    incr_y16(&dst_p, dst_row_pixels);
-  }
-}
-
-static void text_blend(uint8_t* src_p, int src_row_bytes, uint32_t* dst_p, int dst_row_pixels,
-                       int width, int height) {
-=======
 static void TextBlend(const uint8_t* src_p, int src_row_bytes, uint32_t* dst_p, int dst_row_pixels,
                       int width, int height) {
->>>>>>> android-10.0.0_r25
   uint8_t alpha_current = static_cast<uint8_t>((alpha_mask & gr_current) >> 24);
   for (int j = 0; j < height; ++j) {
     const uint8_t* sx = src_p;
@@ -404,22 +328,6 @@ void gr_text(const GRFont* font, int x, int y, const char* s, bool bold) {
     }
 
     int row_pixels = gr_draw->row_bytes / gr_draw->pixel_bytes;
-<<<<<<< HEAD
-
-    uint8_t* src_p = font->texture->data + ((ch - ' ') * font->char_width) +
-                     (bold ? font->char_height * font->texture->row_bytes : 0);
-    if (gr_draw->pixel_bytes == 2) {
-      uint16_t* dst_p = pixel_at16(gr_draw, x, y, row_pixels);
-      
-      text_blend16(src_p, font->texture->row_bytes, dst_p, row_pixels, font->char_width,
-                   font->char_height);
-    } else { // not indenting AOSP original code
-    uint32_t* dst_p = pixel_at(gr_draw, x, y, row_pixels);
-
-    text_blend(src_p, font->texture->row_bytes, dst_p, row_pixels, font->char_width,
-               font->char_height);
-    }
-=======
     const uint8_t* src_p = font->texture->data() + ((ch - ' ') * font->char_width) +
                            (bold ? font->char_height * font->texture->row_bytes : 0);
     uint32_t* dst_p = PixelAt(gr_draw, x, y, row_pixels);
@@ -427,7 +335,6 @@ void gr_text(const GRFont* font, int x, int y, const char* s, bool bold) {
     TextBlend(src_p, font->texture->row_bytes, dst_p, row_pixels, font->char_width,
               font->char_height);
 
->>>>>>> android-10.0.0_r25
     x += font->char_width;
   }
 }
@@ -447,22 +354,9 @@ void gr_texticon(int x, int y, const GRSurface* icon) {
   if (outside(x, y) || outside(x + icon->width - 1, y + icon->height - 1)) return;
 
   int row_pixels = gr_draw->row_bytes / gr_draw->pixel_bytes;
-<<<<<<< HEAD
-  uint8_t* src_p = icon->data;
-  if (gr_draw->pixel_bytes == 2) {
-	uint16_t* dst_p = pixel_at16(gr_draw, x, y, row_pixels);
-
-    text_blend16(src_p, icon->row_bytes, dst_p, row_pixels, icon->width, icon->height);
-    return;
-  }
-  uint32_t* dst_p = pixel_at(gr_draw, x, y, row_pixels);
-
-  text_blend(src_p, icon->row_bytes, dst_p, row_pixels, icon->width, icon->height);
-=======
   const uint8_t* src_p = icon->data();
   uint32_t* dst_p = PixelAt(gr_draw, x, y, row_pixels);
   TextBlend(src_p, icon->row_bytes, dst_p, row_pixels, icon->width, icon->height);
->>>>>>> android-10.0.0_r25
 }
 
 void gr_convert_rgb_555(unsigned char r, unsigned char g, unsigned char b)
@@ -536,27 +430,7 @@ void gr_fill(int x1, int y1, int x2, int y2) {
   if (outside(x1, y1) || outside(x2 - 1, y2 - 1)) return;
 
   int row_pixels = gr_draw->row_bytes / gr_draw->pixel_bytes;
-<<<<<<< HEAD
-  if (gr_draw->pixel_bytes == 2) {
-	uint16_t* p = pixel_at16(gr_draw, x1, y1, row_pixels);
-    uint8_t alpha = static_cast<uint8_t>(((gr_current & alpha_mask) >> 24));
-    if (alpha > 0) {
-      for (int y = y1; y < y2; ++y) {
-        uint16_t* px = p;
-        for (int x = x1; x < x2; ++x) {
-          *px = pixel_blend16(alpha, *px);
-          incr_x16(&px, row_pixels);
-        }
-        incr_y16(&p, row_pixels);
-      }
-    }
-	return;
-  }
-  { // open brace to maintain separation between uint16_t p and uint32_t p
-  uint32_t* p = pixel_at(gr_draw, x1, y1, row_pixels);
-=======
   uint32_t* p = PixelAt(gr_draw, x1, y1, row_pixels);
->>>>>>> android-10.0.0_r25
   uint8_t alpha = static_cast<uint8_t>(((gr_current & alpha_mask) >> 24));
   if (alpha > 0) {
     for (int y = y1; y < y2; ++y) {
@@ -740,49 +614,10 @@ int gr_init_font(const char* name, GRFont** dest) {
   return 0;
 }
 
-<<<<<<< HEAD
-static void gr_init_font(void) {
-  int res = gr_init_font("font", &gr_font);
-  if (res == 0) {
-    return;
-  }
-
-  printf("failed to read font: res=%d\n", res);
-
-  // fall back to the compiled-in font.
-  gr_font = static_cast<GRFont*>(calloc(1, sizeof(*gr_font)));
-  gr_font->texture = static_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
-  gr_font->texture->width = font.width;
-  gr_font->texture->height = font.height;
-  gr_font->texture->row_bytes = font.width;
-  gr_font->texture->pixel_bytes = 1;
-
-  unsigned char* bits = static_cast<unsigned char*>(malloc(font.width * font.height));
-  gr_font->texture->data = bits;
-
-  unsigned char data;
-  unsigned char* in = font.rundata;
-  while ((data = *in++)) {
-    memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
-    bits += (data & 0x7f);
-  }
-
-  gr_font->char_width = font.char_width;
-  gr_font->char_height = font.char_height;
-}
-#endif // TW_NO_MINUI_CUSTOM_FONTS
-
-=======
->>>>>>> android-10.0.0_r25
 void gr_flip() {
   gr_draw = gr_backend->Flip();
 }
 
-<<<<<<< HEAD
-int gr_init(void)
-{
-  gr_init_font();
-=======
 int gr_init() {
   // pixel_format needs to be set before loading any resources or initializing backends.
   std::string format = android::base::GetProperty("ro.minui.pixel_format", "");
@@ -801,7 +636,6 @@ int gr_init() {
     printf("Failed to init font: %d, continuing graphic backend initialization without font file\n",
            ret);
   }
->>>>>>> android-10.0.0_r25
 
   auto backend = std::unique_ptr<MinuiBackend>{ std::make_unique<MinuiBackendOverlay>() };
   gr_draw = backend->Init();
@@ -812,16 +646,6 @@ int gr_init() {
     }
 #endif
 
-#ifndef MSM_BSP
-    if (!gr_draw) {
-		backend = std::make_unique<MinuiBackendAdf>();
-        gr_draw = backend->Init();
-        if (gr_draw)
-             printf("Using adf graphics.\n");
-    }
-#else
-	printf("Skipping adf graphics because TW_TARGET_USES_QCOM_BSP := true\n");
-#endif
 
     if (!gr_draw) {
         backend = std::make_unique<MinuiBackendDrm>();
@@ -835,13 +659,11 @@ int gr_init() {
         gr_draw = backend->Init();
         if (gr_draw)
             printf("Using fbdev graphics.\n");
-    }
 
   if (!gr_draw) {
     return -1;
   }
 
-  gr_backend = backend.release();
 
   int overscan_percent = android::base::GetIntProperty("ro.minui.overscan_percent", 0);
   overscan_offset_x = gr_draw->width * overscan_percent / 100;

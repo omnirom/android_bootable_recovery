@@ -48,42 +48,6 @@
 #include "services.h"
 #include "sysdeps.h"
 
-<<<<<<< HEAD
-typedef struct stinfo stinfo;
-
-struct stinfo {
-    void (*func)(int fd, void *cookie);
-    int fd;
-    void *cookie;
-};
-
-void service_bootstrap_func(void* x) {
-    stinfo* sti = reinterpret_cast<stinfo*>(x);
-    sti->func(sti->fd, sti->cookie);
-    free(sti);
-}
-
-#if PLATFORM_SDK_VERSION < 26
-static void sideload_host_service(int sfd, void* data) {
-    char* args = reinterpret_cast<char*>(data);
-#else
-static void sideload_host_service(int sfd, const std::string& args) {
-#endif
-    int file_size;
-    int block_size;
-#if PLATFORM_SDK_VERSION < 26
-    if (sscanf(args, "%d:%d", &file_size, &block_size) != 2) {
-        printf("bad sideload-host arguments: %s\n", args);
-#else
-    if (sscanf(args.c_str(), "%d:%d", &file_size, &block_size) != 2) {
-        printf("bad sideload-host arguments: %s\n", args.c_str());
-#endif
-        exit(1);
-    }
-#if PLATFORM_SDK_VERSION < 26
-    free(args);
-#endif
-=======
 static int minadbd_socket = -1;
 static bool rescue_mode = false;
 static std::string sideload_mount_point = FUSE_SIDELOAD_HOST_MOUNTPOINT;
@@ -174,7 +138,6 @@ static MinadbdErrorCode RunAdbFuseSideload(int sfd, const std::string& args,
       return kMinadbdHostSocketIOError;
     }
   }
->>>>>>> android-10.0.0_r25
 
   return kMinadbdSuccess;
 }
@@ -193,44 +156,6 @@ static void RescueInstallHostService(unique_fd sfd, const std::string& args) {
   }
 }
 
-<<<<<<< HEAD
-#if PLATFORM_SDK_VERSION < 26
-static int create_service_thread(void (*func)(int, void *), void *cookie) {
-    int s[2];
-    if (adb_socketpair(s)) {
-        printf("cannot create service socket pair\n");
-        return -1;
-    }
-
-    stinfo* sti = static_cast<stinfo*>(malloc(sizeof(stinfo)));
-    if(sti == 0) fatal("cannot allocate stinfo");
-    sti->func = func;
-    sti->cookie = cookie;
-    sti->fd = s[1];
-
-#if PLATFORM_SDK_VERSION == 23
-    adb_thread_t t;
-    if (adb_thread_create( &t, (adb_thread_func_t)service_bootstrap_func, sti)){
-#else
-    if (!adb_thread_create(service_bootstrap_func, sti)) {
-#endif
-        free(sti);
-        adb_close(s[0]);
-        adb_close(s[1]);
-        printf("cannot create service thread\n");
-        return -1;
-    }
-
-    //VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
-    return s[0];
-}
-#else
-static int create_service_thread(void (*func)(int, const std::string&), const std::string& args) {
-    int s[2];
-    if (adb_socketpair(s)) {
-        printf("cannot create service socket pair\n");
-        return -1;
-=======
 // Answers the query on a given property |prop|, by writing the result to the given |sfd|. The
 // result will be newline-terminated, so nonexistent or nonallowed query will be answered with "\n".
 // If given an empty string, dumps all the supported properties (analogous to `adb shell getprop`)
@@ -255,7 +180,6 @@ static void RescueGetpropHostService(unique_fd sfd, const std::string& prop) {
         continue;
       }
       result += "[" + key + "]: [" + value + "]\n";
->>>>>>> android-10.0.0_r25
     }
   } else if (kGetpropAllowedProps.find(prop) != kGetpropAllowedProps.end()) {
     result = android::base::GetProperty(prop, "") + "\n";
@@ -321,41 +245,14 @@ static void WipeDeviceService(unique_fd fd, const std::string& args) {
     exit(kMinadbdMessageFormatError);
   }
 
-<<<<<<< HEAD
-    //VLOG(SERVICES) << "service thread started, " << s[0] << ":" << s[1];
-    return s[0];
-=======
   std::string response = (status == MinadbdCommandStatus::kSuccess) ? kMinadbdServicesExitSuccess
                                                                     : kMinadbdServicesExitFailure;
   response += std::string(message_size - response.size(), '\0');
   if (!android::base::WriteFully(fd, response.c_str(), response.size())) {
     exit(kMinadbdHostSocketIOError);
   }
->>>>>>> android-10.0.0_r25
 }
-#endif
 
-<<<<<<< HEAD
-#if PLATFORM_SDK_VERSION >= 28
-int service_to_fd(const char* name, atransport* /* transport */) {
-#else
-int service_to_fd(const char* name, const atransport* transport __unused) {
-#endif
-  int ret = -1;
-
-  if (!strncmp(name, "sideload:", 9)) {
-    // this exit status causes recovery to print a special error
-    // message saying to use a newer adb (that supports
-    // sideload-host).
-    exit(3);
-  } else if (!strncmp(name, "sideload-host:", 14)) {
-#if PLATFORM_SDK_VERSION < 26
-    char* arg = strdup(name + 14);
-#else
-    std::string arg(name + 14);
-#endif
-    ret = create_service_thread(sideload_host_service, arg);
-=======
 unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport */) {
   // Common services that are supported both in sideload and rescue modes.
   if (ConsumePrefix(&name, "reboot:")) {
@@ -389,7 +286,6 @@ unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport *
     }
 
     return unique_fd{};
->>>>>>> android-10.0.0_r25
   }
 
   // Sideload-specific services.

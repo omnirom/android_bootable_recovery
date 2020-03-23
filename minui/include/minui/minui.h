@@ -16,13 +16,10 @@
 
 #pragma once
 
-<<<<<<< HEAD
 #ifndef TW_USE_MINUI_21
 
-=======
 #include <stdint.h>
 #include <stdlib.h>
->>>>>>> android-10.0.0_r25
 #include <sys/types.h>
 
 #include <functional>
@@ -128,7 +125,6 @@ void gr_clear();
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 void gr_fill(int x1, int y1, int x2, int y2);
 
-<<<<<<< HEAD
 void gr_texticon(int x, int y, GRSurface* icon);
 #ifdef TW_NO_MINUI_CUSTOM_FONTS
 void gr_text(int x, int y, const char *s, bool bold);
@@ -136,22 +132,15 @@ int gr_measure(const char *s);
 void gr_font_size(int *x, int *y);
 void gr_set_font(__attribute__ ((unused))const char* name);
 #else
-=======
 void gr_texticon(int x, int y, const GRSurface* icon);
->>>>>>> android-10.0.0_r25
 
 const GRFont* gr_sys_font();
 int gr_init_font(const char* name, GRFont** dest);
 void gr_text(const GRFont* font, int x, int y, const char* s, bool bold);
 // Returns -1 if font is nullptr.
 int gr_measure(const GRFont* font, const char* s);
-<<<<<<< HEAD
-void gr_font_size(const GRFont* font, int* x, int* y);
-#endif
-=======
 // Returns -1 if font is nullptr.
 int gr_font_size(const GRFont* font, int* x, int* y);
->>>>>>> android-10.0.0_r25
 
 void gr_blit(const GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(const GRSurface* surface);
@@ -182,12 +171,9 @@ using ev_set_key_callback = std::function<int(int code, int value)>;
 
 #ifdef TW_USE_MINUI_WITH_OPTIONAL_TOUCH_EVENTS
 int ev_init(ev_callback input_cb, bool allow_touch_inputs = false);
-<<<<<<< HEAD
-=======
 void ev_exit();
 int ev_add_fd(android::base::unique_fd&& fd, ev_callback cb);
 void ev_iterate_available_keys(const std::function<void(int)>& f);
->>>>>>> android-10.0.0_r25
 void ev_iterate_touch_inputs(const std::function<void(int)>& action);
 #else
 int ev_init(ev_callback input_cb);
@@ -254,8 +240,6 @@ std::vector<std::string> get_locales_in_png(const std::string& png_name);
 // Free a surface allocated by any of the res_create_*_surface()
 // functions.
 void res_free_surface(GRSurface* surface);
-<<<<<<< HEAD
-
 #else //ifndef TW_USE_MINUI_21
 
 // This the old minui21/minui.h for compatibility with building TWRP
@@ -348,5 +332,3 @@ void gr_clear();
 
 #endif // ifndef TW_USE_MINUI_21
 #endif // ifndef _MINUI_H_
-=======
->>>>>>> android-10.0.0_r25

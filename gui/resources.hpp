@@ -1,5 +1,5 @@
 /*
-	Copyright 2017 TeamWin
+    Copyright 2012 to 2020 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -25,7 +25,8 @@
 #include <vector>
 #include <map>
 #include "rapidxml.hpp"
-#include "../zipwrap.hpp"
+#include "zipwrap.hpp"
+#include "../minuitwrp/truetype.hpp"
 
 extern "C" {
 #include "../minuitwrp/minui.h"
@@ -58,7 +59,7 @@ public:
 
 public:
 	void* GetResource() { return mFont; }
-	int GetHeight() { return gr_ttf_getMaxFontHeight(mFont); }
+	int GetHeight() { return twrpTruetype::gr_ttf_getMaxFontHeight(mFont); }
 	void Override(xml_node<>* node, ZipWrap* pZip);
 
 protected:

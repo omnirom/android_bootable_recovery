@@ -57,47 +57,6 @@
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
-<<<<<<< HEAD
-#include "mounts.h"
-
-#include "applypatch/applypatch.h"
-#include "flashutils/flashutils.h"
-#include "install.h"
-#ifdef HAVE_LIBTUNE2FS
-#include "tune2fs.h"
-#endif
-
-#ifdef USE_EXT4
-#include "make_ext4fs.h"
-#include "wipe.h"
-#endif
-
-#include "otautil/ZipUtil.h"
-#include "otafault/ota_io.h"
-#include "otautil/DirUtil.h"
-=======
-#include "otautil/dirutil.h"
->>>>>>> android-10.0.0_r25
-#include "otautil/error_code.h"
-#include "otautil/mounts.h"
-#include "otautil/print_sha1.h"
-#include "otautil/sysutil.h"
-#include "updater/updater.h"
-
-// Send over the buffer to recovery though the command pipe.
-static void uiPrint(State* state, const std::string& buffer) {
-  UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
-
-  // "line1\nline2\n" will be split into 3 tokens: "line1", "line2" and "".
-  // So skip sending empty strings to UI.
-  std::vector<std::string> lines = android::base::Split(buffer, "\n");
-  for (auto& line : lines) {
-    if (!line.empty()) {
-      fprintf(ui->cmd_pipe, "ui_print %s\n", line.c_str());
-    }
-  }
-
-  // On the updater side, we need to dump the contents to stderr (which has
   // been redirected to the log file). Because the recovery will only print
   // the contents to screen when processing pipe command ui_print.
   LOG(INFO) << buffer;
@@ -1458,11 +1417,6 @@ void RegisterInstallFunctions() {
   RegisterFunction("wipe_block_device", WipeBlockDeviceFn);
 
   RegisterFunction("read_file", ReadFileFn);
-<<<<<<< HEAD
-  RegisterFunction("sha1_check", Sha1CheckFn);
-  RegisterFunction("rename", RenameFn);
-=======
->>>>>>> android-10.0.0_r25
   RegisterFunction("write_value", WriteValueFn);
 
   RegisterFunction("wipe_cache", WipeCacheFn);

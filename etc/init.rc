@@ -7,25 +7,10 @@ import /init.recovery.vold_decrypt.rc
 import /init.recovery.${ro.hardware}.rc
 
 on early-init
-    # Apply strict SELinux checking of PROT_EXEC on mmap/mprotect calls.
-    write /sys/fs/selinux/checkreqprot 0
-
-    # Set the security context for the init process.
-    # This should occur before anything else (e.g. ueventd) is started.
-    setcon u:r:init:s0
-
     # Set the security context of /postinstall if present.
     restorecon /postinstall
 
     start ueventd
-
-<<<<<<< HEAD
-service set_permissive /sbin/permissive.sh
-    oneshot
-    seclabel u:r:recovery:s0
-=======
-    setprop sys.usb.configfs 0
->>>>>>> android-10.0.0_r25
 
 on init
     export PATH /sbin:/system/bin
@@ -35,8 +20,6 @@ on init
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /sdcard
 
-<<<<<<< HEAD
-=======
     symlink /proc/self/fd/0 /dev/stdin
     symlink /proc/self/fd/1 /dev/stdout
     symlink /proc/self/fd/2 /dev/stderr
@@ -44,7 +27,6 @@ on init
     symlink /system/bin /bin
     symlink /system/etc /etc
 
->>>>>>> android-10.0.0_r25
     mount cgroup none /acct cpuacct
     mkdir /acct/uid
 
@@ -61,15 +43,12 @@ on init
     write /proc/sys/kernel/panic_on_oops 1
     write /proc/sys/vm/max_map_count 1000000
 
-<<<<<<< HEAD
 on fs
     mount pstore pstore /sys/fs/pstore
     mkdir /dev/usb-ffs 0770 shell shell
     mkdir /dev/usb-ffs/adb 0770 shell shell
     mount functionfs adb /dev/usb-ffs/adb uid=2000,gid=2000
 
-=======
->>>>>>> android-10.0.0_r25
 on boot
     ifup lo
     hostname localhost
@@ -116,7 +95,6 @@ on late-init
     trigger early-boot
     trigger boot
 
-<<<<<<< HEAD
 on property:sys.powerctl=*
    powerctl ${sys.powerctl}
 
@@ -125,37 +103,20 @@ service ueventd /sbin/ueventd
     seclabel u:r:ueventd:s0
 
 service adbd /sbin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
-=======
-service ueventd /system/bin/ueventd
-    critical
-    seclabel u:r:ueventd:s0
-
-service charger /system/bin/charger
-    critical
-    seclabel u:r:charger:s0
-
-service recovery /system/bin/recovery
-    socket recovery stream 422 system system
-    seclabel u:r:recovery:s0
-
-service adbd /system/bin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
->>>>>>> android-10.0.0_r25
     disabled
     socket adbd stream 660 system system
     seclabel u:r:adbd:s0
 
-<<<<<<< HEAD
 # Always start adbd on userdebug and eng builds
 on property:ro.debuggable=1
     #write /sys/class/android_usb/android0/enable 1
     #start adbd
     setprop service.adb.root 1
-=======
-service fastbootd /system/bin/fastbootd
+
+service fastbootd /sbin/fastbootd
     disabled
     group system
     seclabel u:r:fastbootd:s0
->>>>>>> android-10.0.0_r25
 
 # Restart adbd so it can run as root
 on property:service.adb.root=1

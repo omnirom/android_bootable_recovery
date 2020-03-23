@@ -1,5 +1,5 @@
 /*
-	Copyright 2017 TeamWin
+    Copyright 2012 to 2020 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -30,11 +30,13 @@
 #include <iomanip>
 #include <fcntl.h>
 
-#include "../zipwrap.hpp"
+#include "zipwrap.hpp"
 extern "C" {
 #include "../twcommon.h"
 #include "gui.h"
 }
+
+#include "../minuitwrp/truetype.hpp"
 #include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"
@@ -155,12 +157,12 @@ void FontResource::LoadFont(xml_node<>* node, ZipWrap* pZip)
 		std::string tmpname = "/tmp/" + file;
 		if (ExtractResource(pZip, "fonts", file, "", tmpname) == 0)
 		{
-			mFont = gr_ttf_loadFont(tmpname.c_str(), font_size, dpi);
+			mFont = twrpTruetype::gr_ttf_loadFont(tmpname.c_str(), font_size, dpi);
 		}
 		else
 		{
 			file = std::string(TWRES "fonts/") + file;
-			mFont = gr_ttf_loadFont(file.c_str(), font_size, dpi);
+			mFont = twrpTruetype::gr_ttf_loadFont(file.c_str(), font_size, dpi);
 		}
 	}
 	else
@@ -170,11 +172,13 @@ void FontResource::LoadFont(xml_node<>* node, ZipWrap* pZip)
 }
 
 void FontResource::DeleteFont() {
-	if (mFont)
-		gr_ttf_freeFont(mFont);
+	if (mFont) {
+		twrpTruetype::gr_ttf_freeFont(mFont);
+	}
 	mFont = NULL;
-	if (origFont)
-		gr_ttf_freeFont(origFont);
+	if (origFont) {
+		twrpTruetype::gr_ttf_freeFont(origFont);
+	}
 	origFont = NULL;
 }
 
@@ -182,7 +186,7 @@ void FontResource::Override(xml_node<>* node, ZipWrap* pZip) {
 	if (!origFont) {
 		origFont = mFont;
 	} else if (mFont) {
-		gr_ttf_freeFont(mFont);
+		twrpTruetype::gr_ttf_freeFont(mFont);
 		mFont = NULL;
 	}
 	LoadFont(node, pZip);

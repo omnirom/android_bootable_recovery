@@ -76,19 +76,6 @@ static int drm_format_to_bpp(uint32_t format) {
 
 std::unique_ptr<GRSurfaceDrm> GRSurfaceDrm::Create(int drm_fd, int width, int height) {
   uint32_t format;
-<<<<<<< HEAD
-#if defined(RECOVERY_ABGR)
-  format = DRM_FORMAT_RGBA8888;
-#elif defined(RECOVERY_BGRA)
-  format = DRM_FORMAT_ARGB8888;
-#elif defined(RECOVERY_RGBA)
-  format = DRM_FORMAT_ARGB8888;
-#elif defined(RECOVERY_RGBX)
-  format = DRM_FORMAT_XBGR8888;
-#else
-  format = DRM_FORMAT_RGB565;
-#endif
-=======
   PixelFormat pixel_format = gr_pixel_format();
   // PixelFormat comes in byte order, whereas DRM_FORMAT_* uses little-endian
   // (external/libdrm/include/drm/drm_fourcc.h). Note that although drm_fourcc.h also defines a
@@ -103,7 +90,6 @@ std::unique_ptr<GRSurfaceDrm> GRSurfaceDrm::Create(int drm_fd, int width, int he
   } else {
     format = DRM_FORMAT_RGB565;
   }
->>>>>>> android-10.0.0_r25
 
   drm_mode_create_dumb create_dumb = {};
   create_dumb.height = height;

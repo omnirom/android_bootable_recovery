@@ -21,15 +21,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-<<<<<<< HEAD:rotate_logs.h
-//#include <log/log_id.h>
-#include <private/android_logger.h> /* private pmsg functions */
-=======
 #include <string>
 #include <vector>
 
 #include <log/log_id.h>
->>>>>>> android-10.0.0_r25:otautil/include/otautil/logging.h
 
 static constexpr int KEEP_LOG_COUNT = 10;
 

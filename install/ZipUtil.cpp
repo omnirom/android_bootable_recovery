@@ -28,7 +28,7 @@
 #include <selinux/selinux.h>
 #include <ziparchive/zip_archive.h>
 
-#include "otautil/DirUtil.h"
+#include "otautil/dirutil.h"
 
 static constexpr mode_t UNZIP_DIRMODE = 0755;
 static constexpr mode_t UNZIP_FILEMODE = 0644;

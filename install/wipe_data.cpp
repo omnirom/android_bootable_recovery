@@ -36,12 +36,12 @@ constexpr const char* CACHE_ROOT = "/cache";
 constexpr const char* DATA_ROOT = "/data";
 constexpr const char* METADATA_ROOT = "/metadata";
 
-static bool EraseVolume(const char* volume, RecoveryUI* ui, bool convert_fbe) {
+static bool EraseVolume(const char* volume, bool convert_fbe) {
   bool is_cache = (strcmp(volume, CACHE_ROOT) == 0);
   bool is_data = (strcmp(volume, DATA_ROOT) == 0);
 
-  ui->SetBackground(RecoveryUI::ERASING);
-  ui->SetProgressType(RecoveryUI::INDETERMINATE);
+  // ui->SetBackground(RecoveryUI::ERASING);
+  // ui->SetProgressType(RecoveryUI::INDETERMINATE);
 
   std::vector<saved_log_file> log_files;
   if (is_cache) {
@@ -50,7 +50,7 @@ static bool EraseVolume(const char* volume, RecoveryUI* ui, bool convert_fbe) {
     log_files = ReadLogFilesToMemory();
   }
 
-  ui->Print("Formatting %s...\n", volume);
+  // ui->Print("Formatting %s...\n", volume);
 
   ensure_path_unmounted(volume);
 
@@ -84,10 +84,10 @@ static bool EraseVolume(const char* volume, RecoveryUI* ui, bool convert_fbe) {
   return (result == 0);
 }
 
-bool WipeCache(RecoveryUI* ui, const std::function<bool()>& confirm_func) {
+bool WipeCache(const std::function<bool()>& confirm_func) {
   bool has_cache = volume_for_mount_point("/cache") != nullptr;
   if (!has_cache) {
-    ui->Print("No /cache partition found.\n");
+    // ui->Print("No /cache partition found.\n");
     return false;
   }
 
@@ -95,29 +95,29 @@ bool WipeCache(RecoveryUI* ui, const std::function<bool()>& confirm_func) {
     return false;
   }
 
-  ui->Print("\n-- Wiping cache...\n");
-  bool success = EraseVolume("/cache", ui, false);
-  ui->Print("Cache wipe %s.\n", success ? "complete" : "failed");
+  // ui->Print("\n-- Wiping cache...\n");
+  bool success = EraseVolume("/cache", false);
+  // ui->Print("Cache wipe %s.\n", success ? "complete" : "failed");
   return success;
 }
 
 bool WipeData(Device* device, bool convert_fbe) {
-  RecoveryUI* ui = device->GetUI();
-  ui->Print("\n-- Wiping data...\n");
+  // RecoveryUI* ui = device->GetUI();
+  // ui->Print("\n-- Wiping data...\n");
   bool success = device->PreWipeData();
   if (success) {
-    success &= EraseVolume(DATA_ROOT, ui, convert_fbe);
+    success &= EraseVolume(DATA_ROOT, convert_fbe);
     bool has_cache = volume_for_mount_point("/cache") != nullptr;
     if (has_cache) {
-      success &= EraseVolume(CACHE_ROOT, ui, false);
+      success &= EraseVolume(CACHE_ROOT, false);
     }
     if (volume_for_mount_point(METADATA_ROOT) != nullptr) {
-      success &= EraseVolume(METADATA_ROOT, ui, false);
+      success &= EraseVolume(METADATA_ROOT, false);
     }
   }
   if (success) {
     success &= device->PostWipeData();
   }
-  ui->Print("Data wipe %s.\n", success ? "complete" : "failed");
+  // ui->Print("Data wipe %s.\n", success ? "complete" : "failed");
   return success;
 }

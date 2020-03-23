@@ -64,8 +64,8 @@ static constexpr int kRecoveryApiVersion = 3;
 static_assert(kRecoveryApiVersion == RECOVERY_API_VERSION, "Mismatching recovery API versions.");
 
 // Default allocation of progress bar segments to operations
-static constexpr int VERIFICATION_PROGRESS_TIME = 60;
-static constexpr float VERIFICATION_PROGRESS_FRACTION = 0.25;
+// static constexpr int VERIFICATION_PROGRESS_TIME = 60;
+// static constexpr float VERIFICATION_PROGRESS_FRACTION = 0.25;
 
 static std::condition_variable finish_log_temperature;
 
@@ -157,8 +157,6 @@ static int CheckAbSpecificMetadata(const std::map<std::string, std::string>& met
     return INSTALL_ERROR;
   }
 
-<<<<<<< HEAD:install.cpp
-=======
   // Check for downgrade version.
   int64_t build_timestamp =
       android::base::GetIntProperty("ro.build.date.utc", std::numeric_limits<int64_t>::max());
@@ -182,7 +180,6 @@ static int CheckAbSpecificMetadata(const std::map<std::string, std::string>& met
     }
   }
 
->>>>>>> android-10.0.0_r25:install/install.cpp
   return 0;
 }
 
@@ -330,7 +327,7 @@ static void log_max_temperature(int* max_temperature, const std::atomic<bool>& l
 // If the package contains an update binary, extract it and run it.
 static int try_update_binary(const std::string& package, ZipArchiveHandle zip, bool* wipe_cache,
                              std::vector<std::string>* log_buffer, int retry_count,
-                             int* max_temperature, RecoveryUI* ui) {
+                             int* max_temperature) {
   std::map<std::string, std::string> metadata;
   if (!ReadMetadataFromPackage(zip, &metadata)) {
     LOG(ERROR) << "Failed to parse metadata in the zip file";
@@ -442,7 +439,7 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
       int seconds;
       if (tokens.size() == 2 && android::base::ParseDouble(tokens[0].c_str(), &fraction) &&
           android::base::ParseInt(tokens[1], &seconds)) {
-        ui->ShowProgress(fraction * (1 - VERIFICATION_PROGRESS_FRACTION), seconds);
+        // ui->ShowProgress(fraction * (1 - VERIFICATION_PROGRESS_FRACTION), seconds);
       } else {
         LOG(ERROR) << "invalid \"progress\" parameters: " << line;
       }
@@ -450,22 +447,22 @@ static int try_update_binary(const std::string& package, ZipArchiveHandle zip, b
       std::vector<std::string> tokens = android::base::Split(args, " ");
       double fraction;
       if (tokens.size() == 1 && android::base::ParseDouble(tokens[0].c_str(), &fraction)) {
-        ui->SetProgress(fraction);
+        // ui->SetProgress(fraction);
       } else {
         LOG(ERROR) << "invalid \"set_progress\" parameters: " << line;
       }
     } else if (command == "ui_print") {
-      ui->PrintOnScreenOnly("%s\n", args.c_str());
+      // ui->PrintOnScreenOnly("%s\n", args.c_str());
       fflush(stdout);
     } else if (command == "wipe_cache") {
       *wipe_cache = true;
     } else if (command == "clear_display") {
-      ui->SetBackground(RecoveryUI::NONE);
+      // ui->SetBackground(RecoveryUI::NONE);
     } else if (command == "enable_reboot") {
       // packages can explicitly request that they want the user
       // to be able to reboot during installation (useful for
       // debugging packages that don't exit).
-      ui->SetEnableReboot(true);
+      // ui->SetEnableReboot(true);
     } else if (command == "retry_update") {
       retry_update = true;
     } else if (command == "log") {
@@ -576,16 +573,16 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip) {
 
 static int really_install_package(const std::string& path, bool* wipe_cache, bool needs_mount,
                                   std::vector<std::string>* log_buffer, int retry_count,
-                                  int* max_temperature, RecoveryUI* ui) {
-  ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
-  ui->Print("Finding update package...\n");
+                                  int* max_temperature) {
+  // ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
+  // ui->Print("Finding update package...\n");
   // Give verification half the progress bar...
-  ui->SetProgressType(RecoveryUI::DETERMINATE);
-  ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
+  // ui->SetProgressType(RecoveryUI::DETERMINATE);
+  // ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
   LOG(INFO) << "Update location: " << path;
 
   // Map the update package into memory.
-  ui->Print("Opening update package...\n");
+  // ui->Print("Opening update package...\n");
 
   if (needs_mount) {
     if (path[0] == '@') {
@@ -596,14 +593,14 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   }
 
   auto package = Package::CreateMemoryPackage(
-      path, std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
+      path);
   if (!package) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kMapFileFailure));
     return INSTALL_CORRUPT;
   }
 
   // Verify package.
-  if (!verify_package(package.get(), ui)) {
+  if (!verify_package(package.get())) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kZipVerificationFailure));
     return INSTALL_CORRUPT;
   }
@@ -622,21 +619,21 @@ static int really_install_package(const std::string& path, bool* wipe_cache, boo
   }
 
   // Verify and install the contents of the package.
-  ui->Print("Installing update...\n");
-  if (retry_count > 0) {
-    ui->Print("Retry attempt: %d\n", retry_count);
-  }
-  ui->SetEnableReboot(false);
+  // ui->Print("Installing update...\n");
+  // if (retry_count > 0) {
+    // ui->Print("Retry attempt: %d\n", retry_count);
+  // }
+  // ui->SetEnableReboot(false);
   int result =
-      try_update_binary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature, ui);
-  ui->SetEnableReboot(true);
-  ui->Print("\n");
+      try_update_binary(path, zip, wipe_cache, log_buffer, retry_count, max_temperature);
+  // ui->SetEnableReboot(true);
+  // ui->Print("\n");
 
   return result;
 }
 
 int install_package(const std::string& path, bool should_wipe_cache, bool needs_mount,
-                    int retry_count, RecoveryUI* ui) {
+                    int retry_count) {
   CHECK(!path.empty());
 
   auto start = std::chrono::system_clock::now();
@@ -652,7 +649,7 @@ int install_package(const std::string& path, bool should_wipe_cache, bool needs_
   } else {
     bool updater_wipe_cache = false;
     result = really_install_package(path, &updater_wipe_cache, needs_mount, &log_buffer,
-                                    retry_count, &max_temperature, ui);
+                                    retry_count, &max_temperature);
     should_wipe_cache = should_wipe_cache || updater_wipe_cache;
   }
 
@@ -709,7 +706,7 @@ int install_package(const std::string& path, bool should_wipe_cache, bool needs_
   LOG(INFO) << log_content;
 
   if (result == INSTALL_SUCCESS && should_wipe_cache) {
-    if (!WipeCache(ui, nullptr)) {
+    if (!WipeCache(nullptr)) {
       result = INSTALL_ERROR;
     }
   }
@@ -717,7 +714,7 @@ int install_package(const std::string& path, bool should_wipe_cache, bool needs_
   return result;
 }
 
-bool verify_package(Package* package, RecoveryUI* ui) {
+bool verify_package(Package* package) {
   static constexpr const char* CERTIFICATE_ZIP_FILE = "/system/etc/security/otacerts.zip";
   std::vector<Certificate> loaded_keys = LoadKeysFromZipfile(CERTIFICATE_ZIP_FILE);
   if (loaded_keys.empty()) {
@@ -727,11 +724,11 @@ bool verify_package(Package* package, RecoveryUI* ui) {
   LOG(INFO) << loaded_keys.size() << " key(s) loaded from " << CERTIFICATE_ZIP_FILE;
 
   // Verify package.
-  ui->Print("Verifying update package...\n");
-  auto t0 = std::chrono::system_clock::now();
+  // ui->Print("Verifying update package...\n");
+  // auto t0 = std::chrono::system_clock::now();
   int err = verify_file(package, loaded_keys);
-  std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
-  ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
+  // std::chrono::duration<double> duration = std::chrono::system_clock::now() - t0;
+  // ui->Print("Update package verification took %.1f s (result %d).\n", duration.count(), err);
   if (err != VERIFY_SUCCESS) {
     LOG(ERROR) << "Signature verification failed";
     LOG(ERROR) << "error: " << kZipVerificationFailure;

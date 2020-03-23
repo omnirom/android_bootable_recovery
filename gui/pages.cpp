@@ -42,14 +42,18 @@
 #ifdef USE_MINZIP
 #include "../minzip/SysUtil.h"
 #else
+#ifdef USE_OTAUTIL_ZIPARCHIVE
 #include <otautil/SysUtil.h>
+#else
+#include <ziparchive/zip_archive.h>
+#endif
 #endif
 
 extern "C" {
 #include "../twcommon.h"
 #include "gui.h"
 }
-#include "../zipwrap.hpp"
+#include "zipwrap.hpp"
 #include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"

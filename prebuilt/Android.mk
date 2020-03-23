@@ -18,17 +18,27 @@ RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/bu
 ifneq ($(TW_USE_TOOLBOX), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/busybox
 else
-    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
+    else
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/sh
+    endif
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
-        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/grep
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/grep
+        else
+            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/grep
+        endif
         LOCAL_POST_INSTALL_CMD += $(hide) if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep" ]; then \
-                                    rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; fi; ln -sr $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; \
+                                    rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; fi; ln -s $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; \
                                     if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep" ]; then \
-                                    rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep; fi; ln -sr $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep;
-        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
+                                    rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep; fi; ln -s $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep;
+        # RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
         ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
-            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dd
+            ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
+                RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dd
+            endif
         endif
         ifneq ($(wildcard external/zip/Android.mk),)
             RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
@@ -49,7 +59,11 @@ RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/fsck.fat
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/fatlabel
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkfs.fat
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 27; echo $$?),0)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/adbd
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 29; echo $$?),0)    
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/adbd
+    else
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/adbd
+    endif
 endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/e2fsck
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
@@ -66,15 +80,42 @@ ifeq ($(TARGET_ARCH), x86_64)
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/linker64
 endif
 ifeq ($(TARGET_ARCH), arm64)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/linker64
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/linker64
+    else
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/linker64
+    endif
 endif
 #RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/twrpmtp
-RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libc.so
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libc.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libdl.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libm.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libbacktrace.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libbootloader_message.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libfs_mgr.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libfscrypt.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libgsi.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libkeyutils.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/liblogwrap.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/liblp.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libprocessgroup.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libprocessgroup_setup.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libadbd.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libadbd_services.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libcap.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libminijail.so
+    # RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libinit.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libdl_android.so
+else
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libc.so
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdl.so
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libm.so
+endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcutils.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrecovery.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libusbhost.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libutils.so
-RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdl.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_com_err.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_e2p.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2fs.so
@@ -94,12 +135,13 @@ ifneq ($(wildcard external/e2fsprogs/lib/blkid/Android.*),)
 endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libpng.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/liblog.so
-RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libm.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libstdc++.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libz.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libminuitwrp.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libminadbd.so
-RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libminzip.so
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libminzip.so
+endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libmtdutils.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libtar.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libtwadbbu.so
@@ -150,7 +192,11 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libmincrypttwrp.so
 endif
-RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toolbox
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/toolbox
+else
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toolbox
+endif
 
 ifneq ($(TW_OEM_BUILD),true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/twrp
@@ -290,9 +336,17 @@ ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
         RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mkfs.f2fs
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libf2fs.so
     else ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
-        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkfs.f2fs
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/make_f2fs
+        else
+            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkfs.f2fs
+        endif
         ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
-            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/sload.f2fs
+            ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+                RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sload_f2fs
+            else
+                RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/sload.f2fs
+            endif
         endif
     else ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
         RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mkfs.f2fs
@@ -405,24 +459,30 @@ ifneq ($(TW_USE_TOOLBOX), true)
     TW_BB_SYMLINKS := busybox_symlinks
 endif
 
-TWRP_AUTOGEN := $(intermediates)/teamwin
-GEN := $(intermediates)/teamwin
-$(GEN): $(RELINK) $(TW_BB_SYMLINKS) toolbox_symlinks
-$(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,init)/init
-	$(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
+# GEN := $(intermediates)/teamwin
+# $(GEN): $(RELINK) $(TW_BB_SYMLINKS) toolbox_symlinks
 
-LOCAL_GENERATED_SOURCES := $(GEN)
-LOCAL_SRC_FILES := teamwin $(GEN)
-include $(BUILD_PREBUILT)
-
-#permissive.sh
+#relink recovery executables linker to /sbin
 include $(CLEAR_VARS)
-LOCAL_MODULE := permissive.sh
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE := relink
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
+LOCAL_POST_INSTALL_CMD += $(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
+LOCAL_REQUIRED_MODULES := linker toolbox_symlinks adbd libdl_android
+include $(BUILD_PHONY_PACKAGE)
+
+#relink init
+include $(CLEAR_VARS)
+LOCAL_MODULE := relink_init
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
+RELINK_INIT := $(TARGET_RECOVERY_ROOT_OUT)/system/bin/init
+LOCAL_POST_INSTALL_CMD += $(RELINK) $(TARGET_RECOVERY_ROOT_OUT) $(RELINK_INIT) && \
+    ln -sf ../init $(TARGET_RECOVERY_ROOT_OUT)/sbin/ueventd 
+LOCAL_REQUIRED_MODULES := init_second_stage.recovery
+include $(BUILD_PHONY_PACKAGE)
 
 #mke2fs.conf
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 26; echo $$?),0)
@@ -542,16 +602,16 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	include $(BUILD_PREBUILT)
 endif
 
-ifeq ($(TW_USE_TOOLBOX), true)
-    include $(CLEAR_VARS)
-    LOCAL_MODULE := mkshrc_twrp
-    LOCAL_MODULE_STEM := mkshrc
-    LOCAL_MODULE_TAGS := eng
-    LOCAL_MODULE_CLASS := ETC
-    LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/etc
-    LOCAL_SRC_FILES := $(LOCAL_MODULE)
-    include $(BUILD_PREBUILT)
-endif
+#ifeq ($(TW_USE_TOOLBOX), true)
+#    include $(CLEAR_VARS)
+#    LOCAL_MODULE := mkshrc_twrp
+#    LOCAL_MODULE_STEM := mkshrc
+#    LOCAL_MODULE_TAGS := eng
+#    LOCAL_MODULE_CLASS := ETC
+#    LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/etc
+#    LOCAL_SRC_FILES := $(LOCAL_MODULE)
+#    include $(BUILD_PREBUILT)
+#endif
 
 #TWRP App "placeholder"
 include $(CLEAR_VARS)

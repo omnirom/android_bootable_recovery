@@ -65,24 +65,10 @@ static bool test_bit(size_t bit, unsigned long* array) { // NOLINT
 
 #ifdef TW_USE_MINUI_WITH_OPTIONAL_TOUCH_EVENTS
 int ev_init(ev_callback input_cb, bool allow_touch_inputs) {
-<<<<<<< HEAD
-#else
-#ifdef TW_USE_MINUI_WITH_DATA
-int ev_init(ev_callback input_cb, void* data) {
-#else
-int ev_init(ev_callback input_cb) {
-#endif
-  bool allow_touch_inputs = false;
-#endif
-
-  g_epoll_fd = epoll_create(MAX_DEVICES + MAX_MISC_FDS);
-  if (g_epoll_fd == -1) {
-=======
   g_epoll_fd.reset();
 
   android::base::unique_fd epoll_fd(epoll_create1(EPOLL_CLOEXEC));
   if (epoll_fd == -1) {
->>>>>>> android-10.0.0_r25
     return -1;
   }
 
@@ -114,23 +100,12 @@ int ev_init(ev_callback input_cb) {
       }
     }
 
-<<<<<<< HEAD
-      ev_fdinfo[ev_count].fd = fd;
-      ev_fdinfo[ev_count].cb = std::move(input_cb);
-#ifdef TW_USE_MINUI_WITH_DATA
-      ev_fdinfo[ev_count].data = data;
-#endif
-      ev_count++;
-      ev_dev_count++;
-      if (ev_dev_count == MAX_DEVICES) break;
-=======
     epoll_event ev;
     ev.events = EPOLLIN | EPOLLWAKEUP;
     ev.data.ptr = &ev_fdinfo[g_ev_count];
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
       epoll_ctl_failed = true;
       continue;
->>>>>>> android-10.0.0_r25
     }
 
     ev_fdinfo[g_ev_count].fd.reset(fd.release());
@@ -152,17 +127,8 @@ int ev_get_epollfd(void) {
   return g_epoll_fd.get();
 }
 
-<<<<<<< HEAD
-#ifdef TW_USE_MINUI_WITH_DATA
-int ev_add_fd(int fd, ev_callback cb, void* data) {
-#else
-int ev_add_fd(int fd, ev_callback cb) {
-#endif
-  if (ev_misc_count == MAX_MISC_FDS || cb == NULL) {
-=======
 int ev_add_fd(android::base::unique_fd&& fd, ev_callback cb) {
   if (g_ev_misc_count == MAX_MISC_FDS || cb == nullptr) {
->>>>>>> android-10.0.0_r25
     return -1;
   }
 
@@ -171,20 +137,10 @@ int ev_add_fd(android::base::unique_fd&& fd, ev_callback cb) {
   ev.data.ptr = static_cast<void*>(&ev_fdinfo[g_ev_count]);
   int ret = epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev);
   if (!ret) {
-<<<<<<< HEAD
-    ev_fdinfo[ev_count].fd = fd;
-    ev_fdinfo[ev_count].cb = std::move(cb);
-#ifdef TW_USE_MINUI_WITH_DATA
-    ev_fdinfo[ev_count].data = data;
-#endif
-    ev_count++;
-    ev_misc_count++;
-=======
     ev_fdinfo[g_ev_count].fd.reset(fd.release());
     ev_fdinfo[g_ev_count].cb = std::move(cb);
     g_ev_count++;
     g_ev_misc_count++;
->>>>>>> android-10.0.0_r25
   }
 
   return ret;
@@ -212,15 +168,7 @@ void ev_dispatch(void) {
     FdInfo* fdi = static_cast<FdInfo*>(g_polled_events[n].data.ptr);
     const ev_callback& cb = fdi->cb;
     if (cb) {
-<<<<<<< HEAD
-#ifdef TW_USE_MINUI_WITH_DATA
-      cb(fdi->fd, polledevents[n].events, fdi->data);
-#else
-      cb(fdi->fd, polledevents[n].events);
-#endif
-=======
       cb(fdi->fd, g_polled_events[n].events);
->>>>>>> android-10.0.0_r25
     }
   }
 }

@@ -48,14 +48,6 @@
 // (Note it's "updateR-script", not the older "update-script".)
 static constexpr const char* SCRIPT_NAME = "META-INF/com/google/android/updater-script";
 
-<<<<<<< HEAD
-#define SELINUX_CONTEXTS_ZIP "file_contexts"
-#define SELINUX_CONTEXTS_TMP "/tmp/file_contexts"
-
-extern bool have_eio_error;
-
-=======
->>>>>>> android-10.0.0_r25
 struct selabel_handle *sehandle;
 
 static void UpdaterLogger(android::base::LogId /* id */, android::base::LogSeverity /* severity */,

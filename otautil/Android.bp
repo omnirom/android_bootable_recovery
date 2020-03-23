@@ -24,15 +24,7 @@ cc_library_static {
 
     // Minimal set of files to support host build.
     srcs: [
-<<<<<<< HEAD
-        "SysUtil.cpp",
-        "DirUtil.cpp",
-        "ZipUtil.cpp",
-        "ThermalUtil.cpp",
-        "cache_location.cpp",
-=======
         "paths.cpp",
->>>>>>> android-10.0.0_r25
         "rangeset.cpp",
     ],
 
@@ -69,6 +61,7 @@ cc_library_static {
                 "libext4_utils",
                 "libfs_mgr",
                 "libselinux",
+                "libziparchive",
             ],
         },
     },

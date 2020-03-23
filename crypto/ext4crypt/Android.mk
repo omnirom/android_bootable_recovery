@@ -3,12 +3,18 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libe4crypt
-LOCAL_MODULE_TAGS := eng optional
+LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS :=
 LOCAL_SRC_FILES := Decrypt.cpp ScryptParameters.cpp Utils.cpp HashPassword.cpp ext4_crypt.cpp
 LOCAL_SHARED_LIBRARIES := libselinux libc libc++ libext4_utils libbase libcrypto libcutils libkeymaster_messages libhardware libprotobuf-cpp-lite
 LOCAL_STATIC_LIBRARIES := libscrypt_static
-LOCAL_C_INCLUDES := system/extras/ext4_utils system/extras/ext4_utils/include/ext4_utils external/scrypt/lib/crypto system/security/keystore hardware/libhardware/include/hardware system/security/softkeymaster/include/keymaster system/keymaster/include
+LOCAL_C_INCLUDES := system/extras/ext4_utils \
+    system/extras/ext4_utils/include/ext4_utils \
+    external/scrypt/lib/crypto \
+    system/security/keystore/include \
+    hardware/libhardware/include/hardware \
+    system/security/softkeymaster/include/keymaster \
+    system/keymaster/include
 
 ifneq ($(wildcard hardware/libhardware/include/hardware/keymaster0.h),)
     LOCAL_CFLAGS += -DTW_CRYPTO_HAVE_KEYMASTERX
@@ -17,6 +23,10 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     #8.0 or higher
     LOCAL_CFLAGS += -DHAVE_GATEKEEPER1
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        LOCAL_SHARED_LIBRARIES += android.hardware.confirmationui@1.0
+        # LOCAL_CFLAGS += -DUSE_
+    endif
     LOCAL_SHARED_LIBRARIES += android.hardware.keymaster@3.0 libkeystore_binder libhidlbase libutils libbinder android.hardware.gatekeeper@1.0
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
         #9.0 rules

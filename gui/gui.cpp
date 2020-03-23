@@ -50,7 +50,7 @@ extern "C"
 #include "../openrecoveryscript.hpp"
 #include "../orscmd/orscmd.h"
 #include "blanktimer.hpp"
-#include "../tw_atomic.hpp"
+#include "tw_atomic.hpp"
 
 // Enable to print render time of each frame to the log file
 //#define PRINT_RENDER_TIME 1

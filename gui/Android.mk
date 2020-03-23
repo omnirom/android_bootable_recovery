@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS := -fno-strict-aliasing
+LOCAL_CFLAGS := -fno-strict-aliasing -Wno-implicit-fallthrough
 
 LOCAL_SRC_FILES := \
     gui.cpp \
@@ -39,9 +39,21 @@ else
 endif
 
 LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++ libaosprecovery libselinux
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../otautil/include
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
-    LOCAL_SHARED_LIBRARIES += libziparchive
-    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../otautil/include
+    LOCAL_SHARED_LIBRARIES += libziparchive 
+    LOCAL_STATIC_LIBRARIES += libotautil
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 28; echo $$?),0)
+        LOCAL_C_INCLUDES += $(LOCAL_PATH)/../install/include \
+            system/core/libziparchive/include/ \
+            $(LOCAL_PATH)/../recovery_ui/include \
+            $(LOCAL_PATH)/../fuse_sideload/include
+        LOCAL_CFLAGS += -D_USE_SYSTEM_ZIPARCHIVE
+    else
+        LOCAL_C_INCLUDES += $(LOCAL_PATH)/../install28/ \
+            $(LOCAL_PATH)/../fuse_sideload28/
+        LOCAL_CFLAGS += -DUSE_28_INSTALL -DUSE_OTAUTIL_ZIPARCHIVE
+    endif
 else
     LOCAL_SHARED_LIBRARIES += libminzip
     LOCAL_CFLAGS += -DUSE_MINZIP
@@ -84,7 +96,8 @@ endif
 LOCAL_C_INCLUDES += \
     bionic \
     system/core/include \
-    system/core/libpixelflinger/include
+    system/core/libpixelflinger/include \
+    external/freetype/include
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_C_INCLUDES += external/stlport/stlport
@@ -98,7 +111,7 @@ include $(BUILD_STATIC_LIBRARY)
 # Transfer in the resources for the device
 include $(CLEAR_VARS)
 LOCAL_MODULE := twrp
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWRES_PATH)
 

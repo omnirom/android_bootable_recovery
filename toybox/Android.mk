@@ -553,6 +553,10 @@ ALL_TOOLS += \
     stop \
     stty
 endif
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 28; echo $$?),0)
+ALL_TOOLS += \
+    dd
+endif
 endif
 # Account for master branch changes pulld into CM14.1
 ifneq ($(CM_BUILD),)
@@ -569,7 +573,9 @@ endif
 endif
 
 # Install the symlinks.
-LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf toybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)
+# LOCAL_POST_INSTALL_CMD := $(hide) $(foreach t,$(ALL_TOOLS),ln -sf toybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)
+LOCAL_POST_INSTALL_CMD := $(foreach t,$(ALL_TOOLS),ln -sf toybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/$(t);)
+
 
 include $(BUILD_EXECUTABLE)
 

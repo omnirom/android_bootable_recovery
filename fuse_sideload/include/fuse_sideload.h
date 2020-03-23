@@ -17,17 +17,9 @@
 #ifndef __FUSE_SIDELOAD_H
 #define __FUSE_SIDELOAD_H
 
-<<<<<<< HEAD:fuse_sideload.h
-#ifdef USE_FUSE_SIDELOAD22
-#include "fuse_sideload22.h"
-#else
-
-#include <functional>
-=======
 #include <memory>
 
 #include "fuse_provider.h"
->>>>>>> android-10.0.0_r25:fuse_sideload/include/fuse_sideload.h
 
 // Define the filenames created by the sideload FUSE filesystem.
 static constexpr const char* FUSE_SIDELOAD_HOST_MOUNTPOINT = "/sideload";
@@ -38,16 +30,5 @@ static constexpr const char* FUSE_SIDELOAD_HOST_EXIT_PATHNAME = "/sideload/exit"
 
 int run_fuse_sideload(std::unique_ptr<FuseDataProvider>&& provider,
                       const char* mount_point = FUSE_SIDELOAD_HOST_MOUNTPOINT);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-int run_old_fuse_sideload(const struct provider_vtab& vtab, void* cookie,
-                      uint64_t file_size, uint32_t block_size);
-#ifdef __cplusplus
-}
-#endif
-
-#endif
 
 #endif

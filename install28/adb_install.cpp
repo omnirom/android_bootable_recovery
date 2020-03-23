@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include "adb_install.h"
-
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -31,15 +29,19 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "ui.h"
 #include "cutils/properties.h"
 
 #include "common.h"
-#include "fuse_sideload.h"
 #ifdef USE_OLD_VERIFIER
 #include "verifier24/verifier.h"
+#include "ui.h"
+#elif USE_28_VERIFIER
+#include "verifier28/verifier.h"
+#include "verifier28/adb_install.h"
+#include "verifier28/ui.h"
+#include "verifier28/fuse_sideload.h"
 #else
-#include "verifier.h"
+#include "install/install.h"
 #endif
 
 static void set_usb_driver(bool enabled) {

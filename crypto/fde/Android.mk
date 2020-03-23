@@ -3,7 +3,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libcryptfsfde
-LOCAL_MODULE_TAGS := eng optional
+LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := cryptfs.cpp
 LOCAL_SHARED_LIBRARIES := libcrypto libhardware libcutils libstdc++
 LOCAL_STATIC_LIBRARIES := libscrypttwrp_static

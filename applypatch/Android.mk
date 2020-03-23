@@ -23,7 +23,7 @@ LOCAL_SRC_FILES := \
     freecache.cpp \
     imgpatch.cpp
 LOCAL_MODULE := libapplypatch
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/include \
     $(commands_recovery_local_path)

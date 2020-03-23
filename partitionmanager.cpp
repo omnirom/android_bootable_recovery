@@ -515,7 +515,7 @@ int TWPartitionManager::Mount_By_Path(string Path, bool Display_Error) {
 	bool found = false;
 	string Local_Path = TWFunc::Get_Root_Path(Path);
 
-	if (Local_Path == "/tmp" || Local_Path == "/" || Local_Path == "/etc")
+	if (Local_Path == "/tmp" || Local_Path == "/")
 		return true;
 
 	// Iterate through all partitions
@@ -799,7 +799,6 @@ int TWPartitionManager::Run_Backup(bool adbbackup) {
 	string Backup_Name, Backup_List, backup_path;
 	unsigned long long total_bytes = 0, free_space = 0;
 	TWPartition* storage = NULL;
-	std::vector<TWPartition*>::iterator subpart;
 	struct tm *t;
 	time_t seconds, total_start, total_stop;
 	size_t start_pos = 0, end_pos = 0;
@@ -2960,7 +2959,7 @@ void TWPartitionManager::read_uevent() {
 
 	int len = recv(uevent_pfd.fd, buf, sizeof(buf), MSG_DONTWAIT);
 	if (len == -1) {
-		LOGINFO("recv error on uevent\n");
+		LOGERR("recv error on uevent\n");
 		return;
 	}
 	/*int i = 0; // Print all uevent output for test /debug

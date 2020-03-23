@@ -90,7 +90,7 @@ static bool WriteStatusToFd(MinadbdCommandStatus status, int fd) {
 
 // Installs the package from FUSE. Returns the installation result and whether it should continue
 // waiting for new commands.
-static auto AdbInstallPackageHandler(RecoveryUI* ui, int* result) {
+static auto AdbInstallPackageHandler(int* result) {
   // How long (in seconds) we wait for the package path to be ready. It doesn't need to be too long
   // because the minadbd service has already issued an install command. FUSE_SIDELOAD_HOST_PATHNAME
   // will start to exist once the host connects and starts serving a package. Poll for its
@@ -106,11 +106,11 @@ static auto AdbInstallPackageHandler(RecoveryUI* ui, int* result) {
         continue;
       } else {
         should_continue = false;
-        ui->Print("\nTimed out waiting for fuse to be ready.\n\n");
+        // ui->Print("\nTimed out waiting for fuse to be ready.\n\n");
         break;
       }
     }
-    *result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, false, false, 0, ui);
+    *result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, false, false, 0);
     break;
   }
 
@@ -182,7 +182,7 @@ static bool HandleMessageFromMinadbd(int socket_fd,
 
 // TODO(xunchang) add a wrapper function and kill the minadbd service there.
 static void ListenAndExecuteMinadbdCommands(
-    RecoveryUI* ui, pid_t minadbd_pid, android::base::unique_fd&& socket_fd,
+    pid_t minadbd_pid, android::base::unique_fd&& socket_fd,
     const std::map<MinadbdCommand, CommandFunction>& command_map) {
   android::base::unique_fd epoll_fd(epoll_create1(O_CLOEXEC));
   if (epoll_fd == -1) {
@@ -206,8 +206,8 @@ static void ListenAndExecuteMinadbdCommands(
   constexpr int TIMEOUT_MILLIS = 300 * 1000;
   while (true) {
     // Reset the progress bar and the background image before each command.
-    ui->SetProgressType(RecoveryUI::EMPTY);
-    ui->SetBackground(RecoveryUI::NO_COMMAND);
+    // ui->SetProgressType(RecoveryUI::EMPTY);
+    // ui->SetBackground(RecoveryUI::NO_COMMAND);
 
     // Poll for the status change of the socket_fd, and handle the message if the fd is ready to
     // read.
@@ -272,8 +272,8 @@ static void ListenAndExecuteMinadbdCommands(
 //                               b11. exit the listening loop
 //
 static void CreateMinadbdServiceAndExecuteCommands(
-    RecoveryUI* ui, const std::map<MinadbdCommand, CommandFunction>& command_map,
-    bool rescue_mode) {
+    const std::map<MinadbdCommand, CommandFunction>& command_map,
+    bool rescue_mode, std::string install_file) {
   signal(SIGPIPE, SIG_IGN);
 
   android::base::unique_fd recovery_socket;
@@ -291,8 +291,10 @@ static void CreateMinadbdServiceAndExecuteCommands(
   if (child == 0) {
     recovery_socket.reset();
     std::vector<std::string> minadbd_commands = {
-      "/system/bin/minadbd",
-      "--socket_fd",
+      "/sbin/recovery",
+      "recovery",
+      "--adbd",
+      install_file,
       std::to_string(minadbd_socket.release()),
     };
     if (rescue_mode) {
@@ -312,7 +314,7 @@ static void CreateMinadbdServiceAndExecuteCommands(
     return;
   }
 
-  std::thread listener_thread(ListenAndExecuteMinadbdCommands, ui, child,
+  std::thread listener_thread(ListenAndExecuteMinadbdCommands, child,
                               std::move(recovery_socket), std::ref(command_map));
   if (listener_thread.joinable()) {
     listener_thread.join();
@@ -331,7 +333,9 @@ static void CreateMinadbdServiceAndExecuteCommands(
   signal(SIGPIPE, SIG_DFL);
 }
 
-int ApplyFromAdb(Device* device, bool rescue_mode, Device::BuiltinAction* reboot_action) {
+// int ApplyFromAdb(Device* device, bool rescue_mode, Device::BuiltinAction* reboot_action) {
+  int ApplyFromAdb(const char* install_file, Device::BuiltinAction* reboot_action) {
+
   // Save the usb state to restore after the sideload operation.
   std::string usb_state = android::base::GetProperty("sys.usb.state", "none");
   // Clean up state and stop adbd.
@@ -340,24 +344,25 @@ int ApplyFromAdb(Device* device, bool rescue_mode, Device::BuiltinAction* reboot
     return INSTALL_ERROR;
   }
 
-  RecoveryUI* ui = device->GetUI();
+  // RecoveryUI* ui = device->GetUI();
 
   int install_result = INSTALL_ERROR;
   std::map<MinadbdCommand, CommandFunction> command_map{
-    { MinadbdCommand::kInstall, std::bind(&AdbInstallPackageHandler, ui, &install_result) },
-    { MinadbdCommand::kRebootAndroid, std::bind(&AdbRebootHandler, MinadbdCommand::kRebootAndroid,
+  { MinadbdCommand::kInstall, std::bind(&AdbInstallPackageHandler, &install_result) },
+  { MinadbdCommand::kRebootAndroid, std::bind(&AdbRebootHandler, MinadbdCommand::kRebootAndroid,
+                                              &install_result, reboot_action) },
+  { MinadbdCommand::kRebootBootloader,
+    std::bind(&AdbRebootHandler, MinadbdCommand::kRebootBootloader, &install_result,
+              reboot_action) },
+  { MinadbdCommand::kRebootFastboot, std::bind(&AdbRebootHandler, MinadbdCommand::kRebootFastboot,
                                                 &install_result, reboot_action) },
-    { MinadbdCommand::kRebootBootloader,
-      std::bind(&AdbRebootHandler, MinadbdCommand::kRebootBootloader, &install_result,
-                reboot_action) },
-    { MinadbdCommand::kRebootFastboot, std::bind(&AdbRebootHandler, MinadbdCommand::kRebootFastboot,
-                                                 &install_result, reboot_action) },
-    { MinadbdCommand::kRebootRecovery, std::bind(&AdbRebootHandler, MinadbdCommand::kRebootRecovery,
-                                                 &install_result, reboot_action) },
-    { MinadbdCommand::kRebootRescue,
-      std::bind(&AdbRebootHandler, MinadbdCommand::kRebootRescue, &install_result, reboot_action) },
-  };
+  { MinadbdCommand::kRebootRecovery, std::bind(&AdbRebootHandler, MinadbdCommand::kRebootRecovery,
+                                                &install_result, reboot_action) },
+  { MinadbdCommand::kRebootRescue,
+    std::bind(&AdbRebootHandler, MinadbdCommand::kRebootRescue, &install_result, reboot_action) },
+};
 
+/*
   if (!rescue_mode) {
     ui->Print(
         "\n\nNow send the package you want to apply\n"
@@ -371,8 +376,8 @@ int ApplyFromAdb(Device* device, bool rescue_mode, Device::BuiltinAction* reboot
 
     ui->Print("\n\nWaiting for rescue commands...\n");
   }
-
-  CreateMinadbdServiceAndExecuteCommands(ui, command_map, rescue_mode);
+*/
+  CreateMinadbdServiceAndExecuteCommands(command_map, false, install_file);
 
   // Clean up before switching to the older state, for example setting the state
   // to none sets sys/class/android_usb/android0/enable to 0.

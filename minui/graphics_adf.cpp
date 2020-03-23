@@ -116,19 +116,6 @@ int MinuiBackendAdf::DeviceInit(adf_device* dev) {
 }
 
 GRSurface* MinuiBackendAdf::Init() {
-<<<<<<< HEAD
-#if defined(RECOVERY_ABGR)
-  format = DRM_FORMAT_ABGR8888;
-#elif defined(RECOVERY_BGRA)
-  format = DRM_FORMAT_BGRA8888;
-#elif defined(RECOVERY_RGBA)
-  format = DRM_FORMAT_RGBA8888;
-#elif defined(RECOVERY_RGBX)
-  format = DRM_FORMAT_RGBX8888;
-#else
-  format = DRM_FORMAT_RGB565;
-#endif
-=======
   PixelFormat pixel_format = gr_pixel_format();
   if (pixel_format == PixelFormat::ABGR) {
     format = DRM_FORMAT_ABGR8888;
@@ -139,7 +126,6 @@ GRSurface* MinuiBackendAdf::Init() {
   } else {
     format = DRM_FORMAT_RGB565;
   }
->>>>>>> android-10.0.0_r25
 
   adf_id_t* dev_ids = nullptr;
   ssize_t n_dev_ids = adf_devices(&dev_ids);
@@ -178,14 +164,8 @@ GRSurface* MinuiBackendAdf::Init() {
   return ret;
 }
 
-<<<<<<< HEAD
-void MinuiBackendAdf::Sync(__unused GRSurfaceAdf* surf) {
-#ifdef HAS_LIBSYNC
-  static constexpr unsigned int warningTimeout = 3000;
-=======
 void MinuiBackendAdf::Sync(GRSurfaceAdf* surf) {
   static constexpr unsigned int kWarningTimeout = 3000;
->>>>>>> android-10.0.0_r25
 
   if (surf == nullptr) return;
 
