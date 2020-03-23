@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Тушаал байхгүй"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Алдаа!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Аюулгүй байдлын шинэчлэлтийг суулгаж байна"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Андройд системийг ачаалах боломжгүй байна. Таны өгөгдөл эвдэрч болзошгүй. Хэрэв та энэ мессежийг үргэлжлүүлэн авах бол үйлдвэрээс гарсан төлөвийг ажиллуулж, энэ төхөөрөмжид хадгалсан хэрэглэгчийн бүх өгөгдлийг устгах шаардлагатай байж болзошгүй."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Дахин оролдох"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Үйлдвэрээс гарсан төлөвт"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Хэрэглэгчийн бүх өгөгдлийг арчих уу?\n\n ҮҮНИЙГ БУЦААХ БОЛОМЖГҮЙ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Цуцлах"</string>
 </resources>

@@ -1,0 +1,112 @@
+// Copyright (C) 2018 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_defaults {
+    name: "minadbd_defaults",
+
+    cflags: [
+        "-DADB_HOST=0",
+        "-Wall",
+        "-Werror",
+    ],
+
+    cpp_std: "experimental",
+
+    include_dirs: [
+        "system/core/adb",
+    ],
+}
+
+// `libminadbd_services` is analogous to the `libadbd_services` for regular `adbd`, but providing
+// the sideload service only.
+cc_library {
+    name: "libminadbd_services",
+    recovery_available: true,
+
+    defaults: [
+        "minadbd_defaults",
+    ],
+
+    srcs: [
+        "fuse_adb_provider.cpp",
+        "minadbd_services.cpp",
+    ],
+
+    shared_libs: [
+        "libadbd",
+        "libbase",
+        "libcrypto",
+        "libfusesideload",
+    ],
+}
+
+cc_library_headers {
+    name: "libminadbd_headers",
+    recovery_available: true,
+    // TODO create a include dir
+    export_include_dirs: [
+        ".",
+    ],
+}
+
+cc_binary {
+    name: "minadbd",
+    recovery: true,
+
+    defaults: [
+        "minadbd_defaults",
+    ],
+
+    srcs: [
+        "minadbd.cpp",
+    ],
+
+    shared_libs: [
+        "libadbd",
+        "libbase",
+        "libcrypto",
+        "libminadbd_services",
+    ],
+}
+
+cc_test {
+    name: "minadbd_test",
+    isolated: true,
+
+    defaults: [
+        "minadbd_defaults",
+    ],
+
+    srcs: [
+        "fuse_adb_provider_test.cpp",
+        "minadbd_services_test.cpp",
+    ],
+
+    static_libs: [
+        "libminadbd_services",
+        "libfusesideload",
+        "libadbd",
+        "libcrypto",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "liblog",
+    ],
+
+    test_suites: [
+        "device-tests",
+    ],
+}

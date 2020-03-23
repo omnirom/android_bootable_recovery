@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Žiadny príkaz"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Chyba!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Inštaluje sa bezpečnostná aktualizácia"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Systém Android sa nedá načítať. Vaše údaje môžu byť poškodené. Ak chcete získať túto správu a budete pokračovať, zrejme budete musieť obnoviť výrobné nastavenia a vymazať tak všetky údaje používateľa uložené v tomto zariadení."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Skúsiť znova"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Obnovenie výrobných nastavení"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Chcete vymazať všetky údaje používateľa?\n\n TÁTO AKCIA SA NEDÁ VRÁTIŤ SPÄŤ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Zrušiť"</string>
 </resources>

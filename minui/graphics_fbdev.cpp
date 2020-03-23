@@ -26,9 +26,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <memory>
+
+#include <android-base/unique_fd.h>
+
 #include "minui/minui.h"
 
-MinuiBackendFbdev::MinuiBackendFbdev() : gr_draw(nullptr), fb_fd(-1) {}
+std::unique_ptr<GRSurfaceFbdev> GRSurfaceFbdev::Create(size_t width, size_t height,
+                                                       size_t row_bytes, size_t pixel_bytes) {
+  // Cannot use std::make_unique to access non-public ctor.
+  return std::unique_ptr<GRSurfaceFbdev>(new GRSurfaceFbdev(width, height, row_bytes, pixel_bytes));
+}
 
 void MinuiBackendFbdev::Blank(bool blank) {
 #if defined(TW_NO_SCREEN_BLANK) && defined(TW_BRIGHTNESS_PATH) && defined(TW_MAX_BRIGHTNESS)
@@ -52,12 +60,12 @@ void MinuiBackendFbdev::Blank(bool blank) {
 #endif
 }
 
-void MinuiBackendFbdev::SetDisplayedFramebuffer(unsigned n) {
+void MinuiBackendFbdev::SetDisplayedFramebuffer(size_t n) {
   if (n > 1 || !double_buffered) return;
 
-  vi.yres_virtual = gr_framebuffer[0].height * 2;
-  vi.yoffset = n * gr_framebuffer[0].height;
-  vi.bits_per_pixel = gr_framebuffer[0].pixel_bytes * 8;
+  vi.yres_virtual = gr_framebuffer[0]->height * 2;
+  vi.yoffset = n * gr_framebuffer[0]->height;
+  vi.bits_per_pixel = gr_framebuffer[0]->pixel_bytes * 8;
   if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
     perror("active fb swap failed");
   }
@@ -65,7 +73,7 @@ void MinuiBackendFbdev::SetDisplayedFramebuffer(unsigned n) {
 }
 
 GRSurface* MinuiBackendFbdev::Init() {
-  int fd = open("/dev/graphics/fb0", O_RDWR);
+  android::base::unique_fd fd(open("/dev/graphics/fb0", O_RDWR | O_CLOEXEC));
   if (fd == -1) {
     perror("cannot open fb0");
     return nullptr;
@@ -74,13 +82,11 @@ GRSurface* MinuiBackendFbdev::Init() {
   fb_fix_screeninfo fi;
   if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
     perror("failed to get fb0 info");
-    close(fd);
     return nullptr;
   }
 
   if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
     perror("failed to get fb0 info");
-    close(fd);
     return nullptr;
   }
 
@@ -107,50 +113,41 @@ GRSurface* MinuiBackendFbdev::Init() {
   void* bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (bits == MAP_FAILED) {
     perror("failed to mmap framebuffer");
-    close(fd);
     return nullptr;
   }
 
   memset(bits, 0, fi.smem_len);
 
-  gr_framebuffer[0].width = vi.xres;
-  gr_framebuffer[0].height = vi.yres;
-  gr_framebuffer[0].row_bytes = fi.line_length;
-  gr_framebuffer[0].pixel_bytes = vi.bits_per_pixel / 8;
-  gr_framebuffer[0].data = static_cast<uint8_t*>(bits);
-  memset(gr_framebuffer[0].data, 0, gr_framebuffer[0].height * gr_framebuffer[0].row_bytes);
+  gr_framebuffer[0] =
+      GRSurfaceFbdev::Create(vi.xres, vi.yres, fi.line_length, vi.bits_per_pixel / 8);
+  gr_framebuffer[0]->buffer_ = static_cast<uint8_t*>(bits);
+  memset(gr_framebuffer[0]->buffer_, 0, gr_framebuffer[0]->height * gr_framebuffer[0]->row_bytes);
+
+  gr_framebuffer[1] =
+      GRSurfaceFbdev::Create(gr_framebuffer[0]->width, gr_framebuffer[0]->height,
+                             gr_framebuffer[0]->row_bytes, gr_framebuffer[0]->pixel_bytes);
 
   /* check if we can use double buffering */
   if (vi.yres * fi.line_length * 2 <= fi.smem_len) {
     double_buffered = true;
 
-    memcpy(gr_framebuffer + 1, gr_framebuffer, sizeof(GRSurface));
-    gr_framebuffer[1].data =
-        gr_framebuffer[0].data + gr_framebuffer[0].height * gr_framebuffer[0].row_bytes;
-
-    gr_draw = gr_framebuffer + 1;
-
+    gr_framebuffer[1]->buffer_ =
+        gr_framebuffer[0]->buffer_ + gr_framebuffer[0]->height * gr_framebuffer[0]->row_bytes;
   } else {
     double_buffered = false;
 
-    // Without double-buffering, we allocate RAM for a buffer to
-    // draw in, and then "flipping" the buffer consists of a
-    // memcpy from the buffer we allocated to the framebuffer.
-
-    gr_draw = static_cast<GRSurface*>(malloc(sizeof(GRSurface)));
-    memcpy(gr_draw, gr_framebuffer, sizeof(GRSurface));
-    gr_draw->data = static_cast<unsigned char*>(malloc(gr_draw->height * gr_draw->row_bytes));
-    if (!gr_draw->data) {
-      perror("failed to allocate in-memory surface");
-      return nullptr;
-    }
+    // Without double-buffering, we allocate RAM for a buffer to draw in, and then "flipping" the
+    // buffer consists of a memcpy from the buffer we allocated to the framebuffer.
+    memory_buffer.resize(gr_framebuffer[1]->height * gr_framebuffer[1]->row_bytes);
+    gr_framebuffer[1]->buffer_ = memory_buffer.data();
   }
 
-  memset(gr_draw->data, 0, gr_draw->height * gr_draw->row_bytes);
-  fb_fd = fd;
+  gr_draw = gr_framebuffer[1].get();
+  memset(gr_draw->buffer_, 0, gr_draw->height * gr_draw->row_bytes);
+  fb_fd = std::move(fd);
   SetDisplayedFramebuffer(0);
 
-  printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
+  printf("framebuffer: %d (%zu x %zu)\n", fb_fd.get(), gr_draw->width, gr_draw->height);
 
   Blank(true);
   Blank(false);
@@ -160,25 +157,13 @@ GRSurface* MinuiBackendFbdev::Init() {
 
 GRSurface* MinuiBackendFbdev::Flip() {
   if (double_buffered) {
-    // Change gr_draw to point to the buffer currently displayed,
-    // then flip the driver so we're displaying the other buffer
-    // instead.
-    gr_draw = gr_framebuffer + displayed_buffer;
+    // Change gr_draw to point to the buffer currently displayed, then flip the driver so we're
+    // displaying the other buffer instead.
+    gr_draw = gr_framebuffer[displayed_buffer].get();
     SetDisplayedFramebuffer(1 - displayed_buffer);
   } else {
     // Copy from the in-memory surface to the framebuffer.
-    memcpy(gr_framebuffer[0].data, gr_draw->data, gr_draw->height * gr_draw->row_bytes);
+    memcpy(gr_framebuffer[0]->buffer_, gr_draw->buffer_, gr_draw->height * gr_draw->row_bytes);
   }
   return gr_draw;
-}
-
-MinuiBackendFbdev::~MinuiBackendFbdev() {
-  close(fb_fd);
-  fb_fd = -1;
-
-  if (!double_buffered && gr_draw) {
-    free(gr_draw->data);
-    free(gr_draw);
-  }
-  gr_draw = nullptr;
 }

@@ -24,13 +24,15 @@ cc_binary {
         "-Werror",
     ],
 
-    static_libs: [
-        "libbootloader_message",
-        "libotautil",
-        "libfs_mgr",
+    shared_libs: [
         "libbase",
+        "libbootloader_message",
         "libcutils",
-        "liblog",
+        "libfs_mgr",
+    ],
+
+    static_libs: [
+        "libotautil",
     ],
 
     init_rc: [

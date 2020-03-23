@@ -21,19 +21,19 @@
 
 #include <string>
 
+#include <android-base/unique_fd.h>
 #include <gtest/gtest.h>
 
 #include "adb_io.h"
 #include "fuse_adb_provider.h"
 
 TEST(fuse_adb_provider, read_block_adb) {
-  adb_data data = {};
-  int sockets[2];
+  android::base::unique_fd device_socket;
+  android::base::unique_fd host_socket;
 
-  ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, sockets));
-  data.sfd = sockets[0];
+  ASSERT_TRUE(android::base::Socketpair(AF_UNIX, SOCK_STREAM, 0, &device_socket, &host_socket));
+  FuseAdbDataProvider data(std::move(device_socket), 0, 0);
 
-  int host_socket = sockets[1];
   fcntl(host_socket, F_SETFL, O_NONBLOCK);
 
   const char expected_data[] = "foobar";
@@ -46,8 +46,8 @@ TEST(fuse_adb_provider, read_block_adb) {
 
   uint32_t block = 1234U;
   const char expected_block[] = "00001234";
-  ASSERT_EQ(0, read_block_adb(data, block, reinterpret_cast<uint8_t*>(block_data),
-                              sizeof(expected_data) - 1));
+  ASSERT_TRUE(data.ReadBlockAlignedData(reinterpret_cast<uint8_t*>(block_data),
+                                        sizeof(expected_data) - 1, block));
 
   // Check that read_block_adb requested the right block.
   char block_req[sizeof(expected_block)] = {};
@@ -65,26 +65,21 @@ TEST(fuse_adb_provider, read_block_adb) {
   errno = 0;
   ASSERT_EQ(-1, read(host_socket, &tmp, 1));
   ASSERT_EQ(EWOULDBLOCK, errno);
-
-  close(sockets[0]);
-  close(sockets[1]);
 }
 
 TEST(fuse_adb_provider, read_block_adb_fail_write) {
-  adb_data data = {};
-  int sockets[2];
+  android::base::unique_fd device_socket;
+  android::base::unique_fd host_socket;
 
-  ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, sockets));
-  data.sfd = sockets[0];
+  ASSERT_TRUE(android::base::Socketpair(AF_UNIX, SOCK_STREAM, 0, &device_socket, &host_socket));
+  FuseAdbDataProvider data(std::move(device_socket), 0, 0);
 
-  ASSERT_EQ(0, close(sockets[1]));
+  host_socket.reset();
 
   // write(2) raises SIGPIPE since the reading end has been closed. Ignore the signal to avoid
   // failing the test.
   signal(SIGPIPE, SIG_IGN);
 
   char buf[1];
-  ASSERT_EQ(-EIO, read_block_adb(data, 0, reinterpret_cast<uint8_t*>(buf), 1));
-
-  close(sockets[0]);
+  ASSERT_FALSE(data.ReadBlockAlignedData(reinterpret_cast<uint8_t*>(buf), 1, 0));
 }

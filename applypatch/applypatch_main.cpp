@@ -16,13 +16,10 @@
 
 #include "applypatch_modes.h"
 
-// This program (applypatch) applies binary patches to files in a way that
-// is safe (the original file is not touched until we have the desired
-// replacement for it) and idempotent (it's okay to run this program
-// multiple times).
-//
-// See the comments to applypatch_modes() function.
+#include <android-base/logging.h>
 
+// See the comments for applypatch() function.
 int main(int argc, char** argv) {
-    return applypatch_modes(argc, const_cast<const char**>(argv));
+  android::base::InitLogging(argv);
+  return applypatch_modes(argc, argv);
 }

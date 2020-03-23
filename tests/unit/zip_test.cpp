@@ -21,13 +21,16 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/test_utils.h>
 #include <gtest/gtest.h>
+<<<<<<< HEAD
 #include <otautil/SysUtil.h>
 #include <otautil/ZipUtil.h>
+=======
+>>>>>>> android-10.0.0_r25
 #include <ziparchive/zip_archive.h>
 
 #include "common/test_constants.h"
+#include "otautil/sysutil.h"
 
 TEST(ZipTest, ExtractPackageRecursive) {
   std::string zip_path = from_testdata_base("ziptest_valid.zip");

@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"କୌଣସି କମାଣ୍ଡ ନାହିଁ"</string>
     <string name="recovery_error" msgid="5748178989622716736">"ତ୍ରୁଟି!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"ସୁରକ୍ଷା ଅପ୍‌ଡେଟ୍‌ ଇନ୍‌ଷ୍ଟଲ୍‌ କରୁଛି"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android ସିଷ୍ଟମ୍‍ ଲୋଡ୍‍ କରାଯାଇପାରିବ ନାହିଁ। ଆପଣଙ୍କ ଡାଟା ହୁଏତ ତ୍ରୁଟି ରହିଥାଇ ପାରେ। ଯଦି ଆପଣ ଏହି ମେସେଜ୍‍ ପାଇବା ଜାରି ରଖନ୍ତି, ତେବେ ଆପଣଙ୍କୁ ଫ୍ୟାକ୍ଟେରୀ ଡାଟା ରିସେଟ୍‍ କରିବାକୁ ହେବ ଏବଂ ଏହି ଡିଭାଇସ୍‍‍ରେ ଷ୍ଟୋର୍‍ ହୋଇଥିବା ସମସ୍ତ ଡାଟା ଇରେଜ୍‍ କରନ୍ତୁ।"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ଫ୍ୟାକ୍ଟୋରୀ ଡାଟା ରିସେଟ୍‌"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"ସମସ୍ଯ ଉପଯୋଗକର୍ତ୍ତା ଡାଟା ୱାଇପ୍‍ କରିବେ?\n\n ଏହା ଫେରାଇ ନିଆଯାଇପାରିବ ନାହିଁ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"ବାତିଲ୍‌ କରନ୍ତୁ"</string>
 </resources>

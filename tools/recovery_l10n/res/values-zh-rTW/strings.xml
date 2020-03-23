@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"沒有指令"</string>
     <string name="recovery_error" msgid="5748178989622716736">"錯誤！"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"正在安裝安全性更新"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"無法載入 Android 系統。你的資料可能已經損毀。如果系統持續顯示這則訊息，你可能必須恢復原廠設定，並清除裝置上儲存的所有使用者資料。"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"再試一次"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"恢復原廠設定"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"要抹除所有使用者資料嗎？\n\n請注意，一旦抹除就無法復原！"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"取消"</string>
 </resources>

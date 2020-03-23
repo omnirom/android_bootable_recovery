@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
+<<<<<<< HEAD
 #ifndef RECOVERY_COMMON_H
 #define RECOVERY_COMMON_H
 
 #include <stdio.h>
 #include <stdarg.h>
+=======
+#pragma once
+
+>>>>>>> android-10.0.0_r25
 #include <string>
 
 #ifdef __cplusplus
@@ -45,10 +50,16 @@ extern "C" {
 //static constexpr int kRecoveryApiVersion = 3;
 
 class RecoveryUI;
+struct selabel_handle;
 
+extern struct selabel_handle* sehandle;
 extern RecoveryUI* ui;
+<<<<<<< HEAD
 extern bool modified_flash;
 //typedef struct fstab_rec Volume;
+=======
+extern bool has_cache;
+>>>>>>> android-10.0.0_r25
 
 // The current stage, e.g. "1/2".
 extern std::string stage;
@@ -56,6 +67,7 @@ extern std::string stage;
 // The reason argument provided in "--reason=".
 extern const char* reason;
 
+<<<<<<< HEAD
 // fopen a file, mounting volumes and making parent dirs as necessary.
 FILE* fopen_path(const char *path, const char *mode);
 
@@ -70,3 +82,6 @@ void ui_print(const char* format, ...);
 bool reboot(const std::string& command);
 
 #endif  // RECOVERY_COMMON_H
+=======
+bool is_ro_debuggable();
+>>>>>>> android-10.0.0_r25

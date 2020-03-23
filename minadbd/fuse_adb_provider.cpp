@@ -18,39 +18,22 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-
-#include <functional>
 
 #include "adb.h"
 #include "adb_io.h"
-#include "fuse_sideload.h"
 
-int read_block_adb(const adb_data& ad, uint32_t block, uint8_t* buffer, uint32_t fetch_size) {
-  if (!WriteFdFmt(ad.sfd, "%08u", block)) {
+bool FuseAdbDataProvider::ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
+                                               uint32_t start_block) const {
+  if (!WriteFdFmt(fd_, "%08u", start_block)) {
     fprintf(stderr, "failed to write to adb host: %s\n", strerror(errno));
-    return -EIO;
+    return false;
   }
 
-  if (!ReadFdExactly(ad.sfd, buffer, fetch_size)) {
+  if (!ReadFdExactly(fd_, buffer, fetch_size)) {
     fprintf(stderr, "failed to read from adb host: %s\n", strerror(errno));
-    return -EIO;
+    return false;
   }
 
-  return 0;
-}
-
-int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size) {
-  adb_data ad;
-  ad.sfd = sfd;
-  ad.file_size = file_size;
-  ad.block_size = block_size;
-
-  provider_vtab vtab;
-  vtab.read_block = std::bind(read_block_adb, ad, std::placeholders::_1, std::placeholders::_2,
-                              std::placeholders::_3);
-  vtab.close = [&ad]() { WriteFdExactly(ad.sfd, "DONEDONE"); };
-
-  return run_fuse_sideload(vtab, file_size, block_size);
+  return true;
 }

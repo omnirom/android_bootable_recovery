@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"אין פקודה"</string>
     <string name="recovery_error" msgid="5748178989622716736">"שגיאה!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"מתקין עדכון אבטחה"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"‏לא ניתן לטעון את מערכת Android. ייתכן שהנתונים שלך פגומים. אם הודעה זו תופיע שוב, ייתכן שיהיה עליך לבצע איפוס לנתוני היצרן ולמחוק את כל נתוני המשתמש ששמורים במכשיר זה."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ניסיון נוסף"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"איפוס לנתוני היצרן"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"לאפס את כל נתוני המשתמש?\n\n לא ניתן לבטל פעולה זו!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"ביטול"</string>
 </resources>

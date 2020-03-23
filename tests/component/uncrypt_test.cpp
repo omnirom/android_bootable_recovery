@@ -26,7 +26,6 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/properties.h>
-#include <android-base/test_utils.h>
 #include <android-base/unique_fd.h>
 #include <bootloader_message/bootloader_message.h>
 #include <gtest/gtest.h>

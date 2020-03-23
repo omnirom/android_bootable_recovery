@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"কোনো আদেশ নাই"</string>
     <string name="recovery_error" msgid="5748178989622716736">"ত্ৰুটি!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"সুৰক্ষা আপডেইট ইনষ্টল কৰি থকা হৈছে"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android ছিষ্টেম ল\'ড কৰিব নোৱাৰি। আপোনাৰ ডেটাত কিবা আসোঁৱাহ থকা যেন লাগিছে। আপুনি যদি এই বাৰ্তাটো পায়েই থাকে, আপুনি নিজৰ ডিভাইচটো ফেক্টৰী ডেটা ৰিছেট কৰি সেইটোত থকা ব্যৱহাৰকাৰীৰ সকলো ডেটা মচিব লগা হ\'ব পাৰে।"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"আকৌ চেষ্টা কৰক"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ফেক্টৰী ডেটা ৰিছেট"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"ব্যৱহাৰকাৰীৰ সকলো ডেটা মচিবনে?\n\n এইটো কৰাৰ পিছত আনডু কৰিব নোৱাৰি!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"বাতিল কৰক"</string>
 </resources>

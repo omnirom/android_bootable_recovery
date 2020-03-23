@@ -36,4 +36,36 @@
        system is installing a security update. [CHAR LIMIT=60] -->
   <string name="recovery_installing_security">Installing security update</string>
 
+  <!-- Displayed on the screen beneath the recovery titles when the
+       device enters the recovery mode and prompts a data wipe. [CHAR
+       LIMIT=400] -->
+  <string name="recovery_wipe_data_menu_header">Cannot load Android
+    system. Your data may be corrupt. If you continue to get this
+    message, you may need to perform a factory data reset and erase
+    all user data stored on this device.</string>
+
+  <!-- Displayed on the screen as the first element of the menu to
+       prompt the wipe data, beneath the menu header. The menu shows
+       up when the device enters the recovery mode and prompts a data
+       wipe. [CHAR LIMIT=60] -->
+  <string name="recovery_try_again">Try again</string>
+
+  <!-- Displayed on the screen as the second element of the menu to
+       prompt the wipe data, beneath the menu header. The menu shows
+       up when the device enters the recovery mode and prompts a data
+       wipe. [CHAR LIMIT=60] -->
+  <string name="recovery_factory_data_reset">Factory data reset</string>
+
+  <!-- Displayed on the screen beneath the recovery titles when users
+       select "Factory data reset" in the previous menu. [CHAR
+       LIMIT=150] -->
+  <string name="recovery_wipe_data_confirmation">Wipe all user data?\n\n
+    THIS CAN NOT BE UNDONE!</string>
+
+  <!-- Displayed on the screen as the first element of the wipe data
+       confirmation menu. The menu shows up when users select
+       "Factory data reset" when prompted to wipe data. [CHAR
+       LIMIT=60] -->
+  <string name="recovery_cancel_wipe_data">Cancel</string>
+
 </resources>

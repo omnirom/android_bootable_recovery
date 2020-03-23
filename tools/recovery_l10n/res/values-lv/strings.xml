@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Nav nevienas komandas"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Kļūda!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Notiek drošības atjauninājuma instalēšana"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Nevar ielādēt Android sistēmu. Jūsu dati var būt bojāti. Ja šis ziņojums tiek rādīts atkārtoti, iespējams, jums ir jāveic rūpnīcas datu atiestatīšana un jādzēš visi šajā ierīcē saglabātie lietotāja dati."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Mēģināt vēlreiz"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Rūpnīcas datu atiestatīšana"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Vai dzēst visus lietotāja datus?\n\n ŠO DARBĪBU NEVAR ATSAUKT!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Atcelt"</string>
 </resources>

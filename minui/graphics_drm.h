@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef _GRAPHICS_DRM_H_
-#define _GRAPHICS_DRM_H_
+#pragma once
 
+#include <stddef.h>
 #include <stdint.h>
+
+#include <memory>
 
 #include <xf86drmMode.h>
 
@@ -25,34 +27,48 @@
 #include "minui/minui.h"
 
 class GRSurfaceDrm : public GRSurface {
- private:
-  uint32_t fb_id;
-  uint32_t handle;
+ public:
+  ~GRSurfaceDrm() override;
 
+  // Creates a GRSurfaceDrm instance.
+  static std::unique_ptr<GRSurfaceDrm> Create(int drm_fd, int width, int height);
+
+  uint8_t* data() override {
+    return mmapped_buffer_;
+  }
+
+ private:
   friend class MinuiBackendDrm;
+
+  GRSurfaceDrm(size_t width, size_t height, size_t row_bytes, size_t pixel_bytes, int drm_fd,
+               uint32_t handle)
+      : GRSurface(width, height, row_bytes, pixel_bytes), drm_fd_(drm_fd), handle(handle) {}
+
+  const int drm_fd_;
+
+  uint32_t fb_id{ 0 };
+  uint32_t handle{ 0 };
+  uint8_t* mmapped_buffer_{ nullptr };
 };
 
 class MinuiBackendDrm : public MinuiBackend {
  public:
+  MinuiBackendDrm() = default;
+  ~MinuiBackendDrm() override;
+
   GRSurface* Init() override;
   GRSurface* Flip() override;
   void Blank(bool) override;
-  ~MinuiBackendDrm() override;
-  MinuiBackendDrm();
 
  private:
   void DrmDisableCrtc(int drm_fd, drmModeCrtc* crtc);
-  void DrmEnableCrtc(int drm_fd, drmModeCrtc* crtc, GRSurfaceDrm* surface);
-  GRSurfaceDrm* DrmCreateSurface(int width, int height);
-  void DrmDestroySurface(GRSurfaceDrm* surface);
+  bool DrmEnableCrtc(int drm_fd, drmModeCrtc* crtc, const std::unique_ptr<GRSurfaceDrm>& surface);
   void DisableNonMainCrtcs(int fd, drmModeRes* resources, drmModeCrtc* main_crtc);
   drmModeConnector* FindMainMonitor(int fd, drmModeRes* resources, uint32_t* mode_index);
 
-  GRSurfaceDrm* GRSurfaceDrms[2];
-  int current_buffer;
-  drmModeCrtc* main_monitor_crtc;
-  drmModeConnector* main_monitor_connector;
-  int drm_fd;
+  std::unique_ptr<GRSurfaceDrm> GRSurfaceDrms[2];
+  int current_buffer{ 0 };
+  drmModeCrtc* main_monitor_crtc{ nullptr };
+  drmModeConnector* main_monitor_connector{ nullptr };
+  int drm_fd{ -1 };
 };
-
-#endif  // _GRAPHICS_DRM_H_

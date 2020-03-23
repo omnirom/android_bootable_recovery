@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Няма каманды"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Памылка"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Усталёўка абнаўлення сістэмы бяспекі"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Не ўдалося загрузіць сістэму Android. Магчыма, вашы даныя пашкоджаны. Калі вы зноў убачыце гэта паведамленне, скіньце налады прылады да заводскіх значэнняў і сатрыце ўсе карыстальніцкія даныя, якія на ёй захоўваюцца."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Паўтарыць спробу"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Скінуць да заводскіх налад"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Ачысціць усе карыстальніцкія даныя?\n\n ГЭТА ДЗЕЯННЕ НЕЛЬГА АДРАБІЦЬ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Скасаваць"</string>
 </resources>

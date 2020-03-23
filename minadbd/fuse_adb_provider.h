@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef __FUSE_ADB_PROVIDER_H
-#define __FUSE_ADB_PROVIDER_H
+#pragma once
 
 #include <stdint.h>
 
-struct adb_data {
-  int sfd;  // file descriptor for the adb channel
+#include "fuse_provider.h"
 
-  uint64_t file_size;
-  uint32_t block_size;
+// This class reads data from adb server.
+class FuseAdbDataProvider : public FuseDataProvider {
+ public:
+  FuseAdbDataProvider(int fd, uint64_t file_size, uint32_t block_size)
+      : FuseDataProvider(file_size, block_size), fd_(fd) {}
+
+  bool ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch_size,
+                            uint32_t start_block) const override;
+
+ private:
+  // The underlying source to read data from (i.e. the one that talks to the host).
+  int fd_;
 };
-
-int read_block_adb(const adb_data& ad, uint32_t block, uint8_t* buffer, uint32_t fetch_size);
-int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size);
-
-#endif

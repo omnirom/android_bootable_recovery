@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Нема наредба"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Грешка!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Се инсталира безбедносно ажурирање"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Не може да се вчита системот Android. Можно е податоците да се оштетени. Ако и понатаму ја примате поракава, можеби ќе треба да извршите ресетирање на фабрички податоци и да ги избришете сите кориснички податоци меморирани на уредов."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Обиди се пак"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Ресетирање на фабрички податоци"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Да се избришат ли сите кориснички податоци?\n\n ОВА НЕ МОЖЕ ДА СЕ ВРАТИ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Откажи"</string>
 </resources>

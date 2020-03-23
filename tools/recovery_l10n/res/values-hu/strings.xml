@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Nincs parancs"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Hiba!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Biztonsági frissítés telepítése"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Nem sikerült az Android rendszer betöltése. Az adatok sérültek lehetnek. Ha újra megjelenik ez az üzenet, előfordulhat, hogy vissza kell állítania az eszköz gyári adatait, és törölnie kell az eszközön tárolt összes felhasználói adatot."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Újra"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Gyári adatok visszaállítása"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Törli az összes felhasználói adatot?\n\n A MŰVELET NEM VONHATÓ VISSZA."</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Mégse"</string>
 </resources>

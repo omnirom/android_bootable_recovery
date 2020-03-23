@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Nenhum comando"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Erro!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"A instalar atualização de segurança"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Não é possível carregar o sistema Android. Os seus dados podem estar danificados. Se continuar a receber esta mensagem, pode ter de efetuar uma reposição de dados de fábrica e apagar todos os dados do utilizador armazenados neste dispositivo."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Tentar novamente"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Reposição de dados de fábrica"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Pretende limpar todos os dados do utilizador?\n\n NÃO É POSSÍVEL ANULAR ESTA AÇÃO."</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Cancelar"</string>
 </resources>

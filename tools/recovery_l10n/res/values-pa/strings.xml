@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"ਕੋਈ ਆਦੇਸ਼ ਨਹੀਂ"</string>
     <string name="recovery_error" msgid="5748178989622716736">"ਅਸ਼ੁੱਧੀ!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"ਸੁਰੱਖਿਆ ਅੱਪਡੇਟ ਸਥਾਪਤ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android ਸਿਸਟਮ ਨੂੰ ਲੋਡ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ। ਸ਼ਾਇਦ ਤੁਹਾਡਾ ਡਾਟਾ ਖਰਾਬ ਹੈ। ਜੇਕਰ ਤੁਹਾਨੂੰ ਇਹ ਸੁਨੇਹਾ ਪ੍ਰਾਪਤ ਹੋਣਾ ਜਾਰੀ ਰਹਿੰਦਾ ਹੈ, ਤਾਂ ਸ਼ਾਇਦ ਤੁਹਾਨੂੰ ਫੈਕਟਰੀ ਡਾਟਾ ਰੀਸੈੱਟ ਕਰਨਾ ਪਵੇ ਅਤੇ ਇਸ ਡੀਵਾਈਸ \'ਤੇ ਸਟੋਰ ਕੀਤੇ ਸਾਰੇ ਵਰਤੋਂਕਾਰ ਡਾਟੇ ਨੂੰ ਮਿਟਾਉਣਾ ਪਵੇ।"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ਫੈਕਟਰੀ ਡਾਟਾ ਰੀਸੈੱਟ ਕਰੋ"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"ਕੀ ਸਾਰਾ ਵਰਤੋਂਕਾਰ ਡਾਟਾ ਸਾਫ਼ ਕਰਨਾ ਹੈ?\n\n ਇਸਨੂੰ ਅਣਕੀਤਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"ਰੱਦ ਕਰੋ"</string>
 </resources>

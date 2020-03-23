@@ -1,0 +1,17 @@
+{
+    "__": "*** Generated using tools/gen_update_config.py ***",
+    "ab_config": {
+        "verify_payload_metadata": true,
+        "force_switch_slot": false,
+        "property_files": [
+            {
+                "filename": "payload.bin",
+                "offset": 195,
+                "size": 8
+            }
+        ]
+    },
+    "ab_install_type": "NON_STREAMING",
+    "name": "S ota_002_package",
+    "url": "file:///data/my-sample-ota-builds-dir/ota_003_package.zip"
+}

@@ -23,35 +23,33 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/statfs.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include <android-base/unique_fd.h>
 #include <openssl/sha.h>
 
 #include "bmlutils/bmlutils.h"
 #include "mtdutils/mtdutils.h"
 
 #include "edify/expr.h"
-#include "otafault/ota_io.h"
-#include "otautil/cache_location.h"
+#include "otautil/paths.h"
 #include "otautil/print_sha1.h"
 
-static int LoadPartitionContents(const std::string& filename, FileContents* file);
-static size_t FileSink(const unsigned char* data, size_t len, int fd);
-static int GenerateTarget(const FileContents& source_file, const std::unique_ptr<Value>& patch,
-                          const std::string& target_filename,
-                          const uint8_t target_sha1[SHA_DIGEST_LENGTH], const Value* bonus_data);
+using namespace std::string_literals;
 
+<<<<<<< HEAD
 static bool mtd_partitions_scanned = false;
 
 // Read a file into memory; store the file contents and associated metadata in *file.
@@ -64,30 +62,29 @@ int LoadFileContents(const char* filename, FileContents* file) {
     strncmp(filename, "BML:", 4) == 0) {
     return LoadPartitionContents(filename, file);
   }
+=======
+static bool GenerateTarget(const Partition& target, const FileContents& source_file,
+                           const Value& patch, const Value* bonus_data);
+>>>>>>> android-10.0.0_r25
 
-  struct stat sb;
-  if (stat(filename, &sb) == -1) {
-    printf("failed to stat \"%s\": %s\n", filename, strerror(errno));
-    return -1;
+bool LoadFileContents(const std::string& filename, FileContents* file) {
+  // No longer allow loading contents from eMMC partitions.
+  if (android::base::StartsWith(filename, "EMMC:")) {
+    return false;
   }
 
-  std::vector<unsigned char> data(sb.st_size);
-  unique_file f(ota_fopen(filename, "rb"));
-  if (!f) {
-    printf("failed to open \"%s\": %s\n", filename, strerror(errno));
-    return -1;
+  std::string data;
+  if (!android::base::ReadFileToString(filename, &data)) {
+    PLOG(ERROR) << "Failed to read \"" << filename << "\"";
+    return false;
   }
 
-  size_t bytes_read = ota_fread(data.data(), 1, data.size(), f.get());
-  if (bytes_read != data.size()) {
-    printf("short read of \"%s\" (%zu bytes of %zu)\n", filename, bytes_read, data.size());
-    return -1;
-  }
-  file->data = std::move(data);
+  file->data = std::vector<unsigned char>(data.begin(), data.end());
   SHA1(file->data.data(), file->data.size(), file->sha1);
-  return 0;
+  return true;
 }
 
+<<<<<<< HEAD
 // Load the contents of an EMMC partition into the provided
 // FileContents.  filename should be a string of the form
 // "EMMC:<partition_device>:...".  The smallest size_n bytes for
@@ -142,30 +139,32 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
   if (!dev) {
     printf("failed to open emmc partition \"%s\": %s\n", partition, strerror(errno));
     return -1;
+=======
+// Reads the contents of a Partition to the given FileContents buffer.
+static bool ReadPartitionToBuffer(const Partition& partition, FileContents* out,
+                                  bool check_backup) {
+  uint8_t expected_sha1[SHA_DIGEST_LENGTH];
+  if (ParseSha1(partition.hash, expected_sha1) != 0) {
+    LOG(ERROR) << "Failed to parse target hash \"" << partition.hash << "\"";
+    return false;
+>>>>>>> android-10.0.0_r25
   }
 
-  SHA_CTX sha_ctx;
-  SHA1_Init(&sha_ctx);
-
-  // Allocate enough memory to hold the largest size.
-  std::vector<unsigned char> buffer(pairs[pair_count - 1].first);
-  unsigned char* buffer_ptr = buffer.data();
-  size_t buffer_size = 0;  // # bytes read so far
-  bool found = false;
-
-  for (const auto& pair : pairs) {
-    size_t current_size = pair.first;
-    const std::string& current_sha1 = pair.second;
-
-    // Read enough additional bytes to get us up to the next size. (Again,
-    // we're trying the possibilities in order of increasing size).
-    size_t next = current_size - buffer_size;
-    if (next > 0) {
-      size_t read = ota_fread(buffer_ptr, 1, next, dev.get());
-      if (next != read) {
-        printf("short read (%zu bytes of %zu) for partition \"%s\"\n", read, next, partition);
-        return -1;
+  android::base::unique_fd dev(open(partition.name.c_str(), O_RDONLY));
+  if (dev == -1) {
+    PLOG(ERROR) << "Failed to open eMMC partition \"" << partition << "\"";
+  } else {
+    std::vector<unsigned char> buffer(partition.size);
+    if (!android::base::ReadFully(dev, buffer.data(), buffer.size())) {
+      PLOG(ERROR) << "Failed to read " << buffer.size() << " bytes of data for partition "
+                  << partition;
+    } else {
+      SHA1(buffer.data(), buffer.size(), out->sha1);
+      if (memcmp(out->sha1, expected_sha1, SHA_DIGEST_LENGTH) == 0) {
+        out->data = std::move(buffer);
+        return true;
       }
+<<<<<<< HEAD
       SHA1_Update(&sha_ctx, buffer_ptr, read);
       buffer_size += read;
       buffer_ptr += read;
@@ -197,47 +196,39 @@ static int LoadPartitionContents(const std::string& filename, FileContents* file
       printf("partition read matched size %zu SHA-1 %s\n", current_size, current_sha1.c_str());
       found = true;
       break;
+=======
+>>>>>>> android-10.0.0_r25
     }
   }
 
-  if (!found) {
-    // Ran off the end of the list of (size, sha1) pairs without finding a match.
-    printf("contents of partition \"%s\" didn't match %s\n", partition, filename.c_str());
-    return -1;
+  if (!check_backup) {
+    LOG(ERROR) << "Partition contents don't have the expected checksum";
+    return false;
   }
 
-  SHA1_Final(file->sha1, &sha_ctx);
+  if (LoadFileContents(Paths::Get().cache_temp_source(), out) &&
+      memcmp(out->sha1, expected_sha1, SHA_DIGEST_LENGTH) == 0) {
+    return true;
+  }
 
-  buffer.resize(buffer_size);
-  file->data = std::move(buffer);
-
-  return 0;
+  LOG(ERROR) << "Both of partition contents and backup don't have the expected checksum";
+  return false;
 }
 
-// Save the contents of the given FileContents object under the given
-// filename.  Return 0 on success.
-int SaveFileContents(const char* filename, const FileContents* file) {
-  unique_fd fd(ota_open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
+bool SaveFileContents(const std::string& filename, const FileContents* file) {
+  android::base::unique_fd fd(
+      open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR));
   if (fd == -1) {
-    printf("failed to open \"%s\" for write: %s\n", filename, strerror(errno));
-    return -1;
+    PLOG(ERROR) << "Failed to open \"" << filename << "\" for write";
+    return false;
   }
 
-  size_t bytes_written = FileSink(file->data.data(), file->data.size(), fd);
-  if (bytes_written != file->data.size()) {
-    printf("short write of \"%s\" (%zd bytes of %zu): %s\n", filename, bytes_written,
-           file->data.size(), strerror(errno));
-    return -1;
-  }
-  if (ota_fsync(fd) != 0) {
-    printf("fsync of \"%s\" failed: %s\n", filename, strerror(errno));
-    return -1;
-  }
-  if (ota_close(fd) != 0) {
-    printf("close of \"%s\" failed: %s\n", filename, strerror(errno));
-    return -1;
+  if (!android::base::WriteFully(fd, file->data.data(), file->data.size())) {
+    PLOG(ERROR) << "Failed to write " << file->data.size() << " bytes of data to " << filename;
+    return false;
   }
 
+<<<<<<< HEAD
   return 0;
 }
 
@@ -264,10 +255,78 @@ int WriteToPartition(const unsigned char* data, size_t len, const std::string& t
     } else {
         printf("WriteToPartition called with bad target (%s)\n", target.c_str());
         return -1;
+=======
+  if (fsync(fd) != 0) {
+    PLOG(ERROR) << "Failed to fsync \"" << filename << "\"";
+    return false;
+  }
+
+  if (close(fd.release()) != 0) {
+    PLOG(ERROR) << "Failed to close \"" << filename << "\"";
+    return false;
+  }
+
+  return true;
+}
+
+// Writes a memory buffer to 'target' Partition.
+static bool WriteBufferToPartition(const FileContents& file_contents, const Partition& partition) {
+  const unsigned char* data = file_contents.data.data();
+  size_t len = file_contents.data.size();
+  size_t start = 0;
+  bool success = false;
+  for (size_t attempt = 0; attempt < 2; ++attempt) {
+    android::base::unique_fd fd(open(partition.name.c_str(), O_RDWR));
+    if (fd == -1) {
+      PLOG(ERROR) << "Failed to open \"" << partition << "\"";
+      return false;
+    }
+
+    if (TEMP_FAILURE_RETRY(lseek(fd, start, SEEK_SET)) == -1) {
+      PLOG(ERROR) << "Failed to seek to " << start << " on \"" << partition << "\"";
+      return false;
+    }
+
+    if (!android::base::WriteFully(fd, data + start, len - start)) {
+      PLOG(ERROR) << "Failed to write " << len - start << " bytes to \"" << partition << "\"";
+      return false;
+    }
+
+    if (fsync(fd) != 0) {
+      PLOG(ERROR) << "Failed to sync \"" << partition << "\"";
+      return false;
+    }
+    if (close(fd.release()) != 0) {
+      PLOG(ERROR) << "Failed to close \"" << partition << "\"";
+      return false;
+    }
+
+    fd.reset(open(partition.name.c_str(), O_RDONLY));
+    if (fd == -1) {
+      PLOG(ERROR) << "Failed to reopen \"" << partition << "\" for verification";
+      return false;
+    }
+
+    // Drop caches so our subsequent verification read won't just be reading the cache.
+    sync();
+    std::string drop_cache = "/proc/sys/vm/drop_caches";
+    if (!android::base::WriteStringToFile("3\n", drop_cache)) {
+      PLOG(ERROR) << "Failed to write to " << drop_cache;
+    } else {
+      LOG(INFO) << "  caches dropped";
+    }
+    sleep(1);
+
+    // Verify.
+    if (TEMP_FAILURE_RETRY(lseek(fd, 0, SEEK_SET)) == -1) {
+      PLOG(ERROR) << "Failed to seek to 0 on " << partition;
+      return false;
+>>>>>>> android-10.0.0_r25
     }
 
     const char* partition = pieces[1].c_str();
 
+<<<<<<< HEAD
     if (pieces[0] == "BML") {
         if (strcmp(partition, "boot") == 0) {
             partition = BOARD_BML_BOOT;
@@ -482,290 +541,264 @@ static int FindMatchingPatch(uint8_t* sha1, const std::vector<std::string>& patc
     }
   }
   return -1;
-}
+=======
+      if (!android::base::ReadFully(fd, buffer, to_read)) {
+        PLOG(ERROR) << "Failed to verify-read " << partition << " at " << p;
+        return false;
+      }
 
-// Returns 0 if the contents of the file (argv[2]) or the cached file
-// match any of the sha1's on the command line (argv[3:]).  Returns
-// nonzero otherwise.
-int applypatch_check(const char* filename, const std::vector<std::string>& patch_sha1_str) {
-  FileContents file;
-
-  // It's okay to specify no sha1s; the check will pass if the
-  // LoadFileContents is successful.  (Useful for reading
-  // partitions, where the filename encodes the sha1s; no need to
-  // check them twice.)
-  if (LoadFileContents(filename, &file) != 0 ||
-      (!patch_sha1_str.empty() && FindMatchingPatch(file.sha1, patch_sha1_str) < 0)) {
-    printf("file \"%s\" doesn't have any of expected sha1 sums; checking cache\n", filename);
-
-    // If the source file is missing or corrupted, it might be because we were killed in the middle
-    // of patching it.  A copy of it should have been made in cache_temp_source.  If that file
-    // exists and matches the sha1 we're looking for, the check still passes.
-    if (LoadFileContents(CacheLocation::location().cache_temp_source().c_str(), &file) != 0) {
-      printf("failed to load cache file\n");
-      return 1;
+      if (memcmp(buffer, data + p, to_read) != 0) {
+        LOG(ERROR) << "Verification failed starting at " << p;
+        start = p;
+        break;
+      }
     }
 
-    if (FindMatchingPatch(file.sha1, patch_sha1_str) < 0) {
-      printf("cache bits don't match any sha1 for \"%s\"\n", filename);
-      return 1;
+    if (start == len) {
+      LOG(INFO) << "Verification read succeeded (attempt " << attempt + 1 << ")";
+      success = true;
+      break;
+    }
+
+    if (close(fd.release()) != 0) {
+      PLOG(ERROR) << "Failed to close " << partition;
+      return false;
     }
   }
+
+  if (!success) {
+    LOG(ERROR) << "Failed to verify after all attempts";
+    return false;
+  }
+
+  sync();
+
+  return true;
+>>>>>>> android-10.0.0_r25
+}
+
+int ParseSha1(const std::string& str, uint8_t* digest) {
+  const char* ps = str.c_str();
+  uint8_t* pd = digest;
+  for (int i = 0; i < SHA_DIGEST_LENGTH * 2; ++i, ++ps) {
+    int digit;
+    if (*ps >= '0' && *ps <= '9') {
+      digit = *ps - '0';
+    } else if (*ps >= 'a' && *ps <= 'f') {
+      digit = *ps - 'a' + 10;
+    } else if (*ps >= 'A' && *ps <= 'F') {
+      digit = *ps - 'A' + 10;
+    } else {
+      return -1;
+    }
+    if (i % 2 == 0) {
+      *pd = digit << 4;
+    } else {
+      *pd |= digit;
+      ++pd;
+    }
+  }
+  if (*ps != '\0') return -1;
   return 0;
+}
+
+bool PatchPartitionCheck(const Partition& target, const Partition& source) {
+  FileContents target_file;
+  FileContents source_file;
+  return (ReadPartitionToBuffer(target, &target_file, false) ||
+          ReadPartitionToBuffer(source, &source_file, true));
 }
 
 int ShowLicenses() {
-    ShowBSDiffLicense();
-    return 0;
-}
-
-static size_t FileSink(const unsigned char* data, size_t len, int fd) {
-  size_t done = 0;
-  while (done < len) {
-    ssize_t wrote = TEMP_FAILURE_RETRY(ota_write(fd, data + done, len - done));
-    if (wrote == -1) {
-      printf("error writing %zd bytes: %s\n", (len - done), strerror(errno));
-      return done;
-    }
-    done += wrote;
-  }
-  return done;
-}
-
-// Return the amount of free space (in bytes) on the filesystem
-// containing filename.  filename must exist.  Return -1 on error.
-size_t FreeSpaceForFile(const char* filename) {
-    struct statfs sf;
-    if (statfs(filename, &sf) != 0) {
-        printf("failed to statfs %s: %s\n", filename, strerror(errno));
-        return -1;
-    }
-    return sf.f_bsize * sf.f_bavail;
-}
-
-int CacheSizeCheck(size_t bytes) {
-    if (MakeFreeSpaceOnCache(bytes) < 0) {
-        printf("unable to make %zu bytes available on /cache\n", bytes);
-        return 1;
-    }
-    return 0;
-}
-
-// This function applies binary patches to EMMC target files in a way that is safe (the original
-// file is not touched until we have the desired replacement for it) and idempotent (it's okay to
-// run this program multiple times).
-//
-// - If the SHA-1 hash of <target_filename> is <target_sha1_string>, does nothing and exits
-//   successfully.
-//
-// - Otherwise, if the SHA-1 hash of <source_filename> is one of the entries in <patch_sha1_str>,
-//   the corresponding patch from <patch_data> (which must be a VAL_BLOB) is applied to produce a
-//   new file (the type of patch is automatically detected from the blob data). If that new file
-//   has SHA-1 hash <target_sha1_str>, moves it to replace <target_filename>, and exits
-//   successfully. Note that if <source_filename> and <target_filename> are not the same,
-//   <source_filename> is NOT deleted on success. <target_filename> may be the string "-" to mean
-//   "the same as <source_filename>".
-//
-// - Otherwise, or if any error is encountered, exits with non-zero status.
-//
-// <source_filename> must refer to an EMMC partition to read the source data. See the comments for
-// the LoadPartitionContents() function above for the format of such a filename. <target_size> has
-// become obsolete since we have dropped the support for patching non-EMMC targets (EMMC targets
-// have the size embedded in the filename).
-int applypatch(const char* source_filename, const char* target_filename,
-               const char* target_sha1_str, size_t /* target_size */,
-               const std::vector<std::string>& patch_sha1_str,
-               const std::vector<std::unique_ptr<Value>>& patch_data, const Value* bonus_data) {
-  printf("patch %s: ", source_filename);
-
-  if (target_filename[0] == '-' && target_filename[1] == '\0') {
-    target_filename = source_filename;
-  }
-
-  if (strncmp(target_filename, "EMMC:", 5) != 0) {
-    printf("Supporting patching EMMC targets only.\n");
-    return 1;
-  }
-
-  uint8_t target_sha1[SHA_DIGEST_LENGTH];
-  if (ParseSha1(target_sha1_str, target_sha1) != 0) {
-    printf("failed to parse tgt-sha1 \"%s\"\n", target_sha1_str);
-    return 1;
-  }
-
-  // We try to load the target file into the source_file object.
-  FileContents source_file;
-  if (LoadFileContents(target_filename, &source_file) == 0) {
-    if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
-      // The early-exit case: the patch was already applied, this file has the desired hash, nothing
-      // for us to do.
-      printf("already %s\n", short_sha1(target_sha1).c_str());
-      return 0;
-    }
-  }
-
-  if (source_file.data.empty() ||
-      (target_filename != source_filename && strcmp(target_filename, source_filename) != 0)) {
-    // Need to load the source file: either we failed to load the target file, or we did but it's
-    // different from the expected.
-    source_file.data.clear();
-    LoadFileContents(source_filename, &source_file);
-  }
-
-  if (!source_file.data.empty()) {
-    int to_use = FindMatchingPatch(source_file.sha1, patch_sha1_str);
-    if (to_use != -1) {
-      return GenerateTarget(source_file, patch_data[to_use], target_filename, target_sha1,
-                            bonus_data);
-    }
-  }
-
-  printf("source file is bad; trying copy\n");
-
-  FileContents copy_file;
-  if (LoadFileContents(CacheLocation::location().cache_temp_source().c_str(), &copy_file) < 0) {
-    printf("failed to read copy file\n");
-    return 1;
-  }
-
-  int to_use = FindMatchingPatch(copy_file.sha1, patch_sha1_str);
-  if (to_use == -1) {
-    printf("copy file doesn't match source SHA-1s either\n");
-    return 1;
-  }
-
-  return GenerateTarget(copy_file, patch_data[to_use], target_filename, target_sha1, bonus_data);
-}
-
-/*
- * This function flashes a given image to the target partition. It verifies
- * the target cheksum first, and will return if target has the desired hash.
- * It checks the checksum of the given source image before flashing, and
- * verifies the target partition afterwards. The function is idempotent.
- * Returns zero on success.
- */
-int applypatch_flash(const char* source_filename, const char* target_filename,
-                     const char* target_sha1_str, size_t target_size) {
-  printf("flash %s: ", target_filename);
-
-  uint8_t target_sha1[SHA_DIGEST_LENGTH];
-  if (ParseSha1(target_sha1_str, target_sha1) != 0) {
-    printf("failed to parse tgt-sha1 \"%s\"\n", target_sha1_str);
-    return 1;
-  }
-
-  std::string target_str(target_filename);
-  std::vector<std::string> pieces = android::base::Split(target_str, ":");
-  if (pieces.size() != 2 || pieces[0] != "EMMC") {
-    printf("invalid target name \"%s\"", target_filename);
-    return 1;
-  }
-
-  // Load the target into the source_file object to see if already applied.
-  pieces.push_back(std::to_string(target_size));
-  pieces.push_back(target_sha1_str);
-  std::string fullname = android::base::Join(pieces, ':');
-  FileContents source_file;
-  if (LoadPartitionContents(fullname, &source_file) == 0 &&
-      memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) == 0) {
-    // The early-exit case: the image was already applied, this partition
-    // has the desired hash, nothing for us to do.
-    printf("already %s\n", short_sha1(target_sha1).c_str());
-    return 0;
-  }
-
-  if (LoadFileContents(source_filename, &source_file) == 0) {
-    if (memcmp(source_file.sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
-      // The source doesn't have desired checksum.
-      printf("source \"%s\" doesn't have expected sha1 sum\n", source_filename);
-      printf("expected: %s, found: %s\n", short_sha1(target_sha1).c_str(),
-             short_sha1(source_file.sha1).c_str());
-      return 1;
-    }
-  }
-
-  if (WriteToPartition(source_file.data.data(), target_size, target_filename) != 0) {
-    printf("write of copied data to %s failed\n", target_filename);
-    return 1;
-  }
+  ShowBSDiffLicense();
   return 0;
 }
 
-static int GenerateTarget(const FileContents& source_file, const std::unique_ptr<Value>& patch,
-                          const std::string& target_filename,
-                          const uint8_t target_sha1[SHA_DIGEST_LENGTH], const Value* bonus_data) {
-  if (patch->type != VAL_BLOB) {
-    printf("patch is not a blob\n");
-    return 1;
+bool PatchPartition(const Partition& target, const Partition& source, const Value& patch,
+                    const Value* bonus) {
+  LOG(INFO) << "Patching " << target.name;
+
+  // We try to load and check against the target hash first.
+  FileContents target_file;
+  if (ReadPartitionToBuffer(target, &target_file, false)) {
+    // The early-exit case: the patch was already applied, this file has the desired hash, nothing
+    // for us to do.
+    LOG(INFO) << "  already " << target.hash.substr(0, 8);
+    return true;
   }
 
-  const char* header = &patch->data[0];
-  size_t header_bytes_read = patch->data.size();
+  FileContents source_file;
+  if (ReadPartitionToBuffer(source, &source_file, true)) {
+    return GenerateTarget(target, source_file, patch, bonus);
+  }
+
+  LOG(ERROR) << "Failed to find any match";
+  return false;
+}
+
+bool FlashPartition(const Partition& partition, const std::string& source_filename) {
+  LOG(INFO) << "Flashing " << partition;
+
+  // We try to load and check against the target hash first.
+  FileContents target_file;
+  if (ReadPartitionToBuffer(partition, &target_file, false)) {
+    // The early-exit case: the patch was already applied, this file has the desired hash, nothing
+    // for us to do.
+    LOG(INFO) << "  already " << partition.hash.substr(0, 8);
+    return true;
+  }
+
+  FileContents source_file;
+  if (!LoadFileContents(source_filename, &source_file)) {
+    LOG(ERROR) << "Failed to load source file";
+    return false;
+  }
+
+  uint8_t expected_sha1[SHA_DIGEST_LENGTH];
+  if (ParseSha1(partition.hash, expected_sha1) != 0) {
+    LOG(ERROR) << "Failed to parse source hash \"" << partition.hash << "\"";
+    return false;
+  }
+
+  if (memcmp(source_file.sha1, expected_sha1, SHA_DIGEST_LENGTH) != 0) {
+    // The source doesn't have desired checksum.
+    LOG(ERROR) << "source \"" << source_filename << "\" doesn't have expected SHA-1 sum";
+    LOG(ERROR) << "expected: " << partition.hash.substr(0, 8)
+               << ", found: " << short_sha1(source_file.sha1);
+    return false;
+  }
+  if (!WriteBufferToPartition(source_file, partition)) {
+    LOG(ERROR) << "Failed to write to " << partition;
+    return false;
+  }
+  return true;
+}
+
+static bool GenerateTarget(const Partition& target, const FileContents& source_file,
+                           const Value& patch, const Value* bonus_data) {
+  uint8_t expected_sha1[SHA_DIGEST_LENGTH];
+  if (ParseSha1(target.hash, expected_sha1) != 0) {
+    LOG(ERROR) << "Failed to parse target hash \"" << target.hash << "\"";
+    return false;
+  }
+
+  if (patch.type != Value::Type::BLOB) {
+    LOG(ERROR) << "patch is not a blob";
+    return false;
+  }
+
+  const char* header = patch.data.data();
+  size_t header_bytes_read = patch.data.size();
   bool use_bsdiff = false;
   if (header_bytes_read >= 8 && memcmp(header, "BSDIFF40", 8) == 0) {
     use_bsdiff = true;
   } else if (header_bytes_read >= 8 && memcmp(header, "IMGDIFF2", 8) == 0) {
     use_bsdiff = false;
   } else {
-    printf("Unknown patch file format\n");
-    return 1;
+    LOG(ERROR) << "Unknown patch file format";
+    return false;
   }
 
-  CHECK(android::base::StartsWith(target_filename, "EMMC:"));
-
-  // We still write the original source to cache, in case the partition write is interrupted.
-  if (MakeFreeSpaceOnCache(source_file.data.size()) < 0) {
-    printf("not enough free space on /cache\n");
-    return 1;
+  // We write the original source to cache, in case the partition write is interrupted.
+  if (!CheckAndFreeSpaceOnCache(source_file.data.size())) {
+    LOG(ERROR) << "Not enough free space on /cache";
+    return false;
   }
-  if (SaveFileContents(CacheLocation::location().cache_temp_source().c_str(), &source_file) < 0) {
-    printf("failed to back up source file\n");
-    return 1;
+  if (!SaveFileContents(Paths::Get().cache_temp_source(), &source_file)) {
+    LOG(ERROR) << "Failed to back up source file";
+    return false;
   }
 
   // We store the decoded output in memory.
-  std::string memory_sink_str;  // Don't need to reserve space.
-  SinkFn sink = [&memory_sink_str](const unsigned char* data, size_t len) {
-    memory_sink_str.append(reinterpret_cast<const char*>(data), len);
+  FileContents patched;
+  SHA_CTX ctx;
+  SHA1_Init(&ctx);
+  SinkFn sink = [&patched, &ctx](const unsigned char* data, size_t len) {
+    SHA1_Update(&ctx, data, len);
+    patched.data.insert(patched.data.end(), data, data + len);
     return len;
   };
 
-  SHA_CTX ctx;
-  SHA1_Init(&ctx);
-
   int result;
   if (use_bsdiff) {
-    result =
-        ApplyBSDiffPatch(source_file.data.data(), source_file.data.size(), *patch, 0, sink, &ctx);
+    result = ApplyBSDiffPatch(source_file.data.data(), source_file.data.size(), patch, 0, sink);
   } else {
-    result = ApplyImagePatch(source_file.data.data(), source_file.data.size(), *patch, sink, &ctx,
-                             bonus_data);
+    result =
+        ApplyImagePatch(source_file.data.data(), source_file.data.size(), patch, sink, bonus_data);
   }
 
   if (result != 0) {
-    printf("applying patch failed\n");
-    return 1;
+    LOG(ERROR) << "Failed to apply the patch: " << result;
+    return false;
   }
 
-  uint8_t current_target_sha1[SHA_DIGEST_LENGTH];
-  SHA1_Final(current_target_sha1, &ctx);
-  if (memcmp(current_target_sha1, target_sha1, SHA_DIGEST_LENGTH) != 0) {
-    printf("patch did not produce expected sha1\n");
-    return 1;
-  } else {
-    printf("now %s\n", short_sha1(target_sha1).c_str());
+  SHA1_Final(patched.sha1, &ctx);
+  if (memcmp(patched.sha1, expected_sha1, SHA_DIGEST_LENGTH) != 0) {
+    LOG(ERROR) << "Patching did not produce the expected SHA-1 of " << short_sha1(expected_sha1);
+
+    LOG(ERROR) << "target size " << patched.data.size() << " SHA-1 " << short_sha1(patched.sha1);
+    LOG(ERROR) << "source size " << source_file.data.size() << " SHA-1 "
+               << short_sha1(source_file.sha1);
+
+    uint8_t patch_digest[SHA_DIGEST_LENGTH];
+    SHA1(reinterpret_cast<const uint8_t*>(patch.data.data()), patch.data.size(), patch_digest);
+    LOG(ERROR) << "patch size " << patch.data.size() << " SHA-1 " << short_sha1(patch_digest);
+
+    if (bonus_data != nullptr) {
+      uint8_t bonus_digest[SHA_DIGEST_LENGTH];
+      SHA1(reinterpret_cast<const uint8_t*>(bonus_data->data.data()), bonus_data->data.size(),
+           bonus_digest);
+      LOG(ERROR) << "bonus size " << bonus_data->data.size() << " SHA-1 "
+                 << short_sha1(bonus_digest);
+    }
+
+    return false;
   }
+
+  LOG(INFO) << "  now " << short_sha1(expected_sha1);
 
   // Write back the temp file to the partition.
-  if (WriteToPartition(reinterpret_cast<const unsigned char*>(memory_sink_str.c_str()),
-                       memory_sink_str.size(), target_filename) != 0) {
-    printf("write of patched data to %s failed\n", target_filename.c_str());
-    return 1;
+  if (!WriteBufferToPartition(patched, target)) {
+    LOG(ERROR) << "Failed to write patched data to " << target.name;
+    return false;
   }
 
   // Delete the backup copy of the source.
-  unlink(CacheLocation::location().cache_temp_source().c_str());
+  unlink(Paths::Get().cache_temp_source().c_str());
 
   // Success!
-  return 0;
+  return true;
+}
+
+bool CheckPartition(const Partition& partition) {
+  FileContents target_file;
+  return ReadPartitionToBuffer(partition, &target_file, false);
+}
+
+Partition Partition::Parse(const std::string& input_str, std::string* err) {
+  std::vector<std::string> pieces = android::base::Split(input_str, ":");
+  if (pieces.size() != 4 || pieces[0] != "EMMC") {
+    *err = "Invalid number of tokens or non-eMMC target";
+    return {};
+  }
+
+  size_t size;
+  if (!android::base::ParseUint(pieces[2], &size) || size == 0) {
+    *err = "Failed to parse \"" + pieces[2] + "\" as byte count";
+    return {};
+  }
+
+  return Partition(pieces[1], size, pieces[3]);
+}
+
+std::string Partition::ToString() const {
+  if (*this) {
+    return "EMMC:"s + name + ":" + std::to_string(size) + ":" + hash;
+  }
+  return "<invalid-partition>";
+}
+
+std::ostream& operator<<(std::ostream& os, const Partition& partition) {
+  os << partition.ToString();
+  return os;
 }

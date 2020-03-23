@@ -16,29 +16,42 @@
 
 #include <unistd.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
-#include <android-base/test_utils.h>
 #include <gtest/gtest.h>
 
+#include "fuse_provider.h"
 #include "fuse_sideload.h"
 
 TEST(SideloadTest, fuse_device) {
   ASSERT_EQ(0, access("/dev/fuse", R_OK | W_OK));
 }
 
+class FuseTestDataProvider : public FuseDataProvider {
+ public:
+  FuseTestDataProvider(uint64_t file_size, uint32_t block_size)
+      : FuseDataProvider(file_size, block_size) {}
+
+ private:
+  bool ReadBlockAlignedData(uint8_t*, uint32_t, uint32_t) const override {
+    return true;
+  }
+};
+
 TEST(SideloadTest, run_fuse_sideload_wrong_parameters) {
-  provider_vtab vtab;
-  vtab.close = [](void) {};
+  auto provider_small_block = std::make_unique<FuseTestDataProvider>(4096, 4095);
+  ASSERT_EQ(-1, run_fuse_sideload(std::move(provider_small_block)));
 
-  ASSERT_EQ(-1, run_fuse_sideload(vtab, 4096, 4095));
-  ASSERT_EQ(-1, run_fuse_sideload(vtab, 4096, (1 << 22) + 1));
+  auto provider_large_block = std::make_unique<FuseTestDataProvider>(4096, (1 << 22) + 1);
+  ASSERT_EQ(-1, run_fuse_sideload(std::move(provider_large_block)));
 
-  // Too many blocks.
-  ASSERT_EQ(-1, run_fuse_sideload(vtab, ((1 << 18) + 1) * 4096, 4096));
+  auto provider_too_many_blocks =
+      std::make_unique<FuseTestDataProvider>(((1 << 18) + 1) * 4096, 4096);
+  ASSERT_EQ(-1, run_fuse_sideload(std::move(provider_too_many_blocks)));
 }
 
 TEST(SideloadTest, run_fuse_sideload) {
@@ -51,18 +64,15 @@ TEST(SideloadTest, run_fuse_sideload) {
   const std::string content = android::base::Join(blocks, "");
   ASSERT_EQ(16384U, content.size());
 
-  provider_vtab vtab;
-  vtab.close = [](void) {};
-  vtab.read_block = [&blocks](uint32_t block, uint8_t* buffer, uint32_t fetch_size) {
-    if (block >= 4) return -1;
-    blocks[block].copy(reinterpret_cast<char*>(buffer), fetch_size);
-    return 0;
-  };
+  TemporaryFile temp_file;
+  ASSERT_TRUE(android::base::WriteStringToFile(content, temp_file.path));
 
+  auto provider = std::make_unique<FuseFileDataProvider>(temp_file.path, 4096);
+  ASSERT_TRUE(provider->Valid());
   TemporaryDir mount_point;
   pid_t pid = fork();
   if (pid == 0) {
-    ASSERT_EQ(0, run_fuse_sideload(vtab, 16384, 4096, mount_point.path));
+    ASSERT_EQ(0, run_fuse_sideload(std::move(provider), mount_point.path));
     _exit(EXIT_SUCCESS);
   }
 

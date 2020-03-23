@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"コマンドが指定されていません"</string>
     <string name="recovery_error" msgid="5748178989622716736">"エラーが発生しました。"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"セキュリティ アップデートをインストールしています"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android システムを読み込めません。データが破損している可能性があります。このメッセージが引き続き表示される場合は、データの初期化を行い、このデバイスに保存されているすべてのユーザー データを消去することが必要な場合があります。"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"再試行"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"データの初期化"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"すべてのユーザー データをワイプしますか？\n\nこの操作は元に戻せません。"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"キャンセル"</string>
 </resources>

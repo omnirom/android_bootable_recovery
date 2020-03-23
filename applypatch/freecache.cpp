@@ -14,31 +14,35 @@
  * limitations under the License.
  */
 
+#include <dirent.h>
 #include <errno.h>
-#include <libgen.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <unistd.h>
-#include <dirent.h>
-#include <ctype.h>
 
+#include <algorithm>
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
 
+#include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 
 #include "applypatch/applypatch.h"
-#include "otautil/cache_location.h"
+#include "otautil/paths.h"
 
-static int EliminateOpenFiles(std::set<std::string>* files) {
+static int EliminateOpenFiles(const std::string& dirname, std::set<std::string>* files) {
   std::unique_ptr<DIR, decltype(&closedir)> d(opendir("/proc"), closedir);
   if (!d) {
-    printf("error opening /proc: %s\n", strerror(errno));
+    PLOG(ERROR) << "Failed to open /proc";
     return -1;
   }
   struct dirent* de;
@@ -52,7 +56,7 @@ static int EliminateOpenFiles(std::set<std::string>* files) {
     struct dirent* fdde;
     std::unique_ptr<DIR, decltype(&closedir)> fdd(opendir(path.c_str()), closedir);
     if (!fdd) {
-      printf("error opening %s: %s\n", path.c_str(), strerror(errno));
+      PLOG(ERROR) << "Failed to open " << path;
       continue;
     }
     while ((fdde = readdir(fdd.get())) != 0) {
@@ -62,9 +66,9 @@ static int EliminateOpenFiles(std::set<std::string>* files) {
       int count = readlink(fd_path.c_str(), link, sizeof(link)-1);
       if (count >= 0) {
         link[count] = '\0';
-        if (strncmp(link, "/cache/", 7) == 0) {
+        if (android::base::StartsWith(link, dirname)) {
           if (files->erase(link) > 0) {
-            printf("%s is open by %s\n", link, de->d_name);
+            LOG(INFO) << link << " is open by " << de->d_name;
           }
         }
       }
@@ -73,77 +77,171 @@ static int EliminateOpenFiles(std::set<std::string>* files) {
   return 0;
 }
 
-static std::set<std::string> FindExpendableFiles() {
-  std::set<std::string> files;
-  // We're allowed to delete unopened regular files in any of these
-  // directories.
-  const char* dirs[2] = {"/cache", "/cache/recovery/otatest"};
+static std::vector<std::string> FindExpendableFiles(
+    const std::string& dirname, const std::function<bool(const std::string&)>& name_filter) {
+  std::unique_ptr<DIR, decltype(&closedir)> d(opendir(dirname.c_str()), closedir);
+  if (!d) {
+    PLOG(ERROR) << "Failed to open " << dirname;
+    return {};
+  }
 
-  for (size_t i = 0; i < sizeof(dirs)/sizeof(dirs[0]); ++i) {
-    std::unique_ptr<DIR, decltype(&closedir)> d(opendir(dirs[i]), closedir);
-    if (!d) {
-      printf("error opening %s: %s\n", dirs[i], strerror(errno));
+  // Look for regular files in the directory (not in any subdirectories).
+  std::set<std::string> files;
+  struct dirent* de;
+  while ((de = readdir(d.get())) != 0) {
+    std::string path = dirname + "/" + de->d_name;
+
+    // We can't delete cache_temp_source; if it's there we might have restarted during
+    // installation and could be depending on it to be there.
+    if (path == Paths::Get().cache_temp_source()) {
       continue;
     }
 
-    // Look for regular files in the directory (not in any subdirectories).
-    struct dirent* de;
-    while ((de = readdir(d.get())) != 0) {
-      std::string path = std::string(dirs[i]) + "/" + de->d_name;
+    // Do not delete the file if it doesn't have the expected format.
+    if (name_filter != nullptr && !name_filter(de->d_name)) {
+      continue;
+    }
 
-      // We can't delete cache_temp_source; if it's there we might have restarted during
-      // installation and could be depending on it to be there.
-      if (path == CacheLocation::location().cache_temp_source()) {
-        continue;
-      }
-
-      struct stat st;
-      if (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
-        files.insert(path);
-      }
+    struct stat st;
+    if (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
+      files.insert(path);
     }
   }
 
-  printf("%zu regular files in deletable directories\n", files.size());
-  if (EliminateOpenFiles(&files) < 0) {
-    return std::set<std::string>();
+  LOG(INFO) << files.size() << " regular files in deletable directory";
+  if (EliminateOpenFiles(dirname, &files) < 0) {
+    return {};
   }
-  return files;
+
+  return std::vector<std::string>(files.begin(), files.end());
 }
 
-int MakeFreeSpaceOnCache(size_t bytes_needed) {
-#ifndef __ANDROID__
-  // TODO (xunchang) implement a heuristic cache size check during host simulation.
-  printf("Skip making (%zu) bytes free space on cache; program is running on host\n", bytes_needed);
-  return 0;
-#endif
-
-  size_t free_now = FreeSpaceForFile("/cache");
-  printf("%zu bytes free on /cache (%zu needed)\n", free_now, bytes_needed);
-
-  if (free_now >= bytes_needed) {
+// Parses the index of given log file, e.g. 3 for last_log.3; returns max number if the log name
+// doesn't have the expected format so that we'll delete these ones first.
+static unsigned int GetLogIndex(const std::string& log_name) {
+  if (log_name == "last_log" || log_name == "last_kmsg") {
     return 0;
   }
-  std::set<std::string> files = FindExpendableFiles();
-  if (files.empty()) {
-    // nothing we can delete to free up space!
-    printf("no files can be deleted to free space on /cache\n");
+
+  unsigned int index;
+  if (sscanf(log_name.c_str(), "last_log.%u", &index) == 1 ||
+      sscanf(log_name.c_str(), "last_kmsg.%u", &index) == 1) {
+    return index;
+  }
+
+  return std::numeric_limits<unsigned int>::max();
+}
+
+// Returns the amount of free space (in bytes) on the filesystem containing filename, or -1 on
+// error.
+static int64_t FreeSpaceForFile(const std::string& filename) {
+  struct statfs sf;
+  if (statfs(filename.c_str(), &sf) == -1) {
+    PLOG(ERROR) << "Failed to statfs " << filename;
     return -1;
   }
 
-  // We could try to be smarter about which files to delete:  the
-  // biggest ones?  the smallest ones that will free up enough space?
-  // the oldest?  the newest?
-  //
-  // Instead, we'll be dumb.
+  auto f_bsize = static_cast<int64_t>(sf.f_bsize);
+  auto free_space = sf.f_bsize * sf.f_bavail;
+  if (f_bsize == 0 || free_space / f_bsize != static_cast<int64_t>(sf.f_bavail)) {
+    LOG(ERROR) << "Invalid block size or overflow (sf.f_bsize " << sf.f_bsize << ", sf.f_bavail "
+               << sf.f_bavail << ")";
+    return -1;
+  }
+  return free_space;
+}
 
-  for (const auto& file : files) {
-    unlink(file.c_str());
-    free_now = FreeSpaceForFile("/cache");
-    printf("deleted %s; now %zu bytes free\n", file.c_str(), free_now);
-    if (free_now < bytes_needed) {
-        break;
+bool CheckAndFreeSpaceOnCache(size_t bytes) {
+#ifndef __ANDROID__
+  // TODO(xunchang): Implement a heuristic cache size check during host simulation.
+  LOG(WARNING) << "Skipped making (" << bytes
+               << ") bytes free space on /cache; program is running on host";
+  return true;
+#endif
+
+  std::vector<std::string> dirs{ "/cache", Paths::Get().cache_log_directory() };
+  for (const auto& dirname : dirs) {
+    if (RemoveFilesInDirectory(bytes, dirname, FreeSpaceForFile)) {
+      return true;
     }
   }
-  return (free_now >= bytes_needed) ? 0 : -1;
+
+  return false;
+}
+
+bool RemoveFilesInDirectory(size_t bytes_needed, const std::string& dirname,
+                            const std::function<int64_t(const std::string&)>& space_checker) {
+  // The requested size cannot exceed max int64_t.
+  if (static_cast<uint64_t>(bytes_needed) >
+      static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
+    LOG(ERROR) << "Invalid arg of bytes_needed: " << bytes_needed;
+    return false;
+  }
+
+  struct stat st;
+  if (stat(dirname.c_str(), &st) == -1) {
+    PLOG(ERROR) << "Failed to stat " << dirname;
+    return false;
+  }
+  if (!S_ISDIR(st.st_mode)) {
+    LOG(ERROR) << dirname << " is not a directory";
+    return false;
+  }
+
+  int64_t free_now = space_checker(dirname);
+  if (free_now == -1) {
+    LOG(ERROR) << "Failed to check free space for " << dirname;
+    return false;
+  }
+  LOG(INFO) << free_now << " bytes free on " << dirname << " (" << bytes_needed << " needed)";
+
+  if (free_now >= static_cast<int64_t>(bytes_needed)) {
+    return true;
+  }
+
+  std::vector<std::string> files;
+  if (dirname == Paths::Get().cache_log_directory()) {
+    // Deletes the log files only.
+    auto log_filter = [](const std::string& file_name) {
+      return android::base::StartsWith(file_name, "last_log") ||
+             android::base::StartsWith(file_name, "last_kmsg");
+    };
+
+    files = FindExpendableFiles(dirname, log_filter);
+
+    // Older logs will come to the top of the queue.
+    auto comparator = [](const std::string& name1, const std::string& name2) -> bool {
+      unsigned int index1 = GetLogIndex(android::base::Basename(name1));
+      unsigned int index2 = GetLogIndex(android::base::Basename(name2));
+      if (index1 == index2) {
+        return name1 < name2;
+      }
+
+      return index1 > index2;
+    };
+
+    std::sort(files.begin(), files.end(), comparator);
+  } else {
+    // We're allowed to delete unopened regular files in the directory.
+    files = FindExpendableFiles(dirname, nullptr);
+  }
+
+  for (const auto& file : files) {
+    if (unlink(file.c_str()) == -1) {
+      PLOG(ERROR) << "Failed to delete " << file;
+      continue;
+    }
+
+    free_now = space_checker(dirname);
+    if (free_now == -1) {
+      LOG(ERROR) << "Failed to check free space for " << dirname;
+      return false;
+    }
+    LOG(INFO) << "Deleted " << file << "; now " << free_now << " bytes free";
+    if (free_now >= static_cast<int64_t>(bytes_needed)) {
+      return true;
+    }
+  }
+
+  return false;
 }

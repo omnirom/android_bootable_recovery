@@ -1,0 +1,29 @@
+{
+    "__name": "name will be visible on UI",
+    "__url": "https:// or file:// uri to update package (zip, xz, ...)",
+    "__ab_install_type": "NON_STREAMING (from a local file) OR STREAMING (on the fly)",
+    "name": "SAMPLE-cake-release BUILD-12345",
+    "url": "http://foo.bar/builds/ota-001.zip",
+    "ab_install_type": "NON_STREAMING",
+    "ab_streaming_metadata": {
+        "__": "streaming_metadata is required only for streaming update",
+        "__property_files": "name, offset and size of files",
+        "__authorization": "it will be sent to OTA package server as value of HTTP header - Authorization",
+        "property_files": [
+            {
+                "__filename": "name of the file in package",
+                "__offset": "defines beginning of the file in package",
+                "__size": "size of the file in package",
+                "filename": "payload.bin",
+                "offset": 531,
+                "size": 5012323
+            }
+        ],
+        "authorization": "Basic my-secret-token"
+    },
+    "ab_config": {
+        "__": "A/B (seamless) update configurations",
+        "__force_switch_slot": "if set true device will boot to a new slot, otherwise user manually switches slot on the screen",
+        "force_switch_slot": false
+    }
+}

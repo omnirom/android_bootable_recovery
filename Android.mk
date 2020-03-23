@@ -15,6 +15,7 @@
 LOCAL_PATH := $(call my-dir)
 commands_TWRP_local_path := $(LOCAL_PATH)
 
+<<<<<<< HEAD
 ifneq ($(project-path-for),)
     ifeq ($(LOCAL_PATH),$(call project-path-for,recovery))
         PROJECT_PATH_AGREES := true
@@ -211,9 +212,34 @@ LOCAL_C_INCLUDES += system/extras/ext4_utils
 tw_git_revision := $(shell git -C $(LOCAL_PATH) rev-parse --short=8 HEAD 2>/dev/null)
 ifeq ($(shell git -C $(LOCAL_PATH) diff --quiet; echo $$?),1)
     tw_git_revision := $(tw_git_revision)-dirty
+=======
+# Needed by build/make/core/Makefile. Must be consistent with the value in Android.bp.
+RECOVERY_API_VERSION := 3
+RECOVERY_FSTAB_VERSION := 2
+
+# TARGET_RECOVERY_UI_LIB should be one of librecovery_ui_{default,wear,vr} or a device-specific
+# module that defines make_device() and the exact RecoveryUI class for the target. It defaults to
+# librecovery_ui_default, which uses ScreenRecoveryUI.
+TARGET_RECOVERY_UI_LIB ?= librecovery_ui_default
+
+# librecovery_ui_ext (shared library)
+# ===================================
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := librecovery_ui_ext
+
+# LOCAL_MODULE_PATH for shared libraries is unsupported in multiarch builds.
+LOCAL_MULTILIB := first
+
+ifeq ($(TARGET_IS_64_BIT),true)
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/system/lib64
+else
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/system/lib
+>>>>>>> android-10.0.0_r25
 endif
 LOCAL_CFLAGS += -DTW_GIT_REVISION='"$(tw_git_revision)"'
 
+<<<<<<< HEAD
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
 ifeq ($(TW_EXCLUDE_MTP),)
     LOCAL_SHARED_LIBRARIES += libtwrpmtp-ffs
@@ -648,6 +674,31 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_CFLAGS += -DUSE_FUSE_SIDELOAD22
 else
     LOCAL_SRC_FILES := fuse_sideload.cpp
+=======
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+    $(TARGET_RECOVERY_UI_LIB)
+
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    liblog \
+    librecovery_ui.recovery
+
+include $(BUILD_SHARED_LIBRARY)
+
+# recovery_deps: A phony target that's depended on by `recovery`, which
+# builds additional modules conditionally based on Makefile variables.
+# ======================================================================
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := recovery_deps
+
+ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
+ifeq ($(HOST_OS),linux)
+LOCAL_REQUIRED_MODULES += \
+    make_f2fs.recovery \
+    sload_f2fs.recovery
+endif
+>>>>>>> android-10.0.0_r25
 endif
 include $(BUILD_SHARED_LIBRARY)
 
@@ -658,6 +709,7 @@ LOCAL_CLANG := true
 LOCAL_CFLAGS := -Wall -Werror -Wno-unused-parameter
 LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
 
+<<<<<<< HEAD
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libfusesideload
 LOCAL_SHARED_LIBRARIES := libcutils libc
@@ -667,6 +719,15 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     LOCAL_CFLAGS += -DUSE_MINCRYPT
 else
     LOCAL_STATIC_LIBRARIES += libcrypto_static
+=======
+# On A/B devices recovery-persist reads the recovery related file from the persist storage and
+# copies them into /data/misc/recovery. Then, for both A/B and non-A/B devices, recovery-persist
+# parses the last_install file and reports the embedded update metrics. Also, the last_install file
+# will be deteleted after the report.
+LOCAL_REQUIRED_MODULES += recovery-persist
+ifeq ($(BOARD_CACHEIMAGE_PARTITION_SIZE),)
+LOCAL_REQUIRED_MODULES += recovery-refresh
+>>>>>>> android-10.0.0_r25
 endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_SRC_FILES := fuse_sideload22.cpp
@@ -676,6 +737,7 @@ else
 endif
 include $(BUILD_STATIC_LIBRARY)
 
+<<<<<<< HEAD
 # libmounts (static library)
 # ===============================
 include $(CLEAR_VARS)
@@ -797,6 +859,9 @@ LOCAL_CFLAGS := -Wall -Werror
 LOCAL_MODULE := librecovery_ui_vr
 
 include $(BUILD_STATIC_LIBRARY)
+=======
+include $(BUILD_PHONY_PACKAGE)
+>>>>>>> android-10.0.0_r25
 
 commands_recovery_local_path := $(LOCAL_PATH)
 
@@ -804,6 +869,7 @@ commands_recovery_local_path := $(LOCAL_PATH)
 #    $(LOCAL_PATH)/otafault/Android.mk
 #    $(LOCAL_PATH)/bootloader_message/Android.mk
 include \
+<<<<<<< HEAD
     $(commands_TWRP_local_path)/boot_control/Android.mk \
     $(commands_TWRP_local_path)/tests/Android.mk \
     $(commands_TWRP_local_path)/tools/Android.mk \
@@ -907,3 +973,6 @@ endif
 endif
 
 commands_TWRP_local_path :=
+=======
+    $(LOCAL_PATH)/updater/Android.mk \
+>>>>>>> android-10.0.0_r25

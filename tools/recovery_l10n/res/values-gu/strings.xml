@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"કોઈ આદેશ નથી"</string>
     <string name="recovery_error" msgid="5748178989622716736">"ભૂલ!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"સુરક્ષા અપડેટ ઇન્સ્ટૉલ કરી રહ્યાં છે"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android સિસ્ટમ લોડ કરી શકાતી નથી. તમારો ડેટા કદાચ દૂષિત થયો હોઈ શકે છે. જો તમને આ સંદેશ મળવાનું ચાલુ રહે, તો કદાચ તમારે આ ડિવાઇસ માટે ફેક્ટરી ડેટા રીસેટ કરવાની પ્રક્રિયા કરવી અને આના પર સ્ટોર કરેલો વપરાશકર્તાનો બધો ડેટા કાઢી નાખવો જરૂરી રહેશે."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ફરી પ્રયાસ કરો"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ફેક્ટરી ડેટા રીસેટ કરો"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"શું વપરાશકર્તાનો બધો ડેટા વાઇપ કરીએ?\n\n આ ક્રિયામાં કરેલો ફેરફાર રદ કરી શકાતો નથી!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"રદ કરો"</string>
 </resources>

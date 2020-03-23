@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Aucune commande"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Erreur!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Installation de la mise à jour de sécurité en cours..."</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Impossible de charger le système Android. Il se peut que vos données soient corrompues. Si vous continuez de recevoir ce message, vous devrez peut-être effectuer une réinitialisation de l\'appareil à ses paramètres d\'usine et effacer toutes les données d\'utilisateur qu\'il contient."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Réessayer"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Réinitialiser aux paramètres d\'usine"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Effacer toutes les données de l\'utilisateur?\n\n CETTE ACTION NE PEUT PAS ÊTRE ANNULÉE!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Annuler"</string>
 </resources>

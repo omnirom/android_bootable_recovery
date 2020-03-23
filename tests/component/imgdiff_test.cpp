@@ -25,7 +25,6 @@
 #include <android-base/memory.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
-#include <android-base/test_utils.h>
 #include <applypatch/imgdiff.h>
 #include <applypatch/imgdiff_image.h>
 #include <applypatch/imgpatch.h>
@@ -197,12 +196,17 @@ TEST(ImgdiffTest, zip_mode_smoke_store) {
 }
 
 TEST(ImgdiffTest, zip_mode_smoke_compressed) {
+  // Generate 1 block of random data.
+  std::string random_data;
+  random_data.reserve(4096);
+  generate_n(back_inserter(random_data), 4096, []() { return rand() % 256; });
+
   // Construct src and tgt zip files.
   TemporaryFile src_file;
   FILE* src_file_ptr = fdopen(src_file.release(), "wb");
   ZipWriter src_writer(src_file_ptr);
   ASSERT_EQ(0, src_writer.StartEntry("file1.txt", ZipWriter::kCompress));
-  const std::string src_content("abcdefg");
+  const std::string src_content = random_data;
   ASSERT_EQ(0, src_writer.WriteBytes(src_content.data(), src_content.size()));
   ASSERT_EQ(0, src_writer.FinishEntry());
   ASSERT_EQ(0, src_writer.Finish());
@@ -212,7 +216,7 @@ TEST(ImgdiffTest, zip_mode_smoke_compressed) {
   FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
   ZipWriter tgt_writer(tgt_file_ptr);
   ASSERT_EQ(0, tgt_writer.StartEntry("file1.txt", ZipWriter::kCompress));
-  const std::string tgt_content("abcdefgxyz");
+  const std::string tgt_content = random_data + "extra contents";
   ASSERT_EQ(0, tgt_writer.WriteBytes(tgt_content.data(), tgt_content.size()));
   ASSERT_EQ(0, tgt_writer.FinishEntry());
   ASSERT_EQ(0, tgt_writer.Finish());
@@ -245,13 +249,57 @@ TEST(ImgdiffTest, zip_mode_smoke_compressed) {
   verify_patched_image(src, patch, tgt);
 }
 
+TEST(ImgdiffTest, zip_mode_empty_target) {
+  TemporaryFile src_file;
+  FILE* src_file_ptr = fdopen(src_file.release(), "wb");
+  ZipWriter src_writer(src_file_ptr);
+  ASSERT_EQ(0, src_writer.StartEntry("file1.txt", ZipWriter::kCompress));
+  const std::string src_content = "abcdefg";
+  ASSERT_EQ(0, src_writer.WriteBytes(src_content.data(), src_content.size()));
+  ASSERT_EQ(0, src_writer.FinishEntry());
+  ASSERT_EQ(0, src_writer.Finish());
+  ASSERT_EQ(0, fclose(src_file_ptr));
+
+  // Construct a empty entry in the target zip.
+  TemporaryFile tgt_file;
+  FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
+  ZipWriter tgt_writer(tgt_file_ptr);
+  ASSERT_EQ(0, tgt_writer.StartEntry("file1.txt", ZipWriter::kCompress));
+  const std::string tgt_content;
+  ASSERT_EQ(0, tgt_writer.WriteBytes(tgt_content.data(), tgt_content.size()));
+  ASSERT_EQ(0, tgt_writer.FinishEntry());
+  ASSERT_EQ(0, tgt_writer.Finish());
+
+  // Compute patch.
+  TemporaryFile patch_file;
+  std::vector<const char*> args = {
+    "imgdiff", "-z", src_file.path, tgt_file.path, patch_file.path,
+  };
+  ASSERT_EQ(0, imgdiff(args.size(), args.data()));
+
+  // Verify.
+  std::string tgt;
+  ASSERT_TRUE(android::base::ReadFileToString(tgt_file.path, &tgt));
+  std::string src;
+  ASSERT_TRUE(android::base::ReadFileToString(src_file.path, &src));
+  std::string patch;
+  ASSERT_TRUE(android::base::ReadFileToString(patch_file.path, &patch));
+
+  verify_patched_image(src, patch, tgt);
+}
+
 TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
+  // Generate 1 block of random data.
+  std::string random_data;
+  random_data.reserve(4096);
+  generate_n(back_inserter(random_data), 4096, []() { return rand() % 256; });
+
   // Construct src and tgt zip files.
   TemporaryFile src_file;
   FILE* src_file_ptr = fdopen(src_file.release(), "wb");
   ZipWriter src_writer(src_file_ptr);
   ASSERT_EQ(0, src_writer.StartEntry("file1.txt", ZipWriter::kCompress));
-  const std::string src_content("abcdefg");
+  const std::string src_content = random_data;
   ASSERT_EQ(0, src_writer.WriteBytes(src_content.data(), src_content.size()));
   ASSERT_EQ(0, src_writer.FinishEntry());
   ASSERT_EQ(0, src_writer.Finish());
@@ -261,7 +309,7 @@ TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
   FILE* tgt_file_ptr = fdopen(tgt_file.release(), "wb");
   ZipWriter tgt_writer(tgt_file_ptr);
   ASSERT_EQ(0, tgt_writer.StartEntry("file1.txt", ZipWriter::kCompress));
-  const std::string tgt_content("abcdefgxyz");
+  const std::string tgt_content = random_data + "abcdefg";
   ASSERT_EQ(0, tgt_writer.WriteBytes(tgt_content.data(), tgt_content.size()));
   ASSERT_EQ(0, tgt_writer.FinishEntry());
   ASSERT_EQ(0, tgt_writer.Finish());
@@ -298,23 +346,19 @@ TEST(ImgdiffTest, zip_mode_smoke_trailer_zeros) {
 }
 
 TEST(ImgdiffTest, image_mode_simple) {
-  // src: "abcdefgh" + gzipped "xyz" (echo -n "xyz" | gzip -f | hd).
-  const std::vector<char> src_data = { 'a',    'b',    'c',    'd',    'e',    'f',    'g',
-                                       'h',    '\x1f', '\x8b', '\x08', '\x00', '\xc4', '\x1e',
-                                       '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xac',
-                                       '\x02', '\x00', '\x67', '\xba', '\x8e', '\xeb', '\x03',
-                                       '\x00', '\x00', '\x00' };
-  const std::string src(src_data.cbegin(), src_data.cend());
+  std::string gzipped_source_path = from_testdata_base("gzipped_source");
+  std::string gzipped_source;
+  ASSERT_TRUE(android::base::ReadFileToString(gzipped_source_path, &gzipped_source));
+
+  const std::string src = "abcdefg" + gzipped_source;
   TemporaryFile src_file;
   ASSERT_TRUE(android::base::WriteStringToFile(src, src_file.path));
 
-  // tgt: "abcdefgxyz" + gzipped "xxyyzz".
-  const std::vector<char> tgt_data = {
-    'a',    'b',    'c',    'd',    'e',    'f',    'g',    'x',    'y',    'z',    '\x1f', '\x8b',
-    '\x08', '\x00', '\x62', '\x1f', '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xa8', '\xac',
-    '\xac', '\xaa', '\x02', '\x00', '\x96', '\x30', '\x06', '\xb7', '\x06', '\x00', '\x00', '\x00'
-  };
-  const std::string tgt(tgt_data.cbegin(), tgt_data.cend());
+  std::string gzipped_target_path = from_testdata_base("gzipped_target");
+  std::string gzipped_target;
+  ASSERT_TRUE(android::base::ReadFileToString(gzipped_target_path, &gzipped_target));
+  const std::string tgt = "abcdefgxyz" + gzipped_target;
+
   TemporaryFile tgt_file;
   ASSERT_TRUE(android::base::WriteStringToFile(tgt, tgt_file.path));
 
@@ -404,23 +448,21 @@ TEST(ImgdiffTest, image_mode_different_num_chunks) {
 }
 
 TEST(ImgdiffTest, image_mode_merge_chunks) {
-  // src: "abcdefgh" + gzipped "xyz" (echo -n "xyz" | gzip -f | hd).
-  const std::vector<char> src_data = { 'a',    'b',    'c',    'd',    'e',    'f',    'g',
-                                       'h',    '\x1f', '\x8b', '\x08', '\x00', '\xc4', '\x1e',
-                                       '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8', '\xac',
-                                       '\x02', '\x00', '\x67', '\xba', '\x8e', '\xeb', '\x03',
-                                       '\x00', '\x00', '\x00' };
-  const std::string src(src_data.cbegin(), src_data.cend());
+  // src: "abcdefg" + gzipped_source.
+  std::string gzipped_source_path = from_testdata_base("gzipped_source");
+  std::string gzipped_source;
+  ASSERT_TRUE(android::base::ReadFileToString(gzipped_source_path, &gzipped_source));
+
+  const std::string src = "abcdefg" + gzipped_source;
   TemporaryFile src_file;
   ASSERT_TRUE(android::base::WriteStringToFile(src, src_file.path));
 
-  // tgt: gzipped "xyz" + "abcdefgh".
-  const std::vector<char> tgt_data = {
-    '\x1f', '\x8b', '\x08', '\x00', '\x62', '\x1f', '\x53', '\x58', '\x00', '\x03', '\xab', '\xa8',
-    '\xa8', '\xac', '\xac', '\xaa', '\x02', '\x00', '\x96', '\x30', '\x06', '\xb7', '\x06', '\x00',
-    '\x00', '\x00', 'a',    'b',    'c',    'd',    'e',    'f',    'g',    'x',    'y',    'z'
-  };
-  const std::string tgt(tgt_data.cbegin(), tgt_data.cend());
+  // tgt: gzipped_target + "abcdefgxyz".
+  std::string gzipped_target_path = from_testdata_base("gzipped_target");
+  std::string gzipped_target;
+  ASSERT_TRUE(android::base::ReadFileToString(gzipped_target_path, &gzipped_target));
+
+  const std::string tgt = gzipped_target + "abcdefgxyz";
   TemporaryFile tgt_file;
   ASSERT_TRUE(android::base::WriteStringToFile(tgt, tgt_file.path));
 

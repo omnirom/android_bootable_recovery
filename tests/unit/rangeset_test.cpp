@@ -209,6 +209,7 @@ TEST(RangeSetTest, GetBlockNumber) {
   ASSERT_EQ(static_cast<size_t>(6), rs.GetBlockNumber(5));
   ASSERT_EQ(static_cast<size_t>(9), rs.GetBlockNumber(8));
 
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   // Out of bound.
   ASSERT_EXIT(rs.GetBlockNumber(9), ::testing::KilledBySignal(SIGABRT), "");
 }
@@ -284,6 +285,8 @@ TEST(SortedRangeSetTest, file_range) {
 
   ASSERT_EQ(static_cast<size_t>(10), rs.GetOffsetInRangeSet(4106));
   ASSERT_EQ(static_cast<size_t>(40970), rs.GetOffsetInRangeSet(4096 * 16 + 10));
+
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   // block#10 not in range.
   ASSERT_EXIT(rs.GetOffsetInRangeSet(40970), ::testing::KilledBySignal(SIGABRT), "");
 }

@@ -15,24 +15,26 @@
  */
 
 /*
- * This program verifies the integrity of the partitions after an A/B OTA
- * update. It gets invoked by init, and will only perform the verification if
- * it's the first boot post an A/B OTA update.
+ * update_verifier verifies the integrity of the partitions after an A/B OTA update. It gets invoked
+ * by init, and will only perform the verification if it's the first boot post an A/B OTA update
+ * (https://source.android.com/devices/tech/ota/ab/#after_reboot).
  *
- * Update_verifier relies on dm-verity to capture any corruption on the partitions
- * being verified. And its behavior varies depending on the dm-verity mode.
- * Upon detection of failures:
+ * update_verifier relies on device-mapper-verity (dm-verity) to capture any corruption on the
+ * partitions being verified (https://source.android.com/security/verifiedboot). The verification
+ * will be skipped, if dm-verity is not enabled on the device.
+ *
+ * Upon detecting verification failures, the device will be rebooted, although the trigger of the
+ * reboot depends on the dm-verity mode.
  *   enforcing mode: dm-verity reboots the device
  *   eio mode: dm-verity fails the read and update_verifier reboots the device
  *   other mode: not supported and update_verifier reboots the device
  *
- * After a predefined number of failing boot attempts, the bootloader should
- * mark the slot as unbootable and stops trying. Other dm-verity modes (
- * for example, veritymode=EIO) are not accepted and simply lead to a
- * verification failure.
+ * All these reboots prevent the device from booting into a known corrupt state. If the device
+ * continuously fails to boot into the new slot, the bootloader should mark the slot as unbootable
+ * and trigger a fallback to the old slot.
  *
- * The current slot will be marked as having booted successfully if the
- * verifier reaches the end after the verification.
+ * The current slot will be marked as having booted successfully if the verifier reaches the end
+ * after the verification.
  */
 
 #include "update_verifier/update_verifier.h"
@@ -40,14 +42,15 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <algorithm>
 #include <future>
-#include <string>
-#include <vector>
+#include <thread>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
@@ -56,14 +59,20 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <android/hardware/boot/1.0/IBootControl.h>
+#include <android/os/IVold.h>
+#include <binder/BinderService.h>
+#include <binder/Status.h>
 #include <cutils/android_reboot.h>
 
-#include "otautil/rangeset.h"
+#include "care_map.pb.h"
 
 using android::sp;
 using android::hardware::boot::V1_0::IBootControl;
 using android::hardware::boot::V1_0::BoolResult;
 using android::hardware::boot::V1_0::CommandResult;
+
+// TODO(xunchang) remove the prefix and use a default path instead.
+constexpr const char* kDefaultCareMapPrefix = "/data/ota_package/care_map";
 
 // Find directories in format of "/sys/block/dm-X".
 static int dm_name_filter(const dirent* de) {
@@ -73,29 +82,29 @@ static int dm_name_filter(const dirent* de) {
   return 0;
 }
 
-static bool read_blocks(const std::string& partition, const std::string& range_str) {
-  if (partition != "system" && partition != "vendor" && partition != "product") {
-    LOG(ERROR) << "Invalid partition name \"" << partition << "\"";
-    return false;
-  }
-  // Iterate the content of "/sys/block/dm-X/dm/name". If it matches one of "system", "vendor" or
-  // "product", then dm-X is a dm-wrapped device for that target. We will later read all the
-  // ("cared") blocks from "/dev/block/dm-X" to ensure the target partition's integrity.
+UpdateVerifier::UpdateVerifier()
+    : care_map_prefix_(kDefaultCareMapPrefix),
+      property_reader_([](const std::string& id) { return android::base::GetProperty(id, ""); }) {}
+
+// Iterate the content of "/sys/block/dm-X/dm/name" and find all the dm-wrapped block devices.
+// We will later read all the ("cared") blocks from "/dev/block/dm-X" to ensure the target
+// partition's integrity.
+std::map<std::string, std::string> UpdateVerifier::FindDmPartitions() {
   static constexpr auto DM_PATH_PREFIX = "/sys/block/";
   dirent** namelist;
   int n = scandir(DM_PATH_PREFIX, &namelist, dm_name_filter, alphasort);
   if (n == -1) {
     PLOG(ERROR) << "Failed to scan dir " << DM_PATH_PREFIX;
-    return false;
+    return {};
   }
   if (n == 0) {
-    LOG(ERROR) << "dm block device not found for " << partition;
-    return false;
+    LOG(ERROR) << "No dm block device found.";
+    return {};
   }
 
   static constexpr auto DM_PATH_SUFFIX = "/dm/name";
   static constexpr auto DEV_PATH = "/dev/block/";
-  std::string dm_block_device;
+  std::map<std::string, std::string> dm_block_devices;
   while (n--) {
     std::string path = DM_PATH_PREFIX + std::string(namelist[n]->d_name) + DM_PATH_SUFFIX;
     std::string content;
@@ -103,39 +112,31 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
       PLOG(WARNING) << "Failed to read " << path;
     } else {
       std::string dm_block_name = android::base::Trim(content);
-#ifdef BOARD_AVB_ENABLE
       // AVB is using 'vroot' for the root block device but we're expecting 'system'.
       if (dm_block_name == "vroot") {
         dm_block_name = "system";
+      } else if (android::base::EndsWith(dm_block_name, "-verity")) {
+        auto npos = dm_block_name.rfind("-verity");
+        dm_block_name = dm_block_name.substr(0, npos);
+      } else if (!android::base::GetProperty("ro.boot.avb_version", "").empty()) {
+        // Verified Boot 1.0 doesn't add a -verity suffix. On AVB 2 devices,
+        // if DAP is enabled, then a -verity suffix must be used to
+        // differentiate between dm-linear and dm-verity devices. If we get
+        // here, we're AVB 2 and looking at a non-verity partition.
+        continue;
       }
-#endif
-      if (dm_block_name == partition) {
-        dm_block_device = DEV_PATH + std::string(namelist[n]->d_name);
-        while (n--) {
-          free(namelist[n]);
-        }
-        break;
-      }
+
+      dm_block_devices.emplace(dm_block_name, DEV_PATH + std::string(namelist[n]->d_name));
     }
     free(namelist[n]);
   }
   free(namelist);
 
-  if (dm_block_device.empty()) {
-    LOG(ERROR) << "Failed to find dm block device for " << partition;
-    return false;
-  }
+  return dm_block_devices;
+}
 
-  // For block range string, first integer 'count' equals 2 * total number of valid ranges,
-  // followed by 'count' number comma separated integers. Every two integers reprensent a
-  // block range with the first number included in range but second number not included.
-  // For example '4,64536,65343,74149,74150' represents: [64536,65343) and [74149,74150).
-  RangeSet ranges = RangeSet::Parse(range_str);
-  if (!ranges) {
-    LOG(ERROR) << "Error parsing RangeSet string " << range_str;
-    return false;
-  }
-
+bool UpdateVerifier::ReadBlocks(const std::string partition_name,
+                                const std::string& dm_block_device, const RangeSet& ranges) {
   // RangeSet::Split() splits the ranges into multiple groups with same number of blocks (except for
   // the last group).
   size_t thread_num = std::thread::hardware_concurrency() ?: 4;
@@ -143,10 +144,10 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
 
   std::vector<std::future<bool>> threads;
   for (const auto& group : groups) {
-    auto thread_func = [&group, &dm_block_device, &partition]() {
+    auto thread_func = [&group, &dm_block_device, &partition_name]() {
       android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(dm_block_device.c_str(), O_RDONLY)));
       if (fd.get() == -1) {
-        PLOG(ERROR) << "Error reading " << dm_block_device << " for partition " << partition;
+        PLOG(ERROR) << "Error reading " << dm_block_device << " for partition " << partition_name;
         return false;
       }
 
@@ -154,9 +155,7 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
       std::vector<uint8_t> buf(1024 * kBlockSize);
 
       size_t block_count = 0;
-      for (const auto& range : group) {
-        size_t range_start = range.first;
-        size_t range_end = range.second;
+      for (const auto& [range_start, range_end] : group) {
         if (lseek64(fd.get(), static_cast<off64_t>(range_start) * kBlockSize, SEEK_SET) == -1) {
           PLOG(ERROR) << "lseek to " << range_start << " failed";
           return false;
@@ -189,52 +188,110 @@ static bool read_blocks(const std::string& partition, const std::string& range_s
   return ret;
 }
 
-// Returns true to indicate a passing verification (or the error should be ignored); Otherwise
-// returns false on fatal errors, where we should reject the current boot and trigger a fallback.
-// Note that update_verifier should be backward compatible to not reject care_map.txt from old
-// releases, which could otherwise fail to boot into the new release. For example, we've changed
-// the care_map format between N and O. An O update_verifier would fail to work with N
-// care_map.txt. This could be a result of sideloading an O OTA while the device having a pending N
-// update.
-bool verify_image(const std::string& care_map_name) {
-  android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
-  // If the device is flashed before the current boot, it may not have care_map.txt
-  // in /data/ota_package. To allow the device to continue booting in this situation,
-  // we should print a warning and skip the block verification.
-  if (care_map_fd.get() == -1) {
-    PLOG(WARNING) << "Failed to open " << care_map_name;
-    return true;
-  }
-  // care_map file has up to six lines, where every two lines make a pair. Within each pair, the
-  // first line has the partition name (e.g. "system"), while the second line holds the ranges of
-  // all the blocks to verify.
-  std::string file_content;
-  if (!android::base::ReadFdToString(care_map_fd.get(), &file_content)) {
-    LOG(ERROR) << "Error reading care map contents to string.";
+bool UpdateVerifier::VerifyPartitions() {
+  auto dm_block_devices = FindDmPartitions();
+  if (dm_block_devices.empty()) {
+    LOG(ERROR) << "No dm-enabled block device is found.";
     return false;
   }
 
-  std::vector<std::string> lines;
-  lines = android::base::Split(android::base::Trim(file_content), "\n");
-  if (lines.size() != 2 && lines.size() != 4 && lines.size() != 6) {
-    LOG(ERROR) << "Invalid lines in care_map: found " << lines.size()
-               << " lines, expecting 2 or 4 or 6 lines.";
-    return false;
-  }
-
-  for (size_t i = 0; i < lines.size(); i += 2) {
-    // We're seeing an N care_map.txt. Skip the verification since it's not compatible with O
-    // update_verifier (the last few metadata blocks can't be read via device mapper).
-    if (android::base::StartsWith(lines[i], "/dev/block/")) {
-      LOG(WARNING) << "Found legacy care_map.txt; skipped.";
-      return true;
+  for (const auto& [partition_name, ranges] : partition_map_) {
+    if (dm_block_devices.find(partition_name) == dm_block_devices.end()) {
+      LOG(ERROR) << "Failed to find dm block device for " << partition_name;
+      return false;
     }
-    if (!read_blocks(lines[i], lines[i+1])) {
+
+    if (!ReadBlocks(partition_name, dm_block_devices.at(partition_name), ranges)) {
       return false;
     }
   }
 
   return true;
+}
+
+bool UpdateVerifier::ParseCareMap() {
+  partition_map_.clear();
+
+  std::string care_map_name = care_map_prefix_ + ".pb";
+  if (access(care_map_name.c_str(), R_OK) == -1) {
+    LOG(ERROR) << care_map_name << " doesn't exist";
+    return false;
+  }
+
+  android::base::unique_fd care_map_fd(TEMP_FAILURE_RETRY(open(care_map_name.c_str(), O_RDONLY)));
+  // If the device is flashed before the current boot, it may not have care_map.txt in
+  // /data/ota_package. To allow the device to continue booting in this situation, we should
+  // print a warning and skip the block verification.
+  if (care_map_fd.get() == -1) {
+    PLOG(WARNING) << "Failed to open " << care_map_name;
+    return false;
+  }
+
+  std::string file_content;
+  if (!android::base::ReadFdToString(care_map_fd.get(), &file_content)) {
+    PLOG(WARNING) << "Failed to read " << care_map_name;
+    return false;
+  }
+
+  if (file_content.empty()) {
+    LOG(WARNING) << "Unexpected empty care map";
+    return false;
+  }
+
+  recovery_update_verifier::CareMap care_map;
+  if (!care_map.ParseFromString(file_content)) {
+    LOG(WARNING) << "Failed to parse " << care_map_name << " in protobuf format.";
+    return false;
+  }
+
+  for (const auto& partition : care_map.partitions()) {
+    if (partition.name().empty()) {
+      LOG(WARNING) << "Unexpected empty partition name.";
+      return false;
+    }
+    if (partition.ranges().empty()) {
+      LOG(WARNING) << "Unexpected block ranges for partition " << partition.name();
+      return false;
+    }
+    RangeSet ranges = RangeSet::Parse(partition.ranges());
+    if (!ranges) {
+      LOG(WARNING) << "Error parsing RangeSet string " << partition.ranges();
+      return false;
+    }
+
+    // Continues to check other partitions if there is a fingerprint mismatch.
+    if (partition.id().empty() || partition.id() == "unknown") {
+      LOG(WARNING) << "Skip reading partition " << partition.name()
+                   << ": property_id is not provided to get fingerprint.";
+      continue;
+    }
+
+    std::string fingerprint = property_reader_(partition.id());
+    if (fingerprint != partition.fingerprint()) {
+      LOG(WARNING) << "Skip reading partition " << partition.name() << ": fingerprint "
+                   << fingerprint << " doesn't match the expected value "
+                   << partition.fingerprint();
+      continue;
+    }
+
+    partition_map_.emplace(partition.name(), ranges);
+  }
+
+  if (partition_map_.empty()) {
+    LOG(WARNING) << "No partition to verify";
+    return false;
+  }
+
+  return true;
+}
+
+void UpdateVerifier::set_care_map_prefix(const std::string& prefix) {
+  care_map_prefix_ = prefix;
+}
+
+void UpdateVerifier::set_property_reader(
+    const std::function<std::string(const std::string&)>& property_reader) {
+  property_reader_ = property_reader;
 }
 
 static int reboot_device() {
@@ -264,19 +321,13 @@ int update_verifier(int argc, char** argv) {
   if (is_successful == BoolResult::FALSE) {
     // The current slot has not booted successfully.
 
-#if defined(PRODUCT_SUPPORTS_VERITY) || defined(BOARD_AVB_ENABLE)
     bool skip_verification = false;
     std::string verity_mode = android::base::GetProperty("ro.boot.veritymode", "");
     if (verity_mode.empty()) {
-      // With AVB it's possible to disable verification entirely and
-      // in this case ro.boot.veritymode is empty.
-#if defined(BOARD_AVB_ENABLE)
-      LOG(WARNING) << "verification has been disabled; marking without verification.";
+      // Skip the verification if ro.boot.veritymode property is not set. This could be a result
+      // that device doesn't support dm-verity, or has disabled that.
+      LOG(WARNING) << "dm-verity not enabled; marking without verification.";
       skip_verification = true;
-#else
-      LOG(ERROR) << "Failed to get dm-verity mode.";
-      return reboot_device();
-#endif
     } else if (android::base::EqualsIgnoreCase(verity_mode, "eio")) {
       // We shouldn't see verity in EIO mode if the current slot hasn't booted successfully before.
       // Continue the verification until we fail to read some blocks.
@@ -285,28 +336,44 @@ int update_verifier(int argc, char** argv) {
       LOG(WARNING) << "dm-verity in disabled mode; marking without verification.";
       skip_verification = true;
     } else if (verity_mode != "enforcing") {
-      LOG(ERROR) << "Unexpected dm-verity mode : " << verity_mode << ", expecting enforcing.";
+      LOG(ERROR) << "Unexpected dm-verity mode: " << verity_mode << ", expecting enforcing.";
       return reboot_device();
     }
 
     if (!skip_verification) {
-      static constexpr auto CARE_MAP_FILE = "/data/ota_package/care_map.txt";
-      if (!verify_image(CARE_MAP_FILE)) {
+      UpdateVerifier verifier;
+      if (!verifier.ParseCareMap()) {
+        LOG(WARNING) << "Failed to parse the care map file, skipping verification";
+      } else if (!verifier.VerifyPartitions()) {
         LOG(ERROR) << "Failed to verify all blocks in care map file.";
         return reboot_device();
       }
     }
-#else
-    LOG(WARNING) << "dm-verity not enabled; marking without verification.";
-#endif
 
-    CommandResult cr;
-    module->markBootSuccessful([&cr](CommandResult result) { cr = result; });
-    if (!cr.success) {
-      LOG(ERROR) << "Error marking booted successfully: " << cr.errMsg;
-      return reboot_device();
+    bool supports_checkpoint = false;
+    auto sm = android::defaultServiceManager();
+    android::sp<android::IBinder> binder = sm->getService(android::String16("vold"));
+    if (binder) {
+      auto vold = android::interface_cast<android::os::IVold>(binder);
+      android::binder::Status status = vold->supportsCheckpoint(&supports_checkpoint);
+      if (!status.isOk()) {
+        LOG(ERROR) << "Failed to check if checkpoints supported. Continuing";
+      }
+    } else {
+      LOG(ERROR) << "Failed to obtain vold Binder. Continuing";
     }
-    LOG(INFO) << "Marked slot " << current_slot << " as booted successfully.";
+
+    if (!supports_checkpoint) {
+      CommandResult cr;
+      module->markBootSuccessful([&cr](CommandResult result) { cr = result; });
+      if (!cr.success) {
+        LOG(ERROR) << "Error marking booted successfully: " << cr.errMsg;
+        return reboot_device();
+      }
+      LOG(INFO) << "Marked slot " << current_slot << " as booted successfully.";
+    } else {
+      LOG(INFO) << "Deferred marking slot " << current_slot << " as booted successfully.";
+    }
   }
 
   LOG(INFO) << "Leaving update_verifier.";

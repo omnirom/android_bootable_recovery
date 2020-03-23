@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Пәрмен жоқ"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Қате!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Қауіпсіздік жаңартуы орнатылуда"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android жүйесі жүктелмейді. Деректеріңіз бүлінген болуы мүмкін. Егер осы хабар қайта шықса, зауыттық деректерді қалпына келтіріп, пайдаланушы деректерін жойып көріңіз."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Қайталау"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Зауыттық деректерді қалпына келтіру"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Пайдаланушының барлық деректері жойылсын ба?\n\n БҰЛ ӘРЕКЕТТІ ҚАЙТАРЫЛМАЙДЫ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Бас тарту"</string>
 </resources>

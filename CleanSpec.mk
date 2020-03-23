@@ -44,8 +44,13 @@
 #$(call add-clean-step, find $(OUT_DIR) -type f -name "IGTalkSession*" -print0 | xargs -0 rm -f)
 #$(call add-clean-step, rm -rf $(PRODUCT_OUT)/data/*)
 
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/EXECUTABLES/recovery_intermediates)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/STATIC_LIBRARIES/libminui_intermediates/import_includes)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/recovery/root/sbin)
+
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/SHARED_LIBRARIES/libinstall.recovery_intermediates)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/recovery/root/system/lib64/libinstall.so)
+
 # ************************************************
 # NEWER CLEAN STEPS MUST BE AT THE END OF THE LIST
 # ************************************************
-$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/EXECUTABLES/recovery_intermediates)
-$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/STATIC_LIBRARIES/libminui_intermediates/import_includes)

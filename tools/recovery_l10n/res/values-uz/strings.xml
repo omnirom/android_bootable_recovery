@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Buyruq yo‘q"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Xato!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Xavfsizlik yangilanishi o‘rnatilmoqda"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android tizimi yuklanmadi. Maʼlumotlaringiz buzuq shekilli. Yana shu xabarni olsangiz, zavod sozlamalarini tiklashingiz va bu qurilmadagi barcha maʼlumotlarni tozalab tashlashingiz lozim."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Qayta urinish"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Zavod sozlamalarini tiklash"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Barcha maʼlumotlar tozalab tashlansinmi?\n\n ULARNI TIKLASH IMKONSIZ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Bekor qilish"</string>
 </resources>

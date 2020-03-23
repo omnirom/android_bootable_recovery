@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-#include "asn1_decoder.h"
+#include "private/asn1_decoder.h"
 
 TEST(Asn1DecoderTest, Empty_Failure) {
   uint8_t empty[] = {};
