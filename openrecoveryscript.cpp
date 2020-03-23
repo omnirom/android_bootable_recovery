@@ -412,6 +412,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					gui_err("no_pwd=No password provided.");
 					ret_val = 1; // failure
 				}
+			} else if (strcmp(command, "listmounts") == 0) {
+				TWFunc::List_Mounts();
 			} else {
 				LOGERR("Unrecognized script command: '%s'\n", command);
 				ret_val = 1;

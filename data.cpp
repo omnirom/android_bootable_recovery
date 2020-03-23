@@ -778,7 +778,11 @@ void DataManager::SetDefaultValues()
 #ifdef TW_HAS_NO_BOOT_PARTITION
 	mPersist.SetValue("tw_backup_list", "/system;/data;");
 #else
+#ifdef PRODUCT_USE_DYNAMIC_PARTITIONS
+	mPersist.SetValue("tw_backup_list", "/data;");
+#else
 	mPersist.SetValue("tw_backup_list", "/system;/data;/boot;");
+#endif
 #endif
 	mConst.SetValue(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE);
 	mData.SetValue(TW_BACKUP_NAME, "(Auto Generate)");
@@ -814,6 +818,7 @@ void DataManager::SetDefaultValues()
 	mData.SetValue("tw_background_thread_running", "0");
 	mData.SetValue(TW_RESTORE_FILE_DATE, "0");
 	mPersist.SetValue("tw_military_time", "0");
+	mData.SetValue(TW_IS_SUPER, "0");
 
 #ifdef TW_INCLUDE_CRYPTO
 	mPersist.SetValue(TW_USE_SHA2, "1");

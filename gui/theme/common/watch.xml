@@ -3101,7 +3101,10 @@
 			</fill>
 
 			<button style="checkbox">
-				<condition var1="tw_mount_system_ro" op="=" var2="0"/>
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+					<condition var1="tw_is_super" op="=" var2="0"/>
+				</conditions>
 				<placement x="%col1_x_left%" y="%row11_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_s_chk=Mount System RO}</text>
 				<image resource="checkbox_false"/>
@@ -3109,7 +3112,10 @@
 			</button>
 
 			<button style="checkbox">
-				<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+					<condition var1="tw_is_super" op="=" var2="0"/>
+				</conditions>
 				<placement x="%col1_x_left%" y="%row11_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_s_chk=Mount System RO}</text>
 				<image resource="checkbox_true"/>

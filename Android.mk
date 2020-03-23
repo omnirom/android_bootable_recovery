@@ -52,6 +52,9 @@ TWHTCD_PATH := $(TWRES_PATH)htcd/
 
 TARGET_RECOVERY_GUI := true
 
+LOCAL_STATIC_LIBRARIES :=
+LOCAL_SHARED_LIBRARIES :=
+
 ifneq ($(TW_DEVICE_VERSION),)
     LOCAL_CFLAGS += -DTW_DEVICE_VERSION='"-$(TW_DEVICE_VERSION)"'
 else
@@ -76,6 +79,19 @@ LOCAL_SRC_FILES := \
     openrecoveryscript.cpp \
     tarWrite.c \
     twrpAdbBuFifo.cpp
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+    LOCAL_STATIC_LIBRARIES += libavb
+    LOCAL_SHARED_LIBRARIES += libfs_mgr libinit
+    LOCAL_C_INCLUDES += \
+        system/core/fs_mgr/libfs_avb/include/ \
+        system/core/fs_mgr/include_fstab/ \
+        system/core/fs_mgr/include/ \
+        system/core/fs_mgr/libdm/include/ \
+        system/core/fs_mgr/liblp/include/ \
+        system/gsid/include/ \
+        system/core/init/
+endif
 
 ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += $(TARGET_RECOVERY_REBOOT_SRC)
@@ -117,9 +133,6 @@ else
     LOCAL_C_INCLUDES += external/boringssl/include external/libcxx/include
 endif
 
-LOCAL_STATIC_LIBRARIES :=
-LOCAL_SHARED_LIBRARIES :=
-
 LOCAL_STATIC_LIBRARIES += libguitwrp
 LOCAL_SHARED_LIBRARIES += libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libtwadbbu libbootloader_message_twrp
 LOCAL_SHARED_LIBRARIES += libcrecovery libtwadbbu libtwrpdigest libc++ libaosprecovery
@@ -153,7 +166,6 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     else
         LOCAL_SHARED_LIBRARIES += libziparchive
         LOCAL_C_INCLUDES += system/core/libziparchive/include
-        LOCAL_C_FLAGS += -DUSE_
     endif
 else
     LOCAL_SHARED_LIBRARIES += libminzip
@@ -188,6 +200,10 @@ ifeq ($(AB_OTA_UPDATER),true)
     LOCAL_CFLAGS += -DAB_OTA_UPDATER=1
     LOCAL_SHARED_LIBRARIES += libhardware android.hardware.boot@1.0
     TWRP_REQUIRED_MODULES += libhardware
+endif
+
+ifeq ($(PRODUCT_USE_DYNAMIC_PARTITIONS),true)
+    LOCAL_CFLAGS += -DPRODUCT_USE_DYNAMIC_PARTITIONS=1
 endif
 
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin

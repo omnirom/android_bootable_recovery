@@ -142,6 +142,7 @@ int GUIPartitionList::NotifyVarChange(const std::string& varName, const std::str
 			currentValue = value;
 			SetPosition();
 		} else if (ListType == "backup") {
+			updateList = true;
 			MatchList();
 		} else if (ListType == "restore") {
 			updateList = true;

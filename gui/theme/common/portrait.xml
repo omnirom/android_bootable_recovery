@@ -2641,7 +2641,10 @@
 			</partitionlist>
 
 			<button style="checkbox">
-				<condition var1="tw_mount_system_ro" op="=" var2="0"/>
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+					<condition var1="tw_is_super" op="=" var2="0"/>
+				</conditions>
 				<placement x="%indent%" y="%row15a_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_false"/>
@@ -2649,7 +2652,10 @@
 			</button>
 
 			<button style="checkbox">
-				<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+					<condition var1="tw_is_super" op="=" var2="0"/>
+				</conditions>
 				<placement x="%indent%" y="%row15a_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_true"/>

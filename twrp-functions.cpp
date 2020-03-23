@@ -317,6 +317,15 @@ unsigned long TWFunc::Get_File_Size(const string& Path) {
 	return st.st_size;
 }
 
+std::string TWFunc::Remove_Beginning_Slash(const std::string& path) {
+	std::string res;
+	size_t pos = path.find_first_of("/");
+	if (pos != std::string::npos) {
+		res = path.substr(pos+1);
+	}
+	return res;
+}
+
 std::string TWFunc::Remove_Trailing_Slashes(const std::string& path, bool leaveLast)
 {
 	std::string res;
@@ -1306,19 +1315,24 @@ void TWFunc::check_selinux_support() {
 }
 
 bool TWFunc::Is_TWRP_App_In_System() {
-	if (PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), false)) {
-		string base_path = PartitionManager.Get_Android_Root_Path();
-		if (TWFunc::Path_Exists(PartitionManager.Get_Android_Root_Path() + "/system"))
-			base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
-		string install_path = base_path + "/priv-app";
-		if (!TWFunc::Path_Exists(install_path))
-			install_path = base_path + "/app";
-		install_path += "/twrpapp";
-		if (TWFunc::Path_Exists(install_path)) {
-			LOGINFO("App found at '%s'\n", install_path.c_str());
-			DataManager::SetValue("tw_app_installed_in_system", 1);
-			return true;
+	LOGINFO("checking for twrp app\n");
+	TWPartition* sys = PartitionManager.Find_Partition_By_Path(PartitionManager.Get_Android_Root_Path());
+	if (!sys->Get_Super_Status()) {
+		if (PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), false)) {
+			string base_path = PartitionManager.Get_Android_Root_Path();
+			if (TWFunc::Path_Exists(PartitionManager.Get_Android_Root_Path() + "/system"))
+				base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
+			string install_path = base_path + "/priv-app";
+			if (!TWFunc::Path_Exists(install_path))
+				install_path = base_path + "/app";
+			install_path += "/twrpapp";
+			if (TWFunc::Path_Exists(install_path)) {
+				LOGINFO("App found at '%s'\n", install_path.c_str());
+				DataManager::SetValue("tw_app_installed_in_system", 1);
+				return true;
+			}
 		}
+		DataManager::SetValue("tw_app_installed_in_system", 0);
 	}
 	DataManager::SetValue("tw_app_installed_in_system", 0);
 	PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
@@ -1331,6 +1345,15 @@ int TWFunc::Property_Override(string Prop_Name, string Prop_Value) {
 #else
     return -2;
 #endif
+}
+
+void TWFunc::List_Mounts() {
+	std::vector<std::string> mounts;
+	read_file("/proc/mounts", mounts);
+	LOGINFO("Mounts:\n");
+	for (auto&& mount: mounts) {
+		LOGINFO("%s\n", mount.c_str());
+	}
 }
 
 #endif // ndef BUILD_TWRPTAR_MAIN
