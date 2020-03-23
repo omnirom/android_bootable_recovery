@@ -83,38 +83,11 @@ endif
 
 LOCAL_MODULE := recovery
 
-#LOCAL_FORCE_STATIC_EXECUTABLE := true
-
-#ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
-#ifeq ($(HOST_OS),linux)
-#LOCAL_REQUIRED_MODULES := mkfs.f2fs
-#endif
-#endif
-
 RECOVERY_API_VERSION := 3
 RECOVERY_FSTAB_VERSION := 2
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
 LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_CLANG := true
-
-#LOCAL_STATIC_LIBRARIES := \
-#    libext4_utils_static \
-#    libsparse_static \
-#    libminzip \
-#    libz \
-#    libmtdutils \
-#    libmincrypt \
-#    libminadbd \
-#    libminui \
-#    libpixelflinger_static \
-#    libpng \
-#    libfs_mgr \
-#    libcutils \
-#    liblog \
-#    libselinux \
-#    libstdc++ \
-#    libm \
-#    libc
 
 LOCAL_C_INCLUDES += \
     system/vold \
@@ -219,11 +192,6 @@ endif
 
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 
-#ifeq ($(TARGET_RECOVERY_UI_LIB),)
-#  LOCAL_SRC_FILES += default_device.cpp
-#else
-#  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
-#endif
 ifeq ($(TARGET_RECOVERY_TWRP_LIB),)
     LOCAL_SRC_FILES += BasePartition.cpp
 else
@@ -633,7 +601,6 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(RECOVERY_BUSYBOX_SYMLINKS)
 ifneq (,$(filter $(PLATFORM_SDK_VERSION),16 17 18))
 ALL_DEFAULT_INSTALLED_MODULES += $(RECOVERY_BUSYBOX_SYMLINKS)
 endif
-#include $(BUILD_PHONY_PACKAGE)
 RECOVERY_BUSYBOX_SYMLINKS :=
 endif # !TW_USE_TOOLBOX
 
@@ -702,31 +669,6 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
     endif
     include $(BUILD_SHARED_LIBRARY)
 endif
-
-# # static libfusesideload
-# # =============================== (required to fix build errors in 8.1 due to use by tests)
-# include $(CLEAR_VARS)
-# LOCAL_CLANG := true
-# LOCAL_CFLAGS := -Wall -Werror -Wno-unused-parameter
-# LOCAL_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
-
-# LOCAL_MODULE_TAGS := optional
-# LOCAL_MODULE := libfusesideload
-# LOCAL_SHARED_LIBRARIES := libcutils libc
-# ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
-#     LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
-#     LOCAL_STATIC_LIBRARIES += libmincrypttwrp
-#     LOCAL_CFLAGS += -DUSE_MINCRYPT
-# else
-#     LOCAL_STATIC_LIBRARIES += libcrypto_static
-# endif
-# ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
-#     LOCAL_SRC_FILES := fuse_sideload22.cpp
-#     LOCAL_CFLAGS += -DUSE_FUSE_SIDELOAD22
-# else
-#     LOCAL_SRC_FILES := fuse_sideload.cpp
-# endif
-# include $(BUILD_STATIC_LIBRARY)
 
 # libmounts (static library)
 # ===============================
@@ -857,38 +799,12 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_CFLAGS := -Wall -Werror
 include $(BUILD_STATIC_LIBRARY)
 
-# # Wear default device
-# # ===============================
-# include $(CLEAR_VARS)
-# LOCAL_SRC_FILES := wear_device.cpp
-# LOCAL_CFLAGS := -Wall -Werror
-
-# # Should match TARGET_RECOVERY_UI_LIB in BoardConfig.mk.
-# LOCAL_MODULE := librecovery_ui_wear
-
-# include $(BUILD_STATIC_LIBRARY)
-
-# # vr headset default device
-# # ===============================
-# include $(CLEAR_VARS)
-
-# LOCAL_SRC_FILES := vr_device.cpp
-# LOCAL_CFLAGS := -Wall -Werror
-
-# # should match TARGET_RECOVERY_UI_LIB set in BoardConfig.mk
-# LOCAL_MODULE := librecovery_ui_vr
-
-# include $(BUILD_STATIC_LIBRARY)
-
 commands_recovery_local_path := $(LOCAL_PATH)
 
 #    $(LOCAL_PATH)/edify/Android.mk
 #    $(LOCAL_PATH)/otafault/Android.mk
-#    $(LOCAL_PATH)/bootloader_message/Android.mk
 
     # $(commands_TWRP_local_path)/boot_control/Android.bp 
-    # $(commands_TWRP_local_path)/tests/Android.mk 
-    # $(commands_TWRP_local_path)/tools/Android.mk 
     # $(commands_TWRP_local_path)/update_verifier/Android.mk
 include \
     $(commands_TWRP_local_path)/updater/Android.mk \
