@@ -25,6 +25,7 @@ cc_defaults {
         "libdm",
         "libfec",
         "libfec_rs",
+        "libavb",
         "libverity_tree",
         "libgtest_prod",
         "liblog",
