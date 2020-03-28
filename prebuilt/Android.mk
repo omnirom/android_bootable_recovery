@@ -15,51 +15,48 @@ RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dump_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/flash_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/erase_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/bu
-ifneq ($(TW_USE_TOOLBOX), true)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/busybox
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
 else
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
-        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/sh
+endif
+RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/grep
     else
-        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/sh
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/grep
     endif
-    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
-        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
-            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/grep
-        else
-            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/grep
+    LOCAL_POST_INSTALL_CMD += $(hide) if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep" ]; then \
+                                rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; fi; ln -s $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; \
+                                if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep" ]; then \
+                                rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep; fi; ln -s $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep;
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dd
         endif
-        LOCAL_POST_INSTALL_CMD += $(hide) if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep" ]; then \
-                                    rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; fi; ln -s $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; \
-                                    if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep" ]; then \
-                                    rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep; fi; ln -s $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep;
-        # RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
-        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
-            ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
-                RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dd
-            endif
-        endif
-        ifneq ($(wildcard external/zip/Android.mk),)
-            RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
-        endif
-        ifneq ($(wildcard external/unzip/Android.mk),)
-            RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
-        endif
-        ifneq ($(wildcard system/core/libziparchive/Android.bp),)
-            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/unzip
-        endif
-        ifneq ($(wildcard external/one-true-awk/Android.bp),)
-            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/awk
-        endif
+    endif
+    ifneq ($(wildcard external/zip/Android.mk),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
+    endif
+    ifneq ($(wildcard external/unzip/Android.mk),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
+    endif
+    ifneq ($(wildcard system/core/libziparchive/Android.bp),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/unzip
+    endif
+    ifneq ($(wildcard external/one-true-awk/Android.bp),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/awk
     endif
 endif
+
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/pigz
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/fsck.fat
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/fatlabel
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkfs.fat
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 27; echo $$?),0)
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 29; echo $$?),0)    
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 29; echo $$?),0)
         RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/adbd
     else
         RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/adbd
@@ -105,12 +102,14 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libadbd_services.so
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libcap.so
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libminijail.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/toybox
     # RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libinit.so
     RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libdl_android.so
 else
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libc.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdl.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libm.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
 endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcutils.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrecovery.so
@@ -454,22 +453,29 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_misc.so
 endif
 
-TW_BB_SYMLINKS :=
-ifneq ($(TW_USE_TOOLBOX), true)
-    TW_BB_SYMLINKS := busybox_symlinks
-endif
+#toybox links
+toybox_links := acpi base64 basename bc blockdev cal cat chcon chgrp chmod chown chroot chrt cksum clear \
+    cmp comm cp cpio cut date dd devmem df diff dirname dmesg dos2unix du echo env expand expr fallocate \
+    false file find flock fmt free fsync getconf getenforce groups gunzip gzip head hostname hwclock i2cdetect \
+    i2cdump i2cget i2cset iconv id ifconfig inotifyd insmod install ionice iorenice kill killall ln load_policy \
+    log logname losetup ls lsmod lsof lspci lsusb md5sum microcom mkdir mkfifo mknod mkswap mktemp modinfo modprobe \
+    more mount mountpoint mv nc netcat netstat nice nl nohup nproc nsenter od paste patch pgrep pidof pkill pmap \
+    printenv printf ps pwd readlink realpath renice restorecon rm rmdir rmmod runcon sed sendevent seq setenforce \
+    setprop setsid sha1sum sha224sum sha256sum sha384sum sha512sum sleep sort split start stat stop strings stty \
+    swapoff swapon sync sysctl tac tail tar taskset tee time timeout top touch toybox tr true truncate tty ulimit \
+    umount uname uniq unix2dos unlink unshare uptime usleep uudecode uuencode uuidgen vmstat watch wc which whoami \
+    xargs xxd yes zcat
+TOYBOX_LINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/system/bin/, $(toybox_links))
 
-# GEN := $(intermediates)/teamwin
-# $(GEN): $(RELINK) $(TW_BB_SYMLINKS) toolbox_symlinks
-
-#relink recovery executables linker to /sbin
+#relink recovery executables linker to /sbin and move symlinks
 include $(CLEAR_VARS)
 LOCAL_MODULE := relink
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-LOCAL_POST_INSTALL_CMD += $(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
-LOCAL_REQUIRED_MODULES := linker toolbox_symlinks adbd libdl_android
+LOCAL_POST_INSTALL_CMD += $(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES) && \
+    mv $(TOYBOX_LINKS) $(TARGET_RECOVERY_ROOT_OUT)/sbin/
+LOCAL_REQUIRED_MODULES := linker adbd libdl_android toybox
 include $(BUILD_PHONY_PACKAGE)
 
 #relink init
@@ -602,16 +608,16 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	include $(BUILD_PREBUILT)
 endif
 
-#ifeq ($(TW_USE_TOOLBOX), true)
-#    include $(CLEAR_VARS)
-#    LOCAL_MODULE := mkshrc_twrp
-#    LOCAL_MODULE_STEM := mkshrc
-#    LOCAL_MODULE_TAGS := optional
-#    LOCAL_MODULE_CLASS := ETC
-#    LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/etc
-#    LOCAL_SRC_FILES := $(LOCAL_MODULE)
-#    include $(BUILD_PREBUILT)
-#endif
+ifeq ($(TW_USE_TOOLBOX), true)
+   include $(CLEAR_VARS)
+   LOCAL_MODULE := mkshrc_twrp
+   LOCAL_MODULE_STEM := mkshrc
+   LOCAL_MODULE_TAGS := optional
+   LOCAL_MODULE_CLASS := ETC
+   LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/etc
+   LOCAL_SRC_FILES := $(LOCAL_MODULE)
+   include $(BUILD_PREBUILT)
+endif
 
 #TWRP App "placeholder"
 include $(CLEAR_VARS)

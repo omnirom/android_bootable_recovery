@@ -418,22 +418,12 @@ ifneq ($(TARGET_ARCH), arm64)
 else
     LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
 endif
-ifneq ($(TW_USE_TOOLBOX), true)
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
-        LOCAL_POST_INSTALL_CMD := \
-            $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin && \
-            ln -sf /sbin/busybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
-    endif
-else
-    ifneq ($(wildcard external/toybox/Android.mk),)
-        TWRP_REQUIRED_MODULES += toybox_symlinks
-    endif
-    ifneq ($(wildcard external/zip/Android.mk),)
-        TWRP_REQUIRED_MODULES += zip
-    endif
-    ifneq ($(wildcard external/unzip/Android.mk),)
-        TWRP_REQUIRED_MODULES += unzip
-    endif
+
+ifneq ($(wildcard external/zip/Android.mk),)
+    TWRP_REQUIRED_MODULES += zip
+endif
+ifneq ($(wildcard external/unzip/Android.mk),)
+    TWRP_REQUIRED_MODULES += unzip
 endif
 
 ifneq ($(TW_NO_EXFAT), true)
@@ -561,48 +551,7 @@ endif
 LOCAL_POST_INSTALL_CMD := \
     $(hide) cp -f $(PRODUCT_OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
 
-#include $(BUILD_PHONY_PACKAGE)
-
-ifneq ($(TW_USE_TOOLBOX), true)
-include $(CLEAR_VARS)
-# Create busybox symlinks... gzip and gunzip are excluded because those need to link to pigz instead
-BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
-exclude := tune2fs mke2fs mkdosfs mkfs.vfat gzip gunzip
-
-# Having /sbin/modprobe present on 32 bit devices with can cause a massive
-# performance problem if the kernel has CONFIG_MODULES=y
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 22; echo $$?),0)
-    ifneq ($(TARGET_ARCH), arm64)
-        ifneq ($(TARGET_ARCH), x86_64)
-            exclude += modprobe
-        endif
-    endif
-endif
-
-# If busybox does not have restorecon, assume it does not have SELinux support.
-# Then, let toolbox provide 'ls' so -Z is available to list SELinux contexts.
-ifeq ($(filter restorecon, $(notdir $(BUSYBOX_LINKS))),)
-    exclude += ls
-endif
-
-RECOVERY_BUSYBOX_TOOLS := $(filter-out $(exclude), $(notdir $(BUSYBOX_LINKS)))
-RECOVERY_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/, $(RECOVERY_BUSYBOX_TOOLS))
-$(RECOVERY_BUSYBOX_SYMLINKS): BUSYBOX_BINARY := busybox
-$(RECOVERY_BUSYBOX_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
-	@echo "Symlink: $@ -> $(BUSYBOX_BINARY)"
-	@mkdir -p $(dir $@)
-	@rm -rf $@
-	$(hide) ln -sf $(BUSYBOX_BINARY) $@
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := busybox_symlinks
-LOCAL_MODULE_TAGS := optional
-LOCAL_ADDITIONAL_DEPENDENCIES := $(RECOVERY_BUSYBOX_SYMLINKS)
-ifneq (,$(filter $(PLATFORM_SDK_VERSION),16 17 18))
-ALL_DEFAULT_INSTALLED_MODULES += $(RECOVERY_BUSYBOX_SYMLINKS)
-endif
-RECOVERY_BUSYBOX_SYMLINKS :=
-endif # !TW_USE_TOOLBOX
+include $(BUILD_PHONY_PACKAGE)
 
 # recovery-persist (system partition dynamic executable run after /data mounts)
 # ===============================
@@ -858,7 +807,6 @@ include $(commands_TWRP_local_path)/injecttwrp/Android.mk \
     $(commands_TWRP_local_path)/minzip/Android.mk \
     $(commands_TWRP_local_path)/dosfstools/Android.mk \
     $(commands_TWRP_local_path)/etc/Android.mk \
-    $(commands_TWRP_local_path)/toybox/Android.mk \
     $(commands_TWRP_local_path)/simg2img/Android.mk \
     $(commands_TWRP_local_path)/adbbu/Android.mk \
     $(commands_TWRP_local_path)/libpixelflinger/Android.mk \
