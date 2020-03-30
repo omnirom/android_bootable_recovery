@@ -312,6 +312,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     endif
 endif
 ifeq ($(AB_OTA_UPDATER), true)
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/update_engine_sideload
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.boot@1.0.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/bootctl
     ifneq ($(TW_INCLUDE_CRYPTO), true)
