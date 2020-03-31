@@ -99,6 +99,8 @@ on late-init
     trigger early-boot
     trigger boot
 
+    start logd
+
 on property:sys.powerctl=*
    powerctl ${sys.powerctl}
 

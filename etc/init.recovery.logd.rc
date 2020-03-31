@@ -1,13 +1,10 @@
-on load_all_props_action
-    start logd
-
-on load_persist_props_action
-    start logd
-
 service logd /sbin/logd
     class core
-    socket logd stream 0666 logd logd
-    socket logdr seqpacket 0666 logd logd
-    socket logdw dgram 0222 logd logd
-    group root system
+    socket logdr seqpacket 0666 root root
+    socket logdw dgram+passcred 0222 root root
+    file /proc/kmsg r
+    file /dev/kmsg w
+    user root
+    group root
+    capabilities SYSLOG AUDIT_CONTROL SETGID SETUID
     seclabel u:r:logd:s0
