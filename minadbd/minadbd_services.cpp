@@ -266,6 +266,10 @@ static void WipeDeviceService(unique_fd fd, const std::string& args) {
   }
 }
 
+asocket* daemon_service_to_socket(std::string_view) {
+  return nullptr;
+}
+
 unique_fd daemon_service_to_fd(std::string_view name, atransport* /* transport */) {
   // Common services that are supported both in sideload and rescue modes.
   if (android::base::ConsumePrefix(&name, "reboot:")) {
