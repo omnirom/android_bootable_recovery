@@ -34,7 +34,7 @@ cc_defaults {
 
 // `libminadbd_services` is analogous to the `libadbd_services` for regular `adbd`, but providing
 // the sideload service only.
-cc_library {
+cc_library_static {
     name: "libminadbd_services",
     recovery_available: true,
 
@@ -79,6 +79,8 @@ cc_binary {
 
     defaults: [
         "minadbd_defaults",
+        "libadbd_binary_dependencies",
+        "librecovery_utils_defaults",
     ],
 
     srcs: [
@@ -86,10 +88,14 @@ cc_binary {
     ],
 
     shared_libs: [
-        "libadbd",
         "libbase",
         "libcrypto",
+    ],
+
+    static_libs: [
         "libminadbd_services",
+        "libfusesideload",
+        "librecovery_utils",
     ],
 
     required: [
@@ -104,6 +110,7 @@ cc_test {
     defaults: [
         "minadbd_defaults",
         "librecovery_utils_defaults",
+        "libadbd_binary_dependencies",
     ],
 
     srcs: [
@@ -116,7 +123,6 @@ cc_test {
         "libfusesideload",
         "librecovery_utils",
         "libotautil",
-        "libadbd",
     ],
 
     shared_libs: [
