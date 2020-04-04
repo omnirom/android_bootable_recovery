@@ -16,10 +16,10 @@ RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/flash_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/erase_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/bu
 
-ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
-else
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/sh
+else
+    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
 endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
@@ -106,11 +106,11 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libdl_android.so
     RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libprotobuf-cpp-lite.so
     RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libbinder.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/toybox
 else
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libc.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdl.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libm.so
-    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
 endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcutils.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrecovery.so
@@ -476,7 +476,7 @@ toybox_links := acpi base64 basename bc blockdev cal cat chcon chgrp chmod chown
     more mount mountpoint mv nc netcat netstat nice nl nohup nproc nsenter od paste patch pgrep pidof pkill pmap \
     printenv printf ps pwd readlink realpath renice restorecon rm rmdir rmmod runcon sed sendevent seq setenforce \
     setprop setsid sha1sum sha224sum sha256sum sha384sum sha512sum sleep sort split start stat stop strings stty \
-    swapoff swapon sync sysctl tac tail tar taskset tee time timeout top touch toybox tr true truncate tty ulimit \
+    swapoff swapon sync sysctl tac tail tar taskset tee time timeout top touch tr true truncate tty ulimit \
     umount uname uniq unix2dos unlink unshare uptime usleep uudecode uuencode uuidgen vmstat watch wc which whoami \
     xargs xxd yes zcat
 TOYBOX_LINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/system/bin/, $(toybox_links))
@@ -500,7 +500,7 @@ LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
 RELINK_INIT := $(TARGET_RECOVERY_ROOT_OUT)/system/bin/init
 LOCAL_POST_INSTALL_CMD += $(RELINK) $(TARGET_RECOVERY_ROOT_OUT) $(RELINK_INIT) && \
-    ln -sf ../init $(TARGET_RECOVERY_ROOT_OUT)/sbin/ueventd 
+    ln -sf ../init $(TARGET_RECOVERY_ROOT_OUT)/sbin/ueventd
 LOCAL_REQUIRED_MODULES := init_second_stage.recovery
 include $(BUILD_PHONY_PACKAGE)
 
