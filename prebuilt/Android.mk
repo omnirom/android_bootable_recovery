@@ -44,7 +44,11 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
         RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
     endif
     ifneq ($(wildcard system/core/libziparchive/Android.bp),)
-        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/unzip
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/unzip
+        else
+            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/unzip
+        endif
     endif
     ifneq ($(wildcard external/one-true-awk/Android.bp),)
         RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/awk
