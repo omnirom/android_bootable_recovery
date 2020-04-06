@@ -407,7 +407,9 @@ TWRP_REQUIRED_MODULES += \
     simg2img_twrp \
     libbootloader_message_twrp \
     init.recovery.hlthchrg.rc \
-    init.recovery.service.rc
+    init.recovery.service.rc \
+    init.recovery.ldconfig.rc \
+    awk
 
 ifneq ($(TARGET_ARCH), arm64)
     ifneq ($(TARGET_ARCH), x86_64)
@@ -511,7 +513,7 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
         ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
             LOCAL_POST_INSTALL_CMD += \
             sed 's/\(namespace.default.search.paths\)\s\{1,\}=/namespace.default.search.paths  = \/sbin\n\1 +=/' \
-                    $(TARGET_RECOVERY_ROOT_OUT)/system/etc/ld.config.txt > $(TARGET_RECOVERY_ROOT_OUT)/sbin/ld.config.txt;
+                    $(TARGET_RECOVERY_ROOT_OUT)/system/etc/ld.config.txt > $(TARGET_RECOVERY_ROOT_OUT)/sbin/ld.config.txt
         else
             LOCAL_POST_INSTALL_CMD += \
             sed 's/\(namespace.default.search.paths\)\s\{1,\}=/namespace.default.search.paths  = \/sbin\n\1 +=/' \
