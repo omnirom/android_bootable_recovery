@@ -78,7 +78,8 @@ LOCAL_SRC_FILES := \
     twrpDigestDriver.cpp \
     openrecoveryscript.cpp \
     tarWrite.c \
-    twrpAdbBuFifo.cpp
+    twrpAdbBuFifo.cpp \
+    twrpApex.cpp
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
     LOCAL_STATIC_LIBRARIES += libavb
@@ -204,6 +205,10 @@ endif
 
 ifeq ($(PRODUCT_USE_DYNAMIC_PARTITIONS),true)
     LOCAL_CFLAGS += -DPRODUCT_USE_DYNAMIC_PARTITIONS=1
+endif
+
+ifeq ($(TW_NO_BIND_SYSTEM),true)
+    LOCAL_CFLAGS += -DTW_NO_BIND_SYSTEM
 endif
 
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin

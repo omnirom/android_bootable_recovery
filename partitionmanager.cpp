@@ -3277,7 +3277,12 @@ bool TWPartitionManager::Prepare_Super_Volume(TWPartition* twrpPart) {
         return false;
     }
 
+	while (access(fstabEntry.blk_device.c_str(), F_OK) != 0) {
+		usleep(100);
+	}
+
 	twrpPart->Set_Block_Device(fstabEntry.blk_device);
+	twrpPart->Mount(true);
 	twrpPart->Update_Size(true);
 	twrpPart->Change_Mount_Read_Only(true);
 	twrpPart->Set_Can_Be_Backed_Up(false);

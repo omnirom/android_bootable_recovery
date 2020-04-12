@@ -484,7 +484,7 @@ endif
 #toybox links
 toybox_links := acpi base64 basename bc blockdev cal cat chcon chgrp chmod chown chroot chrt cksum clear \
     cmp comm cp cpio cut date dd devmem df diff dirname dmesg dos2unix du echo env expand expr fallocate \
-    false file find flock fmt free fsync getconf getenforce groups gunzip gzip head hostname hwclock i2cdetect \
+    false file find flock fmt free fsync getconf getenforce getprop groups gunzip gzip head hostname hwclock i2cdetect \
     i2cdump i2cget i2cset iconv id ifconfig inotifyd insmod install ionice iorenice kill killall ln load_policy \
     log logname losetup ls lsmod lsof lspci lsusb md5sum microcom mkdir mkfifo mknod mkswap mktemp modinfo modprobe \
     more mount mountpoint mv nc netcat netstat nice nl nohup nproc nsenter od paste patch pgrep pidof pkill pmap \

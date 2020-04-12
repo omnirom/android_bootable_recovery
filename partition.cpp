@@ -1575,12 +1575,13 @@ bool TWPartition::Mount(bool Display_Error) {
 		TWFunc::Exec_Cmd(Command);
 	}
 
+ #ifndef TW_NO_BIND_SYSTEM
 	if (Mount_Point == "/system_root") {
 		unlink("/system");
 		mkdir("/system", 0755);
 		mount("/system_root/system", "/system", "auto", MS_BIND, NULL);
 	}
-
+ #endif
 	return true;
 }
 
