@@ -25,7 +25,6 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     LOCAL_CFLAGS += -DHAVE_GATEKEEPER1
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
         LOCAL_SHARED_LIBRARIES += android.hardware.confirmationui@1.0
-        # LOCAL_CFLAGS += -DUSE_
     endif
     LOCAL_SHARED_LIBRARIES += android.hardware.keymaster@3.0 libkeystore_binder libhidlbase libutils libbinder android.hardware.gatekeeper@1.0
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)

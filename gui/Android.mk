@@ -43,6 +43,9 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/../otautil/include
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libziparchive 
     LOCAL_STATIC_LIBRARIES += libotautil
+    ifneq ($(TW_INCLUDE_CRYPTO),)
+        LOCAL_C_INCLUDES += bootable/recovery/crypto/fscrypt
+    endif
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 28; echo $$?),0)
         LOCAL_C_INCLUDES += $(LOCAL_PATH)/../install/include \
             system/core/libziparchive/include/ \

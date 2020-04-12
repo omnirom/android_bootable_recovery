@@ -110,11 +110,25 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libminijail.so
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libunwindstack.so
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libasyncio.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libcgrouprc.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libbinderthreadstate.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libsquashfs_utils.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libjsoncpp.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libmdnssd.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libfec.so
     RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libinit.so
     RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libdl_android.so
     RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libprotobuf-cpp-lite.so
     RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libbinder.so
-    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/toybox
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libchrome.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libevent.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/keystore
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/keystore_cli_v2
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/hwservicemanager
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/servicemanager
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/vold_prepare_subdirs
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../vendor/bin/vndservicemanager
+    RELINK_SOURCE_FILES +=   $(TARGET_RECOVERY_ROOT_OUT)/system/bin/toybox
 else
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libc.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdl.so
@@ -255,7 +269,15 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/htcdumlock
 endif
 ifeq ($(TW_INCLUDE_CRYPTO), true)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcryptfsfde.so
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libcryptfsfde.so
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libdexfile_support.so
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libf2fs_sparseblock.so
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../vendor/lib64/libnos_transport.so
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../vendor/lib64/libnos_datagram.so
+    else
+        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcryptfsfde.so
+    endif
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libhardware.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libgpt_twrp.so
@@ -268,7 +290,11 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     endif
     # FBE files
     ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
-        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libe4crypt.so
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libtwrpfscrypt.so
+        else
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libe4crypt.so
+        endif
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libgatekeeper.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_messages.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeystore_binder.so
@@ -514,16 +540,21 @@ include $(BUILD_PHONY_PACKAGE)
 
 #relink init
 include $(CLEAR_VARS)
-LOCAL_MODULE := relink_init
+LOCAL_MODULE := twrp_ramdisk
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
 RELINK_INIT := $(TARGET_RECOVERY_ROOT_OUT)/system/bin/init
 LOCAL_POST_INSTALL_CMD += $(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/ $(RELINK_INIT) && \
-    mv $(TARGET_RECOVERY_ROOT_OUT)/system/bin/ueventd $(TARGET_RECOVERY_ROOT_OUT)/sbin/ && \
+    cp $(TARGET_RECOVERY_ROOT_OUT)/system/bin/ueventd $(TARGET_RECOVERY_ROOT_OUT)/sbin/ && \
     ln -sf /init $(TARGET_RECOVERY_ROOT_OUT)/sbin/init && \
-    ln -sf /init $(TARGET_RECOVERY_ROOT_OUT)/system/bin/init
-LOCAL_REQUIRED_MODULES := init_second_stage.recovery reboot.recovery
+    ln -sf /init $(TARGET_RECOVERY_ROOT_OUT)/system/bin/init && \
+    mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/ && \
+    cp $(TARGET_ROOT_OUT)/../system/etc/selinux/plat_service_contexts $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/plat_service_contexts && \
+    cp $(TARGET_ROOT_OUT)/../system/etc/selinux/plat_hwservice_contexts $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/plat_hwservice_contexts && \
+    cp $(TARGET_ROOT_OUT)/../vendor/etc/selinux/vndservice_contexts $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/vndservice_contexts && \
+    cp $(TARGET_ROOT_OUT)/../vendor/etc/selinux/vendor_hwservice_contexts $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/vendor_hwservice_contexts
+LOCAL_REQUIRED_MODULES := init_second_stage.recovery reboot.recovery plat_service_contexts plat_hardware_contexts vndservice_contexts
 include $(BUILD_PHONY_PACKAGE)
 
 #mke2fs.conf

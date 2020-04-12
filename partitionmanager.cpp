@@ -43,6 +43,7 @@
 #include <android-base/chrono_utils.h>
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <fstab/fstab.h>
 #include <fs_avb/fs_avb.h>
@@ -84,18 +85,22 @@ extern "C" {
 }
 
 #ifdef TW_INCLUDE_CRYPTO
-	#include "crypto/fde/cryptfs.h"
-	#include "gui/rapidxml.hpp"
-	#include "gui/pages.hpp"
-	#ifdef TW_INCLUDE_FBE
-		#include "crypto/ext4crypt/Decrypt.h"
-		#ifdef TW_INCLUDE_FBE_METADATA_DECRYPT
-			#include "crypto/ext4crypt/MetadataCrypt.h"
-		#endif
+#include "crypto/fde/cryptfs.h"
+#include "gui/rapidxml.hpp"
+#include "gui/pages.hpp"
+#ifdef TW_INCLUDE_FBE
+#include "crypto/ext4crypt/Decrypt.h"
+#ifdef TW_INCLUDE_FBE_METADATA_DECRYPT
+	#ifdef USE_FSCRYPT
+	#include "crypto/fscrypt/MetadataCrypt.h"
+	#else
+	#include "crypto/ext4crypt/MetadataCrypt.h"
 	#endif
-	#ifdef TW_CRYPTO_USE_SYSTEM_VOLD
-		#include "crypto/vold_decrypt/vold_decrypt.h"
-	#endif
+#endif
+#endif
+#ifdef TW_CRYPTO_USE_SYSTEM_VOLD
+#include "crypto/vold_decrypt/vold_decrypt.h"
+#endif
 #endif
 
 #ifdef AB_OTA_UPDATER
@@ -307,13 +312,59 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 	if (settings_partition) {
 		Setup_Settings_Storage_Partition(settings_partition);
 	}
-#ifdef TW_INCLUDE_CRYPTO
+
+	Update_System_Details();
+	UnMount_Main_Partitions();
+#ifdef AB_OTA_UPDATER
+	DataManager::SetValue("tw_active_slot", Get_Active_Slot_Display());
+#endif
+	setup_uevent();
+	return true;
+}
+
+int TWPartitionManager::Write_Fstab(void) {
+	FILE *fp;
+	std::vector<TWPartition*>::iterator iter;
+	string Line;
+
+	fp = fopen("/etc/fstab", "w");
+	if (fp == NULL) {
+		LOGINFO("Can not open /etc/fstab.\n");
+		return false;
+	}
+	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+		if ((*iter)->Can_Be_Mounted) {
+			Line = (*iter)->Actual_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw 0 0\n";
+			fputs(Line.c_str(), fp);
+		}
+		// Handle subpartition tracking
+		if ((*iter)->Is_SubPartition) {
+			TWPartition* ParentPartition = Find_Partition_By_Path((*iter)->SubPartition_Of);
+			if (ParentPartition)
+				ParentPartition->Has_SubPartition = true;
+			else
+				LOGERR("Unable to locate parent partition '%s' of '%s'\n", (*iter)->SubPartition_Of.c_str(), (*iter)->Mount_Point.c_str());
+		}
+	}
+	fclose(fp);
+	return true;
+}
+
+void TWPartitionManager::Decrypt_Data() {
+	#ifdef TW_INCLUDE_CRYPTO
 	TWPartition* Decrypt_Data = Find_Partition_By_Path("/data");
 	if (Decrypt_Data && Decrypt_Data->Is_Encrypted && !Decrypt_Data->Is_Decrypted) {
 		if (!Decrypt_Data->Key_Directory.empty() && Mount_By_Path(Decrypt_Data->Key_Directory, false)) {
 #ifdef TW_INCLUDE_FBE_METADATA_DECRYPT
+#ifdef USE_FSCRYPT
+			if (fscrypt_mount_metadata_encrypted(Decrypt_Data->Actual_Block_Device, Decrypt_Data->Mount_Point, false)) {
+				std::string crypto_blkdev =  android::base::GetProperty("ro.crypto.fs_crypto_blkdev", "error");
+				LOGINFO("Successfully decrypted metadata encrypted data partition with new block device: '%s'\n", crypto_blkdev.c_str());
+#else
 			if (e4crypt_mount_metadata_encrypted(Decrypt_Data->Mount_Point, false, Decrypt_Data->Key_Directory, Decrypt_Data->Actual_Block_Device, &Decrypt_Data->Decrypted_Block_Device)) {
-				LOGINFO("Successfully decrypted metadata encrypted data partition with new block device: '%s'\n", Decrypt_Data->Decrypted_Block_Device.c_str());
+				LOGINFO("Successfully decrypted metadata encrypted data partition with new block device: '%s'\n", 
+				Decrypt_Data->Decrypted_Block_Device.c_str());
+#endif
 				property_set("ro.crypto.state", "encrypted");
 				Decrypt_Data->Is_Decrypted = true; // Needed to make the mount function work correctly
 				int retry_count = 10;
@@ -373,41 +424,6 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 		Decrypt_Adopted();
 	}
 #endif
-	Update_System_Details();
-	UnMount_Main_Partitions();
-#ifdef AB_OTA_UPDATER
-	DataManager::SetValue("tw_active_slot", Get_Active_Slot_Display());
-#endif
-	setup_uevent();
-	return true;
-}
-
-int TWPartitionManager::Write_Fstab(void) {
-	FILE *fp;
-	std::vector<TWPartition*>::iterator iter;
-	string Line;
-
-	fp = fopen("/etc/fstab", "w");
-	if (fp == NULL) {
-		LOGINFO("Can not open /etc/fstab.\n");
-		return false;
-	}
-	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if ((*iter)->Can_Be_Mounted) {
-			Line = (*iter)->Actual_Block_Device + " " + (*iter)->Mount_Point + " " + (*iter)->Current_File_System + " rw 0 0\n";
-			fputs(Line.c_str(), fp);
-		}
-		// Handle subpartition tracking
-		if ((*iter)->Is_SubPartition) {
-			TWPartition* ParentPartition = Find_Partition_By_Path((*iter)->SubPartition_Of);
-			if (ParentPartition)
-				ParentPartition->Has_SubPartition = true;
-			else
-				LOGERR("Unable to locate parent partition '%s' of '%s'\n", (*iter)->SubPartition_Of.c_str(), (*iter)->Mount_Point.c_str());
-		}
-	}
-	fclose(fp);
-	return true;
 }
 
 void TWPartitionManager::Setup_Settings_Storage_Partition(TWPartition* Part) {
@@ -479,8 +495,6 @@ void TWPartitionManager::Output_Partition(TWPartition* Part) {
 		printf("Is_Settings_Storage ");
 	if (Part->Ignore_Blkid)
 		printf("Ignore_Blkid ");
-	if (Part->Retain_Layout_Version)
-		printf("Retain_Layout_Version ");
 	if (Part->Mount_To_Decrypt)
 		printf("Mount_To_Decrypt ");
 	if (Part->Can_Flash_Img)
@@ -877,10 +891,12 @@ int TWPartitionManager::Run_Backup(bool adbbackup) {
 
 	LOGINFO("Calculating backup details...\n");
 	DataManager::GetValue("tw_backup_list", Backup_List);
+	LOGINFO("Backup_List: %s\n", Backup_List.c_str());
 	if (!Backup_List.empty()) {
 		end_pos = Backup_List.find(";", start_pos);
 		while (end_pos != string::npos && start_pos < Backup_List.size()) {
 			backup_path = Backup_List.substr(start_pos, end_pos - start_pos);
+			LOGINFO("backup_path: %s\n", backup_path.c_str());
 			part_settings.Part = Find_Partition_By_Path(backup_path);
 			if (part_settings.Part != NULL) {
 				partition_count++;
@@ -1503,9 +1519,6 @@ int TWPartitionManager::Format_Data(void) {
 	TWPartition* dat = Find_Partition_By_Path("/data");
 
 	if (dat != NULL) {
-		if (!dat->UnMount(true))
-			return false;
-
 		return dat->Wipe_Encryption();
 	} else {
 		gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")("/data"));
@@ -1665,11 +1678,13 @@ void TWPartitionManager::Update_System_Details(void) {
 	TWPartition* FreeStorage = Find_Partition_By_Path(current_storage_path);
 	if (FreeStorage != NULL) {
 		// Attempt to mount storage
-		if (!FreeStorage->Mount(false)) {
-			gui_msg(Msg(msg::kError, "unable_to_mount_storage=Unable to mount storage"));
-			DataManager::SetValue(TW_STORAGE_FREE_SIZE, 0);
-		} else {
-			DataManager::SetValue(TW_STORAGE_FREE_SIZE, (int)(FreeStorage->Free / 1048576LLU));
+		if (!TWFunc::Is_Mount_Wiped("/data")) {
+			if (!FreeStorage->Mount(false)) {
+				gui_msg(Msg(msg::kWarning, "unable_to_mount_storage=Unable to mount storage"));
+				DataManager::SetValue(TW_STORAGE_FREE_SIZE, 0);
+			} else {
+				DataManager::SetValue(TW_STORAGE_FREE_SIZE, (int)(FreeStorage->Free / 1048576LLU));
+			}
 		}
 	} else {
 		LOGINFO("Unable to find storage partition '%s'.\n", current_storage_path.c_str());
@@ -1681,6 +1696,9 @@ void TWPartitionManager::Update_System_Details(void) {
 
 void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 	TWPartition* dat = Find_Partition_By_Path("/data");
+#ifdef USE_FSCRYPT
+	dat->Set_Block_Device("/dev/block/mapper/userdata");
+#endif
 	if (dat != NULL) {
 		DataManager::SetValue(TW_IS_DECRYPTED, 1);
 		dat->Is_Decrypted = true;
@@ -3326,8 +3344,14 @@ std::string TWPartitionManager::Get_Super_Partition() {
 void TWPartitionManager::Setup_Super_Devices() {
 	std::string superPart = Get_Super_Partition();
 	android::fs_mgr::CreateLogicalPartitions(superPart);
+}
+
+void TWPartitionManager::Setup_Super_Partition() {
 	TWPartition* superPartition = new TWPartition();
-	superPartition->Mount_Point = "super";
+	std::string superPart = Get_Super_Partition();
+
+	superPartition->Backup_Path = "/super";
+	superPartition->Mount_Point = "/super";
 	superPartition->Actual_Block_Device = superPart;
 	superPartition->Alternate_Block_Device = superPart;
 	superPartition->Backup_Display_Name = "super";
@@ -3336,6 +3360,7 @@ void TWPartitionManager::Setup_Super_Devices() {
 	superPartition->Can_Be_Backed_Up = true;
 	superPartition->Is_Present = true;
 	superPartition->Is_SubPartition = false;
+	superPartition->Setup_Image();
 	Add_Partition(superPartition);
 	PartitionManager.Output_Partition(superPartition);
 	Update_System_Details();

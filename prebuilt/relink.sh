@@ -18,6 +18,7 @@ process_file()
 
     sed "s|/system/bin/linker64\x0|/sbin/linker64\x0\x0\x0\x0\x0\x0\x0|g" $src | sed "s|/system/bin/linker\x0|/sbin/linker\x0\x0\x0\x0\x0\x0\x0|g" | sed "s|/system/bin/sh\x0|/sbin/sh\x0\x0\x0\x0\x0\x0\x0|g" > $dst
     #rm -f $src
+    [ -e $2.tmp ] && rm $2.tmp || echo
 }
 
 

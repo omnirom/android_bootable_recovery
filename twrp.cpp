@@ -70,6 +70,31 @@ static void Print_Prop(const char *key, const char *name, void *cookie) {
 	printf("%s=%s\n", key, name);
 }
 
+static void Decrypt_Page(bool SkipDecryption, bool datamedia) {
+	// Offer to decrypt if the device is encrypted
+	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
+		if (SkipDecryption) {
+			LOGINFO("Skipping decryption\n");
+		} else {
+			LOGINFO("Is encrypted, do decrypt page first\n");
+			if (gui_startPage("decrypt", 1, 1) != 0) {
+				LOGERR("Failed to start decrypt GUI page.\n");
+			} else {
+				// Check for and load custom theme if present
+				TWFunc::check_selinux_support();
+				gui_loadCustomResources();
+			}
+		}
+	} else if (datamedia) {
+		TWFunc::check_selinux_support();
+		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
+			LOGINFO("Failed to get default contexts and file mode for storage files.\n");
+		} else {
+			LOGINFO("Got default contexts and file mode for storage files.\n");
+		}
+	}
+}
+
 int main(int argc, char **argv) {
 	// Recovery needs to install world-readable files, so clear umask
 	// set by init
@@ -199,9 +224,19 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	PartitionManager.Output_Partition_Logging();
+#ifdef TW_INCLUDE_CRYPTO
+	DataManager::SetValue(TW_IS_ENCRYPTED, 1);
+#endif
 
-	if (PartitionManager.Get_Super_Status())
+	if (PartitionManager.Get_Super_Status()) {
 		PartitionManager.Setup_Super_Devices();
+		PartitionManager.Setup_Super_Partition();
+	} else {
+#ifdef TW_INCLUDE_CRYPTO
+		if (!PartitionManager.Get_Super_Status())
+			PartitionManager.Decrypt_Data();
+#endif
+	}
 
 	// Load up all the resources
 	gui_loadResources();
@@ -310,28 +345,8 @@ int main(int argc, char **argv) {
 	LOGINFO("Backup of TWRP ramdisk done.\n");
 #endif
 
-	// Offer to decrypt if the device is encrypted
-	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
-		if (SkipDecryption) {
-			LOGINFO("Skipping decryption\n");
-		} else {
-			LOGINFO("Is encrypted, do decrypt page first\n");
-			if (gui_startPage("decrypt", 1, 1) != 0) {
-				LOGERR("Failed to start decrypt GUI page.\n");
-			} else {
-				// Check for and load custom theme if present
-				TWFunc::check_selinux_support();
-				gui_loadCustomResources();
-			}
-		}
-	} else if (datamedia) {
-		TWFunc::check_selinux_support();
-		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
-			LOGINFO("Failed to get default contexts and file mode for storage files.\n");
-		} else {
-			LOGINFO("Got default contexts and file mode for storage files.\n");
-		}
-	}
+	if (!PartitionManager.Get_Super_Status())
+		Decrypt_Page(SkipDecryption, datamedia);
 
 	// Fixup the RTC clock on devices which require it
 	if (crash_counter == 0)
@@ -339,7 +354,9 @@ int main(int argc, char **argv) {
 
 	// Read the settings file
 	TWFunc::Update_Log_File();
-	DataManager::ReadSettingsFile();
+
+	if (!PartitionManager.Get_Super_Status())
+		DataManager::ReadSettingsFile();
 	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
 	GUIConsole::Translate_Now();
 
@@ -388,6 +405,11 @@ int main(int argc, char **argv) {
 				LOGERR("Unable to load apex images from %s\n", APEX_DIR);
 			}
 			property_set("twrp.apex.loaded", "true");
+#ifdef TW_INCLUDE_CRYPTO
+			PartitionManager.Decrypt_Data();
+			Decrypt_Page(SkipDecryption, datamedia);
+			DataManager::ReadSettingsFile();
+#endif
 		} else {
 			if ((DataManager::GetIntValue("tw_mount_system_ro") == 0 && sys->Check_Lifetime_Writes() == 0) || DataManager::GetIntValue("tw_mount_system_ro") == 2) {
 				if (DataManager::GetIntValue("tw_never_show_system_ro_page") == 0) {
@@ -410,6 +432,7 @@ int main(int argc, char **argv) {
 		}
 	}
 #endif
+
 	twrpAdbBuFifo *adb_bu_fifo = new twrpAdbBuFifo();
 	adb_bu_fifo->threadAdbBuFifo();
 
@@ -424,7 +447,8 @@ int main(int argc, char **argv) {
 	// Reboot
 	TWFunc::Update_Intent_File(Send_Intent);
 	delete adb_bu_fifo;
-	TWFunc::Update_Log_File();
+	if (!TWFunc::Is_Mount_Wiped("/data"))
+		TWFunc::Update_Log_File();
 	gui_msg(Msg("rebooting=Rebooting..."));
 	string Reboot_Arg;
 	DataManager::GetValue("tw_reboot_arg", Reboot_Arg);

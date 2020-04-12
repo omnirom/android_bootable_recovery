@@ -774,7 +774,6 @@ extern "C" int gui_loadResources(void)
 #ifndef TW_OEM_BUILD
 	int check = 0;
 	DataManager::GetValue(TW_IS_ENCRYPTED, check);
-
 	if (check)
 	{
 		if (PageManager::LoadPackage("TWRP", TWRES "ui.xml", "decrypt"))
