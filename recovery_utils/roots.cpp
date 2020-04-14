@@ -259,6 +259,12 @@ int format_volume(const std::string& volume, const std::string& directory) {
     make_f2fs_cmd.push_back("-C");
     make_f2fs_cmd.push_back("utf8");
   }
+  if (v->fs_mgr_flags.fs_compress) {
+    make_f2fs_cmd.push_back("-O");
+    make_f2fs_cmd.push_back("compression");
+    make_f2fs_cmd.push_back("-O");
+    make_f2fs_cmd.push_back("extra_attr");
+  }
   make_f2fs_cmd.push_back(v->blk_device);
   if (length >= kSectorSize) {
     make_f2fs_cmd.push_back(std::to_string(length / kSectorSize));
