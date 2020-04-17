@@ -79,6 +79,7 @@ cc_defaults {
         "librecovery_utils",
         "libotautil",
         "libsnapshot_nobinder",
+        "update_metadata-protos",
     ],
 }
 
