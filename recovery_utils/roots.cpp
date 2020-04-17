@@ -157,8 +157,8 @@ int format_volume(const std::string& volume, const std::string& directory) {
   bool needs_projid = false;
 
   if (volume == "/data") {
-    needs_casefold = android::base::GetBoolProperty("ro.emulated_storage.casefold", false);
-    needs_projid = android::base::GetBoolProperty("ro.emulated_storage.projid", false);
+    needs_casefold = android::base::GetBoolProperty("external_storage.casefold.enabled", false);
+    needs_projid = android::base::GetBoolProperty("external_storage.projid.enabled", false);
   }
 
   // If there's a key_loc that looks like a path, it should be a block device for storing encryption
