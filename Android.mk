@@ -18,9 +18,9 @@ LOCAL_PATH := $(call my-dir)
 RECOVERY_API_VERSION := 3
 RECOVERY_FSTAB_VERSION := 2
 
-# TARGET_RECOVERY_UI_LIB should be one of librecovery_ui_{default,wear,vr} or a device-specific
-# module that defines make_device() and the exact RecoveryUI class for the target. It defaults to
-# librecovery_ui_default, which uses ScreenRecoveryUI.
+# TARGET_RECOVERY_UI_LIB should be one of librecovery_ui_{default,wear,vr,ethernet} or a
+# device-specific module that defines make_device() and the exact RecoveryUI class for the
+# target. It defaults to librecovery_ui_default, which uses ScreenRecoveryUI.
 TARGET_RECOVERY_UI_LIB ?= librecovery_ui_default
 
 # librecovery_ui_ext (shared library)
