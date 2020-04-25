@@ -477,9 +477,9 @@ static int Uncrypt(const std::string& input_path, const std::string& map_file, i
     return kUncryptRealpathFindError;
   }
 
-  bool encryptable;
-  bool encrypted;
-  bool f2fs_fs;
+  bool encryptable = false;
+  bool encrypted = false;
+  bool f2fs_fs = false;
   const std::string blk_dev = FindBlockDevice(path, &encryptable, &encrypted, &f2fs_fs);
   if (blk_dev.empty()) {
     LOG(ERROR) << "Failed to find block device for " << path;
