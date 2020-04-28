@@ -330,15 +330,25 @@ static InstallResult TryUpdateBinary(Package* package, bool* wipe_cache,
     return INSTALL_CORRUPT;
   }
 
-  bool is_ab = android::base::GetBoolProperty("ro.build.ab_update", false);
-  if (is_ab) {
+  bool package_is_ab = get_value(metadata, "ota-type") == OtaTypeToString(OtaType::AB);
+  bool device_supports_ab = android::base::GetBoolProperty("ro.build.ab_update", false);
+  bool ab_device_supports_nonab =
+      android::base::GetBoolProperty("ro.virtual_ab.allow_non_ab", false);
+  bool device_only_supports_ab = device_supports_ab && !ab_device_supports_nonab;
+
+  if (package_is_ab) {
     CHECK(package->GetType() == PackageType::kFile);
   }
 
-  // Verify against the metadata in the package first.
-  if (is_ab && !CheckPackageMetadata(metadata, OtaType::AB)) {
-    log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
-    return INSTALL_ERROR;
+  // Verify against the metadata in the package first. Expects A/B metadata if:
+  // Package declares itself as an A/B package
+  // Package does not declare itself as an A/B package, but device only supports A/B;
+  //   still calls CheckPackageMetadata to get a meaningful error message.
+  if (package_is_ab || device_only_supports_ab) {
+    if (!CheckPackageMetadata(metadata, OtaType::AB)) {
+      log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
+      return INSTALL_ERROR;
+    }
   }
 
   ReadSourceTargetBuild(metadata, log_buffer);
@@ -388,8 +398,9 @@ static InstallResult TryUpdateBinary(Package* package, bool* wipe_cache,
 
   std::vector<std::string> args;
   if (auto setup_result =
-          is_ab ? SetUpAbUpdateCommands(package_path, zip, pipe_write.get(), &args)
-                : SetUpNonAbUpdateCommands(package_path, zip, retry_count, pipe_write.get(), &args);
+          package_is_ab
+              ? SetUpAbUpdateCommands(package_path, zip, pipe_write.get(), &args)
+              : SetUpNonAbUpdateCommands(package_path, zip, retry_count, pipe_write.get(), &args);
       !setup_result) {
     log_buffer->push_back(android::base::StringPrintf("error: %d", kUpdateBinaryCommandFailure));
     return INSTALL_CORRUPT;
