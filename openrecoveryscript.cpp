@@ -148,8 +148,8 @@ int OpenRecoveryScript::run_script_file(void) {
 				// Wipe
 				if (strcmp(value, "cache") == 0 || strcmp(value, "/cache") == 0) {
 					PartitionManager.Wipe_By_Path("/cache");
-				} else if (strcmp(value, PartitionManager.Get_Android_Root_Path().c_str()) == 0 || strcmp(value, PartitionManager.Get_Android_Root_Path().c_str()) == 0) {
-					PartitionManager.Wipe_By_Path(PartitionManager.Get_Android_Root_Path());
+				} else if (strcmp(value, "system") == 0 || strcmp(value, "/system") == 0 || strcmp(value, PartitionManager.Get_Android_Root_Path().c_str()) == 0) {
+					PartitionManager.Wipe_By_Path("/system");
 				} else if (strcmp(value, "dalvik") == 0 || strcmp(value, "dalvick") == 0 || strcmp(value, "dalvikcache") == 0 || strcmp(value, "dalvickcache") == 0) {
 					PartitionManager.Wipe_Dalvik_Cache();
 				} else if (strcmp(value, "data") == 0 || strcmp(value, "/data") == 0 || strcmp(value, "factory") == 0 || strcmp(value, "factoryreset") == 0) {
@@ -253,8 +253,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					gui_msg(Msg("set_restore_opt=Setting restore options: '{1}':")(value2));
 					line_len = strlen(value2);
 					for (i=0; i<line_len; i++) {
-						if ((value2[i] == 'S' || value2[i] == 's') && Partition_List.find(PartitionManager.Get_Android_Root_Path() + ';') != string::npos) {
-							Restore_List += PartitionManager.Get_Android_Root_Path() + ';';
+						if ((value2[i] == 'S' || value2[i] == 's') && Partition_List.find("/system;") != string::npos) {
+							Restore_List += "/system;";
 							gui_msg("system=System");
 						} else if ((value2[i] == 'D' || value2[i] == 'd') && Partition_List.find("/data;") != string::npos) {
 							Restore_List += "/data;";
@@ -543,7 +543,7 @@ int OpenRecoveryScript::Backup_Command(string Options) {
 	line_len = Options.size();
 	for (i=0; i<line_len; i++) {
 		if (Options.substr(i, 1) == "S" || Options.substr(i, 1) == "s") {
-			Backup_List += PartitionManager.Get_Android_Root_Path() + ';';
+			Backup_List += "/system;";
 			gui_msg("system=System");
 		} else if (Options.substr(i, 1) == "D" || Options.substr(i, 1) == "d") {
 			Backup_List += "/data;";
