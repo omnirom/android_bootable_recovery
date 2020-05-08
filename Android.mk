@@ -177,7 +177,11 @@ endif
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
         LOCAL_CFLAGS += -DUSE_EXT4
-        LOCAL_C_INCLUDES += system/extras/ext4_utils
+    endif
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 28; echo $$?),0)
+        LOCAL_C_INCLUDES += system/extras/ext4_utils \
+            system/extras/ext4_utils/include \
+            bootable/recovery/crypto/ext4crypt
         LOCAL_SHARED_LIBRARIES += libext4_utils
         ifneq ($(wildcard external/lz4/Android.mk),)
             #LOCAL_STATIC_LIBRARIES += liblz4
@@ -205,8 +209,6 @@ ifeq ($(TARGET_RECOVERY_TWRP_LIB),)
 else
     LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_TWRP_LIB)
 endif
-
-LOCAL_C_INCLUDES += system/extras/ext4_utils
 
 tw_git_revision := $(shell git -C $(LOCAL_PATH) rev-parse --short=8 HEAD 2>/dev/null)
 ifeq ($(shell git -C $(LOCAL_PATH) diff --quiet; echo $$?),1)

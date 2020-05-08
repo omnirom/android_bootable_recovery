@@ -21,8 +21,10 @@
 
 #include <string>
 #include <vector>
+#include <ext4_utils/ext4_crypt.h>
 
 #include "twrpDigest/twrpDigest.hpp"
+#include "ext4crypt_tar.h"
 
 #ifndef BUILD_TWRPTAR_MAIN
 #include "partitions.hpp"
@@ -51,6 +53,7 @@ enum Archive_Type {
 	ENCRYPTED,
 	COMPRESSED_ENCRYPTED
 };
+
 
 // Partition class
 class TWFunc
@@ -113,6 +116,9 @@ public:
 	static void check_selinux_support(); // print whether selinux support is enabled to console
 	static bool Is_TWRP_App_In_System(); // Check if the TWRP app is installed in the system partition
 	static int Property_Override(string Prop_Name, string Prop_Value); // Override properties (including ro. properties)
+	static bool Get_Encryption_Policy(ext4_encryption_policy &policy, std::string path); // return encryption policy for path
+	static bool Set_Encryption_Policy(std::string path, const ext4_encryption_policy &policy); // set encryption policy for path
+	static bool Is_Data_Wiped(std::string path); // check if directory has been wiped
 
 private:
 	static void Copy_Log(string Source, string Destination);

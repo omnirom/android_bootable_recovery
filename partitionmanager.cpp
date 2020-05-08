@@ -1487,9 +1487,6 @@ int TWPartitionManager::Format_Data(void) {
 	TWPartition* dat = Find_Partition_By_Path("/data");
 
 	if (dat != NULL) {
-		if (!dat->UnMount(true))
-			return false;
-
 		return dat->Wipe_Encryption();
 	} else {
 		gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")("/data"));

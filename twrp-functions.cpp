@@ -640,7 +640,9 @@ void TWFunc::Update_Intent_File(string Intent) {
 int TWFunc::tw_reboot(RebootCommand command)
 {
 	DataManager::Flush();
-	Update_Log_File();
+	if (!Is_Data_Wiped("/data"))
+		Update_Log_File();
+
 	// Always force a sync before we reboot
 	sync();
 
@@ -1333,4 +1335,50 @@ int TWFunc::Property_Override(string Prop_Name, string Prop_Value) {
 #endif
 }
 
+bool TWFunc::Get_Encryption_Policy(ext4_encryption_policy &policy, std::string path) {
+	if (!TWFunc::Path_Exists(path)) {
+		LOGERR("Unable to find %s to get policy\n", path.c_str());
+		return false;
+	}
+	if (!e4crypt_policy_get_struct(path.c_str(), &policy)) {
+		LOGERR("No policy set for path %s\n", path.c_str());
+		return false;
+	}
+	return true;
+}
+
+bool TWFunc::Set_Encryption_Policy(std::string path, const ext4_encryption_policy &policy) {
+	if (!TWFunc::Path_Exists(path)) {
+		LOGERR("unable to find %s to set policy\n", path.c_str());
+		return false;
+	}
+	char binary_policy[EXT4_KEY_DESCRIPTOR_SIZE];
+	char policy_hex[EXT4_KEY_DESCRIPTOR_SIZE_HEX];
+	policy_to_hex(binary_policy, policy_hex);
+	if (!e4crypt_policy_set_struct(path.c_str(), &policy)) {
+		LOGERR("unable to set policy for path: %s\n", path.c_str());
+		return false;
+	}
+	return true;
+}
+
+bool TWFunc::Is_Data_Wiped(std::string path) {
+	DIR* d = opendir(path.c_str());
+	size_t file_count = 0;
+	if (d != NULL) {
+		struct dirent* de;
+		while ((de = readdir(d)) != NULL) {
+			LOGINFO("file: %s\n", de->d_name);
+			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+				continue;
+			if (strncmp(de->d_name, "lost+found", 10) == 0 || strncmp(de->d_name, "media", 5) == 0)
+				continue;
+			file_count++;
+
+		}
+		closedir(d);
+	}
+	LOGINFO("file_count: %zu\n", file_count);
+	return file_count == 0;
+}
 #endif // ndef BUILD_TWRPTAR_MAIN

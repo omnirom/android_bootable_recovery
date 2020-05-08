@@ -1,5 +1,5 @@
 /*
-	Copyright 2013 to 2017 TeamWin
+	Copyright 2013 to 2020 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -19,17 +19,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/vfs.h>
 #include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/vfs.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <libgen.h>
-#include <zlib.h>
-#include <iostream>
-#include <sstream>
-#include <sys/param.h>
 #include <fcntl.h>
+#include <grp.h>
+#include <iostream>
+#include <libgen.h>
+#include <pwd.h>
+#include <zlib.h>
+#include <sstream>
 
 #include "cutils/properties.h"
 #include "libblkid/include/blkid.h"
@@ -1632,6 +1635,11 @@ bool TWPartition::Wipe(string New_File_System) {
 	bool wiped = false, update_crypt = false, recreate_media = true;
 	int check;
 	string Layout_Filename = Mount_Point + "/.layout_version";
+	ext4_encryption_policy policy;
+
+	if (Mount_Point == "/data" && TWFunc::get_cache_dir() == AB_CACHE_DIR && Is_Decrypted) {
+		TWFunc::Get_Encryption_Policy(policy, AB_CACHE_DIR);
+	}
 
 	if (!Can_Be_Wiped) {
 		gui_msg(Msg(msg::kError, "cannot_wipe=Partition {1} cannot be wiped.")(Display_Name));
@@ -1648,6 +1656,11 @@ bool TWPartition::Wipe(string New_File_System) {
 
 	if (Has_Data_Media && Current_File_System == New_File_System) {
 		wiped = Wipe_Data_Without_Wiping_Media();
+		if (Mount_Point == "/data" && TWFunc::get_cache_dir() == AB_CACHE_DIR) {
+			bool created = Recreate_AB_Cache_Dir(policy);
+			if (created)
+				gui_msg(Msg(msg::kWarning, "fbe_wipe_msg=WARNING: {1} wiped. FBE device should be booted into Android and not Recovery to set initial FBE policy after wipe.")(TWFunc::get_cache_dir()));
+		}
 		recreate_media = false;
 	} else {
 		DataManager::GetValue(TW_RM_RF_VAR, check);
@@ -1677,9 +1690,6 @@ bool TWPartition::Wipe(string New_File_System) {
 	}
 
 	if (wiped) {
-		if (Mount_Point == "/cache")
-			DataManager::Output_Version();
-
 		if (TWFunc::Path_Exists("/.layout_version") && Mount(false))
 			TWFunc::copy_file("/.layout_version", Layout_Filename, 0600);
 
@@ -1991,10 +2001,10 @@ bool TWPartition::Wipe_Encryption() {
 		gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
 		return false;
 	}
-	if (!UnMount(true))
-		goto exit;
 
 #ifdef TW_INCLUDE_CRYPTO
+	if (!UnMount(true))
+		return false;
 	if (Is_Decrypted && !Decrypted_Block_Device.empty()) {
 		if (delete_crypto_blk_dev((char*)("userdata")) != 0) {
 			LOGERR("Error deleting crypto block device, continuing anyway.\n");
@@ -2014,7 +2024,10 @@ bool TWPartition::Wipe_Encryption() {
 		}
 		DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 #ifndef TW_OEM_BUILD
-		gui_msg("format_data_msg=You may need to reboot recovery to be able to use /data again.");
+		if (Is_FBE)
+			gui_msg(Msg(msg::kWarning, "fbe_wipe_msg=WARNING: {1} wiped. FBE device should be booted into Android and not Recovery to set initial FBE policy after wipe.")(TWFunc::get_cache_dir()));
+		else
+			gui_msg("format_data_msg=You may need to reboot recovery to be able to use /data again.");
 #endif
 		ret = true;
 		if (!Key_Directory.empty())
@@ -2080,6 +2093,9 @@ void TWPartition::Check_FS_Type() {
 }
 
 bool TWPartition::Wipe_EXTFS(string File_System) {
+	if (!UnMount(true))
+		return false;
+
 #if PLATFORM_SDK_VERSION < 28
 	if (!TWFunc::Path_Exists("/sbin/mke2fs"))
 #else
@@ -2219,11 +2235,10 @@ bool TWPartition::Wipe_EXT4() {
 
 bool TWPartition::Wipe_FAT() {
 	string command;
+	if (!UnMount(true))
+		return false;
 
 	if (TWFunc::Path_Exists("/sbin/mkfs.fat")) {
-		if (!UnMount(true))
-			return false;
-
 		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkfs.fat"));
 		Find_Actual_Block_Device();
 		command = "mkfs.fat " + Actual_Block_Device;
@@ -2246,11 +2261,10 @@ bool TWPartition::Wipe_FAT() {
 
 bool TWPartition::Wipe_EXFAT() {
 	string command;
+	if (!UnMount(true))
+		return false;
 
 	if (TWFunc::Path_Exists("/sbin/mkexfatfs")) {
-		if (!UnMount(true))
-			return false;
-
 		gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mkexfatfs"));
 		Find_Actual_Block_Device();
 		command = "mkexfatfs " + Actual_Block_Device;
@@ -2317,6 +2331,8 @@ bool TWPartition::Wipe_RMRF() {
 
 bool TWPartition::Wipe_F2FS() {
 	string command;
+	if (!UnMount(true))
+		return false;
 
 	if (TWFunc::Path_Exists("/sbin/mkfs.f2fs")) {
 		bool NeedPreserveFooter = true;
@@ -2327,8 +2343,6 @@ bool TWPartition::Wipe_F2FS() {
 			gui_msg(Msg(msg::kError, "unable_to_wipe=Unable to wipe {1}.")(Display_Name));
 			return false;
 		}
-		if (!UnMount(true))
-			return false;
 
 		/**
 		 * On decrypted devices, IOCTL_Get_Block_Size calculates size on device mapper,
@@ -2402,14 +2416,14 @@ bool TWPartition::Wipe_NTFS() {
 	string command;
 	string Ntfsmake_Binary;
 
+	if (!UnMount(true))
+		return false;
+
 	if (TWFunc::Path_Exists("/sbin/mkntfs"))
 		Ntfsmake_Binary = "mkntfs";
 	else if (TWFunc::Path_Exists("/sbin/mkfs.ntfs"))
 		Ntfsmake_Binary = "mkfs.ntfs";
 	else
-		return false;
-
-	if (!UnMount(true))
 		return false;
 
 	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)(Ntfsmake_Binary));
@@ -2435,13 +2449,65 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 
 	if (!Mount(true))
 		return false;
-
 	gui_msg("wiping_data=Wiping data without wiping /data/media ...");
 	ret = Wipe_Data_Without_Wiping_Media_Func(Mount_Point + "/");
 	if (ret)
 		gui_msg("done=Done.");
 	return ret;
 #endif // ifdef TW_OEM_BUILD
+}
+
+bool TWPartition::Recreate_AB_Cache_Dir(const ext4_encryption_policy &policy) {
+	struct passwd pd;
+	struct passwd *pwdptr = &pd;
+	struct passwd *tempPd;
+	char pwdBuf[512];
+	int uid = 0, gid = 0;
+
+	if ((getpwnam_r("system", pwdptr, pwdBuf, sizeof(pwdBuf), &tempPd)) != 0) {
+		LOGERR("unable to get system user id\n");
+		return false;
+	} else {
+		struct group grp;
+		struct group *grpptr = &grp;
+		struct group *tempGrp;
+		char grpBuf[512];
+
+		if ((getgrnam_r("cache", grpptr, grpBuf, sizeof(grpBuf), &tempGrp)) != 0) {
+			LOGERR("unable to get cache group id\n");
+			return false;
+		} else {
+			uid = pd.pw_uid;
+			gid = grp.gr_gid;
+
+			if (!TWFunc::Create_Dir_Recursive(AB_CACHE_DIR, S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, uid, gid)) {
+				LOGERR("Unable to recreate %s\n", AB_CACHE_DIR);
+				return false;
+			}
+			if (setfilecon(AB_CACHE_DIR, "u:object_r:cache_file:s0") != 0) {	
+				LOGERR("Unable to set contexts for %s\n", AB_CACHE_DIR);
+				return false;
+			}
+			char policy_hex[EXT4_KEY_DESCRIPTOR_SIZE_HEX];
+			policy_to_hex(policy.master_key_descriptor, policy_hex);
+			LOGINFO("setting policy for %s: %s\n", policy_hex, AB_CACHE_DIR);
+			if (sizeof(policy.master_key_descriptor) > 0) {
+				if (!TWFunc::Set_Encryption_Policy(AB_CACHE_DIR, policy)) {
+					LOGERR("Unable to set encryption policy for %s\n", AB_CACHE_DIR);
+					LOGINFO("Removing %s\n", AB_CACHE_DIR);
+					int ret = TWFunc::removeDir(AB_CACHE_DIR, true);
+					if (ret == -1) {
+						LOGERR("Unable to remove %s\n", AB_CACHE_DIR);
+					}
+					return false;
+				}
+			} else {
+				LOGERR("Not setting empty policy to %s\n", AB_CACHE_DIR);
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 bool TWPartition::Wipe_Data_Without_Wiping_Media_Func(const string& parent __unused) {
