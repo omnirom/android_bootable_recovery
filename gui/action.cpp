@@ -2158,7 +2158,7 @@ int GUIAction::fixabrecoverybootloop(std::string arg __unused)
 			goto exit;
 		DataManager::SetProgress(.25);
 		gui_msg("fixing_recovery_loop_patch=Patching kernel...");
-		std::string command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot --hexpatch kernel 77616E745F696E697472616D667300 736B69705F696E697472616D667300";
+		std::string command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot hexpatch kernel 77616E745F696E697472616D667300 736B69705F696E697472616D667300";
 		if (TWFunc::Exec_Cmd(command) != 0) {
 			gui_msg(Msg(msg::kError, "fix_recovery_loop_patch_error=Error patching kernel."));
 			goto exit;
@@ -2174,7 +2174,7 @@ int GUIAction::fixabrecoverybootloop(std::string arg __unused)
 		}
 		DataManager::SetProgress(.5);
 		gui_msg(Msg("repacking_image=Repacking {1}...")(part->Display_Name));
-		command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot --repack " REPACK_ORIG_DIR "boot.img";
+		command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot repack " REPACK_ORIG_DIR "boot.img";
 		if (TWFunc::Exec_Cmd(command) != 0) {
 			gui_msg(Msg(msg::kError, "repack_error=Error repacking image."));
 			goto exit;
