@@ -3254,7 +3254,7 @@ bool TWPartitionManager::Prepare_Repack(const std::string& Source_Path, const st
 		if (TWFunc::copy_file(Source_Path, destination, 0644))
 			return false;
 	}
-	std::string command = "cd " + Temp_Folder_Destination + " && /sbin/magiskboot --unpack -h '" + Source_Path +"'";
+	std::string command = "cd " + Temp_Folder_Destination + " && /sbin/magiskboot unpack -h '" + Source_Path +"'";
 	if (TWFunc::Exec_Cmd(command) != 0) {
 		LOGINFO("Error unpacking %s!\n", Source_Path.c_str());
 		gui_msg(Msg(msg::kError, "unpack_error=Error unpacking image."));
@@ -3306,7 +3306,7 @@ bool TWPartitionManager::Repack_Images(const std::string& Target_Image, const st
 		LOGERR("Disabling verity is not implemented yet\n");
 	if (Repack_Options.Disable_Force_Encrypt)
 		LOGERR("Disabling force encrypt is not implemented yet\n");
-	std::string command = "cd " + path + " && /sbin/magiskboot --repack " + path + "boot.img";
+	std::string command = "cd " + path + " && /sbin/magiskboot repack " + path + "boot.img";
 	if (TWFunc::Exec_Cmd(command) != 0) {
 		gui_msg(Msg(msg::kError, "repack_error=Error repacking image."));
 		return false;
@@ -3335,7 +3335,7 @@ bool TWPartitionManager::Repack_Images(const std::string& Target_Image, const st
 			return false;
 		}
 		path = REPACK_ORIG_DIR;
-		command = "cd " + path + " && /sbin/magiskboot --repack " + path + "boot.img";
+		command = "cd " + path + " && /sbin/magiskboot repack " + path + "boot.img";
 		if (TWFunc::Exec_Cmd(command) != 0) {
 			gui_msg(Msg(msg::kError, "repack_error=Error repacking image."));
 			return false;
