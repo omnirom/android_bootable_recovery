@@ -148,8 +148,8 @@ int OpenRecoveryScript::run_script_file(void) {
 				// Wipe
 				if (strcmp(value, "cache") == 0 || strcmp(value, "/cache") == 0) {
 					PartitionManager.Wipe_By_Path("/cache");
-				} else if (strcmp(value, PartitionManager.Get_Android_Root_Path().c_str()) == 0 || strcmp(value, PartitionManager.Get_Android_Root_Path().c_str()) == 0) {
-					PartitionManager.Wipe_By_Path(PartitionManager.Get_Android_Root_Path());
+				} else if (strcmp(value, "system") == 0 || strcmp(value, "/system") == 0 || strcmp(value, PartitionManager.Get_Android_Root_Path().c_str()) == 0) {
+					PartitionManager.Wipe_By_Path("/system");
 				} else if (strcmp(value, "dalvik") == 0 || strcmp(value, "dalvick") == 0 || strcmp(value, "dalvikcache") == 0 || strcmp(value, "dalvickcache") == 0) {
 					PartitionManager.Wipe_Dalvik_Cache();
 				} else if (strcmp(value, "data") == 0 || strcmp(value, "/data") == 0 || strcmp(value, "factory") == 0 || strcmp(value, "factoryreset") == 0) {
@@ -301,6 +301,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					strcat(mount, value);
 				} else
 					strcpy(mount, value);
+				if (!strcmp(mount, "/system"))
+					strcpy(mount, PartitionManager.Get_Android_Root_Path().c_str());
 				if (PartitionManager.Mount_By_Path(mount, true))
 					gui_msg(Msg("mounted=Mounted '{1}'")(mount));
 			} else if (strcmp(command, "unmount") == 0 || strcmp(command, "umount") == 0) {
@@ -311,6 +313,8 @@ int OpenRecoveryScript::run_script_file(void) {
 					strcat(mount, value);
 				} else
 					strcpy(mount, value);
+				if (!strcmp(mount, "/system"))
+					strcpy(mount, PartitionManager.Get_Android_Root_Path().c_str());
 				if (PartitionManager.UnMount_By_Path(mount, true))
 					gui_msg(Msg("unmounted=Unounted '{1}'")(mount));
 			} else if (strcmp(command, "set") == 0) {

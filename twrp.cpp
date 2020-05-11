@@ -43,6 +43,11 @@ extern "C" {
 #include "twrp-functions.hpp"
 #include "data.hpp"
 #include "partitions.hpp"
+#ifdef __ANDROID_API_N__
+#include <android-base/strings.h>
+#else
+#include <base/strings.h>
+#endif
 #include "openrecoveryscript.hpp"
 #include "variables.h"
 #include "twrpAdbBuFifo.hpp"
@@ -117,8 +122,78 @@ int main(int argc, char **argv) {
 	if (!TWFunc::Path_Exists(fstab_filename)) {
 		fstab_filename = "/etc/recovery.fstab";
 	}
+
+	// Begin SAR detection
+	{
+		TWPartitionManager SarPartitionManager;
+		printf("=> Processing %s for SAR-detection\n", fstab_filename.c_str());
+		if (!SarPartitionManager.Process_Fstab(fstab_filename, 1, 1)) {
+			LOGERR("Failing out of recovery due to problem with fstab.\n");
+			return -1;
+		}
+
+		mkdir("/s", 0755);
+
+#if defined(AB_OTA_UPDATER) || defined(__ANDROID_API_Q__)
+		bool fallback_sar = true;
+#else
+		bool fallback_sar = property_get_bool("ro.build.system_root_image", false);
+#endif
+
+		if(SarPartitionManager.Mount_By_Path("/s", false)) {
+			if (TWFunc::Path_Exists("/s/build.prop")) {
+				LOGINFO("SAR-DETECT: Non-SAR System detected\n");
+				property_set("ro.twrp.sar", "0");
+				rmdir("/system_root");
+			} else if (TWFunc::Path_Exists("/s/system/build.prop")) {
+				LOGINFO("SAR-DETECT: SAR System detected\n");
+				property_set("ro.twrp.sar", "1");
+			} else {
+				LOGINFO("SAR-DETECT: No build.prop found, falling back to %s\n", fallback_sar ? "SAR" : "Non-SAR");
+				property_set("ro.twrp.sar", fallback_sar ? "1" : "0");
+			}
+
+// We are doing this here during SAR-detection, since we are mounting the system-partition anyway
+// This way we don't need to remount it later, just for overriding properties
+#if defined(TW_INCLUDE_LIBRESETPROP) && defined(TW_OVERRIDE_SYSTEM_PROPS)
+			stringstream override_props(EXPAND(TW_OVERRIDE_SYSTEM_PROPS));
+			string current_prop;
+			while (getline(override_props, current_prop, ';')) {
+				string other_prop;
+				if (current_prop.find("=") != string::npos) {
+					other_prop = current_prop.substr(current_prop.find("=") + 1);
+					current_prop = current_prop.substr(0, current_prop.find("="));
+				} else {
+					other_prop = current_prop;
+				}
+				other_prop = android::base::Trim(other_prop);
+				current_prop = android::base::Trim(current_prop);
+				string sys_val = TWFunc::System_Property_Get(other_prop, SarPartitionManager, "/s");
+				if (!sys_val.empty()) {
+					LOGINFO("Overriding %s with value: \"%s\" from system property %s\n", current_prop.c_str(), sys_val.c_str(), other_prop.c_str());
+					int error = TWFunc::Property_Override(current_prop, sys_val);
+					if (error) {
+						LOGERR("Failed overriding property %s, error_code: %d\n", current_prop.c_str(), error);
+					}
+				} else {
+					LOGINFO("Not overriding %s with empty value from system property %s\n", current_prop.c_str(), other_prop.c_str());
+				}
+			}
+#endif
+			SarPartitionManager.UnMount_By_Path("/s", false);
+		} else {
+			LOGINFO("SAR-DETECT: Could not mount system partition, falling back to %s\n", fallback_sar ? "SAR":"Non-SAR");
+			property_set("ro.twrp.sar", fallback_sar ? "1" : "0");
+		}
+
+		rmdir("/s");
+
+		TWFunc::check_and_run_script("/sbin/sarsetup.sh", "boot");
+	}
+	// End SAR detection
+
 	printf("=> Processing %s\n", fstab_filename.c_str());
-	if (!PartitionManager.Process_Fstab(fstab_filename, 1)) {
+	if (!PartitionManager.Process_Fstab(fstab_filename, 1, 0)) {
 		LOGERR("Failing out of recovery due to problem with fstab.\n");
 		return -1;
 	}

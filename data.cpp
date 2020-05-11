@@ -783,6 +783,7 @@ void DataManager::SetDefaultValues()
 #else
 	mPersist.SetValue(TW_NO_SHA2, "1");
 #endif
+	mPersist.SetValue(TW_UNMOUNT_SYSTEM, "1");
 
 #ifdef TW_NO_SCREEN_TIMEOUT
 	mConst.SetValue("tw_screen_timeout_secs", "0");

@@ -59,6 +59,10 @@ extern "C" {
 	#include "libcrecovery/common.h"
 }
 
+#ifdef TW_INCLUDE_LIBRESETPROP
+    #include <resetprop.h>
+#endif
+
 struct selabel_handle *selinux_handle;
 
 /* Execute a command */
@@ -891,19 +895,23 @@ string TWFunc::Get_Current_Date() {
 }
 
 string TWFunc::System_Property_Get(string Prop_Name) {
-	bool mount_state = PartitionManager.Is_Mounted_By_Path(PartitionManager.Get_Android_Root_Path());
+	return System_Property_Get(Prop_Name, PartitionManager, PartitionManager.Get_Android_Root_Path());
+}
+
+string TWFunc::System_Property_Get(string Prop_Name, TWPartitionManager &PartitionManager, string Mount_Point) {
+	bool mount_state = PartitionManager.Is_Mounted_By_Path(Mount_Point);
 	std::vector<string> buildprop;
 	string propvalue;
-	if (!PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true))
+	if (!PartitionManager.Mount_By_Path(Mount_Point, true))
 		return propvalue;
-	string prop_file = "/system/build.prop";
+	string prop_file = Mount_Point + "/build.prop";
 	if (!TWFunc::Path_Exists(prop_file))
-		prop_file = PartitionManager.Get_Android_Root_Path() + "/system/build.prop"; // for devices with system as a root file system (e.g. Pixel)
+		prop_file = Mount_Point + "/system/build.prop"; // for devices with system as a root file system (e.g. Pixel)
 	if (TWFunc::read_file(prop_file, buildprop) != 0) {
 		LOGINFO("Unable to open build.prop for getting '%s'.\n", Prop_Name.c_str());
 		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 		if (!mount_state)
-			PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
+			PartitionManager.UnMount_By_Path(Mount_Point, false);
 		return propvalue;
 	}
 	int line_count = buildprop.size();
@@ -916,12 +924,12 @@ string TWFunc::System_Property_Get(string Prop_Name) {
 		if (propname == Prop_Name) {
 			propvalue = buildprop.at(index).substr(end_pos + 1, buildprop.at(index).size());
 			if (!mount_state)
-				PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
+				PartitionManager.UnMount_By_Path(Mount_Point, false);
 			return propvalue;
 		}
 	}
 	if (!mount_state)
-		PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
+		PartitionManager.UnMount_By_Path(Mount_Point, false);
 	return propvalue;
 }
 
@@ -1315,4 +1323,13 @@ bool TWFunc::Is_TWRP_App_In_System() {
 	DataManager::SetValue("tw_app_installed_in_system", 0);
 	return false;
 }
+
+int TWFunc::Property_Override(string Prop_Name, string Prop_Value) {
+#ifdef TW_INCLUDE_LIBRESETPROP
+    return setprop(Prop_Name.c_str(), Prop_Value.c_str(), false);
+#else
+    return -2;
+#endif
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN

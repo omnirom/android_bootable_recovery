@@ -13,7 +13,6 @@ on early-init
     # ueventd wants to write to /acct
     mount cgroup none /acct cpuacct
     mkdir /acct/uid
-
     start ueventd
 
 on init
