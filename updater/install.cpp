@@ -852,6 +852,20 @@ Value* Tune2FsFn(const char* name, State* state, const std::vector<std::unique_p
   return StringValue("t");
 }
 
+Value* AddSlotSuffixFn(const char* name, State* state,
+                       const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 1) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
+  }
+  std::vector<std::string> args;
+  if (!ReadArgs(state, argv, &args)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+  }
+  const std::string& arg = args[0];
+  auto updater_runtime = state->updater->GetRuntime();
+  return StringValue(updater_runtime->AddSlotSuffix(arg));
+}
+
 void RegisterInstallFunctions() {
   RegisterFunction("mount", MountFn);
   RegisterFunction("is_mounted", IsMountedFn);
@@ -885,4 +899,6 @@ void RegisterInstallFunctions() {
 
   RegisterFunction("enable_reboot", EnableRebootFn);
   RegisterFunction("tune2fs", Tune2FsFn);
+
+  RegisterFunction("add_slot_suffix", AddSlotSuffixFn);
 }
