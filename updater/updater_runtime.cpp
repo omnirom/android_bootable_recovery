@@ -28,6 +28,7 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <ext4_utils/wipe.h>
+#include <fs_mgr.h>
 #include <selinux/label.h>
 #include <tune2fs.h>
 
@@ -185,4 +186,8 @@ int UpdaterRuntime::Tune2Fs(const std::vector<std::string>& args) const {
   auto tune2fs_args = StringVectorToNullTerminatedArray(args);
   // tune2fs changes the filesystem parameters on an ext2 filesystem; it returns 0 on success.
   return tune2fs_main(tune2fs_args.size() - 1, tune2fs_args.data());
+}
+
+std::string UpdaterRuntime::AddSlotSuffix(const std::string_view arg) const {
+  return std::string(arg) + fs_mgr_get_slot_suffix();
 }
