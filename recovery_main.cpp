@@ -471,6 +471,11 @@ int main(int argc, char** argv) {
     std::string usb_config =
         fastboot ? "fastboot" : IsRoDebuggable() || IsDeviceUnlocked() ? "adb" : "none";
     std::string usb_state = android::base::GetProperty("sys.usb.state", "none");
+    if (fastboot) {
+      device->PreFastboot();
+    } else {
+      device->PreRecovery();
+    }
     if (usb_config != usb_state) {
       if (!SetUsbConfig("none")) {
         LOG(ERROR) << "Failed to clear USB config";

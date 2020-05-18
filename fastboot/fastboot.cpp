@@ -52,6 +52,7 @@ Device::BuiltinAction StartFastboot(Device* device, const std::vector<std::strin
   ui->ResetKeyInterruptStatus();
   ui->SetTitle(title_lines);
   ui->ShowText(true);
+  device->StartFastboot();
 
   // Reset to normal system boot so recovery won't cycle indefinitely.
   // TODO(b/112277594) Clear only if 'recovery' field of BCB is empty. If not,
