@@ -1,5 +1,3 @@
-<<<<<<< HEAD   (fc79aa Encryption: don't try wrapped key if not needed)
-=======
 /*
  * Copyright (C) 2007 The Android Open Source Project
  *
