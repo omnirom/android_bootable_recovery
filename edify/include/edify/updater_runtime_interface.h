@@ -71,4 +71,7 @@ class UpdaterRuntimeInterface {
   virtual bool MapPartitionOnDeviceMapper(const std::string& partition_name, std::string* path) = 0;
   virtual bool UnmapPartitionOnDeviceMapper(const std::string& partition_name) = 0;
   virtual bool UpdateDynamicPartitions(const std::string_view op_list_value) = 0;
+
+  // On devices supports A/B, add current slot suffix to arg. Otherwise, return |arg| as is.
+  virtual std::string AddSlotSuffix(const std::string_view arg) const = 0;
 };

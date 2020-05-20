@@ -41,6 +41,7 @@ using android::fs_mgr::LpMetadata;
 using android::fs_mgr::MetadataBuilder;
 using android::fs_mgr::Partition;
 using android::fs_mgr::PartitionOpener;
+using android::fs_mgr::SlotNumberForSlotSuffix;
 
 static constexpr std::chrono::milliseconds kMapTimeout{ 1000 };
 
@@ -48,13 +49,17 @@ static std::string GetSuperDevice() {
   return "/dev/block/by-name/" + fs_mgr_get_super_partition_name();
 }
 
-static bool UnmapPartitionOnDeviceMapper(const std::string& partition_name) {
-  auto state = DeviceMapper::Instance().GetState(partition_name);
+static std::string AddSlotSuffix(const std::string& partition_name) {
+  return partition_name + fs_mgr_get_slot_suffix();
+}
+
+static bool UnmapPartitionWithSuffixOnDeviceMapper(const std::string& partition_name_suffix) {
+  auto state = DeviceMapper::Instance().GetState(partition_name_suffix);
   if (state == DmDeviceState::INVALID) {
     return true;
   }
   if (state == DmDeviceState::ACTIVE) {
-    return DestroyLogicalPartition(partition_name);
+    return DestroyLogicalPartition(partition_name_suffix);
   }
   LOG(ERROR) << "Unknown device mapper state: "
              << static_cast<std::underlying_type_t<DmDeviceState>>(state);
@@ -63,12 +68,17 @@ static bool UnmapPartitionOnDeviceMapper(const std::string& partition_name) {
 
 bool UpdaterRuntime::MapPartitionOnDeviceMapper(const std::string& partition_name,
                                                 std::string* path) {
-  auto state = DeviceMapper::Instance().GetState(partition_name);
+  auto partition_name_suffix = AddSlotSuffix(partition_name);
+  auto state = DeviceMapper::Instance().GetState(partition_name_suffix);
   if (state == DmDeviceState::INVALID) {
     CreateLogicalPartitionParams params = {
       .block_device = GetSuperDevice(),
-      .metadata_slot = 0,
-      .partition_name = partition_name,
+      // If device supports A/B, apply non-A/B update to the partition at current slot. Otherwise,
+      // SlotNumberForSlotSuffix("") returns 0.
+      .metadata_slot = SlotNumberForSlotSuffix(fs_mgr_get_slot_suffix()),
+      // If device supports A/B, apply non-A/B update to the partition at current slot. Otherwise,
+      // fs_mgr_get_slot_suffix() returns empty string.
+      .partition_name = partition_name_suffix,
       .force_writable = true,
       .timeout_ms = kMapTimeout,
     };
@@ -76,7 +86,7 @@ bool UpdaterRuntime::MapPartitionOnDeviceMapper(const std::string& partition_nam
   }
 
   if (state == DmDeviceState::ACTIVE) {
-    return DeviceMapper::Instance().GetDmDevicePathByName(partition_name, path);
+    return DeviceMapper::Instance().GetDmDevicePathByName(partition_name_suffix, path);
   }
   LOG(ERROR) << "Unknown device mapper state: "
              << static_cast<std::underlying_type_t<DmDeviceState>>(state);
@@ -84,7 +94,7 @@ bool UpdaterRuntime::MapPartitionOnDeviceMapper(const std::string& partition_nam
 }
 
 bool UpdaterRuntime::UnmapPartitionOnDeviceMapper(const std::string& partition_name) {
-  return ::UnmapPartitionOnDeviceMapper(partition_name);
+  return ::UnmapPartitionWithSuffixOnDeviceMapper(AddSlotSuffix(partition_name));
 }
 
 namespace {  // Ops
@@ -126,22 +136,23 @@ using OpMap = std::map<std::string, OpFunction>;
 
 bool PerformOpResize(const OpParameters& params) {
   if (!params.ExpectArgSize(2)) return false;
-  const auto& partition_name = params.arg(0);
+  const auto& partition_name_suffix = AddSlotSuffix(params.arg(0));
   auto size = params.uint_arg(1, "size");
   if (!size.has_value()) return false;
 
-  auto partition = params.builder->FindPartition(partition_name);
+  auto partition = params.builder->FindPartition(partition_name_suffix);
   if (partition == nullptr) {
-    LOG(ERROR) << "Failed to find partition " << partition_name
+    LOG(ERROR) << "Failed to find partition " << partition_name_suffix
                << " in dynamic partition metadata.";
     return false;
   }
-  if (!UnmapPartitionOnDeviceMapper(partition_name)) {
-    LOG(ERROR) << "Cannot unmap " << partition_name << " before resizing.";
+  if (!UnmapPartitionWithSuffixOnDeviceMapper(partition_name_suffix)) {
+    LOG(ERROR) << "Cannot unmap " << partition_name_suffix << " before resizing.";
     return false;
   }
   if (!params.builder->ResizePartition(partition, size.value())) {
-    LOG(ERROR) << "Failed to resize partition " << partition_name << " to size " << *size << ".";
+    LOG(ERROR) << "Failed to resize partition " << partition_name_suffix << " to size " << *size
+               << ".";
     return false;
   }
   return true;
@@ -149,24 +160,25 @@ bool PerformOpResize(const OpParameters& params) {
 
 bool PerformOpRemove(const OpParameters& params) {
   if (!params.ExpectArgSize(1)) return false;
-  const auto& partition_name = params.arg(0);
+  const auto& partition_name_suffix = AddSlotSuffix(params.arg(0));
 
-  if (!UnmapPartitionOnDeviceMapper(partition_name)) {
-    LOG(ERROR) << "Cannot unmap " << partition_name << " before removing.";
+  if (!UnmapPartitionWithSuffixOnDeviceMapper(partition_name_suffix)) {
+    LOG(ERROR) << "Cannot unmap " << partition_name_suffix << " before removing.";
     return false;
   }
-  params.builder->RemovePartition(partition_name);
+  params.builder->RemovePartition(partition_name_suffix);
   return true;
 }
 
 bool PerformOpAdd(const OpParameters& params) {
   if (!params.ExpectArgSize(2)) return false;
-  const auto& partition_name = params.arg(0);
-  const auto& group_name = params.arg(1);
+  const auto& partition_name_suffix = AddSlotSuffix(params.arg(0));
+  const auto& group_name_suffix = AddSlotSuffix(params.arg(1));
 
-  if (params.builder->AddPartition(partition_name, group_name, LP_PARTITION_ATTR_READONLY) ==
-      nullptr) {
-    LOG(ERROR) << "Failed to add partition " << partition_name << " to group " << group_name << ".";
+  if (params.builder->AddPartition(partition_name_suffix, group_name_suffix,
+                                   LP_PARTITION_ATTR_READONLY) == nullptr) {
+    LOG(ERROR) << "Failed to add partition " << partition_name_suffix << " to group "
+               << group_name_suffix << ".";
     return false;
   }
   return true;
@@ -174,21 +186,21 @@ bool PerformOpAdd(const OpParameters& params) {
 
 bool PerformOpMove(const OpParameters& params) {
   if (!params.ExpectArgSize(2)) return false;
-  const auto& partition_name = params.arg(0);
-  const auto& new_group = params.arg(1);
+  const auto& partition_name_suffix = AddSlotSuffix(params.arg(0));
+  const auto& new_group_name_suffix = AddSlotSuffix(params.arg(1));
 
-  auto partition = params.builder->FindPartition(partition_name);
+  auto partition = params.builder->FindPartition(partition_name_suffix);
   if (partition == nullptr) {
-    LOG(ERROR) << "Cannot move partition " << partition_name << " to group " << new_group
-               << " because it is not found.";
+    LOG(ERROR) << "Cannot move partition " << partition_name_suffix << " to group "
+               << new_group_name_suffix << " because it is not found.";
     return false;
   }
 
-  auto old_group = partition->group_name();
-  if (old_group != new_group) {
-    if (!params.builder->ChangePartitionGroup(partition, new_group)) {
-      LOG(ERROR) << "Cannot move partition " << partition_name << " from group " << old_group
-                 << " to group " << new_group << ".";
+  auto old_group_name_suffix = partition->group_name();
+  if (old_group_name_suffix != new_group_name_suffix) {
+    if (!params.builder->ChangePartitionGroup(partition, new_group_name_suffix)) {
+      LOG(ERROR) << "Cannot move partition " << partition_name_suffix << " from group "
+                 << old_group_name_suffix << " to group " << new_group_name_suffix << ".";
       return false;
     }
   }
@@ -197,22 +209,22 @@ bool PerformOpMove(const OpParameters& params) {
 
 bool PerformOpAddGroup(const OpParameters& params) {
   if (!params.ExpectArgSize(2)) return false;
-  const auto& group_name = params.arg(0);
+  const auto& group_name_suffix = AddSlotSuffix(params.arg(0));
   auto maximum_size = params.uint_arg(1, "maximum_size");
   if (!maximum_size.has_value()) return false;
 
-  auto group = params.builder->FindGroup(group_name);
+  auto group = params.builder->FindGroup(group_name_suffix);
   if (group != nullptr) {
-    LOG(ERROR) << "Cannot add group " << group_name << " because it already exists.";
+    LOG(ERROR) << "Cannot add group " << group_name_suffix << " because it already exists.";
     return false;
   }
 
   if (maximum_size.value() == 0) {
-    LOG(WARNING) << "Adding group " << group_name << " with no size limits.";
+    LOG(WARNING) << "Adding group " << group_name_suffix << " with no size limits.";
   }
 
-  if (!params.builder->AddGroup(group_name, maximum_size.value())) {
-    LOG(ERROR) << "Failed to add group " << group_name << " with maximum size "
+  if (!params.builder->AddGroup(group_name_suffix, maximum_size.value())) {
+    LOG(ERROR) << "Failed to add group " << group_name_suffix << " with maximum size "
                << maximum_size.value() << ".";
     return false;
   }
@@ -221,20 +233,20 @@ bool PerformOpAddGroup(const OpParameters& params) {
 
 bool PerformOpResizeGroup(const OpParameters& params) {
   if (!params.ExpectArgSize(2)) return false;
-  const auto& group_name = params.arg(0);
+  const auto& group_name_suffix = AddSlotSuffix(params.arg(0));
   auto new_size = params.uint_arg(1, "maximum_size");
   if (!new_size.has_value()) return false;
 
-  auto group = params.builder->FindGroup(group_name);
+  auto group = params.builder->FindGroup(group_name_suffix);
   if (group == nullptr) {
-    LOG(ERROR) << "Cannot resize group " << group_name << " because it is not found.";
+    LOG(ERROR) << "Cannot resize group " << group_name_suffix << " because it is not found.";
     return false;
   }
 
   auto old_size = group->maximum_size();
   if (old_size != new_size.value()) {
-    if (!params.builder->ChangeGroupSize(group_name, new_size.value())) {
-      LOG(ERROR) << "Cannot resize group " << group_name << " from " << old_size << " to "
+    if (!params.builder->ChangeGroupSize(group_name_suffix, new_size.value())) {
+      LOG(ERROR) << "Cannot resize group " << group_name_suffix << " from " << old_size << " to "
                  << new_size.value() << ".";
       return false;
     }
@@ -243,8 +255,8 @@ bool PerformOpResizeGroup(const OpParameters& params) {
 }
 
 std::vector<std::string> ListPartitionNamesInGroup(MetadataBuilder* builder,
-                                                   const std::string& group_name) {
-  auto partitions = builder->ListPartitionsInGroup(group_name);
+                                                   const std::string& group_name_suffix) {
+  auto partitions = builder->ListPartitionsInGroup(group_name_suffix);
   std::vector<std::string> partition_names;
   std::transform(partitions.begin(), partitions.end(), std::back_inserter(partition_names),
                  [](Partition* partition) { return partition->name(); });
@@ -253,15 +265,16 @@ std::vector<std::string> ListPartitionNamesInGroup(MetadataBuilder* builder,
 
 bool PerformOpRemoveGroup(const OpParameters& params) {
   if (!params.ExpectArgSize(1)) return false;
-  const auto& group_name = params.arg(0);
+  const auto& group_name_suffix = AddSlotSuffix(params.arg(0));
 
-  auto partition_names = ListPartitionNamesInGroup(params.builder, group_name);
+  auto partition_names = ListPartitionNamesInGroup(params.builder, group_name_suffix);
   if (!partition_names.empty()) {
-    LOG(ERROR) << "Cannot remove group " << group_name << " because it still contains partitions ["
+    LOG(ERROR) << "Cannot remove group " << group_name_suffix
+               << " because it still contains partitions ["
                << android::base::Join(partition_names, ", ") << "]";
     return false;
   }
-  params.builder->RemoveGroupAndPartitions(group_name);
+  params.builder->RemoveGroupAndPartitions(group_name_suffix);
   return true;
 }
 
@@ -269,16 +282,16 @@ bool PerformOpRemoveAllGroups(const OpParameters& params) {
   if (!params.ExpectArgSize(0)) return false;
 
   auto group_names = params.builder->ListGroups();
-  for (const auto& group_name : group_names) {
-    auto partition_names = ListPartitionNamesInGroup(params.builder, group_name);
-    for (const auto& partition_name : partition_names) {
-      if (!UnmapPartitionOnDeviceMapper(partition_name)) {
-        LOG(ERROR) << "Cannot unmap " << partition_name << " before removing group " << group_name
-                   << ".";
+  for (const auto& group_name_suffix : group_names) {
+    auto partition_names = ListPartitionNamesInGroup(params.builder, group_name_suffix);
+    for (const auto& partition_name_suffix : partition_names) {
+      if (!UnmapPartitionWithSuffixOnDeviceMapper(partition_name_suffix)) {
+        LOG(ERROR) << "Cannot unmap " << partition_name_suffix << " before removing group "
+                   << group_name_suffix << ".";
         return false;
       }
     }
-    params.builder->RemoveGroupAndPartitions(group_name);
+    params.builder->RemoveGroupAndPartitions(group_name_suffix);
   }
   return true;
 }
