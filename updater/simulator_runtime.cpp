@@ -130,3 +130,8 @@ bool SimulatorRuntime::UpdateDynamicPartitions(const std::string_view op_list_va
   }
   return true;
 }
+
+std::string SimulatorRuntime::AddSlotSuffix(const std::string_view arg) const {
+  LOG(INFO) << "Skip adding slot suffix to " << arg;
+  return std::string(arg);
+}

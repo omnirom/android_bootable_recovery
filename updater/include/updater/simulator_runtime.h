@@ -53,6 +53,7 @@ class SimulatorRuntime : public UpdaterRuntimeInterface {
   bool MapPartitionOnDeviceMapper(const std::string& partition_name, std::string* path) override;
   bool UnmapPartitionOnDeviceMapper(const std::string& partition_name) override;
   bool UpdateDynamicPartitions(const std::string_view op_list_value) override;
+  std::string AddSlotSuffix(const std::string_view arg) const override;
 
  private:
   std::string FindBlockDeviceName(const std::string_view name) const override;
