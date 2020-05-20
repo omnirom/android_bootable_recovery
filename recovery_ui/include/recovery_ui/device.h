@@ -79,9 +79,21 @@ class Device {
     ui_.reset(ui);
   }
 
+  // Called before recovery mode started up, to perform whatever device-specific recovery mode
+  // preparation as needed.
+  virtual void PreRecovery() {}
+
   // Called when recovery starts up (after the UI has been obtained and initialized and after the
   // arguments have been parsed, but before anything else).
   virtual void StartRecovery() {}
+
+  // Called before fastboot mode is started up, to perform whatever device-specific fastboot mode
+  // preparation as needed.
+  virtual void PreFastboot() {}
+
+  // Called when fastboot starts up (after the UI has been obtained and initialized and after the
+  // arguments have been parsed, but before anything else).
+  virtual void StartFastboot() {}
 
   // Called from the main thread when recovery is at the main menu and waiting for input, and a key
   // is pressed. (Note that "at" the main menu does not necessarily mean the menu is visible;
