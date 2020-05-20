@@ -143,14 +143,14 @@ int main(int argc, char **argv) {
 		if(SarPartitionManager.Mount_By_Path("/s", false)) {
 			if (TWFunc::Path_Exists("/s/build.prop")) {
 				LOGINFO("SAR-DETECT: Non-SAR System detected\n");
-				property_set("ro.twrp.sar", "0");
+				property_set("ro.twrp.sar", "false");
 				rmdir("/system_root");
 			} else if (TWFunc::Path_Exists("/s/system/build.prop")) {
 				LOGINFO("SAR-DETECT: SAR System detected\n");
-				property_set("ro.twrp.sar", "1");
+				property_set("ro.twrp.sar", "true");
 			} else {
 				LOGINFO("SAR-DETECT: No build.prop found, falling back to %s\n", fallback_sar ? "SAR" : "Non-SAR");
-				property_set("ro.twrp.sar", fallback_sar ? "1" : "0");
+				property_set("ro.twrp.sar", fallback_sar ? "true" : "false");
 			}
 
 // We are doing this here during SAR-detection, since we are mounting the system-partition anyway
@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
 			SarPartitionManager.UnMount_By_Path("/s", false);
 		} else {
 			LOGINFO("SAR-DETECT: Could not mount system partition, falling back to %s\n", fallback_sar ? "SAR":"Non-SAR");
-			property_set("ro.twrp.sar", fallback_sar ? "1" : "0");
+			property_set("ro.twrp.sar", fallback_sar ? "true" : "false");
 		}
 
 		rmdir("/s");
