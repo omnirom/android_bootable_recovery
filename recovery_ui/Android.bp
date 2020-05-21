@@ -22,6 +22,7 @@ cc_library {
 
     srcs: [
         "device.cpp",
+        "ethernet_ui.cpp",
         "screen_ui.cpp",
         "stub_ui.cpp",
         "ui.cpp",
@@ -86,6 +87,26 @@ cc_library_static {
 
     srcs: [
         "vr_device.cpp",
+    ],
+
+    export_include_dirs: ["include"],
+}
+
+// The default device that uses EthernetRecoveryUI.
+cc_library_static {
+    name: "librecovery_ui_ethernet",
+    recovery_available: true,
+
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    srcs: [
+        "ethernet_device.cpp",
+    ],
+
+    shared_libs: [
+        "libbase",
     ],
 
     export_include_dirs: ["include"],
