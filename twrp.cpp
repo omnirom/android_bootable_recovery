@@ -43,10 +43,11 @@ extern "C" {
 #include "twrp-functions.hpp"
 #include "data.hpp"
 #include "partitions.hpp"
-#ifdef __ANDROID_API_N__
-#include <android-base/strings.h>
-#else
+
+#ifdef USE_OLD_BASE_INCLUDE
 #include <base/strings.h>
+#else
+#include <android-base/strings.h>
 #endif
 #include "openrecoveryscript.hpp"
 #include "variables.h"
