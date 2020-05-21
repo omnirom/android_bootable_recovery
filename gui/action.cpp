@@ -63,6 +63,7 @@ std::set<string> GUIAction::setActionsRunningInCallerThread;
 static string zip_queue[10];
 static int zip_queue_index;
 pid_t sideload_child_pid;
+extern std::vector<users_struct> Users_List;
 
 static void *ActionThread_work_wrapper(void *data);
 
@@ -369,6 +370,8 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 	int ret_val = 0;
 
 	DataManager::SetValue("ui_progress", 0);
+	DataManager::SetValue("ui_portion_size", 0);
+	DataManager::SetValue("ui_portion_start", 0);
 
 	if (filename.empty())
 	{
@@ -408,6 +411,8 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 	// Done
 	DataManager::SetValue("ui_progress", 100);
 	DataManager::SetValue("ui_progress", 0);
+	DataManager::SetValue("ui_portion_size", 0);
+	DataManager::SetValue("ui_portion_start", 0);
 	return ret_val;
 }
 
@@ -490,6 +495,8 @@ void GUIAction::operation_start(const string operation_name)
 	time(&Start);
 	DataManager::SetValue(TW_ACTION_BUSY, 1);
 	DataManager::SetValue("ui_progress", 0);
+	DataManager::SetValue("ui_portion_size", 0);
+	DataManager::SetValue("ui_portion_start", 0);
 	DataManager::SetValue("tw_operation", operation_name);
 	DataManager::SetValue("tw_operation_state", 0);
 	DataManager::SetValue("tw_operation_status", 0);
@@ -1495,12 +1502,31 @@ int GUIAction::decrypt(std::string arg __unused)
 		simulate_progress_bar();
 	} else {
 		string Password;
+		string userID;
 		DataManager::GetValue("tw_crypto_password", Password);
-		op_status = PartitionManager.Decrypt_Device(Password);
+
+		if (DataManager::GetIntValue(TW_IS_FBE)) {  // for FBE
+			DataManager::GetValue("tw_crypto_user_id", userID);
+			if (userID != "") {
+				op_status = PartitionManager.Decrypt_Device(Password, atoi(userID.c_str()));
+				if (userID != "0") {
+					if (op_status != 0)
+						op_status = 1;
+					operation_end(op_status);
+	          		return 0;
+				}
+			} else {
+				LOGINFO("User ID not found\n");
+				op_status = 1;
+			}
+		::sleep(1);
+		} else {  // for FDE
+			op_status = PartitionManager.Decrypt_Device(Password);
+		}
+
 		if (op_status != 0)
 			op_status = 1;
 		else {
-
 			DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 
 			int has_datamedia;

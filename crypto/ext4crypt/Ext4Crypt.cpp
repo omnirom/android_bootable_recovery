@@ -63,6 +63,7 @@
 #define MANAGE_MISC_DIRS 0
 
 #include <cutils/fs.h>
+#include <cutils/properties.h>
 
 #include <android-base/file.h>
 //#include <android-base/logging.h>
@@ -316,16 +317,6 @@ bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, userid_t use
     return true;
 }
 
-static bool ensure_policy(const std::string& raw_ref __unused, const std::string& path) {
-    return true;
-    // ensure policy will set a policy if one is not set on an empty folder - we don't want to do this in recovery
-    /*if (e4crypt_policy_ensure(path.c_str(), raw_ref.data(), raw_ref.size()) != 0) {
-        LOG(ERROR) << "Failed to set policy on: " << path << "\n";
-        return false;
-    }
-    return true;*/
-}
-
 static bool is_numeric(const char* name) {
     for (const char* p = name; *p != '\0'; p++) {
         if (!isdigit(*p)) return false;
@@ -363,6 +354,9 @@ static bool load_all_de_keys() {
             if (!install_key(key, &raw_ref)) return false;
             s_de_key_raw_refs[user_id] = raw_ref;
             LOG(DEBUG) << "Installed de key for user " << user_id;
+
+            std::string user_prop = "twrp.user." + std::to_string(user_id) + ".decrypt";
+            property_set(user_prop.c_str(), "0");
         }
     }
     // ext4enc:TODO: go through all DE directories, ensure that all user dirs have the
@@ -411,13 +405,6 @@ bool e4crypt_init_user0() {
         // explicit calls to install DE keys for secondary users
         if (!load_all_de_keys()) return false;
     }
-    // We can only safely prepare DE storage here, since CE keys are probably
-    // entangled with user credentials.  The framework will always prepare CE
-    // storage once CE keys are installed.
-    if (!e4crypt_prepare_user_storage(nullptr, 0, 0, FLAG_STORAGE_DE)) {
-        LOG(ERROR) << "Failed to prepare user 0 storage";
-        return false;
-    }
 
     // If this is a non-FBE device that recently left an emulated mode,
     // restore user data directories to known-good state.
@@ -458,79 +445,6 @@ bool e4crypt_unlock_user_key(userid_t user_id, int serial __unused, const char* 
         }
     } else {
 		printf("Emulation mode not supported in TWRP\n");
-        // When in emulation mode, we just use chmod. However, we also
-        // unlock directories when not in emulation mode, to bring devices
-        // back into a known-good state.
-        /*if (!emulated_unlock(android::vold::BuildDataSystemCePath(user_id), 0771) ||
-            !emulated_unlock(android::vold::BuildDataMiscCePath(user_id), 01771) ||
-            !emulated_unlock(android::vold::BuildDataMediaCePath(nullptr, user_id), 0770) ||
-            !emulated_unlock(android::vold::BuildDataUserCePath(nullptr, user_id), 0771)) {
-            LOG(ERROR) << "Failed to unlock user " << user_id;
-            return false;
-        }*/
     }
-    return true;
-}
-
-bool e4crypt_prepare_user_storage(const char* volume_uuid, userid_t user_id, int serial __unused,
-        int flags) {
-
-    if (flags & FLAG_STORAGE_DE) {
-        // DE_sys key
-        auto system_legacy_path = android::vold::BuildDataSystemLegacyPath(user_id);
-        auto misc_legacy_path = android::vold::BuildDataMiscLegacyPath(user_id);
-        auto profiles_de_path = android::vold::BuildDataProfilesDePath(user_id);
-        auto foreign_de_path = android::vold::BuildDataProfilesForeignDexDePath(user_id);
-
-        // DE_n key
-        auto system_de_path = android::vold::BuildDataSystemDePath(user_id);
-        auto misc_de_path = android::vold::BuildDataMiscDePath(user_id);
-        auto user_de_path = android::vold::BuildDataUserDePath(volume_uuid, user_id);
-
-        if (!prepare_dir(system_legacy_path, 0700, AID_SYSTEM, AID_SYSTEM)) return false;
-#if MANAGE_MISC_DIRS
-        if (!prepare_dir(misc_legacy_path, 0750, multiuser_get_uid(user_id, AID_SYSTEM),
-                multiuser_get_uid(user_id, AID_EVERYBODY))) return false;
-#endif
-        if (!prepare_dir(profiles_de_path, 0771, AID_SYSTEM, AID_SYSTEM)) return false;
-        if (!prepare_dir(foreign_de_path, 0773, AID_SYSTEM, AID_SYSTEM)) return false;
-
-        if (!prepare_dir(system_de_path, 0770, AID_SYSTEM, AID_SYSTEM)) return false;
-        if (!prepare_dir(misc_de_path, 01771, AID_SYSTEM, AID_MISC)) return false;
-        if (!prepare_dir(user_de_path, 0771, AID_SYSTEM, AID_SYSTEM)) return false;
-
-        // For now, FBE is only supported on internal storage
-        if (e4crypt_is_native() && volume_uuid == nullptr) {
-            std::string de_raw_ref;
-            if (!lookup_key_ref(s_de_key_raw_refs, user_id, &de_raw_ref)) return false;
-            if (!ensure_policy(de_raw_ref, system_de_path)) return false;
-            if (!ensure_policy(de_raw_ref, misc_de_path)) return false;
-            if (!ensure_policy(de_raw_ref, user_de_path)) return false;
-        }
-    }
-
-    if (flags & FLAG_STORAGE_CE) {
-        // CE_n key
-        auto system_ce_path = android::vold::BuildDataSystemCePath(user_id);
-        auto misc_ce_path = android::vold::BuildDataMiscCePath(user_id);
-        auto media_ce_path = android::vold::BuildDataMediaCePath(volume_uuid, user_id);
-        auto user_ce_path = android::vold::BuildDataUserCePath(volume_uuid, user_id);
-
-        if (!prepare_dir(system_ce_path, 0770, AID_SYSTEM, AID_SYSTEM)) return false;
-        if (!prepare_dir(misc_ce_path, 01771, AID_SYSTEM, AID_MISC)) return false;
-        if (!prepare_dir(media_ce_path, 0770, AID_MEDIA_RW, AID_MEDIA_RW)) return false;
-        if (!prepare_dir(user_ce_path, 0771, AID_SYSTEM, AID_SYSTEM)) return false;
-
-        // For now, FBE is only supported on internal storage
-        if (e4crypt_is_native() && volume_uuid == nullptr) {
-            std::string ce_raw_ref;
-            if (!lookup_key_ref(s_ce_key_raw_refs, user_id, &ce_raw_ref)) return false;
-            if (!ensure_policy(ce_raw_ref, system_ce_path)) return false;
-            if (!ensure_policy(ce_raw_ref, misc_ce_path)) return false;
-            if (!ensure_policy(ce_raw_ref, media_ce_path)) return false;
-            if (!ensure_policy(ce_raw_ref, user_ce_path)) return false;
-        }
-    }
-
     return true;
 }

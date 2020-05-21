@@ -59,6 +59,10 @@ extern "C" {
 	#include "libcrecovery/common.h"
 }
 
+#ifdef TW_INCLUDE_LIBRESETPROP
+    #include <resetprop.h>
+#endif
+
 struct selabel_handle *selinux_handle;
 
 /* Execute a command */
@@ -524,7 +528,7 @@ void TWFunc::Copy_Log(string Source, string Destination) {
 			destLogBuffer.append(destFileBuffer);
 		}
 	} else if (Path_Exists(uncompressedLog)) {
-		std::ifstream uncompressedIfs(uncompressedLog);
+		std::ifstream uncompressedIfs(uncompressedLog.c_str());
 		std::stringstream uncompressedSS;
 		uncompressedSS << uncompressedIfs.rdbuf();
 		uncompressedIfs.close();
@@ -533,7 +537,7 @@ void TWFunc::Copy_Log(string Source, string Destination) {
 		std::remove(uncompressedLog.c_str());
 	}
 
-	std::ifstream ifs(Source);
+	std::ifstream ifs(Source.c_str());
 	std::stringstream ss;
 	ss << ifs.rdbuf();
 	std::string srcLogBuffer(ss.str());
@@ -636,7 +640,9 @@ void TWFunc::Update_Intent_File(string Intent) {
 int TWFunc::tw_reboot(RebootCommand command)
 {
 	DataManager::Flush();
-	Update_Log_File();
+	if (!Is_Data_Wiped("/data"))
+		Update_Log_File();
+
 	// Always force a sync before we reboot
 	sync();
 
@@ -759,8 +765,8 @@ int TWFunc::copy_file(string src, string dst, int mode) {
 		LOGINFO("Unable to find source file %s\n", src.c_str());
 		return -1;
 	}
-	std::ifstream srcfile(src, ios::binary);
-	std::ofstream dstfile(dst, ios::binary);
+	std::ifstream srcfile(src.c_str(), ios::binary);
+	std::ofstream dstfile(dst.c_str(), ios::binary);
 	dstfile << srcfile.rdbuf();
 	if (!dstfile.bad()) {
 		LOGINFO("Copied file %s to %s\n", src.c_str(), dst.c_str());
@@ -891,19 +897,23 @@ string TWFunc::Get_Current_Date() {
 }
 
 string TWFunc::System_Property_Get(string Prop_Name) {
-	bool mount_state = PartitionManager.Is_Mounted_By_Path(PartitionManager.Get_Android_Root_Path());
+	return System_Property_Get(Prop_Name, PartitionManager, PartitionManager.Get_Android_Root_Path());
+}
+
+string TWFunc::System_Property_Get(string Prop_Name, TWPartitionManager &PartitionManager, string Mount_Point) {
+	bool mount_state = PartitionManager.Is_Mounted_By_Path(Mount_Point);
 	std::vector<string> buildprop;
 	string propvalue;
-	if (!PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true))
+	if (!PartitionManager.Mount_By_Path(Mount_Point, true))
 		return propvalue;
-	string prop_file = "/system/build.prop";
+	string prop_file = Mount_Point + "/build.prop";
 	if (!TWFunc::Path_Exists(prop_file))
-		prop_file = PartitionManager.Get_Android_Root_Path() + "/system/build.prop"; // for devices with system as a root file system (e.g. Pixel)
+		prop_file = Mount_Point + "/system/build.prop"; // for devices with system as a root file system (e.g. Pixel)
 	if (TWFunc::read_file(prop_file, buildprop) != 0) {
 		LOGINFO("Unable to open build.prop for getting '%s'.\n", Prop_Name.c_str());
 		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 		if (!mount_state)
-			PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
+			PartitionManager.UnMount_By_Path(Mount_Point, false);
 		return propvalue;
 	}
 	int line_count = buildprop.size();
@@ -916,12 +926,12 @@ string TWFunc::System_Property_Get(string Prop_Name) {
 		if (propname == Prop_Name) {
 			propvalue = buildprop.at(index).substr(end_pos + 1, buildprop.at(index).size());
 			if (!mount_state)
-				PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
+				PartitionManager.UnMount_By_Path(Mount_Point, false);
 			return propvalue;
 		}
 	}
 	if (!mount_state)
-		PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
+		PartitionManager.UnMount_By_Path(Mount_Point, false);
 	return propvalue;
 }
 
@@ -1313,6 +1323,62 @@ bool TWFunc::Is_TWRP_App_In_System() {
 		}
 	}
 	DataManager::SetValue("tw_app_installed_in_system", 0);
+	PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
 	return false;
+}
+
+int TWFunc::Property_Override(string Prop_Name, string Prop_Value) {
+#ifdef TW_INCLUDE_LIBRESETPROP
+    return setprop(Prop_Name.c_str(), Prop_Value.c_str(), false);
+#else
+    return -2;
+#endif
+}
+
+bool TWFunc::Get_Encryption_Policy(ext4_encryption_policy &policy, std::string path) {
+	if (!TWFunc::Path_Exists(path)) {
+		LOGERR("Unable to find %s to get policy\n", path.c_str());
+		return false;
+	}
+	if (!e4crypt_policy_get_struct(path.c_str(), &policy)) {
+		LOGERR("No policy set for path %s\n", path.c_str());
+		return false;
+	}
+	return true;
+}
+
+bool TWFunc::Set_Encryption_Policy(std::string path, const ext4_encryption_policy &policy) {
+	if (!TWFunc::Path_Exists(path)) {
+		LOGERR("unable to find %s to set policy\n", path.c_str());
+		return false;
+	}
+	char binary_policy[EXT4_KEY_DESCRIPTOR_SIZE];
+	char policy_hex[EXT4_KEY_DESCRIPTOR_SIZE_HEX];
+	policy_to_hex(binary_policy, policy_hex);
+	if (!e4crypt_policy_set_struct(path.c_str(), &policy)) {
+		LOGERR("unable to set policy for path: %s\n", path.c_str());
+		return false;
+	}
+	return true;
+}
+
+bool TWFunc::Is_Data_Wiped(std::string path) {
+	DIR* d = opendir(path.c_str());
+	size_t file_count = 0;
+	if (d != NULL) {
+		struct dirent* de;
+		while ((de = readdir(d)) != NULL) {
+			LOGINFO("file: %s\n", de->d_name);
+			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+				continue;
+			if (strncmp(de->d_name, "lost+found", 10) == 0 || strncmp(de->d_name, "media", 5) == 0)
+				continue;
+			file_count++;
+
+		}
+		closedir(d);
+	}
+	LOGINFO("file_count: %zu\n", file_count);
+	return file_count == 0;
 }
 #endif // ndef BUILD_TWRPTAR_MAIN

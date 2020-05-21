@@ -141,6 +141,7 @@
 		<string name="factory_reset2">(not including internal storage)</string>
 		<string name="factory_reset3">Most of the time this is</string>
 		<string name="factory_reset4">the only wipe that you need.</string>
+		<string name="factory_reset5">(not including users/lockscreen)</string>
 		<string name="factory_resetting">Factory Reset...</string>
 		<string name="advanced_wipe_hdr">Advanced Wipe</string>
 		<string name="advanced_wipe_btn">Advanced Wipe</string>
@@ -511,6 +512,15 @@
 		<string name="fix_recovery_loop_complete">Fix Recovery Bootloop Complete</string>
 		<string name="fixing_recovery_loop_patch">Patching kernel...</string>
 		<string name="fix_recovery_loop_patch_error">Error patching kernel.</string>
+		<string name="decrypt_users">Decrypt Users</string>
+		<string name="decrypt_users_selection">Select a user ID to decrypt</string>
+		<string name="select_user">Select User</string>
+		<string name="backup_storage_undecrypt_warning">Backup not include some files of user {1}, because the user is not decrypted.</string>
+		<string name="decrypting_user_fbe">Attempting to decrypt FBE for user {1}...</string>
+		<string name="decrypt_user_success_fbe">User {1} Decrypted Successfully</string>
+		<string name="decrypt_user_fail_fbe">Failed to decrypt user {1}</string>
+		<string name="decrypt_data_enter_pass_fbe">Enter Password for User [%tw_crypto_user_id%]</string>
+		<string name="decrypt_data_enter_pattern_fbe">Enter Pattern for User [%tw_crypto_user_id%]</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel does not have support for reading SELinux contexts.</string>
@@ -687,7 +697,7 @@
 		<!-- These 2 items are saved in the data manager instead of resource manager, so %llu, etc is correct instead of {1} -->
 		<string name="file_progress">%llu of %llu files, %i%%</string>
 		<string name="size_progress">%lluMB of %lluMB, %i%%</string>
-		<string name="decrypt_cmd">Attempting to decrypt data partition via command line.</string>
+		<string name="decrypt_cmd" version="2">Attempting to decrypt data partition or user data via command line.</string>
 		<string name="base_pkg_err">Failed to load base packages.</string>
 		<string name="simulating">Simulating actions...</string>
 		<string name="backup_cancel">Backup Cancelled</string>
@@ -719,5 +729,11 @@
 		<string name="include_kernel_log">Include Kernel Log</string>
 		<string name="sha2_chk">Use SHA2 for hashing</string>
 		<string name="unable_set_boot_slot">Error changing bootloader boot slot to {1}</string>
+		<string name="unmount_sys_install">Unmount System before installing a ZIP</string>
+		<string name="unmount_system">Unmounting System...</string>
+		<string name="unmount_system_err">Failed unmounting System</string>
+		<string name="fbe_wipe_msg">WARNING: {1} wiped. FBE device should be booted into Android and not Recovery to set initial FBE policy after wipe.</string>
+		<string name="flash_ab_inactive">Flashing A/B zip to inactive slot: {1}</string>
+		<string name="flash_ab_reboot">To flash additional zips, please reboot recovery to switch to the updated slot.</string>
 	</resources>
 </language>

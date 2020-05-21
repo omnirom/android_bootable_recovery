@@ -780,6 +780,128 @@ void Set_Needed_Properties(void) {
 	property_set("vendor.sys.listeners.registered", "false");
 }
 
+void Update_Patch_Level(void) {
+	// On Oreo and above, keymaster requires Android version & patch level to match installed system
+	string sdkverstr = TWFunc::System_Property_Get("ro.build.version.sdk");
+	if (!sdkverstr.empty()) {
+		sdkver = atoi(sdkverstr.c_str());
+	}
+	if (sdkver <= 25) {
+		property_set("vold_decrypt.legacy_system", "true");
+	} else {
+		LOGINFO("Current system is Oreo or above. Setting OS version and security patch level from installed system...\n");
+		property_set("vold_decrypt.legacy_system", "false");
+	}
+
+	char prop_value[PROPERTY_VALUE_MAX];
+	char legacy_system_value[PROPERTY_VALUE_MAX] = "false";
+	property_get("vold_decrypt.legacy_system", prop_value, "");
+
+	// Only set OS ver and patch level if device uses Oreo+ system
+	if (strcmp(prop_value, legacy_system_value) == 0) {
+		property_get("ro.build.version.release", prop_value, "");
+		std::string osver_orig = prop_value;
+		property_set("vold_decrypt.osver_orig", osver_orig.c_str());
+		LOGINFO("Current OS version: %s\n", osver_orig.c_str());
+
+		int error = 0;
+		std::string osver = TWFunc::System_Property_Get("ro.build.version.release");
+		if (!(osver == osver_orig)) {
+			if (!(error = TWFunc::Property_Override("ro.build.version.release", osver))) {
+				LOGINFO("Property override successful! New OS version: %s\n", osver.c_str());
+			} else {
+				LOGERROR("Property override failed, code %d\n", error);
+				return;
+			}
+			// TODO: Confirm whether we actually need to update the props in prop.default
+			std::string sed_osver = "sed -i 's/ro.build.version.release=.*/ro.build.version.release=" + osver + "/g' /prop.default";
+			TWFunc::Exec_Cmd(sed_osver);
+			property_set("vold_decrypt.osver_set", "true");
+		} else {
+			LOGINFO("Current OS version & System OS version already match. Proceeding to next step.\n");
+			property_set("vold_decrypt.osver_set", "false");
+		}
+
+		property_get("ro.build.version.security_patch", prop_value, "");
+		std::string patchlevel_orig = prop_value;
+		property_set("vold_decrypt.patchlevel_orig", patchlevel_orig.c_str());
+		LOGINFO("Current security patch level: %s\n", patchlevel_orig.c_str());
+
+		std::string patchlevel = TWFunc::System_Property_Get("ro.build.version.security_patch");
+		if (!(patchlevel == patchlevel_orig)) {
+			if (!(error = TWFunc::Property_Override("ro.build.version.security_patch", patchlevel))) {
+				LOGINFO("Property override successful! New security patch level: %s\n", patchlevel.c_str());
+			} else {
+				LOGERROR("Property override failed, code %d\n", error);
+				return;
+			}
+			// TODO: Confirm whether we actually need to update the props in prop.default
+			std::string sed_patchlevel = "sed -i 's/ro.build.version.security_patch=.*/ro.build.version.security_patch=" + patchlevel + "/g' /prop.default";
+			TWFunc::Exec_Cmd(sed_patchlevel);
+			property_set("vold_decrypt.patchlevel_set", "true");
+		} else {
+			LOGINFO("Current security patch level & System security patch level already match. Proceeding to next step.\n");
+			property_set("vold_decrypt.patchlevel_set", "false");
+		}
+		return;
+	} else {
+		LOGINFO("Current system is Nougat or older. Skipping OS version and security patch level setting...\n");
+		return;
+	}
+}
+
+void Revert_Patch_Level(void) {
+	char osver_set[PROPERTY_VALUE_MAX];
+	char patchlevel_set[PROPERTY_VALUE_MAX];
+	char osver_patchlevel_set[PROPERTY_VALUE_MAX] = "false";
+
+	property_get("vold_decrypt.osver_set", osver_set, "");
+	property_get("vold_decrypt.patchlevel_set", patchlevel_set, "");
+
+	int osver_result = strcmp(osver_set, osver_patchlevel_set);
+	int patchlevel_result = strcmp(patchlevel_set, osver_patchlevel_set);
+	if (!(osver_result == 0 && patchlevel_result == 0)) {
+		char prop_value[PROPERTY_VALUE_MAX];
+		LOGINFO("Reverting OS version and security patch level to original TWRP values...\n");
+		property_get("vold_decrypt.osver_orig", prop_value, "");
+		std::string osver_orig = prop_value;
+		property_get("ro.build.version.release", prop_value, "");
+		std::string osver = prop_value;
+
+		int error = 0;
+		if (!(osver == osver_orig)) {
+			if (!(error = TWFunc::Property_Override("ro.build.version.release", osver_orig))) {
+				LOGINFO("Property override successful! Original OS version: %s\n", osver_orig.c_str());
+			} else {
+				LOGERROR("Property override failed, code %d\n", error);
+				return;
+			}
+			// TODO: Confirm whether we actually need to update the props in prop.default
+			std::string sed_osver_orig = "sed -i 's/ro.build.version.release=.*/ro.build.version.release=" + osver_orig + "/g' /prop.default";
+			TWFunc::Exec_Cmd(sed_osver_orig);
+		}
+
+		property_get("vold_decrypt.patchlevel_orig", prop_value, "");
+		std::string patchlevel_orig = prop_value;
+		property_get("ro.build.version.security_patch", prop_value, "");
+		std::string patchlevel = prop_value;
+
+		if (!(patchlevel == patchlevel_orig)) {
+			if (!(error = TWFunc::Property_Override("ro.build.version.security_patch", patchlevel_orig))) {
+				LOGINFO("Property override successful! Original security patch level: %s\n", patchlevel_orig.c_str());
+			} else {
+				LOGERROR("Property override failed, code %d\n", error);
+				return;
+			}
+			// TODO: Confirm whether we actually need to update the props in prop.default
+			std::string sed_patchlevel_orig = "sed -i 's/ro.build.version.security_patch=.*/ro.build.version.security_patch=" + patchlevel_orig + "/g' /prop.default";
+			TWFunc::Exec_Cmd(sed_patchlevel_orig);
+		}
+	} else {
+		return;
+	}
+}
+
 static unsigned int get_blkdev_size(int fd) {
 	unsigned long nr_sec;
 
@@ -1161,6 +1283,9 @@ int Vold_Decrypt_Core(const string& Password) {
 	Symlink_Firmware_Files(is_vendor_symlinked, is_firmware_symlinked);
 
 	Set_Needed_Properties();
+#ifdef TW_INCLUDE_LIBRESETPROP
+	Update_Patch_Level();
+#endif
 
 	// Start services needed for vold decrypt
 	LOGINFO("Starting services...\n");
@@ -1225,7 +1350,9 @@ int Vold_Decrypt_Core(const string& Password) {
 		LOGINFO("Failed to start vold\n");
 		res = VD_ERR_VOLD_FAILED_TO_START;
 	}
-
+#ifdef TW_INCLUDE_LIBRESETPROP
+	Revert_Patch_Level();
+#endif
 	// Stop services needed for vold decrypt so /system can be unmounted
 	LOGINFO("Stopping services...\n");
 	Stop_Service("sys_vold");

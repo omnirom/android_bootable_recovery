@@ -524,11 +524,22 @@
 			</button>
 
 			<button style="main_button_half_height">
+				<condition var1="tw_ab_device" var2="0"/>
 				<placement x="%center_x%" y="%row21a_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
 					<action function="set">tw_back=main2</action>
 					<action function="page">reboot_system_routine</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_ab_device" var2="1"/>
+				<placement x="%center_x%" y="%row21a_y%"/>
+				<text>{@reboot_btn=Reboot}</text>
+				<actions>
+					<action function="set">tw_back=main2</action>
+					<action function="page">reboot</action>
 				</actions>
 			</button>
 
@@ -699,6 +710,7 @@
 				<action function="set">tw_cancel_param=</action>
 				<action function="set">tw_show_exclamation=0</action>
 				<action function="set">tw_show_reboot=0</action>
+				<action function="set">tw_crypto_user_id=</action>
 				<action function="page">%tw_clear_destination%</action>
 			</action>
 		</page>
@@ -1002,8 +1014,13 @@
 			</text>
 
 			<text style="text_m_accent">
-				<condition var1="tw_has_data_media" var2="1"/>
 				<placement x="%center_x%" y="%row3_y%" placement="5"/>
+				<text>{@factory_reset5=(not including users/lockscreen)}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<condition var1="tw_has_data_media" var2="1"/>
+				<placement x="%center_x%" y="%row4_y%" placement="5"/>
 				<text>{@factory_reset2=(not including internal storage)}</text>
 			</text>
 
@@ -2662,6 +2679,10 @@
 				</conditions>
 				<placement x="%center_x%" y="%row18a_y%"/>
 				<text>{@decrypt_data_btn=Decrypt Data}</text>
+				<action function="set">tw_crypto_user_id=0</action>
+				<action function="set">tw_crypto_password=</action>
+				<action function="set">tw_password_fail=0</action>
+				<action function="set">tw_crypto_pwtype=%tw_crypto_pwtype_0%</action>
 				<action function="page">decrypt</action>
 			</button>
 
@@ -3150,6 +3171,9 @@
 					<condition var1="tw_no_sha2" var2="0"/>
 					<data variable="tw_use_sha2"/>
 				</listitem>
+				<listitem name="{@unmount_sys_install=Unmount System before installing a ZIP}">
+					<data variable="tw_unmount_system"/>
+				</listitem>
 			</listbox>
 
 			<button style="main_button_half_height">
@@ -3529,6 +3553,16 @@
 
 			<listbox style="advanced_listbox">
 				<placement x="%indent%" y="%row13a_y%" w="%content_width%" h="%listbox_advanced_height%"/>
+				<listitem name="{@decrypt_users=Decrypt Users}">
+					<conditions>
+						<condition var1="tw_is_fbe" var2="1"/>
+						<condition var1="tw_all_users_decrypted" var2="0"/>
+					</conditions>
+					<actions>
+						<action function="set">tw_crypto_user_id=</action>
+						<action function="page">decrypt_users</action>
+					</actions>
+				</listitem>
 				<listitem name="{@reload_theme_btn=Reload Theme}">
 					<action function="reload"/>
 				</listitem>
@@ -4543,8 +4577,15 @@
 			</text>
 
 			<text style="text_m_accent">
+				<condition var1="tw_is_fbe" op="!=" var2="1"/>
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
 				<text>{@decrypt_data_enter_pass=Enter Password:}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<condition var1="tw_is_fbe" var2="1"/>
+				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<text>{@decrypt_data_enter_pass_fbe=Enter Password for User [%tw_crypto_user_id%]}</text>
 			</text>
 
 			<input>
@@ -4602,8 +4643,15 @@
 			</text>
 
 			<text style="text_m_accent">
+				<condition var1="tw_is_fbe" op="!=" var2="1"/>
 				<placement x="%center_x%" y="%row2_y%" placement="5"/>
 				<text>{@decrypt_data_enter_pattern=Enter Pattern.}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<condition var1="tw_is_fbe" var2="1"/>
+				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<text>{@decrypt_data_enter_pattern_fbe=Enter Pattern for User [%tw_crypto_user_id%]}</text>
 			</text>
 
 			<text style="text_m_fail">
@@ -5123,6 +5171,45 @@
 			<action>
 				<touch key="power+voldown"/>
 				<action function="screenshot"/>
+			</action>
+		</page>
+
+		<page name="decrypt_users">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@decrypt_users=Decrypt Users}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<text>{@decrypt_users_selection=Select a user ID to decrypt}</text>
+			</text>
+
+			<listbox>
+				<placement x="%indent%" y="%row3_y%" w="%content_width%" h="%listbox_advanced_height%"/>
+				<text>{@select_user=Select User}</text>
+				<icon selected="radio_true" unselected="radio_false" />
+				<data name="tw_crypto_user_id" />
+			</listbox>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row21a_y%"/>
+				<text>{@decrypt_users=Decrypt Users}</text>
+				<action function="set">tw_crypto_password=</action>
+				<action function="set">tw_password_fail=0</action>
+				<action function="page">decrypt</action>
+			</button>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">advanced</action>
 			</action>
 		</page>
 	</pages>

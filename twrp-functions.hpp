@@ -21,8 +21,14 @@
 
 #include <string>
 #include <vector>
+#include <ext4_utils/ext4_crypt.h>
 
 #include "twrpDigest/twrpDigest.hpp"
+#include "ext4crypt_tar.h"
+
+#ifndef BUILD_TWRPTAR_MAIN
+#include "partitions.hpp"
+#endif
 
 using namespace std;
 
@@ -47,6 +53,7 @@ enum Archive_Type {
 	ENCRYPTED,
 	COMPRESSED_ENCRYPTED
 };
+
 
 // Partition class
 class TWFunc
@@ -90,6 +97,7 @@ public:
 	static int write_to_file(const string& fn, const string& line);             //write to file
 	static bool Try_Decrypting_Backup(string Restore_Path, string Password); // true for success, false for failed to decrypt
 	static string System_Property_Get(string Prop_Name);                // Returns value of Prop_Name from reading /system/build.prop
+	static string System_Property_Get(string Prop_Name, TWPartitionManager &PartitionManager, string Mount_Point);                // Returns value of Prop_Name from reading /system/build.prop
 	static string Get_Current_Date(void);                               // Returns the current date in ccyy-m-dd--hh-nn-ss format
 	static void Auto_Generate_Backup_Name();                            // Populates TW_BACKUP_NAME with a backup name based on current date and ro.build.display.id from /system/build.prop
 	static void Fixup_Time_On_Boot(const string& time_paths = ""); // Fixes time on devices which need it (time_paths is a space separated list of paths to check for ats_* files)
@@ -107,6 +115,10 @@ public:
 	static std::string get_cache_dir(); // return the cache partition existence
 	static void check_selinux_support(); // print whether selinux support is enabled to console
 	static bool Is_TWRP_App_In_System(); // Check if the TWRP app is installed in the system partition
+	static int Property_Override(string Prop_Name, string Prop_Value); // Override properties (including ro. properties)
+	static bool Get_Encryption_Policy(ext4_encryption_policy &policy, std::string path); // return encryption policy for path
+	static bool Set_Encryption_Policy(std::string path, const ext4_encryption_policy &policy); // set encryption policy for path
+	static bool Is_Data_Wiped(std::string path); // check if directory has been wiped
 
 private:
 	static void Copy_Log(string Source, string Destination);

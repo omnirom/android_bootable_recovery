@@ -121,12 +121,30 @@ static int check_newer_ab_build(ZipWrap* zip)
         }
     }
     char value[PROPERTY_VALUE_MAX];
+    char propmodel[PROPERTY_VALUE_MAX];
+    char propname[PROPERTY_VALUE_MAX];
 
     property_get("ro.product.device", value, "");
+    property_get("ro.product.model", propmodel, "");
+    property_get("ro.product.name", propname, "");
     const std::string& pkg_device = metadata["pre-device"];
-    if (pkg_device != value || pkg_device.empty()) {
+
+    std::vector<std::string> assertResults = android::base::Split(pkg_device, ",");
+
+    bool deviceExists = false;
+
+    for(const std::string& deviceAssert : assertResults)
+    {
+        std::string assertName = android::base::Trim(deviceAssert);
+        if ((assertName == value || assertName == propmodel || assertName == propname ) && !assertName.empty()) {
+            deviceExists = true;
+            break;
+        }
+    }
+
+    if (!deviceExists) {
         printf("Package is for product %s but expected %s\n",
-             pkg_device.c_str(), value);
+            pkg_device.c_str(), value);
         return INSTALL_ERROR;
     }
 

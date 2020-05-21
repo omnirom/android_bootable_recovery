@@ -45,7 +45,7 @@ void print_usage(void) {
 	printf("  wipe <partition name>\n");
 	printf("  sideload\n");
 	printf("  set <variable> [value]\n");
-	printf("  decrypt <password>\n");
+	printf("  decrypt <password> [USER ID]\n");
 	printf("  remountrw\n");
 	printf("  fixperms\n");
 	printf("  mount <path>\n");

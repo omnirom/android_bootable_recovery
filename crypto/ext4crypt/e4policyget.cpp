@@ -23,13 +23,12 @@
 #define EXT4_KEY_DESCRIPTOR_SIZE_HEX 17
 
 int main(int argc, char *argv[]) {
-	bool ret = false;
 	if (argc != 2) {
 		printf("Must specify a path\n");
 		return -1;
 	} else  {
 		ext4_encryption_policy eep;
-		if (e4crypt_policy_get_struct(argv[1], &eep, sizeof(eep))) {
+		if (e4crypt_policy_get_struct(argv[1], &eep)) {
 			char policy_hex[EXT4_KEY_DESCRIPTOR_SIZE_HEX];
 			policy_to_hex(eep.master_key_descriptor, policy_hex);
 			printf("%s\n", policy_hex);

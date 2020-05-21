@@ -28,6 +28,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/mount.h>
 #include <unistd.h>
 
 #include <string.h>
@@ -299,7 +300,7 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 		} else if (strcmp(command, "set_progress") == 0) {
 			char* fraction_char = strtok(NULL, " \n");
 			float fraction_float = strtof(fraction_char, NULL);
-			DataManager::SetProgress(fraction_float);
+			DataManager::_SetProgress(fraction_float);
 		} else if (strcmp(command, "ui_print") == 0) {
 			char* display_value = strtok(NULL, "\n");
 			if (display_value) {
@@ -339,7 +340,7 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 }
 
 int TWinstall_zip(const char* path, int* wipe_cache) {
-	int ret_val, zip_verify = 1;
+	int ret_val, zip_verify = 1, unmount_system = 1;
 
 	if (strcmp(path, "error") == 0) {
 		LOGERR("Failed to get adb sideload file: '%s'\n", path);
@@ -358,6 +359,8 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 			return INSTALL_CORRUPT;
 		}
 	}
+
+	DataManager::GetValue(TW_UNMOUNT_SYSTEM, unmount_system);
 
 #ifndef TW_OEM_BUILD
 	DataManager::GetValue(TW_SIGNED_ZIP_VERIFY_VAR, zip_verify);
@@ -410,6 +413,14 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 		return INSTALL_CORRUPT;
 	}
 
+	if (unmount_system) {
+		gui_msg("unmount_system=Unmounting System...");
+		if(!PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), true)) {
+			gui_err("unmount_system_err=Failed unmounting System");
+			return -1;
+		}
+	}
+
 	time_t start, stop;
 	time(&start);
 	if (Zip.EntryExists(ASSUMED_UPDATE_BINARY_NAME)) {
@@ -430,7 +441,23 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 	} else {
 		if (Zip.EntryExists(AB_OTA)) {
 			LOGINFO("AB zip\n");
+			gui_msg(Msg(msg::kHighlight, "flash_ab_inactive=Flashing A/B zip to inactive slot: {1}")(PartitionManager.Get_Active_Slot_Display()=="A"?"B":"A"));
+			// We need this so backuptool can do its magic
+			bool system_mount_state = PartitionManager.Is_Mounted_By_Path(PartitionManager.Get_Android_Root_Path());
+			bool vendor_mount_state = PartitionManager.Is_Mounted_By_Path("/vendor");
+			PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
+			PartitionManager.Mount_By_Path("/vendor", true);
+			TWFunc::Exec_Cmd("cp -f /sbin/sh /tmp/sh");
+			mount("/tmp/sh", "/system/bin/sh", "auto", MS_BIND, NULL);
 			ret_val = Run_Update_Binary(path, &Zip, wipe_cache, AB_OTA_ZIP_TYPE);
+			umount("/system/bin/sh");
+			unlink("/tmp/sh");
+			if (!vendor_mount_state)
+				PartitionManager.UnMount_By_Path("/vendor", true);
+			if (!system_mount_state)
+				PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
+			gui_warn("flash_ab_reboot=To flash additional zips, please reboot recovery to switch to the updated slot.");
+
 		} else {
 			if (Zip.EntryExists("ui.xml")) {
 				LOGINFO("TWRP theme zip\n");
