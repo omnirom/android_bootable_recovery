@@ -29,7 +29,6 @@
 #endif
 
 #include "twrpDigest/twrpDigest.hpp"
-#include "ext4crypt_tar.h"
 
 #ifndef BUILD_TWRPTAR_MAIN
 #include "partitions.hpp"
