@@ -146,7 +146,7 @@ bool generateWrappedKey(userid_t user_id, KeyType key_type,
     paramBuilder.push_back(param1);
 
     km::KeyParameter param2;
-    if ((key_type == KeyType::DE_USER) || (key_type == KeyType::DE_SYS)) {
+    if ((key_type == KeyType::DE_USER) || (key_type == KeyType::DE_SYS || (key_type == KeyType::ME))) {
         param2.tag = (km::Tag) (android::hardware::keymaster::V4_0::KM_TAG_KEY_TYPE);
         param2.f.integer = 0;
     } else if (key_type == KeyType::CE_USER) {

@@ -199,15 +199,36 @@ bool retrieveKey(bool create_if_absent, const std::string& key_path, const std::
     if (pathExists(key_path)) {
         LOG(ERROR) << "Key exists, using: " << key_path;
         if (!retrieveKey(key_path, kEmptyAuthentication, key, keepOld)) return false;
+			if (is_metadata_wrapped_key_supported()) {
+				KeyBuffer ephemeral_wrapped_key;
+				if (!getEphemeralWrappedKey(KeyFormat::RAW, *key, &ephemeral_wrapped_key)) {
+					LOG(ERROR) << "Failed to export key for retrieved key";
+					return false;
+				}
+				*key = std::move(ephemeral_wrapped_key);
+			}
     } else {
         if (!create_if_absent) {
             LOG(ERROR) << "No key found in " << key_path;
             return false;
         }
         LOG(ERROR) << "Creating new key in " << key_path;
-        if (!randomKey(key)) return false;
-        LOG(ERROR) << "retrieveKey1";
-        if (!storeKeyAtomically(key_path, tmp_path, kEmptyAuthentication, *key)) return false;
+        if (is_metadata_wrapped_key_supported()) {
+            if(!generateWrappedKey(MAX_USER_ID, KeyType::ME, key)) return false;
+        } else {
+            if (!randomKey(key)) return false;
+        }
+		LOG(ERROR) << "retrieveKey1";
+        if (!storeKeyAtomically(key_path, tmp_path,
+                kEmptyAuthentication, *key)) return false;
+	if (is_metadata_wrapped_key_supported()) {
+            KeyBuffer ephemeral_wrapped_key;
+            if (!getEphemeralWrappedKey(KeyFormat::RAW, *key, &ephemeral_wrapped_key)) {
+                LOG(ERROR) << "Failed to export key for generated key";
+                return false;
+            }
+            *key = std::move(ephemeral_wrapped_key);
+        }
     }
     return true;
 }
