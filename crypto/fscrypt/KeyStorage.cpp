@@ -64,6 +64,7 @@ static constexpr size_t SECDISCARDABLE_BYTES = 1 << 14;
 static constexpr size_t STRETCHED_BYTES = 1 << 6;
 
 static constexpr uint32_t AUTH_TIMEOUT = 30;  // Seconds
+constexpr int EXT4_AES_256_XTS_KEY_SIZE = 64;
 
 static const char* kCurrentVersion = "1";
 static const char* kRmPath = "/system/bin/rm";
@@ -127,6 +128,47 @@ static bool generateKeymasterKey(Keymaster& keymaster, const KeyAuthentication& 
         paramBuilder.Authorization(km::TAG_AUTH_TIMEOUT, AUTH_TIMEOUT);
     }
     return keymaster.generateKey(paramBuilder, key);
+}
+
+bool generateWrappedKey(userid_t user_id, KeyType key_type,
+                                     KeyBuffer* key) {
+    Keymaster keymaster;
+    if (!keymaster) return false;
+    *key = KeyBuffer(EXT4_AES_256_XTS_KEY_SIZE);
+    std::string key_temp;
+    auto paramBuilder = km::AuthorizationSetBuilder()
+                               .AesEncryptionKey(AES_KEY_BYTES * 8)
+                               .GcmModeMinMacLen(GCM_MAC_BYTES * 8)
+                               .Authorization(km::TAG_USER_ID, user_id);
+    km::KeyParameter param1;
+    param1.tag = (km::Tag) (android::hardware::keymaster::V4_0::KM_TAG_FBE_ICE);
+    param1.f.boolValue = true;
+    paramBuilder.push_back(param1);
+
+    km::KeyParameter param2;
+    if ((key_type == KeyType::DE_USER) || (key_type == KeyType::DE_SYS)) {
+        param2.tag = (km::Tag) (android::hardware::keymaster::V4_0::KM_TAG_KEY_TYPE);
+        param2.f.integer = 0;
+    } else if (key_type == KeyType::CE_USER) {
+        param2.tag = (km::Tag) (android::hardware::keymaster::V4_0::KM_TAG_KEY_TYPE);
+        param2.f.integer = 1;
+    }
+    paramBuilder.push_back(param2);
+
+    if (!keymaster.generateKey(paramBuilder, &key_temp)) return false;
+    *key = KeyBuffer(key_temp.size());
+    memcpy(reinterpret_cast<void*>(key->data()), key_temp.c_str(), key->size());
+    return true;
+}
+
+bool getEphemeralWrappedKey(km::KeyFormat format, KeyBuffer& kmKey, KeyBuffer* key) {
+    std::string key_temp;
+    Keymaster keymaster;
+    if (!keymaster) return false;
+    if (!keymaster.exportKey(format, kmKey, "!", "!", &key_temp)) return false;
+    *key = KeyBuffer(key_temp.size());
+    memcpy(reinterpret_cast<void*>(key->data()), key_temp.c_str(), key->size());
+    return true;
 }
 
 static std::pair<km::AuthorizationSet, km::HardwareAuthToken> beginParams(

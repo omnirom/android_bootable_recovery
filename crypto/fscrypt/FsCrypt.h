@@ -27,6 +27,8 @@ bool fscrypt_vold_create_user_key(userid_t user_id, int serial, bool ephemeral);
 bool fscrypt_destroy_user_key(userid_t user_id);
 bool fscrypt_add_user_key_auth(userid_t user_id, int serial, const std::string& token,
                                const std::string& secret);
+bool fscrypt_clear_user_key_auth(userid_t user_id, int serial, const std::string& token_hex,
+                               const std::string& secret_hex);
 bool fscrypt_fixate_newest_user_key_auth(userid_t user_id);
 
 bool fscrypt_unlock_user_key(userid_t user_id, int serial, const std::string& token,
@@ -38,6 +40,7 @@ bool fscrypt_prepare_user_storage(const std::string& volume_uuid, userid_t user_
 bool fscrypt_destroy_user_storage(const std::string& volume_uuid, userid_t user_id, int flags);
 
 bool fscrypt_destroy_volume_keys(const std::string& volume_uuid);
-
+bool is_wrapped_key_supported();
+bool is_wrapped_key_supported_external();
 bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, userid_t user_id,
                            std::string* raw_ref);

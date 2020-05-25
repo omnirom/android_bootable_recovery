@@ -17,8 +17,9 @@
 #ifndef ANDROID_VOLD_KEYSTORAGE_H
 #define ANDROID_VOLD_KEYSTORAGE_H
 
+#include "Keymaster.h"
 #include "KeyBuffer.h"
-
+#include <cutils/multiuser.h>
 #include <string>
 
 namespace android {
@@ -37,6 +38,12 @@ class KeyAuthentication {
 
     const std::string token;
     const std::string secret;
+};
+
+enum class KeyType {
+    DE_SYS,
+    DE_USER,
+    CE_USER
 };
 
 extern const KeyAuthentication kEmptyAuthentication;
@@ -68,6 +75,8 @@ bool retrieveKey(const std::string& dir, const KeyAuthentication& auth, KeyBuffe
 bool destroyKey(const std::string& dir);
 
 bool runSecdiscardSingle(const std::string& file);
+bool generateWrappedKey(userid_t user_id, KeyType key_type, KeyBuffer* key);
+bool getEphemeralWrappedKey(km::KeyFormat format, KeyBuffer& kmKey, KeyBuffer* key);
 }  // namespace vold
 }  // namespace android
 

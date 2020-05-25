@@ -19,6 +19,7 @@
 
 #include "KeyBuffer.h"
 #include "KeyStorage.h"
+#include "Keymaster.h"
 
 #include <memory>
 #include <string>
@@ -31,7 +32,7 @@ bool installKey(const KeyBuffer& key, std::string* raw_ref);
 bool evictKey(const std::string& raw_ref);
 bool retrieveAndInstallKey(bool create_if_absent, const KeyAuthentication& key_authentication,
                            const std::string& key_path, const std::string& tmp_path,
-                           std::string* key_ref);
+                           std::string* key_ref, bool wrapped_key_supported);
 bool retrieveKey(bool create_if_absent, const std::string& key_path, const std::string& tmp_path,
                  KeyBuffer* key, bool keepOld = true);
 

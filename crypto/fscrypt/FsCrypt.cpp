@@ -16,6 +16,7 @@
 
 #include "FsCrypt.h"
 
+#include "Keymaster.h"
 #include "KeyStorage.h"
 #include "KeyUtil.h"
 #include "Utils.h"
@@ -65,6 +66,8 @@ using android::base::StringPrintf;
 using android::fs_mgr::GetEntryForMountPoint;
 using android::vold::kEmptyAuthentication;
 using android::vold::KeyBuffer;
+using android::vold::Keymaster;
+using android::hardware::keymaster::V4_0::KeyFormat;
 // using android::vold::writeStringToFile;
 
 // Store main DE raw ref / policy
@@ -207,12 +210,45 @@ static bool read_and_fixate_user_ce_key(userid_t user_id,
     return false;
 }
 
+static bool is_wrapped_key_supported_common(const std::string& mount_point) {
+    struct fstab_rec* rec = fs_mgr_get_entry_for_mount_point(fstab_default, mount_point);
+    char const* contents_mode = NULL;
+    char const* filenames_mode = NULL;
+
+    fs_mgr_get_file_encryption_modes(rec, &contents_mode, &filenames_mode);
+    if (!contents_mode || !filenames_mode) {
+        LOG(ERROR) << "Couldn't read file or contents mode, returning false";
+        return false;
+    }
+
+    if (strcmp(contents_mode, "ice_wrapped_key_supported") == 0)
+        return true;
+    else
+        return false;
+}
+
+bool is_wrapped_key_supported() {
+    return is_wrapped_key_supported_common(DATA_MNT_POINT);
+}
+
+bool is_wrapped_key_supported_external() {
+    return false;
+}
+
 static bool read_and_install_user_ce_key(userid_t user_id,
                                          const android::vold::KeyAuthentication& auth) {
     if (s_ce_key_raw_refs.count(user_id) != 0) return true;
     KeyBuffer ce_key;
     if (!read_and_fixate_user_ce_key(user_id, auth, &ce_key)) return false;
     std::string ce_raw_ref;
+    if (is_wrapped_key_supported()) {
+        KeyBuffer ephemeral_wrapped_key;
+        if (!getEphemeralWrappedKey(KeyFormat::RAW, ce_key, &ephemeral_wrapped_key)) {
+           LOG(ERROR) << "Failed to export ce key";
+           return false;
+        }
+        ce_key = std::move(ephemeral_wrapped_key);
+    }
     if (!android::vold::installKey(ce_key, &ce_raw_ref)) return false;
     s_ce_keys[user_id] = std::move(ce_key);
     s_ce_key_raw_refs[user_id] = ce_raw_ref;
@@ -242,8 +278,15 @@ static bool destroy_dir(const std::string& dir) {
 // it creates keys in a fixed location.
 static bool create_and_install_user_keys(userid_t user_id, bool create_ephemeral) {
     KeyBuffer de_key, ce_key;
-    if (!android::vold::randomKey(&de_key)) return false;
-    if (!android::vold::randomKey(&ce_key)) return false;
+
+    if(is_wrapped_key_supported()) {
+        if (!generateWrappedKey(user_id, android::vold::KeyType::DE_USER, &de_key)) return false;
+        if (!generateWrappedKey(user_id, android::vold::KeyType::CE_USER, &ce_key)) return false;
+    } else {
+        if (!android::vold::randomKey(&de_key)) return false;
+        if (!android::vold::randomKey(&ce_key)) return false;
+    }
+
     if (create_ephemeral) {
         // If the key should be created as ephemeral, don't store it.
         s_ephemeral_users.insert(user_id);
@@ -262,12 +305,33 @@ static bool create_and_install_user_keys(userid_t user_id, bool create_ephemeral
                                                kEmptyAuthentication, de_key))
             return false;
     }
-    if (!android::vold::installKey(de_key, &de_raw_ref)) return false;
-    s_de_key_raw_refs[user_id] = de_raw_ref;
+
     std::string ce_raw_ref;
+    if (is_wrapped_key_supported()) {
+        KeyBuffer ephemeral_wrapped_de_key;
+        KeyBuffer ephemeral_wrapped_ce_key;
+
+        /* Export and install the DE keys */
+        if (!getEphemeralWrappedKey(KeyFormat::RAW, de_key, &ephemeral_wrapped_de_key)) {
+           LOG(ERROR) << "Failed to export de_key";
+           return false;
+        }
+        /* Export and install the CE keys */
+        if (!getEphemeralWrappedKey(KeyFormat::RAW, ce_key, &ephemeral_wrapped_ce_key)) {
+           LOG(ERROR) << "Failed to export de_key";
+           return false;
+        }
+
+        de_key = std::move(ephemeral_wrapped_de_key);
+        ce_key = std::move(ephemeral_wrapped_ce_key);
+    }
+    if (!android::vold::installKey(de_key, &de_raw_ref)) return false;
     if (!android::vold::installKey(ce_key, &ce_raw_ref)) return false;
-    s_ce_keys[user_id] = ce_key;
+    s_ce_keys[user_id] = std::move(ce_key);
+
+    s_de_key_raw_refs[user_id] = de_raw_ref;
     s_ce_key_raw_refs[user_id] = ce_raw_ref;
+
     LOG(DEBUG) << "Created keys for user " << user_id;
     return true;
 }
@@ -337,6 +401,14 @@ static bool load_all_de_keys() {
             KeyBuffer key;
             if (!android::vold::retrieveKey(key_path, kEmptyAuthentication, &key)) return false;
             std::string raw_ref;
+            if (is_wrapped_key_supported()) {
+                KeyBuffer ephemeral_wrapped_key;
+                if (!getEphemeralWrappedKey(KeyFormat::RAW, key, &ephemeral_wrapped_key)) {
+                   LOG(ERROR) << "Failed to export de_key in create_and_install_user_keys";
+                   return false;
+                }
+                key = std::move(ephemeral_wrapped_key);
+            }
             if (!android::vold::installKey(key, &raw_ref)) return false;
             s_de_key_raw_refs[user_id] = raw_ref;
             LOG(DEBUG) << "Installed de key for user " << user_id;
@@ -349,6 +421,7 @@ static bool load_all_de_keys() {
 
 bool fscrypt_initialize_systemwide_keys() {
     LOG(INFO) << "fscrypt_initialize_systemwide_keys";
+    bool wrapped_key_supported = false;
 
     if (s_systemwide_keys_initialized) {
         LOG(INFO) << "Already initialized";
@@ -356,8 +429,11 @@ bool fscrypt_initialize_systemwide_keys() {
     }
 
     PolicyKeyRef device_ref;
-    if (!android::vold::retrieveAndInstallKey(true, kEmptyAuthentication, device_key_path,
-                                              device_key_temp, &device_ref.key_raw_ref))
+    wrapped_key_supported = is_wrapped_key_supported();
+
+    if (!android::vold::retrieveAndInstallKey(true, kEmptyAuthentication,
+                       device_key_path, device_key_temp,
+                           &device_ref.key_raw_ref, wrapped_key_supported))
         return false;
     get_data_file_encryption_modes(&device_ref);
 
@@ -537,6 +613,7 @@ static bool read_or_create_volkey(const std::string& misc_path, const std::strin
                                   PolicyKeyRef* key_ref) {
     auto secdiscardable_path = volume_secdiscardable_path(volume_uuid);
     std::string secdiscardable_hash;
+    bool wrapped_key_supported = false;
     if (android::vold::pathExists(secdiscardable_path)) {
         if (!android::vold::readSecdiscardable(secdiscardable_path, &secdiscardable_hash))
             return false;
@@ -554,8 +631,10 @@ static bool read_or_create_volkey(const std::string& misc_path, const std::strin
         return false;
     }
     android::vold::KeyAuthentication auth("", secdiscardable_hash);
+    wrapped_key_supported = is_wrapped_key_supported_external();
+
     if (!android::vold::retrieveAndInstallKey(true, auth, key_path, key_path + "_tmp",
-                                              &key_ref->key_raw_ref))
+                                              &key_ref->key_raw_ref, wrapped_key_supported))
         return false;
     key_ref->contents_mode =
         android::base::GetProperty("ro.crypto.volume.contents_mode", "aes-256-xts");
@@ -581,18 +660,72 @@ bool fscrypt_add_user_key_auth(userid_t user_id, int serial, const std::string& 
     if (!parse_hex(secret_hex, &secret)) return false;
     auto auth =
         secret.empty() ? kEmptyAuthentication : android::vold::KeyAuthentication(token, secret);
-    auto it = s_ce_keys.find(user_id);
-    if (it == s_ce_keys.end()) {
-        LOG(ERROR) << "Key not loaded into memory, can't change for user " << user_id;
-        return false;
-    }
-    const auto& ce_key = it->second;
     auto const directory_path = get_ce_key_directory_path(user_id);
     auto const paths = get_ce_key_paths(directory_path);
+
+    KeyBuffer ce_key;
+    if(is_wrapped_key_supported()) {
+        std::string ce_key_current_path = get_ce_key_current_path(directory_path);
+        if (android::vold::retrieveKey(ce_key_current_path, kEmptyAuthentication, &ce_key)) {
+            LOG(DEBUG) << "Successfully retrieved key";
+        } else {
+            if (android::vold::retrieveKey(ce_key_current_path, auth, &ce_key)) {
+                LOG(DEBUG) << "Successfully retrieved key";
+            }
+        }
+    } else {
+        auto it = s_ce_keys.find(user_id);
+        if (it == s_ce_keys.end()) {
+            LOG(ERROR) << "Key not loaded into memory, can't change for user " << user_id;
+            return false;
+        }
+        ce_key = it->second;
+    }
+
     std::string ce_key_path;
     if (!get_ce_key_new_path(directory_path, paths, &ce_key_path)) return false;
     if (!android::vold::storeKeyAtomically(ce_key_path, user_key_temp, auth, ce_key)) return false;
     if (!android::vold::FsyncDirectory(directory_path)) return false;
+    return true;
+}
+
+bool fscrypt_clear_user_key_auth(userid_t user_id, int serial, const std::string& token_hex,
+                                 const std::string& secret_hex) {
+    LOG(DEBUG) << "fscrypt_clear_user_key_auth " << user_id << " serial=" << serial
+               << " token_present=" << (token_hex != "!");
+    if (!fscrypt_is_native()) return true;
+    if (s_ephemeral_users.count(user_id) != 0) return true;
+    std::string token, secret;
+
+    if (!parse_hex(token_hex, &token)) return false;
+    if (!parse_hex(secret_hex, &secret)) return false;
+
+    if (is_wrapped_key_supported()) {
+        auto const directory_path = get_ce_key_directory_path(user_id);
+        auto const paths = get_ce_key_paths(directory_path);
+
+        KeyBuffer ce_key;
+        std::string ce_key_current_path = get_ce_key_current_path(directory_path);
+
+        auto auth = android::vold::KeyAuthentication(token, secret);
+        /* Retrieve key while removing a pin. A secret is needed */
+        if (android::vold::retrieveKey(ce_key_current_path, auth, &ce_key)) {
+            LOG(DEBUG) << "Successfully retrieved key";
+        } else {
+            /* Retrieve key when going None to swipe and vice versa when a
+               synthetic password is present */
+            if (android::vold::retrieveKey(ce_key_current_path, kEmptyAuthentication, &ce_key)) {
+                LOG(DEBUG) << "Successfully retrieved key";
+            }
+        }
+
+        std::string ce_key_path;
+        if (!get_ce_key_new_path(directory_path, paths, &ce_key_path)) return false;
+        if (!android::vold::storeKeyAtomically(ce_key_path, user_key_temp, kEmptyAuthentication, ce_key))
+            return false;
+    } else {
+        if(!fscrypt_add_user_key_auth(user_id, serial, "!", "!")) return false;
+    }
     return true;
 }
 

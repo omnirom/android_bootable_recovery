@@ -27,9 +27,14 @@
 #include <android-base/logging.h>
 #include <keyutils.h>
 
+#include "FsCrypt.h"
 #include "KeyStorage.h"
 #include "Utils.h"
 
+#define MAX_USER_ID 0xFFFFFFFF
+
+using android::hardware::keymaster::V4_0::KeyFormat;
+using android::vold::KeyType;
 namespace android {
 namespace vold {
 
@@ -105,7 +110,14 @@ bool installKey(const KeyBuffer& key, std::string* raw_ref) {
     fscrypt_key& fs_key = *reinterpret_cast<fscrypt_key*>(fsKeyBuffer.data());
 
     if (!fillKey(key, &fs_key)) return false;
-    *raw_ref = generateKeyRef(fs_key.raw, fs_key.size);
+    if (is_wrapped_key_supported()) {
+        /* When wrapped key is supported, only the first 32 bytes are
+           the same per boot. The second 32 bytes can change as the ephemeral
+           key is different. */
+        *raw_ref = generateKeyRef(fs_key.raw, (fs_key.size)/2);
+    } else {
+        *raw_ref = generateKeyRef(fs_key.raw, fs_key.size);
+    }
     key_serial_t device_keyring;
     if (!fscryptKeyring(&device_keyring)) return false;
     for (char const* const* name_prefix = NAME_PREFIXES; *name_prefix != nullptr; name_prefix++) {
@@ -146,7 +158,7 @@ bool evictKey(const std::string& raw_ref) {
 
 bool retrieveAndInstallKey(bool create_if_absent, const KeyAuthentication& key_authentication,
                            const std::string& key_path, const std::string& tmp_path,
-                           std::string* key_ref) {
+                           std::string* key_ref, bool wrapped_key_supported) {
     KeyBuffer key;
     if (pathExists(key_path)) {
         LOG(DEBUG) << "Key exists, using: " << key_path;
@@ -157,8 +169,21 @@ bool retrieveAndInstallKey(bool create_if_absent, const KeyAuthentication& key_a
             return false;
         }
         LOG(INFO) << "Creating new key in " << key_path;
-        if (!randomKey(&key)) return false;
+        if (wrapped_key_supported) {
+            if(!generateWrappedKey(MAX_USER_ID, KeyType::DE_SYS, &key)) return false;
+        } else {
+            if (!randomKey(&key)) return false;
+        }
         if (!storeKeyAtomically(key_path, tmp_path, key_authentication, key)) return false;
+    }
+
+    if (wrapped_key_supported) {
+        KeyBuffer ephemeral_wrapped_key;
+        if (!getEphemeralWrappedKey(KeyFormat::RAW, key, &ephemeral_wrapped_key)) {
+            LOG(ERROR) << "Failed to export key in retrieveAndInstallKey";
+            return false;
+        }
+        key = std::move(ephemeral_wrapped_key);
     }
 
     if (!installKey(key, key_ref)) {
