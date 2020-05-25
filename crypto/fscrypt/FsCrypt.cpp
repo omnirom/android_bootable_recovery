@@ -230,7 +230,7 @@ bool is_wrapped_key_supported_external() {
     return false;
 }
 
-bool is_metadata_wrapped_key_supported() {
+bool is_metadata_wrapped_key_supported_common(const std::string& mount_point) {
 	LOG(DEBUG) << "Determining metadata wrapped-key support for " << mount_point;
 	std::string wrapped_key_supported = android::base::GetProperty("fbe.metadata.wrappedkey", "false");
 	LOG(DEBUG) << "fbe.metadata.wrappedkey = " << wrapped_key_supported;
@@ -240,6 +240,10 @@ bool is_metadata_wrapped_key_supported() {
     } else {
         return false;
     }
+}
+
+bool is_metadata_wrapped_key_supported() {
+	return is_metadata_wrapped_key_supported_common(METADATA_MNT_POINT);
 }
 
 static bool read_and_install_user_ce_key(userid_t user_id,
