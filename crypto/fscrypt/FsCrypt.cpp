@@ -211,20 +211,15 @@ static bool read_and_fixate_user_ce_key(userid_t user_id,
 }
 
 static bool is_wrapped_key_supported_common(const std::string& mount_point) {
-    struct fstab_rec* rec = fs_mgr_get_entry_for_mount_point(fstab_default, mount_point);
-    char const* contents_mode = NULL;
-    char const* filenames_mode = NULL;
-
-    fs_mgr_get_file_encryption_modes(rec, &contents_mode, &filenames_mode);
-    if (!contents_mode || !filenames_mode) {
-        LOG(ERROR) << "Couldn't read file or contents mode, returning false";
+    LOG(DEBUG) << "Determining wrapped-key support for " << mount_point;
+    std::string wrapped_key_supported = android::base::GetProperty("fbe.data.wrappedkey", "false");
+    LOG(DEBUG) << "fbe.data.wrappedkey = " << wrapped_key_supported;
+    if (mount_point == DATA_MNT_POINT && wrapped_key_supported == "true") {
+        LOG(DEBUG) << "Wrapped key supported on " << mount_point;
+        return true;
+    } else {
         return false;
     }
-
-    if (strcmp(contents_mode, "ice_wrapped_key_supported") == 0)
-        return true;
-    else
-        return false;
 }
 
 bool is_wrapped_key_supported() {
