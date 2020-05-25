@@ -1373,7 +1373,6 @@ bool TWFunc::Is_Data_Wiped(std::string path) {
 	if (d != NULL) {
 		struct dirent* de;
 		while ((de = readdir(d)) != NULL) {
-			LOGINFO("file: %s\n", de->d_name);
 			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
 				continue;
 			if (strncmp(de->d_name, "lost+found", 10) == 0 || strncmp(de->d_name, "media", 5) == 0)
@@ -1383,7 +1382,6 @@ bool TWFunc::Is_Data_Wiped(std::string path) {
 		}
 		closedir(d);
 	}
-	LOGINFO("file_count: %zu\n", file_count);
 	return file_count == 0;
 #else
 	return true;
