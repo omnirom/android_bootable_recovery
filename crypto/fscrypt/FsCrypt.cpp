@@ -363,19 +363,23 @@ static void get_data_file_encryption_modes(PolicyKeyRef* key_ref) {
         PLOG(ERROR) << "Failed to open default fstab";
         return;
     }
-    auto entry = android::fs_mgr::GetEntryForMountPoint(&fstab_default, DATA_MNT_POINT);
+    /*auto entry = android::fs_mgr::GetEntryForMountPoint(&fstab_default, DATA_MNT_POINT);
     if (entry == nullptr) {
         LOG(ERROR) << "get_data_file_encryption_modes::failed\n";
         return;
-    }
-    key_ref->contents_mode = entry->file_contents_mode;
-    key_ref->filenames_mode = entry->file_names_mode;
+    }*/
+    LOG(INFO) << "contents mode '" << android::base::GetProperty("fbe.contents", "aes-256-xts") << "' filenames '" << android::base::GetProperty("fbe.filenames", "aes-256-heh") << "'\n";
+    key_ref->contents_mode =
+        android::base::GetProperty("fbe.contents", "aes-256-xts");
+    key_ref->filenames_mode =
+        android::base::GetProperty("fbe.filenames", "aes-256-heh");
 }
 
 static bool ensure_policy(const PolicyKeyRef& key_ref, const std::string& path) {
-    return fscrypt_policy_ensure(path.c_str(), key_ref.key_raw_ref.data(),
+	return true;
+    /*return fscrypt_policy_ensure(path.c_str(), key_ref.key_raw_ref.data(),
                                  key_ref.key_raw_ref.size(), key_ref.contents_mode.c_str(),
-                                 key_ref.filenames_mode.c_str()) == 0;
+                                 key_ref.filenames_mode.c_str()) == 0;*/
 }
 
 static bool is_numeric(const char* name) {
