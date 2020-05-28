@@ -307,11 +307,8 @@ int main(int argc, char **argv) {
 
 	// Offer to decrypt if the device is encrypted
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
-		LOGINFO("Is encrypted, do decrypt page first\n");
-	if (DataManager::GetIntValue(TW_IS_FBE))
-		DataManager::SetValue("tw_crypto_user_id", "0");
-	if (gui_startPage("decrypt", 1, 1) != 0) {
-		LOGERR("Failed to start decrypt GUI page.\n");
+		if (SkipDecryption) {
+			LOGINFO("Skipping decryption\n");
 		} else {
 			LOGINFO("Is encrypted, do decrypt page first\n");
 			if (gui_startPage("decrypt", 1, 1) != 0) {
@@ -332,7 +329,8 @@ int main(int argc, char **argv) {
 	}
 
 	// Fixup the RTC clock on devices which require it
-	if (crash_counter == 0) TWFunc::Fixup_Time_On_Boot();
+	if (crash_counter == 0)
+		TWFunc::Fixup_Time_On_Boot();
 
 	// Read the settings file
 	TWFunc::Update_Log_File();
@@ -343,9 +341,7 @@ int main(int argc, char **argv) {
 	// Run any outstanding OpenRecoveryScript
 	std::string cacheDir = TWFunc::get_cache_dir();
 	std::string orsFile = cacheDir + "/recovery/openrecoveryscript";
-
-	if (TWFunc::Path_Exists(SCRIPT_FILE_TMP) ||
-	(DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 && TWFunc::Path_Exists(orsFile))) {
+	if ((DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 || SkipDecryption) && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(orsFile))) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
 	}
 
