@@ -187,6 +187,11 @@ ifneq ($(TW_WHITELIST_INPUT),)
   LOCAL_CFLAGS += -DWHITELIST_INPUT=$(TW_WHITELIST_INPUT)
 endif
 
+ifeq ($(TW_HAPTICS_TSPDRV), true)
+  LOCAL_SRC_FILES += tspdrv.cpp
+  LOCAL_CFLAGS += -DTW_HAPTICS_TSPDRV
+endif
+
 ifeq ($(TW_DISABLE_TTF), true)
     $(warning ****************************************************************************)
     $(warning * TW_DISABLE_TTF support has been deprecated in TWRP.                      *)
