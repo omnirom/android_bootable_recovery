@@ -741,18 +741,6 @@ if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
 	int retry_count = 3;
 	while (!Decrypt_DE() && --retry_count)
 		usleep(2000);
-	PartitionManager.Parse_Users();  // after load_all_de_keys() to parse_users
-	std::vector<users_struct>::iterator iter;
-	std::vector<users_struct>* userList = PartitionManager.Get_Users_List();
-	for (iter = userList->begin(); iter != userList->end(); iter++) {
-		if (atoi((*iter).userId.c_str()) != 0) {
-			ExcludeAll(Mount_Point + "/system_de/" + (*iter).userId + "/spblob");
-			ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/gatekeeper.password.key");
-			ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/gatekeeper.pattern.key");
-			ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/locksettings.db");
-			ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/locksettings.db-wal");
-		}
-	}
 	if (retry_count > 0) {
 		property_set("ro.crypto.state", "encrypted");
 		Is_Encrypted = true;
@@ -763,6 +751,18 @@ if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
 		if (pwd_type < 0) {
 			LOGERR("This TWRP does not have synthetic password decrypt support\n");
 			pwd_type = 0;  // default password
+		}
+		PartitionManager.Parse_Users();  // after load_all_de_keys() to parse_users
+		std::vector<users_struct>::iterator iter;
+		std::vector<users_struct>* userList = PartitionManager.Get_Users_List();
+		for (iter = userList->begin(); iter != userList->end(); iter++) {
+			if (atoi((*iter).userId.c_str()) != 0) {
+				ExcludeAll(Mount_Point + "/system_de/" + (*iter).userId + "/spblob");
+				ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/gatekeeper.password.key");
+				ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/gatekeeper.pattern.key");
+				ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/locksettings.db");
+				ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/locksettings.db-wal");
+			}
 		}
 		DataManager::SetValue(TW_CRYPTO_PWTYPE, pwd_type);
 		DataManager::SetValue("tw_crypto_pwtype_0", pwd_type);

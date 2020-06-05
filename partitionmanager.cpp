@@ -1766,11 +1766,13 @@ void TWPartitionManager::Check_Users_Decryption_Status() {
 	std::vector<users_struct>::iterator iter;
 	for (iter = Users_List.begin(); iter != Users_List.end(); iter++) {
 		if (!(*iter).isDecrypted) {
+			LOGINFO("User %s is not decrypted.\n", (*iter).userId.c_str());
 			all_is_decrypted = 0;
 			break;
 		}
 	}
 	if (all_is_decrypted == 1) {
+		LOGINFO("All found users are decrypted.\n");
 		DataManager::SetValue("tw_all_users_decrypted", "1");
 		property_set("twrp.all.users.decrypted", "true");
 	} else
