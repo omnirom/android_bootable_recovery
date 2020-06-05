@@ -419,6 +419,8 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 			gui_err("unmount_system_err=Failed unmounting System");
 			return -1;
 		}
+		unlink("/system");
+		mkdir("/system", 0755);
 	}
 
 	time_t start, stop;
