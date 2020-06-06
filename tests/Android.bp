@@ -92,6 +92,7 @@ librecovery_static_libs = [
     "libhidlbase",
     "liblp",
     "libtinyxml2",
+    "libc++fs",
 ]
 
 // recovery image for unittests.
