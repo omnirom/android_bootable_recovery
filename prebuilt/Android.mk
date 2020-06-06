@@ -655,7 +655,7 @@ include $(BUILD_PREBUILT)
 #TWRP App permissions for Android 9+
 include $(CLEAR_VARS)
 LOCAL_MODULE := privapp-permissions-twrpapp.xml
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 LOCAL_SRC_FILES := $(LOCAL_MODULE)
