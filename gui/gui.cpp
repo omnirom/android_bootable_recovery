@@ -858,10 +858,12 @@ extern "C" int gui_loadCustomResources(void)
 #endif
 	return 0;
 
+#ifndef TW_OEM_BUILD
 error:
 	LOGERR("An internal error has occurred: unable to load theme.\n");
 	gGuiInitialized = 0;
 	return -1;
+#endif
 }
 
 extern "C" int gui_start(void)
@@ -869,7 +871,7 @@ extern "C" int gui_start(void)
 	return gui_startPage("main", 1, 0);
 }
 
-extern "C" int gui_startPage(const char *page_name, const int allow_commands, int stop_on_page_done)
+extern "C" int gui_startPage(const char *page_name, __attribute__((unused)) const int allow_commands, int stop_on_page_done)
 {
 	if (!gGuiInitialized)
 		return -1;
