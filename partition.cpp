@@ -422,7 +422,10 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error,
 		else
 			return true;
 	} else if (Mount_Point == "auto") {
-		Mount_Point = "/auto" + to_string(auto_index);
+		Mount_Point = "/auto";
+		char autoi[5];
+		sprintf(autoi, "%i", auto_index);
+		Mount_Point += autoi;
 		Backup_Path = Mount_Point;
 		Storage_Path = Mount_Point;
 		Backup_Name = Mount_Point.substr(1);
