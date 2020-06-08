@@ -50,7 +50,7 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 28; echo $$?),0)
         LOCAL_C_INCLUDES += system/extras/ext4_utils \
             system/extras/ext4_utils/include \
-            bootable/recovery/crypto/ext4crypt
+            $(LOCAL_PATH)/../crypto/ext4crypt
         LOCAL_SHARED_LIBRARIES += libext4_utils
     endif
 endif
