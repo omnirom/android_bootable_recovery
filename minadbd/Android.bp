@@ -99,7 +99,7 @@ cc_binary {
     ],
 
     required: [
-        "adbd_system_binaries_recovery",
+        "adbd_system_api_recovery",
     ]
 }
 
