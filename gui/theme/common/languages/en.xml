@@ -735,5 +735,7 @@
 		<string name="fbe_wipe_msg">WARNING: {1} wiped. FBE device should be booted into Android and not Recovery to set initial FBE policy after wipe.</string>
 		<string name="flash_ab_inactive">Flashing A/B zip to inactive slot: {1}</string>
 		<string name="flash_ab_reboot">To flash additional zips, please reboot recovery to switch to the updated slot.</string>
+		<string name="ozip_decrypt_decryption">Starting Ozip Decryption...</string>
+		<string name="ozip_decrypt_finish">Ozip Decryption Finished!</string>
 	</resources>
 </language>
