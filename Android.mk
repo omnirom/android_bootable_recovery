@@ -143,6 +143,7 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libstlport
     LOCAL_CFLAGS += -DTW_NO_SHA2_LIBRARY
 endif
+LOCAL_CFLAGS += -DSDK_VERSION=$(PLATFORM_SDK_VERSION)
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 25; echo $$?),0)
     LOCAL_CFLAGS += -DUSE_OLD_BASE_INCLUDE
 endif

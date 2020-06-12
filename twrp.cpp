@@ -44,10 +44,12 @@ extern "C" {
 #include "data.hpp"
 #include "partitions.hpp"
 
-#ifdef USE_OLD_BASE_INCLUDE
-#include <strings.h>
-#else
+#if SDK_VERSION >= 24
 #include <android-base/strings.h>
+#elif SDK_VERSION == 23
+#include <base/strings.h>
+#else
+#include <strings.h>
 #endif
 #include "openrecoveryscript.hpp"
 #include "variables.h"
