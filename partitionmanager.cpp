@@ -3332,7 +3332,6 @@ void TWPartitionManager::Setup_Super_Devices() {
 	superPartition->Alternate_Block_Device = superPart;
 	superPartition->Backup_Display_Name = "super";
 	superPartition->Can_Flash_Img = true;
-	superPartition->Change_Mount_Read_Only(true);
 	superPartition->Current_File_System = "emmc";
 	superPartition->Can_Be_Backed_Up = true;
 	superPartition->Is_Present = true;
