@@ -640,7 +640,7 @@ void TWFunc::Update_Intent_File(string Intent) {
 int TWFunc::tw_reboot(RebootCommand command)
 {
 	DataManager::Flush();
-	if (!Is_Data_Wiped("/data"))
+	if (!Is_Data_Wiped())
 		Update_Log_File();
 
 	// Always force a sync before we reboot
@@ -1366,9 +1366,10 @@ bool TWFunc::Set_Encryption_Policy(std::string path, const ext4_encryption_polic
 	return true;
 }
 
-bool TWFunc::Is_Data_Wiped(std::string path) {
+bool TWFunc::Is_Data_Wiped() {
+	std::string data_path = "/data";
 #ifdef TW_INCLUDE_FBE
-	DIR* d = opendir(path.c_str());
+	DIR* d = opendir(data_path.c_str());
 	size_t file_count = 0;
 	if (d != NULL) {
 		struct dirent* de;

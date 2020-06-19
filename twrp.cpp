@@ -404,7 +404,7 @@ int main(int argc, char **argv) {
 	// Reboot
 	TWFunc::Update_Intent_File(Send_Intent);
 	delete adb_bu_fifo;
-	if (!TWFunc::Is_Data_Wiped("/data"))
+	if (!TWFunc::Is_Data_Wiped())
 		TWFunc::Update_Log_File();
 	gui_msg(Msg("rebooting=Rebooting..."));
 	string Reboot_Arg;
