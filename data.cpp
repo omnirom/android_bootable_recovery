@@ -1093,30 +1093,30 @@ void DataManager::Output_Version(void)
 	string Path;
 	char version[255];
 
-	std::string cacheDir = TWFunc::get_cache_dir();
-	if (cacheDir.empty()) {
+	std::string logDir = TWFunc::get_log_dir();
+	if (logDir.empty()) {
 		LOGINFO("Unable to find cache directory\n");
 		return;
 	}
 
-	std::string recoveryCacheDir = cacheDir + "recovery/";
+	std::string recoveryLogDir = logDir + "recovery/";
 
-	if (cacheDir == NON_AB_CACHE_DIR) {
-		if (!PartitionManager.Mount_By_Path(NON_AB_CACHE_DIR, false)) {
+	if (logDir == CACHE_LOGS_DIR) {
+		if (!PartitionManager.Mount_By_Path(CACHE_LOGS_DIR, false)) {
 			LOGINFO("Unable to mount '%s' to write version number.\n", Path.c_str());
 			return;
 		}
 
-		if (!TWFunc::Path_Exists(recoveryCacheDir)) {
-			LOGINFO("Recreating %s folder.\n", recoveryCacheDir.c_str());
-			if (!TWFunc::Create_Dir_Recursive(recoveryCacheDir.c_str(), S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, 0, 0)) {
-				LOGERR("DataManager::Output_Version -- Unable to make %s: %s\n", recoveryCacheDir.c_str(), strerror(errno));
+		if (!TWFunc::Path_Exists(recoveryLogDir)) {
+			LOGINFO("Recreating %s folder.\n", recoveryLogDir.c_str());
+			if (!TWFunc::Create_Dir_Recursive(recoveryLogDir.c_str(), S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, 0, 0)) {
+				LOGERR("DataManager::Output_Version -- Unable to make %s: %s\n", recoveryLogDir.c_str(), strerror(errno));
 				return;
 			}
 		}
 	}
 
-	std::string verPath = recoveryCacheDir + ".version";
+	std::string verPath = recoveryLogDir + ".version";
 	if (TWFunc::Path_Exists(verPath)) {
 		unlink(verPath.c_str());
 	}
@@ -1128,7 +1128,7 @@ void DataManager::Output_Version(void)
 	strcpy(version, TW_VERSION_STR);
 	fwrite(version, sizeof(version[0]), strlen(version) / sizeof(version[0]), fp);
 	fclose(fp);
-	TWFunc::copy_file("/etc/recovery.fstab", recoveryCacheDir + "recovery.fstab", 0644);
+	TWFunc::copy_file("/etc/recovery.fstab", recoveryLogDir + "recovery.fstab", 0644);
 	PartitionManager.Output_Storage_Fstab();
 	sync();
 	LOGINFO("Version number saved to '%s'\n", verPath.c_str());

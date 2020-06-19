@@ -28,6 +28,8 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
 #include <zlib.h>
 #include <iostream>
 #include <iomanip>
@@ -1431,10 +1433,10 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 
 	dir.push_back("/data/dalvik-cache");
 
-	std::string cacheDir = TWFunc::get_cache_dir();
-	if (cacheDir == NON_AB_CACHE_DIR) {
-		if (!PartitionManager.Mount_By_Path(NON_AB_CACHE_DIR, false)) {
-			LOGINFO("Unable to mount %s for wiping cache.\n", NON_AB_CACHE_DIR);
+	std::string cacheDir = TWFunc::get_log_dir();
+	if (cacheDir == CACHE_LOGS_DIR) {
+		if (!PartitionManager.Mount_By_Path(CACHE_LOGS_DIR, false)) {
+			LOGINFO("Unable to mount %s for wiping cache.\n", CACHE_LOGS_DIR);
 		}
 		dir.push_back(cacheDir + "dalvik-cache");
 		dir.push_back(cacheDir + "/dc");
@@ -1449,7 +1451,7 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 		}
 	}
 
-	if (cacheDir == NON_AB_CACHE_DIR) {
+	if (cacheDir == CACHE_LOGS_DIR) {
 		gui_msg("wiping_cache_dalvik=Wiping Dalvik Cache Directories...");
 	} else {
 		gui_msg("wiping_dalvik=Wiping Dalvik Directory...");
@@ -1461,7 +1463,7 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 		}
 	}
 
-	if (cacheDir == NON_AB_CACHE_DIR) {
+	if (cacheDir == CACHE_LOGS_DIR) {
 		gui_msg("cache_dalvik_done=-- Dalvik Cache Directories Wipe Complete!");
 	} else {
 		gui_msg("dalvik_done=-- Dalvik Directory Wipe Complete!");
@@ -1678,13 +1680,11 @@ void TWPartitionManager::Update_System_Details(void) {
 	TWPartition* FreeStorage = Find_Partition_By_Path(current_storage_path);
 	if (FreeStorage != NULL) {
 		// Attempt to mount storage
-		if (!TWFunc::Is_Mount_Wiped("/data")) {
-			if (!FreeStorage->Mount(false)) {
-				gui_msg(Msg(msg::kWarning, "unable_to_mount_storage=Unable to mount storage"));
-				DataManager::SetValue(TW_STORAGE_FREE_SIZE, 0);
-			} else {
-				DataManager::SetValue(TW_STORAGE_FREE_SIZE, (int)(FreeStorage->Free / 1048576LLU));
-			}
+		if (!FreeStorage->Mount(false)) {
+			gui_msg(Msg(msg::kWarning, "unable_to_mount_storage=Unable to mount storage"));
+			DataManager::SetValue(TW_STORAGE_FREE_SIZE, 0);
+		} else {
+			DataManager::SetValue(TW_STORAGE_FREE_SIZE, (int)(FreeStorage->Free / 1048576LLU));
 		}
 	} else {
 		LOGINFO("Unable to find storage partition '%s'.\n", current_storage_path.c_str());
@@ -2315,14 +2315,14 @@ void TWPartitionManager::Output_Storage_Fstab(void) {
 	std::vector<TWPartition*>::iterator iter;
 	char storage_partition[255];
 	std::string Temp;
-	std::string cacheDir = TWFunc::get_cache_dir();
+	std::string cacheDir = TWFunc::get_log_dir();
 
 	if (cacheDir.empty()) {
 		LOGINFO("Unable to find cache directory\n");
 		return;
 	}
 
-	std::string storageFstab = TWFunc::get_cache_dir() + "recovery/storage.fstab";
+	std::string storageFstab = TWFunc::get_log_dir() + "recovery/storage.fstab";
 	FILE *fp = fopen(storageFstab.c_str(), "w");
 
 	if (fp == NULL) {
@@ -3368,4 +3368,44 @@ void TWPartitionManager::Setup_Super_Partition() {
 
 bool TWPartitionManager::Get_Super_Status() {
 	return access(Get_Super_Partition().c_str(), F_OK) == 0;
+}
+
+bool TWPartitionManager::Recreate_Logs_Dir() {
+#ifdef TW_INCLUDE_FBE
+	struct passwd pd;
+	struct passwd *pwdptr = &pd;
+	struct passwd *tempPd;
+	char pwdBuf[512];
+	int uid = 0, gid = 0;
+
+	if ((getpwnam_r("system", pwdptr, pwdBuf, sizeof(pwdBuf), &tempPd)) != 0) {
+		LOGERR("unable to get system user id\n");
+		return false;
+	} else {
+		struct group grp;
+		struct group *grpptr = &grp;
+		struct group *tempGrp;
+		char grpBuf[512];
+
+		if ((getgrnam_r("cache", grpptr, grpBuf, sizeof(grpBuf), &tempGrp)) != 0) {
+			LOGERR("unable to get cache group id\n");
+			return false;
+		} else {
+			uid = pd.pw_uid;
+			gid = grp.gr_gid;
+			std::string abLogsRecoveryDir(DATA_LOGS_DIR);
+			abLogsRecoveryDir += "/recovery/";
+
+			if (!TWFunc::Create_Dir_Recursive(abLogsRecoveryDir, S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, uid, gid)) {
+				LOGERR("Unable to recreate %s\n", abLogsRecoveryDir.c_str());
+				return false;
+			}
+			if (setfilecon(abLogsRecoveryDir.c_str(), "u:object_r:cache_file:s0") != 0) {
+				LOGERR("Unable to set contexts for %s\n", abLogsRecoveryDir.c_str());
+				return false;
+			}
+		}
+	}
+#endif
+	return true;
 }
