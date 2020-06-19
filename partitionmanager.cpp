@@ -1402,10 +1402,10 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 
 	dir.push_back("/data/dalvik-cache");
 
-	std::string cacheDir = TWFunc::get_cache_dir();
-	if (cacheDir == NON_AB_CACHE_DIR) {
-		if (!PartitionManager.Mount_By_Path(NON_AB_CACHE_DIR, false)) {
-			LOGINFO("Unable to mount %s for wiping cache.\n", NON_AB_CACHE_DIR);
+	std::string cacheDir = TWFunc::get_log_dir();
+	if (cacheDir == CACHE_LOGS_DIR) {
+		if (!PartitionManager.Mount_By_Path(CACHE_LOGS_DIR, false)) {
+			LOGINFO("Unable to mount %s for wiping cache.\n", CACHE_LOGS_DIR);
 		}
 		dir.push_back(cacheDir + "dalvik-cache");
 		dir.push_back(cacheDir + "/dc");
@@ -1420,7 +1420,7 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 		}
 	}
 
-	if (cacheDir == NON_AB_CACHE_DIR) {
+	if (cacheDir == CACHE_LOGS_DIR) {
 		gui_msg("wiping_cache_dalvik=Wiping Dalvik Cache Directories...");
 	} else {
 		gui_msg("wiping_dalvik=Wiping Dalvik Directory...");
@@ -1432,7 +1432,7 @@ int TWPartitionManager::Wipe_Dalvik_Cache(void) {
 		}
 	}
 
-	if (cacheDir == NON_AB_CACHE_DIR) {
+	if (cacheDir == CACHE_LOGS_DIR) {
 		gui_msg("cache_dalvik_done=-- Dalvik Cache Directories Wipe Complete!");
 	} else {
 		gui_msg("dalvik_done=-- Dalvik Directory Wipe Complete!");
@@ -2410,14 +2410,14 @@ void TWPartitionManager::Output_Storage_Fstab(void) {
 	std::vector<TWPartition*>::iterator iter;
 	char storage_partition[255];
 	std::string Temp;
-	std::string cacheDir = TWFunc::get_cache_dir();
+	std::string cacheDir = TWFunc::get_log_dir();
 
 	if (cacheDir.empty()) {
 		LOGINFO("Unable to find cache directory\n");
 		return;
 	}
 
-	std::string storageFstab = TWFunc::get_cache_dir() + "recovery/storage.fstab";
+	std::string storageFstab = TWFunc::get_log_dir() + "recovery/storage.fstab";
 	FILE *fp = fopen(storageFstab.c_str(), "w");
 
 	if (fp == NULL) {

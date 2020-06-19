@@ -584,11 +584,11 @@ void TWFunc::Copy_Log(string Source, string Destination) {
 }
 
 void TWFunc::Update_Log_File(void) {
-	std::string recoveryDir = get_cache_dir() + "recovery/";
+	std::string recoveryDir = get_log_dir() + "recovery/";
 
-	if (get_cache_dir() == NON_AB_CACHE_DIR) {
-		if (!PartitionManager.Mount_By_Path(NON_AB_CACHE_DIR, false)) {
-			LOGINFO("Failed to mount %s for TWFunc::Update_Log_File\n", NON_AB_CACHE_DIR);
+	if (get_log_dir() == CACHE_LOGS_DIR) {
+		if (!PartitionManager.Mount_By_Path(CACHE_LOGS_DIR, false)) {
+			LOGINFO("Failed to mount %s for TWFunc::Update_Log_File\n", CACHE_LOGS_DIR);
 		}
 	}
 
@@ -620,7 +620,7 @@ void TWFunc::Update_Log_File(void) {
 		}
 	}
 
-	if (get_cache_dir() == NON_AB_CACHE_DIR) {
+	if (get_log_dir() == CACHE_LOGS_DIR) {
 		if (PartitionManager.Mount_By_Path("/cache", false)) {
 			if (unlink("/cache/recovery/command") && errno != ENOENT) {
 				LOGINFO("Can't unlink %s\n", "/cache/recovery/command");
@@ -640,8 +640,7 @@ void TWFunc::Update_Intent_File(string Intent) {
 int TWFunc::tw_reboot(RebootCommand command)
 {
 	DataManager::Flush();
-	if (!Is_Data_Wiped())
-		Update_Log_File();
+	Update_Log_File();
 
 	// Always force a sync before we reboot
 	sync();
@@ -1248,20 +1247,20 @@ int TWFunc::stream_adb_backup(string &Restore_Name) {
 	return ret;
 }
 
-std::string TWFunc::get_cache_dir() {
-	if (PartitionManager.Find_Partition_By_Path(NON_AB_CACHE_DIR) == NULL) {
-		if (PartitionManager.Find_Partition_By_Path(AB_CACHE_DIR) == NULL) {
-			if (PartitionManager.Find_Partition_By_Path(PERSIST_CACHE_DIR) == NULL) {
+std::string TWFunc::get_log_dir() {
+	if (PartitionManager.Find_Partition_By_Path(CACHE_LOGS_DIR) == NULL) {
+		if (PartitionManager.Find_Partition_By_Path(DATA_LOGS_DIR) == NULL) {
+			if (PartitionManager.Find_Partition_By_Path(PERSIST_LOGS_DIR) == NULL) {
 				LOGINFO("Unable to find a directory to store TWRP logs.");
 				return "";
 			}
-			return PERSIST_CACHE_DIR;
+			return PERSIST_LOGS_DIR;
 		} else {
-			return AB_CACHE_DIR;
+			return DATA_LOGS_DIR;
 		}
 	}
 	else {
-		return NON_AB_CACHE_DIR;
+		return CACHE_LOGS_DIR;
 	}
 }
 
@@ -1284,12 +1283,12 @@ void TWFunc::check_selinux_support() {
 		printf("SELinux contexts loaded from /file_contexts\n");
 	{ // Check to ensure SELinux can be supported by the kernel
 		char *contexts = NULL;
-		std::string cacheDir = TWFunc::get_cache_dir();
+		std::string cacheDir = TWFunc::get_log_dir();
 		std::string se_context_check = cacheDir + "recovery/";
 		int ret = 0;
 
-		if (cacheDir == NON_AB_CACHE_DIR) {
-			PartitionManager.Mount_By_Path(NON_AB_CACHE_DIR, false);
+		if (cacheDir == CACHE_LOGS_DIR) {
+			PartitionManager.Mount_By_Path(CACHE_LOGS_DIR, false);
 		}
 		if (TWFunc::Path_Exists(se_context_check)) {
 			ret = lgetfilecon(se_context_check.c_str(), &contexts);
@@ -1364,28 +1363,5 @@ bool TWFunc::Set_Encryption_Policy(std::string path, const ext4_encryption_polic
 	}
 #endif
 	return true;
-}
-
-bool TWFunc::Is_Data_Wiped() {
-	std::string data_path = "/data";
-#ifdef TW_INCLUDE_FBE
-	DIR* d = opendir(data_path.c_str());
-	size_t file_count = 0;
-	if (d != NULL) {
-		struct dirent* de;
-		while ((de = readdir(d)) != NULL) {
-			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
-				continue;
-			if (strncmp(de->d_name, "lost+found", 10) == 0 || strncmp(de->d_name, "media", 5) == 0)
-				continue;
-			file_count++;
-
-		}
-		closedir(d);
-	}
-	return file_count == 0;
-#else
-	return true;
-#endif
 }
 #endif // ndef BUILD_TWRPTAR_MAIN

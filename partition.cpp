@@ -740,7 +740,6 @@ if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
 	ExcludeAll(Mount_Point + "/system_de/0/spblob");  // contains data needed to decrypt pixel 2
 	ExcludeAll(Mount_Point + "/system/users/0/gatekeeper.password.key");
 	ExcludeAll(Mount_Point + "/system/users/0/gatekeeper.pattern.key");
-	ExcludeAll(Mount_Point + "/cache");
 	int retry_count = 3;
 	while (!Decrypt_DE() && --retry_count)
 		usleep(2000);
@@ -1181,6 +1180,7 @@ void TWPartition::Setup_Data_Media() {
 		DataManager::SetValue("tw_has_data_media", 1);
 		backup_exclusions.add_absolute_dir("/data/data/com.google.android.music/files");
 		backup_exclusions.add_absolute_dir("/data/per_boot"); // DJ9,14Jan2020 - exclude this dir to prevent "error 255" on AOSP ROMs that create and lock it
+		backup_exclusions.add_absolute_dir("/data/cache");
 		wipe_exclusions.add_absolute_dir(Mount_Point + "/misc/vold"); // adopted storage keys
 		ExcludeAll(Mount_Point + "/.layout_version");
 		ExcludeAll(Mount_Point + "/system/storage.xml");
@@ -1651,11 +1651,6 @@ bool TWPartition::Wipe(string New_File_System) {
 	bool wiped = false, update_crypt = false, recreate_media = true;
 	int check;
 	string Layout_Filename = Mount_Point + "/.layout_version";
-	ext4_encryption_policy policy;
-
-	if (Mount_Point == "/data" && TWFunc::get_cache_dir() == AB_CACHE_DIR && Is_Decrypted) {
-		TWFunc::Get_Encryption_Policy(policy, AB_CACHE_DIR);
-	}
 
 	if (!Can_Be_Wiped) {
 		gui_msg(Msg(msg::kError, "cannot_wipe=Partition {1} cannot be wiped.")(Display_Name));
@@ -1672,10 +1667,10 @@ bool TWPartition::Wipe(string New_File_System) {
 
 	if (Has_Data_Media && Current_File_System == New_File_System) {
 		wiped = Wipe_Data_Without_Wiping_Media();
-		if (Mount_Point == "/data" && TWFunc::get_cache_dir() == AB_CACHE_DIR) {
-			bool created = Recreate_AB_Cache_Dir(policy);
-			if (created)
-				gui_msg(Msg(msg::kWarning, "fbe_wipe_msg=WARNING: {1} wiped. FBE device should be booted into Android and not Recovery to set initial FBE policy after wipe.")(TWFunc::get_cache_dir()));
+		if (Mount_Point == "/data" && TWFunc::get_log_dir() == DATA_LOGS_DIR) {
+			bool created = Recreate_Logs_Dir();
+			if (!created)
+				LOGERR("Unable to create log directory for TWRP\n");
 		}
 		recreate_media = false;
 	} else {
@@ -2040,10 +2035,7 @@ bool TWPartition::Wipe_Encryption() {
 		}
 		DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 #ifndef TW_OEM_BUILD
-		if (Is_FBE)
-			gui_msg(Msg(msg::kWarning, "fbe_wipe_msg=WARNING: {1} wiped. FBE device should be booted into Android and not Recovery to set initial FBE policy after wipe.")(TWFunc::get_cache_dir()));
-		else
-			gui_msg("format_data_msg=You may need to reboot recovery to be able to use /data again.");
+		gui_msg("format_data_msg=You may need to reboot recovery to be able to use /data again.");
 #endif
 		ret = true;
 		if (!Key_Directory.empty())
@@ -2473,7 +2465,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 #endif // ifdef TW_OEM_BUILD
 }
 
-bool TWPartition::Recreate_AB_Cache_Dir(const ext4_encryption_policy &policy) {
+bool TWPartition::Recreate_Logs_Dir() {
 #ifdef TW_INCLUDE_FBE
 	struct passwd pd;
 	struct passwd *pwdptr = &pd;
@@ -2496,30 +2488,15 @@ bool TWPartition::Recreate_AB_Cache_Dir(const ext4_encryption_policy &policy) {
 		} else {
 			uid = pd.pw_uid;
 			gid = grp.gr_gid;
+			std::string abLogsRecoveryDir(DATA_LOGS_DIR);
+			abLogsRecoveryDir += "/recovery/";
 
-			if (!TWFunc::Create_Dir_Recursive(AB_CACHE_DIR, S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, uid, gid)) {
-				LOGERR("Unable to recreate %s\n", AB_CACHE_DIR);
+			if (!TWFunc::Create_Dir_Recursive(abLogsRecoveryDir, S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, uid, gid)) {
+				LOGERR("Unable to recreate %s\n", abLogsRecoveryDir.c_str());
 				return false;
 			}
-			if (setfilecon(AB_CACHE_DIR, "u:object_r:cache_file:s0") != 0) {	
-				LOGERR("Unable to set contexts for %s\n", AB_CACHE_DIR);
-				return false;
-			}
-			char policy_hex[EXT4_KEY_DESCRIPTOR_SIZE_HEX];
-			policy_to_hex(policy.master_key_descriptor, policy_hex);
-			LOGINFO("setting policy for %s: %s\n", policy_hex, AB_CACHE_DIR);
-			if (sizeof(policy.master_key_descriptor) > 0) {
-				if (!TWFunc::Set_Encryption_Policy(AB_CACHE_DIR, policy)) {
-					LOGERR("Unable to set encryption policy for %s\n", AB_CACHE_DIR);
-					LOGINFO("Removing %s\n", AB_CACHE_DIR);
-					int ret = TWFunc::removeDir(AB_CACHE_DIR, true);
-					if (ret == -1) {
-						LOGERR("Unable to remove %s\n", AB_CACHE_DIR);
-					}
-					return false;
-				}
-			} else {
-				LOGERR("Not setting empty policy to %s\n", AB_CACHE_DIR);
+			if (setfilecon(abLogsRecoveryDir.c_str(), "u:object_r:cache_file:s0") != 0) {
+				LOGERR("Unable to set contexts for %s\n", abLogsRecoveryDir.c_str());
 				return false;
 			}
 		}
