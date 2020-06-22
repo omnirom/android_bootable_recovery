@@ -400,6 +400,9 @@ int main(int argc, char **argv) {
 				LOGERR("Unable to prepare super volumes.\n");
 			}
 			sys->Mount(true);
+			if (ven) {
+				ven->Mount(true);
+			}
 			twrpApex apex;
 			if (!apex.loadApexImages()) {
 				LOGERR("Unable to load apex images from %s\n", APEX_DIR);
