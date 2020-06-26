@@ -771,6 +771,9 @@ extern "C" int gui_init(void)
 		PageManager::ReleasePackage("splash");
 	}
 
+#ifdef TW_DELAY_TOUCH_INIT_MS
+	usleep(TW_DELAY_TOUCH_INIT_MS);
+#endif
 	ev_init();
 	return 0;
 }

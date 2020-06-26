@@ -32,6 +32,10 @@ LOCAL_SRC_FILES := \
     terminal.cpp \
     twmsg.cpp
 
+ifneq ($(TW_DELAY_TOUCH_INIT_MS),)
+    LOCAL_CFLAGS += -DTW_DELAY_TOUCH_INIT_MS=$(TW_DELAY_TOUCH_INIT_MS)
+endif
+
 ifneq ($(TWRP_CUSTOM_KEYBOARD),)
     LOCAL_SRC_FILES += $(TWRP_CUSTOM_KEYBOARD)
 else
