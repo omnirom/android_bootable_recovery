@@ -466,6 +466,34 @@ TEST(InstallTest, CheckPackageMetadata_ab_fingerprint) {
   TestCheckPackageMetadata(metadata, OtaType::AB, false);
 }
 
+TEST(InstallTest, CheckPackageMetadata_dynamic_fingerprint) {
+  std::string device = android::base::GetProperty("ro.product.device", "");
+  ASSERT_FALSE(device.empty());
+
+  std::string finger_print = android::base::GetProperty("ro.build.fingerprint", "");
+  ASSERT_FALSE(finger_print.empty());
+
+  std::string metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=please|work|" + device + "|please|work",
+          "pre-build=" + finger_print = "pass|this|test",
+          "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
+      },
+      "\n");
+  TestCheckPackageMetadata(metadata, OtaType::AB, true);
+
+  metadata = android::base::Join(
+      std::vector<std::string>{
+          "ota-type=AB",
+          "pre-device=" + device,
+          "pre-build=dummy_build_fingerprint",
+          "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
+      },
+      "\n");
+  TestCheckPackageMetadata(metadata, OtaType::AB, false);
+}
+
 TEST(InstallTest, CheckPackageMetadata_ab_post_timestamp) {
   std::string device = android::base::GetProperty("ro.product.device", "");
   ASSERT_NE("", device);
