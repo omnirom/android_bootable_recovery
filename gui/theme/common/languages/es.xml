@@ -61,21 +61,21 @@
 		<string name="install_select_file_hdr">Seleccionar Archivo</string>
 		<string name="file_selector_folders_hdr">Carpetas</string>
 		<string name="select_file_from_storage">Seleccionar Archivo desde %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
-		<string name="adb_sideload_btn">Carga archivo por ADB</string>
+		<string name="adb_sideload_btn">Cargar archivo por ADB</string>
 		<string name="install_hdr">Instalar</string>
 		<string name="select_storage_hdr">Seleccionar Almacenamiento</string>
 		<string name="select_storage_btn">Seleccionar Almacenamiento</string>
 		<string name="queue_hdr">Cola</string>
 		<string name="zip_queue_count">%tw_zip_queue_count% de un máximo de 10 archivos en cola</string>
 		<string name="zip_queue_count_s">Archivo %tw_zip_queue_count% de 10:</string>
-		<string name="zip_warn1">Esta operación podría instalar software</string>
+		<string name="zip_warn1">Esta operación podría instalar un software</string>
 		<string name="zip_warn2">incompatible y dejar tu dispositivo inutilizable.</string>
-		<string name="zip_back_cancel">Pulsa el botón de atrás para cancelar el añadir este zip.</string>
+		<string name="zip_back_cancel">Pulsa el botón de atrás para no añadir este zip.</string>
 		<string name="zip_back_clear">Pulsa el botón de atrás para limpiar la cola.</string>
 		<string name="folder">Carpeta:</string>
 		<string name="file">Archivo:</string>
 		<string name="zip_sig_chk">Verificar la firma del archivo</string>
-		<string name="inject_twrp_chk">Injectar TWRP después de instalar</string>
+		<string name="inject_twrp_chk">Inyectar TWRP después de instalar</string>
 		<string name="install_reboot_chk">Reiniciar después de completar la instalación</string>
 		<string name="options_hdr">Opciones</string>
 		<string name="confirm_flash_hdr">Confirmar el Flasheo</string>
@@ -119,6 +119,7 @@
 		<string name="factory_reset2">(no incluye almacenamiento interno)</string>
 		<string name="factory_reset3">La mayoría de las veces esta es</string>
 		<string name="factory_reset4">la única limpieza que necesitas.</string>
+		<string name="factory_reset5">(no incluye usuarios/bloqueo de pantalla)</string>
 		<string name="factory_resetting">Restablecimiento de Fábrica...</string>
 		<string name="advanced_wipe_hdr">Limpieza Avanzada</string>
 		<string name="advanced_wipe_btn">Limpieza Avanzada</string>
@@ -186,9 +187,9 @@
 		<string name="swipe_change_fs">Desliza para Cambiar</string>
 		<string name="swipe_change_s">   Cambiar</string>
 		<string name="back_btn">Atrás</string>
-		<string name="wipe_enc_btn">Limpiar Encriptación</string>
+		<string name="wipe_enc_btn">Quitar Encriptación</string>
 		<string name="swipe_factory_reset">Desliza para Restablecer de Fábrica</string>
-		<string name="repair_change_btn">Reparar ó Cambiar Sistema de Archivos</string>
+		<string name="repair_change_btn">Reparar o Cambiar Sistema de Archivos</string>
 		<string name="storage_hdr">Almacenamiento: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">Copia de Seguridad</string>
 		<string name="backup_confirm_hdr">Confirmar Copia de Seguridad</string>
@@ -200,26 +201,26 @@
 		<string name="enc_disabled">desactivado - establezca una contraseña para activar</string>
 		<string name="enc_enabled">activado</string>
 		<string name="enable_backup_comp_chk">Habilitar compresión</string>
-		<string name="skip_digest_backup_chk" version="2">Saltar generación Digest durante respaldo</string>
-		<string name="disable_backup_space_chk">Desactivar comprobación de Espacio Libre</string>
+		<string name="skip_digest_backup_chk" version="2">Saltar la generación de el Digest durante la copia de seguridad</string>
+		<string name="disable_backup_space_chk" version="2">Desactivar comprobación de Espacio Libre antes de hacer la copia de seguridad</string>
 		<string name="refresh_sizes_btn">Refrescar Tamaños</string>
-		<string name="swipe_backup">Desliza para Respaldar</string>
+		<string name="swipe_backup">Desliza para Crear la Copia de Seguridad</string>
 		<string name="append_date_btn">Ajustar Fecha</string>
 		<string name="backup_name_exists">Ya existe una copia de seguridad con este nombre.</string>
 		<string name="encrypt_backup">Cifrar tú Copia de seguridad?</string>
-		<string name="enter_pass">Introducir tú contraseña:</string>
-		<string name="enter_pass2">Introducir tú contraseña de nuevo:</string>
+		<string name="enter_pass">Introduce tú contraseña:</string>
+		<string name="enter_pass2">Introduce tú contraseña de nuevo:</string>
 		<string name="pass_not_match">Las Contraseñas no coinciden!</string>
 		<string name="partitions">Particiones:</string>
 		<string name="disabled">Desactivado</string>
 		<string name="enabled">Activado</string>
-		<string name="backup_name_hdr">Establecer nombre de copia de seguridad</string>
+		<string name="backup_name_hdr">Establecer nombre de Copia de Seguridad</string>
 		<string name="progress">Progreso:</string>
 		<string name="backup_complete">¡Copia de seguridad completa!</string>
 		<string name="restore_hdr">Restaurar</string>
 		<string name="sel_backup_hdr">Selecciona la Copia de Seguridad</string>
 		<string name="restore_sel_store_hdr">Seleccionar Copia de Seguridad de %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
-		<string name="restore_sel_pack_fs">Selecciona el Paquete para Restaurar:</string>
+		<string name="restore_sel_pack_fs">Selecciona la Copia de Seguridad para Restaurar:</string>
 		<string name="restore_enc_backup_hdr">Copia de Seguridad Cifrada</string>
 		<string name="restore_dec_fail">¡Contraseña incorrecta, inténtelo de nuevo!</string>
 		<string name="del_backup_btn">Eliminar Copia de seguridad</string>
@@ -233,7 +234,7 @@
 		<string name="restore_try_decrypt_s">Intentando Desencriptarla</string>
 		<string name="restore_backup_date">Copia de seguridad creada en %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Selecciona las Particiones para Restaurar:</string>
-		<string name="restore_enable_digest_chk" version="2">Activar Verificación Digest de la copia de seguridad</string>
+		<string name="restore_enable_digest_chk" version="2">Activar la Verificación de el Digest de la Copia de Seguridad</string>
 		<string name="restore_complete">Restauración Completa</string>
 		<string name="swipe_restore">Desliza para Restaurar</string>
 		<string name="swipe_restore_s">   Restaurar</string>
@@ -249,7 +250,7 @@
 		<string name="mount_sel_part">Selecciona las Particiones para Montar:</string>
 		<string name="mount_sys_ro_chk">Montar partición de sistema en modo lectura</string>
 		<string name="mount_sys_ro_s_chk">Montar System RO</string>
-		<string name="decrypt_data_btn">Desencritar Data</string>
+		<string name="decrypt_data_btn">Desencriptar Data</string>
 		<string name="disable_mtp_btn">Desactivar MTP</string>
 		<string name="enable_mtp_btn">Activar MTP</string>
 		<string name="mount_usb_storage_btn">Montar Almacenamiento USB</string>
@@ -265,19 +266,19 @@
 		<string name="rb_download_btn">Descarga</string>
 		<string name="rb_edl_btn">Edl</string>
 		<string name="turning_off">Apagando...</string>
-		<string name="swipe_power_off">Deslice para Apagar</string>
+		<string name="swipe_power_off">Desliza para Apagar</string>
 		<string name="swipe_power_off_s">Apagar</string>
-		<string name="sys_ro_hdr">Particion de sistema sin modificar</string>
+		<string name="sys_ro_hdr">Partición de sistema sin modificar</string>
 		<string name="sys_ro_keep">Mantener Sitema solo lectura</string>
 		<string name="sys_rop1">TWRP puede dejar sin modificar la partición del sistema</string>
-		<string name="sys_rop2">para que sea más fácil para usted instalar actualizaciones oficiales.</string>
+		<string name="sys_rop2">para que sea más fácil instalar actualizaciones oficiales.</string>
 		<string name="sys_rop3">TWRP será incapaz de impedir que la stock ROM</string>
-		<string name="sys_rop4">sustituya TWRP y no ofrecerá rootear su dispositivo.</string>
-		<string name="sys_rop5">Instalación de zips o la realización de operaciones adb aún puede</string>
+		<string name="sys_rop4">sustituya TWRP y no ofrecerá la opción para rootear su dispositivo.</string>
+		<string name="sys_rop5">La instalación de zips o la realización de operaciones adb aún puede</string>
 		<string name="sys_rop6">modificar la partición del sistema.</string>
-		<string name="sys_rol1">TWRP puede dejar sin modificar la partición del sistema para que sea más fácil para usted instalar actualizaciones oficiales.</string>
-		<string name="sys_rol2">TWRP será incapaz de impedir que la stock ROM sustituya TWRP y no ofrecerá rootear su dispositivo.</string>
-		<string name="sys_rol3">Instalación de zips o la realización de operaciones adb aún puede modificar la partición del sistema.</string>
+		<string name="sys_rol1">TWRP puede dejar sin modificar la partición del sistema para que sea más fácil instalar actualizaciones oficiales.</string>
+		<string name="sys_rol2">TWRP será incapaz de impedir que la stock ROM sustituya TWRP y no ofrecerá la opción para rootear su dispositivo.</string>
+		<string name="sys_rol3">La instalación de zips o la realización de operaciones adb aún puede modificar la partición del sistema.</string>
 		<string name="sys_ro_never_show_chk">No mostrar nunca más esta pantalla durante el inicio</string>
 		<string name="sys_ro_keep_ro_btn">Mantener modo lectura</string>
 		<string name="swipe_allow_mod">Deslice para Permitir Modificaciones</string>
@@ -286,15 +287,15 @@
 		<string name="settings_gen_hdr">General</string>
 		<string name="settings_gen_s_hdr">General</string>
 		<string name="settings_gen_btn">General</string>
-		<string name="use_rmrf_chk">Usar rm -rf en lugar de formateo</string>
+		<string name="use_rmrf_chk">Usar rm -rf en lugar de formatear</string>
 		<string name="use24clock_chk">Usar reloj 24-horas </string>
-		<string name="rev_navbar_chk">Invertir posición de la barra de navegacion</string>
-		<string name="simact_chk">Simulate actions for theme testing</string>
+		<string name="rev_navbar_chk">Invertir la posición de la barra de navegacion</string>
+		<string name="simact_chk">Simular acciones para probar temas</string>
 		<string name="simfail_chk">Simular fallos de acciones</string>
-		<string name="ctr_navbar_rdo">Centrar Botones de la barra de navegacion</string>
+		<string name="ctr_navbar_rdo">Centrar los Botones de la barra de navegacion</string>
 		<string name="lft_navbar_rdo">Diseño de barra de navegación Invertida izquirda</string>
 		<string name="rht_navbar_rdo">Diseño de barra de navegación Invertida derecha</string>
-		<string name="restore_defaults_btn">Restore Defaults</string>
+		<string name="restore_defaults_btn">Restaurar los Valores por Defecto</string>
 		<string name="settings_tz_btn">Zona Horaria</string>
 		<string name="settings_screen_btn">Pantalla</string>
 		<string name="settings_screen_bright_btn">Brillo de Pantalla</string>
@@ -326,7 +327,7 @@
 		<string name="utcp10">(UTC +10) Eastern Australia, Guam</string>
 		<string name="utcp11">(UTC +11) Vladivostok, Solomon Islands</string>
 		<string name="utcp12">(UTC +12) Auckland, Wellington, Fiji</string>
-		<string name="sel_tz_offset">Selecciona Variación (usualmente 0): %tw_time_zone_guioffset%</string>
+		<string name="sel_tz_offset">Selecciona Variación (normalmente 0): %tw_time_zone_guioffset%</string>
 		<string name="tz_offset_none">Ninguno</string>
 		<string name="tz_offset_0">0</string>
 		<string name="tz_offset_15">15</string>
@@ -340,7 +341,7 @@
 		<string name="settings_screen_timeout_hdr">Tiempo de espera de pantalla</string>
 		<string name="enable_timeout_chk">Activar tiempo de espera de pantalla</string>
 		<string name="screen_to_slider">Tiempo de espera de pantalla en segundos:</string>
-		<string name="screen_to_slider_s">Tiempo de espera de pantalla en segundos (0=disabled): %tw_screen_timeout_secs%</string>
+		<string name="screen_to_slider_s">Tiempo de espera de pantalla en segundos (0=desactivado): %tw_screen_timeout_secs%</string>
 		<string name="screen_to_na">Ajustes de tiempo de espera de la pantalla no disponibles</string>
 		<string name="screen_bright_slider">Brillo: %tw_brightness_pct%%</string>
 		<string name="screen_bright_na">Configuración de brillo no diponible</string>
@@ -348,7 +349,7 @@
 		<string name="button_vibration_hdr">Vibración de los Botones</string>
 		<string name="kb_vibration_hdr">Vibración del Teclado</string>
 		<string name="act_vibration_hdr">Vibración de Acciones</string>
-		<string name="button_vibration">Vibración de Botón:</string>
+		<string name="button_vibration">Vibración de los Botones:</string>
 		<string name="kb_vibration">Vibración de Teclado:</string>
 		<string name="act_vibration">Vibración de Acciones:</string>
 		<string name="select_language">Selecciona Idioma:</string>
@@ -356,8 +357,8 @@
 		<string name="set_language_btn">Establecer Idioma</string>
 		<string name="advanced_hdr">Avanzado</string>
 		<string name="copy_log_confirm">Copiar Log a Tarjeta SD?</string>
-		<string name="copying_log">Copiando Log a Tarjeta SD...</string>
-		<string name="copy_log_complete">Copia del Log Completada</string>
+		<string name="copying_log" version="2">Copiando Logs a Tarjeta SD...</string>
+		<string name="copy_log_complete" version="2">Copia de los Logs Completada</string>
 		<string name="fix_context_btn">Reparar Contextos</string>
 		<string name="part_sd_btn">Particionar Tarjeta SD</string>
 		<string name="part_sd_s_btn">Tarjeta SD</string>
@@ -366,14 +367,14 @@
 		<string name="terminal_btn">Terminal</string>
 		<string name="reload_theme_btn">Recargar Tema</string>
 		<string name="dumlock_btn">HTC Dumlock</string>
-		<string name="inject_twrp_btn">Injectar TWRP</string>
-		<string name="inject_twrp_confirm">Re-Injectar TWRP?</string>
-		<string name="injecting_twrp">Re-Injectando TWRP...</string>
-		<string name="inject_twrp_complete">TWRP Injección Completa</string>
+		<string name="inject_twrp_btn">Inyectar TWRP</string>
+		<string name="inject_twrp_confirm">Re-Inyectar TWRP?</string>
+		<string name="injecting_twrp">Re-Inyectando TWRP...</string>
+		<string name="inject_twrp_complete">TWRP Inyección Completa</string>
 		<string name="swipe_to_confirm">Desliza para Confirmar</string>
 		<string name="part_sd_hdr">Particionar Tarjeta SD</string>
 		<string name="invalid_partsd_sel">Debes seleccionar un dispositivo extraíble</string>
-		<string name="part_sd_lose">Perderá todos los archivos de la tarjeta SD!</string>
+		<string name="part_sd_lose">Se perderán todos los archivos de la tarjeta SD!</string>
 		<string name="part_sd_undo">Esta Acción no se puede Deshacer!</string>
 		<string name="part_sd_ext_sz">Tamaño de EXT:</string>
 		<string name="part_sd_swap_sz">Tamaño de Intercambio:</string>
@@ -382,12 +383,12 @@
 		<string name="file_system">Sistema de Archivos:</string>
 		<string name="swipe_part_sd">Desliza para Particionar</string>
 		<string name="swipe_part_sd_s">Particionar</string>
-		<string name="partitioning_sd">Particionando Tarjeta SD...</string>
-		<string name="partitioning_sd2">Esto puede tomar unos Minutos.</string>
-		<string name="part_sd_complete">Particionar Completado</string>
+		<string name="partitioning_sd">Particionando la Tarjeta SD...</string>
+		<string name="partitioning_sd2">Esto puede tardar unos Minutos.</string>
+		<string name="part_sd_complete">Particionado Completado</string>
 		<string name="dumlock_hdr">HTC Dumlock</string>
 		<string name="dumlock_restore_btn">Restaurar Boot Original</string>
-		<string name="dumlock_restore_confirm">¿Restaurar imagen de boot original?</string>
+		<string name="dumlock_restore_confirm">¿Restaurar la imagen de boot original?</string>
 		<string name="dumlock_restoring">Restaurando boot Original...</string>
 		<string name="dumlock_restore_complete">Restauración del Boot Original Completado</string>
 		<string name="dumlock_reflash_btn">Reflashear Recovery</string>
@@ -401,7 +402,7 @@
 		<string name="swipe_to_unlock">Desliza para Desbloquear</string>
 		<string name="swipe_unlock">   Desbloquear</string>
 		<string name="fm_hdr">Administrador de Archivos </string>
-		<string name="fm_sel_file">Selecciona un Archivo ó Carpeta</string>
+		<string name="fm_sel_file">Selecciona un Archivo o Carpeta</string>
 		<string name="fm_type_folder">Carpeta</string>
 		<string name="fm_type_file">Archivo</string>
 		<string name="fm_choose_act">Elija una Acción</string>
@@ -432,7 +433,7 @@
 		<string name="decrypt_data_failed">Contraseña incorrecta, intente de nuevo!</string>
 		<string name="decrypt_data_failed_pattern">Patrón incorrecto, intentelo de nuevo!</string>
 		<string name="decrypt_data_enter_pattern">Introduzca un patrón.</string>
-		<string name="decrypt_data_trying">Tratando de Desencriptar</string>
+		<string name="decrypt_data_trying">Intentando Desencriptar</string>
 		<string name="term_hdr">Comando de Terminal</string>
 		<string name="term_s_hdr">Terminal</string>
 		<string name="term_kill_btn">MATAR</string>
@@ -449,7 +450,7 @@
 		<string name="fix_contexts_note1">Nota: La fijación de los contextos rara vez es necesaria.</string>
 		<string name="fix_contexts_note2">La fijación de Contextos de SELinux puede causar</string>
 		<string name="fix_contexts_note3">que tú dispositivo no arranque correctamente.</string>
-		<string name="swipe_to_fix_contexts">Desliza para fijar Contextos</string>
+		<string name="swipe_to_fix_contexts">Desliza para fijar los Contextos</string>
 		<string name="swipe_fix_contexts">   Fijar Contextos</string>
 		<string name="fixing_contexts">Fijando Contextos...</string>
 		<string name="fix_contexts_complete">Fijar Contextos Completado</string>
@@ -457,12 +458,12 @@
 		<string name="install_cancel">No instalar</string>
 		<string name="sel_storage_list">Seleccionar Almacenamiento</string>
 		<string name="ok_btn">OK</string>
-		<string name="no_kernel_selinux">Kernel no tiene soporte para la lectura de los contextos de SELinux.</string>
+		<string name="no_kernel_selinux">El Kernel no tiene soporte para la lectura de los contextos de SELinux.</string>
 		<string name="full_selinux">Soporte completo de SELinux está presente.</string>
 		<string name="no_selinux">No hay soporte SELinux (no libselinux).</string>
 		<string name="mtp_enabled">MTP Activado</string>
 		<string name="mtp_crash">MTP falló, no se iniciará MTP en el arranque.</string>
-		<string name="decrypt_success">Datos descifrados exitosamente, nuevo dispositivo de bloque: \'{1}\'</string>
+		<string name="decrypt_success">Datos descifrados correctamente, nuevo dispositivo de bloque: \'{1}\'</string>
 		<string name="unable_to_decrypt">Incapaz de descifrar con la contraseña actual. Quizás necesites realizar un Formateo de Datos.</string>
 		<string name="generating_digest1" version="2">Generando Digest</string>
 		<string name="generating_digest2" version="2"> * Generando Digest...</string>
@@ -478,18 +479,18 @@
 		<string name="available_space"> * Espacio disponible: {1}MB</string>
 		<string name="unable_locate_storage">Incapaz de localizar el dispositivo de almacenamiento.</string>
 		<string name="no_space">No hay suficiente espacio en el almacenamiento.</string>
-		<string name="backup_started">[COPIA DE SEGURIDAD COMENZADA]</string>
+		<string name="backup_started">[COPIA DE SEGURIDAD INICIADA]</string>
 		<string name="backup_folder">Carpeta de copia seguridad establecida en \'{1}\'</string>
 		<string name="fail_backup_folder">Error al crear carpeta de copia de seguridad.</string>
 		<string name="avg_backup_fs">Tasa media de copia de seguridad para sistemas de archivo: {1} MB/seg</string>
 		<string name="avg_backup_img">Tasa media de copia de seguridad para imágenes de unidades: {1} MB/seg</string>
 		<string name="total_backed_size">[{1} MB TOTALES DE COPIA DE SEGURIDAD]</string>
 		<string name="backup_completed">[COPIA DE SEGURIDAD COMPLETADA EN {1} SEGUNDOS	]</string>
-		<string name="restore_started">[RESTAURACIÓN COMENZADA]</string>
+		<string name="restore_started">[RESTAURACIÓN INICIADA]</string>
 		<string name="restore_folder">Restaurar carpeta: \'{1}\'</string>
 		<string name="restore_part_done">[{1} completado ({2} segundos)]</string>
 		<string name="verifying_digest" version="2">Verificando Digest</string>
-		<string name="skip_digest" version="2">Saltando checkeo de Digest basado en ajustes del usuario.</string>
+		<string name="skip_digest" version="2">Saltando la verificación de Digest basado en ajustes del usuario.</string>
 		<string name="calc_restore">Calculando detalles de la restauración...</string>
 		<string name="restore_read_only">No se puede restaurar {1} -- montado en modo leer.</string>
 		<string name="restore_unable_locate">Incapaz de localizar la partición \'{1}\' para la restauración.</string>
@@ -499,7 +500,7 @@
 		<string name="updating_system_details">Actualizando Detalles de Sistema</string>
 		<string name="restore_completed">[RESTAURACIÓN COMPLETADA EN {1} SEGUNDOS]</string>
 		<string name="error_opening_strerr">Error abriendo: \'{1}\' ({2})</string>
-		<string name="unable_locate_part_backup_name">Incapaz de localizar partición con el nombre de copia de seguridad: \'{1}\'</string>
+		<string name="unable_locate_part_backup_name">Incapaz de localizar la partición con el nombre de copia de seguridad: \'{1}\'</string>
 		<string name="unable_find_part_path">Incapaz de encontrar la partición para la dirección \'{1}\'</string>
 		<string name="update_part_details">Actualizando detalles de la partición…</string>
 		<string name="update_part_details_done">…hecho</string>
@@ -514,13 +515,13 @@
 		<string name="unable_to_mount_storage">Incapaz de montar almacenamiento</string>
 		<string name="fail_decrypt">Error al descifrar datos.</string>
 		<string name="no_crypto_support">No hay ningún soporte de cifrado compilado en esta compilación.</string>
-		<string name="decrypt_success_dev">Datos desencriptados satisfactoriamente, nuevo bloque de dispositivo: '{1}'</string>
+		<string name="decrypt_success_dev">Datos desencriptados correctamente, nuevo bloque de dispositivo: '{1}'</string>
 		<string name="done">Hecho.</string>
 		<string name="start_partition_sd">Particionando tarjeta SD...</string>
 		<string name="partition_sd_locate">Incapaz de localizar el dispositivo a particionar.</string>
 		<string name="ext_swap_size">El tamaño de EXT + Swap es más grande que el tamaño de la tarjeta SD.</string>
-		<string name="remove_part_table">Eliminando tabla de partición...</string>
-		<string name="unable_rm_part">Incapaz de eliminar la tabla de partición.</string>
+		<string name="remove_part_table">Eliminando la tabla de particiones...</string>
+		<string name="unable_rm_part">Incapaz de eliminar la tabla de particiones.</string>
 		<string name="create_part">Creando partición {1}...</string>
 		<string name="unable_to_create_part">Incapaz de crear partición {1}.</string>
 		<string name="format_sdext_as">Formateando sd-ext como {1}...</string>
@@ -529,7 +530,7 @@
 		<string name="mtp_already_enabled">MTP ya está habilitado</string>
 		<string name="mtp_fail">Error al activar MTP</string>
 		<string name="no_mtp">Soporte a MTP no incluido</string>
-		<string name="image_flash_start">[FLASHEO DE IMAGEN EMPEZADA]</string>
+		<string name="image_flash_start">[FLASHEO DE IMAGEN EMPEZADO]</string>
 		<string name="img_to_flash">Imagen a flashear: \'{1}\'</string>
 		<string name="flash_unable_locate">Incapaz de localizar la partición \'{1}\' para flashear.</string>
 		<string name="no_part_flash">No se ha seleccionado partición para flashear.</string>
@@ -561,7 +562,7 @@
 		<string name="backing_up">Realizando copia de seguridad {1}...</string>
 		<string name="backing">Realizando copia de seguridad</string>
 		<string name="backup_size">El tamaño del archivo \'{1}\' de la copia seguridad es de 0 bytes.</string>
-		<string name="datamedia_fs_restore">CUIDADO: !Esta copia de seguridad de /data se hizo con el sistema de archivos {1}! La copia de seguridad puede no arrancar a no ser que cambies a {1}.</string>
+		<string name="datamedia_fs_restore">CUIDADO: !Esta copia de seguridad de /data se hizo con el sistema de archivos {1}! La copia de seguridad puede que no arranque a no ser que cambies a {1}.</string>
 		<string name="restoring">Restaurando {1}...</string>
 		<string name="restoring_hdr">Restaurando</string>
 		<string name="recreate_folder_err">Incapaz de recrear la carpeta {1}.</string>
@@ -581,9 +582,9 @@
 		<string name="making_dir1">Creando Directorio</string>
 		<string name="making_dir2">Creando directorio: \'{1}\'</string>
 		<string name="running_command">Corriendo Comando</string>
-		<string name="sideload">Carga lateral de ADB</string>
-		<string name="start_sideload">Empezando carga lateral de ADB...</string>
-		<string name="need_new_adb">Necesitas de adb 1.0.32 o más nuevo para poder realizar la carga lateral en este dispositivo.</string>
+		<string name="sideload">Carga de archivos por ADB</string>
+		<string name="start_sideload">Empezando la carga de archivos por ADB...</string>
+		<string name="need_new_adb">Necesitas de adb 1.0.32 o más nuevo para poder realizar la carga de archivos por ADB en este dispositivo.</string>
 		<string name="no_pwd">No se ha proporcionado contraseña.</string>
 		<string name="done_ors">Procesamiento de comando de archivos hecho</string>
 		<string name="injecttwrp">Inyectando TWRP en imagen boot...</string>
@@ -591,23 +592,23 @@
 		<string name="installing_zip">Instalando archivo zip '{1}'</string>
 		<string name="select_backup_opt">Ajustando opciones de copia de seguridad:</string>
 		<string name="compression_on">La compresión está activada</string>
-		<string name="digest_off" version="2">La generación de Digest está desactivada</string>
+		<string name="digest_off" version="2">La generación de el Digest está desactivada</string>
 		<string name="backup_fail">Copia de seguridad fallida</string>
 		<string name="backup_clean">La copia de seguridad falló. Limpiando carpeta de la copia de seguridad.</string>
-		<string name="running_recovery_commands">Corriendo Comandos de Recovery</string>
+		<string name="running_recovery_commands">Ejecutando Comandos de Recovery</string>
 		<string name="recovery_commands_complete">Comandos de Recovery Completos</string>
-		<string name="running_ors">Corriendo OpenRecoveryScript</string>
+		<string name="running_ors">Ejecutando OpenRecoveryScript</string>
 		<string name="ors_complete">OpenRecoveryScript Completo</string>
 		<string name="no_updater_binary">No fue posible encontrar \'{1}\' en el archivo zip.</string>
-		<string name="check_for_digest" version="2">Buscando archivo Digest...</string>
+		<string name="check_for_digest" version="2">Buscando el archivo Digest...</string>
 		<string name="fail_sysmap">Error al mapear archivo \'{1}\'</string>
 		<string name="verify_zip_sig">Verificando firma de zip…</string>
 		<string name="verify_zip_fail">¡Verificación de firma de Zip fallida!</string>
 		<string name="verify_zip_done">Firma de Zip verificada exitosamente.</string>
 		<string name="zip_corrupt">¡Este archivo Zip es corrupto!</string>
-		<string name="no_digest" version="2">Saltando verificación de Digest: no se ha encontrado archivo Digest</string>
-		<string name="digest_fail" version="2">Digest no coincide</string>
-		<string name="digest_match" version="2">Digest coincide</string>
+		<string name="no_digest" version="2">Saltando la verificación de el Digest: no se ha encontrado archivo Digest</string>
+		<string name="digest_fail" version="2">El Digest no coincide</string>
+		<string name="digest_match" version="2">El Digest coincide</string>
 		<string name="pid_signal">Proceso {1} terminó con señal: {2}</string>
 		<string name="pid_error">Proceso {1} terminó con ERROR: {2}</string>
 		<string name="install_dumlock">Instalando HTC Dumlock en el sistema…</string>
@@ -621,8 +622,8 @@
 		<string name="split_thread">Dividiendo hilo ID {1} en archivo {2}</string>
 		<string name="file_progress">%llu de %llu archivos, %i%%</string>
 		<string name="size_progress">%lluMB de %lluMB, %i%%</string>
-		<string name="decrypt_cmd">Intentando decriptar partición de datos via línea de comandos.</string>
-		<string name="base_pkg_err">Carga de paquetes básicos fallido.</string>
+		<string name="decrypt_cmd" version="2">Intentando desencriptar la partición de datos o los datos de el usuario via línea de comandos.</string>
+		<string name="base_pkg_err">Carga de paquetes básicos fallida.</string>
 		<string name="simulating">Simulando acciones...</string>
 		<string name="backup_cancel">Copia de seguridad cancelada.</string>
 		<string name="config_twrp">Configurando TWRP...</string>
@@ -640,10 +641,83 @@
 		<string name="backup_name_len">El nombre de esta copia de seguridad es demasiado largo.</string>
 		<string name="backup_name_invalid">El nombre de la copia de seguridad \'{1}\' contiene un carácter inválido: \'{1}\'</string>
 		<string name="no_real_sdcard">¡Este dispositivo no tiene una tarjeta SD real! ¡Abortando!</string>
-		<string name="cancel_sideload">Cancelando carga lateral ADB...</string>
+		<string name="cancel_sideload">Cancelando la Carga de Archivos por ADB...</string>
 		<string name="change_fs_err">Error cambiando sistema de archivos.</string>
 		<string name="theme_ver_err">Tema personalizado no coincide con la versión de TWRP. Usando tema stock.</string>
 		<string name="up_a_level">(Subir Un Nivel)</string>
-		<string name="install_reboot">Reiniciando en 5 segundos</string>
+		<string name="install_reboot" version="2">Reiniciando en %tw_sleep% segundos</string>
+		<string name="data_backup">Datos (excl. almacenamiento interno)</string>
+		<string name="autostorage">Almacenamiento Interno</string>
+		<string name="wipe_dalvik_btn">Limpiar Dalvik</string>
+		<string name="wipe_dalvik_confirm">Limpiar Dalvik?</string>
+		<string name="wipe_dalvik_complete">Limpieza de Dalvik Completada</string>
+		<string name="reboot_install_app_hdr">Instalar la Aplicación de TWRP?</string>
+		<string name="reboot_install_app1">Te gustaría instalar la aplicación oficial de TWRP?</string>
+		<string name="reboot_install_app2">La aplicación puede comprobar versiones nuevas de TWRP.</string>
+		<string name="reboot_install_app_prompt_install">Preguntar al usuario si quiere instalar la aplicación de TWRP si no está instalada</string>
+		<string name="reboot_install_app_system">Instalar como Aplicación del Sistema</string>
+		<string name="reboot_installing_app">Instalando la aplicación...</string>
+		<string name="swipe_to_install_app">Desliza para instalar la applicación de TWRP</string>
+		<string name="uninstall_twrp_system_app">Desinstalar la aplicación TWRP del Sistema</string>
+		<string name="uninstall_twrp_system_app_confirm">Desinstalar la aplicación TWRP del Sistema?</string>
+		<string name="uninstalling_twrp_system_app">Desinstalando la aplicación TWRP del Sistema...</string>
+		<string name="uninstall_twrp_system_app_complete">Desinstalación de la aplicación TWRP del Sistema Completada</string>
+		<string name="current_boot_slot">Slot Actual: %tw_active_slot%</string>
+		<string name="boot_slot_a">Slot A</string>
+		<string name="boot_slot_b">Slot B</string>
+		<string name="changing_boot_slot">Cambiando el Boot Slot</string>
+		<string name="changing_boot_slot_complete">Cambio de el Boot Slot Completado</string>
+		<string name="vibration_disabled">La Vibración está desactivada en este dispositivo</string>
+		<string name="decrypt_data_vold_os_missing">Archivos necesarios que faltan para descifrar vold: {1}</string>
+		<string name="install_twrp_ramdisk">Instalar Ramdisk del Recovery</string>
+		<string name="install_kernel">Instalar Kernel</string>
+		<string name="repack_kernel_confirm_hdr">Instalar Kernel</string>
+		<string name="repack_ramdisk_confirm_hdr">Instalar Recovery</string>
+		<string name="repack_kernel_confirm">Instalar Kernel?</string>
+		<string name="repack_ramdisk_confirm">Instalar Recovery?</string>
+		<string name="repack_backup_first">Crear una copia de seguridad de la imagen existente primero</string>
+		<string name="repack">Empaquetado</string>
+		<string name="repack_error">Error al empaquetar la imagen..</string>
+		<string name="repacking_image">Empaquetando {1}...</string>
+		<string name="repack_image_hdr">Selecciona una Imagen</string>
+		<string name="swipe_to_install">Desliza para instalar la applicación de TWRP</string>
+		<string name="installing">Instalando...</string>
+		<string name="install_complete">Instalación Completada</string>
+		<string name="unpack_error">Error al desempaquetar la imagen.</string>
+		<string name="fix_recovery_loop">Arrgelar el Bootlop a Recovery</string>
+		<string name="fix_recovery_loop_confirm">Arrgelar el Bootlop a Recovery?</string>
+		<string name="fixing_recovery_loop">Arrgelando el Bootlop a Recovery...</string>
+		<string name="fix_recovery_loop_complete">Arrgelar el Bootlop a Recovery Completado</string>
+		<string name="fixing_recovery_loop_patch">Parcheando la imagen de arranque...</string>
+		<string name="fix_recovery_loop_patch_error">Error parcheando la imagen de arranque.</string>
+		<string name="cache_dalvik_done">-- Limpieza de los directorios Dalvik Caché Completada!</string>
+		<string name="decrypt_success_nodev">Data successfully decrypted</string>
+		<string name="backup_storage_warning">Las copias de seguridad de {1} no incluyen ningún archivo en el almacenamiento interno, como imágenes o descargas.</string>
+		<string name="invalid_zip_format">Formato de archivo zip no válido!</string>
+		<string name="adbbackup_error">Error con la copia de seguridad de ADB. Cancelando..."</string>
+		<string name="adbbackup_control_error">CNo se puede escribir en el canal de control adb</string>
+		<string name="twrp_adbbu_option">La Opción --twrp es Necesaria para Habilitar los Backups por ADB</string>
+		<string name="partition_not_found">Directorio: {1} no encontrada en la lista de particiones</string>
+		<string name="copy_kernel_log">Se ha copiado el Log de Kernel a {1}</string>
+		<string name="include_kernel_log">Incluye el Log de el Kernel</string>
+		<string name="sha2_chk">Usar SHA2 para hacer hash</string>
+		<string name="unable_set_boot_slot">Error al cambiar el Slot de Arranque del Cargador de Arranque a {1}</string>
+		<string name="unmount_sys_install">Desmontar el Sistema antes de instalar un Zip</string>
+		<string name="unmount_system">Desmontando el Sistema...</string>
+		<string name="unmount_system_err">Fallo al desmontar el Sistema</string>
+		<string name="flash_ab_inactive">Instalando un zip A/B en el slot inactivo: {1}</string>
+		<string name="flash_ab_reboot">Para instalar Zips adicionales, por favor, reinicia al recovery para cambiar al slot actualizado.</string>
+		<string name="ozip_decrypt_decryption">Empezando la Desencriptación Ozip...</string>
+		<string name="ozip_decrypt_finish">Desencriptación Ozip  Completada!</string>
+		<string name="decrypt_users">Desencriptar Usuarios</string>
+		<string name="decrypt_users_selection">Selecciona un ID de usuario a desencriptar</string>
+		<string name="select_user">Seleccionar Usuario</string>
+		<string name="backup_storage_undecrypt_warning">La copia de seguridad no incluye algunos archivos del usuario {1}, porque el usuario no está desencriptado.</string>
+		<string name="decrypting_user_fbe">Intentando desencriptar FBE para el usuario {1}...</string>
+		<string name="decrypt_user_success_fbe">Usuario {1} desencriptado con éxito</string>
+		<string name="decrypt_user_fail_fbe">Error al desencriptar el usuario {1}</string>
+		<string name="decrypt_data_enter_pass_fbe">Ingrese la contraseña para el usuario [%tw_crypto_user_id%]</string>
+		<string name="decrypt_data_enter_pattern_fbe">EIngrese el patrón para el usuario [%tw_crypto_user_id%]</string>
+		<string name="unpacking_image">Desempaquetando {1}...</string>
 	</resources>
 </language>
