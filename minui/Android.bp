@@ -24,6 +24,10 @@ cc_library {
         "include",
     ],
 
+    include_dirs: [
+	"system/core/libion/kernel-headers",
+    ],
+
     srcs: [
         "events.cpp",
         "graphics.cpp",

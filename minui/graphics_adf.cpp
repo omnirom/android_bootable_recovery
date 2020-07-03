@@ -164,7 +164,8 @@ GRSurface* MinuiBackendAdf::Init() {
   return ret;
 }
 
-void MinuiBackendAdf::Sync(GRSurfaceAdf* surf) {
+void MinuiBackendAdf::Sync(__unused GRSurfaceAdf* surf) {
+#ifdef HAS_LIBSYNC
   static constexpr unsigned int kWarningTimeout = 3000;
 
   if (surf == nullptr) return;

@@ -65,6 +65,14 @@ static bool test_bit(size_t bit, unsigned long* array) { // NOLINT
 
 #ifdef TW_USE_MINUI_WITH_OPTIONAL_TOUCH_EVENTS
 int ev_init(ev_callback input_cb, bool allow_touch_inputs) {
+#else
+#ifdef TW_USE_MINUI_WITH_DATA
+int ev_init(ev_callback input_cb, void* data) {
+#else
+int ev_init(ev_callback input_cb) {
+#endif
+  bool allow_touch_inputs = false;
+#endif
   g_epoll_fd.reset();
 
   android::base::unique_fd epoll_fd(epoll_create1(EPOLL_CLOEXEC));

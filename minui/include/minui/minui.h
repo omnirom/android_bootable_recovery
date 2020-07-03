@@ -15,6 +15,8 @@
  */
 
 #pragma once
+#ifndef _MINUI_H_
+#define _MINUI_H_
 
 #ifndef TW_USE_MINUI_21
 
@@ -141,7 +143,7 @@ void gr_text(const GRFont* font, int x, int y, const char* s, bool bold);
 int gr_measure(const GRFont* font, const char* s);
 // Returns -1 if font is nullptr.
 int gr_font_size(const GRFont* font, int* x, int* y);
-
+#endif
 void gr_blit(const GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(const GRSurface* surface);
 unsigned int gr_get_height(const GRSurface* surface);
