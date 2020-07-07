@@ -66,7 +66,7 @@ void blanktimer::checkForTimeout() {
 	if (sleepTimer && diff.tv_sec > sleepTimer && state < kOff) {
 		state = kOff;
 		TWFunc::Set_Brightness("0");
-		TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
+		TWFunc::check_and_run_script("/system/bin/postscreenblank.sh", "blank");
 		PageManager::ChangeOverlay("lock");
 	}
 #ifndef TW_NO_SCREEN_BLANK
@@ -100,7 +100,7 @@ void blanktimer::resetTimerAndUnblank(void) {
 			gr_fb_blank(false);
 #endif
 			// TODO: this is asymmetric with postscreenblank.sh - shouldn't it be under the next case label?
-			TWFunc::check_and_run_script("/sbin/postscreenunblank.sh", "unblank");
+			TWFunc::check_and_run_script("/system/bin/postscreenunblank.sh", "unblank");
 			// No break here, we want to keep going
 		case kOff:
 			gui_forceRender();
@@ -129,7 +129,7 @@ void blanktimer::blank(void) {
 		orig_brightness = getBrightness();
 		state = kOff;
 		TWFunc::Set_Brightness("0");
-		TWFunc::check_and_run_script("/sbin/postscreenblank.sh", "blank");
+		TWFunc::check_and_run_script("/system/bin/postscreenblank.sh", "blank");
 	}
 #ifndef TW_NO_SCREEN_BLANK
 	if (state == kOff) {

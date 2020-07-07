@@ -81,7 +81,7 @@ int sdkver = 20;
 #ifdef TW_CRYPTO_SYSTEM_VOLD_DEBUG
 
 #ifndef VD_STRACE_BIN
-#define VD_STRACE_BIN "/sbin/strace"
+#define VD_STRACE_BIN "/system/bin/strace"
 #endif
 
 bool has_strace = false;
@@ -399,7 +399,7 @@ void Symlink_Firmware_Files(bool is_vendor_symlinked, bool is_firmware_symlinked
 	LOGINFO("%d file(s) symlinked.\n", (int)FirmwareFiles.size());
 }
 
-// Android 8.0 fs_mgr checks for "/sbin/recovery", in which case it will
+// Android 8.0 fs_mgr checks for "/system/bin/recovery", in which case it will
 // use /etc/recovery.fstab -> symlink it temporarily. Reference:
 // https://android.googlesource.com/platform/system/core/+/android-8.0.0_r17/fs_mgr/fs_mgr_fstab.cpp#693
 bool Symlink_Recovery_Fstab(void) {
@@ -716,8 +716,8 @@ vector<AdditionalService> Get_List_Of_Additional_Services(void) {
 
 					if (Service_Exists(services[j].Service_Name))
 						services[j].TWRP_Service_Name = services[j].Service_Name;
-					else if (Service_Exists("sbin" + services[j].Service_Name))
-						services[j].TWRP_Service_Name = "sbin" + services[j].Service_Name;
+					else if (Service_Exists("system/bin" + services[j].Service_Name))
+						services[j].TWRP_Service_Name = "system/bin" + services[j].Service_Name;
 					else
 						services[j].TWRP_Service_Name.clear();
 
@@ -995,7 +995,7 @@ int Exec_vdc_cryptfs(const string& command, const string& argument, vdc_ReturnVa
 	}
 
 	// getpwtype and checkpw commands are removed from Pie vdc, using modified vdc_pie
-	const char *cmd[] = { "/sbin/vdc_pie", "cryptfs" };
+	const char *cmd[] = { "/system/bin/vdc_pie", "cryptfs" };
 	if (sdkver < 28)
 		cmd[0] = "/system/bin/vdc";
 	const char *env[] = { "LD_LIBRARY_PATH=/system/lib64:/system/lib", NULL };

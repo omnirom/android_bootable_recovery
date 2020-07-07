@@ -917,7 +917,7 @@ void DataManager::SetDefaultValues()
 
 	mData.SetValue("tw_enable_adb_backup", "0");
 
-	if (TWFunc::Path_Exists("/sbin/magiskboot"))
+	if (TWFunc::Path_Exists("/system/bin/magiskboot"))
 		mConst.SetValue("tw_has_repack_tools", "1");
 	else
 		mConst.SetValue("tw_has_repack_tools", "0");

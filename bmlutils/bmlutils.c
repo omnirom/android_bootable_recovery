@@ -180,14 +180,14 @@ int format_rfs_device (const char *device, const char *path) {
     // dump 10KB of zeros to partition before format due to fat.format bug
     char cmd[PATH_MAX];
 
-    sprintf(cmd, "/sbin/dd if=/dev/zero of=%s bs=4096 count=10", device);
+    sprintf(cmd, "/system/bin/dd if=/dev/zero of=%s bs=4096 count=10", device);
     if(__system(cmd)) {
         printf("failure while zeroing rfs partition.\n");
         return -1;
     }
 
     // Run fat.format
-    sprintf(cmd, "/sbin/fat.format -F %s -S 4096 -s %s %s", fatsize, sectorsize, device);
+    sprintf(cmd, "/system/bin/fat.format -F %s -S 4096 -s %s %s", fatsize, sectorsize, device);
     if(__system(cmd)) {
         printf("failure while running fat.format\n");
         return -1;

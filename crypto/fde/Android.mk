@@ -65,7 +65,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := twrpdec
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/
 LOCAL_SRC_FILES := main.cpp cryptfs.cpp
 LOCAL_SHARED_LIBRARIES := libcrypto libhardware libcutils libc libstdc++
 LOCAL_C_INCLUDES := external/openssl/include $(commands_recovery_local_path)/crypto/scrypt/lib/crypto

@@ -66,12 +66,15 @@ extern "C" {
 struct selabel_handle *selinux_handle;
 
 /* Execute a command */
-int TWFunc::Exec_Cmd(const string& cmd, string &result) {
+int TWFunc::Exec_Cmd(const string& cmd, string &result, bool combine_stderr) {
 	FILE* exec;
 	char buffer[130];
 	int ret = 0;
-	exec = __popen(cmd.c_str(), "r");
-	if (!exec) return -1;
+	std::string popen_cmd = cmd;
+	if (combine_stderr)
+		popen_cmd = cmd + " 2>&1";
+	exec = __popen(popen_cmd.c_str(), "r");
+
 	while (!feof(exec)) {
 		if (fgets(buffer, 128, exec) != NULL) {
 			result += buffer;
@@ -90,7 +93,7 @@ int TWFunc::Exec_Cmd(const string& cmd, bool Show_Errors) {
 			LOGERR("Exec_Cmd(): vfork failed: %d!\n", errno);
 			return -1;
 		case 0: // child
-			execl("/sbin/sh", "sh", "-c", cmd.c_str(), NULL);
+			execl("/system/bin/sh", "sh", "-c", cmd.c_str(), NULL);
 			_exit(127);
 			break;
 		default:
@@ -530,7 +533,7 @@ void TWFunc::Copy_Log(string Source, string Destination) {
 		if (type == COMPRESSED) {
 			std::string destFileBuffer;
 			std::string getCompressedContents = "pigz -c -d " + Destination;
-			if (Exec_Cmd(getCompressedContents, destFileBuffer) < 0) {
+			if (Exec_Cmd(getCompressedContents, destFileBuffer, false) < 0) {
 				LOGINFO("Unable to get destination logfile contents.\n");
 				return;
 			}
@@ -659,7 +662,7 @@ int TWFunc::tw_reboot(RebootCommand command)
 		case rb_system:
 			Update_Intent_File("s");
 			sync();
-			check_and_run_script("/sbin/rebootsystem.sh", "reboot system");
+			check_and_run_script("/system/bin/rebootsystem.sh", "reboot system");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,");
 #elif defined(ANDROID_RB_RESTART)
@@ -668,21 +671,21 @@ int TWFunc::tw_reboot(RebootCommand command)
 			return reboot(RB_AUTOBOOT);
 #endif
 		case rb_recovery:
-			check_and_run_script("/sbin/rebootrecovery.sh", "reboot recovery");
+			check_and_run_script("/system/bin/rebootrecovery.sh", "reboot recovery");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,recovery");
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "recovery");
 #endif
 		case rb_bootloader:
-			check_and_run_script("/sbin/rebootbootloader.sh", "reboot bootloader");
+			check_and_run_script("/system/bin/rebootbootloader.sh", "reboot bootloader");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,bootloader");
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "bootloader");
 #endif
 		case rb_poweroff:
-			check_and_run_script("/sbin/poweroff.sh", "power off");
+			check_and_run_script("/system/bin/poweroff.sh", "power off");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "shutdown,");
 #elif defined(ANDROID_RB_POWEROFF)
@@ -691,14 +694,14 @@ int TWFunc::tw_reboot(RebootCommand command)
 			return reboot(RB_POWER_OFF);
 #endif
 		case rb_download:
-			check_and_run_script("/sbin/rebootdownload.sh", "reboot download");
+			check_and_run_script("/system/bin/rebootdownload.sh", "reboot download");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,download");
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "download");
 #endif
 		case rb_edl:
-			check_and_run_script("/sbin/rebootedl.sh", "reboot edl");
+			check_and_run_script("/system/bin/rebootedl.sh", "reboot edl");
 #ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,edl");
 #else
@@ -1228,10 +1231,10 @@ unsigned long long TWFunc::IOCTL_Get_Block_Size(const char* block_device) {
 
 void TWFunc::copy_kernel_log(string curr_storage) {
 	std::string dmesgDst = curr_storage + "/dmesg.log";
-	std::string dmesgCmd = "/sbin/dmesg";
+	std::string dmesgCmd = "/system/bin/dmesg";
 
 	std::string result;
-	Exec_Cmd(dmesgCmd, result);
+	Exec_Cmd(dmesgCmd, result, false);
 	write_to_file(dmesgDst, result);
 	gui_msg(Msg("copy_kernel_log=Copied kernel log to {1}")(dmesgDst));
 	tw_set_default_metadata(dmesgDst.c_str());
@@ -1248,7 +1251,7 @@ bool TWFunc::isNumber(string strtocheck) {
 }
 
 int TWFunc::stream_adb_backup(string &Restore_Name) {
-	string cmd = "/sbin/bu --twrp stream " + Restore_Name;
+	string cmd = "/system/bin/bu --twrp stream " + Restore_Name;
 	LOGINFO("stream_adb_backup: %s\n", cmd.c_str());
 	int ret = TWFunc::Exec_Cmd(cmd);
 	if (ret != 0)
@@ -1299,8 +1302,8 @@ void TWFunc::check_selinux_support() {
 		if (TWFunc::Path_Exists(se_context_check)) {
 			ret = lgetfilecon(se_context_check.c_str(), &contexts);
 			if (ret < 0) {
-				LOGINFO("Could not check %s SELinux contexts, using /sbin/teamwin instead which may be inaccurate.\n", se_context_check.c_str());
-				lgetfilecon("/sbin/teamwin", &contexts);
+				LOGINFO("Could not check %s SELinux contexts, using /system/bin/teamwin instead which may be inaccurate.\n", se_context_check.c_str());
+				lgetfilecon("/system/bin/teamwin", &contexts);
 			}
 		}
 		if (ret < 0) {

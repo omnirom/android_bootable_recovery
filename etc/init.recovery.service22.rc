@@ -1,7 +1,7 @@
 on boot
 
 # For starting recovery on 5.0 and newer
-service recovery /sbin/recovery
+service recovery /system/bin/recovery
     seclabel u:r:recovery:s0
 
 on early-init

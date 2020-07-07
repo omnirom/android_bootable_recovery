@@ -71,9 +71,9 @@ void usage() {
 	printf(" -d    target directory\n");
 	printf(" -t    output file\n");
 	printf(" -m    skip media subfolder (has data media)\n");
-	printf(" -z    compress backup (/sbin/pigz must be present)\n");
+	printf(" -z    compress backup (/system/bin/pigz must be present)\n");
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
-	printf(" -e    encrypt/decrypt backup followed by password (/sbin/openaes must be present)\n");
+	printf(" -e    encrypt/decrypt backup followed by password (/system/bin/openaes must be present)\n");
 	printf(" -u    encrypt using userdata encryption (must be used with -e)\n");
 #endif
 	printf("\n\n");

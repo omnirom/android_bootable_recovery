@@ -16,7 +16,7 @@
 #ifndef __ORSCMD_H
 #define __ORSCMD_H
 
-#define ORS_INPUT_FILE "/sbin/orsin"
-#define ORS_OUTPUT_FILE "/sbin/orsout"
+#define ORS_INPUT_FILE "/system/bin/orsin"
+#define ORS_OUTPUT_FILE "/system/bin/orsout"
 
 #endif //__ORSCMD_H

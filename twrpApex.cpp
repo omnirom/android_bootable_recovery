@@ -46,7 +46,8 @@ std::string twrpApex::unzipImage(std::string file) {
 	}
 
 	std::string baseFile = basename(file.c_str());
-	std::string path = "/sbin/" + baseFile;
+	std::string path(APEX_BASE);
+	path = path + baseFile;
 	int fd = open(path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
 	ret = ExtractEntryToFile(handle, &entry, fd);
 	if (ret != 0) {

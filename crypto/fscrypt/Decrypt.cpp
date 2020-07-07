@@ -629,7 +629,7 @@ std::string unwrapSyntheticPasswordBlob(const std::string& spblob_path, const st
 			if (auth_wait_count == 0 || access("/auth_error", F_OK) == 0) {
 				printf("error during keymaster_auth service\n");
 				/* If you are getting this error, make sure that you have the keymaster_auth service defined in your init scripts, preferrably in init.recovery.{ro.hardware}.rc
-				 * service keystore_auth /sbin/keystore_auth
+				 * service keystore_auth /system/bin/keystore_auth
 				 *     disabled
 				 *     oneshot
 				 *     user system

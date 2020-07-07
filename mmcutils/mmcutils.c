@@ -315,9 +315,9 @@ mmc_find_partition_by_name(const char *name)
     return NULL;
 }
 
-#define MKE2FS_BIN      "/sbin/mke2fs"
-#define TUNE2FS_BIN     "/sbin/tune2fs"
-#define E2FSCK_BIN      "/sbin/e2fsck"
+#define MKE2FS_BIN      "/system/bin/mke2fs"
+#define TUNE2FS_BIN     "/system/bin/tune2fs"
+#define E2FSCK_BIN      "/system/bin/e2fsck"
 
 int
 run_exec_process ( char *const *argv) {

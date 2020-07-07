@@ -17,7 +17,7 @@ on early-init
 
 on init
     export PATH /sbin:/system/bin
-    export LD_LIBRARY_PATH /sbin
+    export LD_LIBRARY_PATH /system/lib64
 
     export ANDROID_ROOT /system
     export ANDROID_DATA /data
@@ -103,11 +103,11 @@ on late-init
 on property:sys.powerctl=*
    powerctl ${sys.powerctl}
 
-service ueventd /sbin/ueventd
+service ueventd /system/bin/ueventd
     critical
     seclabel u:r:ueventd:s0
 
-service adbd /sbin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
+service adbd /system/bin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
     disabled
     socket adbd stream 660 system system
     seclabel u:r:adbd:s0
@@ -118,7 +118,7 @@ on property:ro.debuggable=1
     #start adbd
     setprop service.adb.root 1
 
-service fastbootd /sbin/fastbootd
+service fastbootd /system/bin/fastbootd
     disabled
     group system
     seclabel u:r:fastbootd:s0

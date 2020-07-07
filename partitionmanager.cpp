@@ -67,6 +67,7 @@
 #include "gui/gui.hpp"
 #include "progresstracking.hpp"
 #include "twrpDigestDriver.hpp"
+#include "twrpRepacker.hpp"
 #include "adbbu/libtwadbbu.hpp"
 
 #ifdef TW_HAS_MTP
@@ -1420,7 +1421,7 @@ int TWPartitionManager::Factory_Reset(void) {
 				ret = false;
 		}
 	}
-	TWFunc::check_and_run_script("/sbin/factoryreset.sh", "Factory Reset Script");
+	TWFunc::check_and_run_script("/system/bin/factoryreset.sh", "Factory Reset Script");
 	return ret;
 }
 
@@ -2584,6 +2585,7 @@ bool TWPartitionManager::Remove_MTP_Storage(unsigned int Storage_ID) {
 }
 
 bool TWPartitionManager::Flash_Image(string& path, string& filename) {
+	twrpRepacker repacker;
 	int partition_count = 0;
 	TWPartition* flash_part = NULL;
 	string Flash_List, flash_path, full_filename;
@@ -2617,7 +2619,7 @@ bool TWPartitionManager::Flash_Image(string& path, string& filename) {
 		Repack_Options.Disable_Verity = false;
 		Repack_Options.Disable_Force_Encrypt = false;
 		Repack_Options.Backup_First = DataManager::GetIntValue("tw_repack_backup_first") != 0;
-		return Repack_Images(full_filename, Repack_Options);
+		return repacker.Repack_Image_And_Flash(full_filename, Repack_Options);
 	}
 	PartitionSettings part_settings;
 	part_settings.Backup_Folder = path;
@@ -3106,162 +3108,6 @@ bool TWPartitionManager::Prepare_Empty_Folder(const std::string& Folder) {
 	if (TWFunc::Path_Exists(Folder))
 		TWFunc::removeDir(Folder, false);
 	return TWFunc::Recursive_Mkdir(Folder);
-}
-
-bool TWPartitionManager::Prepare_Repack(TWPartition* Part, const std::string& Temp_Folder_Destination, const bool Create_Backup, const std::string& Backup_Name) {
-	if (!Part) {
-		LOGERR("Partition was null!\n");
-		return false;
-	}
-	if (!Prepare_Empty_Folder(Temp_Folder_Destination))
-		return false;
-	std::string target_image = Temp_Folder_Destination + "boot.img";
-	PartitionSettings part_settings;
-	part_settings.Part = Part;
-	if (Create_Backup) {
-		if (Check_Backup_Name(Backup_Name, true, false) != 0)
-			return false;
-		DataManager::GetValue(TW_BACKUPS_FOLDER_VAR, part_settings.Backup_Folder);
-		part_settings.Backup_Folder = part_settings.Backup_Folder + "/" + TWFunc::Get_Current_Date() + " " + Backup_Name + "/";
-		if (!TWFunc::Recursive_Mkdir(part_settings.Backup_Folder))
-			return false;
-	} else
-		part_settings.Backup_Folder = Temp_Folder_Destination;
-	part_settings.adbbackup = false;
-	part_settings.generate_digest = false;
-	part_settings.generate_md5 = false;
-	part_settings.PM_Method = PM_BACKUP;
-	part_settings.progress = NULL;
-	pid_t not_a_pid = 0;
-	if (!Part->Backup(&part_settings, &not_a_pid))
-		return false;
-	std::string backed_up_image = part_settings.Backup_Folder;
-	backed_up_image += Part->Backup_FileName;
-	target_image = Temp_Folder_Destination + "boot.img";
-	if (Create_Backup) {
-		std::string source = part_settings.Backup_Folder + Part->Backup_FileName;
-		if (TWFunc::copy_file(source, target_image, 0644) != 0) {
-			LOGERR("Failed to copy backup file '%s' to temp folder target '%s'\n", source.c_str(), target_image.c_str());
-			return false;
-		}
-	} else {
-		if (rename(backed_up_image.c_str(), target_image.c_str()) != 0) {
-			LOGERR("Failed to rename '%s' to '%s'\n", backed_up_image.c_str(), target_image.c_str());
-			return false;
-		}
-	}
-	return Prepare_Repack(target_image, Temp_Folder_Destination, false, false);
-}
-
-bool TWPartitionManager::Prepare_Repack(const std::string& Source_Path, const std::string& Temp_Folder_Destination, const bool Copy_Source, const bool Create_Destination) {
-	if (Create_Destination) {
-		if (!Prepare_Empty_Folder(Temp_Folder_Destination))
-			return false;
-	}
-	if (Copy_Source) {
-		std::string destination = Temp_Folder_Destination + "/boot.img";
-		if (TWFunc::copy_file(Source_Path, destination, 0644))
-			return false;
-	}
-	std::string command = "cd " + Temp_Folder_Destination + " && /sbin/magiskboot unpack -h '" + Source_Path +"'";
-	if (TWFunc::Exec_Cmd(command) != 0) {
-		LOGINFO("Error unpacking %s!\n", Source_Path.c_str());
-		gui_msg(Msg(msg::kError, "unpack_error=Error unpacking image."));
-		return false;
-	}
-	return true;
-}
-
-bool TWPartitionManager::Repack_Images(const std::string& Target_Image, const struct Repack_Options_struct& Repack_Options) {
-	if (!TWFunc::Path_Exists("/sbin/magiskboot")) {
-		LOGERR("Image repacking tool not present in this TWRP build!");
-		return false;
-	}
-	DataManager::SetProgress(0);
-	TWPartition* part = PartitionManager.Find_Partition_By_Path("/boot");
-	if (part)
-		gui_msg(Msg("unpacking_image=Unpacking {1}...")(part->Display_Name));
-	else {
-		gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")("/boot"));
-		return false;
-	}
-	if (!PartitionManager.Prepare_Repack(part, REPACK_ORIG_DIR, Repack_Options.Backup_First, gui_lookup("repack", "Repack")))
-		return false;
-	DataManager::SetProgress(.25);
-	gui_msg(Msg("unpacking_image=Unpacking {1}...")(Target_Image));
-	if (!PartitionManager.Prepare_Repack(Target_Image, REPACK_NEW_DIR, true))
-		return false;
-	DataManager::SetProgress(.5);
-	gui_msg(Msg("repacking_image=Repacking {1}...")(part->Display_Name));
-	std::string path = REPACK_NEW_DIR;
-	if (Repack_Options.Type == REPLACE_KERNEL) {
-		// When we replace the kernel, what we really do is copy the boot partition ramdisk into the new image's folder
-		if (TWFunc::copy_file(REPACK_ORIG_DIR "ramdisk.cpio", REPACK_NEW_DIR "ramdisk.cpio", 0644)) {
-			LOGERR("Failed to copy ramdisk\n");
-			return false;
-		}
-	} else if (Repack_Options.Type == REPLACE_RAMDISK) {
-		// Repack the ramdisk
-		if (TWFunc::copy_file(REPACK_NEW_DIR "ramdisk.cpio", REPACK_ORIG_DIR "ramdisk.cpio", 0644)) {
-			LOGERR("Failed to copy ramdisk\n");
-			return false;
-		}
-		path = REPACK_ORIG_DIR;
-	} else {
-		LOGERR("Invalid repacking options specified\n");
-		return false;
-	}
-	if (Repack_Options.Disable_Verity)
-		LOGERR("Disabling verity is not implemented yet\n");
-	if (Repack_Options.Disable_Force_Encrypt)
-		LOGERR("Disabling force encrypt is not implemented yet\n");
-	std::string command = "cd " + path + " && /sbin/magiskboot repack " + path + "boot.img";
-	if (TWFunc::Exec_Cmd(command) != 0) {
-		gui_msg(Msg(msg::kError, "repack_error=Error repacking image."));
-		return false;
-	}
-	DataManager::SetProgress(.75);
-	std::string file = "new-boot.img";
-	DataManager::SetValue("tw_flash_partition", "/boot;");
-	if (!PartitionManager.Flash_Image(path, file)) {
-		LOGINFO("Error flashing new image\n");
-		return false;
-	}
-	DataManager::SetProgress(1);
-	TWFunc::removeDir(REPACK_ORIG_DIR, false);
-	if (part->SlotSelect && Repack_Options.Type == REPLACE_RAMDISK) {
-		LOGINFO("Switching slots to flash ramdisk to both partitions\n");
-		string Current_Slot = Get_Active_Slot_Display();
-		if (Current_Slot == "A")
-			Set_Active_Slot("B");
-		else
-			Set_Active_Slot("A");
-		DataManager::SetProgress(.25);
-		if (!PartitionManager.Prepare_Repack(part, REPACK_ORIG_DIR, Repack_Options.Backup_First, gui_lookup("repack", "Repack")))
-			return false;
-		if (TWFunc::copy_file(REPACK_NEW_DIR "ramdisk.cpio", REPACK_ORIG_DIR "ramdisk.cpio", 0644)) {
-			LOGERR("Failed to copy ramdisk\n");
-			return false;
-		}
-		path = REPACK_ORIG_DIR;
-		command = "cd " + path + " && /sbin/magiskboot repack " + path + "boot.img";
-		if (TWFunc::Exec_Cmd(command) != 0) {
-			gui_msg(Msg(msg::kError, "repack_error=Error repacking image."));
-			return false;
-		}
-		DataManager::SetProgress(.75);
-		std::string file = "new-boot.img";
-		DataManager::SetValue("tw_flash_partition", "/boot;");
-		if (!PartitionManager.Flash_Image(path, file)) {
-			LOGINFO("Error flashing new image\n");
-			return false;
-		}
-		DataManager::SetProgress(1);
-		TWFunc::removeDir(REPACK_ORIG_DIR, false);
-		Set_Active_Slot(Current_Slot);
-	}
-	TWFunc::removeDir(REPACK_NEW_DIR, false);
-	return true;
 }
 
 bool TWPartitionManager::Prepare_Super_Volume(TWPartition* twrpPart) {

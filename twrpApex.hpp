@@ -22,6 +22,7 @@
 #define APEX_DIR "/system_root/system/apex"
 #define APEX_PAYLOAD "apex_payload.img"
 #define LOOP_BLOCK_DEVICE_DIR "/dev/block/"
+#define APEX_BASE "/apex/"
 
 class twrpApex {
 public:

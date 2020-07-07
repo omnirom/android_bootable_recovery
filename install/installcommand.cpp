@@ -211,7 +211,7 @@ abupdate_binary_command(const char* path, ZipWrap* zip, int retry_count __unused
     }
     long payload_offset = zip->GetEntryOffset(AB_OTA_PAYLOAD);
     *cmd = {
-        "/sbin/update_engine_sideload",
+        "/system/bin/update_engine_sideload",
         android::base::StringPrintf("--payload=file://%s", path),
         android::base::StringPrintf("--offset=%ld", payload_offset),
         "--headers=" + std::string(payload_properties.begin(),

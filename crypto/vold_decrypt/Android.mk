@@ -128,7 +128,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             LOCAL_SRC_FILES := vdc_pie.cpp
             LOCAL_MODULE_TAGS := optional
             LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-            LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+            LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/
             LOCAL_CLANG := true
             LOCAL_TIDY := true
             LOCAL_TIDY_FLAGS := -warnings-as-errors=clang-analyzer-security*,cert-*
@@ -141,12 +141,12 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             endif
             ifneq ($(TARGET_ARCH), arm64)
                 ifneq ($(TARGET_ARCH), x86_64)
-                    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker
+                    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/system/bin/linker
                 else
-                    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
+                    LOCAL_LDFLAGS += -Wl,-dynamic-linker,/system/bin/linker64
                 endif
             else
-                LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
+                LOCAL_LDFLAGS += -Wl,-dynamic-linker,/system/bin/linker64
             endif
 
             include $(BUILD_EXECUTABLE)

@@ -116,7 +116,7 @@ public:
 		// (Mandatory for programs like the shell to make them manage correctly their outputs)
 		ioctl(0, TIOCSCTTY, 1);
 
-		execl("/sbin/sh", "sh", NULL);
+		execl("/system/bin/sh", "sh", NULL);
 		_exit(127);
 	}
 

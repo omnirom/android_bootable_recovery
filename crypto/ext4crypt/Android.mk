@@ -75,10 +75,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := twrpfbe
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/
 LOCAL_SRC_FILES := main.cpp
 LOCAL_SHARED_LIBRARIES := libe4crypt
-#LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
 
 include $(BUILD_EXECUTABLE)
 
@@ -86,10 +85,10 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := e4policyget
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/
 LOCAL_SRC_FILES := e4policyget.cpp
 LOCAL_SHARED_LIBRARIES := libe4crypt
-LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/system/bin/linker64
 
 include $(BUILD_EXECUTABLE)
 
@@ -97,7 +96,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := keystore_auth
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/
 LOCAL_SRC_FILES := keystore_auth.cpp
 LOCAL_SHARED_LIBRARIES := libc libkeystore_binder libutils libbinder liblog
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
@@ -105,7 +104,7 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
     LOCAL_CFLAGS += -DUSE_SECURITY_NAMESPACE
     LOCAL_SHARED_LIBRARIES += libkeystore_aidl
 endif
-LOCAL_LDFLAGS += -Wl,-dynamic-linker,/sbin/linker64
+LOCAL_LDFLAGS += -Wl,-dynamic-linker,/system/bin/linker64
 
 include $(BUILD_EXECUTABLE)
 

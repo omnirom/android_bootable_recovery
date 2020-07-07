@@ -291,7 +291,7 @@ static void CreateMinadbdServiceAndExecuteCommands(
   if (child == 0) {
     recovery_socket.reset();
     std::vector<std::string> minadbd_commands = {
-      "/sbin/recovery",
+      "/system/bin/recovery",
       "recovery",
       "--adbd",
       install_file,

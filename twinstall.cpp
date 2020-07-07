@@ -451,7 +451,7 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 			bool vendor_mount_state = PartitionManager.Is_Mounted_By_Path("/vendor");
 			PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
 			PartitionManager.Mount_By_Path("/vendor", true);
-			TWFunc::Exec_Cmd("cp -f /sbin/sh /tmp/sh");
+			TWFunc::Exec_Cmd("cp -f /system/bin/sh /tmp/sh");
 			mount("/tmp/sh", "/system/bin/sh", "auto", MS_BIND, NULL);
 			ret_val = Run_Update_Binary(path, &Zip, wipe_cache, AB_OTA_ZIP_TYPE);
 			umount("/system/bin/sh");

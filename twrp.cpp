@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
 
 		rmdir("/s");
 
-		TWFunc::check_and_run_script("/sbin/sarsetup.sh", "boot");
+		TWFunc::check_and_run_script("/system/bin/sarsetup.sh", "boot");
 	}
 	// End SAR detection
 
@@ -302,8 +302,8 @@ int main(int argc, char **argv) {
 	}
 
 	// Check for and run startup script if script exists
-	TWFunc::check_and_run_script("/sbin/runatboot.sh", "boot");
-	TWFunc::check_and_run_script("/sbin/postrecoveryboot.sh", "boot");
+	TWFunc::check_and_run_script("/system/bin/runatboot.sh", "boot");
+	TWFunc::check_and_run_script("/system/bin/postrecoveryboot.sh", "boot");
 
 #ifdef TW_INCLUDE_INJECTTWRP
 	// Back up TWRP Ramdisk if needed:

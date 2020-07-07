@@ -89,7 +89,7 @@ const std::string device_key_temp = device_key_dir + "/temp";
 
 const std::string user_key_dir = std::string() + DATA_MNT_POINT + "/misc/vold/user_keys";
 const std::string user_key_temp = user_key_dir + "/temp";
-const std::string prepare_subdirs_path = "/sbin/vold_prepare_subdirs";
+const std::string prepare_subdirs_path = "/system/bin/vold_prepare_subdirs";
 
 const std::string systemwide_volume_key_dir =
     std::string() + DATA_MNT_POINT + "/misc/vold/volume_keys";

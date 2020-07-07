@@ -38,6 +38,7 @@
 #include <sstream>
 #include "../partitions.hpp"
 #include "../twrp-functions.hpp"
+#include "../twrpRepacker.hpp"
 #include "../openrecoveryscript.hpp"
 
 #include "install/adb_install.h"
@@ -396,12 +397,12 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 
 		// Now, check if we need to ensure TWRP remains installed...
 		struct stat st;
-		if (stat("/sbin/installTwrp", &st) == 0)
+		if (stat("/system/bin/installTwrp", &st) == 0)
 		{
 			DataManager::SetValue("tw_operation", "Configuring TWRP");
 			DataManager::SetValue("tw_partition", "");
 			gui_msg("config_twrp=Configuring TWRP...");
-			if (TWFunc::Exec_Cmd("/sbin/installTwrp reinstall") < 0)
+			if (TWFunc::Exec_Cmd("/system/bin/installTwrp reinstall") < 0)
 			{
 				gui_msg("config_twrp_err=Unable to configure TWRP with this kernel.");
 			}
@@ -921,19 +922,19 @@ int GUIAction::getpartitiondetails(std::string arg)
 					DataManager::SetValue("tw_partition_can_resize", 1);
 				else
 					DataManager::SetValue("tw_partition_can_resize", 0);
-				if (TWFunc::Path_Exists("/sbin/mkfs.fat"))
+				if (TWFunc::Path_Exists("/system/bin/mkfs.fat"))
 					DataManager::SetValue("tw_partition_vfat", 1);
 				else
 					DataManager::SetValue("tw_partition_vfat", 0);
-				if (TWFunc::Path_Exists("/sbin/mkexfatfs"))
+				if (TWFunc::Path_Exists("/system/bin/mkexfatfs"))
 					DataManager::SetValue("tw_partition_exfat", 1);
 				else
 					DataManager::SetValue("tw_partition_exfat", 0);
-				if (TWFunc::Path_Exists("/sbin/mkfs.f2fs"))
+				if (TWFunc::Path_Exists("/system/bin/mkfs.f2fs"))
 					DataManager::SetValue("tw_partition_f2fs", 1);
 				else
 					DataManager::SetValue("tw_partition_f2fs", 0);
-				if (TWFunc::Path_Exists("/sbin/mke2fs"))
+				if (TWFunc::Path_Exists("/system/bin/mke2fs"))
 					DataManager::SetValue("tw_partition_ext", 1);
 				else
 					DataManager::SetValue("tw_partition_ext", 0);
@@ -1031,7 +1032,7 @@ void GUIAction::reinject_after_flash()
 
 int GUIAction::ozip_decrypt(string zip_path)
 {
-	if (!TWFunc::Path_Exists("/sbin/ozip_decrypt")) {
+	if (!TWFunc::Path_Exists("/system/bin/ozip_decrypt")) {
             return 1;
         }
     gui_msg("ozip_decrypt_decryption=Starting Ozip Decryption...");
@@ -2025,7 +2026,7 @@ int GUIAction::installapp(std::string arg __unused)
 					goto exit;
 				}
 				install_path += "/base.apk";
-				if (TWFunc::copy_file("/sbin/me.twrp.twrpapp.apk", install_path, 0644)) {
+				if (TWFunc::copy_file("/system/bin/me.twrp.twrpapp.apk", install_path, 0644)) {
 					LOGERR("Error copying apk file\n");
 					goto exit;
 				}
@@ -2058,7 +2059,7 @@ int GUIAction::installapp(std::string arg __unused)
 							goto exit;
 						}
 						install_path += "/me.twrp.twrpapp.apk";
-						if (TWFunc::copy_file("/sbin/me.twrp.twrpapp.apk", install_path, 0644)) {
+						if (TWFunc::copy_file("/system/bin/me.twrp.twrpapp.apk", install_path, 0644)) {
 							LOGERR("Error copying apk file\n");
 							goto exit;
 						}
@@ -2069,7 +2070,7 @@ int GUIAction::installapp(std::string arg __unused)
 
 						// System apps require their permissions to be pre-set via an XML file in /etc/permissions
 						string permission_path = base_path + "/etc/permissions/privapp-permissions-twrpapp.xml";
-						if (TWFunc::copy_file("/sbin/privapp-permissions-twrpapp.xml", permission_path, 0644)) {
+						if (TWFunc::copy_file("/system/bin/privapp-permissions-twrpapp.xml", permission_path, 0644)) {
 							LOGERR("Error copying permission file\n");
 							goto exit;
 						}
@@ -2155,6 +2156,8 @@ exit:
 int GUIAction::repackimage(std::string arg __unused)
 {
 	int op_status = 1;
+	twrpRepacker repacker;
+
 	operation_start("Repack Image");
 	if (!simulate)
 	{
@@ -2167,7 +2170,7 @@ int GUIAction::repackimage(std::string arg __unused)
 			Repack_Options.Type = REPLACE_KERNEL;
 		else
 			Repack_Options.Type = REPLACE_RAMDISK;
-		if (!PartitionManager.Repack_Images(path, Repack_Options))
+		if (!repacker.Repack_Image_And_Flash(path, Repack_Options))
 			goto exit;
 	} else
 		simulate_progress_bar();
@@ -2180,10 +2183,12 @@ exit:
 int GUIAction::fixabrecoverybootloop(std::string arg __unused)
 {
 	int op_status = 1;
+	twrpRepacker repacker;
+
 	operation_start("Repack Image");
 	if (!simulate)
 	{
-		if (!TWFunc::Path_Exists("/sbin/magiskboot")) {
+		if (!TWFunc::Path_Exists("/system/bin/magiskboot")) {
 			LOGERR("Image repacking tool not present in this TWRP build!");
 			goto exit;
 		}
@@ -2195,11 +2200,11 @@ int GUIAction::fixabrecoverybootloop(std::string arg __unused)
 			gui_msg(Msg(msg::kError, "unable_to_locate=Unable to locate {1}.")("/boot"));
 			goto exit;
 		}
-		if (!PartitionManager.Prepare_Repack(part, REPACK_ORIG_DIR, DataManager::GetIntValue("tw_repack_backup_first") != 0, gui_lookup("repack", "Repack")))
+		if (!repacker.Backup_Image_For_Repack(part, REPACK_ORIG_DIR, DataManager::GetIntValue("tw_repack_backup_first") != 0, gui_lookup("repack", "Repack")))
 			goto exit;
 		DataManager::SetProgress(.25);
 		gui_msg("fixing_recovery_loop_patch=Patching kernel...");
-		std::string command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot hexpatch kernel 77616E745F696E697472616D667300 736B69705F696E697472616D667300";
+		std::string command = "cd " REPACK_ORIG_DIR " && /system/bin/magiskboot hexpatch kernel 77616E745F696E697472616D667300 736B69705F696E697472616D667300";
 		if (TWFunc::Exec_Cmd(command) != 0) {
 			gui_msg(Msg(msg::kError, "fix_recovery_loop_patch_error=Error patching kernel."));
 			goto exit;
@@ -2215,7 +2220,7 @@ int GUIAction::fixabrecoverybootloop(std::string arg __unused)
 		}
 		DataManager::SetProgress(.5);
 		gui_msg(Msg("repacking_image=Repacking {1}...")(part->Display_Name));
-		command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot repack " REPACK_ORIG_DIR "boot.img";
+		command = "cd " REPACK_ORIG_DIR " && /system/bin/magiskboot repack " REPACK_ORIG_DIR "boot.img";
 		if (TWFunc::Exec_Cmd(command) != 0) {
 			gui_msg(Msg(msg::kError, "repack_error=Error repacking image."));
 			goto exit;

@@ -1,4 +1,4 @@
-service logd /sbin/logd
+service logd /system/bin/logd
     class core
     socket logdr seqpacket 0666 root root
     socket logdw dgram+passcred 0222 root root
