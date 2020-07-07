@@ -1471,7 +1471,7 @@ unsigned long long twrpTar::uncompressedSize(string filename) {
 		Command = "pigz -l '" + filename + "'";
 		/* if we set Command = "pigz -l " + tarfn + " | sed '1d' | cut -f5 -d' '";
 		we get the uncompressed size at once. */
-		TWFunc::Exec_Cmd(Command, result);
+		TWFunc::Exec_Cmd(Command, result, false);
 		if (!result.empty()) {
 			/* Expected output:
 			compressed original  reduced name
@@ -1496,7 +1496,7 @@ unsigned long long twrpTar::uncompressedSize(string filename) {
 			Command = "openaes dec --key \"" + password + "\" --in '" + filename + "' | pigz -l";
 			/* if we set Command = "pigz -l " + tarfn + " | sed '1d' | cut -f5 -d' '";
 			we get the uncompressed size at once. */
-			TWFunc::Exec_Cmd(Command, result);
+			TWFunc::Exec_Cmd(Command, result, false);
 			if (!result.empty()) {
 				LOGINFO("result was: '%s'\n", result.c_str());
 				/* Expected output:

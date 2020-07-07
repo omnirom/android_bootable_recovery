@@ -66,8 +66,8 @@ public:
 	static string Get_Path(const string& Path);                                 // Trims everything after the last / in the string
 	static string Get_Filename(const string& Path);                             // Trims the path off of a filename
 
-	static int Exec_Cmd(const string& cmd, string &result);                     //execute a command and return the result as a string by reference
-	static int Exec_Cmd(const string& cmd, bool Show_Errors = true);                   //execute a command, displays an error to the GUI if Show_Errors is true, Show_Errors is true by default
+ 	static int Exec_Cmd(const string& cmd, string &result, bool combine_stderr);     //execute a command and return the result as a string by reference, set combined_stderror to add stderr
+ 	static int Exec_Cmd(const string& cmd, bool Show_Errors = true);            //execute a command, displays an error to the GUI if Show_Errors is true, Show_Errors is true by default
 	static int Wait_For_Child(pid_t pid, int *status, string Child_Name, bool Show_Errors = true); // Waits for pid to exit and checks exit status, displays an error to the GUI if Show_Errors is true which is the default
 	static int Wait_For_Child_Timeout(pid_t pid, int *status, const string& Child_Name, int timeout); // Waits for a pid to exit until the timeout is hit. If timeout is hit, kill the chilld.
 	static bool Path_Exists(string Path);                                       // Returns true if the path exists
