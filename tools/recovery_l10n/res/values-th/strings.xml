@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"ไม่มีคำสั่ง"</string>
     <string name="recovery_error" msgid="5748178989622716736">"ข้อผิดพลาด!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"กำลังติดตั้งการอัปเดตความปลอดภัย"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"โหลดระบบ Android ไม่ได้ ข้อมูลของคุณอาจเสียหาย หากคุณยังคงได้รับข้อความนี้อยู่ คุณอาจต้องรีเซ็ตข้อมูลเป็นค่าเริ่มต้นและลบข้อมูลผู้ใช้ทั้งหมดที่เก็บอยู่ในอุปกรณ์นี้"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"ลองอีกครั้ง"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"รีเซ็ตข้อมูลเป็นค่าเริ่มต้น"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"ต้องการล้างข้อมูลผู้ใช้ทั้งหมดใช่ไหม\n\n การกระทำนี้จะยกเลิกไม่ได้"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"ยกเลิก"</string>
 </resources>

@@ -50,7 +50,7 @@ extern "C"
 #include "../openrecoveryscript.hpp"
 #include "../orscmd/orscmd.h"
 #include "blanktimer.hpp"
-#include "../tw_atomic.hpp"
+#include "tw_atomic.hpp"
 
 // Enable to print render time of each frame to the log file
 //#define PRINT_RENDER_TIME 1
@@ -765,6 +765,9 @@ extern "C" int gui_init(void)
 		PageManager::ReleasePackage("splash");
 	}
 
+#ifdef TW_DELAY_TOUCH_INIT_MS
+	usleep(TW_DELAY_TOUCH_INIT_MS);
+#endif
 	ev_init();
 	return 0;
 }
@@ -774,7 +777,6 @@ extern "C" int gui_loadResources(void)
 #ifndef TW_OEM_BUILD
 	int check = 0;
 	DataManager::GetValue(TW_IS_ENCRYPTED, check);
-
 	if (check)
 	{
 		if (PageManager::LoadPackage("TWRP", TWRES "ui.xml", "decrypt"))
@@ -858,10 +860,12 @@ extern "C" int gui_loadCustomResources(void)
 #endif
 	return 0;
 
+#ifndef TW_OEM_BUILD
 error:
 	LOGERR("An internal error has occurred: unable to load theme.\n");
 	gGuiInitialized = 0;
 	return -1;
+#endif
 }
 
 extern "C" int gui_start(void)
@@ -869,7 +873,7 @@ extern "C" int gui_start(void)
 	return gui_startPage("main", 1, 0);
 }
 
-extern "C" int gui_startPage(const char *page_name, const int allow_commands, int stop_on_page_done)
+extern "C" int gui_startPage(const char *page_name, __attribute__((unused)) const int allow_commands, int stop_on_page_done)
 {
 	if (!gGuiInitialized)
 		return -1;

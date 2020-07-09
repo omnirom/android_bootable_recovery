@@ -6,3 +6,15 @@ subdirs = [
 //    "otautil",
 //    "uncrypt",
 ]
+
+cc_defaults {
+    name: "recovery_defaults",
+    cflags: [
+        "-D_FILE_OFFSET_BITS=64",
+        // Must be the same as RECOVERY_API_VERSION.
+        "-DRECOVERY_API_VERSION=3",
+        "-Wall",
+        "-Werror",
+    ],
+    cpp_std: "c++17",
+}

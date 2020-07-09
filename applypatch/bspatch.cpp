@@ -66,18 +66,12 @@ void ShowBSDiffLicense() {
 }
 
 int ApplyBSDiffPatch(const unsigned char* old_data, size_t old_size, const Value& patch,
-                     size_t patch_offset, SinkFn sink, SHA_CTX* ctx) {
-  auto sha_sink = [&sink, &ctx](const uint8_t* data, size_t len) {
-    len = sink(data, len);
-    if (ctx) SHA1_Update(ctx, data, len);
-    return len;
-  };
-
+                     size_t patch_offset, SinkFn sink) {
   CHECK_LE(patch_offset, patch.data.size());
 
   int result = bsdiff::bspatch(old_data, old_size,
                                reinterpret_cast<const uint8_t*>(&patch.data[patch_offset]),
-                               patch.data.size() - patch_offset, sha_sink);
+                               patch.data.size() - patch_offset, sink);
   if (result != 0) {
     LOG(ERROR) << "bspatch failed, result: " << result;
     // print SHA1 of the patch in the case of a data error.

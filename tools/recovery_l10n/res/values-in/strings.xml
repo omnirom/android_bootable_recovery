@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Tidak ada perintah"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Error!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Memasang pembaruan keamanan"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Tidak dapat memuat sistem Android. Data Anda mungkin rusak. Jika terus mendapatkan pesan ini, Anda mungkin perlu melakukan reset ke setelan pabrik dan menghapus semua data pengguna yang disimpan di perangkat ini."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Coba lagi"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Reset ke setelan pabrik"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Hapus total semua data pengguna?\n\n TINDAKAN INI TIDAK DAPAT DIURUNGKAN!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Batal"</string>
 </resources>

@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"कुनै आदेश छैन"</string>
     <string name="recovery_error" msgid="5748178989622716736">"त्रुटि!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"सुरक्षा सम्बन्धी अद्यावधिकलाई स्थापना गर्दै"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Android प्रणाली लोड गर्न सकिएन। तपाईंको डेटा बिग्रेको हुन सक्छ। तपाईं यो सन्देश प्राप्त गर्नुहुन्छ भने तपाईंले फ्याक्ट्री डेटा रिसेट गर्न आवश्यक छ र यो यन्त्रमा भण्डारण गरेका सबै प्रयोगकर्ताको डेटा मेट्न पर्छ।"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"फेरि प्रयास गर्नुहोस्"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"फ्याक्ट्री डेटा रिसेट"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"प्रयोगकर्ताको सबै डेटा मेट्ने हो?\n\n यो अन्डू गर्न सकिँदैन!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"रद्द गर्नुहोस्"</string>
 </resources>

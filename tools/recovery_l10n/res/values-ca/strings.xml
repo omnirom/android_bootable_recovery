@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"No hi ha cap ordre"</string>
     <string name="recovery_error" msgid="5748178989622716736">"S\'ha produït un error"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"S\'està instal·lant una actualització de seguretat"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"No s\'ha pogut carregar el sistema Android. És possible que les teves dades estiguin malmeses. Si continues veient aquest missatge, pot ser que hagis de restablir les dades de fàbrica i esborrar totes les dades d\'usuari emmagatzemades en aquest dispositiu."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Torna-ho a provar"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Restableix les dades de fàbrica"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Vols eliminar totes les dades d\'usuari?\n\n AQUESTA ACCIÓ NO ES POT DESFER."</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Cancel·la"</string>
 </resources>

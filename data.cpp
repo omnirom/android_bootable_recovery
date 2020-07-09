@@ -510,18 +510,56 @@ int DataManager::SetValue(const string& varName, const unsigned long long& value
 	return SetValue(varName, valStr.str(), persist);
 }
 
+// For legacy code that doesn't set a scope
 int DataManager::SetProgress(const float Fraction) {
-	return SetValue("ui_progress", (float) (Fraction * 100.0));
+	if (SetValue("ui_portion_size", 0) != 0)
+		return -1;
+	if (SetValue("ui_portion_start", 0) != 0)
+		return -1;
+	ShowProgress(1, 0);
+	int res = _SetProgress(Fraction);
+	if (SetValue("ui_portion_size", 0) != 0)
+		return -1;
+	if (SetValue("ui_portion_start", 0) != 0)
+		return -1;
+	return res;
 }
 
-int DataManager::ShowProgress(const float Portion, const float Seconds)
+int DataManager::_SetProgress(float Fraction) {
+	float Portion_Start, Portion_Size;
+	GetValue("ui_portion_size", Portion_Size);
+	GetValue("ui_portion_start", Portion_Start);
+	//LOGINFO("SetProgress(%.2lf): Portion_Size: %.2lf Portion_Start: %.2lf\n", Fraction, Portion_Size, Portion_Start);
+	if (Fraction < 0.0)
+		Fraction = 0;
+	if (Fraction > 1.0)
+		Fraction = 1;
+	if (SetValue("ui_progress", (float) ((Portion_Start + (Portion_Size * Fraction)) * 100.0)) != 0)
+		return -1;
+	return (SetValue("ui_progress_portion", 0) != 0);
+}
+
+int DataManager::ShowProgress(float Portion, const float Seconds)
 {
-	float Starting_Portion;
-	GetValue("ui_progress_portion", Starting_Portion);
-	if (SetValue("ui_progress_portion", (float)(Portion * 100.0) + Starting_Portion) != 0)
+	float Portion_Start, Portion_Size;
+	GetValue("ui_portion_size", Portion_Size);
+	GetValue("ui_portion_start", Portion_Start);
+	Portion_Start += Portion_Size;
+	if(Portion + Portion_Start > 1.0)
+		Portion = 1.0 - Portion_Start;
+	//LOGINFO("ShowProgress(%.2lf, %.2lf): Portion_Start: %.2lf\n", Portion, Seconds, Portion_Start);
+	if (SetValue("ui_portion_start", Portion_Start) != 0)
 		return -1;
-	if (SetValue("ui_progress_frames", Seconds * 30) != 0)
+	if (SetValue("ui_portion_size", Portion) != 0)
 		return -1;
+	if (SetValue("ui_progress", (float)(Portion_Start * 100.0)) != 0)
+		return -1;
+	if(Seconds) {
+		if (SetValue("ui_progress_portion", (float)((Portion * 100.0) + Portion_Start)) != 0)
+			return -1;
+		if (SetValue("ui_progress_frames", Seconds * 48) != 0)
+			return -1;
+	}
 	return 0;
 }
 
@@ -740,7 +778,11 @@ void DataManager::SetDefaultValues()
 #ifdef TW_HAS_NO_BOOT_PARTITION
 	mPersist.SetValue("tw_backup_list", "/system;/data;");
 #else
+#ifdef PRODUCT_USE_DYNAMIC_PARTITIONS
+	mPersist.SetValue("tw_backup_list", "/data;");
+#else
 	mPersist.SetValue("tw_backup_list", "/system;/data;/boot;");
+#endif
 #endif
 	mConst.SetValue(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE);
 	mData.SetValue(TW_BACKUP_NAME, "(Auto Generate)");
@@ -776,6 +818,7 @@ void DataManager::SetDefaultValues()
 	mData.SetValue("tw_background_thread_running", "0");
 	mData.SetValue(TW_RESTORE_FILE_DATE, "0");
 	mPersist.SetValue("tw_military_time", "0");
+	mData.SetValue(TW_IS_SUPER, "0");
 
 #ifdef TW_INCLUDE_CRYPTO
 	mPersist.SetValue(TW_USE_SHA2, "1");
@@ -783,6 +826,7 @@ void DataManager::SetDefaultValues()
 #else
 	mPersist.SetValue(TW_NO_SHA2, "1");
 #endif
+	mPersist.SetValue(TW_UNMOUNT_SYSTEM, "1");
 
 #ifdef TW_NO_SCREEN_TIMEOUT
 	mConst.SetValue("tw_screen_timeout_secs", "0");
@@ -1049,28 +1093,30 @@ void DataManager::Output_Version(void)
 	string Path;
 	char version[255];
 
-	std::string cacheDir = TWFunc::get_cache_dir();
-	if (cacheDir.empty()) {
+	std::string logDir = TWFunc::get_log_dir();
+	if (logDir.empty()) {
 		LOGINFO("Unable to find cache directory\n");
 		return;
 	}
 
-	std::string recoveryCacheDir = cacheDir + "recovery/";
+	std::string recoveryLogDir = logDir + "recovery/";
 
-	if (cacheDir == NON_AB_CACHE_DIR) {
-		if (!PartitionManager.Mount_By_Path(NON_AB_CACHE_DIR, false)) {
+	if (logDir == CACHE_LOGS_DIR) {
+		if (!PartitionManager.Mount_By_Path(CACHE_LOGS_DIR, false)) {
 			LOGINFO("Unable to mount '%s' to write version number.\n", Path.c_str());
 			return;
 		}
-	}
-	if (!TWFunc::Path_Exists(recoveryCacheDir)) {
-		LOGINFO("Recreating %s folder.\n", recoveryCacheDir.c_str());
-		if (!TWFunc::Create_Dir_Recursive(recoveryCacheDir.c_str(), S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, 0, 0)) {
-			LOGERR("DataManager::Output_Version -- Unable to make %s: %s\n", recoveryCacheDir.c_str(), strerror(errno));
-			return;
+
+		if (!TWFunc::Path_Exists(recoveryLogDir)) {
+			LOGINFO("Recreating %s folder.\n", recoveryLogDir.c_str());
+			if (!TWFunc::Create_Dir_Recursive(recoveryLogDir.c_str(), S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, 0, 0)) {
+				LOGERR("DataManager::Output_Version -- Unable to make %s: %s\n", recoveryLogDir.c_str(), strerror(errno));
+				return;
+			}
 		}
 	}
-	std::string verPath = recoveryCacheDir + ".version";
+
+	std::string verPath = recoveryLogDir + ".version";
 	if (TWFunc::Path_Exists(verPath)) {
 		unlink(verPath.c_str());
 	}
@@ -1082,7 +1128,7 @@ void DataManager::Output_Version(void)
 	strcpy(version, TW_VERSION_STR);
 	fwrite(version, sizeof(version[0]), strlen(version) / sizeof(version[0]), fp);
 	fclose(fp);
-	TWFunc::copy_file("/etc/recovery.fstab", recoveryCacheDir + "recovery.fstab", 0644);
+	TWFunc::copy_file("/etc/recovery.fstab", recoveryLogDir + "recovery.fstab", 0644);
 	PartitionManager.Output_Storage_Fstab();
 	sync();
 	LOGINFO("Version number saved to '%s'\n", verPath.c_str());

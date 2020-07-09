@@ -30,7 +30,7 @@ LOCAL_CFLAGS := \
     -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS
 
 LOCAL_SRC_FILES := config.cpp ota_io.cpp
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libotafault
 LOCAL_CLANG := true
 LOCAL_C_INCLUDES := $(commands_recovery_local_path)

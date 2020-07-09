@@ -46,9 +46,9 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <android-base/unique_fd.h>
 #include <applypatch/applypatch.h>
 #include <bootloader_message/bootloader_message.h>
-#include <cutils/android_reboot.h>
 #include <ext4_utils/wipe.h>
 #include <openssl/sha.h>
 #include <selinux/label.h>
@@ -57,41 +57,6 @@
 #include <ziparchive/zip_archive.h>
 
 #include "edify/expr.h"
-#include "mounts.h"
-
-#include "applypatch/applypatch.h"
-#include "flashutils/flashutils.h"
-#include "install.h"
-#ifdef HAVE_LIBTUNE2FS
-#include "tune2fs.h"
-#endif
-
-#ifdef USE_EXT4
-#include "make_ext4fs.h"
-#include "wipe.h"
-#endif
-
-#include "otautil/ZipUtil.h"
-#include "otafault/ota_io.h"
-#include "otautil/DirUtil.h"
-#include "otautil/error_code.h"
-#include "otautil/print_sha1.h"
-#include "updater/updater.h"
-
-// Send over the buffer to recovery though the command pipe.
-static void uiPrint(State* state, const std::string& buffer) {
-  UpdaterInfo* ui = static_cast<UpdaterInfo*>(state->cookie);
-
-  // "line1\nline2\n" will be split into 3 tokens: "line1", "line2" and "".
-  // So skip sending empty strings to UI.
-  std::vector<std::string> lines = android::base::Split(buffer, "\n");
-  for (auto& line : lines) {
-    if (!line.empty()) {
-      fprintf(ui->cmd_pipe, "ui_print %s\n", line.c_str());
-    }
-  }
-
-  // On the updater side, we need to dump the contents to stderr (which has
   // been redirected to the log file). Because the recovery will only print
   // the contents to screen when processing pipe command ui_print.
   LOG(INFO) << buffer;
@@ -179,8 +144,8 @@ Value* PackageExtractFileFn(const char* name, State* state,
       return StringValue("");
     }
 
-    unique_fd fd(TEMP_FAILURE_RETRY(
-        ota_open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
+    android::base::unique_fd fd(TEMP_FAILURE_RETRY(
+        open(dest_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
     if (fd == -1) {
       PLOG(ERROR) << name << ": can't open " << dest_path << " for write";
       return StringValue("");
@@ -194,11 +159,12 @@ Value* PackageExtractFileFn(const char* name, State* state,
                  << "\": " << ErrorCodeString(ret);
       success = false;
     }
-    if (ota_fsync(fd) == -1) {
+    if (fsync(fd) == -1) {
       PLOG(ERROR) << "fsync of \"" << dest_path << "\" failed";
       success = false;
     }
-    if (ota_close(fd) == -1) {
+
+    if (close(fd.release()) != 0) {
       PLOG(ERROR) << "close of \"" << dest_path << "\" failed";
       success = false;
     }
@@ -233,145 +199,86 @@ Value* PackageExtractFileFn(const char* name, State* state,
                         zip_path.c_str(), buffer.size(), ErrorCodeString(ret));
     }
 
-    return new Value(VAL_BLOB, buffer);
+    return new Value(Value::Type::BLOB, buffer);
   }
 }
 
-// apply_patch(src_file, tgt_file, tgt_sha1, tgt_size, patch1_sha1, patch1_blob, [...])
-//   Applies a binary patch to the src_file to produce the tgt_file. If the desired target is the
-//   same as the source, pass "-" for tgt_file. tgt_sha1 and tgt_size are the expected final SHA1
-//   hash and size of the target file. The remaining arguments must come in pairs: a SHA1 hash (a
-//   40-character hex string) and a blob. The blob is the patch to be applied when the source
-//   file's current contents have the given SHA1.
+// patch_partition_check(target_partition, source_partition)
+//   Checks if the target and source partitions have the desired checksums to be patched. It returns
+//   directly, if the target partition already has the expected checksum. Otherwise it in turn
+//   checks the integrity of the source partition and the backup file on /cache.
 //
-//   The patching is done in a safe manner that guarantees the target file either has the desired
-//   SHA1 hash and size, or it is untouched -- it will not be left in an unrecoverable intermediate
-//   state. If the process is interrupted during patching, the target file may be in an intermediate
-//   state; a copy exists in the cache partition so restarting the update can successfully update
-//   the file.
-Value* ApplyPatchFn(const char* name, State* state,
-                    const std::vector<std::unique_ptr<Expr>>& argv) {
-  if (argv.size() < 6 || (argv.size() % 2) == 1) {
+// For example, patch_partition_check(
+//     "EMMC:/dev/block/boot:12342568:8aaacf187a6929d0e9c3e9e46ea7ff495b43424d",
+//     "EMMC:/dev/block/boot:12363048:06b0b16299dcefc94900efed01e0763ff644ffa4")
+Value* PatchPartitionCheckFn(const char* name, State* state,
+                             const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 2) {
     return ErrorAbort(state, kArgsParsingFailure,
-                      "%s(): expected at least 6 args and an "
-                      "even number, got %zu",
-                      name, argv.size());
+                      "%s(): Invalid number of args (expected 2, got %zu)", name, argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argv, &args, 0, 4)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-  }
-  const std::string& source_filename = args[0];
-  const std::string& target_filename = args[1];
-  const std::string& target_sha1 = args[2];
-  const std::string& target_size_str = args[3];
-
-  size_t target_size;
-  if (!android::base::ParseUint(target_size_str.c_str(), &target_size)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s(): can't parse \"%s\" as byte count", name,
-                      target_size_str.c_str());
+  if (!ReadArgs(state, argv, &args, 0, 2)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
 
-  int patchcount = (argv.size() - 4) / 2;
-  std::vector<std::unique_ptr<Value>> arg_values;
-  if (!ReadValueArgs(state, argv, &arg_values, 4, argv.size() - 4)) {
-    return nullptr;
+  std::string err;
+  auto target = Partition::Parse(args[0], &err);
+  if (!target) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse target \"%s\": %s", name,
+                      args[0].c_str(), err.c_str());
   }
 
-  for (int i = 0; i < patchcount; ++i) {
-    if (arg_values[i * 2]->type != VAL_STRING) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s(): sha-1 #%d is not string", name, i * 2);
-    }
-    if (arg_values[i * 2 + 1]->type != VAL_BLOB) {
-      return ErrorAbort(state, kArgsParsingFailure, "%s(): patch #%d is not blob", name, i * 2 + 1);
-    }
+  auto source = Partition::Parse(args[1], &err);
+  if (!source) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse source \"%s\": %s", name,
+                      args[1].c_str(), err.c_str());
   }
 
-  std::vector<std::string> patch_sha_str;
-  std::vector<std::unique_ptr<Value>> patches;
-  for (int i = 0; i < patchcount; ++i) {
-    patch_sha_str.push_back(arg_values[i * 2]->data);
-    patches.push_back(std::move(arg_values[i * 2 + 1]));
-  }
-
-  int result = applypatch(source_filename.c_str(), target_filename.c_str(), target_sha1.c_str(),
-                          target_size, patch_sha_str, patches, nullptr);
-
-  return StringValue(result == 0 ? "t" : "");
+  bool result = PatchPartitionCheck(target, source);
+  return StringValue(result ? "t" : "");
 }
 
-// apply_patch_check(filename, [sha1, ...])
-//   Returns true if the contents of filename or the temporary copy in the cache partition (if
-//   present) have a SHA-1 checksum equal to one of the given sha1 values. sha1 values are
-//   specified as 40 hex digits. This function differs from sha1_check(read_file(filename),
-//   sha1 [, ...]) in that it knows to check the cache partition copy, so apply_patch_check() will
-//   succeed even if the file was corrupted by an interrupted apply_patch() update.
-Value* ApplyPatchCheckFn(const char* name, State* state,
-                         const std::vector<std::unique_ptr<Expr>>& argv) {
-  if (argv.size() < 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s(): expected at least 1 arg, got %zu", name,
-                      argv.size());
+// patch_partition(target, source, patch)
+//   Applies the given patch to the source partition, and writes the result to the target partition.
+//
+// For example, patch_partition(
+//     "EMMC:/dev/block/boot:12342568:8aaacf187a6929d0e9c3e9e46ea7ff495b43424d",
+//     "EMMC:/dev/block/boot:12363048:06b0b16299dcefc94900efed01e0763ff644ffa4",
+//     package_extract_file("boot.img.p"))
+Value* PatchPartitionFn(const char* name, State* state,
+                        const std::vector<std::unique_ptr<Expr>>& argv) {
+  if (argv.size() != 3) {
+    return ErrorAbort(state, kArgsParsingFailure,
+                      "%s(): Invalid number of args (expected 3, got %zu)", name, argv.size());
   }
 
   std::vector<std::string> args;
-  if (!ReadArgs(state, argv, &args, 0, 1)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-  }
-  const std::string& filename = args[0];
-
-  std::vector<std::string> sha1s;
-  if (argv.size() > 1 && !ReadArgs(state, argv, &sha1s, 1, argv.size() - 1)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
-  }
-  int result = applypatch_check(filename.c_str(), sha1s);
-
-  return StringValue(result == 0 ? "t" : "");
-}
-
-// sha1_check(data)
-//    to return the sha1 of the data (given in the format returned by
-//    read_file).
-//
-// sha1_check(data, sha1_hex, [sha1_hex, ...])
-//    returns the sha1 of the file if it matches any of the hex
-//    strings passed, or "" if it does not equal any of them.
-//
-Value* Sha1CheckFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
-  if (argv.size() < 1) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() expects at least 1 arg", name);
+  if (!ReadArgs(state, argv, &args, 0, 2)) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
 
-  std::vector<std::unique_ptr<Value>> args;
-  if (!ReadValueArgs(state, argv, &args)) {
-    return nullptr;
+  std::string err;
+  auto target = Partition::Parse(args[0], &err);
+  if (!target) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse target \"%s\": %s", name,
+                      args[0].c_str(), err.c_str());
   }
 
-  if (args[0]->type == VAL_INVALID) {
-    return StringValue("");
-  }
-  uint8_t digest[SHA_DIGEST_LENGTH];
-  SHA1(reinterpret_cast<const uint8_t*>(args[0]->data.c_str()), args[0]->data.size(), digest);
-
-  if (argv.size() == 1) {
-    return StringValue(print_sha1(digest));
+  auto source = Partition::Parse(args[1], &err);
+  if (!source) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse source \"%s\": %s", name,
+                      args[1].c_str(), err.c_str());
   }
 
-  for (size_t i = 1; i < argv.size(); ++i) {
-    uint8_t arg_digest[SHA_DIGEST_LENGTH];
-    if (args[i]->type != VAL_STRING) {
-      LOG(ERROR) << name << "(): arg " << i << " is not a string; skipping";
-    } else if (ParseSha1(args[i]->data.c_str(), arg_digest) != 0) {
-      // Warn about bad args and skip them.
-      LOG(ERROR) << name << "(): error parsing \"" << args[i]->data << "\" as sha-1; skipping";
-    } else if (memcmp(digest, arg_digest, SHA_DIGEST_LENGTH) == 0) {
-      // Found a match.
-      return args[i].release();
-    }
+  std::vector<std::unique_ptr<Value>> values;
+  if (!ReadValueArgs(state, argv, &values, 2, 1) || values[0]->type != Value::Type::BLOB) {
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Invalid patch arg", name);
   }
 
-  // Didn't match any of the hex strings; return false.
-  return StringValue("");
+  bool result = PatchPartition(target, source, *values[0], nullptr);
+  return StringValue(result ? "t" : "");
 }
 
 // mount(fs_type, partition_type, location, mount_point)
@@ -493,17 +400,20 @@ Value* UnmountFn(const char* name, State* state, const std::vector<std::unique_p
   return StringValue(mount_point);
 }
 
-static int exec_cmd(const char* path, char* const argv[]) {
+static int exec_cmd(const std::vector<std::string>& args) {
+  CHECK(!args.empty());
+  auto argv = StringVectorToNullTerminatedArray(args);
+
   pid_t child;
   if ((child = vfork()) == 0) {
-    execv(path, argv);
+    execv(argv[0], argv.data());
     _exit(EXIT_FAILURE);
   }
 
   int status;
   waitpid(child, &status, 0);
   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    LOG(ERROR) << path << " failed with status " << WEXITSTATUS(status);
+    LOG(ERROR) << args[0] << " failed with status " << WEXITSTATUS(status);
   }
   return WEXITSTATUS(status);
 }
@@ -553,66 +463,53 @@ Value* FormatFn(const char* name, State* state, const std::vector<std::unique_pt
   }
 
   if (fs_type == "ext4") {
-    const char* mke2fs_argv[] = { "/sbin/mke2fs_static", "-t",    "ext4", "-b", "4096",
-                                  location.c_str(),      nullptr, nullptr };
-    std::string size_str;
+    std::vector<std::string> mke2fs_args = {
+      "/system/bin/mke2fs", "-t", "ext4", "-b", "4096", location
+    };
     if (size != 0) {
-      size_str = std::to_string(size / 4096LL);
-      mke2fs_argv[6] = size_str.c_str();
+      mke2fs_args.push_back(std::to_string(size / 4096LL));
     }
 
-    int status = exec_cmd(mke2fs_argv[0], const_cast<char**>(mke2fs_argv));
-    if (status != 0) {
+    if (auto status = exec_cmd(mke2fs_args); status != 0) {
       LOG(ERROR) << name << ": mke2fs failed (" << status << ") on " << location;
       return StringValue("");
     }
 
-    const char* e2fsdroid_argv[] = { "/sbin/e2fsdroid_static", "-e",   "-a", mount_point.c_str(),
-                                     location.c_str(),         nullptr };
-    status = exec_cmd(e2fsdroid_argv[0], const_cast<char**>(e2fsdroid_argv));
-    if (status != 0) {
+    if (auto status = exec_cmd({ "/system/bin/e2fsdroid", "-e", "-a", mount_point, location });
+        status != 0) {
       LOG(ERROR) << name << ": e2fsdroid failed (" << status << ") on " << location;
       return StringValue("");
     }
     return StringValue(location);
-  } else if (fs_type == "f2fs") {
+  }
+
+  if (fs_type == "f2fs") {
     if (size < 0) {
       LOG(ERROR) << name << ": fs_size can't be negative for f2fs: " << fs_size;
       return StringValue("");
     }
-    std::string num_sectors = std::to_string(size / 512);
-
-    const char* f2fs_path = "/sbin/mkfs.f2fs";
-    const char* f2fs_argv[] = { "mkfs.f2fs",
-                                "-d1",
-                                "-f",
-                                "-O", "encrypt",
-                                "-O", "quota",
-                                "-O", "verity",
-                                "-w", "512",
-                                location.c_str(),
-                                (size < 512) ? nullptr : num_sectors.c_str(),
-                                nullptr };
-    int status = exec_cmd(f2fs_path, const_cast<char**>(f2fs_argv));
-    if (status != 0) {
-      LOG(ERROR) << name << ": mkfs.f2fs failed (" << status << ") on " << location;
+    std::vector<std::string> f2fs_args = {
+      "/system/bin/make_f2fs", "-g", "android", "-w", "512", location
+    };
+    if (size >= 512) {
+      f2fs_args.push_back(std::to_string(size / 512));
+    }
+    if (auto status = exec_cmd(f2fs_args); status != 0) {
+      LOG(ERROR) << name << ": make_f2fs failed (" << status << ") on " << location;
       return StringValue("");
     }
 
-    const char* sload_argv[] = { "/sbin/sload.f2fs", "-t", mount_point.c_str(), location.c_str(),
-                                 nullptr };
-    status = exec_cmd(sload_argv[0], const_cast<char**>(sload_argv));
-    if (status != 0) {
-      LOG(ERROR) << name << ": sload.f2fs failed (" << status << ") on " << location;
+    if (auto status = exec_cmd({ "/system/bin/sload_f2fs", "-t", mount_point, location });
+        status != 0) {
+      LOG(ERROR) << name << ": sload_f2fs failed (" << status << ") on " << location;
       return StringValue("");
     }
 
     return StringValue(location);
-  } else {
-    LOG(ERROR) << name << ": unsupported fs_type \"" << fs_type << "\" partition_type \""
-               << partition_type << "\"";
   }
 
+  LOG(ERROR) << name << ": unsupported fs_type \"" << fs_type << "\" partition_type \""
+             << partition_type << "\"";
   return nullptr;
 }
 
@@ -1076,32 +973,11 @@ Value* FileGetPropFn(const char* name, State* state,
   const std::string& filename = args[0];
   const std::string& key = args[1];
 
-  struct stat st;
-  if (stat(filename.c_str(), &st) < 0) {
-    return ErrorAbort(state, kFileGetPropFailure, "%s: failed to stat \"%s\": %s", name,
-                      filename.c_str(), strerror(errno));
-  }
-
-  constexpr off_t MAX_FILE_GETPROP_SIZE = 65536;
-  if (st.st_size > MAX_FILE_GETPROP_SIZE) {
-    return ErrorAbort(state, kFileGetPropFailure, "%s too large for %s (max %lld)",
-                      filename.c_str(), name, static_cast<long long>(MAX_FILE_GETPROP_SIZE));
-  }
-
-  std::string buffer(st.st_size, '\0');
-  unique_file f(ota_fopen(filename.c_str(), "rb"));
-  if (f == nullptr) {
-    return ErrorAbort(state, kFileOpenFailure, "%s: failed to open %s: %s", name, filename.c_str(),
-                      strerror(errno));
-  }
-
-  if (ota_fread(&buffer[0], 1, st.st_size, f.get()) != static_cast<size_t>(st.st_size)) {
-    ErrorAbort(state, kFreadFailure, "%s: failed to read %zu bytes from %s", name,
-               static_cast<size_t>(st.st_size), filename.c_str());
+  std::string buffer;
+  if (!android::base::ReadFileToString(filename, &buffer)) {
+    ErrorAbort(state, kFreadFailure, "%s: failed to read %s", name, filename.c_str());
     return nullptr;
   }
-
-  ota_fclose(f);
 
   std::vector<std::string> lines = android::base::Split(buffer, "\n");
   for (size_t i = 0; i < lines.size(); i++) {
@@ -1148,7 +1024,7 @@ Value* ApplyPatchSpaceFn(const char* name, State* state,
   }
 
   // Skip the cache size check if the update is a retry.
-  if (state->is_retry || CacheSizeCheck(bytes) == 0) {
+  if (state->is_retry || CheckAndFreeSpaceOnCache(bytes)) {
     return StringValue("t");
   }
   return StringValue("");
@@ -1173,17 +1049,12 @@ Value* RunProgramFn(const char* name, State* state, const std::vector<std::uniqu
     return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
   }
 
-  char* args2[argv.size() + 1];
-  for (size_t i = 0; i < argv.size(); i++) {
-    args2[i] = &args[i][0];
-  }
-  args2[argv.size()] = nullptr;
-
-  LOG(INFO) << "about to run program [" << args2[0] << "] with " << argv.size() << " args";
+  auto exec_args = StringVectorToNullTerminatedArray(args);
+  LOG(INFO) << "about to run program [" << exec_args[0] << "] with " << argv.size() << " args";
 
   pid_t child = fork();
   if (child == 0) {
-    execv(args2[0], args2);
+    execv(exec_args[0], exec_args.data());
     PLOG(ERROR) << "run_program: execv failed";
     _exit(EXIT_FAILURE);
   }
@@ -1201,8 +1072,8 @@ Value* RunProgramFn(const char* name, State* state, const std::vector<std::uniqu
   return StringValue(std::to_string(status));
 }
 
-// Read a local file and return its contents (the Value* returned
-// is actually a FileContents*).
+// read_file(filename)
+//   Reads a local file 'filename' and returns its contents as a string Value.
 Value* ReadFileFn(const char* name, State* state, const std::vector<std::unique_ptr<Expr>>& argv) {
   if (argv.size() != 1) {
     return ErrorAbort(state, kArgsParsingFailure, "%s() expects 1 arg, got %zu", name, argv.size());
@@ -1210,18 +1081,18 @@ Value* ReadFileFn(const char* name, State* state, const std::vector<std::unique_
 
   std::vector<std::string> args;
   if (!ReadArgs(state, argv, &args)) {
-    return ErrorAbort(state, kArgsParsingFailure, "%s() Failed to parse the argument(s)", name);
+    return ErrorAbort(state, kArgsParsingFailure, "%s(): Failed to parse the argument(s)", name);
   }
   const std::string& filename = args[0];
 
-  Value* v = new Value(VAL_INVALID, "");
-
-  FileContents fc;
-  if (LoadFileContents(filename.c_str(), &fc) == 0) {
-    v->type = VAL_BLOB;
-    v->data = std::string(fc.data.begin(), fc.data.end());
+  std::string contents;
+  if (android::base::ReadFileToString(filename, &contents)) {
+    return new Value(Value::Type::STRING, std::move(contents));
   }
-  return v;
+
+  // Leave it to caller to handle the failure.
+  PLOG(ERROR) << name << ": Failed to read " << filename;
+  return StringValue("");
 }
 
 // write_value(value, filename)
@@ -1287,11 +1158,7 @@ Value* RebootNowFn(const char* name, State* state, const std::vector<std::unique
     return StringValue("");
   }
 
-  std::string reboot_cmd = "reboot," + property;
-  if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
-    reboot_cmd += ",quiescent";
-  }
-  android::base::SetProperty(ANDROID_RB_PROPERTY, reboot_cmd);
+  reboot("reboot," + property);
 
   sleep(5);
   return ErrorAbort(state, kRebootFailure, "%s() failed to reboot", name);
@@ -1379,7 +1246,12 @@ Value* WipeBlockDeviceFn(const char* name, State* state, const std::vector<std::
   if (!android::base::ParseUint(len_str.c_str(), &len)) {
     return nullptr;
   }
-  unique_fd fd(ota_open(filename.c_str(), O_WRONLY, 0644));
+  android::base::unique_fd fd(open(filename.c_str(), O_WRONLY));
+  if (fd == -1) {
+    PLOG(ERROR) << "Failed to open " << filename;
+    return StringValue("");
+  }
+
   // The wipe_block_device function in ext4_utils returns 0 on success and 1
   // for failure.
   int status = wipe_block_device(fd, len);
@@ -1407,20 +1279,12 @@ Value* Tune2FsFn(const char* name, State* state, const std::vector<std::unique_p
     return ErrorAbort(state, kArgsParsingFailure, "%s() could not read args", name);
   }
 
-  char* args2[argv.size() + 1];
-  // Tune2fs expects the program name as its args[0]
-  args2[0] = const_cast<char*>(name);
-  if (args2[0] == nullptr) {
-    return nullptr;
-  }
-  for (size_t i = 0; i < argv.size(); ++i) {
-    args2[i + 1] = &args[i][0];
-  }
+  // tune2fs expects the program name as its first arg.
+  args.insert(args.begin(), "tune2fs");
+  auto tune2fs_args = StringVectorToNullTerminatedArray(args);
 
-  // tune2fs changes the file system parameters on an ext2 file system; it
-  // returns 0 on success.
-  int result = tune2fs_main(argv.size() + 1, args2);
-  if (result != 0) {
+  // tune2fs changes the filesystem parameters on an ext2 filesystem; it returns 0 on success.
+  if (auto result = tune2fs_main(tune2fs_args.size() - 1, tune2fs_args.data()); result != 0) {
     return ErrorAbort(state, kTune2FsFailure, "%s() returned error code %d", name, result);
   }
   return StringValue("t");
@@ -1459,15 +1323,13 @@ void RegisterInstallFunctions() {
   RegisterFunction("getprop", GetPropFn);
   RegisterFunction("file_getprop", FileGetPropFn);
 
-  RegisterFunction("apply_patch", ApplyPatchFn);
-  RegisterFunction("apply_patch_check", ApplyPatchCheckFn);
   RegisterFunction("apply_patch_space", ApplyPatchSpaceFn);
+  RegisterFunction("patch_partition", PatchPartitionFn);
+  RegisterFunction("patch_partition_check", PatchPartitionCheckFn);
 
   RegisterFunction("wipe_block_device", WipeBlockDeviceFn);
 
   RegisterFunction("read_file", ReadFileFn);
-  RegisterFunction("sha1_check", Sha1CheckFn);
-  RegisterFunction("rename", RenameFn);
   RegisterFunction("write_value", WriteValueFn);
 
   RegisterFunction("wipe_cache", WipeCacheFn);

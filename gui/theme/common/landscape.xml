@@ -310,7 +310,7 @@
 				<condition var1="tw_selectimage" var2="0"/>
 				<placement x="%col2_x_left%" y="%row1a_y%" w="%fileselector_install_width%" h="%fileselector_install_height%"/>
 				<text>%tw_zip_location%</text>
-				<filter extn=".zip" folders="0" files="1"/>
+				<filter extn=".zip;.ozip;.ZIP;.OZIP" folders="0" files="1"/>
 				<path name="tw_zip_location" default="/sdcard"/>
 				<data name="tw_filename"/>
 				<selection name="tw_file"/>
@@ -572,6 +572,7 @@
 			</button>
 
 			<button style="main_button_half_width">
+				<condition var1="tw_ab_device" var2="0"/>
 				<placement x="%center_x%" y="%row15a_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
@@ -579,6 +580,17 @@
 					<action function="page">reboot_system_routine</action>
 				</actions>
 			</button>
+
+			<button style="main_button_half_width">
+				<condition var1="tw_ab_device" var2="1"/>
+				<placement x="%center_x%" y="%row15a_y%"/>
+				<text>{@reboot_btn=Reboot}</text>
+				<actions>
+					<action function="set">tw_back=main2</action>
+					<action function="page">reboot</action>
+				</actions>
+			</button>
+
 
 			<action>
 				<touch key="back"/>
@@ -2473,7 +2485,10 @@
 			</partitionlist>
 
 			<button style="checkbox">
-				<condition var1="tw_mount_system_ro" op="=" var2="0"/>
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+					<condition var1="tw_is_super" op="=" var2="0"/>
+				</conditions>
 				<placement x="%col1_x_left%" y="%row14_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_false"/>
@@ -2481,7 +2496,10 @@
 			</button>
 
 			<button style="checkbox">
-				<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+					<condition var1="tw_is_super" op="=" var2="0"/>
+				</conditions>
 				<placement x="%col1_x_left%" y="%row14_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_chk=Mount system partition read-only}</text>
 				<image resource="checkbox_true"/>
@@ -2936,6 +2954,9 @@
 				<listitem name="{@sha2_chk=Use SHA2 for hashing}">
 					<condition var1="tw_no_sha2" var2="0"/>
 					<data variable="tw_use_sha2"/>
+				</listitem>
+				<listitem name="{@unmount_sys_install=Unmount System before installing a ZIP}">
+					<data variable="tw_unmount_system"/>
 				</listitem>
 			</listbox>
 

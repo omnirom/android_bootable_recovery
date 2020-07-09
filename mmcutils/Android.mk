@@ -7,7 +7,7 @@ LOCAL_SRC_FILES := \
 	mmcutils.c
 
 LOCAL_MODULE := libmmcutils
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -18,7 +18,7 @@ LOCAL_SRC_FILES := \
 mmcutils.c
 
 LOCAL_MODULE := libmmcutils
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
 

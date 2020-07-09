@@ -21,54 +21,42 @@
 #include <string.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/file.h>
+#include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
-#include <fs_mgr.h>
+#include <fstab/fstab.h>
 
-#ifdef USE_OLD_BOOTLOADER_MESSAGE
-#include <sys/system_properties.h>
+using android::fs_mgr::Fstab;
+using android::fs_mgr::ReadDefaultFstab;
 
-static struct fstab* read_fstab(std::string* err) {
-  // The fstab path is always "/fstab.${ro.hardware}".
-  std::string fstab_path = "/fstab.";
-  char value[PROP_VALUE_MAX];
-  if (__system_property_get("ro.hardware", value) == 0) {
-    *err = "failed to get ro.hardware";
-    return nullptr;
-  }
-  fstab_path += value;
-  struct fstab* fstab = fs_mgr_read_fstab(fstab_path.c_str());
-  if (fstab == nullptr) {
-    *err = "failed to read " + fstab_path;
-  }
-  return fstab;
+static std::string g_misc_device_for_test;
+
+// Exposed for test purpose.
+void SetMiscBlockDeviceForTest(std::string_view misc_device) {
+  g_misc_device_for_test = misc_device;
 }
-#endif
 
 static std::string get_misc_blk_device(std::string* err) {
-#ifdef USE_OLD_BOOTLOADER_MESSAGE
-  struct fstab* fstab = read_fstab(err);
-#else
-  std::unique_ptr<fstab, decltype(&fs_mgr_free_fstab)> fstab(fs_mgr_read_fstab_default(),
-                                                             fs_mgr_free_fstab);
-#endif
-  if (!fstab) {
+  if (!g_misc_device_for_test.empty()) {
+    return g_misc_device_for_test;
+  }
+  Fstab fstab;
+  if (!ReadDefaultFstab(&fstab)) {
     *err = "failed to read default fstab";
     return "";
   }
-#ifdef USE_OLD_BOOTLOADER_MESSAGE
-  fstab_rec* record = fs_mgr_get_entry_for_mount_point(fstab, "/misc");
-#else
-  fstab_rec* record = fs_mgr_get_entry_for_mount_point(fstab.get(), "/misc");
-#endif
-  if (record == nullptr) {
-    *err = "failed to find /misc partition";
-    return "";
+  for (const auto& entry : fstab) {
+    if (entry.mount_point == "/misc") {
+      return entry.blk_device;
+    }
   }
-  return record->blk_device;
+
+  *err = "failed to find /misc partition";
+  return "";
 }
 
 // In recovery mode, recovery can get started and try to access the misc
@@ -249,6 +237,37 @@ bool write_wipe_package(const std::string& package_data, std::string* err) {
   }
   return write_misc_partition(package_data.data(), package_data.size(), misc_blk_device,
                               WIPE_PACKAGE_OFFSET_IN_MISC, err);
+}
+
+static bool OffsetAndSizeInVendorSpace(size_t offset, size_t size) {
+  auto total_size = WIPE_PACKAGE_OFFSET_IN_MISC - VENDOR_SPACE_OFFSET_IN_MISC;
+  return size <= total_size && offset <= total_size - size;
+}
+
+bool ReadMiscPartitionVendorSpace(void* data, size_t size, size_t offset, std::string* err) {
+  if (!OffsetAndSizeInVendorSpace(offset, size)) {
+    *err = android::base::StringPrintf("Out of bound read (offset %zu size %zu)", offset, size);
+    return false;
+  }
+  auto misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) {
+    return false;
+  }
+  return read_misc_partition(data, size, misc_blk_device, VENDOR_SPACE_OFFSET_IN_MISC + offset,
+                             err);
+}
+
+bool WriteMiscPartitionVendorSpace(const void* data, size_t size, size_t offset, std::string* err) {
+  if (!OffsetAndSizeInVendorSpace(offset, size)) {
+    *err = android::base::StringPrintf("Out of bound write (offset %zu size %zu)", offset, size);
+    return false;
+  }
+  auto misc_blk_device = get_misc_blk_device(err);
+  if (misc_blk_device.empty()) {
+    return false;
+  }
+  return write_misc_partition(data, size, misc_blk_device, VENDOR_SPACE_OFFSET_IN_MISC + offset,
+                              err);
 }
 
 extern "C" bool write_reboot_bootloader(void) {

@@ -53,19 +53,16 @@ struct State {
   bool is_retry = false;
 };
 
-enum ValueType {
-    VAL_INVALID = -1,
-    VAL_STRING = 1,
-    VAL_BLOB = 2,
-};
-
 struct Value {
-    ValueType type;
-    std::string data;
+  enum class Type {
+    STRING = 1,
+    BLOB = 2,
+  };
 
-    Value(ValueType type, const std::string& str) :
-        type(type),
-        data(str) {}
+  Value(Type type, const std::string& str) : type(type), data(str) {}
+
+  Type type;
+  std::string data;
 };
 
 struct Expr;
@@ -156,6 +153,6 @@ Value* StringValue(const char* str);
 
 Value* StringValue(const std::string& str);
 
-int parse_string(const char* str, std::unique_ptr<Expr>* root, int* error_count);
+int ParseString(const std::string& str, std::unique_ptr<Expr>* root, int* error_count);
 
 #endif  // _EXPRESSION_H

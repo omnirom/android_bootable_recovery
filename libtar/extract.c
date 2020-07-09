@@ -36,8 +36,13 @@
 #include <selinux/selinux.h>
 
 #ifdef HAVE_EXT4_CRYPT
-# include "ext4crypt_tar.h"
+#include "ext4crypt_tar.h"
 #endif
+
+#ifdef USE_FSCRYPT
+#include "fscrypt_policy.h"
+#endif
+
 #include "android_utils.h"
 
 const unsigned long long progress_size = (unsigned long long)(T_BLOCKSIZE);
@@ -570,6 +575,31 @@ tar_extract_dir(TAR *t, const char *realname)
 			//return -1; // This may not be an error in some cases, so log and ignore
 		}
 	}
+#endif
+
+#ifdef USE_FSCRYPT
+	if(t->th_buf.fep != NULL)
+	{
+#ifdef DEBUG
+		printf("tar_extract_file(): restoring fscrypt policy %s to dir %s\n", t->th_buf.fep->master_key_descriptor, realname);
+#endif
+		uint8_t binary_policy[FS_KEY_DESCRIPTOR_SIZE];
+		if (!lookup_ref_tar(t->th_buf.fep->master_key_descriptor, &binary_policy[0])) {
+			printf("error looking up proper fscrypt policy for '%s' - %s\n", realname, t->th_buf.fep->master_key_descriptor);
+			return -1;
+		}
+		char policy_hex[FS_KEY_DESCRIPTOR_SIZE_HEX];
+		policy_to_hex(binary_policy, policy_hex);
+		printf("restoring policy %s > '%s' to '%s'\n", t->th_buf.fep->master_key_descriptor, policy_hex, realname);
+		memcpy(&t->th_buf.fep->master_key_descriptor, binary_policy, FS_KEY_DESCRIPTOR_SIZE);
+		if (!fscrypt_policy_set_struct(realname, t->th_buf.fep))
+		{
+			printf("tar_extract_file(): failed to restore fscrypt policy to dir '%s' '%s'!!!\n", realname, policy_hex);
+			//return -1; // This may not be an error in some cases, so log and ignore
+		}
+	}
+	else
+		printf("NULL FSCRYPT\n");
 #endif
 
 	return 0;

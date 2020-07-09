@@ -1,5 +1,5 @@
 /*
-        Copyright 2012 bigbiff/Dees_Troy TeamWin
+        Copyright 2012 to 2020 TeamWin
         This file is part of TWRP/TeamWin Recovery Project.
 
         TWRP is free software: you can redistribute it and/or modify
@@ -28,6 +28,7 @@ extern "C" {
 #include "gui.h"
 }
 #include "../minuitwrp/minui.h"
+#include "../minuitwrp/truetype.hpp"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
@@ -333,7 +334,7 @@ void GUIKeyboard::DrawKey(Key& key, int keyX, int keyY, int keyW, int keyH)
 	else if (!labelText.empty() && labelFont && labelFont->GetResource())
 	{
 		void* fontResource = labelFont->GetResource();
-		int textW = gr_ttf_measureEx(labelText.c_str(), fontResource);
+		int textW = twrpTruetype::gr_ttf_measureEx(labelText.c_str(), fontResource);
 		int textH = labelFont->GetHeight();
 		int textX = keyX + (keyW - textW) / 2;
 		int textY = keyY + (keyH - textH) / 2;
@@ -346,7 +347,7 @@ void GUIKeyboard::DrawKey(Key& key, int keyX, int keyY, int keyW, int keyH)
 		void* fontResource = mLongpressFont->GetResource();
 		gr_color(mLongpressFontColor.red, mLongpressFontColor.green, mLongpressFontColor.blue, mLongpressFontColor.alpha);
 		string text(1, keychar);
-		int textW = gr_ttf_measureEx(text.c_str(), fontResource);
+		int textW = twrpTruetype::gr_ttf_measureEx(text.c_str(), fontResource);
 		int textX = keyX + keyW - longpressOffsetX - textW;
 		int textY = keyY + longpressOffsetY;
 		gr_textEx_scaleW(textX, textY, text.c_str(), fontResource, keyW, TOP_LEFT, 0);

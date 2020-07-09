@@ -48,6 +48,8 @@ enum CauseCode : int {
   kRebootFailure,
   kPackageExtractFileFailure,
   kPatchApplicationFailure,
+  kHashTreeComputationFailure,
+  kEioFailure,
   kVendorFailure = 200
 };
 

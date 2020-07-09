@@ -14,27 +14,75 @@
  * limitations under the License.
  */
 
-#ifndef _MINUI_H_
-#define _MINUI_H_
+#pragma once
 
 #ifndef TW_USE_MINUI_21
 
+#include <stdint.h>
+#include <stdlib.h>
 #include <sys/types.h>
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
+
+#include <android-base/macros.h>
+#include <android-base/unique_fd.h>
 
 //
 // Graphics.
 //
 
-struct GRSurface {
-  int width;
-  int height;
-  int row_bytes;
-  int pixel_bytes;
-  unsigned char* data;
+class GRSurface {
+ public:
+  static constexpr size_t kSurfaceDataAlignment = 8;
+
+  virtual ~GRSurface() = default;
+
+  // Creates and returns a GRSurface instance that's sufficient for storing an image of the given
+  // size (i.e. row_bytes * height). The starting address of the surface data is aligned to
+  // kSurfaceDataAlignment. Returns the created GRSurface instance (in std::unique_ptr), or nullptr
+  // on error.
+  static std::unique_ptr<GRSurface> Create(size_t width, size_t height, size_t row_bytes,
+                                           size_t pixel_bytes);
+
+  // Clones the current GRSurface instance (i.e. an image).
+  std::unique_ptr<GRSurface> Clone() const;
+
+  virtual uint8_t* data() {
+    return data_.get();
+  }
+
+  const uint8_t* data() const {
+    return const_cast<const uint8_t*>(const_cast<GRSurface*>(this)->data());
+  }
+
+  size_t data_size() const {
+    return data_size_;
+  }
+
+  size_t width;
+  size_t height;
+  size_t row_bytes;
+  size_t pixel_bytes;
+
+ protected:
+  GRSurface(size_t width, size_t height, size_t row_bytes, size_t pixel_bytes)
+      : width(width), height(height), row_bytes(row_bytes), pixel_bytes(pixel_bytes) {}
+
+ private:
+  // The deleter for data_, whose data is allocated via aligned_alloc(3).
+  struct DataDeleter {
+    void operator()(uint8_t* data) {
+      free(data);
+    }
+  };
+
+  std::unique_ptr<uint8_t, DataDeleter> data_;
+  size_t data_size_;
+
+  DISALLOW_COPY_AND_ASSIGN(GRSurface);
 };
 
 struct GRFont {
@@ -43,14 +91,27 @@ struct GRFont {
   int char_height;
 };
 
-enum GRRotation {
-  ROTATION_NONE = 0,
-  ROTATION_RIGHT = 1,
-  ROTATION_DOWN = 2,
-  ROTATION_LEFT = 3,
+enum class GRRotation : int {
+  NONE = 0,
+  RIGHT = 1,
+  DOWN = 2,
+  LEFT = 3,
 };
 
+enum class PixelFormat : int {
+  UNKNOWN = 0,
+  ABGR = 1,
+  RGBX = 2,
+  BGRA = 3,
+};
+
+// Initializes the graphics backend and loads font file. Returns 0 on success, or -1 on error. Note
+// that the font initialization failure would be non-fatal, as caller may not need to draw any text
+// at all. Caller can check the font initialization result via gr_sys_font() as needed.
 int gr_init();
+
+// Frees the allocated resources. The function is idempotent, and safe to be called if gr_init()
+// didn't finish successfully.
 void gr_exit();
 
 int gr_fb_width();
@@ -59,7 +120,8 @@ int gr_fb_height();
 void gr_flip();
 void gr_fb_blank(bool blank);
 
-void gr_clear();  // clear entire surface to current color
+// Clears entire surface to current color.
+void gr_clear();
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 void gr_fill(int x1, int y1, int x2, int y2);
 
@@ -70,20 +132,25 @@ int gr_measure(const char *s);
 void gr_font_size(int *x, int *y);
 void gr_set_font(__attribute__ ((unused))const char* name);
 #else
+void gr_texticon(int x, int y, const GRSurface* icon);
 
 const GRFont* gr_sys_font();
 int gr_init_font(const char* name, GRFont** dest);
 void gr_text(const GRFont* font, int x, int y, const char* s, bool bold);
+// Returns -1 if font is nullptr.
 int gr_measure(const GRFont* font, const char* s);
-void gr_font_size(const GRFont* font, int* x, int* y);
-#endif
+// Returns -1 if font is nullptr.
+int gr_font_size(const GRFont* font, int* x, int* y);
 
-void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
-unsigned int gr_get_width(GRSurface* surface);
-unsigned int gr_get_height(GRSurface* surface);
+void gr_blit(const GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
+unsigned int gr_get_width(const GRSurface* surface);
+unsigned int gr_get_height(const GRSurface* surface);
 
-// Set rotation, flips gr_fb_width/height if 90 degree rotation difference
+// Sets rotation, flips gr_fb_width/height if 90 degree rotation difference
 void gr_rotate(GRRotation rotation);
+
+// Returns the current PixelFormat being used.
+PixelFormat gr_pixel_format();
 
 //
 // Input events.
@@ -104,6 +171,9 @@ using ev_set_key_callback = std::function<int(int code, int value)>;
 
 #ifdef TW_USE_MINUI_WITH_OPTIONAL_TOUCH_EVENTS
 int ev_init(ev_callback input_cb, bool allow_touch_inputs = false);
+void ev_exit();
+int ev_add_fd(android::base::unique_fd&& fd, ev_callback cb);
+void ev_iterate_available_keys(const std::function<void(int)>& f);
 void ev_iterate_touch_inputs(const std::function<void(int)>& action);
 #else
 int ev_init(ev_callback input_cb);
@@ -170,7 +240,6 @@ std::vector<std::string> get_locales_in_png(const std::string& png_name);
 // Free a surface allocated by any of the res_create_*_surface()
 // functions.
 void res_free_surface(GRSurface* surface);
-
 #else //ifndef TW_USE_MINUI_21
 
 // This the old minui21/minui.h for compatibility with building TWRP

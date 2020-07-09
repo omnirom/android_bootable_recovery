@@ -20,9 +20,10 @@
 
 #include <string>
 
-#include <android-base/test_utils.h>
+#include <android-base/file.h>
 #include <gtest/gtest.h>
-#include <otautil/DirUtil.h>
+
+#include "otautil/dirutil.h"
 
 TEST(DirUtilTest, create_invalid) {
   // Requesting to create an empty dir is invalid.

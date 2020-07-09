@@ -17,9 +17,9 @@
 #ifndef _OTA_TEST_CONSTANTS_H
 #define _OTA_TEST_CONSTANTS_H
 
-#include <stdlib.h>
-
 #include <string>
+
+#include <android-base/file.h>
 
 // Zip entries in ziptest_valid.zip.
 static const std::string kATxtContents("abcdefghabcdefgh\n");
@@ -32,14 +32,9 @@ static const std::string kATxtSha1Sum("32c96a03dc8cd20097940f351bca6261ee5a1643"
 // echo -n -e "abcdefgh\n" | sha1sum
 static const std::string kBTxtSha1Sum("e414af7161c9554089f4106d6f1797ef14a73666");
 
-static std::string from_testdata_base(const std::string& fname) {
-#ifdef __ANDROID__
-  static std::string data_root = getenv("ANDROID_DATA");
-#else
-  static std::string data_root = std::string(getenv("ANDROID_PRODUCT_OUT")) + "/data";
-#endif
-
-  return data_root + "/nativetest/recovery/testdata/" + fname;
+[[maybe_unused]] static std::string from_testdata_base(const std::string& fname) {
+  static std::string exec_dir = android::base::GetExecutableDirectory();
+  return exec_dir + "/testdata/" + fname;
 }
 
 #endif  // _OTA_TEST_CONSTANTS_H

@@ -28,8 +28,9 @@
 // 16K - 64K    Used by uncrypt and recovery to store wipe_package for A/B devices
 // Note that these offsets are admitted by bootloader,recovery and uncrypt, so they
 // are not configurable without changing all of them.
-static const size_t BOOTLOADER_MESSAGE_OFFSET_IN_MISC = 0;
-static const size_t WIPE_PACKAGE_OFFSET_IN_MISC = 16 * 1024;
+constexpr size_t BOOTLOADER_MESSAGE_OFFSET_IN_MISC = 0;
+constexpr size_t VENDOR_SPACE_OFFSET_IN_MISC = 2 * 1024;
+constexpr size_t WIPE_PACKAGE_OFFSET_IN_MISC = 16 * 1024;
 
 /* Bootloader Message (2-KiB)
  *
@@ -65,16 +66,6 @@ struct bootloader_message {
     char status[32];
     char recovery[768];
 
-#ifdef USE_OLD_BOOTLOADER_MESSAGE
-    // The 'recovery' field used to be 1024 bytes.  It has only ever
-    // been used to store the recovery command line, so 768 bytes
-    // should be plenty.  We carve off the last 256 bytes to store the
-    // stage string (for multistage packages) and possible future
-    // expansion.
-    char stage[32];
-    char slot_suffix[32];
-    char reserved[192];
-#else
     // The 'recovery' field used to be 1024 bytes.  It has only ever
     // been used to store the recovery command line, so 768 bytes
     // should be plenty.  We carve off the last 256 bytes to store the
@@ -87,14 +78,13 @@ struct bootloader_message {
     // 1184-byte so that the entire bootloader_message struct rounds up
     // to 2048-byte.
     char reserved[1184];
-#endif
 };
 
 /**
  * We must be cautious when changing the bootloader_message struct size,
  * because A/B-specific fields may end up with different offsets.
  */
-#if !defined(USE_OLD_BOOTLOADER_MESSAGE) && ((__STDC_VERSION__ >= 201112L) || defined(__cplusplus))
+#if (__STDC_VERSION__ >= 201112L) || defined(__cplusplus)
 static_assert(sizeof(struct bootloader_message) == 2048,
               "struct bootloader_message size changes, which may break A/B devices");
 #endif
@@ -131,7 +121,7 @@ struct bootloader_message_ab {
  * Be cautious about the struct size change, in case we put anything post
  * bootloader_message_ab struct (b/29159185).
  */
-#if !defined(USE_OLD_BOOTLOADER_MESSAGE) && ((__STDC_VERSION__ >= 201112L) || defined(__cplusplus))
+#if (__STDC_VERSION__ >= 201112L) || defined(__cplusplus)
 static_assert(sizeof(struct bootloader_message_ab) == 4096,
               "struct bootloader_message_ab size changes");
 #endif
@@ -238,6 +228,14 @@ bool read_wipe_package(std::string* package_data, size_t size, std::string* err)
 
 // Write the wipe package into BCB (to offset WIPE_PACKAGE_OFFSET_IN_MISC).
 bool write_wipe_package(const std::string& package_data, std::string* err);
+
+// Reads data from the vendor space in /misc partition, with the given offset and size. Note that
+// offset is in relative to the start of vendor space.
+bool ReadMiscPartitionVendorSpace(void* data, size_t size, size_t offset, std::string* err);
+
+// Writes the given data to the vendor space in /misc partition, at the given offset. Note that
+// offset is in relative to the start of the vendor space.
+bool WriteMiscPartitionVendorSpace(const void* data, size_t size, size_t offset, std::string* err);
 
 #else
 

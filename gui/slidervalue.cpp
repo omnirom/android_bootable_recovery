@@ -1,5 +1,5 @@
 /*
-	Copyright 2017 TeamWin
+    Copyright 2012 to 2020 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -39,6 +39,7 @@ extern "C" {
 #include "../twcommon.h"
 }
 #include "../minuitwrp/minui.h"
+#include "../minuitwrp/truetype.hpp"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
@@ -270,7 +271,7 @@ int GUISliderValue::measureText(const std::string& str)
 	void* fontResource = NULL;
 	if (mFont)  fontResource = mFont->GetResource();
 
-	return gr_ttf_measureEx(str.c_str(), fontResource);
+	return twrpTruetype::gr_ttf_measureEx(str.c_str(), fontResource);
 }
 
 int GUISliderValue::Render(void)

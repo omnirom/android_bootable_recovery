@@ -462,12 +462,12 @@ PatchChunk::PatchChunk(const ImageChunk& tgt)
       target_len_(tgt.GetRawDataLength()),
       target_uncompressed_len_(tgt.DataLengthForPatch()),
       target_compress_level_(tgt.GetCompressLevel()),
-      data_(tgt.DataForPatch(), tgt.DataForPatch() + tgt.DataLengthForPatch()) {}
+      data_(tgt.GetRawData(), tgt.GetRawData() + tgt.GetRawDataLength()) {}
 
 // Return true if raw data is smaller than the patch size.
 bool PatchChunk::RawDataIsSmaller(const ImageChunk& tgt, size_t patch_size) {
   size_t target_len = tgt.GetRawDataLength();
-  return (tgt.GetType() == CHUNK_NORMAL && (target_len <= 160 || target_len < patch_size));
+  return target_len < patch_size || (tgt.GetType() == CHUNK_NORMAL && target_len <= 160);
 }
 
 void PatchChunk::UpdateSourceOffset(const SortedRangeSet& src_range) {

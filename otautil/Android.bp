@@ -16,29 +16,54 @@ cc_library_static {
     name: "libotautil",
 
     host_supported: true,
+    recovery_available: true,
 
+    defaults: [
+        "recovery_defaults",
+    ],
+
+    // Minimal set of files to support host build.
     srcs: [
-        "SysUtil.cpp",
-        "DirUtil.cpp",
-        "ZipUtil.cpp",
-        "ThermalUtil.cpp",
-        "cache_location.cpp",
+        "paths.cpp",
         "rangeset.cpp",
     ],
 
-    static_libs: [
-        "libselinux",
+    shared_libs: [
         "libbase",
         "libziparchive",
-    ],
-
-    cflags: [
-        "-D_FILE_OFFSET_BITS=64",
-        "-Werror",
-        "-Wall",
     ],
 
     export_include_dirs: [
         "include",
     ],
+
+    target: {
+        android: {
+            srcs: [
+                "dirutil.cpp",
+                "logging.cpp",
+                "mounts.cpp",
+                "parse_install_logs.cpp",
+                "roots.cpp",
+                "sysutil.cpp",
+                "thermalutil.cpp",
+            ],
+
+            include_dirs: [
+                "system/vold",
+            ],
+
+            static_libs: [
+                "libfstab",
+            ],
+
+            shared_libs: [
+                "libcutils",
+                "libext4_utils",
+                "libfs_mgr",
+                "libselinux",
+                "libziparchive",
+            ],
+        },
+    },
 }

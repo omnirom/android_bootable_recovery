@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Нема команде"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Грешка!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Инсталира се безбедносно ажурирање"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Учитавање Android система није успело. Подаци су можда оштећени. Ако наставите да добијате ову поруку, можда ћете морати да ресетујете уређај на фабричка подешавања и обришете све податке корисника које чувате на њему."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Пробај поново"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Ресетовање на фабричка подешавања"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Желите ли да избришете све податке корисника?\n\n ОВО НЕ МОЖЕ ДА СЕ ОПОЗОВЕ!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Откажи"</string>
 </resources>

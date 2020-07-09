@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "private/resources.h"
+
 #include <fcntl.h>
 #include <linux/fb.h>
 #include <linux/kd.h>
@@ -25,89 +27,55 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <limits>
 #include <memory>
 #include <regex>
 #include <string>
 #include <vector>
 
-//#include <android-base/stringprintf.h> // does not exist in 6.0
-//#include <android-base/strings.h> // does not exist in 6.0
+#include <android-base/strings.h>
 #include <png.h>
 
 #include "minui/minui.h"
 
-#define SURFACE_DATA_ALIGNMENT 8
+static std::string g_resource_dir{ "/res/images" };
 
-static GRSurface* malloc_surface(size_t data_size) {
-    size_t size = sizeof(GRSurface) + data_size + SURFACE_DATA_ALIGNMENT;
-    unsigned char* temp = static_cast<unsigned char*>(malloc(size));
-    if (temp == NULL) return NULL;
-    GRSurface* surface = reinterpret_cast<GRSurface*>(temp);
-    surface->data = temp + sizeof(GRSurface) +
-        (SURFACE_DATA_ALIGNMENT - (sizeof(GRSurface) % SURFACE_DATA_ALIGNMENT));
-    return surface;
+std::unique_ptr<GRSurface> GRSurface::Create(size_t width, size_t height, size_t row_bytes,
+                                             size_t pixel_bytes) {
+  if (width == 0 || row_bytes == 0 || height == 0 || pixel_bytes == 0) return nullptr;
+  if (std::numeric_limits<size_t>::max() / row_bytes < height) return nullptr;
+
+  // Cannot use std::make_unique to access non-public ctor.
+  auto result = std::unique_ptr<GRSurface>(new GRSurface(width, height, row_bytes, pixel_bytes));
+  size_t data_size = row_bytes * height;
+  result->data_size_ =
+      (data_size + kSurfaceDataAlignment - 1) / kSurfaceDataAlignment * kSurfaceDataAlignment;
+  result->data_.reset(
+      static_cast<uint8_t*>(aligned_alloc(kSurfaceDataAlignment, result->data_size_)));
+  if (!result->data_) return nullptr;
+  return result;
 }
 
-// This class handles the png file parsing. It also holds the ownership of the png pointer and the
-// opened file pointer. Both will be destroyed/closed when this object goes out of scope.
-class PngHandler {
- public:
-  PngHandler(const std::string& name);
+std::unique_ptr<GRSurface> GRSurface::Clone() const {
+  auto result = GRSurface::Create(width, height, row_bytes, pixel_bytes);
+  if (!result) return nullptr;
+  memcpy(result->data(), data(), data_size_);
+  return result;
+}
 
-  ~PngHandler();
-
-  png_uint_32 width() const {
-    return width_;
+PngHandler::PngHandler(const std::string& name) {
+  std::string res_path = g_resource_dir + "/" + name + ".png";
+  png_fp_.reset(fopen(res_path.c_str(), "rbe"));
+  // Try to read from |name| if the resource path does not work.
+  if (!png_fp_) {
+    png_fp_.reset(fopen(name.c_str(), "rbe"));
   }
-
-  png_uint_32 height() const {
-    return height_;
-  }
-
-  png_byte channels() const {
-    return channels_;
-  }
-
-  png_structp png_ptr() const {
-    return png_ptr_;
-  }
-
-  png_infop info_ptr() const {
-    return info_ptr_;
-  }
-
-  int error_code() const {
-    return error_code_;
-  };
-
-  operator bool() const {
-    return error_code_ == 0;
-  }
-
- private:
-  png_structp png_ptr_{ nullptr };
-  png_infop info_ptr_{ nullptr };
-  png_uint_32 width_;
-  png_uint_32 height_;
-  png_byte channels_;
-
-  // The |error_code_| is set to a negative value if an error occurs when opening the png file.
-  int error_code_;
-  // After initialization, we'll keep the file pointer open before destruction of PngHandler.
-  std::unique_ptr<FILE, decltype(&fclose)> png_fp_;
-};
-
-PngHandler::PngHandler(const std::string& name) : error_code_(0), png_fp_(nullptr, fclose) {
-  char res_path[PATH_MAX];
-  sprintf(res_path, "/res/images/%s.png", name.c_str());
-  //std::string res_path = sprintf("/res/images/%s.png", name.c_str());
-  png_fp_.reset(fopen(res_path, "rbe"));
   if (!png_fp_) {
     error_code_ = -1;
     return;
   }
 
-  unsigned char header[8];
+  uint8_t header[8];
   size_t bytesRead = fread(header, 1, sizeof(header), png_fp_.get());
   if (bytesRead != sizeof(header)) {
     error_code_ = -2;
@@ -140,19 +108,17 @@ PngHandler::PngHandler(const std::string& name) : error_code_(0), png_fp_(nullpt
   png_set_sig_bytes(png_ptr_, sizeof(header));
   png_read_info(png_ptr_, info_ptr_);
 
-  int color_type;
-  int bit_depth;
-  png_get_IHDR(png_ptr_, info_ptr_, &width_, &height_, &bit_depth, &color_type, nullptr, nullptr,
+  png_get_IHDR(png_ptr_, info_ptr_, &width_, &height_, &bit_depth_, &color_type_, nullptr, nullptr,
                nullptr);
 
   channels_ = png_get_channels(png_ptr_, info_ptr_);
 
-  if (bit_depth == 8 && channels_ == 3 && color_type == PNG_COLOR_TYPE_RGB) {
+  if (bit_depth_ == 8 && channels_ == 3 && color_type_ == PNG_COLOR_TYPE_RGB) {
     // 8-bit RGB images: great, nothing to do.
-  } else if (bit_depth <= 8 && channels_ == 1 && color_type == PNG_COLOR_TYPE_GRAY) {
+  } else if (bit_depth_ <= 8 && channels_ == 1 && color_type_ == PNG_COLOR_TYPE_GRAY) {
     // 1-, 2-, 4-, or 8-bit gray images: expand to 8-bit gray.
     png_set_expand_gray_1_2_4_to_8(png_ptr_);
-  } else if (bit_depth <= 8 && channels_ == 1 && color_type == PNG_COLOR_TYPE_PALETTE) {
+  } else if (bit_depth_ <= 8 && channels_ == 1 && color_type_ == PNG_COLOR_TYPE_PALETTE) {
     // paletted images: expand to 8-bit RGB.  Note that we DON'T
     // currently expand the tRNS chunk (if any) to an alpha
     // channel, because minui doesn't support alpha channels in
@@ -160,8 +126,8 @@ PngHandler::PngHandler(const std::string& name) : error_code_(0), png_fp_(nullpt
     png_set_palette_to_rgb(png_ptr_);
     channels_ = 3;
   } else {
-    fprintf(stderr, "minui doesn't support PNG depth %d channels %d color_type %d\n", bit_depth,
-            channels_, color_type);
+    fprintf(stderr, "minui doesn't support PNG depth %d channels %d color_type %d\n", bit_depth_,
+            channels_, color_type_);
     error_code_ = -7;
   }
 }
@@ -172,70 +138,49 @@ PngHandler::~PngHandler() {
   }
 }
 
-// "display" surfaces are transformed into the framebuffer's required
-// pixel format (currently only RGBX is supported) at load time, so
-// gr_blit() can be nothing more than a memcpy() for each row.  The
-// next two functions are the only ones that know anything about the
-// framebuffer pixel format; they need to be modified if the
-// framebuffer format changes (but nothing else should).
+// "display" surfaces are transformed into the framebuffer's required pixel format (currently only
+// RGBX is supported) at load time, so gr_blit() can be nothing more than a memcpy() for each row.
 
-// Allocate and return a GRSurface* sufficient for storing an image of
-// the indicated size in the framebuffer pixel format.
-static GRSurface* init_display_surface(png_uint_32 width, png_uint_32 height) {
-    GRSurface* surface = malloc_surface(width * height * 4);
-    if (surface == NULL) return NULL;
-
-    surface->width = width;
-    surface->height = height;
-    surface->row_bytes = width * 4;
-    surface->pixel_bytes = 4;
-
-    return surface;
-}
-
-// Copy 'input_row' to 'output_row', transforming it to the
-// framebuffer pixel format.  The input format depends on the value of
-// 'channels':
+// Copies 'input_row' to 'output_row', transforming it to the framebuffer pixel format. The input
+// format depends on the value of 'channels':
 //
 //   1 - input is 8-bit grayscale
 //   3 - input is 24-bit RGB
 //   4 - input is 32-bit RGBA/RGBX
 //
 // 'width' is the number of pixels in the row.
-static void transform_rgb_to_draw(unsigned char* input_row,
-                                  unsigned char* output_row,
-                                  int channels, int width) {
-    int x;
-    unsigned char* ip = input_row;
-    unsigned char* op = output_row;
+static void TransformRgbToDraw(const uint8_t* input_row, uint8_t* output_row, int channels,
+                               int width) {
+  const uint8_t* ip = input_row;
+  uint8_t* op = output_row;
 
-    switch (channels) {
-        case 1:
-            // expand gray level to RGBX
-            for (x = 0; x < width; ++x) {
-                *op++ = *ip;
-                *op++ = *ip;
-                *op++ = *ip;
-                *op++ = 0xff;
-                ip++;
-            }
-            break;
+  switch (channels) {
+    case 1:
+      // expand gray level to RGBX
+      for (int x = 0; x < width; ++x) {
+        *op++ = *ip;
+        *op++ = *ip;
+        *op++ = *ip;
+        *op++ = 0xff;
+        ip++;
+      }
+      break;
 
-        case 3:
-            // expand RGBA to RGBX
-            for (x = 0; x < width; ++x) {
-                *op++ = *ip++;
-                *op++ = *ip++;
-                *op++ = *ip++;
-                *op++ = 0xff;
-            }
-            break;
+    case 3:
+      // expand RGBA to RGBX
+      for (int x = 0; x < width; ++x) {
+        *op++ = *ip++;
+        *op++ = *ip++;
+        *op++ = *ip++;
+        *op++ = 0xff;
+      }
+      break;
 
-        case 4:
-            // copy RGBA to RGBX
-            memcpy(output_row, input_row, width*4);
-            break;
-    }
+    case 4:
+      // copy RGBA to RGBX
+      memcpy(output_row, input_row, width * 4);
+      break;
+  }
 }
 
 int res_create_display_surface(const char* name, GRSurface** pSurface) {
@@ -248,23 +193,24 @@ int res_create_display_surface(const char* name, GRSurface** pSurface) {
   png_uint_32 width = png_handler.width();
   png_uint_32 height = png_handler.height();
 
-  GRSurface* surface = init_display_surface(width, height);
+  auto surface = GRSurface::Create(width, height, width * 4, 4);
   if (!surface) {
     return -8;
   }
 
-#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
-  png_set_bgr(png_ptr);
-#endif
-
-  for (png_uint_32 y = 0; y < height; ++y) {
-    std::vector<unsigned char> p_row(width * 4);
-    png_read_row(png_ptr, p_row.data(), nullptr);
-    transform_rgb_to_draw(p_row.data(), surface->data + y * surface->row_bytes,
-                          png_handler.channels(), width);
+  PixelFormat pixel_format = gr_pixel_format();
+  if (pixel_format == PixelFormat::ABGR || pixel_format == PixelFormat::BGRA) {
+    png_set_bgr(png_ptr);
   }
 
-  *pSurface = surface;
+  for (png_uint_32 y = 0; y < height; ++y) {
+    std::vector<uint8_t> p_row(width * 4);
+    png_read_row(png_ptr, p_row.data(), nullptr);
+    TransformRgbToDraw(p_row.data(), surface->data() + y * surface->row_bytes,
+                       png_handler.channels(), width);
+  }
+
+  *pSurface = surface.release();
 
   return 0;
 }
@@ -317,23 +263,24 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
     goto exit;
   }
   for (int i = 0; i < *frames; ++i) {
-    surface[i] = init_display_surface(width, height / *frames);
-    if (!surface[i]) {
+    auto created_surface = GRSurface::Create(width, height / *frames, width * 4, 4);
+    if (!created_surface) {
       result = -8;
       goto exit;
     }
+    surface[i] = created_surface.release();
   }
 
-#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
-  png_set_bgr(png_ptr);
-#endif
+  if (gr_pixel_format() == PixelFormat::ABGR || gr_pixel_format() == PixelFormat::BGRA) {
+    png_set_bgr(png_ptr);
+  }
 
   for (png_uint_32 y = 0; y < height; ++y) {
-    std::vector<unsigned char> p_row(width * 4);
+    std::vector<uint8_t> p_row(width * 4);
     png_read_row(png_ptr, p_row.data(), nullptr);
     int frame = y % *frames;
-    unsigned char* out_row = surface[frame]->data + (y / *frames) * surface[frame]->row_bytes;
-    transform_rgb_to_draw(p_row.data(), out_row, png_handler.channels(), width);
+    uint8_t* out_row = surface[frame]->data() + (y / *frames) * surface[frame]->row_bytes;
+    TransformRgbToDraw(p_row.data(), out_row, png_handler.channels(), width);
   }
 
   *pSurface = surface;
@@ -370,27 +317,28 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
   png_uint_32 width = png_handler.width();
   png_uint_32 height = png_handler.height();
 
-  GRSurface* surface = malloc_surface(width * height);
+  auto surface = GRSurface::Create(width, height, width, 1);
   if (!surface) {
     return -8;
   }
-  surface->width = width;
-  surface->height = height;
-  surface->row_bytes = width;
-  surface->pixel_bytes = 1;
 
-#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
-  png_set_bgr(png_ptr);
-#endif
+  PixelFormat pixel_format = gr_pixel_format();
+  if (pixel_format == PixelFormat::ABGR || pixel_format == PixelFormat::BGRA) {
+    png_set_bgr(png_ptr);
+  }
 
   for (png_uint_32 y = 0; y < height; ++y) {
-    unsigned char* p_row = surface->data + y * surface->row_bytes;
+    uint8_t* p_row = surface->data() + y * surface->row_bytes;
     png_read_row(png_ptr, p_row, nullptr);
   }
 
-  *pSurface = surface;
+  *pSurface = surface.release();
 
   return 0;
+}
+
+void res_set_resource_dir(const std::string& dirname) {
+  g_resource_dir = dirname;
 }
 
 // This function tests if a locale string stored in PNG (prefix) matches
@@ -430,7 +378,7 @@ std::vector<std::string> get_locales_in_png(const std::string& png_name) {
   }
 
   std::vector<std::string> result;
-  std::vector<unsigned char> row(png_handler.width());
+  std::vector<uint8_t> row(png_handler.width());
   for (png_uint_32 y = 0; y < png_handler.height(); ++y) {
     png_read_row(png_handler.png_ptr(), row.data(), nullptr);
     int h = (row[3] << 8) | row[2];
@@ -466,7 +414,7 @@ int res_create_localized_alpha_surface(const char* name,
   png_uint_32 height = png_handler.height();
 
   for (png_uint_32 y = 0; y < height; ++y) {
-    std::vector<unsigned char> row(width);
+    std::vector<uint8_t> row(width);
     png_read_row(png_ptr, row.data(), nullptr);
     int w = (row[1] << 8) | row[0];
     int h = (row[3] << 8) | row[2];
@@ -476,21 +424,17 @@ int res_create_localized_alpha_surface(const char* name,
     if (y + 1 + h >= height || matches_locale(loc, locale)) {
       printf("  %20s: %s (%d x %d @ %d)\n", name, loc, w, h, y);
 
-      GRSurface* surface = malloc_surface(w * h);
+      auto surface = GRSurface::Create(w, h, w, 1);
       if (!surface) {
         return -8;
       }
-      surface->width = w;
-      surface->height = h;
-      surface->row_bytes = w;
-      surface->pixel_bytes = 1;
 
       for (int i = 0; i < h; ++i, ++y) {
         png_read_row(png_ptr, row.data(), nullptr);
-        memcpy(surface->data + i * w, row.data(), w);
+        memcpy(surface->data() + i * w, row.data(), w);
       }
 
-      *pSurface = surface;
+      *pSurface = surface.release();
       break;
     }
 

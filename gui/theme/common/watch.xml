@@ -398,7 +398,7 @@
 				<condition var1="tw_selectimage" var2="0"/>
 				<placement x="%indent%" y="%row2_header_y%" w="%content_width%" h="%fileselector_install_height%"/>
 				<text>%tw_zip_location%</text>
-				<filter extn=".zip" folders="1" files="1"/>
+				<filter extn=".zip;.ozip;.ZIP;.OZIP" folders="1" files="1"/>
 				<path name="tw_zip_location" default="/sdcard"/>
 				<data name="tw_filename"/>
 				<selection name="tw_file"/>
@@ -751,11 +751,22 @@
 			</button>
 
 			<button style="main_button_half_height">
+				<condition var1="tw_ab_device" var2="0"/>
 				<placement x="%col1_x_right%" y="%row13_y%"/>
 				<text>{@reboot_system_btn=Reboot System}</text>
 				<actions>
 					<action function="set">tw_back=main2</action>
 					<action function="page">reboot_system_routine</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_ab_device" var2="1"/>
+				<placement x="%col1_x_right%" y="%row13_y%"/>
+				<text>{@reboot_btn=Reboot}</text>
+				<actions>
+					<action function="set">tw_back=main2</action>
+					<action function="page">reboot</action>
 				</actions>
 			</button>
 
@@ -3090,7 +3101,10 @@
 			</fill>
 
 			<button style="checkbox">
-				<condition var1="tw_mount_system_ro" op="=" var2="0"/>
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+					<condition var1="tw_is_super" op="=" var2="0"/>
+				</conditions>
 				<placement x="%col1_x_left%" y="%row11_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_s_chk=Mount System RO}</text>
 				<image resource="checkbox_false"/>
@@ -3098,7 +3112,10 @@
 			</button>
 
 			<button style="checkbox">
-				<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+				<conditions>
+					<condition var1="tw_mount_system_ro" op="!=" var2="0"/>
+					<condition var1="tw_is_super" op="=" var2="0"/>
+				</conditions>
 				<placement x="%col1_x_left%" y="%row11_y%" textplacement="6"/>
 				<text>{@mount_sys_ro_s_chk=Mount System RO}</text>
 				<image resource="checkbox_true"/>
@@ -3639,6 +3656,9 @@
 				<listitem name="{@sha2_chk=Use SHA2 for hashing}">
 					<condition var1="tw_no_sha2" var2="0"/>
 					<data variable="tw_use_sha2"/>
+				</listitem>
+				<listitem name="{@unmount_sys_install=Unmount System before installing a ZIP}">
+					<data variable="tw_unmount_system"/>
 				</listitem>
 			</listbox>
 

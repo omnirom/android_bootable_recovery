@@ -23,7 +23,7 @@
 #include "MtpTypes.h"
 #include "mtp.h"
 #include "btree.hpp"
-#include "../../tw_atomic.hpp"
+#include "tw_atomic.hpp"
 
 class MtpDatabase;
 

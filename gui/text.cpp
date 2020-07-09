@@ -1,5 +1,5 @@
 /*
-        Copyright 2012 to 2016 bigbiff/Dees_Troy TeamWin
+        Copyright 2012 to 2020 TeamWin
         This file is part of TWRP/TeamWin Recovery Project.
 
         TWRP is free software: you can redistribute it and/or modify
@@ -39,6 +39,7 @@ extern "C" {
 #include "../twcommon.h"
 }
 #include "../minuitwrp/minui.h"
+#include "../minuitwrp/truetype.hpp"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
@@ -159,7 +160,7 @@ int GUIText::GetCurrentBounds(int& w, int& h)
 
 	h = mFontHeight;
 	mLastValue = gui_parse_text(mText);
-	w = gr_ttf_measureEx(mLastValue.c_str(), fontResource);
+	w = twrpTruetype::gr_ttf_measureEx(mLastValue.c_str(), fontResource);
 	return 0;
 }
 

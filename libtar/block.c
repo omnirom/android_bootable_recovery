@@ -18,8 +18,14 @@
 # include <stdlib.h>
 #endif
 
+#define DEBUG 1
+
 #ifdef HAVE_EXT4_CRYPT
-# include "ext4crypt_tar.h"
+#include "ext4crypt_tar.h"
+#endif
+
+#ifdef USE_FSCRYPT
+#include "fscrypt_policy.h"
 #endif
 
 #define BIT_ISSET(bitmask, bit) ((bitmask) & (bit))
@@ -32,6 +38,10 @@
 // Used to identify e4crypt_policy in extended ('x')
 #define E4CRYPT_TAG "TWRP.security.e4crypt="
 #define E4CRYPT_TAG_LEN strlen(E4CRYPT_TAG)
+
+// Used to identify fscrypt_policy in extended ('x')
+#define FSCRYPT_TAG "TWRP.security.fscrypt="
+#define FSCRYPT_TAG_LEN strlen(FSCRYPT_TAG)
 
 // Used to identify Posix capabilities in extended ('x')
 #define CAPABILITIES_TAG "SCHILY.xattr.security.capability="
@@ -132,7 +142,7 @@ th_read(TAR *t)
 	char *ptr;
 
 #ifdef DEBUG
-	printf("==> th_read(t=0x%lx)\n", t);
+	printf("==> th_read(t=0x%p)\n", (void *)t);
 #endif
 
 	if (t->th_buf.gnu_longname != NULL)
@@ -145,6 +155,12 @@ th_read(TAR *t)
 	if (t->th_buf.eep != NULL)
 		free(t->th_buf.eep);
 #endif
+
+#ifdef USE_FSCRYPT
+	if (t->th_buf.fep != NULL)
+		free(t->th_buf.fep);
+#endif
+
 	if (t->th_buf.has_cap_data)
 	{
 		memset(&t->th_buf.cap_data, 0, sizeof(struct vfs_cap_data));
@@ -178,7 +194,7 @@ th_read(TAR *t)
 		}
 #ifdef DEBUG
 		printf("    th_read(): GNU long linkname detected "
-		       "(%ld bytes, %d blocks)\n", sz, blocks);
+		       "(%zu bytes, %zu blocks)\n", sz, blocks);
 #endif
 		t->th_buf.gnu_longlink = (char *)malloc(blocks * T_BLOCKSIZE);
 		if (t->th_buf.gnu_longlink == NULL)
@@ -189,7 +205,7 @@ th_read(TAR *t)
 		{
 #ifdef DEBUG
 			printf("    th_read(): reading long linkname "
-			       "(%d blocks left, ptr == %ld)\n", blocks-j, ptr);
+			       "(%zu blocks left, ptr == %p)\n", blocks-j, (void *) ptr);
 #endif
 			i = tar_block_read(t, ptr);
 			if (i != T_BLOCKSIZE)
@@ -228,7 +244,7 @@ th_read(TAR *t)
 		}
 #ifdef DEBUG
 		printf("    th_read(): GNU long filename detected "
-		       "(%ld bytes, %d blocks)\n", sz, blocks);
+		       "(%zu bytes, %zu blocks)\n", sz, blocks);
 #endif
 		t->th_buf.gnu_longname = (char *)malloc(blocks * T_BLOCKSIZE);
 		if (t->th_buf.gnu_longname == NULL)
@@ -239,7 +255,7 @@ th_read(TAR *t)
 		{
 #ifdef DEBUG
 			printf("    th_read(): reading long filename "
-			       "(%d blocks left, ptr == %ld)\n", blocks-j, ptr);
+			       "(%zu blocks left, ptr == %p)\n", blocks-j, (void *) ptr);
 #endif
 			i = tar_block_read(t, ptr);
 			if (i != T_BLOCKSIZE)
@@ -266,7 +282,7 @@ th_read(TAR *t)
 		}
 	}
 
-	// Extended headers (selinux contexts, posix file capabilities, ext4 encryption policies)
+	// Extended headers (selinux contexts, posix file capabilities and encryption policies)
 	while(TH_ISEXTHEADER(t) || TH_ISPOLHEADER(t))
 	{
 		sz = th_get_size(t);
@@ -386,6 +402,36 @@ th_read(TAR *t)
 				}
 			}
 #endif // HAVE_EXT4_CRYPT
+
+#ifdef USE_FSCRYPT
+			start = strstr(buf, FSCRYPT_TAG);
+			if (start && start+FSCRYPT_TAG_LEN < buf+len) {
+				t->th_buf.fep = (struct fscrypt_encryption_policy*)malloc(sizeof(struct fscrypt_encryption_policy));
+				if (!t->th_buf.fep) {
+					printf("malloc fscrypt_encryption_policy\n");
+					return -1;
+				}
+				start += FSCRYPT_TAG_LEN;
+				if (*start == '0') {
+					start++;
+					char *newline_check = start + sizeof(struct fscrypt_encryption_policy);
+					if (*newline_check != '\n')
+						printf("did not find newline char in expected location, continuing anyway...\n");
+					memcpy(t->th_buf.fep, start, sizeof(struct fscrypt_encryption_policy));
+#ifdef DEBUG
+					printf("    th_read(): FSCrypt policy v1 detected: %i %i %i %i %s\n",
+						(int)t->th_buf.fep->version,
+						(int)t->th_buf.fep->contents_encryption_mode,
+						(int)t->th_buf.fep->filenames_encryption_mode,
+						(int)t->th_buf.fep->flags,
+						t->th_buf.fep->master_key_descriptor);
+#endif
+				}
+				else {
+					printf("     invalid fscrypt header found\n");
+				}
+			}
+#endif // USE_FSCRYPT
 		}
 
 		i = th_read_internal(t);
@@ -610,6 +656,38 @@ th_write(TAR *t)
 
 		snprintf(ptr, T_BLOCKSIZE, "%d "E4CRYPT_TAG"2", (int)sz);
 		memcpy(ptr + sz - sizeof(struct ext4_encryption_policy) - 1, t->th_buf.eep, sizeof(struct ext4_encryption_policy));
+		char *nlptr = ptr + sz - 1;
+		*nlptr = '\n';
+		ptr += sz;
+	}
+#endif
+
+#ifdef USE_FSCRYPT
+	if((t->options & TAR_STORE_FSCRYPT_POL) && t->th_buf.fep != NULL)
+	{
+#ifdef DEBUG
+		printf("th_write(): using fscrypt_policy %s\n",
+		       t->th_buf.fep->master_key_descriptor);
+#endif
+		/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *version code* *content* *newline* */
+		//                                                       size   newline
+		sz = FSCRYPT_TAG_LEN + sizeof(struct fscrypt_encryption_policy) + 1 + 3  +    1;
+
+		if(sz >= 100) // another ascci digit for size
+			++sz;
+
+		if (total_sz + sz >= T_BLOCKSIZE)
+		{
+			if (th_write_extended(t, &buf[0], total_sz))
+				return -1;
+			ptr = buf;
+			total_sz = sz;
+		}
+		else
+			total_sz += sz;
+
+		snprintf(ptr, T_BLOCKSIZE, "%d "FSCRYPT_TAG"0", (int)sz);
+		memcpy(ptr + sz - sizeof(struct fscrypt_encryption_policy) - 1, t->th_buf.fep, sizeof(struct fscrypt_encryption_policy));
 		char *nlptr = ptr + sz - 1;
 		*nlptr = '\n';
 		ptr += sz;

@@ -24,22 +24,28 @@
 
 #include <sys/capability.h>
 #include <sys/xattr.h>
+#include <linux/fs.h>
 #include <linux/xattr.h>
 
 #ifdef STDC_HEADERS
-# include <stdlib.h>
-# include <string.h>
+#include <stdlib.h>
+#include <string.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#include <unistd.h>
 #endif
 
 #include <selinux/selinux.h>
 
 #ifdef HAVE_EXT4_CRYPT
-# include "ext4crypt_tar.h"
+#include "ext4crypt_tar.h"
 #endif
+
+#ifdef USE_FSCRYPT
+#include "fscrypt_policy.h"
+#endif
+
 #include "android_utils.h"
 
 struct tar_dev
@@ -142,6 +148,7 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 			printf("malloc ext4_encryption_policy\n");
 			return -1;
 		}
+
 		if (e4crypt_policy_get_struct(realname, t->th_buf.eep))
 		{
 			char tar_policy[EXT4_KEY_DESCRIPTOR_SIZE];
@@ -163,6 +170,43 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 			// no policy found, but this is not an error as not all dirs will have a policy
 			free(t->th_buf.eep);
 			t->th_buf.eep = NULL;
+		}
+	}
+#endif
+#ifdef USE_FSCRYPT
+	if (TH_ISDIR(t) && t->options & TAR_STORE_FSCRYPT_POL)
+	{
+		if (t->th_buf.fep != NULL)
+		{
+			free(t->th_buf.fep);
+			t->th_buf.fep = NULL;
+		}
+
+		t->th_buf.fep = (struct fscrypt_encryption_policy*)malloc(sizeof(struct fscrypt_encryption_policy));
+		if (!t->th_buf.fep) {
+			printf("malloc fs_encryption_policy\n");
+			return -1;
+		}
+
+		if (fscrypt_policy_get_struct(realname, t->th_buf.fep)) {
+			uint8_t tar_policy[FS_KEY_DESCRIPTOR_SIZE];
+			memset(tar_policy, 0, sizeof(tar_policy));
+			char policy_hex[FS_KEY_DESCRIPTOR_SIZE_HEX];
+			policy_to_hex(t->th_buf.fep->master_key_descriptor, policy_hex);
+			if (lookup_ref_key(t->th_buf.fep->master_key_descriptor, &tar_policy[0])) {
+				printf("found fscrypt policy '%s' - '%s' - '%s'\n", realname, tar_policy, policy_hex);
+				memcpy(t->th_buf.fep->master_key_descriptor, tar_policy, FS_KEY_DESCRIPTOR_SIZE);
+			} else {
+				printf("failed to lookup fscrypt tar policy for '%s' - '%s'\n", realname, policy_hex);
+				free(t->th_buf.fep);
+				t->th_buf.fep = NULL;
+				return -1;
+			}
+		}
+		else {
+			// no policy found, but this is not an error as not all dirs will have a policy
+			free(t->th_buf.fep);
+			t->th_buf.fep = NULL;
 		}
 	}
 #endif

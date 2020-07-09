@@ -1,3 +1,33 @@
+# bootable/recovery project uses repohook to apply `clang-format` to the changed lines, with the
+# local style file in `.clang-format`. This will be triggered automatically with `repo upload`.
+# Alternatively, one can stage and format a change with `git clang-format` directly.
+#
+#   $ git add <files>
+#   $ git clang-format --style file
+#
+# Or to format a committed change.
+#
+#   $ git clang-format --style file HEAD~1
+#
+# `--style file` will pick up the local style file in `.clang-format`. This can be configured as the
+# default behavior for bootable/recovery project.
+#
+#   $ git config --local clangFormat.style file
+#
+# Note that `repo upload` calls the `clang-format` binary in Android repo (i.e.
+# `$ANDROID_BUILD_TOP/prebuilts/clang/host/linux-x86/clang-stable/bin/clang-format`), which might
+# give slightly different results from the one installed in host machine (e.g.
+# `/usr/bin/clang-format`). Specifying the file with `--binary` will ensure consistent results.
+#
+#  $ git clang-format --binary \
+#      /path/to/aosp-master/prebuilts/clang/host/linux-x86/clang-stable/bin/clang-format
+#
+# Or to do one-time setup to make it default.
+#
+#   $ git config --local clangFormat.binary \
+#       /path/to/aosp-master/prebuilts/clang/host/linux-x86/clang-stable/bin/clang-format
+#
+
 BasedOnStyle: Google
 AllowShortBlocksOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty

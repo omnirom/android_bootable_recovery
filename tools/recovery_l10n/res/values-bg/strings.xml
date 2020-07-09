@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Без команда"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Грешка!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Актуализацията на сигурносттa се инсталира"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Системата Android не може да се зареди. Данните ви може да са повредени. Ако продължите да получавате това съобщение, може да е необходимо да възстановите фабричните настройки и да изтриете всички потребителски данни, съхранени на това устройство."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Нов опит"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Възстановяване на фабричните настройки"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Да се изчистят ли всички потребителски данни?\n\n ТОВА ДЕЙСТВИЕ НЕ МОЖЕ ДА БЪДЕ ОТМЕНЕНО!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Отказ"</string>
 </resources>

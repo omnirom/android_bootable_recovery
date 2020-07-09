@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"Geen opdracht"</string>
     <string name="recovery_error" msgid="5748178989622716736">"Fout!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"Beveiligingsupdate installeren"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Kan het Android-systeem niet laden. Je gegevens zijn mogelijk beschadigd. Als je dit bericht blijft ontvangen, moet je mogelijk de fabrieksinstellingen terugzetten en alle gebruikersgegevens wissen die op dit apparaat zijn opgeslagen."</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"Opnieuw proberen"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Terugzetten op fabrieksinstellingen"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Alle gebruikersgegevens wissen?\n\n DIT KAN NIET ONGEDAAN WORDEN GEMAAKT."</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Annuleren"</string>
 </resources>

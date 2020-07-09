@@ -22,19 +22,20 @@ minadbd_cflags := \
 # libminadbd (static library)
 # ===============================
 include $(CLEAR_VARS)
+    # ../fuse_sideload.cpp \
 
 LOCAL_SRC_FILES := \
     fuse_adb_provider.cpp \
-    ../fuse_sideload.cpp \
     minadbd.cpp \
     minadbd_services.cpp \
 
 LOCAL_MODULE := libminadbd
 LOCAL_CFLAGS := $(minadbd_cflags) -Wno-unused-parameter
 LOCAL_CONLY_FLAGS := -Wimplicit-function-declaration
+LOCAL_CFLAGS +=  -std=gnu++2a
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/.. system/core/adb
-LOCAL_WHOLE_STATIC_LIBRARIES := libadbd
-LOCAL_SHARED_LIBRARIES := libbase liblog libcutils libc
+#LOCAL_WHOLE_STATIC_LIBRARIES := libadbd
+LOCAL_SHARED_LIBRARIES := libadbd libbase liblog libcutils libc
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     LOCAL_C_INCLUDES += $(LOCAL_PATH)/libmincrypt/includes
@@ -47,6 +48,13 @@ else
         # Needed in Android 9.0
         LOCAL_WHOLE_STATIC_LIBRARIES += libasyncio
     endif
+endif
+
+ifeq ($shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../fuse_sideload28/
+else
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../fuse_sideload/include 
+    LOCAL_SHARED_LIBRARIES += libfusesideload
 endif
 
 include $(BUILD_SHARED_LIBRARY)
@@ -63,9 +71,16 @@ LOCAL_CLANG := true
 LOCAL_MODULE := libminadbd
 LOCAL_CFLAGS := $(minadbd_cflags) -Wno-unused-parameter
 LOCAL_CONLY_FLAGS := -Wimplicit-function-declaration
+LOCAL_CFLAGS +=  -std=gnu++2a
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/.. system/core/adb
-LOCAL_WHOLE_STATIC_LIBRARIES := libadbd
-LOCAL_STATIC_LIBRARIES := libbase liblog libcutils libc
+LOCAL_SHARED_LIBRARIES := libadbd libbase liblog libcutils libc
+#LOCAL_STATIC_LIBRARIES := libbase liblog libcutils libc
+
+ifeq ($shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../fuse_sideload28/
+else
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../fuse_sideload/include
+endif
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     LOCAL_C_INCLUDES += $(LOCAL_PATH)/libmincrypt/includes
@@ -84,19 +99,19 @@ include $(BUILD_STATIC_LIBRARY)
 
 # minadbd_test (native test)
 # ===============================
-include $(CLEAR_VARS)
+# include $(CLEAR_VARS)
 
-LOCAL_MODULE := minadbd_test
-LOCAL_COMPATIBILITY_SUITE := device-tests
-LOCAL_SRC_FILES := fuse_adb_provider_test.cpp
-LOCAL_CFLAGS := $(minadbd_cflags)
-LOCAL_C_INCLUDES := $(LOCAL_PATH) system/core/adb
-LOCAL_STATIC_LIBRARIES := \
-    libBionicGtestMain \
-    libminadbd
-LOCAL_SHARED_LIBRARIES := \
-    liblog \
-    libbase \
-    libcutils
+# LOCAL_MODULE := minadbd_test
+# LOCAL_COMPATIBILITY_SUITE := device-tests
+# LOCAL_SRC_FILES := fuse_adb_provider_test.cpp
+# LOCAL_CFLAGS := $(minadbd_cflags)
+# LOCAL_C_INCLUDES := $(LOCAL_PATH) system/core/adb
+# LOCAL_STATIC_LIBRARIES := \
+#     libBionicGtestMain \
+#     libminadbd
+# LOCAL_SHARED_LIBRARIES := \
+#     liblog \
+#     libbase \
+#     libcutils
 
-include $(BUILD_NATIVE_TEST)
+# include $(BUILD_NATIVE_TEST)

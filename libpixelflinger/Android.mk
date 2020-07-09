@@ -34,11 +34,11 @@ PIXELFLINGER_SRC_FILES += \
 	codeflinger/load_store.cpp \
 	codeflinger/blending.cpp \
 	codeflinger/texturing.cpp \
-	fixed.cpp.arm \
-	picker.cpp.arm \
-	pixelflinger.cpp.arm \
-	trap.cpp.arm \
-	scanline.cpp.arm
+	fixed.cpp \
+	picker.cpp \
+	pixelflinger.cpp \
+	trap.cpp \
+	scanline.cpp
 else
 PIXELFLINGER_SRC_FILES_x86 := \
 	codeflinger/x86/X86Assembler.cpp \
@@ -105,6 +105,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES += $(LOCAL_EXPORT_C_INCLUDE_DIRS)
 LOCAL_CFLAGS := $(PIXELFLINGER_CFLAGS)
 LOCAL_CPPFLAGS := -Wno-unused-function
+LOCAL_STATIC_LIBRARIES += libbase libutils libcutils
 LOCAL_C_INCLUDES_x86 := $(PIXELFLINGER_C_INCLUDES_x86)
 ifeq ($(TW_HAVE_X86_ACCELERATED_PIXELFLINGER),true)
 LOCAL_WHOLE_STATIC_LIBRARIES += libenc

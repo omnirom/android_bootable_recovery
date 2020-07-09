@@ -1,5 +1,5 @@
 /*
-	Copyright 2013 bigbiff/Dees_Troy TeamWin
+	Copyright 2020 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -142,6 +142,7 @@ int GUIPartitionList::NotifyVarChange(const std::string& varName, const std::str
 			currentValue = value;
 			SetPosition();
 		} else if (ListType == "backup") {
+			updateList = true;
 			MatchList();
 		} else if (ListType == "restore") {
 			updateList = true;
@@ -260,7 +261,6 @@ void GUIPartitionList::NotifySelect(size_t item_selected)
 					}
 					mList.at(item_selected).selected = 1;
 					mUpdate = 1;
-
 					DataManager::SetValue(mVariable, str);
 				}
 			} else {

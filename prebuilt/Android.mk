@@ -6,7 +6,7 @@ RELINK := $(LOCAL_PATH)/relink.sh
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := teamwin
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 
@@ -15,41 +15,57 @@ RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dump_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/flash_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/erase_image
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/bu
-ifneq ($(TW_USE_TOOLBOX), true)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/busybox
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/sh
 else
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
-    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
+endif
+RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/grep
+    else
         RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/grep
-        LOCAL_POST_INSTALL_CMD += $(hide) if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep" ]; then \
-                                    rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; fi; ln -sr $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; \
-                                    if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep" ]; then \
-                                    rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep; fi; ln -sr $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep;
-        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
-        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
+    endif
+    LOCAL_POST_INSTALL_CMD += $(hide) if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep" ]; then \
+                                rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; fi; ln -s $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/egrep; \
+                                if [ -e "$(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep" ]; then \
+                                rm $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep; fi; ln -s $(TARGET_RECOVERY_ROOT_OUT)/sbin/grep $(TARGET_RECOVERY_ROOT_OUT)/sbin/fgrep;
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
             RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dd
         endif
-        ifneq ($(wildcard external/zip/Android.mk),)
-            RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
-        endif
-        ifneq ($(wildcard external/unzip/Android.mk),)
-            RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
-        endif
-        ifneq ($(wildcard system/core/libziparchive/Android.bp),)
+    endif
+    ifneq ($(wildcard external/zip/Android.mk),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
+    endif
+    ifneq ($(wildcard external/unzip/Android.mk),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
+    endif
+    ifneq ($(wildcard system/core/libziparchive/Android.bp),)
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/unzip
+        else
             RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/unzip
         endif
-        ifneq ($(wildcard external/one-true-awk/Android.bp),)
-            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/awk
-        endif
+    endif
+    ifneq ($(wildcard external/one-true-awk/Android.bp),)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/awk
     endif
 endif
+
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/pigz
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/fsck.fat
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/fatlabel
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkfs.fat
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 27; echo $$?),0)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/adbd
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 28; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/adbd
+    else
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/adbd
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/fastbootd
+    endif
 endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/e2fsck
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
@@ -59,6 +75,9 @@ RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mke2fs
 RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/tune2fs
 RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/resize2fs
 RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/simg2img
+ifneq ($(TW_OZIP_DECRYPT_KEY),)
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/ozip_decrypt
+endif
 ifneq ($(TARGET_ARCH), x86_64)
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/linker
 endif
@@ -66,15 +85,60 @@ ifeq ($(TARGET_ARCH), x86_64)
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/linker64
 endif
 ifeq ($(TARGET_ARCH), arm64)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/linker64
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/linker64
+    else
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/linker64
+    endif
 endif
 #RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/twrpmtp
-RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libc.so
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libc.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libdl.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libm.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libbootloader_message.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libfs_mgr.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libfscrypt.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libgsi.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libkeyutils.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/liblogwrap.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/liblp.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libprocessgroup.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libprocessgroup_setup.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libadbd.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libadbd_services.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libcap.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libminijail.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libunwindstack.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libasyncio.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libcgrouprc.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libbinderthreadstate.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libsquashfs_utils.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libjsoncpp.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libmdnssd.so
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libfec.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libinit.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libdl_android.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libprotobuf-cpp-lite.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libbinder.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libchrome.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libevent.so
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/keystore
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/keystore_cli_v2
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/hwservicemanager
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/servicemanager
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/vold_prepare_subdirs
+    RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../vendor/bin/vndservicemanager
+    RELINK_SOURCE_FILES +=   $(TARGET_RECOVERY_ROOT_OUT)/system/bin/toybox
+else
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libc.so
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdl.so
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libm.so
+endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcutils.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrecovery.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libusbhost.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libutils.so
-RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libdl.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_com_err.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_e2p.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2fs.so
@@ -94,12 +158,13 @@ ifneq ($(wildcard external/e2fsprogs/lib/blkid/Android.*),)
 endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libpng.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/liblog.so
-RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libm.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libstdc++.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libz.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libminuitwrp.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libminadbd.so
-RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libminzip.so
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 29; echo $$?),0)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libminzip.so
+endif
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libmtdutils.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libtar.so
 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libtwadbbu.so
@@ -136,7 +201,11 @@ ifneq (,$(filter $(PLATFORM_SDK_VERSION), 21 22))
 else
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
         # Android M libraries
-        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libbacktrace.so
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/lib64/libbacktrace.so
+        else
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libbacktrace.so
+        endif
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libunwind.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libbase.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libc++.so
@@ -150,7 +219,11 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libmincrypttwrp.so
 endif
-RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toolbox
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/toolbox
+else
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toolbox
+endif
 
 ifneq ($(TW_OEM_BUILD),true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/twrp
@@ -161,7 +234,6 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
 ifneq ($(TW_EXCLUDE_MTP), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libtwrpmtp-ffs.so
-    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libasyncio.so
 endif
 else
 ifneq ($(TW_EXCLUDE_MTP), true)
@@ -198,7 +270,15 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
     RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/htcdumlock
 endif
 ifeq ($(TW_INCLUDE_CRYPTO), true)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcryptfsfde.so
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libcryptfsfde.so
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libdexfile_support.so
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libf2fs_sparseblock.so
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../vendor/lib64/libnos_transport.so
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../vendor/lib64/libnos_datagram.so
+    else
+        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcryptfsfde.so
+    endif
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libhardware.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libgpt_twrp.so
@@ -211,7 +291,11 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     endif
     # FBE files
     ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
-        RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libe4crypt.so
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/lib64/libtwrpfscrypt.so
+        else
+            RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libe4crypt.so
+        endif
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libgatekeeper.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_messages.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeystore_binder.so
@@ -226,6 +310,12 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/keystore_cli
             RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/servicemanager
             RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.system.wifi.keystore@1.0.so
+            ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+                RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.vibrator@1.0.so
+                RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.vibrator@1.1.so
+                RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.vibrator@1.2.so
+            endif
+
             ifneq ($(wildcard system/keymaster/keymaster_stl.cpp),)
                 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_portable.so
                 RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_staging.so
@@ -267,6 +357,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     endif
 endif
 ifeq ($(AB_OTA_UPDATER), true)
+    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/system/bin/update_engine_sideload
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.boot@1.0.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/bootctl
     ifneq ($(TW_INCLUDE_CRYPTO), true)
@@ -290,9 +381,17 @@ ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
         RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mkfs.f2fs
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libf2fs.so
     else ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
-        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkfs.f2fs
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/make_f2fs
+        else
+            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/mkfs.f2fs
+        endif
         ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
-            RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/sload.f2fs
+            ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+                RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sload_f2fs
+            else
+                RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/sload.f2fs
+            endif
         endif
     else ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?),0)
         RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/mkfs.f2fs
@@ -307,7 +406,11 @@ ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/fsck.f2fs
 endif
 ifneq ($(wildcard system/core/reboot/Android.*),)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/reboot
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/reboot
+    else
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/reboot
+    endif
 endif
 ifneq ($(TW_DISABLE_TTF), true)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libft2.so
@@ -341,9 +444,17 @@ ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
     endif
 endif
 ifeq ($(TWRP_INCLUDE_LOGCAT), true)
-    RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/logcat
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/logcat
+    else
+        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/logcat
+    endif
     ifeq ($(TARGET_USES_LOGD), true)
-        RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/logd
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+            RELINK_SOURCE_FILES += $(TARGET_ROOT_OUT)/../system/bin/logd
+        else
+            RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/logd
+        endif
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libsysutils.so
         RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libnl.so
     endif
@@ -400,35 +511,58 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_misc.so
 endif
 
-TW_BB_SYMLINKS :=
-ifneq ($(TW_USE_TOOLBOX), true)
-    TW_BB_SYMLINKS := busybox_symlinks
-endif
+#toybox links
+toybox_links := acpi base64 basename bc blockdev cal cat chcon chgrp chmod chown chroot chrt cksum clear \
+    cmp comm cp cpio cut date dd devmem df diff dirname dmesg dos2unix du echo env expand expr fallocate \
+    false file find flock fmt free fsync getconf getenforce getprop groups gunzip gzip head hostname hwclock i2cdetect \
+    i2cdump i2cget i2cset iconv id ifconfig inotifyd insmod install ionice iorenice kill killall ln load_policy \
+    log logname losetup ls lsmod lsof lspci lsusb md5sum microcom mkdir mkfifo mknod mkswap mktemp modinfo modprobe \
+    more mount mountpoint mv nc netcat netstat nice nl nohup nproc nsenter od paste patch pgrep pidof pkill pmap \
+    printenv printf ps pwd readlink realpath renice restorecon rm rmdir rmmod runcon sed sendevent seq setenforce \
+    setprop setsid sha1sum sha224sum sha256sum sha384sum sha512sum sleep sort split start stat stop strings stty \
+    swapoff swapon sync sysctl tac tail tar taskset tee time timeout top touch tr true truncate tty ulimit \
+    umount uname uniq unix2dos unlink unshare uptime usleep uudecode uuencode uuidgen vmstat watch wc which whoami \
+    xargs xxd yes zcat
+TOYBOX_LINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/system/bin/, $(toybox_links))
 
-TWRP_AUTOGEN := $(intermediates)/teamwin
-GEN := $(intermediates)/teamwin
-$(GEN): $(RELINK) $(TW_BB_SYMLINKS) toolbox_symlinks
-$(GEN): $(RELINK_SOURCE_FILES) $(call intermediates-dir-for,EXECUTABLES,init)/init
-	$(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES)
-
-LOCAL_GENERATED_SOURCES := $(GEN)
-LOCAL_SRC_FILES := teamwin $(GEN)
-include $(BUILD_PREBUILT)
-
-#permissive.sh
+#relink recovery executables linker to /sbin and move symlinks
 include $(CLEAR_VARS)
-LOCAL_MODULE := permissive.sh
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE := relink
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
+LOCAL_POST_INSTALL_CMD += $(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/sbin $(RELINK_SOURCE_FILES) && \
+    cp $(TOYBOX_LINKS) $(TARGET_RECOVERY_ROOT_OUT)/sbin/
+TARGET_RELINK_FILES := $(notdir $(RELINK_SOURCE_FILES))
+TARGET_BASE_RELINK_MODULES := $(basename $(TARGET_RELINK_FILES))
+TARGET_RELINK_MODULES :=  $(filter-out libdexfile, $(TARGET_BASE_RELINK_MODULES))
+LOCAL_REQUIRED_MODULES += $(TARGET_RELINK_MODULES)
+include $(BUILD_PHONY_PACKAGE)
+
+#relink init
+include $(CLEAR_VARS)
+LOCAL_MODULE := twrp_ramdisk
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
+RELINK_INIT := $(TARGET_RECOVERY_ROOT_OUT)/system/bin/init
+LOCAL_POST_INSTALL_CMD += $(RELINK) $(TARGET_RECOVERY_ROOT_OUT)/ $(RELINK_INIT) && \
+    cp $(TARGET_RECOVERY_ROOT_OUT)/system/bin/ueventd $(TARGET_RECOVERY_ROOT_OUT)/sbin/ && \
+    ln -sf /init $(TARGET_RECOVERY_ROOT_OUT)/sbin/init && \
+    ln -sf /init $(TARGET_RECOVERY_ROOT_OUT)/system/bin/init && \
+    mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/ && \
+    cp $(TARGET_ROOT_OUT)/../system/etc/selinux/plat_service_contexts $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/plat_service_contexts && \
+    cp $(TARGET_ROOT_OUT)/../system/etc/selinux/plat_hwservice_contexts $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/plat_hwservice_contexts && \
+    cp $(TARGET_ROOT_OUT)/../vendor/etc/selinux/vndservice_contexts $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/vndservice_contexts && \
+    cp $(TARGET_ROOT_OUT)/../vendor/etc/selinux/vendor_hwservice_contexts $(TARGET_RECOVERY_ROOT_OUT)/system/etc/selinux/vendor_hwservice_contexts
+LOCAL_REQUIRED_MODULES := init_second_stage.recovery reboot.recovery plat_service_contexts plat_hardware_contexts vndservice_contexts
+include $(BUILD_PHONY_PACKAGE)
 
 #mke2fs.conf
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 26; echo $$?),0)
     include $(CLEAR_VARS)
     LOCAL_MODULE := mke2fs.conf
-    LOCAL_MODULE_TAGS := eng
+    LOCAL_MODULE_TAGS := optional
     LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
     LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/etc
     LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -441,7 +575,7 @@ ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
 	    include $(CLEAR_VARS)
 	    LOCAL_MODULE := sgdisk_static
 	    LOCAL_MODULE_STEM := sgdisk
-	    LOCAL_MODULE_TAGS := eng
+	    LOCAL_MODULE_TAGS := optional
 	    LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	    LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 	    LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -450,7 +584,7 @@ ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
 	#parted
 	#include $(CLEAR_VARS)
 	#LOCAL_MODULE := parted
-	#LOCAL_MODULE_TAGS := eng
+	#LOCAL_MODULE_TAGS := optional
 	#LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	#LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 	#LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -461,7 +595,7 @@ endif
 ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := openaes_license
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/license/openaes
 	LOCAL_SRC_FILES := ../openaes/LICENSE
@@ -472,7 +606,7 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	#htcdumlock for /system for dumlock
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := htcdumlocksys
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWHTCD_PATH)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -481,7 +615,7 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	#flash_image for /system for dumlock
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := flash_imagesys
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWHTCD_PATH)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -490,7 +624,7 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	#dump_image for /system for dumlock
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := dump_imagesys
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWHTCD_PATH)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -499,7 +633,7 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	#libbmlutils for /system for dumlock
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := libbmlutils.so
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWHTCD_PATH)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -508,7 +642,7 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	#libflashutils for /system for dumlock
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := libflashutils.so
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWHTCD_PATH)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -517,7 +651,7 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	#libmmcutils for /system for dumlock
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := libmmcutils.so
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWHTCD_PATH)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -526,7 +660,7 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	#libmtdutils for /system for dumlock
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := libmtdutils.so
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWHTCD_PATH)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -535,7 +669,7 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 	#HTCDumlock.apk
 	include $(CLEAR_VARS)
 	LOCAL_MODULE := HTCDumlock.apk
-	LOCAL_MODULE_TAGS := eng
+	LOCAL_MODULE_TAGS := optional
 	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)$(TWHTCD_PATH)
 	LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -543,20 +677,29 @@ ifeq ($(TW_INCLUDE_DUMLOCK), true)
 endif
 
 ifeq ($(TW_USE_TOOLBOX), true)
-    include $(CLEAR_VARS)
-    LOCAL_MODULE := mkshrc_twrp
-    LOCAL_MODULE_STEM := mkshrc
-    LOCAL_MODULE_TAGS := eng
-    LOCAL_MODULE_CLASS := ETC
-    LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/etc
-    LOCAL_SRC_FILES := $(LOCAL_MODULE)
-    include $(BUILD_PREBUILT)
+   include $(CLEAR_VARS)
+   LOCAL_MODULE := mkshrc_twrp
+   LOCAL_MODULE_STEM := mkshrc
+   LOCAL_MODULE_TAGS := optional
+   LOCAL_MODULE_CLASS := ETC
+   LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/etc
+   LOCAL_SRC_FILES := $(LOCAL_MODULE)
+   include $(BUILD_PREBUILT)
 endif
 
 #TWRP App "placeholder"
 include $(CLEAR_VARS)
 LOCAL_MODULE := me.twrp.twrpapp.apk
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+LOCAL_SRC_FILES := $(LOCAL_MODULE)
+include $(BUILD_PREBUILT)
+
+#TWRP App permissions for Android 9+
+include $(CLEAR_VARS)
+LOCAL_MODULE := privapp-permissions-twrpapp.xml
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -568,7 +711,7 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
             # Prebuilt vdc_pie for pre-Pie SDK Platforms
             include $(CLEAR_VARS)
             LOCAL_MODULE := vdc_pie
-            LOCAL_MODULE_TAGS := eng
+            LOCAL_MODULE_TAGS := optional
             LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
             LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
             LOCAL_SRC_FILES := vdc_pie-$(TARGET_ARCH)
@@ -577,9 +720,9 @@ ifeq ($(TW_INCLUDE_CRYPTO), true)
     endif
 endif
 
-ifeq ($(TW_INCLUDE_REPACKTOOLS), true)
+ifneq (,$(filter $(TW_INCLUDE_REPACKTOOLS) $(TW_INCLUDE_RESETPROP) $(TW_INCLUDE_LIBRESETPROP), true))
     ifeq ($(wildcard external/magisk-prebuilt/Android.mk),)
-        $(warning Magisk repacking tools not found!)
+        $(warning Magisk prebuilt tools not found!)
         $(warning Please place https://github.com/TeamWin/external_magisk-prebuilt)
         $(warning into external/magisk-prebuilt)
         $(error magiskboot prebuilts not present; exiting)

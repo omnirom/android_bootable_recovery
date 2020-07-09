@@ -43,11 +43,17 @@ extern "C" {
 #include "twrp-functions.hpp"
 #include "data.hpp"
 #include "partitions.hpp"
+#ifdef __ANDROID_API_N__
+#include <android-base/strings.h>
+#else
+#include <base/strings.h>
+#endif
 #include "openrecoveryscript.hpp"
 #include "variables.h"
 #include "twrpAdbBuFifo.hpp"
+#include "twrpApex.hpp"
 #ifdef TW_USE_NEW_MINADBD
-#include "minadbd/minadbd.h"
+// #include "minadbd/minadbd.h"
 #else
 extern "C" {
 #include "minadbd21/adb.h"
@@ -62,6 +68,31 @@ bool datamedia;
 
 static void Print_Prop(const char *key, const char *name, void *cookie) {
 	printf("%s=%s\n", key, name);
+}
+
+static void Decrypt_Page(bool SkipDecryption, bool datamedia) {
+	// Offer to decrypt if the device is encrypted
+	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
+		if (SkipDecryption) {
+			LOGINFO("Skipping decryption\n");
+		} else {
+			LOGINFO("Is encrypted, do decrypt page first\n");
+			if (gui_startPage("decrypt", 1, 1) != 0) {
+				LOGERR("Failed to start decrypt GUI page.\n");
+			} else {
+				// Check for and load custom theme if present
+				TWFunc::check_selinux_support();
+				gui_loadCustomResources();
+			}
+		}
+	} else if (datamedia) {
+		TWFunc::check_selinux_support();
+		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
+			LOGINFO("Failed to get default contexts and file mode for storage files.\n");
+		} else {
+			LOGINFO("Got default contexts and file mode for storage files.\n");
+		}
+	}
 }
 
 int main(int argc, char **argv) {
@@ -84,7 +115,7 @@ int main(int argc, char **argv) {
 		property_set("ctl.stop", "adbd");
 #ifdef TW_USE_NEW_MINADBD
 		//adb_server_main(0, DEFAULT_ADB_PORT, -1); TODO fix this for android8
-		minadbd_main();
+		// minadbd_main();
 #else
 		adb_main(argv[2]);
 #endif
@@ -117,12 +148,96 @@ int main(int argc, char **argv) {
 	if (!TWFunc::Path_Exists(fstab_filename)) {
 		fstab_filename = "/etc/recovery.fstab";
 	}
+
+	// Begin SAR detection
+	{
+		TWPartitionManager SarPartitionManager;
+		printf("=> Processing %s for SAR-detection\n", fstab_filename.c_str());
+		if (!SarPartitionManager.Process_Fstab(fstab_filename, 1, 1)) {
+			LOGERR("Failing out of recovery due to problem with fstab.\n");
+			return -1;
+		}
+
+		mkdir("/s", 0755);
+
+#if defined(AB_OTA_UPDATER) || defined(__ANDROID_API_Q__)
+		bool fallback_sar = true;
+#else
+		bool fallback_sar = property_get_bool("ro.build.system_root_image", false);
+#endif
+
+		if(SarPartitionManager.Mount_By_Path("/s", false)) {
+			if (TWFunc::Path_Exists("/s/build.prop")) {
+				LOGINFO("SAR-DETECT: Non-SAR System detected\n");
+				property_set("ro.twrp.sar", "0");
+				rmdir("/system_root");
+			} else if (TWFunc::Path_Exists("/s/system/build.prop")) {
+				LOGINFO("SAR-DETECT: SAR System detected\n");
+				property_set("ro.twrp.sar", "1");
+			} else {
+				LOGINFO("SAR-DETECT: No build.prop found, falling back to %s\n", fallback_sar ? "SAR" : "Non-SAR");
+				property_set("ro.twrp.sar", fallback_sar ? "1" : "0");
+			}
+
+// We are doing this here during SAR-detection, since we are mounting the system-partition anyway
+// This way we don't need to remount it later, just for overriding properties
+#if defined(TW_INCLUDE_LIBRESETPROP) && defined(TW_OVERRIDE_SYSTEM_PROPS)
+			stringstream override_props(EXPAND(TW_OVERRIDE_SYSTEM_PROPS));
+			string current_prop;
+			while (getline(override_props, current_prop, ';')) {
+				string other_prop;
+				if (current_prop.find("=") != string::npos) {
+					other_prop = current_prop.substr(current_prop.find("=") + 1);
+					current_prop = current_prop.substr(0, current_prop.find("="));
+				} else {
+					other_prop = current_prop;
+				}
+				other_prop = android::base::Trim(other_prop);
+				current_prop = android::base::Trim(current_prop);
+				string sys_val = TWFunc::System_Property_Get(other_prop, SarPartitionManager, "/s");
+				if (!sys_val.empty()) {
+					LOGINFO("Overriding %s with value: \"%s\" from system property %s\n", current_prop.c_str(), sys_val.c_str(), other_prop.c_str());
+					int error = TWFunc::Property_Override(current_prop, sys_val);
+					if (error) {
+						LOGERR("Failed overriding property %s, error_code: %d\n", current_prop.c_str(), error);
+					}
+				} else {
+					LOGINFO("Not overriding %s with empty value from system property %s\n", current_prop.c_str(), other_prop.c_str());
+				}
+			}
+#endif
+			SarPartitionManager.UnMount_By_Path("/s", false);
+		} else {
+			LOGINFO("SAR-DETECT: Could not mount system partition, falling back to %s\n", fallback_sar ? "SAR":"Non-SAR");
+			property_set("ro.twrp.sar", fallback_sar ? "1" : "0");
+		}
+
+		rmdir("/s");
+
+		TWFunc::check_and_run_script("/sbin/sarsetup.sh", "boot");
+	}
+	// End SAR detection
+
 	printf("=> Processing %s\n", fstab_filename.c_str());
-	if (!PartitionManager.Process_Fstab(fstab_filename, 1)) {
+	if (!PartitionManager.Process_Fstab(fstab_filename, 1, 0)) {
 		LOGERR("Failing out of recovery due to problem with fstab.\n");
 		return -1;
 	}
 	PartitionManager.Output_Partition_Logging();
+#ifdef TW_INCLUDE_CRYPTO
+	DataManager::SetValue(TW_IS_ENCRYPTED, 1);
+#endif
+
+	if (PartitionManager.Get_Super_Status()) {
+		PartitionManager.Setup_Super_Devices();
+		PartitionManager.Setup_Super_Partition();
+	} else {
+#ifdef TW_INCLUDE_CRYPTO
+		if (!PartitionManager.Get_Super_Status())
+			PartitionManager.Decrypt_Data();
+#endif
+	}
+
 	// Load up all the resources
 	gui_loadResources();
 
@@ -230,28 +345,8 @@ int main(int argc, char **argv) {
 	LOGINFO("Backup of TWRP ramdisk done.\n");
 #endif
 
-	// Offer to decrypt if the device is encrypted
-	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
-		if (SkipDecryption) {
-			LOGINFO("Skipping decryption\n");
-		} else {
-			LOGINFO("Is encrypted, do decrypt page first\n");
-			if (gui_startPage("decrypt", 1, 1) != 0) {
-				LOGERR("Failed to start decrypt GUI page.\n");
-			} else {
-				// Check for and load custom theme if present
-				TWFunc::check_selinux_support();
-				gui_loadCustomResources();
-			}
-		}
-	} else if (datamedia) {
-		TWFunc::check_selinux_support();
-		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
-			LOGINFO("Failed to get default contexts and file mode for storage files.\n");
-		} else {
-			LOGINFO("Got default contexts and file mode for storage files.\n");
-		}
-	}
+	if (!PartitionManager.Get_Super_Status())
+		Decrypt_Page(SkipDecryption, datamedia);
 
 	// Fixup the RTC clock on devices which require it
 	if (crash_counter == 0)
@@ -259,12 +354,16 @@ int main(int argc, char **argv) {
 
 	// Read the settings file
 	TWFunc::Update_Log_File();
-	DataManager::ReadSettingsFile();
+
+	if (!PartitionManager.Get_Super_Status())
+		DataManager::ReadSettingsFile();
 	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
 	GUIConsole::Translate_Now();
 
 	// Run any outstanding OpenRecoveryScript
-	std::string cacheDir = TWFunc::get_cache_dir();
+	std::string cacheDir = TWFunc::get_log_dir();
+	if (cacheDir == DATA_LOGS_DIR)
+		cacheDir = "/data/cache";
 	std::string orsFile = cacheDir + "/recovery/openrecoveryscript";
 	if ((DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 || SkipDecryption) && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(orsFile))) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
@@ -297,28 +396,55 @@ int main(int argc, char **argv) {
 	// Check if system has never been changed
 	TWPartition* sys = PartitionManager.Find_Partition_By_Path(PartitionManager.Get_Android_Root_Path());
 	TWPartition* ven = PartitionManager.Find_Partition_By_Path("/vendor");
-
 	if (sys) {
-		if ((DataManager::GetIntValue("tw_mount_system_ro") == 0 && sys->Check_Lifetime_Writes() == 0) || DataManager::GetIntValue("tw_mount_system_ro") == 2) {
-			if (DataManager::GetIntValue("tw_never_show_system_ro_page") == 0) {
-				DataManager::SetValue("tw_back", "main");
-				if (gui_startPage("system_readonly", 1, 1) != 0) {
-					LOGERR("Failed to start system_readonly GUI page.\n");
+		if (sys->Get_Super_Status()) {
+			if (!PartitionManager.Prepare_All_Super_Volumes()) {
+				LOGERR("Unable to prepare super volumes.\n");
+			}
+			sys->Mount(true);
+			if (ven) {
+				ven->Mount(true);
+			}
+			twrpApex apex;
+			if (!apex.loadApexImages()) {
+				LOGERR("Unable to load apex images from %s\n", APEX_DIR);
+			}
+			property_set("twrp.apex.loaded", "true");
+#ifdef TW_INCLUDE_CRYPTO
+			PartitionManager.Decrypt_Data();
+			Decrypt_Page(SkipDecryption, datamedia);
+			std::string recoveryLogDir(DATA_LOGS_DIR);
+			recoveryLogDir += "/recovery";
+			if (!TWFunc::Path_Exists(recoveryLogDir)) {
+				bool created = PartitionManager.Recreate_Logs_Dir();
+				if (!created)
+					LOGERR("Unable to create log directory for TWRP\n");
+			}
+			DataManager::ReadSettingsFile();
+#endif
+		} else {
+			if ((DataManager::GetIntValue("tw_mount_system_ro") == 0 && sys->Check_Lifetime_Writes() == 0) || DataManager::GetIntValue("tw_mount_system_ro") == 2) {
+				if (DataManager::GetIntValue("tw_never_show_system_ro_page") == 0) {
+					DataManager::SetValue("tw_back", "main");
+					if (gui_startPage("system_readonly", 1, 1) != 0) {
+						LOGERR("Failed to start system_readonly GUI page.\n");
+					}
+				} else if (DataManager::GetIntValue("tw_mount_system_ro") == 0) {
+					sys->Change_Mount_Read_Only(false);
+					if (ven)
+						ven->Change_Mount_Read_Only(false);
 				}
-			} else if (DataManager::GetIntValue("tw_mount_system_ro") == 0) {
+			} else if (DataManager::GetIntValue("tw_mount_system_ro") == 1) {
+				// Do nothing, user selected to leave system read only
+			} else {
 				sys->Change_Mount_Read_Only(false);
 				if (ven)
 					ven->Change_Mount_Read_Only(false);
 			}
-		} else if (DataManager::GetIntValue("tw_mount_system_ro") == 1) {
-			// Do nothing, user selected to leave system read only
-		} else {
-			sys->Change_Mount_Read_Only(false);
-			if (ven)
-				ven->Change_Mount_Read_Only(false);
 		}
 	}
 #endif
+
 	twrpAdbBuFifo *adb_bu_fifo = new twrpAdbBuFifo();
 	adb_bu_fifo->threadAdbBuFifo();
 

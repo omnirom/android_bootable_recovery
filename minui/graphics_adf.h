@@ -14,45 +14,63 @@
  * limitations under the License.
  */
 
-#ifndef _GRAPHICS_ADF_H_
-#define _GRAPHICS_ADF_H_
+#pragma once
+
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/types.h>
+
+#include <memory>
 
 #include <adf/adf.h>
 
 #include "graphics.h"
+#include "minui/minui.h"
 
 class GRSurfaceAdf : public GRSurface {
- private:
-  int fence_fd;
-  int fd;
-  __u32 offset;
-  __u32 pitch;
+ public:
+  ~GRSurfaceAdf() override;
 
+  static std::unique_ptr<GRSurfaceAdf> Create(int intf_fd, const drm_mode_modeinfo* mode,
+                                              __u32 format, int* err);
+
+  uint8_t* data() override {
+    return mmapped_buffer_;
+  }
+
+ private:
   friend class MinuiBackendAdf;
+
+  GRSurfaceAdf(size_t width, size_t height, size_t row_bytes, size_t pixel_bytes, __u32 offset,
+               __u32 pitch, int fd)
+      : GRSurface(width, height, row_bytes, pixel_bytes), offset(offset), pitch(pitch), fd(fd) {}
+
+  const __u32 offset;
+  const __u32 pitch;
+
+  int fd;
+  int fence_fd{ -1 };
+  uint8_t* mmapped_buffer_{ nullptr };
 };
 
 class MinuiBackendAdf : public MinuiBackend {
  public:
+  MinuiBackendAdf();
+  ~MinuiBackendAdf() override;
   GRSurface* Init() override;
   GRSurface* Flip() override;
   void Blank(bool) override;
-  ~MinuiBackendAdf() override;
-  MinuiBackendAdf();
 
  private:
-  int SurfaceInit(const drm_mode_modeinfo* mode, GRSurfaceAdf* surf);
   int InterfaceInit();
   int DeviceInit(adf_device* dev);
-  void SurfaceDestroy(GRSurfaceAdf* surf);
   void Sync(GRSurfaceAdf* surf);
 
   int intf_fd;
   adf_id_t eng_id;
   __u32 format;
   adf_device dev;
-  unsigned int current_surface;
-  unsigned int n_surfaces;
-  GRSurfaceAdf surfaces[2];
+  size_t current_surface;
+  size_t n_surfaces;
+  std::unique_ptr<GRSurfaceAdf> surfaces[2];
 };
-
-#endif  // _GRAPHICS_ADF_H_

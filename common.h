@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef RECOVERY_COMMON_H
-#define RECOVERY_COMMON_H
+#pragma once
 
-#include <stdio.h>
-#include <stdarg.h>
 #include <string>
 
-#ifdef __cplusplus
+#ifndef __cplusplus
 extern "C" {
 #endif
 
@@ -45,10 +42,11 @@ extern "C" {
 //static constexpr int kRecoveryApiVersion = 3;
 
 class RecoveryUI;
+struct selabel_handle;
 
+extern struct selabel_handle* sehandle;
 extern RecoveryUI* ui;
-extern bool modified_flash;
-//typedef struct fstab_rec Volume;
+extern bool has_cache;
 
 // The current stage, e.g. "1/2".
 extern std::string stage;
@@ -56,17 +54,4 @@ extern std::string stage;
 // The reason argument provided in "--reason=".
 extern const char* reason;
 
-// fopen a file, mounting volumes and making parent dirs as necessary.
-FILE* fopen_path(const char *path, const char *mode);
-
-void ui_print(const char* format, ...);
-
-//static bool is_ro_debuggable();
-
-#ifdef __cplusplus
-}
-#endif
-
-bool reboot(const std::string& command);
-
-#endif  // RECOVERY_COMMON_H
+// static bool is_ro_debuggable();

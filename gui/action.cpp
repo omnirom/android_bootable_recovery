@@ -40,8 +40,9 @@
 #include "../twrp-functions.hpp"
 #include "../openrecoveryscript.hpp"
 
-#include "../adb_install.h"
-#include "../fuse_sideload.h"
+#include "install/adb_install.h"
+
+#include "fuse_sideload.h"
 #include "blanktimer.hpp"
 #include "../twinstall.h"
 
@@ -49,14 +50,14 @@ extern "C" {
 #include "../twcommon.h"
 #include "../variables.h"
 #include "cutils/properties.h"
-#include "../adb_install.h"
+#include "install/adb_install.h"
 };
-#include "../set_metadata.h"
+#include "set_metadata.h"
 #include "../minuitwrp/minui.h"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
-#include "../tw_atomic.hpp"
+#include "tw_atomic.hpp"
 
 GUIAction::mapFunc GUIAction::mf;
 std::set<string> GUIAction::setActionsRunningInCallerThread;
@@ -369,6 +370,8 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 	int ret_val = 0;
 
 	DataManager::SetValue("ui_progress", 0);
+	DataManager::SetValue("ui_portion_size", 0);
+	DataManager::SetValue("ui_portion_start", 0);
 
 	if (filename.empty())
 	{
@@ -408,6 +411,8 @@ int GUIAction::flash_zip(std::string filename, int* wipe_cache)
 	// Done
 	DataManager::SetValue("ui_progress", 100);
 	DataManager::SetValue("ui_progress", 0);
+	DataManager::SetValue("ui_portion_size", 0);
+	DataManager::SetValue("ui_portion_start", 0);
 	return ret_val;
 }
 
@@ -490,10 +495,12 @@ void GUIAction::operation_start(const string operation_name)
 	time(&Start);
 	DataManager::SetValue(TW_ACTION_BUSY, 1);
 	DataManager::SetValue("ui_progress", 0);
+	DataManager::SetValue("ui_portion_size", 0);
+	DataManager::SetValue("ui_portion_start", 0);
 	DataManager::SetValue("tw_operation", operation_name);
 	DataManager::SetValue("tw_operation_state", 0);
 	DataManager::SetValue("tw_operation_status", 0);
-	bool tw_ab_device = TWFunc::get_cache_dir() != NON_AB_CACHE_DIR;
+	bool tw_ab_device = TWFunc::get_log_dir() != CACHE_LOGS_DIR;
 	DataManager::SetValue("tw_ab_device", tw_ab_device);
 }
 
@@ -1022,6 +1029,17 @@ void GUIAction::reinject_after_flash()
 	}
 }
 
+int GUIAction::ozip_decrypt(string zip_path)
+{
+	if (!TWFunc::Path_Exists("/sbin/ozip_decrypt")) {
+            return 1;
+        }
+    gui_msg("ozip_decrypt_decryption=Starting Ozip Decryption...");
+	TWFunc::Exec_Cmd("ozip_decrypt " + (string)TW_OZIP_DECRYPT_KEY + " '" + zip_path + "'");
+    gui_msg("ozip_decrypt_finish=Ozip Decryption Finished!");
+	return 0;
+}
+
 int GUIAction::flash(std::string arg)
 {
 	int i, ret_val = 0, wipe_cache = 0;
@@ -1032,6 +1050,20 @@ int GUIAction::flash(std::string arg)
 		size_t slashpos = zip_path.find_last_of('/');
 		string zip_filename = (slashpos == string::npos) ? zip_path : zip_path.substr(slashpos + 1);
 		operation_start("Flashing");
+		if((zip_path.substr(zip_path.size() - 4, 4)) == "ozip")
+		{
+			if((ozip_decrypt(zip_path)) != 0)
+			{
+		LOGERR("Unable to find ozip_decrypt!");
+				break;
+			}
+			zip_filename = (zip_filename.substr(0, zip_filename.size() - 4)).append("zip");
+			zip_path = (zip_path.substr(0, zip_path.size() - 4)).append("zip");
+			if (!TWFunc::Path_Exists(zip_path)) {
+				LOGERR("Unable to find decrypted zip");
+				break;
+			}
+		}
 		DataManager::SetValue("tw_filename", zip_path);
 		DataManager::SetValue("tw_file", zip_filename);
 		DataManager::SetValue(TW_ZIP_INDEX, (i + 1));
@@ -1533,7 +1565,9 @@ int GUIAction::adbsideload(std::string arg __unused)
 		bool mtp_was_enabled = TWFunc::Toggle_MTP(false);
 
 		// wait for the adb connection
-		int ret = apply_from_adb("/", &sideload_child_pid);
+		// int ret = apply_from_adb("/", &sideload_child_pid);
+		Device::BuiltinAction reboot_action = Device::REBOOT_BOOTLOADER;
+		int ret = ApplyFromAdb("/", &reboot_action);
 		DataManager::SetValue("tw_has_cancel", 0); // Remove cancel button from gui now that the zip install is going to start
 
 		if (ret != 0) {
@@ -2032,6 +2066,22 @@ int GUIAction::installapp(std::string arg __unused)
 							LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
 							goto exit;
 						}
+
+						// System apps require their permissions to be pre-set via an XML file in /etc/permissions
+						string permission_path = base_path + "/etc/permissions/privapp-permissions-twrpapp.xml";
+						if (TWFunc::copy_file("/sbin/privapp-permissions-twrpapp.xml", permission_path, 0644)) {
+							LOGERR("Error copying permission file\n");
+							goto exit;
+						}
+						if (chown(permission_path.c_str(), 1000, 1000)) {
+							LOGERR("chown %s error: %s\n", permission_path.c_str(), strerror(errno));
+							goto exit;
+						}
+						if (setfilecon(permission_path.c_str(), (security_context_t)context.c_str()) < 0) {
+							LOGERR("setfilecon %s error: %s\n", permission_path.c_str(), strerror(errno));
+							goto exit;
+						}
+
 						sync();
 						sync();
 						PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
@@ -2149,7 +2199,7 @@ int GUIAction::fixabrecoverybootloop(std::string arg __unused)
 			goto exit;
 		DataManager::SetProgress(.25);
 		gui_msg("fixing_recovery_loop_patch=Patching kernel...");
-		std::string command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot --hexpatch kernel 77616E745F696E697472616D667300 736B69705F696E697472616D667300";
+		std::string command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot hexpatch kernel 77616E745F696E697472616D667300 736B69705F696E697472616D667300";
 		if (TWFunc::Exec_Cmd(command) != 0) {
 			gui_msg(Msg(msg::kError, "fix_recovery_loop_patch_error=Error patching kernel."));
 			goto exit;
@@ -2165,7 +2215,7 @@ int GUIAction::fixabrecoverybootloop(std::string arg __unused)
 		}
 		DataManager::SetProgress(.5);
 		gui_msg(Msg("repacking_image=Repacking {1}...")(part->Display_Name));
-		command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot --repack " REPACK_ORIG_DIR "boot.img";
+		command = "cd " REPACK_ORIG_DIR " && /sbin/magiskboot repack " REPACK_ORIG_DIR "boot.img";
 		if (TWFunc::Exec_Cmd(command) != 0) {
 			gui_msg(Msg(msg::kError, "repack_error=Error repacking image."));
 			goto exit;

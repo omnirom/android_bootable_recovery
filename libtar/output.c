@@ -25,9 +25,12 @@
 #endif
 
 #ifdef HAVE_EXT4_CRYPT
-# include "ext4crypt_tar.h"
+#include "ext4crypt_tar.h"
 #endif
 
+#ifdef USE_FSCRYPT
+#include "fscrypt_policy.h"
+#endif
 
 #ifndef _POSIX_LOGIN_NAME_MAX
 # define _POSIX_LOGIN_NAME_MAX	9
@@ -64,6 +67,10 @@ th_print(TAR *t)
 #ifdef HAVE_EXT4_CRYPT
 	printf("  eep = \"%s\"\n",
 	       (t->th_buf.eep ? t->th_buf.eep->master_key_descriptor : "[NULL]"));
+#endif
+#ifdef USE_FSCRYPT
+	printf("  fep = \"%s\"\n",
+	       (t->th_buf.fep ? t->th_buf.fep->master_key_descriptor : (uint8_t*) "[NULL]"));
 #endif
 }
 

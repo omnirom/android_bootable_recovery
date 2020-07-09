@@ -6,4 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"ምንም ትዕዛዝ የለም"</string>
     <string name="recovery_error" msgid="5748178989622716736">"ስህተት!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"የደህንነት ዝማኔ በመጫን ላይ"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"የAndroid ስርዓትን መጫን አልተቻለም። የእርስዎ ውሂብ የተበላሸ ሊሆን ይችላል። ይህን መልዕክት ማግኘቱን ከቀጠሉ የፋብሪካ ውሂብ ዳግም ማስጀመር ማከናወንና በዚህ መሣሪያ ላይ የተከማቸ ሁሉንም የተጠቃሚ ውሂብ መሰረዝ ሊኖርብዎት ይችላል።"</string>
+    <string name="recovery_try_again" msgid="7168248750158873496">"እንደገና ሞክር"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"የፋብሪካ ውሂብ ዳግም ማስጀመር"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"ሁሉም የተጠቃሚ ውሂብ ይሰረዝ?\n\n ይህ ሊቀለበስ አይችልም!"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"ይቅር"</string>
 </resources>

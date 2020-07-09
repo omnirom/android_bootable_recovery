@@ -50,6 +50,7 @@ void print_usage(void) {
 	printf("  fixperms\n");
 	printf("  mount <path>\n");
 	printf("  unmount <path>\n");
+	printf("  listmounts\n");
 	printf("  print <value>\n");
 	printf("  mkdir <directory>\n");
 	printf("  reboot [recovery|poweroff|bootloader|download|edl]\n");

@@ -1,5 +1,5 @@
 /*
-        Copyright 2012 to 2016 bigbiff/Dees_Troy TeamWin
+        Copyright 2012 to 2020 TeamWin
         This file is part of TWRP/TeamWin Recovery Project.
 
         TWRP is free software: you can redistribute it and/or modify
@@ -41,6 +41,7 @@ extern "C" {
 #include "../twcommon.h"
 }
 #include "../minuitwrp/minui.h"
+#include "../minuitwrp/truetype.hpp"
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
@@ -215,7 +216,7 @@ void GUIInput::UpdateDisplayText() {
 		displayValue = mValue;
 	}
 
-	textWidth = gr_ttf_measureEx(displayValue.c_str(), fontResource);
+	textWidth = twrpTruetype::gr_ttf_measureEx(displayValue.c_str(), fontResource);
 }
 
 void GUIInput::HandleCursorByTouch(int x) {
@@ -239,7 +240,7 @@ void GUIInput::HandleCursorByTouch(int x) {
 
 	for (index = 0; index <= displaySize; index++) {
 		cursorString = displayValue.substr(0, index);
-		cursorX = gr_ttf_measureEx(cursorString.c_str(), fontResource) + mRenderX + scrollingX;
+		cursorX = twrpTruetype::gr_ttf_measureEx(cursorString.c_str(), fontResource) + mRenderX + scrollingX;
 		if (cursorX > x) {
 			if (index > 0 && x <= cursorX - ((x - prevX) / 2) && prevX >= mRenderX) {
 				// This helps make sure that we can place the cursor before the very first char if the first char is
@@ -280,7 +281,7 @@ void GUIInput::HandleCursorByText() {
 	if (mCursorLocation != -1) {
 		string cursorDisplay = displayValue;
 		cursorDisplay.resize(mCursorLocation);
-		cursorTextWidth = gr_ttf_measureEx(cursorDisplay.c_str(), fontResource);
+		cursorTextWidth = twrpTruetype::gr_ttf_measureEx(cursorDisplay.c_str(), fontResource);
 	}
 	cursorX = mRenderX + cursorTextWidth + scrollingX;
 	if (cursorX >= mRenderX + mRenderW) {

@@ -4,7 +4,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libtar
-LOCAL_MODULE_TAGS := eng optional
+LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := append.c block.c decode.c encode.c extract.c handle.c output.c util.c wrapper.c basename.c strmode.c libtar_hash.c libtar_list.c dirname.c android_utils.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH) \
                     external/zlib
@@ -14,9 +14,15 @@ LOCAL_C_INCLUDES += external/libselinux/include
 LOCAL_SHARED_LIBRARIES += libselinux
 
 ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
-    LOCAL_SHARED_LIBRARIES += libe4crypt
-    LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
-    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../crypto/ext4crypt
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        LOCAL_SHARED_LIBRARIES += libtwrpfscrypt
+        LOCAL_CFLAGS += -DUSE_FSCRYPT
+        LOCAL_C_INCLUDES += $(LOCAL_PATH)/../crypto/fscrypt
+    else
+        LOCAL_SHARED_LIBRARIES += libe4crypt
+        LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
+        LOCAL_C_INCLUDES += $(LOCAL_PATH)/../crypto/ext4crypt
+    endif
 endif
 
 include $(BUILD_SHARED_LIBRARY)
@@ -25,7 +31,7 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libtar_static
-LOCAL_MODULE_TAGS := eng optional
+LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := append.c block.c decode.c encode.c extract.c handle.c output.c util.c wrapper.c basename.c strmode.c libtar_hash.c libtar_list.c dirname.c android_utils.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH) \
                     external/zlib
@@ -35,9 +41,15 @@ LOCAL_C_INCLUDES += external/libselinux/include
 LOCAL_STATIC_LIBRARIES += libselinux
 
 ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
-    LOCAL_SHARED_LIBRARIES += libe4crypt
-    LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
-    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../crypto/ext4crypt
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 29; echo $$?),0)
+        LOCAL_SHARED_LIBRARIES += libtwrpfscrypt
+        LOCAL_CFLAGS += -DUSE_FSCRYPT
+        LOCAL_C_INCLUDES += $(LOCAL_PATH)/../crypto/fscrypt
+    else
+        LOCAL_SHARED_LIBRARIES += libe4crypt
+        LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
+        LOCAL_C_INCLUDES += $(LOCAL_PATH)/../crypto/ext4crypt
+    endif
 endif
 
 include $(BUILD_STATIC_LIBRARY)
