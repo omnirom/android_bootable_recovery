@@ -2159,6 +2159,11 @@ bool TWPartition::Wipe_EXTFS(string File_System) {
 			LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
 		} else {
 			// Execute e2fsdroid to initialize selinux context
+			if (Mount_Point == "/persist") {
+				Mount(true);
+				TWFunc::removeDir("/persist/lost+found", false);
+				UnMount(true);
+			}
 			Command = "e2fsdroid -e -S /file_contexts -a " + File_Contexts_Entry + " " + Actual_Block_Device;
 			LOGINFO("e2fsdroid command: %s\n", Command.c_str());
 			ret = TWFunc::Exec_Cmd(Command);
