@@ -521,6 +521,10 @@
 		<string name="decrypt_user_fail_fbe">Failed to decrypt user {1}</string>
 		<string name="decrypt_data_enter_pass_fbe">Enter Password for User [%tw_crypto_user_id%]</string>
 		<string name="decrypt_data_enter_pattern_fbe">Enter Pattern for User [%tw_crypto_user_id%]</string>
+		<string name="multiuser_warning1">Not all users decrypted!</string>
+		<string name="multiuser_warning2">Backup/restore operations may fail!</string>
+		<string name="multiuser_warning_accept">Continue Anyway</string>
+		<string name="multiuser_warning_hdr">Multiuser Warning</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel does not have support for reading SELinux contexts.</string>

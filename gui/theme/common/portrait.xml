@@ -711,6 +711,8 @@
 				<action function="set">tw_show_exclamation=0</action>
 				<action function="set">tw_show_reboot=0</action>
 				<action function="set">tw_crypto_user_id=</action>
+				<action function="set">tw_multiuser_warning_accepted=</action>
+				<action function="set">tw_multiuser_warning_destination=</action>
 				<action function="page">%tw_clear_destination%</action>
 			</action>
 		</page>
@@ -1587,6 +1589,18 @@
 		<page name="backup">
 			<template name="page"/>
 
+			<action>
+				<conditions>
+					<condition var1="tw_is_fbe" var2="1"/>
+					<condition var1="tw_all_users_decrypted" var2="0"/>
+					<condition var1="tw_multiuser_warning_accepted" op="!=" var2="1"/>
+				</conditions>
+				<actions>
+					<action function="set">tw_multiuser_warning_destination=backup</action>
+					<action function="page">multiuser_warning</action>
+				</actions>
+			</action>
+
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@backup_hdr=Backup}</text>
@@ -1686,6 +1700,49 @@
 			<slider>
 				<text>{@swipe_backup=Swipe to Backup}</text>
 				<action function="page">backup_run</action>
+			</slider>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="multiuser_warning">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@multiuser_warning_hdr=Multiuser Warning}</text>
+			</text>
+
+			<text style="text_m_fail">
+				<placement x="%center_x%" y="%row7_y%" placement="5"/>
+				<text>{@multiuser_warning1=Not all users decrypted!}</text>
+			</text>
+
+			<text style="text_m_fail">
+				<placement x="%center_x%" y="%row8_y%" placement="5"/>
+				<text>{@multiuser_warning2=Backup/restore operations may fail!}</text>
+			</text>
+
+			<button style="main_button_half_height_full_width">
+				<placement x="%indent%" y="%row18a_y%"/>
+				<text>{@decrypt_users=Decrypt Users}</text>
+				<action function="page">decrypt_users</action>
+			</button>
+
+			<slider>>
+				<text>{@multiuser_warning_accept=Continue Anyway}</text>
+				<actions>
+					<action function="set">tw_multiuser_warning_accepted=1</action>
+					<action function="page">%tw_multiuser_warning_destination%</action>
+				</actions>
 			</slider>
 
 			<action>
@@ -2237,6 +2294,18 @@
 
 		<page name="restore">
 			<template name="page"/>
+
+			<action>
+				<conditions>
+					<condition var1="tw_is_fbe" var2="1"/>
+					<condition var1="tw_all_users_decrypted" var2="0"/>
+					<condition var1="tw_multiuser_warning_accepted" op="!=" var2="1"/>
+				</conditions>
+				<actions>
+					<action function="set">tw_multiuser_warning_destination=restore</action>
+					<action function="page">multiuser_warning</action>
+				</actions>
+			</action>
 
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
