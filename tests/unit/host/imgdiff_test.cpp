@@ -35,7 +35,6 @@
 
 using android::base::get_unaligned;
 
-// Sanity check for the given imgdiff patch header.
 static void verify_patch_header(const std::string& patch, size_t* num_normal, size_t* num_raw,
                                 size_t* num_deflate) {
   const size_t size = patch.size();
