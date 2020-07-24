@@ -76,7 +76,7 @@ TEST(InstallTest, read_metadata_from_package_smoke) {
 
 TEST(InstallTest, read_metadata_from_package_no_entry) {
   TemporaryFile temp_file;
-  BuildZipArchive({ { "dummy_entry", "" } }, temp_file.release(), kCompressStored);
+  BuildZipArchive({ { "fake_entry", "" } }, temp_file.release(), kCompressStored);
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
@@ -153,7 +153,7 @@ TEST(InstallTest, SetUpNonAbUpdateCommands) {
 TEST(InstallTest, SetUpNonAbUpdateCommands_MissingUpdateBinary) {
   TemporaryFile temp_file;
   // The archive must have something to be opened correctly.
-  BuildZipArchive({ { "dummy_entry", "" } }, temp_file.release(), kCompressStored);
+  BuildZipArchive({ { "fake_entry", "" } }, temp_file.release(), kCompressStored);
 
   // Missing update binary.
   ZipArchiveHandle zip;
@@ -334,7 +334,7 @@ TEST(InstallTest, CheckPackageMetadata_device_type) {
   metadata = android::base::Join(
       std::vector<std::string>{
           "ota-type=BRICK",
-          "pre-device=dummy_device_type",
+          "pre-device=fake_device_type",
       },
       "\n");
   TestCheckPackageMetadata(metadata, OtaType::BRICK, false);
@@ -358,7 +358,7 @@ TEST(InstallTest, CheckPackageMetadata_serial_number_smoke) {
       std::vector<std::string>{
           "ota-type=BRICK",
           "pre-device=" + device,
-          "serialno=dummy_serial",
+          "serialno=fake_serial",
       },
       "\n");
   TestCheckPackageMetadata(metadata, OtaType::BRICK, false);
@@ -383,7 +383,7 @@ TEST(InstallTest, CheckPackageMetadata_multiple_serial_number) {
   ASSERT_NE("", serialno);
 
   std::vector<std::string> serial_numbers;
-  // Creates a dummy serial number string.
+  // Creates a fake serial number string.
   for (char c = 'a'; c <= 'z'; c++) {
     serial_numbers.emplace_back(serialno.size(), c);
   }
@@ -431,7 +431,7 @@ TEST(InstallTest, CheckPackageMetadata_ab_build_version) {
       std::vector<std::string>{
           "ota-type=AB",
           "pre-device=" + device,
-          "pre-build-incremental=dummy_build",
+          "pre-build-incremental=fake_build",
           "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
       },
       "\n");
@@ -459,7 +459,7 @@ TEST(InstallTest, CheckPackageMetadata_ab_fingerprint) {
       std::vector<std::string>{
           "ota-type=AB",
           "pre-device=" + device,
-          "pre-build=dummy_build_fingerprint",
+          "pre-build=fake_build_fingerprint",
           "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
       },
       "\n");
@@ -487,7 +487,7 @@ TEST(InstallTest, CheckPackageMetadata_dynamic_fingerprint) {
       std::vector<std::string>{
           "ota-type=AB",
           "pre-device=" + device,
-          "pre-build=dummy_build_fingerprint",
+          "pre-build=fake_build_fingerprint",
           "post-timestamp=" + std::to_string(std::numeric_limits<int64_t>::max()),
       },
       "\n");
