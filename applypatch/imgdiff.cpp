@@ -1038,20 +1038,21 @@ bool ZipModeImage::AddSplitImageFromChunkList(const ZipModeImage& tgt_image,
   split_tgt_image.Initialize(aligned_tgt_chunks, {});
   split_tgt_image.MergeAdjacentNormalChunks();
 
-  // Construct the dummy source file based on the src_ranges.
-  std::vector<uint8_t> src_content;
+  // Construct the split source file based on the split src ranges.
+  std::vector<uint8_t> split_src_content;
   for (const auto& r : split_src_ranges) {
     size_t end = std::min(src_image.file_content_.size(), r.second * BLOCK_SIZE);
-    src_content.insert(src_content.end(), src_image.file_content_.begin() + r.first * BLOCK_SIZE,
-                       src_image.file_content_.begin() + end);
+    split_src_content.insert(split_src_content.end(),
+                             src_image.file_content_.begin() + r.first * BLOCK_SIZE,
+                             src_image.file_content_.begin() + end);
   }
 
   // We should not have an empty src in our design; otherwise we will encounter an error in
-  // bsdiff since src_content.data() == nullptr.
-  CHECK(!src_content.empty());
+  // bsdiff since split_src_content.data() == nullptr.
+  CHECK(!split_src_content.empty());
 
   ZipModeImage split_src_image(true);
-  split_src_image.Initialize(split_src_chunks, src_content);
+  split_src_image.Initialize(split_src_chunks, split_src_content);
 
   split_tgt_images->push_back(std::move(split_tgt_image));
   split_src_images->push_back(std::move(split_src_image));
