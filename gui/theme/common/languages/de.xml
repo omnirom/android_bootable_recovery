@@ -30,6 +30,7 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Eingegliederte Daten-Partition</string>
 		<string name="adopted_storage">Eingegliederte Storage-Partition</string>
+		<string name="autostorage">Storage-Partition</string>
 
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
@@ -98,6 +99,7 @@
 		<string name="install_failed">Installation fehlgeschlagen</string>
 		<string name="install_successful">Installation erfolgreich</string>
 		<string name="wipe_cache_dalvik_btn">Cache/Dalvik löschen</string>
+		<string name="wipe_dalvik_btn">Dalvik löschen</string>
 		<string name="reboot_system_btn">System neustarten</string>
 		<string name="install_sel_target">Ziel-Partition auswählen</string>
 		<string name="flash_image_select">Partition wählen, um das Image zu einzuspielen:</string>
@@ -105,8 +107,10 @@
 		<string name="flashing_image">Spiele Image ein...</string>
 		<string name="image_flashed">Image eingespielt</string>
 		<string name="wipe_cache_dalvik_confirm">Cache &amp; Dalvik löschen?</string>
+		<string name="wipe_dalvik_confirm">Dalvik löschen?</string>
 		<string name="wiping_cache_dalvik">Lösche Cache &amp; Dalvik...</string>
 		<string name="wipe_cache_dalvik_complete">Cache &amp; Dalvik gelöscht</string>
+		<string name="wipe_dalvik_complete">Dalvik gelöscht</string>
 		<string name="swipe_wipe">Löschen bestätigen</string>
 		<string name="swipe_wipe_s">Löschen</string>
 		<string name="no_os1">Kein OS installiert! Sind Sie</string>
@@ -122,6 +126,10 @@
 		<string name="reboot_install_app_system">Als System-App installieren</string>
 		<string name="reboot_installing_app">Installiere App...</string>
 		<string name="swipe_to_install_app">TWRP App installieren</string>
+		<string name="uninstall_twrp_system_app">Deinstalliere TWRP App vom System</string>
+		<string name="uninstall_twrp_system_app_confirm">TWRP App vom System deinstallieren?</string>
+		<string name="uninstalling_twrp_system_app">Deinstalliere TWRP App vom System...</string>
+		<string name="uninstall_twrp_system_app_complete">Deinstallationder TWRP App vom System abgeschlossen</string>
 		<string name="swipe_flash">Installation bestätigen</string>
 		<string name="confirm_action">Aktion bestätigen</string>
 		<string name="back_cancel">Zurück-Taste drücken, um den Vorgang abzubrechen.</string>
@@ -133,13 +141,14 @@
 		<string name="factory_reset2">(ohne internen Speicher)</string>
 		<string name="factory_reset3">Diese Lösch-Aktion ist in der Regel</string>
 		<string name="factory_reset4">die einzige die benötigt wird.</string>
+		<string name="factory_reset5">(beinhaltet nicht die Benutzer und den Sperrbildschirm)</string>
 		<string name="factory_resetting">Werkseinstellungen herstellen...</string>
 		<string name="advanced_wipe_hdr">Erweitertes Löschen</string>
 		<string name="advanced_wipe_btn">Erweitertes Löschen</string>
 		<string name="wipe_enc_confirm">Verschlüsselung der Daten-Partition enfernen?</string>
 		<string name="formatting_data">Data wird formatiert...</string>
 		<string name="swipe_format_data">Daten-Partition formatieren</string>
-		<string name="swipe_format_data_s">Formatieren </string>
+		<string name="swipe_format_data_s">Formatieren</string>
 		<string name="factory_reset_complete">Werkseinstellungen wiederhergestellt</string>
 		<string name="sel_part_hdr">Partitionen auswählen</string>
 		<string name="wipe_sel_confirm">Ausgewählte Partition(en) löschen?</string>
@@ -318,6 +327,7 @@
 		<string name="settings_tz_btn">Zeitzone</string>
 		<string name="settings_screen_btn">Bildschirm</string>
 		<string name="settings_screen_bright_btn">Helligkeit</string>
+		<string name="vibration_disabled">Vibration ist auf diesen Gerät ausgeschalten</string>
 		<string name="settings_vibration_btn">Vibration</string>
 		<string name="settings_language_btn">Sprache</string>
 		<string name="time_zone_hdr">Zeitzone</string>
@@ -455,6 +465,7 @@
 		<string name="decrypt_data_failed_pattern">Muster falsch, bitte erneut versuchen!</string>
 		<string name="decrypt_data_enter_pattern">Muster eingeben.</string>
 		<string name="decrypt_data_trying">Versuche Entschlüsselung</string>
+		<string name="decrypt_data_vold_os_missing">Fehlende Dateien für vold Entschlüsselung werden benötigt: {1}</string>
 		<string name="term_hdr">Terminal</string>
 		<string name="term_s_hdr">Terminal</string>
 		<string name="term_kill_btn">BEENDEN</string>
@@ -479,6 +490,37 @@
 		<string name="install_cancel">Nicht installieren</string>
 		<string name="sel_storage_list">Speicher auswählen</string>
 		<string name="ok_btn">OK</string>
+		<string name="install_twrp_ramdisk">Installiere Recovery Ramdisk</string>
+		<string name="install_kernel">Kernel installieren</string>
+		<string name="repack_kernel_confirm_hdr">Kernel installieren</string>
+		<string name="repack_ramdisk_confirm_hdr">Recovery installieren</string>
+		<string name="repack_kernel_confirm">Kernel installieren?</string>
+		<string name="repack_ramdisk_confirm">Recovery installieren?</string>
+		<string name="repack_backup_first">Sichern des existierenden Images zu Beginn</string>
+		<string name="repack">Packen</string>
+		<string name="swipe_to_install">Installieren</string>
+		<string name="installing">Installiere...</string>
+		<string name="install_complete">Installation abgeschlossen</string>
+		<string name="unpack_error">Fehler beim Entpacken des Images.</string>
+		<string name="repack_error">Fehler beim Packen des Images.</string>
+		<string name="unpacking_image">Entpacke {1}...</string>
+		<string name="repacking_image">Packen {1}...</string>
+		<string name="repack_image_hdr">Wähle ein Image</string>
+		<string name="fix_recovery_loop">Recovery Bootloop reparieren</string>
+		<string name="fix_recovery_loop_confirm">Recovery Bootloop reparieren?</string>
+		<string name="fixing_recovery_loop">Recovery Bootloop wird repariert...</string>
+		<string name="fix_recovery_loop_complete">Recovery Bootloop Reparatur abgeschlossen</string>
+		<string name="fixing_recovery_loop_patch">Patche Kernel...</string>
+		<string name="fix_recovery_loop_patch_error">Fehler beim Patchen des Kernels.</string>
+		<string name="decrypt_users">Benutzer entschlüsseln</string>
+		<string name="decrypt_users_selection">Wähle eine Benutzer ID zum entschlüsseln</string>
+		<string name="select_user">Benutzer wählen</string>
+		<string name="backup_storage_undecrypt_warning">Das Backup enthält manche Dateien des Benutzers {1} nicht, da dieser nicht verschlüsselt ist</string>
+		<string name="decrypting_user_fbe">Entschlüsselung des FBE von Benutzer {1}...</string>
+		<string name="decrypt_user_success_fbe">Entschlüsselung des Benutzers {1} erfolgreich</string>
+		<string name="decrypt_user_fail_fbe">Entschlüsselung des Benutzers {1} fehlgeschlagen</string>
+		<string name="decrypt_data_enter_pass_fbe">Passwort für Benutzer [%tw_crypto_user_id%] eingeben</string>
+		<string name="decrypt_data_enter_pattern_fbe">Muster für Benutzer [%tw_crypto_user_id%] eingeben</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Dieser Kernel hat keine Leseunterstützung für SELinux-Kontexte.</string>
@@ -532,7 +574,8 @@
 		<string name="update_part_details_done">...Fertig</string>
 		<string name="wiping_dalvik">Dalvik Cache-Verzeichnisse bereinigen...</string>
 		<string name="cleaned">Bereinigt: {1}...</string>
-		<string name="dalvik_done">-- Dalvik Cache-Verzeichnisse bereinigt!</string>
+		<string name="cache_dalvik_done">-- Dalvik Cache-Verzeichnisse bereinigt!</string>
+		<string name="dalvik_done">-- Dalvik-Verzeichnis bereinigt!</string>
 		<string name="no_andsec">Keine "Android Secure"-Partitionen gefunden.</string>
 		<string name="unable_to_locate">{1} nicht gefunden.</string>
 		<string name="wiping_datamedia">Lösche internen Speicher -- /data/media...</string>
@@ -620,7 +663,7 @@
 		<string name="done_ors">Skript wurde verarbeitet</string>
 		<string name="injecttwrp">Injiziere TWRP in das Boot-Image...</string>
 		<string name="zip_err">Fehler beim Installieren von ZIP '{1}'</string>
-		<string name="installing_zip">Installiere Zip '{1}'</string>
+		<string name="installing_zip">Installiere ZIP '{1}'</string>
 		<string name="select_backup_opt">Setze Sicherungs-Optionen:</string>
 		<string name="compression_on">Komprimierung ist aktiviert</string>
 		<string name="digest_off" version="2">Digest-Generierung ist deaktiviert</string>
@@ -630,7 +673,7 @@
 		<string name="recovery_commands_complete">Recovery-Befehle ausgeführt</string>
 		<string name="running_ors">Führe OpenRecoveryScript aus</string>
 		<string name="ors_complete">OpenRecoveryScript ausgeführt</string>
-		<string name="invalid_zip_format">Invalid zip file format!</string>
+		<string name="invalid_zip_format">Invalides ZIP-Datei Format!</string>
 		<string name="check_for_digest" version="2">Suche nach Digest-Datei...</string>
 		<string name="fail_sysmap">'{1}' kann nicht zugeordnet werden</string>
 		<string name="verify_zip_sig">Überprüfe ZIP-Signatur...</string>
@@ -684,6 +727,14 @@
 		<string name="partition_not_found">Pfad: {1} wurde nicht in Partitionsliste gefunden</string>
 		<string name="copy_kernel_log">Kernel-Log wurde nach {1} kopiert</string>
 		<string name="include_kernel_log">Zusätzlich Kernel-Log kopieren</string>
+		<string name="sha2_chk">SHA2 als Hash-Algorithmus verwenden</string>
 		<string name="unable_set_boot_slot">Fehler während Wechsel zu Slot {1}</string>
+		<string name="unmount_sys_install">Aushängen der System-Partition vor der Installation einer ZIP-Datei.</string>
+		<string name="unmount_system">Aushängen der System-Partiton...</string>
+		<string name="unmount_system_err">Aushängen der System-Partition fehlgeschlagen</string>
+		<string name="flash_ab_inactive">Einspielen des A/B ZIPs auf den inaktiven Slot: {1}</string>
+		<string name="flash_ab_reboot">Um weitere ZIP-Dateien einzuspielen bitte das Recovery neustartet um auf den geänderten Slot zu wechseln.</string>
+		<string name="ozip_decrypt_decryption">Starte Ozip Entschlüsselung...</string>
+		<string name="ozip_decrypt_finish">Ozip Entschlüsselung abgeschlossen!</string>
 	</resources>
 </language>
