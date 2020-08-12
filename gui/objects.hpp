@@ -373,6 +373,7 @@ protected:
 	int fixabrecoverybootloop(std::string arg);
 	int enableadb(std::string arg);
 	int enablefastboot(std::string arg);
+	int changeterminal(std::string arg);
 	int simulate;
 };
 
@@ -807,6 +808,8 @@ public:
 	virtual size_t GetItemCount();
 	virtual void RenderItem(size_t itemindex, int yPos, bool selected);
 	virtual void NotifySelect(size_t item_selected);
+	bool status();
+	void stop();
 protected:
 	void InitAndResize();
 

@@ -48,7 +48,6 @@ extern "C" {
 #endif
 
 extern int g_pty_fd; // in gui.cpp where the select is
-
 /*
 Pseudoterminal handler.
 */
@@ -144,7 +143,7 @@ public:
 			return -1;
 		}
 		int rc = ::write(fdMaster, buffer, size);
-		debug_printf("pty write: %d bytes -> %d\n", size, rc);
+		debug_printf("pty write: %zu bytes -> %d\n", size, rc);
 		if (rc < 0) {
 			LOGERR("pty write failed: %d\n", errno);
 			// assume child has died
@@ -386,6 +385,14 @@ public:
 		else
 			for (int i = 0; i < rc; ++i)
 				output(buffer[i]);
+	}
+
+	bool status() {
+		return pty.started();
+	}
+
+	void stop() {
+		pty.stop();
 	}
 
 	void clear()
@@ -899,6 +906,17 @@ void GUITerminal::RenderItem(size_t itemindex, int yPos, bool selected __unused)
 void GUITerminal::NotifySelect(size_t item_selected __unused)
 {
 	// do nothing - terminal ignores selections
+}
+
+bool GUITerminal::status()
+{
+	return engine->status();
+}
+
+void GUITerminal::stop()
+{
+	engine->stop();
+	engine->clear();
 }
 
 void GUITerminal::InitAndResize()
