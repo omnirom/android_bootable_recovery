@@ -63,6 +63,7 @@ extern "C" {
 #define TW_THEME_VER_ERR -2
 
 extern int gGuiRunning;
+GUITerminal* term = NULL;
 
 std::map<std::string, PageSet*> PageManager::mPageSets;
 PageSet* PageManager::mCurrentSet;
@@ -385,6 +386,7 @@ bool Page::ProcessNode(xml_node<>* page, std::vector<xml_node<>*> *templates, in
 			mRenders.push_back(element);
 			mActions.push_back(element);
 			mInputs.push_back(element);
+			term = element;
 		}
 		else if (type == "button")
 		{

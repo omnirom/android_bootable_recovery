@@ -4123,6 +4123,13 @@
 			</button>
 
 			<button style="main_button_half_width">
+				<condition var1="tw_fm_isfolder" var2="1"/>
+				<placement x="%col2_x_right%" y="%row15a_y%"/>
+				<text>{@fm_open_terminal_btn=Open Terminal Here}</text>
+				<action function="changeterminal">%tw_filename1%</action>
+			</button>
+
+			<button style="main_button_half_width">
 				<placement x="%col2_x_right%" y="%row11_y%"/>
 				<text>{@fm_delete_btn=Delete}</text>
 				<actions>
@@ -4743,6 +4750,7 @@
 				<actions>
 					<action function="set">tw_hide_kb=0</action>
 					<action function="key">home</action>
+					<action function="changeterminal"/>
 				</actions>
 			</button>
 
@@ -4830,6 +4838,7 @@
 				<actions>
 					<action function="set">tw_hide_kb=0</action>
 					<action function="key">home</action>
+					<action function="changeterminal"/>
 				</actions>
 			</button>
 
@@ -4868,6 +4877,7 @@
 				<actions>
 					<action function="set">tw_hide_kb=0</action>
 					<action function="page">advanced</action>
+					<action function="changeterminal"/>
 				</actions>
 			</button>
 
@@ -4963,6 +4973,7 @@
 				<actions>
 					<action function="page">main</action>
 					<action function="set">tw_hide_kb=0</action>
+					<action function="changeterminal"/>
 				</actions>
 			</action>
 
@@ -4971,6 +4982,7 @@
 				<actions>
 					<action function="page">advanced</action>
 					<action function="set">tw_hide_kb=0</action>
+					<action function="changeterminal"/>
 				</actions>
 			</action>
 
