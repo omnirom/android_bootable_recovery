@@ -51,7 +51,6 @@ extern "C" {
 #include "openrecoveryscript.hpp"
 #include "variables.h"
 #include "twrpAdbBuFifo.hpp"
-#include "twrpApex.hpp"
 #ifdef TW_USE_NEW_MINADBD
 // #include "minadbd/minadbd.h"
 #else
@@ -77,6 +76,8 @@ static void Decrypt_Page(bool SkipDecryption, bool datamedia) {
 			LOGINFO("Skipping decryption\n");
 		} else {
 			LOGINFO("Is encrypted, do decrypt page first\n");
+			if (DataManager::GetIntValue(TW_IS_FBE))
+				DataManager::SetValue("tw_crypto_user_id", "0");
 			if (gui_startPage("decrypt", 1, 1) != 0) {
 				LOGERR("Failed to start decrypt GUI page.\n");
 			} else {
@@ -197,19 +198,6 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	PartitionManager.Output_Partition_Logging();
-#ifdef TW_INCLUDE_CRYPTO
-	DataManager::SetValue(TW_IS_ENCRYPTED, 1);
-#endif
-
-	if (PartitionManager.Get_Super_Status()) {
-		PartitionManager.Setup_Super_Devices();
-		PartitionManager.Setup_Super_Partition();
-	} else {
-#ifdef TW_INCLUDE_CRYPTO
-		if (!PartitionManager.Get_Super_Status())
-			PartitionManager.Decrypt_Data();
-#endif
-	}
 
 	// Load up all the resources
 	gui_loadResources();
@@ -318,8 +306,7 @@ int main(int argc, char **argv) {
 	LOGINFO("Backup of TWRP ramdisk done.\n");
 #endif
 
-	if (!PartitionManager.Get_Super_Status())
-		Decrypt_Page(SkipDecryption, datamedia);
+	Decrypt_Page(SkipDecryption, datamedia);
 
 	// Fixup the RTC clock on devices which require it
 	if (crash_counter == 0)
@@ -368,21 +355,7 @@ int main(int argc, char **argv) {
 	TWPartition* ven = PartitionManager.Find_Partition_By_Path("/vendor");
 	if (sys) {
 		if (sys->Get_Super_Status()) {
-			if (!PartitionManager.Prepare_All_Super_Volumes()) {
-				LOGERR("Unable to prepare super volumes.\n");
-			}
-			sys->Mount(true);
-			if (ven) {
-				ven->Mount(true);
-			}
-			twrpApex apex;
-			if (!apex.loadApexImages()) {
-				LOGERR("Unable to load apex images from %s\n", APEX_DIR);
-			}
-			property_set("twrp.apex.loaded", "true");
 #ifdef TW_INCLUDE_CRYPTO
-			PartitionManager.Decrypt_Data();
-			Decrypt_Page(SkipDecryption, datamedia);
 			std::string recoveryLogDir(DATA_LOGS_DIR);
 			recoveryLogDir += "/recovery";
 			if (!TWFunc::Path_Exists(recoveryLogDir)) {

@@ -248,6 +248,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 			mapit->second.fstab_line = NULL;
 		}
 	}
+	if (Get_Super_Status()) {
+		Setup_Super_Devices();
+	}
 	LOGINFO("Done processing fstab files\n");
 
 	std::vector<TWPartition*>::iterator iter;
@@ -275,6 +278,27 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 			andsec_partition = (*iter);
 		else
 			(*iter)->Has_Android_Secure = false;
+		if (Is_Super_Partition(TWFunc::Remove_Beginning_Slash((*iter)->Get_Mount_Point()).c_str()))
+			Prepare_Super_Volume((*iter));
+	}
+
+	//Setup Apex before decryption
+	TWPartition* sys = PartitionManager.Find_Partition_By_Path(PartitionManager.Get_Android_Root_Path());
+	TWPartition* ven = PartitionManager.Find_Partition_By_Path("/vendor");
+	if (sys) {
+		if (sys->Get_Super_Status()) {
+			sys->Mount(true);
+			if (ven) {
+				ven->Mount(true);
+			}
+			twrpApex apex;
+			if (!apex.loadApexImages()) {
+				LOGERR("Unable to load apex images from %s\n", APEX_DIR);
+				property_set("twrp.apex.loaded", "false");
+			} else {
+				property_set("twrp.apex.loaded", "true");
+			}
+		}
 	}
 
 	if (!datamedia && !settings_partition && Find_Partition_By_Path("/sdcard") == NULL && Find_Partition_By_Path("/internal_sd") == NULL && Find_Partition_By_Path("/internal_sdcard") == NULL && Find_Partition_By_Path("/emmc") == NULL) {
@@ -316,7 +340,14 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 		Setup_Settings_Storage_Partition(settings_partition);
 	}
 
+#ifdef TW_INCLUDE_CRYPTO
+	DataManager::SetValue(TW_IS_ENCRYPTED, 1);
+	Decrypt_Data();
+#endif
+
 	Update_System_Details();
+	if (Get_Super_Status())
+		Setup_Super_Partition();
 	UnMount_Main_Partitions();
 #ifdef AB_OTA_UPDATER
 	DataManager::SetValue("tw_active_slot", Get_Active_Slot_Display());
@@ -361,7 +392,8 @@ void TWPartitionManager::Decrypt_Data() {
 #ifdef TW_INCLUDE_FBE_METADATA_DECRYPT
 #ifdef USE_FSCRYPT
 			if (fscrypt_mount_metadata_encrypted(Decrypt_Data->Actual_Block_Device, Decrypt_Data->Mount_Point, false)) {
-				std::string crypto_blkdev =  android::base::GetProperty("ro.crypto.fs_crypto_blkdev", "error");
+				std::string crypto_blkdev =android::base::GetProperty("ro.crypto.fs_crypto_blkdev", "error");
+				Decrypt_Data->Decrypted_Block_Device = crypto_blkdev;
 				LOGINFO("Successfully decrypted metadata encrypted data partition with new block device: '%s'\n", crypto_blkdev.c_str());
 #else
 			if (e4crypt_mount_metadata_encrypted(Decrypt_Data->Mount_Point, false, Decrypt_Data->Key_Directory, Decrypt_Data->Actual_Block_Device, &Decrypt_Data->Decrypted_Block_Device)) {
@@ -1989,14 +2021,18 @@ void TWPartitionManager::UnMount_Main_Partitions(void) {
 	// Also unmounts boot if boot is mountable
 	LOGINFO("Unmounting main partitions...\n");
 
-	TWPartition* Boot_Partition = Find_Partition_By_Path("/boot");
+	TWPartition *Partition = Find_Partition_By_Path ("/vendor");
 
-	UnMount_By_Path(Get_Android_Root_Path(), true);
+	if (Partition != NULL) UnMount_By_Path("/vendor", false);
+	UnMount_By_Path (Get_Android_Root_Path(), true);
+	Partition = Find_Partition_By_Path ("/product");
+	if (Partition != NULL) UnMount_By_Path("/product", false);
 	if (!datamedia)
 		UnMount_By_Path("/data", true);
 
-	if (Boot_Partition != NULL && Boot_Partition->Can_Be_Mounted)
-		Boot_Partition->UnMount(true);
+	Partition = Find_Partition_By_Path ("/boot");
+	if (Partition != NULL && Partition->Can_Be_Mounted)
+		Partition->UnMount(true);
 }
 
 int TWPartitionManager::Partition_SDCard(void) {
@@ -3170,6 +3206,8 @@ bool TWPartitionManager::Prepare_All_Super_Volumes() {
 }
 
 bool TWPartitionManager::Is_Super_Partition(const char* fstab_line) {
+	if (!Get_Super_Status())
+		return false;
 	std::vector<std::string> super_partition_list = {"system", "vendor", "odm", "product", "system_ext"};
 
 	for (auto&& fstab_partition_check: super_partition_list) {
