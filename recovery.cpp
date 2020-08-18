@@ -421,15 +421,15 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
       case Device::REBOOT:
       case Device::SHUTDOWN:
         if (!ui->IsTextVisible()) {
-          return Device::REBOOT;
+          return chosen_action;
         }
         // okay to reboot; no need to ask.
         if (!update_in_progress) {
-          return Device::REBOOT;
+          return chosen_action;
         }
         // An update might have been failed. Ask if user really wants to reboot.
         if (AskToReboot(device, chosen_action)) {
-          return Device::REBOOT;
+          return chosen_action;
         }
         break;
 
