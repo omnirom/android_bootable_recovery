@@ -18,6 +18,7 @@
         <option name="cleanup" value="true" />
         <option name="push" value="minadbd_test->/data/local/tmp/minadbd_test" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
     <option name="test-suite-tag" value="apct" />
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
