@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 bigbiff/Dees_Troy TeamWin
+	Copyright 2012-2020 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify
@@ -45,7 +45,7 @@
 #include "data.hpp"
 #include "partitions.hpp"
 #include "variables.h"
-#include "bootloader_message_twrp/include/bootloader_message_twrp/bootloader_message.h"
+#include "bootloader_message/include/bootloader_message/bootloader_message.h"
 #include "cutils/properties.h"
 #include "cutils/android_reboot.h"
 #include <sys/reboot.h>
@@ -619,19 +619,6 @@ void TWFunc::Update_Log_File(void) {
 	chmod(logCopy.c_str(), 0600);
 	chmod(lastLogCopy.c_str(), 0640);
 
-	// Reset bootloader message
-	TWPartition* Part = PartitionManager.Find_Partition_By_Path("/misc");
-	if (Part != NULL) {
-		std::string err;
-		if (!clear_bootloader_message((void*)&err)) {
-			if (err == "no misc device set") {
-				LOGINFO("%s\n", err.c_str());
-			} else {
-				LOGERR("%s\n", err.c_str());
-			}
-		}
-	}
-
 	if (get_log_dir() == CACHE_LOGS_DIR) {
 		if (PartitionManager.Mount_By_Path("/cache", false)) {
 			if (unlink("/cache/recovery/command") && errno != ENOENT) {
@@ -640,6 +627,17 @@ void TWFunc::Update_Log_File(void) {
 		}
 	}
 	sync();
+}
+
+void TWFunc::Clear_Bootloader_Message() {
+	std::string err;
+	if (!clear_bootloader_message(&err)) {
+		if (err == "no misc device set") {
+			LOGINFO("%s\n", err.c_str());
+		} else {
+			LOGERR("%s\n", err.c_str());
+		}
+	}
 }
 
 void TWFunc::Update_Intent_File(string Intent) {
@@ -672,18 +670,10 @@ int TWFunc::tw_reboot(RebootCommand command)
 #endif
 		case rb_recovery:
 			check_and_run_script("/system/bin/rebootrecovery.sh", "reboot recovery");
-#ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,recovery");
-#else
-			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "recovery");
-#endif
 		case rb_bootloader:
 			check_and_run_script("/system/bin/rebootbootloader.sh", "reboot bootloader");
-#ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,bootloader");
-#else
-			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "bootloader");
-#endif
 		case rb_poweroff:
 			check_and_run_script("/system/bin/poweroff.sh", "power off");
 #ifdef ANDROID_RB_PROPERTY
@@ -695,18 +685,12 @@ int TWFunc::tw_reboot(RebootCommand command)
 #endif
 		case rb_download:
 			check_and_run_script("/system/bin/rebootdownload.sh", "reboot download");
-#ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,download");
-#else
-			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "download");
-#endif
 		case rb_edl:
 			check_and_run_script("/system/bin/rebootedl.sh", "reboot edl");
-#ifdef ANDROID_RB_PROPERTY
 			return property_set(ANDROID_RB_PROPERTY, "reboot,edl");
-#else
-			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "edl");
-#endif
+		case rb_fastboot:
+			return property_set(ANDROID_RB_PROPERTY, "reboot,fastboot");
 		default:
 			return -1;
 	}

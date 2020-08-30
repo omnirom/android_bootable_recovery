@@ -6,7 +6,7 @@
 		<title>Backup Naowz</title>
 		<description>Default basic theme</description>
 		<preview>preview.png</preview>
-		<themeversion>3</themeversion>
+		<themeversion>4</themeversion>
 	</details>
 
 	<include>
@@ -198,6 +198,7 @@
 		<variable name="partitionlist_backup_height" value="198"/>
 		<variable name="listbox_timezone_height" value="306"/>
 		<variable name="listbox_settings_height" value="243"/>
+		<variable name="listbox_advanced_height" value="300"/>
 		<variable name="fastscroll_w" value="7"/>
 		<variable name="fastscroll_linew" value="1"/>
 		<variable name="fastscroll_rectw" value="7"/>

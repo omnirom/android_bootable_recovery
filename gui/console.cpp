@@ -1,5 +1,5 @@
 /*
-	Copyright 2015 bigbiff/Dees_Troy TeamWin
+	Copyright 2012 - 2020 TeamWin
 	This file is part of TWRP/TeamWin Recovery Project.
 
 	TWRP is free software: you can redistribute it and/or modify

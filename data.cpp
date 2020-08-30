@@ -717,6 +717,10 @@ void DataManager::SetDefaultValues()
 	printf("TW_HAS_EDL_MODE := true\n");
 	mConst.SetValue(TW_EDL_MODE, "1");
 #endif
+#ifdef PRODUCT_USE_DYNAMIC_PARTITIONS
+	printf("PRODUCT_USE_DYNAMIC_PARTITIONS := true\n");
+	mConst.SetValue(TW_FASTBOOT_MODE, "1");
+#endif
 #ifdef TW_INCLUDE_CRYPTO
 	mConst.SetValue(TW_HAS_CRYPTO, "1");
 	printf("TW_INCLUDE_CRYPTO := true\n");
@@ -792,6 +796,7 @@ void DataManager::SetDefaultValues()
 	mData.SetValue("tw_encrypt_backup", "0");
 	mData.SetValue("tw_sleep_total", "5");
 	mData.SetValue("tw_sleep", "5");
+	mData.SetValue("tw_enable_fastboot", "0");
 
 	// Brightness handling
 	string findbright;

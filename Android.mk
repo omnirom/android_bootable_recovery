@@ -68,6 +68,7 @@ LOCAL_SRC_FILES := \
     partition.cpp \
     partitionmanager.cpp \
     progresstracking.cpp \
+    startupArgs.cpp \
     twinstall.cpp \
     twrp-functions.cpp \
     twrpDigestDriver.cpp \
@@ -119,7 +120,6 @@ LOCAL_C_INCLUDES += \
     external/boringssl/include \
     external/libcxx/include \
     external/libselinux/include \
-    $(LOCAL_PATH)/bootloader_message_twrp/include \
     $(LOCAL_PATH)/recovery_ui/include \
     $(LOCAL_PATH)/otautil/include \
     $(LOCAL_PATH)/install/include \
@@ -128,7 +128,7 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/verifier28/
 
 LOCAL_STATIC_LIBRARIES += libguitwrp
-LOCAL_SHARED_LIBRARIES += libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libtwadbbu libbootloader_message_twrp
+LOCAL_SHARED_LIBRARIES += libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libtwadbbu libbootloader_message
 LOCAL_SHARED_LIBRARIES += libcrecovery libtwadbbu libtwrpdigest libc++ libaosprecovery libinit libcrypto libbase libziparchive libselinux
 LOCAL_CFLAGS += -DUSE_28_VERIFIER
 
@@ -377,7 +377,7 @@ TWRP_REQUIRED_MODULES += \
     mkfs.fat \
     permissive.sh \
     simg2img_twrp \
-    libbootloader_message_twrp \
+    libbootloader_message \
     init.recovery.hlthchrg.rc \
     init.recovery.service.rc \
     init.recovery.ldconfig.rc \
@@ -386,7 +386,8 @@ TWRP_REQUIRED_MODULES += \
     awk \
     toybox \
     toolbox \
-    mkshrc_twrp
+    mkshrc_twrp \
+    android.hardware.health@2.0-service
 
 ifneq ($(TW_INCLUDE_CRYPTO),)
 TWRP_REQUIRED_MODULES += \
@@ -558,8 +559,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SRC_FILES := install/adb_install.cpp install/asn1_decoder.cpp install/fuse_sdcard_install.cpp\
-    install/install.cpp install/installcommand.cpp install/legacy_property_service.cpp \
+LOCAL_SRC_FILES := install/adb_install.cpp install/asn1_decoder.cpp install/fuse_sdcard_install.cpp \
+    install/get_args.cpp install/install.cpp install/installcommand.cpp install/legacy_property_service.cpp \
     install/package.cpp install/verifier.cpp install/wipe_data.cpp install/tw_atomic.cpp \
     install/set_metadata.cpp verifier28/verifier.cpp install/zipwrap.cpp install/ZipUtil.cpp
 LOCAL_SHARED_LIBRARIES += libbase libbootloader_message libcrypto libext4_utils \
@@ -607,8 +608,7 @@ commands_recovery_local_path := $(LOCAL_PATH)
     # $(commands_TWRP_local_path)/boot_control/Android.bp 
     # $(commands_TWRP_local_path)/update_verifier/Android.mk
 include \
-    $(commands_TWRP_local_path)/updater/Android.mk \
-    $(commands_TWRP_local_path)/bootloader_message_twrp/Android.mk
+    $(commands_TWRP_local_path)/updater/Android.mk
 
 include $(commands_TWRP_local_path)/mtp/ffs/Android.mk
 

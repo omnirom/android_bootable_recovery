@@ -373,11 +373,9 @@ int OpenRecoveryScript::run_script_file(void) {
 
 				int wipe_cache = 0;
 				string result;
-				// pid_t sideload_child_pid;
 
 				gui_msg("start_sideload=Starting ADB sideload feature...");
 
-				// ret_val = apply_from_adb("/", &sideload_child_pid);
 				Device::BuiltinAction reboot_action = Device::REBOOT_BOOTLOADER;
 				ret_val = ApplyFromAdb("/", &reboot_action);
 				if (ret_val != 0) {
@@ -452,8 +450,6 @@ int OpenRecoveryScript::run_script_file(void) {
 int OpenRecoveryScript::Insert_ORS_Command(string Command) {
 	ofstream ORSfile(SCRIPT_FILE_TMP, ios_base::app | ios_base::out);
 	if (ORSfile.is_open()) {
-		//if (Command.substr(Command.size() - 1, 1) != "\n")
-		//	Command += "\n";
 		LOGINFO("Inserting '%s'\n", Command.c_str());
 		ORSfile << Command.c_str() << endl;
 		ORSfile.close();

@@ -371,7 +371,8 @@ protected:
 	int uninstalltwrpsystemapp(std::string arg);
 	int repackimage(std::string arg);
 	int fixabrecoverybootloop(std::string arg);
-
+	int enableadb(std::string arg);
+	int enablefastboot(std::string arg);
 	int simulate;
 };
 

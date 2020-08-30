@@ -33,6 +33,7 @@
 #include <sys/wait.h>
 #include <dirent.h>
 #include <private/android_filesystem_config.h>
+#include <android-base/properties.h>
 
 #include <string>
 #include <sstream>
@@ -201,6 +202,8 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(setlanguage);
 		ADD_ACTION(checkforapp);
 		ADD_ACTION(togglebacklight);
+		ADD_ACTION(enableadb);
+		ADD_ACTION(enablefastboot);
 
 		// remember actions that run in the caller thread
 		for (mapFunc::const_iterator it = mf.begin(); it != mf.end(); ++it)
@@ -2240,5 +2243,18 @@ int GUIAction::fixabrecoverybootloop(std::string arg __unused)
 	op_status = 0;
 exit:
 	operation_end(op_status);
+	return 0;
+}
+
+
+int GUIAction::enableadb(std::string arg __unused) {
+	android::base::SetProperty("sys.usb.config", "none");
+	android::base::SetProperty("sys.usb.config", "adb");
+	return 0;
+}
+
+int GUIAction::enablefastboot(std::string arg __unused) {
+	android::base::SetProperty("sys.usb.config", "none");
+	android::base::SetProperty("sys.usb.config", "fastboot");
 	return 0;
 }
