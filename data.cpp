@@ -273,44 +273,6 @@ int DataManager::LoadValues(const string& filename)
 	return 0;
 }
 
-int DataManager::LoadPersistValues(void)
-{
-	static bool loaded = false;
-	string dev_id;
-
-	// Only run this function once, and make sure normal settings file has not yet been read
-	if (loaded || !mBackingFile.empty() || !TWFunc::Path_Exists(PERSIST_SETTINGS_FILE))
-		return -1;
-
-	LOGINFO("Attempt to load settings from /persist settings file...\n");
-
-	if (!mInitialized)
-		SetDefaultValues();
-
-	GetValue("device_id", dev_id);
-	mPersist.SetFile(PERSIST_SETTINGS_FILE);
-	mPersist.SetFileVersion(FILE_VERSION);
-
-	// Read in the file, if possible
-	pthread_mutex_lock(&m_valuesLock);
-	mPersist.LoadValues();
-
-#ifndef TW_NO_SCREEN_TIMEOUT
-	blankTimer.setTime(mPersist.GetIntValue("tw_screen_timeout_secs"));
-#endif
-
-	update_tz_environment_variables();
-	TWFunc::Set_Brightness(GetStrValue("tw_brightness"));
-
-	pthread_mutex_unlock(&m_valuesLock);
-
-	/* Don't set storage nor backup paths this early */
-
-	loaded = true;
-
-	return 0;
-}
-
 int DataManager::Flush()
 {
 	return SaveValues();
@@ -319,15 +281,6 @@ int DataManager::Flush()
 int DataManager::SaveValues()
 {
 #ifndef TW_OEM_BUILD
-	if (PartitionManager.Mount_By_Path("/persist", false)) {
-		mPersist.SetFile(PERSIST_SETTINGS_FILE);
-		mPersist.SetFileVersion(FILE_VERSION);
-		pthread_mutex_lock(&m_valuesLock);
-		mPersist.SaveValues();
-		pthread_mutex_unlock(&m_valuesLock);
-		LOGINFO("Saved settings file values to %s\n", PERSIST_SETTINGS_FILE);
-	}
-
 	if (mBackingFile.empty())
 		return -1;
 
