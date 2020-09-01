@@ -26,7 +26,7 @@
 #include "exclude.hpp"
 #include "tw_atomic.hpp"
 #include "progresstracking.hpp"
-#include "fscrypt_policy.h"
+#include "crypto/fscrypt/fscrypt_policy.h"
 #include "twrpApex.hpp"
 
 #define MAX_FSTAB_LINE_LENGTH 2048
