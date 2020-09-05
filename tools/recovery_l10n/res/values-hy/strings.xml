@@ -9,6 +9,6 @@
     <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"Չհաջողվեց բեռնել Android համակարգը։ Հնարավոր է՝ ձեր տվյալները վնասված են։ Եթե նորից տեսնեք այս հաղորդագրությունը, փորձեք վերակայել սարքի կարգավորումները և ջնջել օգտատիրոջ բոլոր տվյալները։"</string>
     <string name="recovery_try_again" msgid="7168248750158873496">"Նորից փորձել"</string>
     <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Վերակայել բոլոր տվյալները"</string>
-    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Մաքրե՞լ օգտատիրոջ բոլոր տվյալները։\n\n ԱՅՍ ԳՈՐԾՈՂՈՒԹՅՈՒՆԸ ՀՆԱՐԱՎՈՐ ՉԻ ԼԻՆԻ ՀԵՏԱՐԿԵԼ"</string>
+    <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Ջնջե՞լ օգտատիրոջ բոլոր տվյալները։\n\n ԱՅՍ ԳՈՐԾՈՂՈՒԹՅՈՒՆԸ ՀՆԱՐԱՎՈՐ ՉԻ ԼԻՆԻ ՀԵՏԱՐԿԵԼ"</string>
     <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Չեղարկել"</string>
 </resources>

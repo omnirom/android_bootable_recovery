@@ -6,9 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"ليس هناك أي أمر"</string>
     <string name="recovery_error" msgid="5748178989622716736">"خطأ!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"جارٍ تثبيت تحديث الأمان"</string>
-    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"‏يتعذَّر تحميل نظام Android، حيث قد تكون بياناتك تالفة. وإذا استمر ظهور هذه الرسالة، قد يتعيَّن عليك إجراء إعادة الضبط بحسب بيانات المصنع ومحو جميع بيانات المستخدم المُخزَّنة على هذا الجهاز."</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"‏يتعذَّر تحميل نظام Android، حيث قد تكون بياناتك تالفة. وإذا استمر ظهور هذه الرسالة، قد يتعيَّن عليك إجراء إعادة الضبط على الإعدادات الأصلية ومحو جميع بيانات المستخدم المُخزَّنة على هذا الجهاز."</string>
     <string name="recovery_try_again" msgid="7168248750158873496">"إعادة المحاولة"</string>
-    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"إعادة الضبط بحسب بيانات المصنع"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"إعادة الضبط على الإعدادات الأصلية"</string>
     <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"هل تريد حجب كل بيانات المستخدم؟\n\n لا يمكن التراجع عن هذا الإجراء."</string>
     <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"إلغاء"</string>
 </resources>
