@@ -199,6 +199,38 @@ int main(int argc, char **argv) {
 	}
 	PartitionManager.Output_Partition_Logging();
 
+// We are doing this here to allow super partition to be set up prior to overriding properties
+#if defined(TW_INCLUDE_LIBRESETPROP) && defined(TW_OVERRIDE_SYSTEM_PROPS)
+	if (!PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true)) {
+		LOGERR("Unable to mount %s\n", PartitionManager.Get_Android_Root_Path().c_str());
+	} else {
+		stringstream override_props(EXPAND(TW_OVERRIDE_SYSTEM_PROPS));
+		string current_prop;
+		while (getline(override_props, current_prop, ';')) {
+			string other_prop;
+			if (current_prop.find("=") != string::npos) {
+				other_prop = current_prop.substr(current_prop.find("=") + 1);
+				current_prop = current_prop.substr(0, current_prop.find("="));
+			} else {
+				other_prop = current_prop;
+			}
+			other_prop = android::base::Trim(other_prop);
+			current_prop = android::base::Trim(current_prop);
+			string sys_val = TWFunc::System_Property_Get(other_prop, PartitionManager, PartitionManager.Get_Android_Root_Path().c_str());
+			if (!sys_val.empty()) {
+				LOGINFO("Overriding %s with value: \"%s\" from system property %s\n", current_prop.c_str(), sys_val.c_str(), other_prop.c_str());
+				int error = TWFunc::Property_Override(current_prop, sys_val);
+				if (error) {
+					LOGERR("Failed overriding property %s, error_code: %d\n", current_prop.c_str(), error);
+				}
+			} else {
+				LOGINFO("Not overriding %s with empty value from system property %s\n", current_prop.c_str(), other_prop.c_str());
+			}
+		}
+		PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
+	}
+#endif
+
 	// Load up all the resources
 	gui_loadResources();
 
@@ -385,37 +417,6 @@ int main(int argc, char **argv) {
 					ven->Change_Mount_Read_Only(false);
 			}
 		}
-	}
-#endif
-// We are doing this here to allow super partition to be set up prior to overriding properties
-#if defined(TW_INCLUDE_LIBRESETPROP) && defined(TW_OVERRIDE_SYSTEM_PROPS)
-	if (!PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true)) {
-		LOGERR("Unable to mount %s\n", PartitionManager.Get_Android_Root_Path().c_str());
-	} else {
-		stringstream override_props(EXPAND(TW_OVERRIDE_SYSTEM_PROPS));
-		string current_prop;
-		while (getline(override_props, current_prop, ';')) {
-			string other_prop;
-			if (current_prop.find("=") != string::npos) {
-				other_prop = current_prop.substr(current_prop.find("=") + 1);
-				current_prop = current_prop.substr(0, current_prop.find("="));
-			} else {
-				other_prop = current_prop;
-			}
-			other_prop = android::base::Trim(other_prop);
-			current_prop = android::base::Trim(current_prop);
-			string sys_val = TWFunc::System_Property_Get(other_prop, PartitionManager, PartitionManager.Get_Android_Root_Path().c_str());
-			if (!sys_val.empty()) {
-				LOGINFO("Overriding %s with value: \"%s\" from system property %s\n", current_prop.c_str(), sys_val.c_str(), other_prop.c_str());
-				int error = TWFunc::Property_Override(current_prop, sys_val);
-				if (error) {
-					LOGERR("Failed overriding property %s, error_code: %d\n", current_prop.c_str(), error);
-				}
-			} else {
-				LOGINFO("Not overriding %s with empty value from system property %s\n", current_prop.c_str(), other_prop.c_str());
-			}
-		}
-		PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
 	}
 #endif
 
