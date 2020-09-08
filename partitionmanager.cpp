@@ -134,7 +134,7 @@ TWPartitionManager::TWPartitionManager(void) {
 #endif
 }
 
-int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error, bool Sar_Detect) {
+int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error) {
 	FILE *fstabFile;
 	char fstab_line[MAX_FSTAB_LINE_LENGTH];
 	TWPartition* settings_partition = NULL;
@@ -223,7 +223,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 			fstab_line[line_size] = '\n';
 
 		TWPartition* partition = new TWPartition();
-		if (partition->Process_Fstab_Line(fstab_line, Display_Error, &twrp_flags, Sar_Detect))
+		if (partition->Process_Fstab_Line(fstab_line, Display_Error, &twrp_flags))
 			Partitions.push_back(partition);
 		else
 			delete partition;
@@ -238,7 +238,7 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 		for (std::map<string, Flags_Map>::iterator mapit=twrp_flags.begin(); mapit!=twrp_flags.end(); mapit++) {
 			if (Find_Partition_By_Path(mapit->first) == NULL) {
 				TWPartition* partition = new TWPartition();
-				if (partition->Process_Fstab_Line(mapit->second.fstab_line, Display_Error, NULL, Sar_Detect))
+				if (partition->Process_Fstab_Line(mapit->second.fstab_line, Display_Error, NULL))
 					Partitions.push_back(partition);
 				else
 					delete partition;
@@ -255,13 +255,6 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 
 	std::vector<TWPartition*>::iterator iter;
 	for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-		if (Sar_Detect) {
-			if ((*iter)->Mount_Point == "/s")
-				return true;
-			else
-				continue;
-		}
-
 		(*iter)->Partition_Post_Processing(Display_Error);
 
 		if ((*iter)->Is_Storage) {
@@ -2934,9 +2927,7 @@ string TWPartitionManager::Get_Active_Slot_Display() {
 }
 
 string TWPartitionManager::Get_Android_Root_Path() {
-	if (property_get_bool("ro.twrp.sar", false))
-		return "/system_root";
-	return "/system";
+	return "/system_root";
 }
 
 void TWPartitionManager::Remove_Uevent_Devices(const string& Mount_Point) {
