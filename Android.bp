@@ -96,7 +96,6 @@ cc_library_static {
     ],
 
     shared_libs: [
-        "libfusesideload",
         "librecovery_ui",
     ],
 }
