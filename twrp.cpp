@@ -301,8 +301,7 @@ int main(int argc, char **argv) {
 	if (crash_counter == 0)
 		TWFunc::Fixup_Time_On_Boot();
 
-	if (!PartitionManager.Get_Super_Status())
-		DataManager::ReadSettingsFile();
+	DataManager::ReadSettingsFile();
 	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
 	GUIConsole::Translate_Now();
 
