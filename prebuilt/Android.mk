@@ -236,6 +236,7 @@ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
 endif
 ifeq ($(TARGET_USERIMAGES_USE_F2FS), true)
         RECOVERY_BINARY_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/make_f2fs
+        RECOVERY_BINARY_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/fsck.f2fs
         RECOVERY_BINARY_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sload_f2fs
 endif
 ifneq ($(wildcard system/core/reboot/Android.*),)
