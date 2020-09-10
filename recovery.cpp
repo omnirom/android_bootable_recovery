@@ -746,12 +746,6 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         set_retry_bootloader_message(retry_count + 1, args);
       }
 
-      if (update_package[0] == '@') {
-        ensure_path_mounted(update_package + 1);
-      } else {
-        ensure_path_mounted(update_package);
-      }
-
       bool should_use_fuse = false;
       if (!SetupPackageMount(update_package, &should_use_fuse)) {
         LOG(INFO) << "Failed to set up the package access, skipping installation";
