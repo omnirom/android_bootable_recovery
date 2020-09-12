@@ -29,11 +29,11 @@
 typedef struct TrueTypeFontKey {
     int size;
     int dpi;
-    char *path;
+    std::string path;
 } TrueTypeFontKey;
 
 inline bool operator<(const TrueTypeFontKey &ttfkLeft, const TrueTypeFontKey &ttfkRight) {
-    return std::tie(ttfkLeft.size, ttfkLeft.dpi, *ttfkLeft.path) < std::tie(ttfkRight.size, ttfkRight.dpi, *ttfkRight.path);
+    return std::tie(ttfkLeft.size, ttfkLeft.dpi, ttfkLeft.path) < std::tie(ttfkRight.size, ttfkRight.dpi, ttfkRight.path);
 }
 
 typedef struct {

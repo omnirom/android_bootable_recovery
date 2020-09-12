@@ -77,13 +77,14 @@ void* twrpTruetype::gr_ttf_loadFont(const char *filename, int size, int dpi) {
 	int error;
 	TrueTypeFont* res = nullptr;
 	TrueTypeFontKey* key;
+	std::string fontFileName(filename);
 
 	pthread_mutex_lock(&font_data.mutex);
 
 	TrueTypeFontKey k = {
 		.size = size,
 		.dpi = dpi,
-		.path = (char*)filename
+		.path = fontFileName
 	};
 
 	TrueTypeFontMap::iterator ttfIter = font_data.fonts.find(k);
@@ -154,7 +155,7 @@ void* twrpTruetype::gr_ttf_scaleFont(void *font, int max_width, int measured_wid
 	int new_size = ((int)((float)f->size * scale_value)) - 1;
 	if (new_size < 1)
 		new_size = 1;
-	const char* file = f->key->path;
+	const char* file = f->key->path.c_str();
 	int dpi = f->dpi;
 	return gr_ttf_loadFont(file, new_size, dpi);
 }
@@ -182,7 +183,6 @@ void twrpTruetype::gr_ttf_freeFont(void *font) {
 	TrueTypeFont *d = (TrueTypeFont *)font;
 	if(--d->refcount == 0)
 	{
-		delete d->key->path;
 		delete d->key;
 
 		FT_Done_Face(d->face);
