@@ -348,7 +348,7 @@ class RangeSinkWriter {
  */
 struct NewThreadInfo {
   ZipArchiveHandle za;
-  ZipEntry entry;
+  ZipEntry64 entry{};
   bool brotli_compressed;
 
   std::unique_ptr<RangeSinkWriter> writer;
@@ -1626,7 +1626,7 @@ static bool Sha1DevicePath(const std::string& path, uint8_t digest[SHA_DIGEST_LE
 static Value* PerformBlockImageUpdate(const char* name, State* state,
                                       const std::vector<std::unique_ptr<Expr>>& argv,
                                       const CommandMap& command_map, bool dryrun) {
-  CommandParameters params = {};
+  CommandParameters params{};
   stash_map.clear();
   params.canwrite = !dryrun;
 
@@ -1687,7 +1687,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   }
 
   std::string_view path_data(patch_data_fn->data);
-  ZipEntry patch_entry;
+  ZipEntry64 patch_entry;
   if (FindEntry(za, path_data, &patch_entry) != 0) {
     LOG(ERROR) << name << "(): no file \"" << patch_data_fn->data << "\" in package";
     return StringValue("");
@@ -1695,7 +1695,7 @@ static Value* PerformBlockImageUpdate(const char* name, State* state,
   params.patch_start = updater->GetMappedPackageAddress() + patch_entry.offset;
 
   std::string_view new_data(new_data_fn->data);
-  ZipEntry new_entry;
+  ZipEntry64 new_entry;
   if (FindEntry(za, new_data, &new_entry) != 0) {
     LOG(ERROR) << name << "(): no file \"" << new_data_fn->data << "\" in package";
     return StringValue("");

@@ -37,7 +37,7 @@ TEST(ZipTest, OpenFromMemory) {
   ASSERT_EQ(0, OpenArchiveFromMemory(map.addr, map.length, zip_path.c_str(), &handle));
 
   static constexpr const char* BINARY_PATH = "META-INF/com/google/android/update-binary";
-  ZipEntry binary_entry;
+  ZipEntry64 binary_entry;
   // Make sure the package opens correctly and its entry can be read.
   ASSERT_EQ(0, FindEntry(handle, BINARY_PATH, &binary_entry));
 
