@@ -682,9 +682,9 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
   }
 
   // Create a list of deflated zip entries, sorted by offset.
-  std::vector<std::pair<std::string, ZipEntry>> temp_entries;
+  std::vector<std::pair<std::string, ZipEntry64>> temp_entries;
   std::string name;
-  ZipEntry entry;
+  ZipEntry64 entry;
   while ((ret = Next(cookie, &entry, &name)) == 0) {
     if (entry.method == kCompressDeflated || limit_ > 0) {
       temp_entries.emplace_back(name, entry);
@@ -757,7 +757,7 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
 }
 
 bool ZipModeImage::AddZipEntryToChunks(ZipArchiveHandle handle, const std::string& entry_name,
-                                       ZipEntry* entry) {
+                                       ZipEntry64* entry) {
   size_t compressed_len = entry->compressed_length;
   if (compressed_len == 0) return true;
 
