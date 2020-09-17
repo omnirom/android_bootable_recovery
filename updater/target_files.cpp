@@ -115,7 +115,7 @@ bool TargetFile::EntryExists(const std::string_view name) const {
   }
 
   CHECK(handle_);
-  ZipEntry img_entry;
+  ZipEntry64 img_entry;
   return FindEntry(handle_, name, &img_entry) == 0;
 }
 
@@ -126,7 +126,7 @@ bool TargetFile::ReadEntryToString(const std::string_view name, std::string* con
   }
 
   CHECK(handle_);
-  ZipEntry entry;
+  ZipEntry64 entry;
   if (auto find_err = FindEntry(handle_, name, &entry); find_err != 0) {
     LOG(ERROR) << "failed to find " << name << " in the package: " << ErrorCodeString(find_err);
     return false;
@@ -157,7 +157,7 @@ bool TargetFile::ExtractEntryToTempFile(const std::string_view name,
   }
 
   CHECK(handle_);
-  ZipEntry entry;
+  ZipEntry64 entry;
   if (auto find_err = FindEntry(handle_, name, &entry); find_err != 0) {
     LOG(ERROR) << "failed to find " << name << " in the package: " << ErrorCodeString(find_err);
     return false;
