@@ -190,7 +190,7 @@ static void VerifyAbUpdateCommands(const std::string& serialno, bool success = t
 
   ZipArchiveHandle zip;
   ASSERT_EQ(0, OpenArchive(temp_file.path, &zip));
-  ZipEntry payload_entry;
+  ZipEntry64 payload_entry;
   ASSERT_EQ(0, FindEntry(zip, "payload.bin", &payload_entry));
 
   std::map<std::string, std::string> metadata;

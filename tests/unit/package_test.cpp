@@ -106,7 +106,7 @@ TEST_F(PackageTest, GetZipArchiveHandle_extract_entry) {
 
     // Check that we can extract one zip entry.
     std::string_view entry_name = "dir1/file3.txt";
-    ZipEntry entry;
+    ZipEntry64 entry;
     ASSERT_EQ(0, FindEntry(zip, entry_name, &entry));
 
     std::vector<uint8_t> extracted(entry_name.size());
