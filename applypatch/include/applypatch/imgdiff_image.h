@@ -257,7 +257,8 @@ class ZipModeImage : public Image {
   // Initialize image chunks based on the zip entries.
   bool InitializeChunks(const std::string& filename, ZipArchiveHandle handle);
   // Add the a zip entry to the list.
-  bool AddZipEntryToChunks(ZipArchiveHandle handle, const std::string& entry_name, ZipEntry* entry);
+  bool AddZipEntryToChunks(ZipArchiveHandle handle, const std::string& entry_name,
+                           ZipEntry64* entry);
   // Return the real size of the zip file. (omit the trailing zeros that used for alignment)
   bool GetZipFileSize(size_t* input_file_size);
 
