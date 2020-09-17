@@ -115,7 +115,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
     std::string dest_path = args[1];
 
     ZipArchiveHandle za = state->updater->GetPackageHandle();
-    ZipEntry entry;
+    ZipEntry64 entry;
     if (FindEntry(za, zip_path, &entry) != 0) {
       LOG(ERROR) << name << ": no " << zip_path << " in package";
       return StringValue("");
@@ -165,7 +165,7 @@ Value* PackageExtractFileFn(const char* name, State* state,
     const std::string& zip_path = args[0];
 
     ZipArchiveHandle za = state->updater->GetPackageHandle();
-    ZipEntry entry;
+    ZipEntry64 entry;
     if (FindEntry(za, zip_path, &entry) != 0) {
       return ErrorAbort(state, kPackageExtractFileFailure, "%s(): no %s in package", name,
                         zip_path.c_str());
