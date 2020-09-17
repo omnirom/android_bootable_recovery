@@ -712,8 +712,14 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
     // Add the end of zip file (mainly central directory) as a normal chunk.
     size_t entries_end = 0;
     if (!temp_entries.empty()) {
-      entries_end = static_cast<size_t>(temp_entries.back().second.offset +
-                                        temp_entries.back().second.compressed_length);
+      CHECK_GE(temp_entries.back().second.offset, 0);
+      if (__builtin_add_overflow(temp_entries.back().second.offset,
+                                 temp_entries.back().second.compressed_length, &entries_end)) {
+        LOG(ERROR) << "`entries_end` overflows on entry with offset "
+                   << temp_entries.back().second.offset << " and compressed_length "
+                   << temp_entries.back().second.compressed_length;
+        return false;
+      }
     }
     CHECK_LT(entries_end, file_content_.size());
     chunks_.emplace_back(CHUNK_NORMAL, entries_end, &file_content_,
@@ -735,8 +741,16 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
         LOG(ERROR) << "Failed to add " << entry_name << " to target chunks";
         return false;
       }
-
-      pos += temp_entries[nextentry].second.compressed_length;
+      if (temp_entries[nextentry].second.compressed_length > std::numeric_limits<size_t>::max()) {
+        LOG(ERROR) << "Entry " << name << " compressed size exceeds size of address space. "
+                   << entry.compressed_length;
+        return false;
+      }
+      if (__builtin_add_overflow(pos, temp_entries[nextentry].second.compressed_length, &pos)) {
+        LOG(ERROR) << "`pos` overflows after adding "
+                   << temp_entries[nextentry].second.compressed_length;
+        return false;
+      }
       ++nextentry;
       continue;
     }
@@ -758,6 +772,12 @@ bool ZipModeImage::InitializeChunks(const std::string& filename, ZipArchiveHandl
 
 bool ZipModeImage::AddZipEntryToChunks(ZipArchiveHandle handle, const std::string& entry_name,
                                        ZipEntry64* entry) {
+  if (entry->compressed_length > std::numeric_limits<size_t>::max()) {
+    LOG(ERROR) << "Failed to add " << entry_name
+               << " because's compressed size exceeds size of address space. "
+               << entry->compressed_length;
+    return false;
+  }
   size_t compressed_len = entry->compressed_length;
   if (compressed_len == 0) return true;
 
@@ -775,6 +795,12 @@ bool ZipModeImage::AddZipEntryToChunks(ZipArchiveHandle handle, const std::strin
     }
   } else if (entry->method == kCompressDeflated) {
     size_t uncompressed_len = entry->uncompressed_length;
+    if (uncompressed_len > std::numeric_limits<size_t>::max()) {
+      LOG(ERROR) << "Failed to add " << entry_name
+                 << " because's compressed size exceeds size of address space. "
+                 << uncompressed_len;
+      return false;
+    }
     std::vector<uint8_t> uncompressed_data(uncompressed_len);
     int ret = ExtractToMemory(handle, entry, uncompressed_data.data(), uncompressed_len);
     if (ret != 0) {

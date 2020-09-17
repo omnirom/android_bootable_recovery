@@ -323,6 +323,12 @@ static std::vector<Certificate> IterateZipEntriesAndSearchForKeys(const ZipArchi
   std::string_view name;
   ZipEntry64 entry;
   while ((iter_status = Next(cookie, &entry, &name)) == 0) {
+    if (entry.uncompressed_length > std::numeric_limits<size_t>::max()) {
+      LOG(ERROR) << "Failed to extract " << name
+                 << " because's uncompressed size exceeds size of address space. "
+                 << entry.uncompressed_length;
+      return {};
+    }
     std::vector<uint8_t> pem_content(entry.uncompressed_length);
     if (int32_t extract_status =
             ExtractToMemory(handle, &entry, pem_content.data(), pem_content.size());
