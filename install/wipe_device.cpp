@@ -49,7 +49,7 @@ std::vector<std::string> GetWipePartitionList(Package* wipe_package) {
   constexpr char RECOVERY_WIPE_ENTRY_NAME[] = "recovery.wipe";
 
   std::string partition_list_content;
-  ZipEntry entry;
+  ZipEntry64 entry;
   if (FindEntry(zip, RECOVERY_WIPE_ENTRY_NAME, &entry) == 0) {
     uint32_t length = entry.uncompressed_length;
     partition_list_content = std::string(length, '\0');
