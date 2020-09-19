@@ -170,7 +170,12 @@ bool Updater::ReadEntryToString(ZipArchiveHandle za, const std::string& entry_na
                << " in the package: " << ErrorCodeString(find_err);
     return false;
   }
-
+  if (entry.uncompressed_length > std::numeric_limits<size_t>::max()) {
+    LOG(ERROR) << "Failed to extract " << entry_name
+               << " because's uncompressed size exceeds size of address space. "
+               << entry.uncompressed_length;
+    return false;
+  }
   content->resize(entry.uncompressed_length);
   int extract_err = ExtractToMemory(za, &entry, reinterpret_cast<uint8_t*>(&content->at(0)),
                                     entry.uncompressed_length);
