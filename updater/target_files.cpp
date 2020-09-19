@@ -137,6 +137,13 @@ bool TargetFile::ReadEntryToString(const std::string_view name, std::string* con
     return true;
   }
 
+  if (entry.uncompressed_length > std::numeric_limits<size_t>::max()) {
+    LOG(ERROR) << "Failed to extract " << name
+               << " because's uncompressed size exceeds size of address space. "
+               << entry.uncompressed_length;
+    return false;
+  }
+
   content->resize(entry.uncompressed_length);
   if (auto extract_err = ExtractToMemory(
           handle_, &entry, reinterpret_cast<uint8_t*>(&content->at(0)), entry.uncompressed_length);
