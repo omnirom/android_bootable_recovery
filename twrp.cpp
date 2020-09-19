@@ -74,7 +74,7 @@ static void Decrypt_Page(bool SkipDecryption, bool datamedia) {
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
 		if (SkipDecryption) {
 			LOGINFO("Skipping decryption\n");
-		} else {
+		} else if (DataManager::GetIntValue(TW_CRYPTO_PWTYPE) != 0) {
 			LOGINFO("Is encrypted, do decrypt page first\n");
 			if (DataManager::GetIntValue(TW_IS_FBE))
 				DataManager::SetValue("tw_crypto_user_id", "0");
