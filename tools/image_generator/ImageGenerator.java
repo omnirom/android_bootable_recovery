@@ -120,7 +120,7 @@ public class ImageGenerator {
                     put("fa", "NotoNaskhArabicUI-Regular");
                     put("gu", "NotoSansGujaratiUI-Regular");
                     put("hi", "NotoSansDevanagariUI-Regular");
-                    put("hy", "NotoSansArmenian-Regular");
+                    put("hy", "NotoSansArmenian-VF");
                     put("iw", "NotoSansHebrew-Regular");
                     put("ja", "NotoSansCJK-Regular");
                     put("ka", "NotoSansGeorgian-VF");
