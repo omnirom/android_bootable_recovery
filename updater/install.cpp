@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <utime.h>
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -172,6 +173,11 @@ Value* PackageExtractFileFn(const char* name, State* state,
     }
 
     std::string buffer;
+    if (entry.uncompressed_length > std::numeric_limits<size_t>::max()) {
+      return ErrorAbort(state, kPackageExtractFileFailure,
+                        "%s(): Entry `%s` Uncompressed size exceeds size of address space.", name,
+                        zip_path.c_str());
+    }
     buffer.resize(entry.uncompressed_length);
 
     int32_t ret =

@@ -246,7 +246,13 @@ bool SetUpAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, int
     LOG(ERROR) << "Failed to find " << AB_OTA_PAYLOAD_PROPERTIES;
     return false;
   }
-  uint32_t properties_entry_length = properties_entry.uncompressed_length;
+  auto properties_entry_length = properties_entry.uncompressed_length;
+  if (properties_entry_length > std::numeric_limits<size_t>::max()) {
+    LOG(ERROR) << "Failed to extract " << AB_OTA_PAYLOAD_PROPERTIES
+               << " because's uncompressed size exceeds size of address space. "
+               << properties_entry_length;
+    return false;
+  }
   std::vector<uint8_t> payload_properties(properties_entry_length);
   int32_t err =
       ExtractToMemory(zip, &properties_entry, payload_properties.data(), properties_entry_length);
