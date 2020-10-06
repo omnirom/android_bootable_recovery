@@ -1477,7 +1477,7 @@ bool TWPartition::Mount(bool Display_Error) {
 		}
 	}
 
-	if (Current_File_System == "ntfs" && (TWFunc::Path_Exists("/system/bin/ntfs-3g") || TWFunc::Path_Exists("/system/bin/mount.ntfs"))) {
+	if (Current_File_System == "ntfs" && !TWFunc::Path_Exists("/sys/module/tntfs") && (TWFunc::Path_Exists("/system/bin/ntfs-3g") || TWFunc::Path_Exists("/system/bin/mount.ntfs"))) {
 		string cmd;
 		string Ntfsmount_Binary = "";
 
@@ -1497,6 +1497,9 @@ bool TWPartition::Mount(bool Display_Error) {
 		} else {
 			LOGINFO("ntfs-3g failed to mount, trying regular mount method.\n");
 		}
+	} else {
+		if (Current_File_System == "ntfs" && TWFunc::Path_Exists("/sys/module/tntfs"))
+			Current_File_System = "tntfs";
 	}
 
 	if (Mount_Read_Only)
@@ -1667,16 +1670,16 @@ bool TWPartition::Wipe(string New_File_System) {
 			wiped = Wipe_EXT4();
 		else if (New_File_System == "ext2" || New_File_System == "ext3")
 			wiped = Wipe_EXTFS(New_File_System);
-		else if (New_File_System == "vfat")
-			wiped = Wipe_FAT();
 		else if (New_File_System == "exfat")
 			wiped = Wipe_EXFAT();
+		else if (New_File_System == "ntfs" || Current_File_System == "tntfs")
+			wiped = Wipe_NTFS();
 		else if (New_File_System == "yaffs2")
 			wiped = Wipe_MTD();
 		else if (New_File_System == "f2fs")
 			wiped = Wipe_F2FS();
-		else if (New_File_System == "ntfs")
-			wiped = Wipe_NTFS();
+		else if (New_File_System == "vfat")
+			wiped = Wipe_FAT();
 		else {
 			LOGERR("Unable to wipe '%s' -- unknown file system '%s'\n", Mount_Point.c_str(), New_File_System.c_str());
 			return false;
@@ -1740,7 +1743,7 @@ bool TWPartition::Can_Repair() {
 		return true;
 	else if (Current_File_System == "f2fs" && TWFunc::Path_Exists("/system/bin/fsck.f2fs"))
 		return true;
-	else if (Current_File_System == "ntfs" && (TWFunc::Path_Exists("/system/bin/ntfsfix") || TWFunc::Path_Exists("/system/bin/fsck.ntfs")))
+	else if ((Current_File_System == "ntfs" || Current_File_System == "tntfs") && (TWFunc::Path_Exists("/system/bin/ntfsfix") || TWFunc::Path_Exists("/system/bin/fsck.ntfs")))
 		return true;
 	return false;
 }
@@ -1824,7 +1827,7 @@ bool TWPartition::Repair() {
 			return false;
 		}
 	}
-	if (Current_File_System == "ntfs") {
+	if (Current_File_System == "ntfs" || Current_File_System == "tntfs") {
 		string Ntfsfix_Binary;
 		if (TWFunc::Path_Exists("/system/bin/ntfsfix"))
 			Ntfsfix_Binary = "ntfsfix";
@@ -3062,7 +3065,7 @@ uint64_t TWPartition::Get_Max_FileSize() {
 		maxFileSize = 16 * constTB; //16 TB
 	else if (Current_File_System == "vfat")
 		maxFileSize = 4 * constGB; //4 GB
-	else if (Current_File_System == "ntfs")
+	else if (Current_File_System == "ntfs" || Current_File_System == "tntfs")
 		maxFileSize = 256 * constTB; //256 TB
 	else if (Current_File_System == "exfat")
 		maxFileSize = 16 * constPB; //16 PB
