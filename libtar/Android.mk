@@ -25,6 +25,10 @@ ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
     endif
 endif
 
+ifeq ($(TW_LIBTAR_DEBUG),true)
+    LOCAL_CFLAGS += -DTW_LIBTAR_DEBUG
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 # Build static library
@@ -50,6 +54,10 @@ ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
         LOCAL_CFLAGS += -DHAVE_EXT4_CRYPT
         LOCAL_C_INCLUDES += $(LOCAL_PATH)/../crypto/ext4crypt
     endif
+endif
+
+ifeq ($(TW_LIBTAR_DEBUG),true)
+    LOCAL_CFLAGS += -DTW_LIBTAR_DEBUG
 endif
 
 include $(BUILD_STATIC_LIBRARY)
