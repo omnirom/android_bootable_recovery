@@ -18,8 +18,6 @@
 # include <stdlib.h>
 #endif
 
-#define DEBUG 1
-
 #ifdef HAVE_EXT4_CRYPT
 #include "ext4crypt_tar.h"
 #endif
