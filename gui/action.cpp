@@ -1932,10 +1932,19 @@ int GUIAction::togglebacklight(std::string arg __unused)
 int GUIAction::setbootslot(std::string arg)
 {
 	operation_start("Set Boot Slot");
-	if (!simulate)
-		PartitionManager.Set_Active_Slot(arg);
-	else
+	if (!simulate) {
+		if (!PartitionManager.UnMount_By_Path("/vendor", false)) {
+			// PartitionManager failed to unmount /vendor, this should not happen,
+			// but in case it does, do a lazy unmount
+			LOGINFO("WARNING: vendor partition could not be unmounted normally!\n");
+			umount2("/vendor", MNT_DETACH);
+			PartitionManager.Set_Active_Slot(arg);
+		} else {
+			PartitionManager.Set_Active_Slot(arg);
+		}
+	} else {
 		simulate_progress_bar();
+	}
 	operation_end(0);
 	return 0;
 }
