@@ -1,0 +1,8 @@
+on init
+    start servicemanager
+
+service servicemanager /system/bin/servicemanager
+    user root
+    group root readproc
+    disabled
+    seclabel u:r:recovery:s0
