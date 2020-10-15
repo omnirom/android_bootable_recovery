@@ -403,13 +403,13 @@ TWRP_REQUIRED_MODULES += \
     toolbox \
     mkshrc_twrp \
     android.hardware.health@2.0-service \
-    android.hardware.health@2.0-service.rc
+    android.hardware.health@2.0-service.rc \
+    plat_hwservice_contexts \
+    vendor_hwservice_contexts
 
 ifneq ($(TW_INCLUDE_CRYPTO),)
 TWRP_REQUIRED_MODULES += \
     plat_service_contexts \
-    plat_hwservice_contexts \
-    vendor_hwservice_contexts \
     vndservicemanager \
     vndservicemanager.rc \
     vold_prepare_subdirs \
