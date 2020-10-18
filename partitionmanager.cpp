@@ -295,6 +295,12 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 			}
 		}
 	}
+#ifndef USE_VENDOR_LIBS
+	if (ven)
+		ven->UnMount(true);
+	if (sys)
+		sys->UnMount(true);
+#endif
 
 	if (!datamedia && !settings_partition && Find_Partition_By_Path("/sdcard") == NULL && Find_Partition_By_Path("/internal_sd") == NULL && Find_Partition_By_Path("/internal_sdcard") == NULL && Find_Partition_By_Path("/emmc") == NULL) {
 		// Attempt to automatically identify /data/media emulated storage devices
