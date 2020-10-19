@@ -1,0 +1,10 @@
+on boot
+    start health-hal-2-0
+
+service health-hal-2-0 /system/bin/android.hardware.health@2.0-service
+    disabled
+    user root
+    group root
+    capabilities WAKE_ALARM
+    file /dev/kmsg w
+    seclabel u:r:recovery:s0

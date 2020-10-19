@@ -1,0 +1,8 @@
+on post-fs
+    start boot-hal-1-0
+
+service boot-hal-1-0 /system/bin/android.hardware.boot@1.0-service
+    user root
+    group root
+    disabled
+    seclabel u:r:recovery:s0
