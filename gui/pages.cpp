@@ -61,7 +61,8 @@ extern "C" {
 #include "blanktimer.hpp"
 
 // version 2 requires theme to handle power button as action togglebacklight
-#define TW_THEME_VERSION 3
+// version 4 adds fastbootd support
+#define TW_THEME_VERSION 4
 
 #define TW_THEME_VER_ERR -2
 
