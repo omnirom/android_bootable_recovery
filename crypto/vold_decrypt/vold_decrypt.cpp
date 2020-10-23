@@ -1372,7 +1372,7 @@ int Vold_Decrypt_Core(const string& Password) {
 	if (is_fstab_symlinked)
 		Restore_Recovery_Fstab();
 
-	if (!PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), true)) {
+	if (!PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false)) {
 		// PartitionManager failed to unmount ANDROID_ROOT, this should not happen,
 		// but in case it does, do a lazy unmount
 		LOGINFO("WARNING: '%s' could not be unmounted normally!\n", PartitionManager.Get_Android_Root_Path().c_str());
@@ -1383,7 +1383,7 @@ int Vold_Decrypt_Core(const string& Password) {
 	for (size_t i = 0; i < partitions.size(); ++i) {
 		string mnt_point = "/" + partitions[i];
 		if(PartitionManager.Is_Mounted_By_Path(mnt_point)) {
-			if (!PartitionManager.UnMount_By_Path(mnt_point, true)) {
+			if (!PartitionManager.UnMount_By_Path(mnt_point, false)) {
 				LOGINFO("WARNING: %s partition could not be unmounted normally!\n", partitions[i].c_str());
 				umount2(mnt_point.c_str(), MNT_DETACH);
 			}
