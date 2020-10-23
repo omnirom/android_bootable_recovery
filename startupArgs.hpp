@@ -40,6 +40,7 @@ public:
 	static inline std::string const REASON = "--reason";
 	static inline std::string const FASTBOOT = "--fastboot";
 	static inline std::string const NANDROID = "--nandroid";
+	static inline std::string const RESCUE_PARTY = "--prompt_and_wipe_data";
 	void parse(int *argc, char ***argv);
 	bool Should_Skip_Decryption();
 	std::string Get_Intent();
