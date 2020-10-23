@@ -24,7 +24,7 @@ cc_defaults {
     cpp_std: "experimental",
 
     include_dirs: [
-        "system/core/adb",
+        "packages/modules/adb",
     ],
 
     header_libs: [
