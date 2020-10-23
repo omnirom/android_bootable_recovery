@@ -34,7 +34,7 @@ void startupArgs::parse(int *argc, char ***argv) {
 			android::base::SetProperty("sys.usb.config", "fastboot");
 			DataManager::SetValue("tw_enable_adb", 0);
 			DataManager::SetValue("tw_enable_fastboot", 1);
-		} else if (args[index] == UPDATE_PACKAGE) {
+		} else if (args[index].find(UPDATE_PACKAGE) != std::string::npos) {
 			std::string::size_type eq_pos = args[index].find("=");
 			std::string arg = args[index].substr(eq_pos + 1, args[index].size());
 			if (arg.size() == 0) {
