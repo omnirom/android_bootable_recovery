@@ -5154,7 +5154,7 @@
 
 			<button style="main_button_half_width">
 				<condition var1="tw_enable_fastboot" op="=" var2="1" />
-				<placement x="%col2_x_right%" y="%row15a_y%"/>
+				<placement x="%col1_x_left%" y="%row15a_y%"/>
 				<text>{@enable_adb=Enable ADB}</text>
 				<actions>
 					<action function="enableadb"/>
@@ -5165,7 +5165,7 @@
 
 			<button style="main_button_half_width">
 				<condition var1="tw_enable_adb" op="=" var2="1" />
-				<placement x="%col2_x_right%" y="%row15a_y%"/>
+				<placement x="%col1_x_left%" y="%row15a_y%"/>
 				<text>{@enable_fastboot=Enable Fastboot}</text>
 				<actions>
 					<action function="enablefastboot"/>
@@ -5175,7 +5175,7 @@
 			</button>
 
 			<button style="main_button_half_width">
-				<placement x="%col3_x_right%" y="%row15a_y%"/>
+				<placement x="%col2_x_right%" y="%row15a_y%"/>
 				<text>{@reboot_btn=Reboot}</text>
 				<action function="page">fastbootreboot</action>
 			</button>
