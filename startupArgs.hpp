@@ -28,7 +28,7 @@
 #include "twrp-functions.hpp"
 #include "variables.h"
 #include "bootloader_message/include/bootloader_message/bootloader_message.h"
-#include "install/get_args.h"
+#include "twinstall/get_args.h"
 
 class startupArgs {
 public:

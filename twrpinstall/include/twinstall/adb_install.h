@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (C) 2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef __TRANSPORT_H
-#define __TRANSPORT_H
+#pragma once
 
-/* convenience wrappers around read/write that will retry on
-** EINTR and/or short read/write.  Returns 0 on success, -1
-** on error or EOF.
-*/
-int readx(int fd, void *ptr, size_t len);
-int writex(int fd, const void *ptr, size_t len);
-#endif   /* __TRANSPORT_H */
+#include <recovery_ui/device.h>
+
+// Applies a package via `adb sideload` or `adb rescue`. Returns the install result (in `enum
+// InstallResult`). When a reboot has been requested, INSTALL_REBOOT will be the return value, with
+// the reboot target set in reboot_action.
+int twrp_sideload(const char* install_file, Device::BuiltinAction* reboot_action);
+pid_t GetMiniAdbdPid();

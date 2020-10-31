@@ -44,9 +44,10 @@ endif
 
 LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++ libaosprecovery libselinux
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../otautil/include
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../twrpinstall/include
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
-    LOCAL_SHARED_LIBRARIES += libziparchive 
-    LOCAL_STATIC_LIBRARIES += libotautil
+    LOCAL_SHARED_LIBRARIES += libziparchive
+    LOCAL_STATIC_LIBRARIES += libotautil libtwrpinstall
     ifneq ($(TW_INCLUDE_CRYPTO),)
         LOCAL_C_INCLUDES += bootable/recovery/crypto/fscrypt
     endif

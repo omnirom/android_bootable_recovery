@@ -2,6 +2,7 @@ on boot
 
 # For starting recovery on 5.0 and newer
 service recovery /system/bin/recovery
+    socket recovery stream 422 system system
     seclabel u:r:recovery:s0
 
 on early-init

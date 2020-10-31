@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef __FUSE_ADB_PROVIDER_H
-#define __FUSE_ADB_PROVIDER_H
+#pragma once
 
-int run_adb_fuse(int sfd, uint64_t file_size, uint32_t block_size);
+#include <functional>
 
-#endif
+struct selabel_handle;
+
+// Returns true on success.
+bool WipeCache(const std::function<bool()>& confirm);
+
+// Returns true on success.
+bool WipeData(bool convert_fbe);

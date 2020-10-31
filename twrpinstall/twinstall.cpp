@@ -35,24 +35,16 @@
 #include <stdio.h>
 #include <cutils/properties.h>
 
+#include <android-base/unique_fd.h>
+
 #include "twcommon.h"
 #include "mtdutils/mounts.h"
 #include "mtdutils/mtdutils.h"
 
-#ifdef USE_MINZIP
-#include "minzip/SysUtil.h"
-#else
 #include "otautil/sysutil.h"
 #include <ziparchive/zip_archive.h>
-#endif
-#include "zipwrap.hpp"
-#ifdef USE_OLD_VERIFIER
-#include "verifier24/verifier.h"
-#elif USE_28_VERIFIER
-#include "verifier28/verifier.h"
-#else
-#include "install/verifier.h"
-#endif
+#include "twinstall/install.h"
+#include "twinstall/verifier.h"
 #include "variables.h"
 #include "data.hpp"
 #include "partitions.hpp"
@@ -129,15 +121,17 @@ static int switch_to_new_properties()
 }
 #endif
 
-static int Install_Theme(const char* path, ZipWrap *Zip) {
+static int Install_Theme(const char* path, ZipArchiveHandle Zip) {
 #ifdef TW_OEM_BUILD // We don't do custom themes in OEM builds
-	Zip->Close();
+	CloseArchive(Zip);
 	return INSTALL_CORRUPT;
 #else
-	if (!Zip->EntryExists("ui.xml")) {
+	ZipString binary_name("ui.xml");
+	ZipEntry binary_entry;
+	if (FindEntry(Zip, binary_name, &binary_entry) != 0) {
+		CloseArchive(Zip);
 		return INSTALL_CORRUPT;
 	}
-	Zip->Close();
 	if (!PartitionManager.Mount_Settings_Storage(true))
 		return INSTALL_ERROR;
 	string theme_path = DataManager::GetSettingsStoragePath();
@@ -157,44 +151,60 @@ static int Install_Theme(const char* path, ZipWrap *Zip) {
 #endif
 }
 
-static int Prepare_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache) {
+static int Prepare_Update_Binary(ZipArchiveHandle Zip) {
 	char arches[PATH_MAX];
-	std::string binary_name = ASSUMED_UPDATE_BINARY_NAME;
 	property_get("ro.product.cpu.abilist", arches, "error");
 	if (strcmp(arches, "error") == 0)
 		property_get("ro.product.cpu.abi", arches, "error");
 	vector<string> split = TWFunc::split_string(arches, ',', true);
 	std::vector<string>::iterator arch;
-	std::string base_name = binary_name;
+	std::string base_name = UPDATE_BINARY_NAME;
 	base_name += "-";
-	for (arch = split.begin(); arch != split.end(); arch++) {
-		std::string temp = base_name + *arch;
-		if (Zip->EntryExists(temp)) {
-			binary_name = temp;
-			break;
+	ZipEntry binary_entry;
+	ZipString update_binary_string(UPDATE_BINARY_NAME);
+	if (FindEntry(Zip, update_binary_string, &binary_entry) != 0) {
+		for (arch = split.begin(); arch != split.end(); arch++) {
+			std::string temp = base_name + *arch;
+			ZipString binary_name(temp.c_str());
+			if (FindEntry(Zip, binary_name, &binary_entry) != 0) {
+				ZipString binary_name(temp.c_str());
+				break;
+			}
 		}
 	}
-	LOGINFO("Extracting updater binary '%s'\n", binary_name.c_str());
-	if (!Zip->ExtractEntry(binary_name.c_str(), TMP_UPDATER_BINARY_PATH, 0755)) {
-		Zip->Close();
-		LOGERR("Could not extract '%s'\n", ASSUMED_UPDATE_BINARY_NAME);
+	LOGINFO("Extracting updater binary '%s'\n", UPDATE_BINARY_NAME);
+	unlink(TMP_UPDATER_BINARY_PATH);
+	android::base::unique_fd fd(
+		open(TMP_UPDATER_BINARY_PATH, O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0755));
+	if (fd == -1) {
+		return INSTALL_ERROR;
+	}
+	int32_t err = ExtractEntryToFile(Zip, &binary_entry, fd);
+	if (err != 0) {
+		CloseArchive(Zip);
+		LOGERR("Could not extract '%s'\n", UPDATE_BINARY_NAME);
 		return INSTALL_ERROR;
 	}
 
 	// If exists, extract file_contexts from the zip file
-	if (!Zip->EntryExists("file_contexts")) {
-		Zip->Close();
+	ZipString file_contexts("file_contexts");
+	ZipEntry file_contexts_entry;
+	if (FindEntry(Zip, file_contexts, &file_contexts_entry) != 0) {
 		LOGINFO("Zip does not contain SELinux file_contexts file in its root.\n");
 	} else {
 		const string output_filename = "/file_contexts";
 		LOGINFO("Zip contains SELinux file_contexts file in its root. Extracting to %s\n", output_filename.c_str());
-		if (!Zip->ExtractEntry("file_contexts", output_filename, 0644)) {
-			Zip->Close();
+		android::base::unique_fd fd(
+			open(output_filename.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644));
+		if (fd == -1) {
+			return INSTALL_ERROR;
+		}
+		if (ExtractEntryToFile(Zip, &file_contexts_entry, fd)) {
+			CloseArchive(Zip);
 			LOGERR("Could not extract '%s'\n", output_filename.c_str());
 			return INSTALL_ERROR;
 		}
 	}
-	Zip->Close();
 	return INSTALL_SUCCESS;
 }
 
@@ -233,7 +243,7 @@ static bool update_binary_has_legacy_properties(const char *binary) {
 }
 #endif
 
-static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zip_type ztype) {
+static int Run_Update_Binary(const char *path, int* wipe_cache, zip_type ztype) {
 	int ret_val, pipe_fd[2], status, zip_verify;
 	char buffer[1024];
 	FILE* child_data;
@@ -254,7 +264,7 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
     if (ztype == UPDATE_BINARY_ZIP_TYPE) {
 		ret_val = update_binary_command(path, 0, pipe_fd[1], &args);
     } else if (ztype == AB_OTA_ZIP_TYPE) {
-		ret_val = abupdate_binary_command(path, Zip, 0, pipe_fd[1], &args);
+		ret_val = abupdate_binary_command(path, 0, pipe_fd[1], &args);
 	} else {
 		LOGERR("Unknown zip type %i\n", ztype);
 		ret_val = INSTALL_CORRUPT;
@@ -296,7 +306,7 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 			int seconds_float = strtol(seconds_char, NULL, 10);
 
 			if (zip_verify)
-				DataManager::ShowProgress(fraction_float * (1 - VERIFICATION_PROGRESS_FRAC), seconds_float);
+				DataManager::ShowProgress(fraction_float * (1 - VERIFICATION_PROGRESS_FRACTION), seconds_float);
 			else
 				DataManager::ShowProgress(fraction_float, seconds_float);
 		} else if (strcmp(command, "set_progress") == 0) {
@@ -344,11 +354,6 @@ static int Run_Update_Binary(const char *path, ZipWrap *Zip, int* wipe_cache, zi
 int TWinstall_zip(const char* path, int* wipe_cache) {
 	int ret_val, zip_verify = 1, unmount_system = 1;
 
-	if (strcmp(path, "error") == 0) {
-		LOGERR("Failed to get adb sideload file: '%s'\n", path);
-		return INSTALL_CORRUPT;
-	}
-
 	gui_msg(Msg("installing_zip=Installing zip file '{1}'")(path));
 	if (strlen(path) < 9 || strncmp(path, "/sideload", 9) != 0) {
 		string digest_str;
@@ -369,32 +374,22 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 #endif
 	DataManager::SetProgress(0);
 
-	MemMapping map;
-#ifdef USE_MINZIP
-	if (sysMapFile(path, &map) != 0) {
-#else
-	if (!map.MapFile(path)) {
-#endif
-		gui_msg(Msg(msg::kError, "fail_sysmap=Failed to map file '{1}'")(path));
-		return -1;
+	auto package = Package::CreateMemoryPackage(path);
+	if (!package) {
+		return INSTALL_CORRUPT;
 	}
 
 	if (zip_verify) {
 		gui_msg("verify_zip_sig=Verifying zip signature...");
-#ifdef USE_OLD_VERIFIER
-		ret_val = verify_file(map.addr, map.length);
-#else
-		std::vector<Certificate> loadedKeys;
-		if (!load_keys("/res/keys", loadedKeys)) {
-			LOGINFO("Failed to load keys");
-			gui_err("verify_zip_fail=Zip signature verification failed!");
-#ifdef USE_MINZIP
-			sysReleaseMap(&map);
-#endif
+		static constexpr const char* CERTIFICATE_ZIP_FILE = "/system/etc/security/otacerts.zip";
+		std::vector<Certificate> loaded_keys = LoadKeysFromZipfile(CERTIFICATE_ZIP_FILE);
+		if (loaded_keys.empty()) {
+			LOGERR("Failed to load keys\n");
 			return -1;
 		}
-		ret_val = verify_file(map.addr, map.length, loadedKeys, std::bind(&DataManager::SetProgress, std::placeholders::_1));
-#endif
+		LOGINFO("%zu key(s) loaded from %s\n", loaded_keys.size(), CERTIFICATE_ZIP_FILE);
+
+		ret_val = verify_file(package.get(), loaded_keys, std::bind(&DataManager::SetProgress, std::placeholders::_1));
 		if (ret_val != VERIFY_SUCCESS) {
 			LOGINFO("Zip signature verification failed: %i\n", ret_val);
 			gui_err("verify_zip_fail=Zip signature verification failed!");
@@ -406,12 +401,9 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 			gui_msg("verify_zip_done=Zip signature verified successfully.");
 		}
 	}
-	ZipWrap Zip;
-	if (!Zip.Open(path, &map)) {
-		gui_err("zip_corrupt=Zip file is corrupt!");
-#ifdef USE_MINZIP
-			sysReleaseMap(&map);
-#endif
+
+	ZipArchiveHandle Zip = package->GetZipArchiveHandle();
+	if (!Zip) {
 		return INSTALL_CORRUPT;
 	}
 
@@ -427,23 +419,25 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 
 	time_t start, stop;
 	time(&start);
-	if (Zip.EntryExists(ASSUMED_UPDATE_BINARY_NAME)) {
+
+	ZipString update_binary_name(UPDATE_BINARY_NAME);
+	ZipEntry update_binary_entry;
+	if (FindEntry(Zip, update_binary_name, &update_binary_entry) == 0) {
 		LOGINFO("Update binary zip\n");
 		// Additionally verify the compatibility of the package.
-		if (!verify_package_compatibility(&Zip)) {
+		if (!verify_package_compatibility(Zip)) {
 			gui_err("zip_compatible_err=Zip Treble compatibility error!");
-			Zip.Close();
-#ifdef USE_MINZIP
-			sysReleaseMap(&map);
-#endif
+			CloseArchive(Zip);
 			ret_val = INSTALL_CORRUPT;
 		} else {
-			ret_val = Prepare_Update_Binary(path, &Zip, wipe_cache);
+			ret_val = Prepare_Update_Binary(Zip);
 			if (ret_val == INSTALL_SUCCESS)
-				ret_val = Run_Update_Binary(path, &Zip, wipe_cache, UPDATE_BINARY_ZIP_TYPE);
+				ret_val = Run_Update_Binary(path, wipe_cache, UPDATE_BINARY_ZIP_TYPE);
 		}
 	} else {
-		if (Zip.EntryExists(AB_OTA)) {
+		ZipString ab_binary_name(AB_OTA);
+		ZipEntry ab_binary_entry;
+		if (FindEntry(Zip, ab_binary_name, &ab_binary_entry) == 0) {
 			LOGINFO("AB zip\n");
 			gui_msg(Msg(msg::kHighlight, "flash_ab_inactive=Flashing A/B zip to inactive slot: {1}")(PartitionManager.Get_Active_Slot_Display()=="A"?"B":"A"));
 			// We need this so backuptool can do its magic
@@ -451,9 +445,9 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 			bool vendor_mount_state = PartitionManager.Is_Mounted_By_Path("/vendor");
 			PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
 			PartitionManager.Mount_By_Path("/vendor", true);
-			TWFunc::Exec_Cmd("cp -f /system/bin/sh /tmp/sh");
+			TWFunc::copy_file("/system/bin/sh", "/tmp/sh", 0755);
 			mount("/tmp/sh", "/system/bin/sh", "auto", MS_BIND, NULL);
-			ret_val = Run_Update_Binary(path, &Zip, wipe_cache, AB_OTA_ZIP_TYPE);
+			ret_val = Run_Update_Binary(path, wipe_cache, AB_OTA_ZIP_TYPE);
 			umount("/system/bin/sh");
 			unlink("/tmp/sh");
 			if (!vendor_mount_state)
@@ -461,13 +455,14 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 			if (!system_mount_state)
 				PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), true);
 			gui_warn("flash_ab_reboot=To flash additional zips, please reboot recovery to switch to the updated slot.");
-
 		} else {
-			if (Zip.EntryExists("ui.xml")) {
+			ZipString binary_name("ui.xml");
+			ZipEntry binary_entry;
+			if (FindEntry(Zip, binary_name, &binary_entry) != 0) {
 				LOGINFO("TWRP theme zip\n");
-				ret_val = Install_Theme(path, &Zip);
+				ret_val = Install_Theme(path, Zip);
 			} else {
-				Zip.Close();
+				CloseArchive(Zip);
 				ret_val = INSTALL_CORRUPT;
 			}
 		}
@@ -479,8 +474,5 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 	} else {
 		LOGINFO("Install took %i second(s).\n", total_time);
 	}
-#ifdef USE_MINZIP
-	sysReleaseMap(&map);
-#endif
 	return ret_val;
 }

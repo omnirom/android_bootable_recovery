@@ -51,7 +51,7 @@
 #include "gui/pages.hpp"
 #include "orscmd/orscmd.h"
 #include "twinstall.h"
-#include "install/adb_install.h"
+#include "twinstall/adb_install.h"
 extern "C" {
 	#include "gui/gui.h"
 	#include "cutils/properties.h"
@@ -388,8 +388,9 @@ int OpenRecoveryScript::run_script_file(void) {
 				} else {
 					ret_val = 1; // failure
 				}
+				PartitionManager.Unlock_Block_Partitions();
 				sideload = 1; // Causes device to go to the home screen afterwards
-#ifdef USE_28_INSTALL 
+				pid_t sideload_child_pid = GetMiniAdbdPid();
 				if (sideload_child_pid != 0) {
 					LOGINFO("Signaling child sideload process to exit.\n");
 					struct stat st;
@@ -400,7 +401,6 @@ int OpenRecoveryScript::run_script_file(void) {
 					LOGINFO("Waiting for child sideload process to exit.\n");
 					waitpid(sideload_child_pid, &status, 0);
 				}
-#endif
 				property_set("ctl.start", "adbd");
 				gui_msg("done=Done.");
 			} else if (strcmp(command, "fixperms") == 0 || strcmp(command, "fixpermissions") == 0 || strcmp(command, "fixcontexts") == 0) {

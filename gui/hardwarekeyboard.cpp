@@ -34,7 +34,7 @@
 #include <string>
 
 extern "C" {
-#include "../common.h"
+#include "common.h"
 }
 
 #include "../twcommon.h"

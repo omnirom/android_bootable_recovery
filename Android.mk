@@ -69,7 +69,6 @@ LOCAL_SRC_FILES := \
     partitionmanager.cpp \
     progresstracking.cpp \
     startupArgs.cpp \
-    twinstall.cpp \
     twrp-functions.cpp \
     twrpDigestDriver.cpp \
     openrecoveryscript.cpp \
@@ -78,7 +77,7 @@ LOCAL_SRC_FILES := \
     twrpApex.cpp \
     twrpRepacker.cpp
 
-LOCAL_STATIC_LIBRARIES += libavb
+LOCAL_STATIC_LIBRARIES += libavb libtwrpinstall
 LOCAL_SHARED_LIBRARIES += libfs_mgr libinit
 LOCAL_C_INCLUDES += \
     system/core/fs_mgr/libfs_avb/include/ \
@@ -88,7 +87,8 @@ LOCAL_C_INCLUDES += \
     system/core/fs_mgr/liblp/include/ \
     system/gsid/include/ \
     system/core/init/ \
-    system/extras/ext4_utils/include
+    system/extras/ext4_utils/include \
+    $(LOCAL_PATH)/twinstall/include
 
 ifneq ($(TARGET_RECOVERY_REBOOT_SRC),)
   LOCAL_SRC_FILES += $(TARGET_RECOVERY_REBOOT_SRC)
@@ -120,12 +120,11 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/install/include \
     $(LOCAL_PATH)/fuse_sideload/include \
     $(LOCAL_PATH)/install/include \
-    $(LOCAL_PATH)/verifier28/
+    $(LOCAL_PATH)/twrpinstall/include
 
 LOCAL_STATIC_LIBRARIES += libguitwrp
 LOCAL_SHARED_LIBRARIES += libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libtwadbbu libbootloader_message
 LOCAL_SHARED_LIBRARIES += libcrecovery libtwadbbu libtwrpdigest libc++ libaosprecovery libinit libcrypto libbase libziparchive libselinux
-LOCAL_CFLAGS += -DUSE_28_VERIFIER
 
 ifneq ($(wildcard system/core/libsparse/Android.mk),)
 LOCAL_SHARED_LIBRARIES += libsparse
@@ -398,7 +397,8 @@ TWRP_REQUIRED_MODULES += \
     toolbox \
     mkshrc_twrp \
     plat_hwservice_contexts \
-    vendor_hwservice_contexts
+    vendor_hwservice_contexts \
+    minadbd
 
 ifneq ($(TW_INCLUDE_CRYPTO),)
 TWRP_REQUIRED_MODULES += \
@@ -575,9 +575,9 @@ LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := install/adb_install.cpp install/asn1_decoder.cpp install/fuse_sdcard_install.cpp \
-    install/get_args.cpp install/install.cpp install/installcommand.cpp install/legacy_property_service.cpp \
-    install/package.cpp install/verifier.cpp install/wipe_data.cpp install/tw_atomic.cpp \
-    install/set_metadata.cpp verifier28/verifier.cpp install/zipwrap.cpp install/ZipUtil.cpp
+    install/get_args.cpp install/install.cpp install/legacy_property_service.cpp \
+    install/package.cpp install/verifier.cpp install/wipe_data.cpp \
+    install/set_metadata.cpp install/zipwrap.cpp install/ZipUtil.cpp
 LOCAL_SHARED_LIBRARIES += libbase libbootloader_message libcrypto libext4_utils \
     libfs_mgr libfusesideload libhidl-gen-utils libhidlbase \
     liblog libselinux libtinyxml2 libutils libz libziparchive libcutils
@@ -589,6 +589,7 @@ LOCAL_C_INCLUDES += $(commands_TWRP_local_path)/install/include \
                     $(commands_TWRP_local_path)/otautil/include \
                     $(commands_TWRP_local_path)/minadbd \
                     $(commands_TWRP_local_path)/minzip \
+                    $(commands_TWRP_local_path)/twrpinstall/include \
                     system/libvintf/include
 LOCAL_STATIC_LIBRARIES += libotautil libvintf_recovery libvintf libhidl-gen-utils
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
@@ -598,22 +599,6 @@ ifeq ($(AB_OTA_UPDATER),true)
 endif
 
 include $(BUILD_SHARED_LIBRARY)
-
-# libverifier (static library)
-# ===============================
-include $(CLEAR_VARS)
-LOCAL_CLANG := true
-LOCAL_MODULE := libverifier
-LOCAL_SRC_FILES := \
-    asn1_decoder.cpp \
-    verifier.cpp
-LOCAL_STATIC_LIBRARIES := \
-    libotautil \
-    libcrypto_utils \
-    libcrypto \
-    libbase
-LOCAL_CFLAGS := -Wall -Werror
-include $(BUILD_STATIC_LIBRARY)
 
 commands_recovery_local_path := $(LOCAL_PATH)
 

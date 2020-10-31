@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include "asn1_decoder.h"
-
-#include <stdint.h>
+#include "private/asn1_decoder.h"
 
 int asn1_context::peek_byte() const {
   if (length_ == 0) {

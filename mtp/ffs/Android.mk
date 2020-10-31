@@ -13,9 +13,10 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH) bionic \
     system/core/include \
     bionic/libc/private/ \
     bootable/recovery/twrplibusbhost/include \
-    bootable/recovery/install/include
+    bootable/recovery/twrpinstall/include
 
-LOCAL_SHARED_LIBRARIES += libc++ libaosprecovery
+LOCAL_SHARED_LIBRARIES += libc++
+LOCAL_STATIC_LIBRARIES += libtwrpinstall
 
 LOCAL_SRC_FILES = \
     MtpDataPacket.cpp \

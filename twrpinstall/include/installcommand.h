@@ -20,20 +20,19 @@
 #define TMP_UPDATER_BINARY_PATH "/tmp/updater"
 
 #include <string>
+#include <ziparchive/zip_archive.h>
 
-#include "zipwrap.hpp"
-
-bool read_metadata_from_package(ZipWrap* zip, std::string* meta_data);
+bool read_metadata_from_package(ZipArchiveHandle zip, std::string* meta_data);
 
 int
-abupdate_binary_command(const char* path, ZipWrap* zip, int retry_count,
+abupdate_binary_command(const char* path, int retry_count,
                       int status_fd, std::vector<std::string>* cmd);
 int
 update_binary_command(const char* path, int retry_count,
                       int status_fd, std::vector<std::string>* cmd);
 
-bool verify_package_compatibility(ZipWrap *package_zip);
+bool verify_package_compatibility(ZipArchiveHandle package_zip);
 
-void read_source_target_build(ZipWrap* zip/*, std::vector<std::string>& log_buffer*/);
+void read_source_target_build(ZipArchiveHandle zip/*, std::vector<std::string>& log_buffer*/);
 
 #endif  // RECOVERY_INSTALL_COMMAND_H_

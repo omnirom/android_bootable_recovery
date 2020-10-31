@@ -71,7 +71,8 @@ LOCAL_C_INCLUDES += \
     external/zlib \
     system/core/include \
     external/freetype/include \
-    external/libcxx/include
+    external/libcxx/include \
+    $(LOCAL_PATH)/../twrpinstall/include
 
 ifneq ($(TW_INCLUDE_JPEG),)
     LOCAL_C_INCLUDES += \

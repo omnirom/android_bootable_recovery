@@ -32,7 +32,7 @@
 #include <android/hardware/vibrator/1.2/IVibrator.h>
 #endif
 
-#include "../common.h"
+#include "common.h"
 
 #include "minui.h"
 

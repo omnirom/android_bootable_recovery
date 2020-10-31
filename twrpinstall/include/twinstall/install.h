@@ -25,7 +25,6 @@
 #include <ziparchive/zip_archive.h>
 
 #include "package.h"
-#include "recovery_ui/ui.h"
 
 enum InstallResult {
   INSTALL_SUCCESS,
@@ -72,3 +71,4 @@ bool verify_package_compatibility(ZipArchiveHandle package_zip);
 // Mandatory checks: ota-type, pre-device and serial number(if presents)
 // AB OTA specific checks: pre-build version, fingerprint, timestamp.
 int CheckPackageMetadata(const std::map<std::string, std::string>& metadata, OtaType ota_type);
+bool HasUpdaterBinary(ZipArchiveHandle zip);
