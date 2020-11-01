@@ -80,11 +80,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_LIBRARIES += libavb
 LOCAL_SHARED_LIBRARIES += libfs_mgr libinit
-ifeq ($(TW_INCLUDE_CRYPTO),true)
-    LOCAL_CFLAGS += -DUSE_FSCRYPT -Wno-macro-redefined
-    LOCAL_C_INCLUDES += bootable/recovery/crypto/fscrypt \
-        bootable/recovery/crypto
-endif
 LOCAL_C_INCLUDES += \
     system/core/fs_mgr/libfs_avb/include/ \
     system/core/fs_mgr/include_fstab/ \
@@ -151,6 +146,7 @@ endif
 
 ifeq ($(PRODUCT_USE_DYNAMIC_PARTITIONS),true)
     LOCAL_CFLAGS += -DPRODUCT_USE_DYNAMIC_PARTITIONS=1
+    TWRP_REQUIRED_MODULES += android.hardware.health@2.0-service android.hardware.health@2.0-service.rc
 endif
 
 ifeq ($(TW_USES_VENDOR_LIBS),true)
@@ -292,9 +288,10 @@ ifeq ($(TW_INCLUDE_L_CRYPTO), true)
     TW_INCLUDE_CRYPTO := true
 endif
 ifeq ($(TW_INCLUDE_CRYPTO), true)
-    LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO
+    LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO -DUSE_FSCRYPT -Wno-macro-redefined
     LOCAL_SHARED_LIBRARIES += libcryptfsfde libgpt_twrp
-    LOCAL_C_INCLUDES += external/boringssl/src/include
+    LOCAL_C_INCLUDES += external/boringssl/src/include bootable/recovery/crypto/fscrypt \
+        bootable/recovery/crypto
     TW_INCLUDE_CRYPTO_FBE := true
     LOCAL_CFLAGS += -DTW_INCLUDE_FBE
     LOCAL_SHARED_LIBRARIES += libtwrpfscrypt android.frameworks.stats@1.0 android.hardware.authsecret@1.0 \
@@ -396,27 +393,28 @@ TWRP_REQUIRED_MODULES += \
     init.recovery.hlthchrg.rc \
     init.recovery.service.rc \
     init.recovery.ldconfig.rc \
-    hwservicemanager \
-    hwservicemanager.rc \
-    servicemanager \
-    servicemanager.rc \
     awk \
     toybox \
     toolbox \
     mkshrc_twrp \
-    android.hardware.health@2.0-service \
-    android.hardware.health@2.0-service.rc \
     plat_hwservice_contexts \
     vendor_hwservice_contexts
 
 ifneq ($(TW_INCLUDE_CRYPTO),)
 TWRP_REQUIRED_MODULES += \
-    plat_service_contexts \
+    hwservicemanager \
+    hwservicemanager.rc \
     vndservicemanager \
     vndservicemanager.rc \
     vold_prepare_subdirs \
     task_recovery_profiles.json \
     fscryptpolicyget
+    ifneq ($(TW_INCLUDE_CRYPTO_FBE),)
+    TWRP_REQUIRED_MODULES += \
+        plat_service_contexts \
+        servicemanager \
+        servicemanager.rc
+    endif
 endif
 
 ifneq ($(wildcard external/zip/Android.mk),)
