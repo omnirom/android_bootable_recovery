@@ -632,11 +632,7 @@ void TWFunc::Update_Log_File(void) {
 void TWFunc::Clear_Bootloader_Message() {
 	std::string err;
 	if (!clear_bootloader_message(&err)) {
-		if (err == "no misc device set") {
-			LOGINFO("%s\n", err.c_str());
-		} else {
-			LOGERR("%s\n", err.c_str());
-		}
+		LOGINFO("%s\n", err.c_str());
 	}
 }
 
