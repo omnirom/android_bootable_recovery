@@ -455,7 +455,7 @@ else
 endif
 ifneq ($(TW_USE_TOOLBOX), true)
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
-        LOCAL_POST_INSTALL_CMD := \
+        LOCAL_POST_INSTALL_CMD += \
             $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin && \
             ln -sf /sbin/busybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
     endif
@@ -510,7 +510,16 @@ endif
 ifeq ($(TWRP_INCLUDE_LOGCAT), true)
     TWRP_REQUIRED_MODULES += logcat
     ifeq ($(TARGET_USES_LOGD), true)
-        TWRP_REQUIRED_MODULES += logd libsysutils libnl init.recovery.logd.rc
+        TWRP_REQUIRED_MODULES += logd libsysutils libnl event-log-tags init.recovery.logd.rc
+        ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
+            LOCAL_POST_INSTALL_CMD += \
+                $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc; \
+                cp $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/;
+        else
+            LOCAL_POST_INSTALL_CMD += \
+                $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc; \
+                cp $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system/etc/;
+        endif
     endif
 endif
 # Allow devices to specify device-specific recovery dependencies
@@ -579,7 +588,7 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
 else
     LOCAL_ADDITIONAL_DEPENDENCIES := file_contexts.bin
 endif
-LOCAL_POST_INSTALL_CMD := \
+LOCAL_POST_INSTALL_CMD += \
     $(hide) cp -f $(PRODUCT_OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
 
 include $(BUILD_PHONY_PACKAGE)
