@@ -22,6 +22,7 @@ cc_library {
 
     srcs: [
         "device.cpp",
+        "ethernet_device.cpp",
         "ethernet_ui.cpp",
         "screen_ui.cpp",
         "stub_ui.cpp",
@@ -102,7 +103,7 @@ cc_library_static {
     ],
 
     srcs: [
-        "ethernet_device.cpp",
+        "default_ethernet_device.cpp",
     ],
 
     shared_libs: [

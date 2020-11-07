@@ -27,22 +27,8 @@
 #include <sys/types.h>
 
 #include "recovery_ui/device.h"
+#include "recovery_ui/ethernet_device.h"
 #include "recovery_ui/ethernet_ui.h"
-
-class EthernetDevice : public Device {
- public:
-  explicit EthernetDevice(EthernetRecoveryUI* ui);
-
-  void PreRecovery() override;
-  void PreFastboot() override;
-
- private:
-  int SetInterfaceFlags(const unsigned set, const unsigned clr);
-  void SetTitleIPv6LinkLocalAddress(const bool interface_up);
-
-  android::base::unique_fd ctl_sock_;
-  static const std::string interface;
-};
 
 const std::string EthernetDevice::interface = "eth0";
 
@@ -128,9 +114,4 @@ void EthernetDevice::SetTitleIPv6LinkLocalAddress(const bool interface_up) {
   }
 
   recovery_ui->SetIPv6LinkLocalAddress();
-}
-
-// -----------------------------------------------------------------------------------------
-Device* make_device() {
-  return new EthernetDevice(new EthernetRecoveryUI);
 }
