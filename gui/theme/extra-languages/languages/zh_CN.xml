@@ -108,7 +108,7 @@
 		<string name="image_flashed">镜像已刷入。</string>
 		<string name="wipe_cache_dalvik_confirm">是否清除 Cache 和 Dalvik？</string>
 		<string name="wipe_dalvik_confirm">是否清除 Dalvik？</string>
-		<string name="wiping_cache_dalvik">正在清除 Cache 和 Dalvik…</string>
+		<string name="wiping_cache_dalvik">正在清除 Cache 和 Dalvik...</string>
 		<string name="wipe_cache_dalvik_complete">Cache 和 Dalvik 清除完成</string>
 		<string name="wipe_dalvik_complete">Dalvik 清除完成</string>
 		<string name="swipe_wipe">滑动按钮确认清除</string>
@@ -126,6 +126,10 @@
 		<string name="reboot_install_app_system">安装为系统应用</string>
 		<string name="reboot_installing_app">正在安装应用…</string>
 		<string name="swipe_to_install_app">滑动按钮确认安装</string>
+        <string name="uninstall_twrp_system_app">卸载 TWRP 应用</string>
+		<string name="uninstall_twrp_system_app_confirm">确认卸载 TWRP 应用？</string>
+		<string name="uninstalling_twrp_system_app">正在卸载 TWRP 应用...</string>
+		<string name="uninstall_twrp_system_app_complete">卸载 TWRP 应用完成</string>
 		<string name="swipe_flash">滑动按钮确认刷入</string>
 		<string name="confirm_action">确认操作</string>
 		<string name="back_cancel">按返回按钮取消。</string>
@@ -137,6 +141,7 @@
 		<string name="factory_reset2">（不会清除内置存储/sdcard）</string>
 		<string name="factory_reset3">在大多数情况下，您只需要</string>
 		<string name="factory_reset4">执行此操作即可。</string>
+        <string name="factory_reset5">(不包括用户/锁屏)</string>
 		<string name="factory_resetting">正在恢复出厂设置…</string>
 		<string name="advanced_wipe_hdr">高级清除选项</string>
 		<string name="advanced_wipe_btn">高级清除</string>
@@ -507,6 +512,19 @@
 		<string name="fix_recovery_loop_complete">Recovery 无限重启修复完成</string>
 		<string name="fixing_recovery_loop_patch">正在对内核打补丁…</string>
 		<string name="fix_recovery_loop_patch_error">对内核打补丁时出错。</string>
+        <string name="decrypt_users">解密用户</string>
+		<string name="decrypt_users_selection">选择一个要解密的用户ID</string>
+		<string name="select_user">选择用户</string>
+		<string name="backup_storage_undecrypt_warning">备份不包括一些{1}用户的文件，因为此用户没有解密</string>
+		<string name="decrypting_user_fbe">尝试解密用户{1}的FBE...</string>
+		<string name="decrypt_user_success_fbe">用户 {1} 解密成功</string>
+		<string name="decrypt_user_fail_fbe">用户 {1} 解密失败</string>
+		<string name="decrypt_data_enter_pass_fbe">请输入 [%tw_crypto_user_id%] 用户的密码</string>
+		<string name="decrypt_data_enter_pattern_fbe">请画出 [%tw_crypto_user_id%] 用户的密码</string>
+		<string name="multiuser_warning1">有用户没有被解密！</string>
+		<string name="multiuser_warning2">备份/还原操作有可能会失败！</string>
+		<string name="multiuser_warning_accept">仍然继续</string>
+		<string name="multiuser_warning_hdr">多用户警告</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">内核不支持读取 SELinux Context。</string>
@@ -522,8 +540,8 @@
 		<string name="digest_created" version="2"> * Digest 已生成。</string>
 		<string name="digest_error" version="2"> * Digest 错误！</string>
 		<string name="digest_compute_error" version="2"> * 计算 Digest 错误。</string>
-		<string name="current_date">(Current Date)</string>
-		<string name="auto_generate">(Auto Generate)</string>
+		<string name="current_date">(当前日期)</string>
+		<string name="auto_generate">(自动生成)</string>
 		<string name="unable_to_locate_partition">未找到 '{1}' 分区。</string>
 		<string name="no_partition_selected">未选择备份分区。</string>
 		<string name="total_partitions_backup"> * 备份分区总数：{1}</string>
@@ -683,7 +701,7 @@
 		<!-- These 2 items are saved in the data manager instead of resource manager, so %llu, etc is correct instead of {1} -->
 		<string name="file_progress">已完成 %llu 个，共 %llu 个文件，进度 %i%%</string>
 		<string name="size_progress">已完成 %lluMB，共 %lluMB，进度 %i%%</string>
-		<string name="decrypt_cmd">尝试通过命令行解密 Data 分区。</string>
+		<string name="decrypt_cmd" version="2">尝试通过命令行解密 Data 分区 / 用户。</string>
 		<string name="base_pkg_err">无法加载基本包。</string>
 		<string name="simulating">正在模拟操作…</string>
 		<string name="backup_cancel">备份已取消。</string>
@@ -715,5 +733,23 @@
 		<string name="include_kernel_log">包含内核日志</string>
 		<string name="sha2_chk">使用 SHA2 进行散列校验</string>
 		<string name="unable_set_boot_slot">更改 bootloader 启动分区至 {1} 错误</string>
+        <string name="unmount_sys_install">在安装 ZIP 之前先卸载系统(挂载)</string>
+		<string name="unmount_system">卸载系统中...</string>
+		<string name="unmount_system_err">卸载系统失败</string>
+		<string name="flash_ab_inactive">正在刷入 A/B zip 到未选择slot: {1}</string>
+		<string name="flash_ab_reboot">要刷入其他zip文件，请重新进入Recovery以切换到更新后的插槽。</string>
+		<string name="ozip_decrypt_decryption">正在解密Ozip...</string>
+		<string name="ozip_decrypt_finish">Ozip解密完成！</string>
+		<string name="fbe_wipe_msg">注意: {1} 已清除. FBE设备应启动至Android，而不是Recovery，才能在擦除后设置启动FBE策略。</string>
+		<string name="fastboot_button">Fastboot</string>
+		<string name="enable_adb">开启 ADB</string>
+		<string name="enable_fastboot">开启 Fastboot</string>
+		<string name="fastboot_console_msg">进入 Fastboot 模式...</string>
+		<!-- Android Rescue Party trigger -->
+		<string name="rescue_party0">Android 抢救模式被触发! 可能的解决方案? 要么:</string>
+		<string name="rescue_party1"> 1. 清除缓存, 和/或</string>
+		<string name="rescue_party2"> 2. 双清, 和/或</string>
+		<string name="rescue_party3"> 3. 重新刷入Rom.</string>
+		<string name="rescue_party4">报告的问题是：</string>
 	</resources>
 </language>
