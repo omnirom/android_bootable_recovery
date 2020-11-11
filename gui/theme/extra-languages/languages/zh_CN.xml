@@ -104,7 +104,7 @@
 		<string name="install_sel_target">选择目标分区</string>
 		<string name="flash_image_select">选择要刷入镜像的分区：</string>
 		<string name="target_partition">目标分区：</string>
-		<string name="flashing_image">正在刷入镜像…</string>
+		<string name="flashing_image">正在刷入镜像...</string>
 		<string name="image_flashed">镜像已刷入。</string>
 		<string name="wipe_cache_dalvik_confirm">是否清除 Cache 和 Dalvik？</string>
 		<string name="wipe_dalvik_confirm">是否清除 Dalvik？</string>
@@ -116,7 +116,7 @@
 		<string name="no_os1">没有安装任何系统！</string>
 		<string name="no_osrb">您确定要重启？</string>
 		<string name="no_ospo">您确定要关机？</string>
-		<string name="rebooting">正在重启…</string>
+		<string name="rebooting">正在重启...</string>
 		<string name="swipe_reboot">滑动按钮确认重启</string>
 		<string name="swipe_reboot_s">   重启</string>
 		<string name="reboot_install_app_hdr">安装 TWRP 应用？</string>
@@ -124,9 +124,9 @@
 		<string name="reboot_install_app2">该应用可帮您检查 TWRP 的最新版本。</string>
 		<string name="reboot_install_app_prompt_install">如果 TWRP 应用未安装时提示我</string>
 		<string name="reboot_install_app_system">安装为系统应用</string>
-		<string name="reboot_installing_app">正在安装应用…</string>
+		<string name="reboot_installing_app">正在安装应用...</string>
 		<string name="swipe_to_install_app">滑动按钮确认安装</string>
-        <string name="uninstall_twrp_system_app">卸载 TWRP 应用</string>
+		<string name="uninstall_twrp_system_app">卸载 TWRP 应用</string>
 		<string name="uninstall_twrp_system_app_confirm">确认卸载 TWRP 应用？</string>
 		<string name="uninstalling_twrp_system_app">正在卸载 TWRP 应用...</string>
 		<string name="uninstall_twrp_system_app_complete">卸载 TWRP 应用完成</string>
@@ -141,18 +141,19 @@
 		<string name="factory_reset2">（不会清除内置存储/sdcard）</string>
 		<string name="factory_reset3">在大多数情况下，您只需要</string>
 		<string name="factory_reset4">执行此操作即可。</string>
-        <string name="factory_reset5">(不包括用户/锁屏)</string>
+		<string name="factory_reset5">(不包括用户/锁屏)</string>
+		<string name="factory_resetting">正在恢复出厂设置...</string>
 		<string name="factory_resetting">正在恢复出厂设置…</string>
 		<string name="advanced_wipe_hdr">高级清除选项</string>
 		<string name="advanced_wipe_btn">高级清除</string>
 		<string name="wipe_enc_confirm">是否清除 Data 分区加密？</string>
-		<string name="formatting_data">正在格式化 Data 分区…</string>
+		<string name="formatting_data">正在格式化 Data 分区...</string>
 		<string name="swipe_format_data">滑动按钮确认格式化</string>
 		<string name="swipe_format_data_s">   格式化 Data 分区</string>
 		<string name="factory_reset_complete">恢复出厂完成</string>
 		<string name="sel_part_hdr">选择分区</string>
 		<string name="wipe_sel_confirm">是否清除所选的分区？</string>
-		<string name="wiping_part">正在清除分区…</string>
+		<string name="wiping_part">正在清除分区...</string>
 		<string name="wipe_complete">清除完成</string>
 		<string name="sel_part_wipe">选择要清除的分区：</string>
 		<string name="invalid_part_sel">无效的分区</string>
@@ -187,14 +188,14 @@
 		<string name="resize_btn">调整文件系统</string>
 		<string name="resize_btn_s">调整</string>
 		<string name="resize_confirm">是否调整 %tw_partition_name%？</string>
-		<string name="resizing">正在调整…</string>
+		<string name="resizing">正在调整...</string>
 		<string name="resize_complete">调整完成</string>
 		<string name="swipe_resize">滑动按钮确认调整</string>
 		<string name="swipe_resize_s">   调整</string>
 		<string name="repair_btn">修复文件系统</string>
 		<string name="repair_btn_s">修复</string>
 		<string name="repair_confirm">是否修复 %tw_partition_name%？</string>
-		<string name="repairing">正在修复…</string>
+		<string name="repairing">正在修复...</string>
 		<string name="repair_complete">修复完成</string>
 		<string name="swipe_repair">滑动按钮确认修复</string>
 		<string name="swipe_repair_s">   修复</string>
@@ -205,7 +206,7 @@
 		<string name="change_fs_warn1">一些固件或内核可能不支持</string>
 		<string name="change_fs_warn2">某些文件系统，请谨慎！</string>
 		<string name="change_fs_confirm">是否更改 %tw_partition_name% 为：</string>
-		<string name="formatting">正在格式化…</string>
+		<string name="formatting">正在格式化...</string>
 		<string name="format_complete">格式化完成</string>
 		<string name="swipe_change_fs">滑动按钮确认更改</string>
 		<string name="swipe_change_s">   更改</string>
@@ -254,7 +255,7 @@
 		<string name="del_backup_btn">删除备份</string>
 		<string name="del_backup_confirm">是否删除备份：</string>
 		<string name="del_backup_confirm2">此操作无法恢复！</string>
-		<string name="deleting_backup">正在删除备份…</string>
+		<string name="deleting_backup">正在删除备份...</string>
 		<string name="backup_deleted">备份删除完成</string>
 		<string name="swipe_delete">滑动按钮确认删除</string>
 		<string name="swipe_delete_s">   删除</string>
@@ -269,7 +270,7 @@
 		<string name="rename_backup_hdr">重命名备份</string>
 		<string name="rename_backup_confirm">是否重命名备份文件？</string>
 		<string name="rename_backup_confirm2">此操作无法恢复！</string>
-		<string name="renaming_backup">正在重命名…</string>
+		<string name="renaming_backup">正在重命名...</string>
 		<string name="rename_backup_complete">重命名完成</string>
 		<string name="swipe_to_rename">滑动按钮确认重命名</string>
 		<string name="swipe_rename">   重命名</string>
@@ -293,7 +294,7 @@
 		<string name="rb_bootloader_btn">Bootloader</string>
 		<string name="rb_download_btn">Download</string>
 		<string name="rb_edl_btn">Edl</string>
-		<string name="turning_off">正在关机…</string>
+		<string name="turning_off">正在关机...</string>
 		<string name="swipe_power_off">滑动按钮确认关机</string>
 		<string name="swipe_power_off_s">关机</string>
 		<string name="sys_ro_hdr">未修改的 System 分区</string>
@@ -388,7 +389,7 @@
 		<string name="set_language_btn">设置语言</string>
 		<string name="advanced_hdr">高级选项</string>
 		<string name="copy_log_confirm">是否导出日志到内置存储？</string>
-		<string name="copying_log" version="2">正在复制…</string>
+		<string name="copying_log" version="2">正在复制...</string>
 		<string name="copy_log_complete" version="2">日志导出完成</string>
 		<string name="fix_context_btn">修复 Context</string>
 		<string name="part_sd_btn">分区 SD 卡</string>
@@ -400,7 +401,7 @@
 		<string name="dumlock_btn">HTC Dumlock</string>
 		<string name="inject_twrp_btn">注入 TWRP</string>
 		<string name="inject_twrp_confirm">是否重新注入 TWRP？</string>
-		<string name="injecting_twrp">正在重新注入 TWRP…</string>
+		<string name="injecting_twrp">正在重新注入 TWRP...</string>
 		<string name="inject_twrp_complete">TWRP 注入完成</string>
 		<string name="swipe_to_confirm">滑动按钮确认</string>
 		<string name="part_sd_hdr">SD 卡分区</string>
@@ -414,21 +415,21 @@
 		<string name="file_system">文件系统：</string>
 		<string name="swipe_part_sd">滑动按钮确认分区</string>
 		<string name="swipe_part_sd_s">分区</string>
-		<string name="partitioning_sd">正在对 SD 卡分区…</string>
+		<string name="partitioning_sd">正在对 SD 卡分区...</string>
 		<string name="partitioning_sd2">这将需要几分钟的时间。</string>
 		<string name="part_sd_complete">分区完成</string>
 		<string name="dumlock_hdr">HTC Dumlock</string>
 		<string name="dumlock_restore_btn">恢复原版 Boot 镜像</string>
 		<string name="dumlock_restore_confirm">是否恢复原版 Boot 镜像？</string>
-		<string name="dumlock_restoring">正在恢复原版 Boot 镜像…</string>
+		<string name="dumlock_restoring">正在恢复原版 Boot 镜像...</string>
 		<string name="dumlock_restore_complete">恢复原版 Boot 镜像完成</string>
 		<string name="dumlock_reflash_btn">重新刷入 Recovery</string>
 		<string name="dumlock_reflash_confirm">是否重新刷入 Recovery 至 Boot 分区？</string>
-		<string name="dumlock_reflashing">正在刷入 Recovery 至 Boot 分区…</string>
+		<string name="dumlock_reflashing">正在刷入 Recovery 至 Boot 分区...</string>
 		<string name="dumlock_reflash_complete">Recovery 刷入完成</string>
 		<string name="dumlock_install_btn">安装 HTC Dumlock</string>
 		<string name="dumlock_install_confirm">是否安装 HTC Dumlock 文件到系统中？</string>
-		<string name="dumlock_installing">正在安装 HTC Dumlock…</string>
+		<string name="dumlock_installing">正在安装 HTC Dumlock...</string>
 		<string name="dumlock_install_complete">HTC Dumlock 安装完成</string>
 		<string name="swipe_to_unlock">滑动按钮解锁</string>
 		<string name="swipe_unlock">   解锁</string>
@@ -484,7 +485,7 @@
 		<string name="fix_contexts_note3">您的设备无法正常启动。</string>
 		<string name="swipe_to_fix_contexts">滑动按钮确认修复</string>
 		<string name="swipe_fix_contexts">   修复 Context</string>
-		<string name="fixing_contexts">正在修复 Context…</string>
+		<string name="fixing_contexts">正在修复 Context...</string>
 		<string name="fix_contexts_complete">修复 Context 完成</string>
 		<string name="reboot_hdr">重启选项</string>
 		<string name="install_cancel">不，以后再说</string>
@@ -499,20 +500,20 @@
 		<string name="repack_backup_first">请先备份现有的镜像</string>
 		<string name="repack">重新打包</string>
 		<string name="swipe_to_install">滑动按钮确认安装</string>
-		<string name="installing">正在安装…</string>
+		<string name="installing">正在安装...</string>
 		<string name="install_complete">安装完成</string>
 		<string name="unpack_error">解包镜像错误。</string>
 		<string name="repack_error">重新打包镜像错误。</string>
-		<string name="unpacking_image">正在解包 {1}…</string>
-		<string name="repacking_image">正在打包 {1}…</string>
+		<string name="unpacking_image">正在解包 {1}...</string>
+		<string name="repacking_image">正在打包 {1}...</string>
 		<string name="repack_image_hdr">选择镜像</string>
 		<string name="fix_recovery_loop">修复 Recovery 无限重启</string>
 		<string name="fix_recovery_loop_confirm">是否修复 Recovery 无限重启？</string>
-		<string name="fixing_recovery_loop">正在修复 Recovery 无限重启…</string>
+		<string name="fixing_recovery_loop">正在修复 Recovery 无限重启...</string>
 		<string name="fix_recovery_loop_complete">Recovery 无限重启修复完成</string>
-		<string name="fixing_recovery_loop_patch">正在对内核打补丁…</string>
+		<string name="fixing_recovery_loop_patch">正在对内核打补丁...</string>
 		<string name="fix_recovery_loop_patch_error">对内核打补丁时出错。</string>
-        <string name="decrypt_users">解密用户</string>
+		<string name="decrypt_users">解密用户</string>
 		<string name="decrypt_users_selection">选择一个要解密的用户ID</string>
 		<string name="select_user">选择用户</string>
 		<string name="backup_storage_undecrypt_warning">备份不包括一些{1}用户的文件，因为此用户没有解密</string>
@@ -536,7 +537,7 @@
 		<string name="unable_to_decrypt">无法使用默认密码来解密，您可能需要格式化 Data 分区。</string>
 		<string name="generating_digest1" version="2">正在生成 Digest</string>
 		<!-- Message displayed during a backup if we are generating an Digest, ideally, leave the leading " * " to help align and separate this text from other console text -->
-		<string name="generating_digest2" version="2"> * 正在生成 Digest…</string>
+		<string name="generating_digest2" version="2"> * 正在生成 Digest...</string>
 		<string name="digest_created" version="2"> * Digest 已生成。</string>
 		<string name="digest_error" version="2"> * Digest 错误！</string>
 		<string name="digest_compute_error" version="2"> * 计算 Digest 错误。</string>
@@ -562,11 +563,11 @@
 		<string name="restore_part_done">[{1} 恢复完成（{2} 秒）]</string>
 		<string name="verifying_digest" version="2">正在校验 Digest</string>
 		<string name="skip_digest" version="2">基于用户设置，已跳过 Digest 检查。</string>
-		<string name="calc_restore">正在计算恢复详情…</string>
+		<string name="calc_restore">正在计算恢复详情...</string>
 		<string name="restore_read_only">无法恢复 {1} -- 已挂载为只读。</string>
 		<string name="restore_unable_locate">未找到 '{1}' 分区。</string>
 		<string name="no_part_restore">未选择要恢复的分区。</string>
-		<string name="restore_part_count">正在恢复 {1} 个分区…</string>
+		<string name="restore_part_count">正在恢复 {1} 个分区...</string>
 		<string name="total_restore_size">恢复文件总计 {1}MB</string>
 		<string name="updating_system_details">更新系统详细信息</string>
 		<string name="restore_completed">[恢复完成，耗时 {1} 秒]</string>
@@ -574,15 +575,15 @@
 		<string name="error_opening_strerr">打开出错：'{1}' ({2})</string>
 		<string name="unable_locate_part_backup_name">无法通过备份名称来查找分区：'{1}'</string>
 		<string name="unable_find_part_path">找不到分区路径 '{1}'</string>
-		<string name="update_part_details">正在更新分区详情…</string>
-		<string name="update_part_details_done">…完成</string>
-		<string name="wiping_dalvik">正在清除 Dalvik 目录…</string>
-		<string name="cleaned">已清除：{1}…</string>
+		<string name="update_part_details">正在更新分区详情...</string>
+		<string name="update_part_details_done">...完成</string>
+		<string name="wiping_dalvik">正在清除 Dalvik 目录...</string>
+		<string name="cleaned">已清除：{1}...</string>
 		<string name="cache_dalvik_done">-- Dalvik Cache 目录清除完成！</string>
 		<string name="dalvik_done">-- Dalvik 目录清除完成！</string>
 		<string name="no_andsec">未发现 android secure 分区。</string>
 		<string name="unable_to_locate">未找到 {1}。</string>
-		<string name="wiping_datamedia">清除内置存储 -- /data/media…</string>
+		<string name="wiping_datamedia">清除内置存储 -- /data/media...</string>
 		<string name="unable_to_mount">无法挂载 {1}</string>
 		<string name="unable_to_mount_internal">无法挂载内置存储</string>
 		<string name="unable_to_mount_storage">无法挂载存储</string>
@@ -591,14 +592,14 @@
 		<string name="decrypt_success_dev">Data 分区成功解密，新增块设备：'{1}'</string>
 		<string name="decrypt_success_nodev">Data 分区已成功解密</string>
 		<string name="done">完成。</string>
-		<string name="start_partition_sd">正在给 SD 卡分区…</string>
+		<string name="start_partition_sd">正在给 SD 卡分区...</string>
 		<string name="partition_sd_locate">未找到需要分区的设备。</string>
 		<string name="ext_swap_size">EXT+Swap 大小超过 SD 卡容量。</string>
-		<string name="remove_part_table">正在删除分区表…</string>
+		<string name="remove_part_table">正在删除分区表...</string>
 		<string name="unable_rm_part">无法删除分区表。</string>
-		<string name="create_part">正在建立 {1} 分区…</string>
+		<string name="create_part">正在建立 {1} 分区...</string>
 		<string name="unable_to_create_part">无法建立 {1} 分区。</string>
-		<string name="format_sdext_as">正在将 sd-ext 格式化为 {1}…</string>
+		<string name="format_sdext_as">正在将 sd-ext 格式化为 {1}...</string>
 		<string name="part_complete">分区完成。</string>
 		<string name="unable_to_open">无法打开 '{1}'。</string>
 		<string name="mtp_already_enabled">MTP 已经启用</string>
@@ -613,7 +614,7 @@
 		<string name="flash_done">[镜像刷入完成]</string>
 		<string name="wiping">正在清除 {1}</string>
 		<string name="repair_not_exist">{1} 不存在！无法修复！</string>
-		<string name="repairing_using">正在使用 {2} 修复 {1}…</string>
+		<string name="repairing_using">正在使用 {2} 修复 {1}...</string>
 		<string name="unable_repair">无法修复 {1}。</string>
 		<string name="mount_data_footer">无法挂载/data，未找到加密 footer。</string>
 		<!-- {1} is the folder name that we could not create, {2} is strerror output -->
@@ -631,21 +632,21 @@
 		<string name="fail_decrypt_tar">无法解密 tar 文件 '{1}'</string>
 		<string name="format_data_msg">您可能需要重启 Recovery 才能使用/data。</string>
 		<string name="format_data_err">无法格式化并删除加密。</string>
-		<string name="formatting_using">使用 {2} 格式化 {1}…</string>
+		<string name="formatting_using">使用 {2} 格式化 {1}...</string>
 		<string name="unable_to_wipe">无法清除 {1}。</string>
 		<string name="cannot_wipe">无法清除 {1} 分区。</string>
 		<string name="remove_all">移除 '{1}' 下的所有文件</string>
-		<string name="wiping_data">正在清除 Data 分区，跳过清除/data/media…</string>
-		<string name="backing_up">正在备份 {1}…</string>
+		<string name="wiping_data">正在清除 Data 分区，跳过清除/data/media...</string>
+		<string name="backing_up">正在备份 {1}...</string>
 		<string name="backup_storage_warning">备份的 {1} 分区不包含内置存储上的任何文件，例如照片或下载的文件等等。</string>
 		<string name="backing">正在备份</string>
 		<string name="backup_size">'{1}' 的备份文件大小为 0 字节。</string>
 		<string name="datamedia_fs_restore">警告：此/data 备份文件系统为 {1}！除非把文件系统格式设置为 {1} 否则可能无法启动。</string>
-		<string name="restoring">正在恢复 {1}…</string>
+		<string name="restoring">正在恢复 {1}...</string>
 		<string name="restoring_hdr">正在恢复</string>
 		<string name="recreate_folder_err">无法重新创建 {1} 文件夹。</string>
 		<string name="img_size_err">镜像大小大于目标设备</string>
-		<string name="flashing">正在刷入 {1}…</string>
+		<string name="flashing">正在刷入 {1}...</string>
 		<string name="backup_folder_set">备份文件夹设置为：'{1}'</string>
 		<string name="locate_backup_err">未找到备份文件 '{1}'</string>
 		<string name="set_restore_opt">设置恢复选项：'{1}'：</string>
@@ -661,11 +662,11 @@
 		<string name="making_dir2">创建目录：'{1}'</string>
 		<string name="running_command">运行命令</string>
 		<string name="sideload">ADB Sideload</string>
-		<string name="start_sideload">正在开始 ADB sideload…</string>
+		<string name="start_sideload">正在开始 ADB sideload...</string>
 		<string name="need_new_adb">您需要 1.0.32 或更高版本的 adb 才可以使用。</string>
 		<string name="no_pwd">未提供密码。</string>
 		<string name="done_ors">脚本执行完毕</string>
-		<string name="injecttwrp">正在注入 TWRP 到 Boot 镜像…</string>
+		<string name="injecttwrp">正在注入 TWRP 到 Boot 镜像...</string>
 		<string name="zip_err">安装 Zip 刷机包 '{1}' 时出错</string>
 		<string name="installing_zip">正在安装 Zip 刷机包 '{1}'</string>
 		<string name="select_backup_opt">设置备份选项：</string>
@@ -677,10 +678,10 @@
 		<string name="recovery_commands_complete">Recovery 命令执行完成</string>
 		<string name="running_ors">运行 OpenRecoveryScript 脚本</string>
 		<string name="ors_complete">运行 OpenRecoveryScript 脚本完成</string>
-		<string name="check_for_digest" version="2">正在检测 Digest…</string>
+		<string name="check_for_digest" version="2">正在检测 Digest...</string>
 		<string name="invalid_zip_format">Zip 文件格式无效！</string>
 		<string name="fail_sysmap">映射文件 '{1}' 失败</string>
-		<string name="verify_zip_sig">正在校验 Zip 刷机包签名…</string>
+		<string name="verify_zip_sig">正在校验 Zip 刷机包签名...</string>
 		<string name="verify_zip_fail">刷机包签名校验失败！</string>
 		<string name="verify_zip_done">刷机包签名校验成功。</string>
 		<string name="zip_corrupt">刷机包已损坏！</string>
@@ -689,12 +690,12 @@
 		<string name="digest_match" version="2">Digest 校验成功</string>
 		<string name="pid_signal">{1} 过程结束，标志：{2}</string>
 		<string name="pid_error">{1} 过程结束，错误：{2}</string>
-		<string name="install_dumlock">安装 HTC Dumlock 到系统…</string>
-		<string name="dumlock_restore">正在恢复原版 Boot…</string>
-		<string name="dumlock_reflash">正在重新刷入 Recovery 到 Boot…</string>
-		<string name="run_script">正在运行 {1} 脚本…</string>
+		<string name="install_dumlock">安装 HTC Dumlock 到系统...</string>
+		<string name="dumlock_restore">正在恢复原版 Boot...</string>
+		<string name="dumlock_reflash">正在重新刷入 Recovery 到 Boot...</string>
+		<string name="run_script">正在运行 {1} 脚本...</string>
 		<string name="rename_stock">重命名/system 下原版 Recovery 的补丁文件，避免原厂固件替换 TWRP。</string>
-		<string name="split_backup">分解备份文件为多个压缩文件…</string>
+		<string name="split_backup">分解备份文件为多个压缩文件...</string>
 		<string name="backup_error">建立备份失败。</string>
 		<string name="restore_error">在恢复过程中发生错误。</string>
 		<string name="split_thread">拆分线程 ID {1} 到压缩文件 {2}</string>
@@ -703,9 +704,9 @@
 		<string name="size_progress">已完成 %lluMB，共 %lluMB，进度 %i%%</string>
 		<string name="decrypt_cmd" version="2">尝试通过命令行解密 Data 分区 / 用户。</string>
 		<string name="base_pkg_err">无法加载基本包。</string>
-		<string name="simulating">正在模拟操作…</string>
+		<string name="simulating">正在模拟操作...</string>
 		<string name="backup_cancel">备份已取消。</string>
-		<string name="config_twrp">正在配置 TWRP…</string>
+		<string name="config_twrp">正在配置 TWRP...</string>
 		<string name="config_twrp_err">此内核无法配置 TWRP。</string>
 		<string name="copy_log">已经导出 Recovery 日志到 {1}。</string>
 		<string name="max_queue">已达到最大刷机包刷入队列！</string>
@@ -720,12 +721,12 @@
 		<string name="backup_name_len">备份名称太长。</string>
 		<string name="backup_name_invalid">备份名称 '{1}' 中包含无效字符：'{1}'</string>
 		<string name="no_real_sdcard">此设备没有真实的 SD 卡！正在中止！</string>
-		<string name="cancel_sideload">取消 ADB Sideload…</string>
+		<string name="cancel_sideload">取消 ADB Sideload...</string>
 		<string name="change_fs_err">更换文件系统时出错。</string>
 		<string name="theme_ver_err">自定义主题和 TWRP 版本不匹配，正在使用原版主题。</string>
 		<string name="up_a_level">（上级目录）</string>
 		<string name="install_reboot" version="2">将会在 %tw_sleep% 秒内重启</string>
-		<string name="adbbackup_error">ADB 备份错误。正在退出…"</string>
+		<string name="adbbackup_error">ADB 备份错误。正在退出..."</string>
 		<string name="adbbackup_control_error">无法写入 adb 控制通道</string>
 		<string name="twrp_adbbu_option">--twrp 选项需启用 twrp adb backup</string>
 		<string name="partition_not_found">分区列表中未发现路径：{1}</string>
@@ -733,7 +734,7 @@
 		<string name="include_kernel_log">包含内核日志</string>
 		<string name="sha2_chk">使用 SHA2 进行散列校验</string>
 		<string name="unable_set_boot_slot">更改 bootloader 启动分区至 {1} 错误</string>
-        <string name="unmount_sys_install">在安装 ZIP 之前先卸载系统(挂载)</string>
+		<string name="unmount_sys_install">在安装 ZIP 之前先卸载系统(挂载)</string>
 		<string name="unmount_system">卸载系统中...</string>
 		<string name="unmount_system_err">卸载系统失败</string>
 		<string name="flash_ab_inactive">正在刷入 A/B zip 到未选择slot: {1}</string>
