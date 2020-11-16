@@ -201,3 +201,23 @@ cc_test_host {
         },
     },
 }
+
+cc_fuzz {
+    name: "libinstall_verify_package_fuzzer",
+    defaults: [
+        "recovery_test_defaults",
+    ],
+
+    srcs: ["fuzz/verify_package_fuzzer.cpp"],
+
+    corpus: [
+      "testdata/otasigned*.zip",
+    ],
+
+    static_libs: [
+        "libotautil",
+        "libinstall",
+        "librecovery_ui",
+        "libminui",
+    ],
+}
