@@ -934,7 +934,7 @@ int GUIAction::getpartitiondetails(std::string arg)
 					DataManager::SetValue("tw_partition_exfat", 1);
 				else
 					DataManager::SetValue("tw_partition_exfat", 0);
-				if (TWFunc::Path_Exists("/system/bin/mkfs.f2fs"))
+				if (TWFunc::Path_Exists("/system/bin/mkfs.f2fs") || TWFunc::Path_Exists("/system/bin/make_f2fs"))
 					DataManager::SetValue("tw_partition_f2fs", 1);
 				else
 					DataManager::SetValue("tw_partition_f2fs", 0);
