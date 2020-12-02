@@ -35,8 +35,8 @@
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
-		<string name="cpu_temp">溫度：%tw_cpu_temp% &#xB0;C</string>
-		<string name="battery_pct">電量：%tw_battery%</string>
+		<string name="cpu_temp">溫度: %tw_cpu_temp% &#xB0;C</string>
+		<string name="battery_pct">電量: %tw_battery%</string>
 		<string name="sort_by_name">按名稱排序</string>
 		<string name="sort_by_date">按日期排序</string>
 		<string name="sort_by_size">按大小排序</string>
@@ -93,7 +93,7 @@
 		<string name="zip_add_btn">添加更多刷機包</string>
 		<string name="zip_clear_btn">清除刷機佇列</string>
 		<string name="install_zip_count_hdr">正在刷入第 %tw_zip_index% 個，共 %tw_zip_queue_count% 個</string>
-		<string name="installing_zip_xml">正在安裝：%tw_file%</string>
+		<string name="installing_zip_xml">正在安裝: %tw_file%</string>
 		<string name="failed">失敗</string>
 		<string name="successful">成功</string>
 		<string name="install_failed">安裝失敗</string>
@@ -111,13 +111,13 @@
 		<string name="wiping_cache_dalvik">正在清除 Cache 和 Dalvik…</string>
 		<string name="wipe_cache_dalvik_complete">Cache 和 Dalvik 清除完成</string>
 		<string name="wipe_dalvik_complete">Dalvik 清除完成</string>
-		<string name="swipe_wipe">滑動按鈕確認清除</string>
+		<string name="swipe_wipe">滑動滑塊確認清除</string>
 		<string name="swipe_wipe_s">   清除</string>
 		<string name="no_os1">沒有安裝任何系統！</string>
 		<string name="no_osrb">您確定要重啟？</string>
 		<string name="no_ospo">您確定要關機？</string>
 		<string name="rebooting">正在重啟…</string>
-		<string name="swipe_reboot">滑動按鈕確認重啟</string>
+		<string name="swipe_reboot">滑動滑塊確認重啟</string>
 		<string name="swipe_reboot_s">   重啟</string>
 		<string name="reboot_install_app_hdr">安裝 TWRP 應用？</string>
 		<string name="reboot_install_app1">您希望安裝官方 TWRP 應用嗎？</string>
@@ -125,8 +125,12 @@
 		<string name="reboot_install_app_prompt_install">如果 TWRP 應用未安裝時提示我</string>
 		<string name="reboot_install_app_system">安裝為系統應用</string>
 		<string name="reboot_installing_app">正在安裝應用…</string>
-		<string name="swipe_to_install_app">滑動按鈕確認安裝</string>
-		<string name="swipe_flash">滑動按鈕確認刷入</string>
+		<string name="swipe_to_install_app">滑動滑塊確認安裝</string>
+		<string name="uninstall_twrp_system_app">卸載 TWRP 應用</string>
+		<string name="uninstall_twrp_system_app_confirm">確認卸載 TWRP 應用？</string>
+		<string name="uninstalling_twrp_system_app">正在卸載 TWRP 應用…</string>
+		<string name="uninstall_twrp_system_app_complete">卸載 TWRP 應用完成</string>
+		<string name="swipe_flash">滑動滑塊確認刷入</string>
 		<string name="confirm_action">確認操作</string>
 		<string name="back_cancel">按返回按鈕取消。</string>
 		<string name="cancel_btn">取消</string>
@@ -137,12 +141,13 @@
 		<string name="factory_reset2">（不會清除內置存儲/sdcard）</string>
 		<string name="factory_reset3">在大多數情況下，您只需要</string>
 		<string name="factory_reset4">執行此操作即可。</string>
+		<string name="factory_reset5">（不包括用戶/鎖屏）</string>
 		<string name="factory_resetting">正在恢復出廠設置…</string>
 		<string name="advanced_wipe_hdr">高級清除選項</string>
 		<string name="advanced_wipe_btn">高級清除</string>
 		<string name="wipe_enc_confirm">是否清除 Data 分區加密？</string>
 		<string name="formatting_data">正在格式化 Data 分區…</string>
-		<string name="swipe_format_data">滑動按鈕確認格式化</string>
+		<string name="swipe_format_data">滑動滑塊確認格式化</string>
 		<string name="swipe_format_data_s">   格式化 Data 分區</string>
 		<string name="factory_reset_complete">恢復出廠完成</string>
 		<string name="sel_part_hdr">選擇分區</string>
@@ -165,50 +170,50 @@
 		<string name="format_data_complete">格式化 Data 分區完成</string>
 		<!-- Translator note: the word "yes" must remain English! -->
 		<string name="yes_continue">輸入 yes 繼續，按返回按鈕取消。</string>
-		<string name="part_opt_hdr">分區名：%tw_partition_name%</string>
+		<string name="part_opt_hdr">分區名: %tw_partition_name%</string>
 		<string name="sel_act_hdr">選擇操作</string>
 		<string name="file_sys_opt">檔案系統選項</string>
-		<string name="partition">分區：%tw_partition_name%</string>
-		<string name="part_mount_point">掛載位置：%tw_partition_mount_point%</string>
-		<string name="part_curr_fs">檔案系統：%tw_partition_file_system%</string>
+		<string name="partition">分區: %tw_partition_name%</string>
+		<string name="part_mount_point">掛載位置: %tw_partition_mount_point%</string>
+		<string name="part_curr_fs">檔案系統: %tw_partition_file_system%</string>
 		<string name="part_present_yes">當前：是</string>
 		<string name="part_present_no">當前：否</string>
 		<string name="part_removable_yes">可移除：是</string>
 		<string name="part_removable_no">可移除：否</string>
-		<string name="part_size">大小：%tw_partition_size%MB</string>
-		<string name="part_used">已用：%tw_partition_used%MB</string>
-		<string name="part_free">空閒：%tw_partition_free%MB</string>
-		<string name="part_backup_size">備份大小：%tw_partition_backup_size%MB</string>
+		<string name="part_size">大小: %tw_partition_size%MB</string>
+		<string name="part_used">已用: %tw_partition_used%MB</string>
+		<string name="part_free">空閒: %tw_partition_free%MB</string>
+		<string name="part_backup_size">備份大小: %tw_partition_backup_size%MB</string>
 		<string name="resize_btn">調整檔案系統</string>
 		<string name="resize_btn_s">調整</string>
 		<string name="resize_confirm">是否調整 %tw_partition_name%？</string>
 		<string name="resizing">正在調整…</string>
 		<string name="resize_complete">調整完成</string>
-		<string name="swipe_resize">滑動按鈕確認調整</string>
+		<string name="swipe_resize">滑動滑塊確認調整</string>
 		<string name="swipe_resize_s">   調整</string>
 		<string name="repair_btn">修復檔案系統</string>
 		<string name="repair_btn_s">修復</string>
 		<string name="repair_confirm">是否修復 %tw_partition_name%？</string>
 		<string name="repairing">正在修復…</string>
 		<string name="repair_complete">修復完成</string>
-		<string name="swipe_repair">滑動按鈕確認修復</string>
+		<string name="swipe_repair">滑動滑塊確認修復</string>
 		<string name="swipe_repair_s">   修復</string>
 		<string name="change_fs_btn">更改檔案系統</string>
 		<string name="change_fs_btn_s">更改</string>
-		<string name="change_fs_for_hdr">要更改的分區：%tw_partition_name%</string>
-		<string name="change_fs_for_hdr_s">分區：%tw_partition_name%&gt;選擇檔案系統</string>
+		<string name="change_fs_for_hdr">要更改的分區: %tw_partition_name%</string>
+		<string name="change_fs_for_hdr_s">分區: %tw_partition_name%&gt;選擇檔案系統</string>
 		<string name="change_fs_warn1">一些固件或內核可能不支持</string>
 		<string name="change_fs_warn2">某些檔案系統，請謹慎！</string>
 		<string name="change_fs_confirm">是否更改 %tw_partition_name% 為：</string>
 		<string name="formatting">正在格式化…</string>
 		<string name="format_complete">格式化完成</string>
-		<string name="swipe_change_fs">滑動按鈕確認更改</string>
+		<string name="swipe_change_fs">滑動滑塊確認更改</string>
 		<string name="swipe_change_s">   更改</string>
 		<string name="back_btn">返回</string>
 		<string name="wipe_enc_btn">清除加密</string>
-		<string name="swipe_factory_reset">滑動按鈕確認恢復出廠</string>
+		<string name="swipe_factory_reset">滑動滑塊確認恢復出廠</string>
 		<string name="repair_change_btn">修復或更改檔案系統</string>
-		<string name="storage_hdr">存儲位置：%tw_storage_display_name% (%tw_storage_free_size% MB)</string>
+		<string name="storage_hdr">存儲位置: %tw_storage_display_name% (%tw_storage_free_size% MB)</string>
 		<string name="backup_hdr">備份</string>
 		<string name="backup_confirm_hdr">確認備份</string>
 		<string name="encryption_tab">加密</string>
@@ -221,13 +226,13 @@
 		<string name="enable_backup_comp_chk">啟用壓縮</string>
 		<string name="skip_digest_backup_chk" version="2">備份時跳過生成 Digest</string>
 		<string name="disable_backup_space_chk" version="2">在備份之前禁用剩餘空間檢查</string>
-		<string name="current_boot_slot">當前分區：%tw_active_slot%</string>
-		<string name="boot_slot_a">分區 A</string>
-		<string name="boot_slot_b">分區 B</string>
-		<string name="changing_boot_slot">更改啟動分區</string>
-		<string name="changing_boot_slot_complete">更改啟動分區完成</string>
+		<string name="current_boot_slot">當前槽位: %tw_active_slot%</string>
+		<string name="boot_slot_a">槽位 A</string>
+		<string name="boot_slot_b">槽位 B</string>
+		<string name="changing_boot_slot">更改啟動槽位</string>
+		<string name="changing_boot_slot_complete">更改啟動槽位完成</string>
 		<string name="refresh_sizes_btn">刷新大小</string>
-		<string name="swipe_backup">滑動按鈕確認備份</string>
+		<string name="swipe_backup">滑動滑塊確認備份</string>
 		<string name="append_date_btn">附加日期</string>
 		<string name="backup_name_exists">使用該名稱的備份已經存在！</string>
 		<string name="encrypt_backup">是否加密備份？</string>
@@ -251,7 +256,7 @@
 		<string name="del_backup_confirm2">此操作無法恢復！</string>
 		<string name="deleting_backup">正在刪除備份…</string>
 		<string name="backup_deleted">備份刪除完成</string>
-		<string name="swipe_delete">滑動按鈕確認刪除</string>
+		<string name="swipe_delete">滑動滑塊確認刪除</string>
 		<string name="swipe_delete_s">   刪除</string>
 		<string name="restore_try_decrypt">加密的備份 - 嘗試解密</string>
 		<string name="restore_try_decrypt_s">正在嘗試解密</string>
@@ -259,14 +264,14 @@
 		<string name="restore_sel_part">選擇要恢復的分區：</string>
 		<string name="restore_enable_digest_chk" version="2">啟用 Digest 校驗備份檔案</string>
 		<string name="restore_complete">恢復完成</string>
-		<string name="swipe_restore">滑動按鈕確認恢復</string>
+		<string name="swipe_restore">滑動滑塊確認恢復</string>
 		<string name="swipe_restore_s">   恢復</string>
 		<string name="rename_backup_hdr">重命名備份</string>
 		<string name="rename_backup_confirm">是否重命名備份檔案？</string>
 		<string name="rename_backup_confirm2">此操作無法恢復！</string>
 		<string name="renaming_backup">正在重命名…</string>
 		<string name="rename_backup_complete">重命名完成</string>
-		<string name="swipe_to_rename">滑動按鈕確認重命名</string>
+		<string name="swipe_to_rename">滑動滑塊確認重命名</string>
 		<string name="swipe_rename">   重命名</string>
 		<string name="confirm_hdr">確認</string>
 		<string name="mount_hdr">掛載</string>
@@ -279,8 +284,8 @@
 		<string name="mount_usb_storage_btn">掛載 USB 存儲</string>
 		<string name="usb_storage_hdr">USB 存儲</string>
 		<string name="usb_stor_mnt1">已掛載 USB 存儲</string>
-		<string name="usb_stor_mnt2">從您的電腦卸載之前</string>
-		<string name="usb_stor_mnt3">一定要安全地移除設備！</string>
+		<string name="usb_stor_mnt2">請確認解除挂載前先從</string>
+		<string name="usb_stor_mnt3">電腦上安全地移除設備！</string>
 		<string name="unmount_btn">卸載</string>
 		<string name="rb_system_btn">系統</string>
 		<string name="rb_poweroff_btn">關機</string>
@@ -289,7 +294,7 @@
 		<string name="rb_download_btn">Download</string>
 		<string name="rb_edl_btn">Edl</string>
 		<string name="turning_off">正在關機…</string>
-		<string name="swipe_power_off">滑動按鈕確認關機</string>
+		<string name="swipe_power_off">滑動滑塊確認關機</string>
 		<string name="swipe_power_off_s">關機</string>
 		<string name="sys_ro_hdr">未修改的 System 分區</string>
 		<string name="sys_ro_keep">是否保持系統分區為只讀？</string>
@@ -304,7 +309,7 @@
 		<string name="sys_rol3">安裝刷機包或者通過 adb 操作依然可以修改系統分區。</string>
 		<string name="sys_ro_never_show_chk">下次啟動時不再顯示此介面</string>
 		<string name="sys_ro_keep_ro_btn">保持只讀</string>
-		<string name="swipe_allow_mod">滑動按鈕允許修改</string>
+		<string name="swipe_allow_mod">滑動滑塊允許修改</string>
 		<string name="swipe_allow_mod_s">允許修改</string>
 		<string name="settings_hdr">設置</string>
 		<string name="settings_gen_hdr">常規</string>
@@ -337,9 +342,9 @@
 		<string name="utcm6">(UTC -6) 北美中部標準時間</string>
 		<string name="utcm5">(UTC -5) 北美東部標準時間</string>
 		<string name="utcm4">(UTC -4) 大西洋標準時間</string>
-		<string name="utcm3">(UTC -3) 巴西、阿根廷(布宜諾斯)</string>
+		<string name="utcm3">(UTC -3) 巴西、阿根廷（布宜諾斯）</string>
 		<string name="utcm2">(UTC -2) 大西洋中部</string>
-		<string name="utcm1">(UTC -1) 葡萄牙(亞速爾群島)，佛得角</string>
+		<string name="utcm1">(UTC -1) 葡萄牙（亞速爾群島），佛得角</string>
 		<string name="utc0">(UTC  0) 倫敦、都柏林、里斯本</string>
 		<string name="utcp1">(UTC +1) 柏林、布魯塞爾、巴黎</string>
 		<string name="utcp2">(UTC +2) 雅典、伊斯坦布爾、南非</string>
@@ -353,23 +358,23 @@
 		<string name="utcp10">(UTC +10) 澳大利亞東部、關島</string>
 		<string name="utcp11">(UTC +11) 符拉迪沃斯托克、所羅門群島</string>
 		<string name="utcp12">(UTC +12) 奧克蘭、惠靈頓、斐濟</string>
-		<string name="sel_tz_offset">時間偏差（通常為 0）：%tw_time_zone_guioffset%</string>
+		<string name="sel_tz_offset">時間偏差（通常為 0）: %tw_time_zone_guioffset%</string>
 		<string name="tz_offset_none">無</string>
 		<string name="tz_offset_0">0 分鐘</string>
 		<string name="tz_offset_15">15 分鐘</string>
 		<string name="tz_offset_30">30 分鐘</string>
 		<string name="tz_offset_45">45 分鐘</string>
 		<string name="use_dst_chk">使用夏令時 (DST)</string>
-		<string name="curr_tz">當前時區：%tw_time_zone%</string>
+		<string name="curr_tz">當前時區: %tw_time_zone%</string>
 		<string name="curr_tz_s">當前時區：</string>
 		<string name="set_tz_btn">設置時區</string>
 		<string name="settings_screen_hdr">螢幕</string>
 		<string name="settings_screen_timeout_hdr">螢幕超時</string>
 		<string name="enable_timeout_chk">啟用螢幕超時</string>
 		<string name="screen_to_slider">螢幕超時時間（秒）：</string>
-		<string name="screen_to_slider_s">螢幕超時（0=禁用）：%tw_screen_timeout_secs%</string>
+		<string name="screen_to_slider_s">螢幕超時（0=禁用）: %tw_screen_timeout_secs%</string>
 		<string name="screen_to_na">螢幕超時設置不可用</string>
-		<string name="screen_bright_slider">螢幕亮度：%tw_brightness_pct%%</string>
+		<string name="screen_bright_slider">螢幕亮度: %tw_brightness_pct%%</string>
 		<string name="screen_bright_na">螢幕亮度設置不可用</string>
 		<string name="vibration_hdr">振動</string>
 		<string name="button_vibration_hdr">按鈕振動</string>
@@ -397,7 +402,7 @@
 		<string name="inject_twrp_confirm">是否重新注入 TWRP？</string>
 		<string name="injecting_twrp">正在重新注入 TWRP…</string>
 		<string name="inject_twrp_complete">TWRP 注入完成</string>
-		<string name="swipe_to_confirm">滑動按鈕確認</string>
+		<string name="swipe_to_confirm">滑動滑塊確認</string>
 		<string name="part_sd_hdr">SD 卡分區</string>
 		<string name="invalid_partsd_sel">您必須選擇一個可移動設備</string>
 		<string name="part_sd_lose">您將會丟失 SD 卡上的所有檔案！</string>
@@ -407,7 +412,7 @@
 		<string name="part_sd_m">-</string>
 		<string name="part_sd_p">+</string>
 		<string name="file_system">檔案系統：</string>
-		<string name="swipe_part_sd">滑動按鈕確認分區</string>
+		<string name="swipe_part_sd">滑動滑塊確認分區</string>
 		<string name="swipe_part_sd_s">分區</string>
 		<string name="partitioning_sd">正在對 SD 卡分區…</string>
 		<string name="partitioning_sd2">這將需要幾分鐘的時間。</string>
@@ -425,14 +430,14 @@
 		<string name="dumlock_install_confirm">是否安裝 HTC Dumlock 檔案到系統中？</string>
 		<string name="dumlock_installing">正在安裝 HTC Dumlock…</string>
 		<string name="dumlock_install_complete">HTC Dumlock 安裝完成</string>
-		<string name="swipe_to_unlock">滑動按鈕解鎖</string>
+		<string name="swipe_to_unlock">滑動滑塊解鎖</string>
 		<string name="swipe_unlock">   解鎖</string>
 		<string name="fm_hdr">檔案管理</string>
 		<string name="fm_sel_file">選擇檔案或檔案夾</string>
 		<string name="fm_type_folder">檔案夾</string>
 		<string name="fm_type_file">檔案</string>
 		<string name="fm_choose_act">選擇操作</string>
-		<string name="fm_selected">已選擇：%tw_fm_type%</string>
+		<string name="fm_selected">已選擇: %tw_fm_type%</string>
 		<string name="fm_copy_btn">複製</string>
 		<string name="fm_copy_file_btn">複製檔案</string>
 		<string name="fm_copy_folder_btn">複製檔案夾</string>
@@ -460,7 +465,7 @@
 		<string name="decrypt_data_failed_pattern">圖案錯誤，請重試！</string>
 		<string name="decrypt_data_enter_pattern">繪製解鎖圖案</string>
 		<string name="decrypt_data_trying">正在嘗試解密</string>
-		<string name="decrypt_data_vold_os_missing">缺少解密 vold 所需的檔案：{1}</string>
+		<string name="decrypt_data_vold_os_missing">缺少解密 vold 所需的檔案: {1}</string>
 		<string name="term_hdr">終端命令</string>
 		<string name="term_s_hdr">終端</string>
 		<string name="term_kill_btn">終止</string>
@@ -468,7 +473,7 @@
 		<string name="adb_sideload_hdr">ADB Sideload</string>
 		<string name="sideload_wipe_dalvik_chk">清除 Dalvik Cache</string>
 		<string name="sideload_wipe_cache_chk">清除 Cache</string>
-		<string name="swipe_to_sideload">滑動按鈕開始 Sideload</string>
+		<string name="swipe_to_sideload">滑動滑塊開始 Sideload</string>
 		<string name="swipe_sideload">   開始</string>
 		<string name="sideload_confirm">ADB Sideload</string>
 		<string name="sideload_usage">使用方式：adb sideload filename.zip</string>
@@ -477,7 +482,7 @@
 		<string name="fix_contexts_note1">注意：很少情況下需要修復 Context。</string>
 		<string name="fix_contexts_note2">修復 SELinux Context 可能會導致</string>
 		<string name="fix_contexts_note3">您的設備無法正常啓動。</string>
-		<string name="swipe_to_fix_contexts">滑動按鈕確認修復</string>
+		<string name="swipe_to_fix_contexts">滑動滑塊確認修復</string>
 		<string name="swipe_fix_contexts">   修復 Context</string>
 		<string name="fixing_contexts">正在修復 Context…</string>
 		<string name="fix_contexts_complete">修復 Context 完成</string>
@@ -493,7 +498,7 @@
 		<string name="repack_ramdisk_confirm">是否安裝 Recovery？</string>
 		<string name="repack_backup_first">請先備份現有的鏡像</string>
 		<string name="repack">重新打包</string>
-		<string name="swipe_to_install">滑動按鈕確認安裝</string>
+		<string name="swipe_to_install">滑動滑塊確認安裝</string>
 		<string name="installing">正在安裝…</string>
 		<string name="install_complete">安裝完成</string>
 		<string name="unpack_error">解包鏡像錯誤。</string>
@@ -507,6 +512,19 @@
 		<string name="fix_recovery_loop_complete">Recovery 無限重啟修復完成</string>
 		<string name="fixing_recovery_loop_patch">正在對內核打補丁…</string>
 		<string name="fix_recovery_loop_patch_error">對內核打補丁時出錯。</string>
+		<string name="decrypt_users">解密用戶</string>
+		<string name="decrypt_users_selection">選擇一位要解密的用戶 ID</string>
+		<string name="select_user">選擇用戶</string>
+		<string name="backup_storage_undecrypt_warning">備份不包含一些屬於用戶 {1} 的文件，因爲該用戶沒有解密</string>
+		<string name="decrypting_user_fbe">嘗試為用戶 {1} 解密 FBE…</string>
+		<string name="decrypt_user_success_fbe">用戶 {1} 解密成功</string>
+		<string name="decrypt_user_fail_fbe">用戶 {1} 解密失敗</string>
+		<string name="decrypt_data_enter_pass_fbe">請輸入用戶 [%tw_crypto_user_id%] 的密碼</string>
+		<string name="decrypt_data_enter_pattern_fbe">請繪製用戶 [%tw_crypto_user_id%] 的解鎖圖案</string>
+		<string name="multiuser_warning1">并非所有用戶都被解密！</string>
+		<string name="multiuser_warning2">備份/還原操作可能會失敗！</string>
+		<string name="multiuser_warning_accept">仍然繼續</string>
+		<string name="multiuser_warning_hdr">多用戶警告</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">內核不支持讀取 SELinux Context。</string>
@@ -522,40 +540,40 @@
 		<string name="digest_created" version="2"> * Digest 已生成。</string>
 		<string name="digest_error" version="2"> * Digest 錯誤！</string>
 		<string name="digest_compute_error" version="2"> * 計算 Digest 錯誤。</string>
-		<string name="current_date">(Current Date)</string>
-		<string name="auto_generate">(Auto Generate)</string>
-		<string name="unable_to_locate_partition">未找到 '{1}' 分區。</string>
+		<string name="current_date">（當前日期）</string>
+		<string name="auto_generate">（自動生成）</string>
+		<string name="unable_to_locate_partition">未找到“{1}”分區。</string>
 		<string name="no_partition_selected">未選擇備份分區。</string>
-		<string name="total_partitions_backup"> * 備份分區總數：{1}</string>
-		<string name="total_backup_size"> * 備份數據總計：{1}MB</string>
-		<string name="available_space"> * 可用空間：{1}MB</string>
+		<string name="total_partitions_backup"> * 備份分區總數: {1}</string>
+		<string name="total_backup_size"> * 備份數據總計: {1}MB</string>
+		<string name="available_space"> * 可用空間: {1}MB</string>
 		<string name="unable_locate_storage">未找到存儲設備。</string>
 		<string name="no_space">記憶體上沒有足夠的空間。</string>
 		<string name="backup_started">[已開始備份]</string>
-		<string name="backup_folder"> * 備份檔案夾：{1}</string>
+		<string name="backup_folder"> * 備份檔案夾: {1}</string>
 		<string name="fail_backup_folder">建立備份檔案夾失敗。</string>
-		<string name="avg_backup_fs">檔案平均備份速度：{1}MB/秒</string>
-		<string name="avg_backup_img">鏡像平均備份速度：{1}MB/秒</string>
+		<string name="avg_backup_fs">檔案平均備份速度: {1}MB/秒</string>
+		<string name="avg_backup_img">鏡像平均備份速度: {1}MB/秒</string>
 		<string name="total_backed_size">[總計備份 {1}MB]</string>
 		<string name="backup_completed">[備份已完成，耗時 {1} 秒]</string>
 		<string name="restore_started">[已開始恢復]</string>
-		<string name="restore_folder">恢復檔案夾：'{1}'</string>
+		<string name="restore_folder">恢復檔案夾:“{1}”</string>
 		<!-- {1} is the partition display name and {2} is the number of seconds -->
 		<string name="restore_part_done">[{1} 恢復完成（{2} 秒）]</string>
 		<string name="verifying_digest" version="2">正在校驗 Digest</string>
 		<string name="skip_digest" version="2">基於用戶設置，已跳過 Digest 檢查。</string>
 		<string name="calc_restore">正在計算恢復詳情…</string>
 		<string name="restore_read_only">無法恢復 {1} -- 已掛載為只讀。</string>
-		<string name="restore_unable_locate">未找到 '{1}' 分區。</string>
+		<string name="restore_unable_locate">未找到“{1}”分區。</string>
 		<string name="no_part_restore">未選擇要恢復的分區。</string>
 		<string name="restore_part_count">正在恢復 {1} 個分區…</string>
 		<string name="total_restore_size">恢復檔案總計 {1}MB</string>
 		<string name="updating_system_details">更新系統詳細資訊</string>
 		<string name="restore_completed">[恢復完成，耗時 {1} 秒]</string>
 		<!-- {1} is the path we could not open, {2} is strerror output -->
-		<string name="error_opening_strerr">打開出錯：'{1}' ({2})</string>
-		<string name="unable_locate_part_backup_name">無法通過備份名稱來查找分區：'{1}'</string>
-		<string name="unable_find_part_path">找不到分區路徑 '{1}'</string>
+		<string name="error_opening_strerr">打開出錯:“{1}” ({2})</string>
+		<string name="unable_locate_part_backup_name">無法通過備份名稱來查找分區:“{1}”</string>
+		<string name="unable_find_part_path">找不到分區路徑“{1}”</string>
 		<string name="update_part_details">正在更新分區詳情…</string>
 		<string name="update_part_details_done">…完成</string>
 		<string name="wiping_dalvik">正在清除 Dalvik 目錄…</string>
@@ -570,7 +588,7 @@
 		<string name="unable_to_mount_storage">無法掛載存儲</string>
 		<string name="fail_decrypt">解密數據失敗。</string>
 		<string name="no_crypto_support">此版本不支持加密。</string>
-		<string name="decrypt_success_dev">Data 分區成功解密，新增塊設備：'{1}'</string>
+		<string name="decrypt_success_dev">Data 分區成功解密，新增塊設備:“{1}”</string>
 		<string name="decrypt_success_nodev">Data 分區已成功解密</string>
 		<string name="done">完成。</string>
 		<string name="start_partition_sd">正在給 SD 卡分區…</string>
@@ -578,17 +596,17 @@
 		<string name="ext_swap_size">EXT+Swap 大小超過 SD 卡容量。</string>
 		<string name="remove_part_table">正在刪除分區表…</string>
 		<string name="unable_rm_part">無法刪除分區表。</string>
-		<string name="create_part">正在建立 {1} 分區…</string>
-		<string name="unable_to_create_part">無法建立 {1} 分區。</string>
+		<string name="create_part">正在創建 {1} 分區…</string>
+		<string name="unable_to_create_part">無法創建 {1} 分區。</string>
 		<string name="format_sdext_as">正在將 sd-ext 格式化為 {1}…</string>
 		<string name="part_complete">分區完成。</string>
-		<string name="unable_to_open">無法打開 '{1}'。</string>
+		<string name="unable_to_open">無法打開“{1}”。</string>
 		<string name="mtp_already_enabled">MTP 已經啟用</string>
 		<string name="mtp_fail">啟用 MTP 失敗</string>
 		<string name="no_mtp">不支持 MTP</string>
 		<string name="image_flash_start">[開始刷入鏡像]</string>
-		<string name="img_to_flash">刷入鏡像：'{1}'</string>
-		<string name="flash_unable_locate">未找到 '{1}' 分區。</string>
+		<string name="img_to_flash">刷入鏡像:“{1}”</string>
+		<string name="flash_unable_locate">未找到“{1}”分區。</string>
 		<string name="no_part_flash">未選擇刷入分區。</string>
 		<string name="too_many_flash">選擇刷入的分區太多。</string>
 		<string name="invalid_flash">指定的刷入分區無效。</string>
@@ -599,48 +617,48 @@
 		<string name="unable_repair">無法修復 {1}。</string>
 		<string name="mount_data_footer">無法掛載/data，未找到加密 footer。</string>
 		<!-- {1} is the folder name that we could not create, {2} is strerror output -->
-		<string name="create_folder_strerr">無法創建 '{1}' 檔案夾 ({2})。</string>
+		<string name="create_folder_strerr">無法創建“{1}”檔案夾 ({2})。</string>
 		<!-- {1} is the folder name that we could not mount, {2} is strerror output -->
-		<string name="fail_mount">掛載 '{1}' 失敗 ({2})</string>
+		<string name="fail_mount">掛載“{1}”失敗 ({2})</string>
 		<!-- {1} is the folder name that we could not unmount, {2} is strerror output -->
-		<string name="fail_unmount">卸載 '{1}' 失敗 ({2})</string>
-		<string name="cannot_resize">無法更改 {1} 大小。</string>
+		<string name="fail_unmount">卸載“{1}”失敗 ({2})</string>
+		<string name="cannot_resize">無法更改 {1} 的大小。</string>
 		<string name="repair_resize">在調整大小之前修復 {1}。</string>
-		<string name="unable_resize">無法調整 {1} 大小。</string>
-		<string name="no_digest_found" version="2">未找到 '{1}' 的 Digest 校驗檔案。請取消選中“啟用 Digest 校驗備份檔案”複選框。</string>
-		<string name="digest_fail_match" version="2">'{1}' Digest 校驗失敗。</string>
-		<string name="digest_matched" version="2">Digest 匹配 '{1}'。</string>
-		<string name="fail_decrypt_tar">無法解密 tar 檔案 '{1}'</string>
+		<string name="unable_resize">無法調整 {1} 的大小。</string>
+		<string name="no_digest_found" version="2">未找到“{1}”的 Digest 校驗檔案。請取消選中“啟用 Digest 校驗備份檔案”複選框。</string>
+		<string name="digest_fail_match" version="2">“{1}” Digest 校驗失敗。</string>
+		<string name="digest_matched" version="2">Digest 匹配“{1}”。</string>
+		<string name="fail_decrypt_tar">無法解密 Tar 檔案“{1}”</string>
 		<string name="format_data_msg">您可能需要重啟 Recovery 才能使用/data。</string>
 		<string name="format_data_err">無法格式化並刪除加密。</string>
 		<string name="formatting_using">使用 {2} 格式化 {1}…</string>
 		<string name="unable_to_wipe">無法清除 {1}。</string>
 		<string name="cannot_wipe">無法清除 {1} 分區。</string>
-		<string name="remove_all">移除 '{1}' 下的所有檔案</string>
+		<string name="remove_all">移除“{1}”下的所有檔案</string>
 		<string name="wiping_data">正在清除 Data 分区，跳過清除/data/media…</string>
 		<string name="backing_up">正在備份 {1}…</string>
 		<string name="backup_storage_warning">備份的 {1} 分區不包含內置存儲上的任何檔案，例如照片或下載的檔案等等。</string>
 		<string name="backing">正在備份</string>
-		<string name="backup_size">'{1}' 的備份檔案大小為 0 位元組。</string>
+		<string name="backup_size">“{1}”的備份檔案大小為 0 位元組。</string>
 		<string name="datamedia_fs_restore">警告：此/data備份檔案系統為 {1}！除非把檔案系統格式設置為 {1} 否則可能無法啟動。</string>
 		<string name="restoring">正在恢復 {1}…</string>
 		<string name="restoring_hdr">正在恢復</string>
 		<string name="recreate_folder_err">無法重新創建 {1} 檔案夾。</string>
 		<string name="img_size_err">鏡像大小大於目標設備</string>
 		<string name="flashing">正在刷入 {1}…</string>
-		<string name="backup_folder_set">備份檔案夾設置為：'{1}'</string>
-		<string name="locate_backup_err">未找到備份檔案 '{1}'</string>
-		<string name="set_restore_opt">設置恢復選項：'{1}'：</string>
+		<string name="backup_folder_set">備份檔案夾設置為:“{1}”</string>
+		<string name="locate_backup_err">未找到備份檔案“{1}”</string>
+		<string name="set_restore_opt">設置恢復選項:“{1}”：</string>
 		<string name="digest_check_skip" version="2">跳過校驗 Digest 已開啟</string>
 		<string name="ors_encrypt_restore_err">無法使用 OpenRecoveryScript 腳本恢復加密備份。</string>
 		<string name="mounting">正在掛載</string>
 		<string name="unmounting">正在卸載</string>
-		<string name="mounted">'{1}' 已掛載</string>
-		<string name="unmounted">'{1}' 已卸載</string>
-		<string name="setting">設置 '{1}' 為 '{2}'</string>
-		<string name="setting_empty">設置 '{1}' 為空</string>
+		<string name="mounted">“{1}”已掛載</string>
+		<string name="unmounted">“{1}”已卸載</string>
+		<string name="setting">設置“{1}”為“{2}”</string>
+		<string name="setting_empty">設置“{1}”為空</string>
 		<string name="making_dir1">創建目錄</string>
-		<string name="making_dir2">創建目錄：'{1}'</string>
+		<string name="making_dir2">創建目錄:“{1}”</string>
 		<string name="running_command">運行命令</string>
 		<string name="sideload">ADB Sideload</string>
 		<string name="start_sideload">正在開始 ADB sideload…</string>
@@ -648,8 +666,8 @@
 		<string name="no_pwd">未提供密碼。</string>
 		<string name="done_ors">腳本執行完畢</string>
 		<string name="injecttwrp">正在注入 TWRP 到 Boot 鏡像…</string>
-		<string name="zip_err">安裝 Zip 刷機包 '{1}' 時出錯</string>
-		<string name="installing_zip">正在安裝 Zip 刷機包 '{1}'</string>
+		<string name="zip_err">安裝 Zip 刷機包“{1}”時出錯</string>
+		<string name="installing_zip">正在安裝 Zip 刷機包“{1}”</string>
 		<string name="select_backup_opt">設置備份選項：</string>
 		<string name="compression_on">壓縮選項已開啟</string>
 		<string name="digest_off" version="2">Digest 生成已關閉</string>
@@ -661,7 +679,7 @@
 		<string name="ors_complete">運行 OpenRecoveryScript 腳本完成</string>
 		<string name="check_for_digest" version="2">正在檢測 Digest…</string>
 		<string name="invalid_zip_format">Zip 檔案格式無效！</string>
-		<string name="fail_sysmap">映射檔案 '{1}' 失敗</string>
+		<string name="fail_sysmap">映射檔案“{1}”失敗</string>
 		<string name="verify_zip_sig">正在校驗 Zip 刷機包簽名…</string>
 		<string name="verify_zip_fail">刷機包簽名校驗失敗！</string>
 		<string name="verify_zip_done">刷機包簽名校驗成功。</string>
@@ -669,8 +687,8 @@
 		<string name="no_digest" version="2">跳過 Digest 校驗：未找到 Digest 檔案</string>
 		<string name="digest_fail" version="2">Digest 不匹配</string>
 		<string name="digest_match" version="2">Digest 校驗成功</string>
-		<string name="pid_signal">{1} 過程結束，標誌：{2}</string>
-		<string name="pid_error">{1} 過程結束，錯誤：{2}</string>
+		<string name="pid_signal">{1} 過程結束，標誌: {2}</string>
+		<string name="pid_error">{1} 過程結束，錯誤: {2}</string>
 		<string name="install_dumlock">安裝 HTC Dumlock 到系統…</string>
 		<string name="dumlock_restore">正在恢復原版 Boot…</string>
 		<string name="dumlock_reflash">正在重新刷入 Recovery 到 Boot…</string>
@@ -683,7 +701,7 @@
 		<!-- These 2 items are saved in the data manager instead of resource manager, so %llu, etc is correct instead of {1} -->
 		<string name="file_progress">已完成 %llu 個，共 %llu 個檔案，進度 %i%%</string>
 		<string name="size_progress">已完成 %lluMB，共 %lluMB，進度 %i%%</string>
-		<string name="decrypt_cmd">嘗試通過命令行解密 Data 分區。</string>
+		<string name="decrypt_cmd" version="2">正在嘗試通過命令行解密 Data 分區或用戶數據。</string>
 		<string name="base_pkg_err">無法加載基本包。</string>
 		<string name="simulating">正在模擬操作…</string>
 		<string name="backup_cancel">備份已取消。</string>
@@ -700,7 +718,7 @@
 		<string name="auto_gen">(Auto Generate)</string>
 		<string name="curr_date">(Current Date)</string>
 		<string name="backup_name_len">備份名稱太長。</string>
-		<string name="backup_name_invalid">備份名稱 '{1}' 中包含無效字元：'{1}'</string>
+		<string name="backup_name_invalid">備份名稱“{1}”中包含無效字元:“{1}”</string>
 		<string name="no_real_sdcard">此設備沒有真實的 SD 卡！正在中止！</string>
 		<string name="cancel_sideload">取消 ADB Sideload…</string>
 		<string name="change_fs_err">更換檔案系統时出錯。</string>
@@ -709,11 +727,18 @@
 		<string name="install_reboot" version="2">將會在 %tw_sleep% 秒內重啟</string>
 		<string name="adbbackup_error">ADB 備份錯誤。正在退出…"</string>
 		<string name="adbbackup_control_error">無法寫入 adb 控制通道</string>
-		<string name="twrp_adbbu_option">--twrp 選項需啟用 twrp adb backup</string>
-		<string name="partition_not_found">分區列表中未發現路徑：{1}</string>
+		<string name="twrp_adbbu_option">啟用 TWRP ADB 備份需使用 --twrp 選項</string>
+		<string name="partition_not_found">分區列表中未發現路徑: {1}</string>
 		<string name="copy_kernel_log">已導出內核日誌至 {1}</string>
 		<string name="include_kernel_log">包含內核日誌</string>
 		<string name="sha2_chk">使用 SHA2 進行散列校驗</string>
-		<string name="unable_set_boot_slot">更改 bootloader 啟動分區至 {1} 錯誤</string>
+		<string name="unable_set_boot_slot">更改 Bootloader 啟動槽位至 {1} 錯誤</string>
+		<string name="unmount_sys_install">在安裝 Zip 刷機包之前先解除挂載 System</string>
+		<string name="unmount_system">正在解除挂載 System…</string>
+		<string name="unmount_system_err">解除挂載 System 失敗</string>
+		<string name="flash_ab_inactive">正在刷入 A/B Zip 刷機包至非活動槽位: {1}</string>
+		<string name="flash_ab_reboot">如需刷入其它的 Zip 刷機包，請重新啓動 Recovery 切換到新槽位。</string>
+		<string name="ozip_decrypt_decryption">正在解密 Ozip…</string>
+		<string name="ozip_decrypt_finish">Ozip 解密完成！</string>
 	</resources>
 </language>
