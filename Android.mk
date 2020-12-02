@@ -124,7 +124,7 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_STATIC_LIBRARIES += libguitwrp
 LOCAL_SHARED_LIBRARIES += libz libc libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libtwadbbu libbootloader_message
-LOCAL_SHARED_LIBRARIES += libcrecovery libtwadbbu libtwrpdigest libc++ libaosprecovery libinit libcrypto libbase libziparchive libselinux
+LOCAL_SHARED_LIBRARIES += libcrecovery libtwrpdigest libc++ libaosprecovery libinit libcrypto libbase libziparchive libselinux
 
 ifneq ($(wildcard system/core/libsparse/Android.mk),)
 LOCAL_SHARED_LIBRARIES += libsparse
@@ -398,7 +398,8 @@ TWRP_REQUIRED_MODULES += \
     mkshrc_twrp \
     plat_hwservice_contexts \
     vendor_hwservice_contexts \
-    minadbd
+    minadbd \
+    twrpbu
 
 ifneq ($(TW_INCLUDE_CRYPTO),)
 TWRP_REQUIRED_MODULES += \
@@ -602,24 +603,12 @@ include $(BUILD_SHARED_LIBRARY)
 
 commands_recovery_local_path := $(LOCAL_PATH)
 
-#    $(LOCAL_PATH)/edify/Android.mk
-#    $(LOCAL_PATH)/otafault/Android.mk
-
-    # $(commands_TWRP_local_path)/boot_control/Android.bp 
-    # $(commands_TWRP_local_path)/update_verifier/Android.mk
 include \
     $(commands_TWRP_local_path)/updater/Android.mk
 
-include $(commands_TWRP_local_path)/mtp/ffs/Android.mk
-
-ifeq ($(wildcard system/core/uncrypt/Android.mk),)
-    #include $(commands_TWRP_local_path)/uncrypt/Android.mk
-endif
-
-include $(commands_TWRP_local_path)/minadbd/Android.mk \
+include $(commands_TWRP_local_path)/mtp/ffs/Android.mk \
+    $(commands_TWRP_local_path)/minadbd/Android.mk \
     $(commands_TWRP_local_path)/minui/Android.mk
-
-# $(commands_TWRP_local_path)/otautil/Android.mk \
 
 #includes for TWRP
 include $(commands_TWRP_local_path)/injecttwrp/Android.mk \
