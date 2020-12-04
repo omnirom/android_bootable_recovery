@@ -578,7 +578,7 @@ MtpResponseCode IMtpDatabase::getObjectPropertyList(MtpObjectHandle handle, uint
 	  return MTP_RESPONSE_OK;
 	}
   }
-  MTPE("IMtpDatabase::getObjectPropertyList MTP_RESPOSNE_INVALID_OBJECT_HANDLE %i\n", handle);
+  MTPE("IMtpDatabase::getObjectPropertyList MTP_RESPONSE_INVALID_OBJECT_HANDLE %i\n", handle);
   return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 }
 
@@ -612,7 +612,7 @@ MtpResponseCode IMtpDatabase::getObjectFilePath(MtpObjectHandle handle,
 	  return MTP_RESPONSE_OK;
 	}
   }
-  MTPE("IMtpDatabase::getObjectFilePath MTP_RESPOSNE_INVALID_OBJECT_HANDLE %i\n", handle);
+  MTPE("IMtpDatabase::getObjectFilePath MTP_RESPONSE_INVALID_OBJECT_HANDLE %i\n", handle);
   return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 }
 
