@@ -297,7 +297,6 @@ int SetUpNonAbUpdateCommands(const std::string& package, ZipArchiveHandle zip, i
     LOG(ERROR) << "Failed to extract " << UPDATE_BINARY_NAME << ": " << ErrorCodeString(error);
     return INSTALL_ERROR;
   }
-  LOG(ERROR) << "SetupNonAbUpdateCommands::here4";
 
   // When executing the update binary contained in the package, the arguments passed are:
   //   - the version number for this interface
