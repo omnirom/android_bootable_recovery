@@ -3453,7 +3453,6 @@ void TWPartitionManager::Unlock_Block_Partitions() {
 		while ((de = readdir(d)) != NULL) {
 			if (de->d_type == DT_BLK) {
 				std::string block_device = block_path + de->d_name;
-				LOGINFO("block_Device: %s\n", block_device.c_str());
 				if ((fd = open(block_device.c_str(), O_RDONLY | O_CLOEXEC)) < 0) {
 					LOGERR("unable to open block device %s: %s\n", block_device.c_str(), strerror(errno));
 					continue;
