@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <set>
@@ -142,10 +143,48 @@ static MinadbdErrorCode RunAdbFuseSideload(int sfd, const std::string& args,
   return kMinadbdSuccess;
 }
 
+static bool WaitForSocketClose(int fd, std::chrono::milliseconds timeout) {
+  const auto begin = std::chrono::steady_clock::now();
+  const auto end = begin + timeout;
+  while (std::chrono::steady_clock::now() < end) {
+    // We don't care about reading the socket, we just want to wait until
+    // socket closes. In this case .events = 0 will tell the kernel to wait
+    // for close events.
+    struct pollfd pfd = { .fd = fd, .events = 0 };
+    auto timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          end - std::chrono::steady_clock::now())
+                          .count();
+    int rc = TEMP_FAILURE_RETRY(adb_poll(&pfd, 1, timeout_ms));
+    if (rc == 1) {
+      LOG(INFO) << "revents: " << pfd.revents;
+      if (pfd.revents & (POLLHUP | POLLRDHUP)) {
+        return true;
+      }
+    } else {
+      PLOG(ERROR) << "poll() failed";
+      // poll failed, almost definitely due to timeout
+      // If not, you're screwed anyway, because it probably means the kernel ran
+      // out of memory.
+      return false;
+    }
+  }
+  return false;
+}
+
 // Sideload service always exits after serving an install command.
 static void SideloadHostService(unique_fd sfd, const std::string& args) {
+  using namespace std::chrono_literals;
   MinadbdCommandStatus status;
-  exit(RunAdbFuseSideload(sfd.get(), args, &status));
+  auto error = RunAdbFuseSideload(sfd.get(), args, &status);
+  // No need to wait if the socket is already closed, meaning the other end
+  // already exited for some reason.
+  if (error != kMinadbdHostSocketIOError) {
+    // We sleep for a little bit just to wait for the host to receive last
+    // "DONEDONE" message. However minadbd process is likely to get terminated
+    // early due to exit_on_close
+    WaitForSocketClose(sfd, 3000ms);
+  }
+  exit(error);
 }
 
 // Rescue service waits for the next command after an install command.
