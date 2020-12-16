@@ -723,6 +723,7 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 bool TWPartition::Decrypt_FBE_DE() {
 if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
 		DataManager::SetValue(TW_IS_FBE, 1);
+                property_set("ro.crypto.state", "encrypted");
 		property_set("ro.crypto.type", "file");
 		LOGINFO("File Based Encryption is present\n");
 #ifdef TW_INCLUDE_FBE
