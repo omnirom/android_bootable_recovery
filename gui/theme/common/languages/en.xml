@@ -119,7 +119,7 @@
 		<string name="rebooting">Rebooting...</string>
 		<string name="swipe_reboot">Swipe to Reboot</string>
 		<string name="swipe_reboot_s">   Reboot</string>
-		<string name="reboot_install_app_hdr">Install TWRP App?</string>
+		<string name="reboot_install_app_hdr">Install TWRP App</string>
 		<string name="reboot_install_app1">Would you like to install the Official TWRP App?</string>
 		<string name="reboot_install_app2">The app can check for new TWRP versions.</string>
 		<string name="reboot_install_app_prompt_install">Prompt to install TWRP app if not installed</string>
