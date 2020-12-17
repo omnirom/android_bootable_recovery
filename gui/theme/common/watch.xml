@@ -1234,34 +1234,12 @@
 		<page name="rebootcheck">
 			<action>
 				<condition var1="tw_backup_system_size" op="&gt;=" var2="%tw_min_system%"/>
-				<action function="page">appcheck</action>
+				<action function="reboot">%tw_reboot_param%</action>
 			</action>
 
 			<action>
 				<condition var1="tw_backup_system_size" op="&lt;" var2="%tw_min_system%"/>
 				<action function="page">confirm_action</action>
-			</action>
-		</page>
-
-		<page name="appcheck">
-			<action>
-				<condition var1="tw_app_prompt" var2="1"/>
-				<action function="checkforapp"></action>
-			</action>
-
-			<action>
-				<condition var1="tw_app_prompt" op="!=" var2="1"/>
-				<action function="reboot">%tw_reboot_param%</action>
-			</action>
-
-			<action>
-				<condition var1="tw_app_install_status" var2="1"/>
-				<action function="page">rebootapp</action>
-			</action>
-
-			<action>
-				<condition var1="tw_app_install_status" var2="2"/>
-				<action function="reboot">%tw_reboot_param%</action>
 			</action>
 		</page>
 
@@ -3365,6 +3343,13 @@
 		</page>
 
 		<page name="reboot">
+			<action>
+				<action function="checkforapp"></action>
+				<action function="page">reboot2</action>
+			</action>
+		</page>
+
+		<page name="reboot2">
 			<template name="page"/>
 
 			<template name="statusbar"/>
@@ -3459,6 +3444,7 @@
 					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
+
 			<button style="main_button">
 				<condition var1="tw_edl_mode" var2="1"/>
 				<placement x="%col1_x_right%" y="%row11_y%"/>
@@ -3489,14 +3475,14 @@
 			</action>
 		</page>
 
-		<page name="rebootapp">
+		<page name="installapp">
 			<template name="page"/>
 
 			<template name="statusbar"/>
 
 			<text style="text_m">
 				<placement x="%col1_x_left%" y="%row1_header_y%"/>
-				<text>{@reboot_hdr=Reboot} &gt; {@reboot_install_app_hdr=Install TWRP App?}</text>
+				<text>%tw_appinstall_title% &gt; {@reboot_install_app_hdr=Install TWRP App}</text>
 			</text>
 
 			<text style="text_m_accent">
@@ -3510,12 +3496,6 @@
 			</text>
 
 			<checkbox>
-				<placement x="%indent%" y="%row3_y%"/>
-				<text>{@reboot_install_app_prompt_install=Prompt to install TWRP app if not installed}</text>
-				<data variable="tw_app_prompt"/>
-			</checkbox>
-
-			<checkbox>
 				<condition var1="tw_mount_system_ro" var2="0"/>
 				<placement x="%indent%" y="%row5_y%"/>
 				<text>{@reboot_install_app_system=Install as a System App}</text>
@@ -3525,8 +3505,19 @@
 			<button style="main_button_half_height">
 				<placement x="%indent%" y="%row7_y%"/>
 				<text>{@install_cancel=Do not Install}</text>
-				<action function="reboot">%tw_reboot_param%</action>
+				<action function="page">%tw_back%</action>
 			</button>
+
+			<slider>
+				<text>{@swipe_confirm=   Confirm}</text>
+				<actions>
+					<action function="set">tw_action=installapp</action>
+					<action function="set">tw_action_text1={@reboot_installing_app=Installing App...}</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1={@successful=Successful}</action>
+					<action function="page">action_page</action>
+				</actions>
+			</slider>
 
 			<action>
 				<touch key="home"/>
@@ -3540,7 +3531,7 @@
 				<touch key="back"/>
 				<actions>
 					<action function="set">tw_app_install_status=0</action>
-					<action function="page">reboot</action>
+					<action function="page">%tw_back%</action>
 				</actions>
 			</action>
 		</page>
@@ -3715,9 +3706,6 @@
 				</listitem>
 				<listitem name="{@use24clock_chk=Use 24-hour clock}">
 					<data variable="tw_military_time"/>
-				</listitem>
-				<listitem name="{@reboot_install_app_prompt_install=Prompt to install TWRP app on every reboot}">
-					<data variable="tw_app_prompt"/>
 				</listitem>
 				<listitem name="{@simact_chk=Simulate actions for theme testing}">
 					<data variable="tw_simulate_actions"/>
@@ -4226,6 +4214,13 @@
 		</page>
 
 		<page name="advanced2">
+			<action>
+				<action function="checkforapp"></action>
+				<action function="page">advanced3</action>
+			</action>
+		</page>
+
+		<page name="advanced3">
 			<template name="page"/>
 
 			<template name="statusbar"/>
@@ -4306,6 +4301,14 @@
 						<action function="set">tw_complete_text1={@fix_recovery_loop_complete=Fix Recovery Bootloop Complete}</action>
 						<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
 						<action function="page">confirm_action</action>
+					</actions>
+				</listitem>
+				<listitem name="{@reboot_install_app_hdr=Install TWRP App}">
+					<condition var1="tw_app_install_status" var2="1"/>
+					<actions>
+						<action function="set">tw_back=advanced2</action>
+						<action function="set">tw_appinstall_title={@advanced_hdr=Advanced}</action>
+						<action function="page">installapp</action>
 					</actions>
 				</listitem>
 				<listitem name="{@uninstall_twrp_system_app=Uninstall TWRP App from System}">
