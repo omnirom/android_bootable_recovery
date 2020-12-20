@@ -2720,108 +2720,138 @@
 				<text>{@reboot_hdr=Reboot}</text>
 			</text>
 
+			<listbox style="advanced_listbox">
+				<placement x="%col1_x_left%" y="%row2_y%" w="%content_width%" h="%listbox_advanced_height%"/>
+
+				<listitem name="{@rb_system_btn=System}">
+					<condition var1="tw_reboot_system" var2="1"/>
+					<actions>
+						<action function="set">tw_back=reboot</action>
+						<action function="page">reboot_system_routine</action>
+					</actions>
+				</listitem>
+
+				<listitem name="{@rb_poweroff_btn=Power Off}">
+					<condition var1="tw_reboot_poweroff" var2="1"/>
+					<actions>
+						<action function="set">tw_back=reboot</action>
+						<action function="set">tw_action=reboot</action>
+						<action function="set">tw_action_param=poweroff</action>
+						<action function="set">tw_reboot_param=poweroff</action>
+						<action function="set">tw_has_action2=0</action>
+						<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+						<action function="set">tw_text2={@no_ospo=sure you wish to power off?}</action>
+						<action function="set">tw_action_text1={@turning_off=Turning Off...}</action>
+						<action function="set">tw_complete_text1={@turning_off=Turning Off...}</action>
+						<action function="set">tw_slider_text={@swipe_power_off=Swipe to Power Off}</action>
+						<action function="page">rebootcheck</action>
+					</actions>
+				</listitem>
+
+				<listitem name="{@rb_recovery_btn=Recovery}">
+					<condition var1="tw_reboot_recovery" var2="1"/>
+					<actions>
+						<action function="set">tw_back=reboot</action>
+						<action function="set">tw_action=reboot</action>
+						<action function="set">tw_action_param=recovery</action>
+						<action function="set">tw_reboot_param=recovery</action>
+						<action function="set">tw_has_action2=0</action>
+						<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+						<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+						<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+						<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+						<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+						<action function="page">rebootcheck</action>
+					</actions>
+				</listitem>
+
+				<listitem name="{@rb_bootloader_btn=Bootloader}">
+					<condition var1="tw_reboot_bootloader" var2="1"/>
+					<actions>
+						<action function="set">tw_back=reboot</action>
+						<action function="set">tw_action=reboot</action>
+						<action function="set">tw_action_param=bootloader</action>
+						<action function="set">tw_reboot_param=bootloader</action>
+						<action function="set">tw_has_action2=0</action>
+						<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+						<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+						<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+						<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+						<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+						<action function="page">rebootcheck</action>
+					</actions>
+				</listitem>
+
+				<listitem name="{@rb_download_btn=Download}">
+					<condition var1="tw_download_mode" var2="1"/>
+					<actions>
+						<action function="set">tw_back=reboot</action>
+						<action function="set">tw_action=reboot</action>
+						<action function="set">tw_action_param=download</action>
+						<action function="set">tw_reboot_param=download</action>
+						<action function="set">tw_has_action2=0</action>
+						<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+						<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+						<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+						<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+						<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+						<action function="page">rebootcheck</action>
+					</actions>
+				</listitem>
+
+				<listitem name="{@rb_edl_btn=Edl}">
+					<condition var1="tw_edl_mode" var2="1"/>
+					<actions>
+						<action function="set">tw_back=reboot</action>
+						<action function="set">tw_action=reboot</action>
+						<action function="set">tw_action_param=edl</action>
+						<action function="set">tw_reboot_param=edl</action>
+						<action function="set">tw_has_action2=0</action>
+						<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+						<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+						<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+						<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+						<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
+						<action function="page">rebootcheck</action>
+					</actions>
+				</button>
+			</listbox>
+
+			<text style="text_m">
+				<condition var1="tw_has_boot_slots" var2="1"/>
+				<placement x="%center_x%" y="%row14_y%" placement="5"/>
+				<text>{@current_boot_slot=Current Slot: %tw_active_slot%}</text>
+			</text>
+
 			<button style="main_button">
-				<condition var1="tw_reboot_system" var2="1"/>
-				<placement x="%col1_x_left%" y="%row2_y%"/>
-				<text>{@rb_system_btn=System}</text>
+				<condition var1="tw_has_boot_slots" var2="1"/>
+				<placement x="%indent%" y="%row16_y%"/>
+				<text>{@boot_slot_a=Slot A}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
-					<action function="page">reboot_system_routine</action>
+					<action function="set">tw_action=setbootslot</action>
+					<action function="set">tw_action_param=A</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_action_text1={@changing_boot_slot=Changing Boot Slot}</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1={@changing_boot_slot_complete=Change Boot Slot Complete}</action>
+					<action function="page">action_page</action>
 				</actions>
 			</button>
 
 			<button style="main_button">
-				<condition var1="tw_reboot_poweroff" var2="1"/>
-				<placement x="%center_x%" y="%row2_y%"/>
-				<text>{@rb_poweroff_btn=Power Off}</text>
+				<condition var1="tw_has_boot_slots" var2="1"/>
+				<placement x="%center_x%" y="%row16_y%"/>
+				<text>{@boot_slot_b=Slot B}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
-					<action function="set">tw_action=reboot</action>
-					<action function="set">tw_action_param=poweroff</action>
-					<action function="set">tw_reboot_param=poweroff</action>
+					<action function="set">tw_action=setbootslot</action>
+					<action function="set">tw_action_param=B</action>
 					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
-					<action function="set">tw_text2={@no_ospo=sure you wish to power off?}</action>
-					<action function="set">tw_action_text1={@turning_off=Turning Off...}</action>
-					<action function="set">tw_complete_text1={@turning_off=Turning Off...}</action>
-					<action function="set">tw_slider_text={@swipe_power_off=Swipe to Power Off}</action>
-					<action function="page">rebootcheck</action>
-				</actions>
-			</button>
-
-			<button style="main_button">
-				<condition var1="tw_reboot_recovery" var2="1"/>
-				<placement x="%col1_x_left%" y="%row6a_y%"/>
-				<text>{@rb_recovery_btn=Recovery}</text>
-				<actions>
-					<action function="set">tw_back=reboot</action>
-					<action function="set">tw_action=reboot</action>
-					<action function="set">tw_action_param=recovery</action>
-					<action function="set">tw_reboot_param=recovery</action>
-					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
-					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
-					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-					<action function="page">rebootcheck</action>
-				</actions>
-			</button>
-
-			<button style="main_button">
-				<condition var1="tw_reboot_bootloader" var2="1"/>
-				<placement x="%center_x%" y="%row6a_y%"/>
-				<text>{@rb_bootloader_btn=Bootloader}</text>
-				<actions>
-					<action function="set">tw_back=reboot</action>
-					<action function="set">tw_action=reboot</action>
-					<action function="set">tw_action_param=bootloader</action>
-					<action function="set">tw_reboot_param=bootloader</action>
-					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
-					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
-					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-					<action function="page">rebootcheck</action>
-				</actions>
-			</button>
-
-			<button style="main_button">
-				<condition var1="tw_download_mode" var2="1"/>
-				<placement x="%col1_x_left%" y="%row11_y%"/>
-				<text>{@rb_download_btn=Download}</text>
-				<actions>
-					<action function="set">tw_back=reboot</action>
-					<action function="set">tw_action=reboot</action>
-					<action function="set">tw_action_param=download</action>
-					<action function="set">tw_reboot_param=download</action>
-					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
-					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
-					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-					<action function="page">rebootcheck</action>
-				</actions>
-			</button>
-
-			<button style="main_button">
-				<condition var1="tw_edl_mode" var2="1"/>
-				<placement x="%center_x%" y="%row11_y%"/>
-				<text>{@rb_edl_btn=Edl}</text>
-				<actions>
-					<action function="set">tw_back=reboot</action>
-					<action function="set">tw_action=reboot</action>
-					<action function="set">tw_action_param=edl</action>
-					<action function="set">tw_reboot_param=edl</action>
-					<action function="set">tw_has_action2=0</action>
-					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
-					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
-					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
-					<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
-					<action function="page">rebootcheck</action>
+					<action function="set">tw_action_text1={@changing_boot_slot=Changing Boot Slot}</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1={@changing_boot_slot_complete=Change Boot Slot Complete}</action>
+					<action function="page">action_page</action>
 				</actions>
 			</button>
 
