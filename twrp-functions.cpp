@@ -1299,24 +1299,28 @@ bool TWFunc::Is_TWRP_App_In_System() {
 	LOGINFO("checking for twrp app\n");
 	TWPartition* sys = PartitionManager.Find_Partition_By_Path(PartitionManager.Get_Android_Root_Path());
 	if (!sys->Get_Super_Status()) {
-		if (PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), false)) {
-			string base_path = PartitionManager.Get_Android_Root_Path();
-			if (TWFunc::Path_Exists(PartitionManager.Get_Android_Root_Path() + "/system"))
-				base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
-			string install_path = base_path + "/priv-app";
-			if (!TWFunc::Path_Exists(install_path))
-				install_path = base_path + "/app";
-			install_path += "/twrpapp";
-			if (TWFunc::Path_Exists(install_path)) {
-				LOGINFO("App found at '%s'\n", install_path.c_str());
-				DataManager::SetValue("tw_app_installed_in_system", 1);
-				return true;
-			}
+		bool is_system_mounted = true;
+		if(!PartitionManager.Is_Mounted_By_Path(PartitionManager.Get_Android_Root_Path())) {
+			is_system_mounted = false;
+			PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
 		}
+		string base_path = PartitionManager.Get_Android_Root_Path();
+		if (TWFunc::Path_Exists(PartitionManager.Get_Android_Root_Path() + "/system"))
+			base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
+		string install_path = base_path + "/priv-app";
+		if (!TWFunc::Path_Exists(install_path))
+			install_path = base_path + "/app";
+		install_path += "/twrpapp";
+		if (TWFunc::Path_Exists(install_path)) {
+			LOGINFO("App found at '%s'\n", install_path.c_str());
+			DataManager::SetValue("tw_app_installed_in_system", 1);
+			return true;
+		}
+		if (!is_system_mounted)
+			PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
 		DataManager::SetValue("tw_app_installed_in_system", 0);
 	}
 	DataManager::SetValue("tw_app_installed_in_system", 0);
-	PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
 	return false;
 }
 
