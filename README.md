@@ -143,3 +143,17 @@ Note that this mechanism applies to both of normal boot and recovery modes.
 Both of the two conditions need to be satisfied. Although `ro.adb.secure` is a runtime property, its
 value is set at build time (written into `/prop.default`). It defaults to `1` on `-user` builds, and
 `0` for other build variants. The value is overridable via `PRODUCT_DEFAULT_PROPERTY_OVERRIDES`.
+
+Localization of the background texts
+------------------------------------
+
+The recovery image supports localization of several background texts, e.g. installing, error,
+factory reset warnings, etc. For devices using `xxhdpi` and `xxxhdpi`, the build system generates
+these localization images dynamically since android-10 when building the recovery image. While
+the static images under res-*dpi/images/ is used for other display resolutions and as a
+backup.
+
+Check the invocation of the image_generator tool in the [makefile]. And the detailed usage of the
+image_generator is documented [here](./tools/image_generator/README.md).
+
+[makefile]: https://android.googlesource.com/platform/build/+/refs/heads/master/core/Makefile#1800
