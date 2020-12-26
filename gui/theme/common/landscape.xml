@@ -2705,7 +2705,7 @@
 			</text>
 
 			<listbox style="advanced_listbox">
-				<placement x="%col1_x_left%" y="%row2_y%" w="%content_width%" h="%listbox_advanced_height%"/>
+				<placement x="%col1_x_left%" y="%row2_y%" w="%content_width%" h="%fileselector_install_height%"/>
 
 				<listitem name="{@rb_system_btn=System}">
 					<condition var1="tw_reboot_system" var2="1"/>
@@ -2839,7 +2839,7 @@
 			</text>
 
 			<listbox style="advanced_listbox">
-				<placement x="%col1_x_left%" y="%row2_y%" w="%content_width%" h="%listbox_advanced_height%"/>
+				<placement x="%col1_x_left%" y="%row2_y%" w="%content_width%" h="%fileselector_install_height%"/>
 
 				<listitem name="{@rb_system_btn=System}">
 					<condition var1="tw_reboot_system" var2="1"/>
