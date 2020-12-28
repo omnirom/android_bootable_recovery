@@ -118,6 +118,7 @@ public:
 	static std::string get_log_dir(); // return recovery log storage directory
 	static void check_selinux_support(); // print whether selinux support is enabled to console
 	static bool Is_TWRP_App_In_System(); // Check if the TWRP app is installed in the system partition
+	static void checkforapp();
 	static int Property_Override(string Prop_Name, string Prop_Value); // Override properties (including ro. properties)
 	static bool Get_Encryption_Policy(ext4_encryption_policy &policy, std::string path); // return encryption policy for path
 	static bool Set_Encryption_Policy(std::string path, const ext4_encryption_policy &policy); // set encryption policy for path
