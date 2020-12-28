@@ -510,15 +510,18 @@ endif
 ifeq ($(TWRP_INCLUDE_LOGCAT), true)
     TWRP_REQUIRED_MODULES += logcat
     ifeq ($(TARGET_USES_LOGD), true)
-        TWRP_REQUIRED_MODULES += logd libsysutils libnl event-log-tags init.recovery.logd.rc
-        ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
-            LOCAL_POST_INSTALL_CMD += \
-                $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc; \
-                cp $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/;
-        else
-            LOCAL_POST_INSTALL_CMD += \
-                $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc; \
-                cp $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system/etc/;
+        TWRP_REQUIRED_MODULES += logd libsysutils libnl init.recovery.logd.rc
+        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
+            TWRP_REQUIRED_MODULES += event-log-tags
+            ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
+                LOCAL_POST_INSTALL_CMD += \
+                    $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc; \
+                    cp $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/;
+            else
+                LOCAL_POST_INSTALL_CMD += \
+                    $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc; \
+                    cp $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system/etc/;
+            endif
         endif
     endif
 endif
