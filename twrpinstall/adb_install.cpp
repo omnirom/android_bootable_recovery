@@ -43,6 +43,7 @@
 
 #include "fuse_sideload.h"
 #include "twinstall/install.h"
+#include "twinstall.h"
 #include "twinstall/wipe_data.h"
 #include "minadbd_types.h"
 #include "otautil/sysutil.h"
@@ -116,7 +117,8 @@ static auto AdbInstallPackageHandler(int* result) {
         break;
       }
     }
-    *result = install_package(FUSE_SIDELOAD_HOST_PATHNAME, false, false, 0);
+    int dummy;
+    *result = TWinstall_zip(FUSE_SIDELOAD_HOST_PATHNAME, &dummy);
     break;
   }
 
