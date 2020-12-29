@@ -930,10 +930,15 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 			}
 			break;
 		case TWFLAG_WRAPPEDKEY:
-			// Set fbe.data.wrappedkey to true
+			// Set wrappedkey props to true for data and/or metadata
 			{
-				property_set("fbe.data.wrappedkey", "true");
-				LOGINFO("FBE wrapped key enabled\n");
+				size_t slash_loc = Mount_Point.find('/');
+				std::string partition = Mount_Point.substr(slash_loc + 1);
+				if (Mount_Point == "/data" || Mount_Point == "/metadata") {
+					std::string wrapped_prop = "fbe." + partition + ".wrappedkey";
+					property_set(wrapped_prop.c_str(), "true");
+					LOGINFO("FBE wrapped key enabled for %s\n", Mount_Point.c_str());
+				}
 			}
 			break;
 		case TWFLAG_FLASHIMG:
