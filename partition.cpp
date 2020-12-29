@@ -724,11 +724,11 @@ void TWPartition::Set_FBE_Status() {
 	DataManager::SetValue(TW_IS_DECRYPTED, 1);
 	Is_Encrypted = true;
 	Is_Decrypted = true;
-	LOGINFO("Setup_Data_Partition::Key_Directory::%s\n", Key_Directory.c_str());
 	if (Key_Directory.empty()) {
 		Is_FBE = false;
 		DataManager::SetValue(TW_IS_FBE, 0);
 	} else {
+		LOGINFO("Setup_Data_Partition::Key_Directory::%s\n", Key_Directory.c_str());
 		Is_FBE = true;
 		DataManager::SetValue(TW_IS_FBE, 1);
 	}
