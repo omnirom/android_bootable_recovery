@@ -692,7 +692,9 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 		}
 	} else {
 		Set_FBE_Status();
-		if (!Decrypt_FBE_DE()) {
+		int is_device_fbe;
+		DataManager::GetValue(TW_IS_FBE, is_device_fbe);
+		if (!Decrypt_FBE_DE() && is_device_fbe == 1) {
 			char wrappedvalue[PROPERTY_VALUE_MAX];
 			property_get("fbe.data.wrappedkey", wrappedvalue, "");
 			std::string wrappedkeyvalue(wrappedvalue);
