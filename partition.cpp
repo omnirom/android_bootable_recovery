@@ -693,7 +693,9 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 			Primary_Block_Device.c_str(), Mount_Point.c_str());
 		}
 	} else {
-		if (!Decrypt_FBE_DE()) {
+		int is_device_fbe;
+		DataManager::GetValue(TW_IS_FBE, is_device_fbe);
+		if (!Decrypt_FBE_DE() && is_device_fbe == 1) {
 			char wrappedvalue[PROPERTY_VALUE_MAX];
 			property_get("fbe.data.wrappedkey", wrappedvalue, "");
 			std::string wrappedkeyvalue(wrappedvalue);
@@ -723,7 +725,7 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 bool TWPartition::Decrypt_FBE_DE() {
 if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
 		DataManager::SetValue(TW_IS_FBE, 1);
-                property_set("ro.crypto.state", "encrypted");
+		property_set("ro.crypto.state", "encrypted");
 		property_set("ro.crypto.type", "file");
 		LOGINFO("File Based Encryption is present\n");
 #ifdef TW_INCLUDE_FBE
