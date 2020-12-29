@@ -4220,13 +4220,6 @@
 		</page>
 
 		<page name="advanced2">
-			<action>
-				<action function="checkforapp"></action>
-				<action function="page">advanced3</action>
-			</action>
-		</page>
-
-		<page name="advanced3">
 			<template name="page"/>
 
 			<template name="statusbar"/>
