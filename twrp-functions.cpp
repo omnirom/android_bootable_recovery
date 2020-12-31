@@ -1324,6 +1324,53 @@ bool TWFunc::Is_TWRP_App_In_System() {
 	return false;
 }
 
+void TWFunc::checkforapp(){
+
+	string sdkverstr = System_Property_Get("ro.build.version.sdk");
+	int sdkver = 0;
+	if (!sdkverstr.empty()) {
+		sdkver = atoi(sdkverstr.c_str());
+	}
+	if (sdkver <= 13) {
+		if (sdkver == 0)
+			LOGINFO("Unable to read sdk version from build prop\n");
+		else
+			LOGINFO("SDK version too low for TWRP app (%i < 14)\n", sdkver);
+		DataManager::SetValue("tw_app_install_status", 1); // 0 = no status, 1 = not installed, 2 = already installed or do not install
+		goto exit;
+	}
+	if (Is_TWRP_App_In_System()) {
+		DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed or do not install
+		goto exit;
+	}
+	if (PartitionManager.Mount_By_Path("/data", false)) {
+		const char parent_path[] = "/data/app";
+		const char app_prefix[] = "me.twrp.twrpapp-";
+		DIR *d = opendir(parent_path);
+		if (d) {
+			struct dirent *p;
+			while ((p = readdir(d))) {
+				if (p->d_type != DT_DIR || strlen(p->d_name) < strlen(app_prefix) || strncmp(p->d_name, app_prefix, strlen(app_prefix)))
+					continue;
+				closedir(d);
+				LOGINFO("App found at '%s/%s'\n", parent_path, p->d_name);
+				DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed or do not install
+				goto exit;
+			}
+			closedir(d);
+		}
+	} else {
+		LOGINFO("Data partition cannot be mounted during app check\n");
+		DataManager::SetValue("tw_app_install_status", 2); // 0 = no status, 1 = not installed, 2 = already installed or do not install
+	}
+
+	LOGINFO("App not installed\n");
+	DataManager::SetValue("tw_app_install_status", 1); // 0 = no status, 1 = not installed, 2 = already installed
+exit:
+	return;
+
+}
+
 int TWFunc::Property_Override(string Prop_Name, string Prop_Value) {
 #ifdef TW_INCLUDE_LIBRESETPROP
     return setprop(Prop_Name.c_str(), Prop_Value.c_str(), false);
