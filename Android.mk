@@ -399,7 +399,9 @@ TWRP_REQUIRED_MODULES += \
     plat_hwservice_contexts \
     vendor_hwservice_contexts \
     minadbd \
-    twrpbu
+    twrpbu \
+    me.twrp.twrpapp.apk \
+    privapp-permissions-twrpapp.xml
 
 ifneq ($(TW_INCLUDE_CRYPTO),)
 TWRP_REQUIRED_MODULES += \
