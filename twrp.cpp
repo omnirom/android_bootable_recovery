@@ -397,6 +397,8 @@ int main(int argc, char **argv) {
 	twrpAdbBuFifo *adb_bu_fifo = new twrpAdbBuFifo();
 	adb_bu_fifo->threadAdbBuFifo();
 
+	TWFunc::checkforapp(); //Checking compatibility for TWRP app
+
 	// Launch the main GUI
 	gui_start();
 
