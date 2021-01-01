@@ -30,9 +30,6 @@ else
         ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
             RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/dd
         endif
-        ifneq ($(wildcard external/zip/Android.mk),)
-            RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
-        endif
         ifneq ($(wildcard external/unzip/Android.mk),)
             RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
         endif
