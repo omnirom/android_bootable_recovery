@@ -754,5 +754,9 @@
 		<string name="rescue_party3"> 3. Clean-flash your ROM.</string>
 		<string name="rescue_party4">The reported problem is: </string>
 		<string name="restore_system_context">Unable to get default context for {1} -- Android may not boot.</string>
+		<string name="change_twrp_folder_btn">Change TWRP folder</string>
+		<string name="change_twrp_folder_on_process">Changing TWRP folder</string>
+		<string name="change_twrp_folder_after_process">TWRP folder changed to</string>
+		<string name="tw_folder_exists">A folder with that name already exists!</string>
 	</resources>
 </language>

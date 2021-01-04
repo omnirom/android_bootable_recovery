@@ -119,6 +119,7 @@ public:
 	static bool Set_Encryption_Policy(std::string path, const fscrypt_encryption_policy &policy); // set encryption policy for path
 	static void List_Mounts();
 	static void Clear_Bootloader_Message();
+	static string Check_For_TwrpFolder();
 
 private:
 	static void Copy_Log(string Source, string Destination);

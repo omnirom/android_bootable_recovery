@@ -242,6 +242,7 @@ GUIAction::GUIAction(xml_node<>* node)
 		ADD_ACTION(uninstalltwrpsystemapp);
 		ADD_ACTION(repackimage);
 		ADD_ACTION(fixabrecoverybootloop);
+		ADD_ACTION(applycustomtwrpfolder);
 #ifndef TW_EXCLUDE_NANO
 		ADD_ACTION(editfile);
 #endif
@@ -2287,3 +2288,36 @@ int GUIAction::editfile(std::string arg) {
 	return 0;
 }
 #endif
+
+int GUIAction::applycustomtwrpfolder(string arg __unused)
+{
+	operation_start("ChangingTWRPFolder");
+	string storageFolder = DataManager::GetSettingsStoragePath();
+	string newFolder = storageFolder + '/' + arg;
+	string newBackupFolder = newFolder + "/BACKUPS/" + DataManager::GetStrValue("device_id");
+	string prevFolder = storageFolder + DataManager::GetStrValue(TW_RECOVERY_FOLDER_VAR);
+	bool ret = false;
+
+	if (TWFunc::Path_Exists(newFolder)) {
+		gui_msg(Msg(msg::kError, "tw_folder_exists=A folder with that name already exists!"));
+	} else {
+		ret = true;
+	}
+
+	if (newFolder != prevFolder && ret) {
+		ret = TWFunc::Exec_Cmd("mv -f \"" + prevFolder + "\" \"" + newFolder + '\"') != 0 ? false : true;
+	} else {
+		gui_msg(Msg(msg::kError, "tw_folder_exists=A folder with that name already exists!"));
+	}
+
+	if (ret) ret = TWFunc::Recursive_Mkdir("\"" + newBackupFolder + "\"") ? true : false;
+
+
+	if (ret) {
+		DataManager::SetValue(TW_RECOVERY_FOLDER_VAR, '/' + arg);
+		DataManager::SetValue(TW_BACKUPS_FOLDER_VAR, newBackupFolder);
+		DataManager::mBackingFile = newFolder + '/' + TW_SETTINGS_FILE;
+	}
+	operation_end((int)!ret);
+	return 0;
+}

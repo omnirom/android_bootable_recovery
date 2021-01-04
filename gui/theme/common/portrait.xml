@@ -3749,6 +3749,10 @@
 
 			<listbox style="advanced_listbox">
 				<placement x="%indent%" y="%row13a_y%" w="%content_width%" h="%listbox_advanced_height%"/>
+				<listitem name="Change TWRP Folder">
+					<condition var1="tw_is_encrypted" var2="0"/>
+					<action function="page">changeTwrpFolder</action>
+				</listitem>
 				<listitem name="{@decrypt_users=Decrypt Users}">
 					<conditions>
 						<condition var1="tw_is_fbe" var2="1"/>
@@ -5505,6 +5509,105 @@
 			<action>
 				<touch key="back"/>
 				<action function="page">advanced</action>
+			</action>
+		</page>
+
+		<page name="changeTwrpFolder">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@advanced_hdr=Advanced}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@change_twrp_folder_btn=Change TWRP folder}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row2_y%"/>
+				<text>{@name=Name:}</text>
+			</text>
+
+			<input>
+				<placement x="%indent%" y="%row2_input_y%" w="%content_width%" h="%input_height%"/>
+				<text>%tw_custom_folder%</text>
+				<data name="tw_custom_folder"/>
+				<restrict minlen="1" maxlen="64" allow="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"/>
+				<actions>
+					<action function="set">tw_back=changeTwrpFolder</action>
+					<action function="set">tw_action=applycustomtwrpfolder</action>
+					<action function="set">tw_action_param=%tw_custom_folder%</action>
+					<action function="set">tw_text1={@confirm_action=Confirm}</action>
+					<action function="set">tw_text2={@rename_backup_confirm2=This cannot be undone!}</action>
+					<action function="set">tw_action_text1={@change_twrp_folder_on_process=Changing TWRP folder}</action>
+					<action function="set">tw_complete_text1={@change_twrp_folder_after_process=TWRP folder changed to} %tw_custom_folder%</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="set">tw_filecheck=/sdcard/%tw_custom_folder%</action>
+					<action function="set">tw_existpage=changeTwrpFolder</action>
+					<action function="set">tw_notexistpage=confirm_action</action>
+					<action function="page">filecheck</action>
+				</actions>
+			</input>
+
+			<fill color="%accent_color%">
+				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<fill color="%text_fail_color%">
+				<condition var1="tw_fileexists" var2="1"/>
+				<placement x="%indent%" y="row4_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<text style="text_m_fail">
+				<condition var1="tw_fileexists" var2="1"/>
+				<placement x="%indent%" y="%row4a_y%"/>
+				<text>{@tw_folder_exists=A folder with that name already exists!}</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row10_y%"/>
+				<text>{@cancel_btn=Cancel}</text>
+				<actions>
+					<action function="page">advanced</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_recovery_folder" op="!=" var2="/TWRP"/>
+				<placement x="%center_x%" y="%row10_y%"/>
+				<text>{@restore_defaults_btn=Restore Defaults}</text>
+				<actions>
+					<action function="set">tw_back=changeTwrpFolder</action>
+					<action function="set">tw_action=applycustomtwrpfolder</action>
+					<action function="set">tw_action_param=TWRP</action>
+					<action function="set">tw_text1={@confirm_action=Confirm}</action>
+					<action function="set">tw_text2={@rename_backup_confirm2=This cannot be undone!}</action>
+					<action function="set">tw_action_text1={@change_twrp_folder_on_process=Changing TWRP folder}</action>
+					<action function="set">tw_complete_text1={@change_twrp_folder_after_process=TWRP folder changed to} TWRP</action>
+					<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+					<action function="set">tw_filecheck=/sdcard/TWRP</action>
+					<action function="set">tw_existpage=changeTwrpFolder</action>
+					<action function="set">tw_notexistpage=confirm_action</action>
+					<action function="page">filecheck</action>
+				</actions>
+			</button>
+
+			<template name="keyboardtemplate"/>
+
+			<action>
+				<touch key="home"/>
+				<actions>
+					<action function="page">main</action>
+				</actions>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<actions>
+					<action function="page">advanced</action>
+				</actions>
 			</action>
 		</page>
 	</pages>
