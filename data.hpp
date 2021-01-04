@@ -32,6 +32,7 @@ public:
 	static int LoadValues(const string& filename);
 	static int LoadPersistValues(void);
 	static int Flush();
+	static void LoadTWRPFolderInfo(void);
 
 	// Core get routines
 	static int GetValue(const string& varName, string& value);
@@ -63,8 +64,10 @@ public:
 	static string GetCurrentStoragePath(void);
 	static string GetSettingsStoragePath(void);
 
-protected:
+public:
 	static string mBackingFile;
+
+protected:
 	static int mInitialized;
 	static InfoManager mPersist;
 	static InfoManager mData;

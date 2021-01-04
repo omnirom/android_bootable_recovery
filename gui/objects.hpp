@@ -375,6 +375,7 @@ protected:
 #ifndef TW_EXCLUDE_NANO
 	int editfile(std::string arg);
 #endif
+	int applycustomtwrpfolder(std::string arg);
 
 	int simulate;
 };

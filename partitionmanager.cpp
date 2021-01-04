@@ -1701,6 +1701,7 @@ void TWPartitionManager::Post_Decrypt(const string& Block_Device) {
 			DataManager::SetValue("tw_settings_path", "/data/media/0");
 			dat->UnMount(false);
 		}
+		DataManager::LoadTWRPFolderInfo();
 		Update_System_Details();
 		Output_Partition(dat);
 		UnMount_Main_Partitions();

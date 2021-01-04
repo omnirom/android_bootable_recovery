@@ -330,6 +330,7 @@ int main(int argc, char **argv) {
 
 	// Read the settings file
 	TWFunc::Update_Log_File();
+	DataManager::LoadTWRPFolderInfo();
 	DataManager::ReadSettingsFile();
 	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
 	GUIConsole::Translate_Now();
