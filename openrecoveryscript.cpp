@@ -165,6 +165,14 @@ int OpenRecoveryScript::run_script_file(void) {
 					LOGERR("Error with wipe command value: '%s'\n", value);
 					ret_val = 1;
 				}
+			} else if (strcmp(command, "format") == 0) {
+				// Format
+				if (strcmp(value, "data") == 0 || strcmp(value, "/data") == 0 || strcmp(value, "factory") == 0 || strcmp(value, "factoryreset") == 0) {
+					PartitionManager.Format_Data();
+				} else {
+					LOGERR("Error with format command value: '%s'\n", value);
+					ret_val = 1;
+				}
 			} else if (strcmp(command, "backup") == 0) {
 				// Backup
 				DataManager::SetValue("tw_action_text2", gui_parse_text("{@backing}"));
