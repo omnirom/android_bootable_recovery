@@ -156,6 +156,7 @@ int OpenRecoveryScript::run_script_file(void) {
 					PartitionManager.Wipe_By_Path("/cache");
 				} else if (strcmp(value, "system") == 0 || strcmp(value, "/system") == 0 || strcmp(value, PartitionManager.Get_Android_Root_Path().c_str()) == 0) {
 					PartitionManager.Wipe_By_Path("/system");
+					PartitionManager.Update_System_Details();
 				} else if (strcmp(value, "dalvik") == 0 || strcmp(value, "dalvick") == 0 || strcmp(value, "dalvikcache") == 0 || strcmp(value, "dalvickcache") == 0) {
 					PartitionManager.Wipe_Dalvik_Cache();
 				} else if (strcmp(value, "data") == 0 || strcmp(value, "/data") == 0 || strcmp(value, "factory") == 0 || strcmp(value, "factoryreset") == 0) {
@@ -389,6 +390,7 @@ int OpenRecoveryScript::run_script_file(void) {
 					ret_val = 1; // failure
 				}
 				PartitionManager.Unlock_Block_Partitions();
+				PartitionManager.Update_System_Details();
 				sideload = 1; // Causes device to go to the home screen afterwards
 				pid_t sideload_child_pid = GetMiniAdbdPid();
 				if (sideload_child_pid != 0) {
