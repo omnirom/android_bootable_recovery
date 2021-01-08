@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 
 		rmdir("/s");
 
-		TWFunc::check_and_run_script("/sbin/sarsetup.sh", "boot");
+		TWFunc::check_and_run_script("/sbin/sarsetup.sh", "SAR");
 	}
 	// End SAR detection
 
