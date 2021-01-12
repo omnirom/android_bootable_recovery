@@ -132,7 +132,7 @@ TEST_F(ApplyPatchTest, PatchPartitionCheck_UseBackup_BothCorrupted) {
       PatchPartitionCheck(target_partition, Partition(target_file, source_size, source_sha1)));
 }
 
-TEST_F(ApplyPatchTest, PatchPartition) {
+TEST_F(ApplyPatchTest, DISABLED_PatchPartition) {
   FileContents patch_fc;
   ASSERT_TRUE(LoadFileContents(from_testdata_base("recovery-from-boot.p"), &patch_fc));
   Value patch(Value::Type::BLOB, std::string(patch_fc.data.cbegin(), patch_fc.data.cend()));
@@ -146,7 +146,7 @@ TEST_F(ApplyPatchTest, PatchPartition) {
 
 // Tests patching an eMMC target without a separate bonus file (i.e. recovery-from-boot patch has
 // everything).
-TEST_F(ApplyPatchTest, PatchPartitionWithoutBonusFile) {
+TEST_F(ApplyPatchTest, DISABLED_PatchPartitionWithoutBonusFile) {
   FileContents patch_fc;
   ASSERT_TRUE(LoadFileContents(from_testdata_base("recovery-from-boot-with-bonus.p"), &patch_fc));
   Value patch(Value::Type::BLOB, std::string(patch_fc.data.cbegin(), patch_fc.data.cend()));
