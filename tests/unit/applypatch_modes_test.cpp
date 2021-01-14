@@ -100,7 +100,7 @@ TEST_F(ApplyPatchModesTest, InvalidArgs) {
   ASSERT_EQ(2, InvokeApplyPatchModes({ "applypatch", "-x" }));
 }
 
-TEST_F(ApplyPatchModesTest, DISABLED_PatchModeEmmcTarget) {
+TEST_F(ApplyPatchModesTest, PatchModeEmmcTarget) {
   std::vector<std::string> args{
     "applypatch",
     "--bonus",
@@ -118,7 +118,7 @@ TEST_F(ApplyPatchModesTest, DISABLED_PatchModeEmmcTarget) {
 
 // Tests patching an eMMC target without a separate bonus file (i.e. recovery-from-boot patch has
 // everything).
-TEST_F(ApplyPatchModesTest, DISABLED_PatchModeEmmcTargetWithoutBonusFile) {
+TEST_F(ApplyPatchModesTest, PatchModeEmmcTargetWithoutBonusFile) {
   std::vector<std::string> args{
     "applypatch", "--patch", from_testdata_base("recovery-from-boot-with-bonus.p"),
     "--target",   target,    "--source",
