@@ -31,7 +31,6 @@ cc_defaults {
         "libpng",
         "libprocessgroup",
         "libselinux",
-        "libz",
         "libziparchive",
     ],
 
@@ -65,7 +64,7 @@ libapplypatch_static_libs = [
     "libbase",
     "libbrotli",
     "libbz",
-    "libz",
+    "libz_stable",
     "libziparchive",
 ]
 
