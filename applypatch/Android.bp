@@ -71,7 +71,6 @@ cc_library_static {
 cc_library_static {
     name: "libapplypatch_modes",
     vendor_available: true,
-    host_supported: true,
 
     defaults: [
         "applypatch_defaults",
@@ -96,7 +95,6 @@ cc_library_static {
 cc_binary {
     name: "applypatch",
     vendor: true,
-    host_supported: true,
 
     defaults: [
         "applypatch_defaults",
