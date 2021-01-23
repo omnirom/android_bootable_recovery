@@ -751,5 +751,6 @@
 		<string name="rescue_party2"> 2. Format data, and/or</string>
 		<string name="rescue_party3"> 3. Clean-flash your ROM.</string>
 		<string name="rescue_party4">The reported problem is: </string>
+		<string name="restore_system_context">Unable to get default context for {1} -- Android may not boot.</string>
 	</resources>
 </language>

@@ -1197,6 +1197,10 @@ int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 
 				string Full_Filename = part_settings.Backup_Folder + "/" + part_settings.Part->Backup_FileName;
 
+				if (tw_get_default_metadata(Get_Android_Root_Path().c_str()) != 0) {
+					gui_msg(Msg(msg::kWarning, "restore_system_context=Unable to get default context for {1} -- Android may not boot.")(Get_Android_Root_Path()));
+				}
+
 				if (check_digest > 0 && !twrpDigestDriver::Check_Digest(Full_Filename))
 					return false;
 				part_settings.partition_count++;
@@ -1252,6 +1256,7 @@ int TWPartitionManager::Run_Restore(const string& Restore_Name) {
 		}
 	}
 	TWFunc::GUI_Operation_Text(TW_UPDATE_SYSTEM_DETAILS_TEXT, gui_parse_text("{@updating_system_details}"));
+	tw_set_default_metadata(Get_Android_Root_Path().c_str());
 	UnMount_By_Path(Get_Android_Root_Path(), false);
 	Update_System_Details();
 	UnMount_Main_Partitions();
