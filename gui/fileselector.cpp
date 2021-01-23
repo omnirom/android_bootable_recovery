@@ -69,6 +69,12 @@ GUIFileSelector::GUIFileSelector(xml_node<>* node) : GUIScrollList(node)
 		if (attr)
 			mShowNavFolders = atoi(attr->value());
 	}
+	child = FindNode(node, "prfxfilter");
+	if (child) {
+		attr = child->first_attribute("prfx");
+		if (attr)
+			mPrfx = attr->value();
+	}
 
 	// Handle the path variable
 	child = FindNode(node, "path");
@@ -261,6 +267,7 @@ int GUIFileSelector::GetFileList(const std::string folder)
 
 	while ((de = readdir(d)) != NULL) {
 		FileData data;
+		bool match = false;
 
 		data.fileName = de->d_name;
 		if (data.fileName == ".")
@@ -292,26 +299,52 @@ int GUIFileSelector::GetFileList(const std::string folder)
 			for (const std::string& mExtnElement : mExtnResults)
 			{
 				std::string mExtnName = android::base::Trim(mExtnElement);
-				if (mExtnName.empty() || (data.fileName.length() > mExtnName.length() && data.fileName.substr(data.fileName.length() - mExtnName.length()) == mExtnName)) {
+				if (mExtnName.empty() || (data.fileName.length() >= mExtnName.length() && data.fileName.substr(data.fileName.length() - mExtnName.length()) == mExtnName)) {
 					if (mExtnName == ".ab" && twadbbu::Check_ADB_Backup_File(path))
 						mFolderList.push_back(data);
 					else
 						mFileList.push_back(data);
+					match = true;
+					break;
+				}
 			}
+
+			if (!match) {
+				std::vector<std::string> mPrfxResults = android::base::Split(mPrfx, ";");
+				for (const std::string& mPrfxElement : mPrfxResults)
+				{
+					std::string mPrfxName = android::base::Trim(mPrfxElement);
+					if (!mPrfxName.empty() && data.fileName.length() >= mPrfxName.length() && data.fileName.substr(0, mPrfxName.length()) == mPrfxName) {
+						mFileList.push_back(data);
+					}
 #else //On android 5.1 we can't use android::base::Trim and Split so just use the first extension written in the list
 			std::size_t seppos = mExtn.find_first_of(";");
 			std::string mExtnf;
 			if (seppos!=std::string::npos){
 				mExtnf = mExtn.substr(0, seppos);
 			} else {
-			mExtnf = mExtn;
+				mExtnf = mExtn;
 			}
-			if (mExtnf.empty() || (data.fileName.length() > mExtnf.length() && data.fileName.substr(data.fileName.length() - mExtnf.length()) == mExtnf)) {
+			if (mExtnf.empty() || (data.fileName.length() >= mExtnf.length() && data.fileName.substr(data.fileName.length() - mExtnf.length()) == mExtnf)) {
 				if (mExtnf == ".ab" && twadbbu::Check_ADB_Backup_File(path))
 					mFolderList.push_back(data);
 				else
 					mFileList.push_back(data);
+				match = true;
+			}
+
+			if (!match) {
+				std::size_t seppos = mPrfx.find_first_of(";");
+				std::string mPrfxf;
+				if (seppos!=std::string::npos){
+					mPrfxf = mPrfx.substr(0, seppos);
+				} else {
+					mPrfxf = mPrfx;
+				}
+				if (!mPrfxf.empty() && data.fileName.length() >= mPrfxf.length() && data.fileName.substr(0, mPrfxf.length()) == mPrfxf) {
+					mFileList.push_back(data);
 #endif
+				}
 			}
 		}
 	}
