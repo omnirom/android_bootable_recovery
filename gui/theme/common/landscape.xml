@@ -311,6 +311,7 @@
 				<placement x="%col2_x_left%" y="%row1a_y%" w="%fileselector_install_width%" h="%fileselector_install_height%"/>
 				<text>%tw_zip_location%</text>
 				<filter extn=".zip;.ozip;.ZIP;.OZIP" folders="0" files="1"/>
+				<prfxfilter prfx="Magisk-;Magisk.apk;app-release.apk;app-debug.apk" folders="1" files="1"/>
 				<path name="tw_zip_location" default="/sdcard"/>
 				<data name="tw_filename"/>
 				<selection name="tw_file"/>
