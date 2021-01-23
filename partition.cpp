@@ -1664,6 +1664,12 @@ bool TWPartition::Wipe(string New_File_System) {
 	if (Mount_Point == "/cache")
 		Log_Offset = 0;
 
+	if (Mount_Point == PartitionManager.Get_Android_Root_Path()) {
+		if (tw_get_default_metadata(PartitionManager.Get_Android_Root_Path().c_str()) != 0) {
+			gui_msg(Msg(msg::kWarning, "restore_system_context=Unable to get default context for {1} -- Android may not boot.")(PartitionManager.Get_Android_Root_Path()));
+		}
+	}
+
 	if (Retain_Layout_Version && Mount(false) && TWFunc::Path_Exists(Layout_Filename))
 		TWFunc::copy_file(Layout_Filename, "/.layout_version", 0600);
 	else
@@ -1708,6 +1714,9 @@ bool TWPartition::Wipe(string New_File_System) {
 		if (Mount_Point == "/cache" && TWFunc::get_log_dir() != DATA_LOGS_DIR)
 			DataManager::Output_Version();
 
+		if (Mount_Point == PartitionManager.Get_Android_Root_Path()) {
+			tw_set_default_metadata(PartitionManager.Get_Android_Root_Path().c_str());
+		}
 		if (TWFunc::Path_Exists("/.layout_version") && Mount(false))
 			TWFunc::copy_file("/.layout_version", Layout_Filename, 0600);
 

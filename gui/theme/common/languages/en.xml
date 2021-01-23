@@ -740,5 +740,6 @@
 		<string name="flash_ab_reboot">To flash additional zips, please reboot recovery to switch to the updated slot.</string>
 		<string name="ozip_decrypt_decryption">Starting Ozip Decryption...</string>
 		<string name="ozip_decrypt_finish">Ozip Decryption Finished!</string>
+		<string name="restore_system_context">Unable to get default context for {1} -- Android may not boot.</string>
 	</resources>
 </language>
