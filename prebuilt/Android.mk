@@ -505,3 +505,19 @@ ifneq (,$(filter $(TW_INCLUDE_REPACKTOOLS) $(TW_INCLUDE_RESETPROP) $(TW_INCLUDE_
         $(error magiskboot prebuilts not present; exiting)
     endif
 endif
+
+# Include tzdata in TWRP to fix "__bionic_open_tzdata" log spam
+# Dummy file to apply post-install patch
+ifneq ($(TW_EXCLUDE_TZDATA), true)
+    include $(CLEAR_VARS)
+    LOCAL_MODULE := tzdata_twrp
+    LOCAL_MODULE_TAGS := optional
+    LOCAL_MODULE_CLASS := ETC
+    LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)/system/bin
+    LOCAL_REQUIRED_MODULES := tzdata
+
+    LOCAL_POST_INSTALL_CMD += \
+        mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/usr/share/zoneinfo; \
+        cp -f $(TARGET_OUT)/usr/share/zoneinfo/tzdata $(TARGET_RECOVERY_ROOT_OUT)/system/usr/share/zoneinfo/;
+    include $(BUILD_PHONY_PACKAGE)
+endif
