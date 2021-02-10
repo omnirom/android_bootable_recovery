@@ -77,6 +77,7 @@ static void Decrypt_Page(bool SkipDecryption, bool datamedia) {
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
 		if (SkipDecryption) {
 			LOGINFO("Skipping decryption\n");
+			PartitionManager.Update_System_Details();
 		} else if (DataManager::GetIntValue(TW_CRYPTO_PWTYPE) != 0) {
 			LOGINFO("Is encrypted, do decrypt page first\n");
 			if (DataManager::GetIntValue(TW_IS_FBE))
@@ -90,6 +91,7 @@ static void Decrypt_Page(bool SkipDecryption, bool datamedia) {
 			}
 		}
 	} else if (datamedia) {
+		PartitionManager.Update_System_Details();
 		TWFunc::check_selinux_support();
 		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
 			LOGINFO("Failed to get default contexts and file mode for storage files.\n");
@@ -125,7 +127,6 @@ static void process_recovery_mode(twrpAdbBuFifo* adb_bu_fifo, bool skip_decrypti
 		LOGERR("Failing out of recovery due to problem with fstab.\n");
 		return;
 	}
-	PartitionManager.Output_Partition_Logging();
 
 // We are doing this here to allow super partition to be set up prior to overriding properties
 #if defined(TW_INCLUDE_LIBRESETPROP) && defined(TW_OVERRIDE_SYSTEM_PROPS)
@@ -177,6 +178,7 @@ static void process_recovery_mode(twrpAdbBuFifo* adb_bu_fifo, bool skip_decrypti
 #endif
 
 	Decrypt_Page(skip_decryption, datamedia);
+	PartitionManager.Output_Partition_Logging();
 
 	// Fixup the RTC clock on devices which require it
 	if (crash_counter == 0)
