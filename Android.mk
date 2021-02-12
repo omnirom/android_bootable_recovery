@@ -177,6 +177,7 @@ ifeq ($(TW_OEM_BUILD),true)
     TW_USE_TOOLBOX := true
     TW_EXCLUDE_MTP := true
     TW_EXCLUDE_TZDATA := true
+    TW_EXCLUDE_NANO := true
 endif
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
@@ -528,6 +529,11 @@ ifeq ($(TWRP_INCLUDE_LOGCAT), true)
 endif
 ifneq ($(TW_EXCLUDE_TZDATA), true)
     TWRP_REQUIRED_MODULES += tzdata_twrp
+endif
+ifneq ($(TW_EXCLUDE_NANO), true)
+    TWRP_REQUIRED_MODULES += \
+        nano_twrp \
+        init.recovery.nano.rc
 endif
 # Allow devices to specify device-specific recovery dependencies
 ifneq ($(TARGET_RECOVERY_DEVICE_MODULES),)

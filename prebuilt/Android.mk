@@ -405,6 +405,12 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27; echo $$?),0)
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/liblogwrap.so
     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libext2_misc.so
 endif
+ifneq ($(TW_EXCLUDE_NANO), true)
+    RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/nano
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libncurses.so
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libssh.so
+    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libssl.so
+endif
 
 TW_BB_SYMLINKS :=
 ifneq ($(TW_USE_TOOLBOX), true)
@@ -622,3 +628,15 @@ ifneq ($(TW_EXCLUDE_TZDATA), true)
     endif
     include $(BUILD_PHONY_PACKAGE)
 endif
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := nano_twrp
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)/sbin
+LOCAL_REQUIRED_MODULES := nano libncurses
+LOCAL_POST_INSTALL_CMD += \
+    cp -rf $(TARGET_OUT_ETC)/nano $(TARGET_RECOVERY_ROOT_OUT)/etc/; \
+    cp -rf external/libncurses/lib/terminfo $(TARGET_RECOVERY_ROOT_OUT)/etc/;
+include $(BUILD_PHONY_PACKAGE)
+
