@@ -460,6 +460,7 @@
 		<string name="fm_perms">Permissions:</string>
 		<string name="fm_complete">File Operation Complete</string>
 		<string name="fm_open_terminal_btn">Open Terminal Here</string>
+		<string name="fm_edit_file">Edit File</string>
 		<string name="decrypt_data_hdr">Decrypt Data</string>
 		<string name="decrypt_data_enter_pass">Enter Password.</string>
 		<string name="decrypt_data_failed">Password failed, please try again!</string>

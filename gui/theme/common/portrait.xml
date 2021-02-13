@@ -4340,6 +4340,19 @@
 			</text>
 
 			<button style="main_button_half_height">
+				<conditions>
+					<condition var1="tw_include_nano" var2="1"/>
+					<condition var1="tw_fm_isfolder" var2="0"/>
+				</conditions>
+				<placement x="%indent%" y="%row12a_y%"/>
+				<text>{@fm_edit_file=Edit File}</text>
+				<actions>
+					<action function="editfile">nano "%tw_filename1%"</action>
+					<action function="page">terminalcommand</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
 				<condition var1="tw_fm_isfolder" var2="1"/>
 				<placement x="%center_x%" y="%row12a_y%"/>
 				<text>{@fm_open_terminal_btn=Open Terminal Here}</text>

@@ -113,6 +113,9 @@ endif
 ifeq ($(TW_ROUND_SCREEN), true)
     LOCAL_CFLAGS += -DTW_ROUND_SCREEN
 endif
+ifeq ($(TW_EXCLUDE_NANO), true)
+    LOCAL_CFLAGS += -DTW_EXCLUDE_NANO
+endif
 
 LOCAL_C_INCLUDES += \
     bionic \

@@ -4238,6 +4238,19 @@
 			</button>
 
 			<button style="main_button_half_width">
+edi				<conditions>
+					<condition var1="tw_include_nano" var2="1"/>
+					<condition var1="tw_fm_isfolder" var2="0"/>
+				</conditions>
+				<placement x="%col1_x_left%" y="%row15a_y%"/>
+				<text>{@fm_edit_file=Edit File}</text>
+				<actions>
+					<action function="editfile">nano "%tw_filename1%"</action>
+					<action function="page">terminalcommand</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_width">
 				<placement x="%col2_x_left%" y="%row11_y%"/>
 				<text>{@fm_move_btn=Move}</text>
 				<actions>
