@@ -24,9 +24,6 @@ on init
     symlink /system/bin /bin
     symlink /system/etc /etc
 
-    mount cgroup none /acct cpuacct
-    mkdir /acct/uid
-
     mkdir /sdcard
     mkdir /system
     mkdir /data
