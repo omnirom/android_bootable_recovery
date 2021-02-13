@@ -372,6 +372,9 @@ protected:
 	int repackimage(std::string arg);
 	int fixabrecoverybootloop(std::string arg);
 	int changeterminal(std::string arg);
+#ifndef TW_EXCLUDE_NANO
+	int editfile(std::string arg);
+#endif
 
 	int simulate;
 };
