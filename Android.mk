@@ -28,6 +28,9 @@ TARGET_RECOVERY_UI_LIB ?= librecovery_ui_default
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := librecovery_ui_ext
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0 SPDX-license-identifier-MIT SPDX-license-identifier-OFL
+LOCAL_LICENSE_CONDITIONS := by_exception_only notice
+LOCAL_NOTICE_FILE := $(LOCAL_PATH)/NOTICE
 
 # LOCAL_MODULE_PATH for shared libraries is unsupported in multiarch builds.
 LOCAL_MULTILIB := first
@@ -54,6 +57,9 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := recovery_deps
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0 SPDX-license-identifier-MIT SPDX-license-identifier-OFL
+LOCAL_LICENSE_CONDITIONS := by_exception_only notice
+LOCAL_NOTICE_FILE := $(LOCAL_PATH)/NOTICE
 
 ifeq ($(TARGET_USERIMAGES_USE_F2FS),true)
 LOCAL_REQUIRED_MODULES += \
