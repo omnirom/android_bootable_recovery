@@ -44,29 +44,25 @@ std::string UpdaterRuntime::FindBlockDeviceName(const std::string_view name) con
   return std::string(name);
 }
 
-static struct {
-  const char* name;
-  unsigned flag;
-} mount_flags_list[] = {
-  { "noatime", MS_NOATIME },
-  { "noexec", MS_NOEXEC },
-  { "nosuid", MS_NOSUID },
-  { "nodev", MS_NODEV },
-  { "nodiratime", MS_NODIRATIME },
-  { "ro", MS_RDONLY },
-  { "rw", 0 },
-  { "remount", MS_REMOUNT },
-  { "bind", MS_BIND },
-  { "rec", MS_REC },
-  { "unbindable", MS_UNBINDABLE },
-  { "private", MS_PRIVATE },
-  { "slave", MS_SLAVE },
-  { "shared", MS_SHARED },
-  { "defaults", 0 },
-  { 0, 0 },
-};
-
 static bool setMountFlag(const std::string& flag, unsigned* mount_flags) {
+  static constexpr std::pair<const char*, unsigned> mount_flags_list[] = {
+    { "noatime", MS_NOATIME },
+    { "noexec", MS_NOEXEC },
+    { "nosuid", MS_NOSUID },
+    { "nodev", MS_NODEV },
+    { "nodiratime", MS_NODIRATIME },
+    { "ro", MS_RDONLY },
+    { "rw", 0 },
+    { "remount", MS_REMOUNT },
+    { "bind", MS_BIND },
+    { "rec", MS_REC },
+    { "unbindable", MS_UNBINDABLE },
+    { "private", MS_PRIVATE },
+    { "slave", MS_SLAVE },
+    { "shared", MS_SHARED },
+    { "defaults", 0 },
+  };
+
   for (const auto& [name, value] : mount_flags_list) {
     if (flag == name) {
       *mount_flags |= value;
