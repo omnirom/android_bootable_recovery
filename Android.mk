@@ -178,6 +178,7 @@ ifeq ($(TW_OEM_BUILD),true)
     TW_EXCLUDE_MTP := true
     TW_EXCLUDE_TZDATA := true
     TW_EXCLUDE_NANO := true
+    TW_EXCLUDE_BASH := true
 endif
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
@@ -537,6 +538,12 @@ ifneq ($(TW_EXCLUDE_NANO), true)
     TWRP_REQUIRED_MODULES += \
         nano_twrp \
         init.recovery.nano.rc
+endif
+ifneq ($(TW_EXCLUDE_BASH), true)
+    ifneq ($(wildcard external/bash/.),)
+        TWRP_REQUIRED_MODULES += \
+            bash_twrp
+    endif
 endif
 # Allow devices to specify device-specific recovery dependencies
 ifneq ($(TARGET_RECOVERY_DEVICE_MODULES),)
