@@ -442,7 +442,10 @@
 					<condition var1="tw_selectimage" var2="1"/>
 					<condition var1="tw_filename" op="modified"/>
 				</conditions>
-				<action function="page">flashimage_type</action>
+				<actions>
+					<action function="set">tw_is_slot_part=0</action>
+					<action function="page">flashimage_type</action>
+				</actions>
 			</action>
 
 			<action>
@@ -859,6 +862,30 @@
 				<data name="tw_flash_partition"/>
 				<listtype name="flashimg"/>
 			</partitionlist>
+
+			<button style="checkbox">
+				<conditions>
+					<condition var1="tw_is_slot_part" op="=" var2="1"/>
+					<condition var1="tw_flash_both_slots" op="=" var2="0"/>
+					<condition var1="tw_has_boot_slots" var2="1"/>
+				</conditions>
+				<placement x="%col2_x_left%" y="%row11_y%" textplacement="6"/>
+				<text>{@flash_ab_both_slots=Flash to both slots}</text>
+				<image resource="checkbox_false"/>
+				<action function="set">tw_flash_both_slots=1</action>
+			</button>
+
+			<button style="checkbox">
+				<conditions>
+					<condition var1="tw_is_slot_part" op="=" var2="1"/>
+					<condition var1="tw_flash_both_slots" op="=" var2="1"/>
+					<condition var1="tw_has_boot_slots" var2="1"/>
+				</conditions>
+				<placement x="%col2_x_left%" y="%row11_y%" textplacement="6"/>
+				<text>{@flash_ab_both_slots=Flash to both slots}</text>
+				<image resource="checkbox_true"/>
+				<action function="set">tw_flash_both_slots=0</action>
+			</button>
 
 			<button>
 				<placement x="%col1_x_left%" y="%row11_y%"/>
