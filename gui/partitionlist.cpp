@@ -180,6 +180,8 @@ void GUIPartitionList::MatchList(void) {
 		pos = variablelist.find(searchvalue);
 		if (pos != string::npos) {
 			mList.at(i).selected = 1;
+			TWPartition* t_part = PartitionManager.Find_Partition_By_Path(mList.at(i).Mount_Point);
+			DataManager::SetValue("tw_is_slot_part", t_part != NULL ? (int) t_part->SlotSelect : 0);
 		} else {
 			mList.at(i).selected = 0;
 		}
@@ -272,6 +274,8 @@ void GUIPartitionList::NotifySelect(size_t item_selected)
 					mList.at(item_selected).selected = 0;
 				else
 					mList.at(item_selected).selected = 1;
+					TWPartition* t_part = PartitionManager.Find_Partition_By_Path(mList.at(item_selected).Mount_Point);
+					DataManager::SetValue("tw_is_slot_part", t_part != NULL ? (int) t_part->SlotSelect : 0);
 
 				int i;
 				string variablelist;

@@ -928,6 +928,9 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue("tw_include_nano", "0");
 #endif
 
+	mData.SetValue("tw_flash_both_slots", "0");
+	mData.SetValue("tw_is_slot_part", "0");
+
 	mData.SetValue("tw_enable_adb_backup", "0");
 
 	if (TWFunc::Path_Exists("/system/bin/magiskboot"))
