@@ -419,6 +419,15 @@ TWRP_REQUIRED_MODULES += \
     nano.rc
 endif
 
+ifeq ($(TW_INCLUDE_REPACKTOOLS), true)
+TWRP_REQUIRED_MODULES += \
+    magiskboot
+endif
+
+ifeq ($(TW_INCLUDE_RESETPROP), true)
+TWRP_REQUIRED_MODULES += \
+    resetprop
+endif
 
 ifneq ($(TW_INCLUDE_CRYPTO),)
 TWRP_REQUIRED_MODULES += \
