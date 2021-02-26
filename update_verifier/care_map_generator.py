@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (C) 2018 The Android Open Source Project
 #
@@ -115,13 +115,13 @@ def main(argv):
     content = input_care_map.read()
 
   if args.parse_proto:
-    result = ParseProtoMessage(content, args.fingerprint_enabled)
+    result = ParseProtoMessage(content, args.fingerprint_enabled).encode()
   else:
     care_map_proto = GenerateCareMapProtoFromLegacyFormat(
         content.rstrip().splitlines(), args.fingerprint_enabled)
     result = care_map_proto.SerializeToString()
 
-  with open(args.output_file, 'w') as output:
+  with open(args.output_file, 'wb') as output:
     output.write(result)
 
 
