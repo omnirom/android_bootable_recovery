@@ -359,7 +359,8 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error,
 				return false;
 			} else {
 				Primary_Block_Device = ptr;
-				Find_Real_Block_Device(Primary_Block_Device, Display_Error);
+				if (PartitionManager.Get_Android_Root_Path() != "/system_root")
+					Find_Real_Block_Device(Primary_Block_Device, Display_Error);
 			}
 			item_index++;
 		} else if (item_index > 2) {
