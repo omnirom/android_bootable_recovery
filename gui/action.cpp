@@ -2310,7 +2310,7 @@ int GUIAction::applycustomtwrpfolder(string arg __unused)
 		gui_msg(Msg(msg::kError, "tw_folder_exists=A folder with that name already exists!"));
 	}
 
-	if (ret) ret = TWFunc::Recursive_Mkdir("\"" + newBackupFolder + "\"") ? true : false;
+	if (ret) ret = TWFunc::Recursive_Mkdir(newBackupFolder) ? true : false;
 
 
 	if (ret) {

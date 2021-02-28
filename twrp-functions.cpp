@@ -1422,7 +1422,7 @@ string TWFunc::Check_For_TwrpFolder() {
 	DIR* d;
 	struct dirent* de;
 
-	if(DataManager::GetIntValue(TW_IS_ENCRYPTED)) {
+	if (DataManager::GetIntValue(TW_IS_ENCRYPTED)) {
 		goto exit;
 	}
 
@@ -1437,14 +1437,14 @@ string TWFunc::Check_For_TwrpFolder() {
 		string fullPath = mainPath + '/' + name;
 		unsigned char type = de->d_type;
 
-		if(name == "." || name == "..") continue;
+		if (name == "." || name == "..") continue;
 
-		if(type == DT_UNKNOWN) {
+		if (type == DT_UNKNOWN) {
 			type = Get_D_Type_From_Stat(fullPath);
 		}
 
-		if(type == DT_DIR && Path_Exists(fullPath + '/' + TW_SETTINGS_FILE)) {
-			if('/' + name == TW_DEFAULT_RECOVERY_FOLDER){
+		if (type == DT_DIR && Path_Exists(fullPath + '/' + TW_SETTINGS_FILE)) {
+			if ('/' + name == TW_DEFAULT_RECOVERY_FOLDER) {
 				oldFolder = name;
 			} else {
 				customTWRPFolders.push_back(name);
@@ -1454,25 +1454,25 @@ string TWFunc::Check_For_TwrpFolder() {
 
 	closedir(d);
 
-	if(oldFolder == "" && customTWRPFolders.empty()) {
+	if (oldFolder == "" && customTWRPFolders.empty()) {
 		LOGINFO("No recovery folder found. Using default folder.\n");
 		goto exit;
-	} else if(customTWRPFolders.empty()) {
+	} else if (customTWRPFolders.empty()) {
 		LOGINFO("No custom recovery folder found. Using TWRP as default.\n");
 		goto exit;
 	} else {
-		if(customTWRPFolders.size() > 1) {
+		if (customTWRPFolders.size() > 1) {
 			LOGINFO("More than one custom recovery folder found. Using first one from the list.\n");
 		} else {
 			LOGINFO("One custom recovery folder found.\n");
 		}
 		string customPath =  '/' + customTWRPFolders.at(0);
 
-		if(Path_Exists(mainPath + TW_DEFAULT_RECOVERY_FOLDER)) {
+		if (Path_Exists(mainPath + TW_DEFAULT_RECOVERY_FOLDER)) {
 			string oldBackupFolder = mainPath + TW_DEFAULT_RECOVERY_FOLDER + "/BACKUPS/" + DataManager::GetStrValue("device_id");
 			string newBackupFolder = mainPath + customPath + "/BACKUPS/" + DataManager::GetStrValue("device_id");
 
-			if(Path_Exists(oldBackupFolder)) {
+			if (Path_Exists(oldBackupFolder)) {
 				vector<string> backups;
 				d = opendir(oldBackupFolder.c_str());
 
@@ -1481,20 +1481,20 @@ string TWFunc::Check_For_TwrpFolder() {
 						string name = de->d_name;
 						unsigned char type = de->d_type;
 
-						if(name == "." || name == "..") continue;
+						if (name == "." || name == "..") continue;
 
-						if(type == DT_UNKNOWN) {
+						if (type == DT_UNKNOWN) {
 							type = Get_D_Type_From_Stat(mainPath + '/' + name);
 						}
 
-						if(type == DT_DIR) {
+						if (type == DT_DIR) {
 							backups.push_back(name);
 						}
 					}
 					closedir(d);
 				}
 
-				for(auto it = backups.begin(); it != backups.end(); it++) {
+				for (auto it = backups.begin(); it != backups.end(); it++) {
 					Exec_Cmd("mv -f \"" + oldBackupFolder + '/' + *it + "\" \"" + newBackupFolder + '/' + *it + (Path_Exists(newBackupFolder + '/' + *it) ? "_new\"" : "\""));
 				}
 			}
