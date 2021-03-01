@@ -3749,7 +3749,7 @@
 
 			<listbox style="advanced_listbox">
 				<placement x="%indent%" y="%row13a_y%" w="%content_width%" h="%listbox_advanced_height%"/>
-				<listitem name="Change TWRP Folder">
+				<listitem name="{@change_twrp_folder_btn=Change TWRP folder}">
 					<condition var1="tw_is_encrypted" var2="0"/>
 					<action function="page">changeTwrpFolder</action>
 				</listitem>
