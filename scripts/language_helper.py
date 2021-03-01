@@ -129,7 +129,7 @@ for resnode in enres:
 						break
 				if found == False:
 					print "'%s' present in English and not in %s" % (child.attributes['name'].value.encode("utf-8"), otherlang)
-					notfound_err = "NOT FOUND " + child.toxml()
+					notfound_err = "NOT FOUND " + child.toxml().replace('--', '\-\-')
 					notfound_comment = doc.createComment(notfound_err)
 					resources.appendChild(notfound_comment)
 		elif child.nodeType == child.COMMENT_NODE:
