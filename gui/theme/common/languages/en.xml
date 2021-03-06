@@ -517,7 +517,7 @@
 		<string name="decrypt_users">Decrypt Users</string>
 		<string name="decrypt_users_selection">Select a user ID to decrypt</string>
 		<string name="select_user">Select User</string>
-		<string name="backup_storage_undecrypt_warning">Backup not include some files of user {1}, because the user is not decrypted.</string>
+		<string name="backup_storage_undecrypt_warning">Backup will not include some files of user {1}, because the user is not decrypted.</string>
 		<string name="decrypting_user_fbe">Attempting to decrypt FBE for user {1}...</string>
 		<string name="decrypt_user_success_fbe">User {1} Decrypted Successfully</string>
 		<string name="decrypt_user_fail_fbe">Failed to decrypt user {1}</string>
