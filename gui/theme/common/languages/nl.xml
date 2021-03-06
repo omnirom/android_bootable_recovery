@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <language>
 	<display>Nederlands</display>
-
 	<resources>
 		<!-- Font overrides - only change these if your language requires special characters -->
-		<resource name="font_l" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_m" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="font_s" type="fontoverride" filename="RobotoCondensed-Regular.ttf" scale="100" />
-		<resource name="fixed" type="fontoverride" filename="DroidSansMono.ttf" scale="100" />
-
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_l" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_m" scale="100" type="fontoverride"/>
+		<resource filename="RobotoCondensed-Regular.ttf" name="font_s" scale="100" type="fontoverride"/>
+		<resource filename="DroidSansMono.ttf" name="fixed" scale="100" type="fontoverride"/>
 		<!-- Partition display names -->
 		<string name="system">System</string>
 		<string name="system_image">System-image</string>
@@ -31,7 +28,6 @@
 		<string name="adopted_data">Geadopteerde Data</string>
 		<string name="adopted_storage">Geadopteerde opslag</string>
 		<string name="autostorage">Opslag</string>
-
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Team Win Recovery Project</string>
 		<string name="twrp_watch_header">TWRP %tw_version%</string>
@@ -50,7 +46,6 @@
 		<string name="tab_screen">SCHERM</string>
 		<string name="tab_vibration">TRILLEN</string>
 		<string name="tab_language">TAAL</string>
-
 		<string name="install_btn">Installeren</string>
 		<string name="wipe_btn">Wissen</string>
 		<string name="backup_btn">Back-uppen</string>
@@ -82,9 +77,9 @@
 		<string name="zip_back_clear">Klik op Terug om de wachtrij leeg te maken.</string>
 		<string name="folder">Map:</string>
 		<string name="file">Bestand:</string>
-		<string name="zip_sig_chk">Verificatie van de ondertekening van het zipbestand</string>
-		<string name="inject_twrp_chk">TWRP inlassen na installatie</string>
-		<string name="install_reboot_chk">Herstarten na installatie</string>
+		<string name="zip_sig_chk">Ondertekening zipbestand verifiëren</string>
+		<string name="inject_twrp_chk">TWRP injecteren na installatie</string>
+		<string name="install_reboot_chk">Apparaat herstarten na installatie</string>
 		<string name="options_hdr">Opties</string>
 		<string name="confirm_flash_hdr">Flashen bevestigen</string>
 		<string name="zip_queue">Wachtrij:</string>
@@ -126,10 +121,10 @@
 		<string name="reboot_install_app_system">Installeren als System-app</string>
 		<string name="reboot_installing_app">App wordt geïnstalleerd...</string>
 		<string name="swipe_to_install_app">Veeg om TWRP-app te installeren</string>
-		<string name="uninstall_twrp_system_app">TWRP-app deïnstalleren van System</string>
-		<string name="uninstall_twrp_system_app_confirm">TWRP-app deïnstalleren van System?</string>
-		<string name="uninstalling_twrp_system_app">TWRP-app wordt gedeïnstalleerd van System...</string>
-		<string name="uninstall_twrp_system_app_complete">Deïnstallatie TWRP-app van System voltooid</string>
+		<string name="uninstall_twrp_system_app">TWRP-app verwijderen van System</string>
+		<string name="uninstall_twrp_system_app_confirm">TWRP-app verwijderen van System?</string>
+		<string name="uninstalling_twrp_system_app">TWRP-app wordt verwijderd van System...</string>
+		<string name="uninstall_twrp_system_app_complete">TWRP-app verwijderd</string>
 		<string name="swipe_flash">Veeg om te installeren</string>
 		<string name="confirm_action">Actie bevestigen</string>
 		<string name="back_cancel">Klik op Terug om te annuleren.</string>
@@ -141,6 +136,7 @@
 		<string name="factory_reset2">(exclusief interne opslag)</string>
 		<string name="factory_reset3">Meestal kan worden volstaan</string>
 		<string name="factory_reset4">met dit type opschoning.</string>
+		<string name="factory_reset5">(exclusief gebruikers/vergrendelscherm)</string>
 		<string name="factory_resetting">Fabrieksinstellingen worden hersteld...</string>
 		<string name="advanced_wipe_hdr">Geavanceerd wissen</string>
 		<string name="advanced_wipe_btn">Geavanceerd wissen</string>
@@ -166,7 +162,7 @@
 		<string name="format_data_wtc1">Data formatteren verwijdert al uw apps,</string>
 		<string name="format_data_wtc2">back-ups en media. Dit kan niet ongedaan worden gemaakt.</string>
 		<string name="format_data_undo">Dit kan niet ongedaan worden gemaakt.</string>
-		<string name="format_data_complete">Formattering van Data voltooid</string>
+		<string name="format_data_complete">Formatteren van Data voltooid</string>
 		<!-- Translator note: the word "yes" must remain English! -->
 		<string name="yes_continue">Typ 'yes' om verder te gaan. Klik op Terug om te annuleren.</string>
 		<string name="part_opt_hdr">Opties voor partitioneren: %tw_partition_name%</string>
@@ -261,7 +257,7 @@
 		<string name="restore_try_decrypt_s">Poging tot ontsleutelen</string>
 		<string name="restore_backup_date">Back-up gemaakt op %tw_restore_file_date%</string>
 		<string name="restore_sel_part">Partitie(s) selecteren om te herstellen:</string>
-		<string name="restore_enable_digest_chk" version="2">Digestcontrole van back-upbestanden inschakelen</string>
+		<string name="restore_enable_digest_chk" version="2">Digestcontrole back-upbestanden inschakelen</string>
 		<string name="restore_complete">Herstellen voltooid</string>
 		<string name="swipe_restore">Veeg om te herstellen</string>
 		<string name="swipe_restore_s">   Herstellen</string>
@@ -275,8 +271,8 @@
 		<string name="confirm_hdr">Bevestigen</string>
 		<string name="mount_hdr">Koppelen</string>
 		<string name="mount_sel_part">Partitie(s) selecteren om te koppelen:</string>
-		<string name="mount_sys_ro_chk">System-partitie in niet-beschrijfbaar-modus koppelen</string>
-		<string name="mount_sys_ro_s_chk">System-partitie niet beschrijfbaar</string>
+		<string name="mount_sys_ro_chk">System-partitie in onbeschrijfbaar-modus koppelen</string>
+		<string name="mount_sys_ro_s_chk">System-partitie onbeschrijfbaar</string>
 		<string name="decrypt_data_btn">Data ontsleutelen</string>
 		<string name="disable_mtp_btn">MTP uitschakelen</string>
 		<string name="enable_mtp_btn">MTP inschakelen</string>
@@ -307,17 +303,17 @@
 		<string name="sys_rol2">TWRP kan het overschrijven van zichzelf door de oorspronkelijke ROM niet voorkomen en zal ook niet aanbieden het apparaat te rooten.</string>
 		<string name="sys_rol3">Het installeren van zipbestanden en het gebruik van adb kunnen de System-partitie alsnog doen veranderen.</string>
 		<string name="sys_ro_never_show_chk">Dit scherm niet meer weergeven tijdens het opstarten</string>
-		<string name="sys_ro_keep_ro_btn">Niet-beschrijfbaar laten</string>
+		<string name="sys_ro_keep_ro_btn">Onbeschrijfbaar laten</string>
 		<string name="swipe_allow_mod">Veeg om wijzigingen toe te staan</string>
 		<string name="swipe_allow_mod_s">Wijzigingen toestaan</string>
 		<string name="settings_hdr">Instellingen</string>
 		<string name="settings_gen_hdr">Algemeen</string>
 		<string name="settings_gen_s_hdr">Algemeen</string>
 		<string name="settings_gen_btn">Algemeen</string>
-		<string name="use_rmrf_chk">'rm -rf' gebruiken in plaats van formatteren</string>
+		<string name="use_rmrf_chk">'rm -rf' uitvoeren i.p.v. formatteren</string>
 		<string name="use24clock_chk">24-uurs klok</string>
 		<string name="rev_navbar_chk">Omgekeerde volgorde navbar-knoppen</string>
-		<string name="simact_chk">Simuleren van acties t.b.v. testen van thema</string>
+		<string name="simact_chk">Simuleren acties t.b.v. testen thema</string>
 		<string name="simfail_chk">Mislukken van acties simuleren</string>
 		<string name="ctr_navbar_rdo">Navbar-knoppen centreren</string>
 		<string name="lft_navbar_rdo">Navbar-knoppen links uitlijnen</string>
@@ -388,7 +384,7 @@
 		<string name="advanced_hdr">Geavanceerd</string>
 		<string name="copy_log_confirm">Logbestand naar SD-kaart kopiëren?</string>
 		<string name="copying_log" version="2">Log naar SD-kaart kopiëren...</string>
-		<string name="copy_log_complete" version="2">Kopiëren logbestand voltooid</string>
+		<string name="copy_log_complete" version="2">Logbestand gekopieerd</string>
 		<string name="fix_context_btn">Contexten repareren</string>
 		<string name="part_sd_btn">SD-kaart partitioneren</string>
 		<string name="part_sd_s_btn">SD-kaart</string>
@@ -397,10 +393,10 @@
 		<string name="terminal_btn">Terminal</string>
 		<string name="reload_theme_btn">Thema herladen</string>
 		<string name="dumlock_btn">HTC Dumlock</string>
-		<string name="inject_twrp_btn">TWRP inlassen</string>
-		<string name="inject_twrp_confirm">TWRP opnieuw inlassen?</string>
-		<string name="injecting_twrp">TWRP opnieuw inlassen...</string>
-		<string name="inject_twrp_complete">Inlassen TWRP voltooid</string>
+		<string name="inject_twrp_btn">TWRP injecteren</string>
+		<string name="inject_twrp_confirm">TWRP opnieuw injecteren?</string>
+		<string name="injecting_twrp">TWRP opnieuw injecteren...</string>
+		<string name="inject_twrp_complete">TWRP geïnjecteerd</string>
 		<string name="swipe_to_confirm">Veeg om te bevestigen</string>
 		<string name="part_sd_hdr">SD-kaart partitioneren</string>
 		<string name="invalid_partsd_sel">U moet een verwisselbaar apparaat selecteren</string>
@@ -417,10 +413,10 @@
 		<string name="partitioning_sd2">Dit duurt een paar minuten.</string>
 		<string name="part_sd_complete">Partitioneren voltooid</string>
 		<string name="dumlock_hdr">HTC Dumlock</string>
-		<string name="dumlock_restore_btn">Oorspronkelijke bootimage herstellen</string>
-		<string name="dumlock_restore_confirm">Oorspronkelijke bootimage herstellen?</string>
-		<string name="dumlock_restoring">Oorspronkelijke bootimage wordt hersteld...</string>
-		<string name="dumlock_restore_complete">Oorspronkelijke bootimage hersteld</string>
+		<string name="dumlock_restore_btn">Oorspronkelijk bootimage herstellen</string>
+		<string name="dumlock_restore_confirm">Oorspronkelijk bootimage herstellen?</string>
+		<string name="dumlock_restoring">Oorspronkelijk bootimage wordt hersteld...</string>
+		<string name="dumlock_restore_complete">Oorspronkelijk bootimage hersteld</string>
 		<string name="dumlock_reflash_btn">Recovery opnieuw flashen</string>
 		<string name="dumlock_reflash_confirm">Recovery opnieuw naar boot flashen?</string>
 		<string name="dumlock_reflashing">Recovery wordt naar boot geflasht...</string>
@@ -458,6 +454,8 @@
 		<string name="fm_set_perms_hdr">Machtigingen instellen</string>
 		<string name="fm_perms">Machtigingen:</string>
 		<string name="fm_complete">Bestandsbewerking voltooid</string>
+		<string name="fm_open_terminal_btn">Terminal hier openen</string>
+		<string name="fm_edit_file">Bestand bewerken</string>
 		<string name="decrypt_data_hdr">Data-partitie ontsleutelen</string>
 		<string name="decrypt_data_enter_pass">Wachtwoord invoeren.</string>
 		<string name="decrypt_data_failed">Wachtwoord mislukt. Probeer opnieuw!</string>
@@ -507,11 +505,23 @@
 		<string name="repack_image_hdr">Image selecteren</string>
 		<string name="fix_recovery_loop">Herstellen van oneindige lus tijdens opstarten recovery</string>
 		<string name="fix_recovery_loop_confirm">Herstellen van oneindige recoverylus?</string>
-		<string name="fixing_recovery_loop">Oneindige recoverylus wordt hersteld...</string>
-		<string name="fix_recovery_loop_complete">Herstellen van recoverylus voltooid</string>
+		<string name="fixing_recovery_loop">Oneindige recoverylus wordt doorbroken...</string>
+		<string name="fix_recovery_loop_complete">Oneindige lus opgelost</string>
 		<string name="fixing_recovery_loop_patch">Kernel wordt gepatcht...</string>
 		<string name="fix_recovery_loop_patch_error">Fout tijdens patchen kernel.</string>
-
+		<string name="decrypt_users">Gebruikers ontsleutelen</string>
+		<string name="decrypt_users_selection">Selecteer een gebruiker ID om te ontsleutelen</string>
+		<string name="select_user">Selecteer gebruiker</string>
+		<string name="backup_storage_undecrypt_warning">Back-up zonder sommige bestanden van gebruiker {1}: gebruiker niet ontsleuteld.</string>
+		<string name="decrypting_user_fbe">Ontsleutelen van FBE voor gebruiker {1}...</string>
+		<string name="decrypt_user_success_fbe">FBE gebruiker {1} ontsleuteld</string>
+		<string name="decrypt_user_fail_fbe">Ontsleuteling FBE gebruiker {1} mislukt</string>
+		<string name="decrypt_data_enter_pass_fbe">Voer wachtwoord in voor gebruiker [%tw_crypto_user_id%]</string>
+		<string name="decrypt_data_enter_pattern_fbe">Voer patroon in voor gebruiker [%tw_crypto_user_id%]</string>
+		<string name="multiuser_warning1">Niet alle gebruikers ontsleuteld!</string>
+		<string name="multiuser_warning2">Back-up/Herstelbewerkingen kunnen mislukken!</string>
+		<string name="multiuser_warning_accept">Toch doorgaan</string>
+		<string name="multiuser_warning_hdr">Multigebruiker Waarschuwing</string>
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel ondersteunt het lezen van SELinux-contexten niet.</string>
 		<string name="full_selinux">Volledige SELinux-ondersteuning is aanwezig.</string>
@@ -574,7 +584,7 @@
 		<string name="unable_to_mount_storage">Kan opslag niet koppelen</string>
 		<string name="fail_decrypt">Ontsleutelen gegevens mislukt.</string>
 		<string name="no_crypto_support">Geen ondersteuning voor crypto aanwezig.</string>
-		<string name="decrypt_success_dev">Data ontsleuteld. Nieuw block device: {1}</string>
+		<string name="decrypt_success_dev">Data ontsleuteld. Nieuw blok-device: {1}</string>
 		<string name="decrypt_success_nodev">Data ontsleuteld</string>
 		<string name="done">Gereed.</string>
 		<string name="start_partition_sd">SD-kaart wordt gepartitioneerd...</string>
@@ -653,7 +663,7 @@
 		<string name="done_ors">Uitvoeren scriptbestand voltooid</string>
 		<string name="injecttwrp">TWRP wordt in het bootimage ingelast...</string>
 		<string name="zip_err">Fout bij het installeren van zipbestand '{1}'</string>
-		<string name="installing_zip">Zip-bestand '{1}' wordt geïnstalleerd</string>
+		<string name="installing_zip">Zipbestand '{1}' wordt geïnstalleerd</string>
 		<string name="select_backup_opt">Instellen van back-upopties:</string>
 		<string name="compression_on">Compressie staat aan</string>
 		<string name="digest_off" version="2">Het genereren van een digest staat uit</string>
@@ -663,7 +673,6 @@
 		<string name="recovery_commands_complete">Recoverycommando's voltooid</string>
 		<string name="running_ors">OpenRecoveryScript wordt uitgevoerd</string>
 		<string name="ors_complete">OpenRecoveryScript voltooid</string>
-		<string name="no_updater_binary">Kan '{1}' niet vinden in zipbestand.</string>
 		<string name="check_for_digest" version="2">Digestbestand wordt gecontroleerd...</string>
 		<string name="invalid_zip_format">Beschadigd zipbestand!</string>
 		<string name="fail_sysmap">Toewijzen van bestand '{1}' mislukt</string>
@@ -688,7 +697,7 @@
 		<!-- These 2 items are saved in the data manager instead of resource manager, so %llu, etc is correct instead of {1} -->
 		<string name="file_progress">%llu van %llu bestanden, %i%%</string>
 		<string name="size_progress">%llu MB van %llu MB, %i%%</string>
-		<string name="decrypt_cmd">Er wordt geprobeerd de Data-partitie te ontsleutelen via de commandoregel.</string>
+		<string name="decrypt_cmd" version="2">Er wordt geprobeerd de Data-partitie te ontsleutelen via de commandoregel.</string>
 		<string name="base_pkg_err">Fout bij het laden van de basispakketten.</string>
 		<string name="simulating">Acties worden gesimuleerd...</string>
 		<string name="backup_cancel">Back-up geannuleerd</string>
@@ -712,7 +721,7 @@
 		<string name="theme_ver_err">Versie maatwerkthema past niet bij deze versie van TWRP. Standaardthema wordt gebruikt.</string>
 		<string name="up_a_level">(Niveau omhoog)</string>
 		<string name="install_reboot" version="2">Herstarten over %tw_sleep% seconden</string>
-		<string name="adbbackup_error">Fout bij ADB-back-up. Afgebroken..."</string>
+		<string name="adbbackup_error">Fout bij ADB-back-up. Afgebroken...&quot;</string>
 		<string name="adbbackup_control_error">Kan niet schrijven naar adb-beheerskanaal</string>
 		<string name="twrp_adbbu_option">--twrp optie vereist voor inschakelen twrp adb-backup</string>
 		<string name="partition_not_found">pad: {1} niet gevonden in partitielijst</string>
@@ -720,6 +729,29 @@
 		<string name="include_kernel_log">Kernellog bijvoegen</string>
 		<string name="sha2_chk">SHA2 gebruiken voor hashen</string>
 		<string name="unable_set_boot_slot">Fout tijdens aanpassen opstartslot bootloader in {1}</string>
-		<string name="backup_part_name">Partitie: %tw_partition%</string>
+		<string name="unmount_sys_install">Ontkoppel System vóór installatie zipbestand</string>
+		<string name="unmount_system">System wordt ontkoppeld...</string>
+		<string name="unmount_system_err">Ontkoppelen System mislukt</string>
+		<string name="flash_ab_inactive">A/B zipbestand wordt geflasht naar inactieve slot: {1}</string>
+		<string name="flash_ab_reboot">Om meer zipbestanden te flashen dient u eerst te herstarten in Recovery om naar de bijgewerkte slot te schakelen.</string>
+		<string name="flash_ab_both_slots">Beide slots flashen</string>
+		<string name="ozip_decrypt_decryption">Ozip-ontsleutelen...</string>
+		<string name="ozip_decrypt_finish">Ozip-ontsleutelen gereed!</string>
+		<string name="fbe_wipe_msg">WAARSCHUWING: {1} gewist. FBE-apparaat dient opgestart te worden in Android, niet Recovery, om initieel FBE-beleid in werking te zetten na het wissen.</string>
+		<string name="fastboot_button">Fastboot</string>
+		<string name="enable_adb">ADB inschakelen</string>
+		<string name="enable_fastboot">Fastboot inschakelen</string>
+		<string name="fastboot_console_msg">In Fastboot modus...</string>
+		<!-- Android Rescue Party trigger -->
+		<string name="rescue_party0">Android Rescue Party trigger! Mogelijke oplossingen? Of:</string>
+		<string name="rescue_party1"> 1. Cachemappen wissen, en/of</string>
+		<string name="rescue_party2"> 2. Data formatteren, en/of</string>
+		<string name="rescue_party3"> 3. Uw ROM schoon flashen.</string>
+		<string name="rescue_party4">Het gemelde probleem is: </string>
+		<string name="restore_system_context">Kan standaardcontext voor {1} niet achterhalen -- Android start mogelijk niet op.</string>
+		<string name="change_twrp_folder_btn">TWRP-map wijzigen</string>
+		<string name="change_twrp_folder_on_process">TWRP-map wordt gewijzigd</string>
+		<string name="change_twrp_folder_after_process">TWRP-map gewijzigd in</string>
+		<string name="tw_folder_exists">Er bestaat al een map met die naam!</string>
 	</resources>
 </language>
