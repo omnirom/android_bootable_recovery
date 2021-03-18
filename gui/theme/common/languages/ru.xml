@@ -740,5 +740,13 @@
         <string name="flash_ab_reboot">Для прошивки дополнительных ZIP перезагрузите рекавери для переключения на обновлённый слот.</string>
 		<string name="ozip_decrypt_decryption">Начало расшифровки Ozip...</string>
 		<string name="ozip_decrypt_finish">Расшифровка Ozip завершена!</string>
+		<string name="change_twrp_folder_btn">Изменить папку TWRP</string>
+		<string name="change_twrp_folder_on_process">Изменение папки TWRP</string>
+		<string name="change_twrp_folder_after_process">Папка TWRP изменена на</string>
+		<string name="tw_folder_exists">Папка с таким именем уже существует!</string>
+		<string name="fm_open_terminal_btn">Открыть терминал здесь</string>
+		<string name="fm_edit_file">Изменить файл</string>
+		<string name="flash_ab_both_slots">Прошить на оба слота</string>
+		<string name="restore_system_context">Невозможно получить контекст по умолчанию для {1} -- Android может не загрузиться.</string>
 	</resources>
 </language>
