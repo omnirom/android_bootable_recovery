@@ -175,6 +175,15 @@
 			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%accent_color%"/>
 		</style>
 
+		<style name="options_listbox">
+			<highlight color="%fileselector_highlight_color%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<separator color="%background_color%" height="%fileselector_separatorheight%"/>
+			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
+			<background color="%background_color%"/>
+			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%accent_color%"/>
+		</style>
+
 		<style name="slider">
 			<placement x="%col2_x_right%" y="%row17a_y%"/>
 			<font resource="font_m" color="%text_color%"/>
@@ -442,24 +451,23 @@
 				<text>{@options=Options:}</text>
 			</text>
 
-			<checkbox>
-				<placement x="%col1_x_right%" y="%row9_y%"/>
-				<text>{@zip_sig_chk=Zip signature verification}</text>
-				<data variable="tw_signed_zip_verify"/>
-			</checkbox>
-
-			<checkbox>
-				<condition var1="tw_has_injecttwrp" var2="1"/>
-				<placement x="%col1_x_right%" y="%row10a_y%"/>
-				<text>{@inject_twrp_chk=Inject TWRP after install}</text>
-				<data variable="tw_inject_after_zip"/>
-			</checkbox>
-
-			<checkbox>
-				<placement x="%col1_x_right%" y="%row12_y%"/>
-				<text>{@install_reboot_chk=Reboot after installation is complete}</text>
-				<data variable="tw_install_reboot"/>
-			</checkbox>
+			<listbox style="options_listbox">
+				<placement x="%col1_x_right%" y="%row9_y%" w="%content_half_width%" h="%listbox_options_height%"/>
+				<icon selected="checkbox_true" unselected="checkbox_false"/>
+				<listitem name="{@zip_sig_chk=Zip signature verification}">
+					<data variable="tw_signed_zip_verify"/>
+				</listitem>
+				<listitem name="{@skip_digest_zip_chk=Skip Digest check before installing zip}">
+					<data variable="tw_skip_digest_check_zip"/>
+				</listitem>
+				<listitem name="{@install_reboot_chk=Reboot after installation is complete}">
+					<data variable="tw_install_reboot"/>
+				</listitem>
+				<listitem name="{@inject_twrp_chk=Inject TWRP after install}">
+					<condition var1="tw_has_injecttwrp" var2="1"/>
+					<data variable="tw_inject_after_zip"/>
+				</listitem>
+			</listbox>
 
 			<button style="main_button_half_width">
 				<placement x="%col1_x_left%" y="%row15a_y%"/>
@@ -3205,6 +3213,9 @@
 				</listitem>
 				<listitem name="{@restore_enable_digest_chk=Enable Digest verification of backup files}">
 					<data variable="tw_skip_digest_check"/>
+				</listitem>
+				<listitem name="{@skip_digest_zip_chk=Skip Digest check before installing zip}">
+					<data variable="tw_skip_digest_check_zip"/>
 				</listitem>
 				<listitem name="{@use24clock_chk=Use 24-hour clock}">
 					<data variable="tw_military_time"/>

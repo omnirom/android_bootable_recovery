@@ -74,6 +74,7 @@
 #define TW_FORCE_DIGEST_CHECK_VAR   "tw_force_digest_check"
 #define TW_SKIP_DIGEST_CHECK_VAR    "tw_skip_digest_check"
 #define TW_SKIP_DIGEST_GENERATE_VAR "tw_skip_digest_generate"
+#define TW_SKIP_DIGEST_CHECK_ZIP_VAR    "tw_skip_digest_check_zip"
 #define TW_SIGNED_ZIP_VERIFY_VAR    "tw_signed_zip_verify"
 #define TW_INSTALL_REBOOT_VAR       "tw_install_reboot"
 #define TW_TIME_ZONE_VAR            "tw_time_zone"

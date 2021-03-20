@@ -199,6 +199,7 @@
 		<variable name="listbox_timezone_height" value="768"/>
 		<variable name="listbox_settings_height" value="648"/>
 		<variable name="listbox_advanced_height" value="700"/>
+		<variable name="listbox_options_height" value="304"/>
 		<variable name="fastscroll_w" value="18"/>
 		<variable name="fastscroll_linew" value="2"/>
 		<variable name="fastscroll_rectw" value="18"/>

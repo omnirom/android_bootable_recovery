@@ -755,6 +755,7 @@ void DataManager::SetDefaultValues()
 	mPersist.SetValue(TW_GUI_SORT_ORDER, "1");
 	mPersist.SetValue(TW_RM_RF_VAR, "0");
 	mPersist.SetValue(TW_SKIP_DIGEST_CHECK_VAR, "0");
+	mPersist.SetValue(TW_SKIP_DIGEST_CHECK_ZIP_VAR, "1");
 	mPersist.SetValue(TW_SKIP_DIGEST_GENERATE_VAR, "0");
 	mPersist.SetValue(TW_SDEXT_SIZE, "0");
 	mPersist.SetValue(TW_SWAP_SIZE, "0");
