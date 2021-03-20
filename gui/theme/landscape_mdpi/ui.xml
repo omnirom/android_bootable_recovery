@@ -198,6 +198,7 @@
 		<variable name="partitionlist_backup_height" value="198"/>
 		<variable name="listbox_timezone_height" value="306"/>
 		<variable name="listbox_settings_height" value="243"/>
+		<variable name="listbox_options_height" value="110"/>
 		<variable name="fastscroll_w" value="7"/>
 		<variable name="fastscroll_linew" value="1"/>
 		<variable name="fastscroll_rectw" value="7"/>

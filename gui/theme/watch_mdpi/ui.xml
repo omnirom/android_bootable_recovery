@@ -160,6 +160,7 @@
 		<variable name="partitionlist_wipe_height" value="160"/>
 		<variable name="listbox_timezone_height" value="248"/>
 		<variable name="listbox_settings_height" value="248"/>
+		<variable name="listbox_options_height" value="160"/>
 		<variable name="fastscroll_w" value="10"/>
 		<variable name="fastscroll_linew" value="1"/>
 		<variable name="fastscroll_rectw" value="10"/>
