@@ -113,33 +113,33 @@ public class ImageGenerator {
     private static final Map<String, String> LANGUAGE_TO_FONT_MAP =
             new TreeMap<String, String>() {
                 {
-                    put("am", "NotoSansEthiopic-Regular");
-                    put("ar", "NotoNaskhArabicUI");
-                    put("as", "NotoSansBengaliUI-Regular");
-                    put("bn", "NotoSansBengaliUI-Regular");
-                    put("fa", "NotoNaskhArabicUI");
-                    put("gu", "NotoSansGujaratiUI");
-                    put("hi", "NotoSansDevanagariUI-Regular");
-                    put("hy", "NotoSansArmenian-Regular");
-                    put("iw", "NotoSansHebrew");
-                    put("ja", "NotoSansCJKjp-Regular");
-                    put("ka", "NotoSansGeorgian-Regular");
-                    put("ko", "NotoSansCJKjp-Regular");
-                    put("km", "NotoSansKhmerUI");
-                    put("kn", "NotoSansKannadaUI-Regular");
-                    put("lo", "NotoSansLaoUI");
-                    put("ml", "NotoSansMalayalamUI-Regular");
-                    put("mr", "NotoSansDevanagariUI-Regular");
+                    put("am", "NotoSansEthiopic-VF");
+                    put("ar", "NotoNaskhArabicUI-Regular");
+                    put("as", "NotoSansBengaliUI-VF");
+                    put("bn", "NotoSansBengaliUI-VF");
+                    put("fa", "NotoNaskhArabicUI-Regular");
+                    put("gu", "NotoSansGujaratiUI-Regular");
+                    put("hi", "NotoSansDevanagariUI-VF");
+                    put("hy", "NotoSansArmenian-VF");
+                    put("iw", "NotoSansHebrew-Regular");
+                    put("ja", "NotoSansCJK-Regular");
+                    put("ka", "NotoSansGeorgian-VF");
+                    put("ko", "NotoSansCJK-Regular");
+                    put("km", "NotoSansKhmerUI-Regular");
+                    put("kn", "NotoSansKannadaUI-VF");
+                    put("lo", "NotoSansLaoUI-Regular");
+                    put("ml", "NotoSansMalayalamUI-VF");
+                    put("mr", "NotoSansDevanagariUI-VF");
                     put("my", "NotoSansMyanmarUI-Regular");
-                    put("ne", "NotoSansDevanagariUI-Regular");
-                    put("or", "NotoSansOriya");
-                    put("pa", "NotoSansGurmukhiUI-Regular");
-                    put("si", "NotoSansSinhalaUI-Regular");
-                    put("ta", "NotoSansTamilUI-Regular");
-                    put("te", "NotoSansTeluguUI-Regular");
-                    put("th", "NotoSansThaiUI");
-                    put("ur", "NotoNaskhArabicUI");
-                    put("zh", "NotoSansCJKjp-Regular");
+                    put("ne", "NotoSansDevanagariUI-VF");
+                    put("or", "NotoSansOriya-Regular");
+                    put("pa", "NotoSansGurmukhiUI-VF");
+                    put("si", "NotoSansSinhalaUI-VF");
+                    put("ta", "NotoSansTamilUI-VF");
+                    put("te", "NotoSansTeluguUI-VF");
+                    put("th", "NotoSansThaiUI-Regular");
+                    put("ur", "NotoNaskhArabicUI-Regular");
+                    put("zh", "NotoSansCJK-Regular");
                 }
             };
 
@@ -386,7 +386,7 @@ public class ImageGenerator {
         }
 
         String fontName = LANGUAGE_TO_FONT_MAP.getOrDefault(language, DEFAULT_FONT_NAME);
-        String[] suffixes = {".otf", ".ttf", ".ttc", ".otc"};
+        String[] suffixes = {".otf", ".ttf", ".ttc"};
         for (String suffix : suffixes) {
             File fontFile = new File(mFontDirPath, fontName + suffix);
             if (fontFile.isFile()) {
