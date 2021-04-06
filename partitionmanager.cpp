@@ -3393,8 +3393,8 @@ void TWPartitionManager::Setup_Super_Partition() {
 	superPartition->Mount_Point = "/super";
 	superPartition->Actual_Block_Device = superPart;
 	superPartition->Alternate_Block_Device = superPart;
-#ifdef BOARD_DYNAMIC_PARTITIONS_PARTITION_LIST
-	superPartition->Backup_Display_Name = "Super (" BOARD_DYNAMIC_PARTITIONS_PARTITION_LIST ")";
+#ifdef BOARD_SUPER_PARTITION_PARTITION_LIST
+	superPartition->Backup_Display_Name = "Super (" BOARD_SUPER_PARTITION_PARTITION_LIST ")";
 #else
 	superPartition->Backup_Display_Name = "Super";
 #endif
