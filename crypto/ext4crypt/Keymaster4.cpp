@@ -158,11 +158,11 @@ km::ErrorCode Keymaster::exportKey(km::KeyFormat format, KeyBuffer& kmKey, const
     };
     auto error = mDevice->exportKey(format, kmKeyBlob, kmClientId, kmAppData, hidlCb);
     if (!error.isOk()) {
-        LOG(ERROR) << "export_key failed: " << error.description();
+        LOG(ERROR) << "export_key failed: " << error.description() << std::endl;
         return km::ErrorCode::UNKNOWN_ERROR;
     }
     if (km_error != km::ErrorCode::OK) {
-        LOG(ERROR) << "export_key failed, code " << int32_t(km_error);
+        LOG(ERROR) << "export_key failed, code " << int32_t(km_error) << std::endl;
         return km_error;
     }
     return km::ErrorCode::OK;
@@ -174,11 +174,11 @@ bool Keymaster::deleteKey(const std::string& key) {
     auto keyBlob = km::support::blob2hidlVec(key);
     auto error = mDevice->deleteKey(keyBlob);
     if (!error.isOk()) {
-        LOG(ERROR) << "delete_key failed: " << error.description();
+        LOG(ERROR) << "delete_key failed: " << error.description() << std::endl;
         return false;
     }
     if (error != km::ErrorCode::OK) {
-        LOG(ERROR) << "delete_key failed, code " << int32_t(km::ErrorCode(error));
+        LOG(ERROR) << "delete_key failed, code " << int32_t(km::ErrorCode(error)) << std::endl;
         return false;
     }
     return true;
