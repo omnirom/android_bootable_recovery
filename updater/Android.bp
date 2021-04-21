@@ -36,7 +36,6 @@ cc_defaults {
         "libfec_rs",
         "libavb",
         "libverity_tree",
-        "libgtest_prod",
         "liblog",
         "liblp",
         "libselinux",
@@ -50,6 +49,9 @@ cc_defaults {
         "libcrypto_utils",
         "libcutils",
         "libutils",
+    ],
+    header_libs: [
+        "libgtest_prod_headers",
     ],
 }
 

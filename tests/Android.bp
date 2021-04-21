@@ -148,8 +148,10 @@ cc_test {
         "libupdater_core",
         "libupdate_verifier",
 
-        "libgtest_prod",
         "libprotobuf-cpp-lite",
+    ],
+    header_libs: [
+        "libgtest_prod_headers",
     ],
 
     data: [
