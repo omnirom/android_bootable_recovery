@@ -6,9 +6,9 @@
     <string name="recovery_no_command" msgid="4465476568623024327">"کوئی کمانڈ نہیں ہے"</string>
     <string name="recovery_error" msgid="5748178989622716736">"خرابی!"</string>
     <string name="recovery_installing_security" msgid="9184031299717114342">"سیکیورٹی اپ ڈیٹ انسٹال ہو رہی ہے"</string>
-    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"‏Android سسٹم لوڈ نہیں کیا جا سکتا۔ آپ کا ڈیٹا خراب ہو سکتا ہے۔ اگر آپ کو مستقل یہ پیغام موصول ہوتا ہے تو آپ کو فیکٹری ڈیٹا کی دوبارہ ترتیب انجام دینے اور اس آلہ پر اسٹور کردہ سبھی صارف ڈیٹا کو مٹانے کی ضرورت پڑ سکتی ہے۔"</string>
+    <string name="recovery_wipe_data_menu_header" msgid="550255032058254478">"‏Android سسٹم لوڈ نہیں کیا جا سکتا۔ آپ کا ڈیٹا خراب ہو سکتا ہے۔ اگر آپ کو مستقل یہ پیغام موصول ہوتا ہے تو آپ کو فیکٹری ڈیٹا ری سیٹ انجام دینے اور اس آلہ پر اسٹور کردہ سبھی صارف ڈیٹا کو مٹانے کی ضرورت پڑ سکتی ہے۔"</string>
     <string name="recovery_try_again" msgid="7168248750158873496">"دوبارہ کوشش کریں"</string>
-    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"فیکٹری ڈیٹا کی دوبارہ ترتیب"</string>
+    <string name="recovery_factory_data_reset" msgid="7321351565602894783">"فیکٹری ڈیٹا ری سیٹ"</string>
     <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"سبھی صارف ڈیٹا صاف کریں؟\n\n اسے کالعدم نہیں کیا جا سکتا!"</string>
     <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"منسوخ کریں"</string>
 </resources>
