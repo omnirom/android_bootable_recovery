@@ -105,6 +105,8 @@ std::unique_ptr<GRSurfaceDrm> GRSurfaceDrm::Create(int drm_fd, int width, int he
     perror("Failed to DRM_IOCTL_MODE_CREATE_DUMB");
     return nullptr;
   }
+  printf("Allocating buffer with resolution %d x %d pitch: %d bpp: %d, size: %llu\n", width, height,
+         create_dumb.pitch, create_dumb.bpp, create_dumb.size);
 
   // Cannot use std::make_unique to access non-public ctor.
   auto surface = std::unique_ptr<GRSurfaceDrm>(new GRSurfaceDrm(
@@ -128,13 +130,14 @@ std::unique_ptr<GRSurfaceDrm> GRSurfaceDrm::Create(int drm_fd, int width, int he
     return nullptr;
   }
 
-  auto mmapped = mmap(nullptr, surface->height * surface->row_bytes, PROT_READ | PROT_WRITE,
-                      MAP_SHARED, drm_fd, map_dumb.offset);
+  auto mmapped =
+      mmap(nullptr, create_dumb.size, PROT_READ | PROT_WRITE, MAP_SHARED, drm_fd, map_dumb.offset);
   if (mmapped == MAP_FAILED) {
     perror("Failed to mmap()");
     return nullptr;
   }
   surface->mmapped_buffer_ = static_cast<uint8_t*>(mmapped);
+  printf("Framebuffer of size %llu allocated @ %p\n", create_dumb.size, surface->mmapped_buffer_);
   return surface;
 }
 
@@ -260,9 +263,16 @@ drmModeConnector* MinuiBackendDrm::FindMainMonitor(int fd, drmModeRes* resources
   /* If we still didn't find a connector, give up and return. */
   if (!main_monitor_connector) return nullptr;
 
+  for (int modes = 0; modes < main_monitor_connector->count_modes; modes++) {
+    printf("Display Mode %d resolution: %d x %d @ %d FPS\n", modes,
+           main_monitor_connector->modes[modes].hdisplay,
+           main_monitor_connector->modes[modes].vdisplay,
+           main_monitor_connector->modes[modes].vrefresh);
+  }
   *mode_index = 0;
   for (int modes = 0; modes < main_monitor_connector->count_modes; modes++) {
     if (main_monitor_connector->modes[modes].type & DRM_MODE_TYPE_PREFERRED) {
+      printf("Choosing display mode #%d\n", modes);
       *mode_index = modes;
       break;
     }
