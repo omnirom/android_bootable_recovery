@@ -26,6 +26,7 @@ cc_defaults {
 
     defaults: [
         "recovery_defaults",
+        "libspl_check_defaults",
     ],
 
     shared_libs: [
@@ -49,9 +50,48 @@ cc_defaults {
         "librecovery_utils",
         "libotautil",
         "libsnapshot_nobinder",
+        "ota_metadata_proto_cc",
 
         // external dependencies
         "libvintf",
+    ],
+}
+
+cc_test_host {
+    name: "libinstall_host_unittests",
+    defaults: [
+        "libspl_check_defaults"
+    ],
+    srcs: [
+        "spl_check_unittests.cpp",
+    ],
+    static_libs: [
+        "libspl_check",
+    ],
+}
+
+cc_defaults {
+    name: "libspl_check_defaults",
+    static_libs: [
+        "libbase",
+        "ota_metadata_proto_cc",
+        "liblog",
+        "libziparchive",
+        "libz",
+        "libprotobuf-cpp-lite",
+    ],
+}
+
+cc_library_static {
+    name: "libspl_check",
+    recovery_available: true,
+    host_supported: true,
+    defaults: [
+        "libspl_check_defaults",
+    ],
+    srcs: ["spl_check.cpp"],
+    export_include_dirs: [
+        "include",
     ],
 }
 
@@ -73,6 +113,7 @@ cc_library_static {
         "verifier.cpp",
         "wipe_data.cpp",
         "wipe_device.cpp",
+        "spl_check.cpp",
     ],
 
     header_libs: [
