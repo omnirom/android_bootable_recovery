@@ -317,6 +317,7 @@
 		<string name="settings_gen_s_hdr">General</string>
 		<string name="settings_gen_btn">General</string>
 		<string name="use_rmrf_chk">Use rm -rf instead of formatting</string>
+		<string name="auto_reflashtwrp_chk">Automatically Reflash TWRP after flashing a ROM</string>
 		<string name="use24clock_chk">Use 24-hour clock</string>
 		<string name="rev_navbar_chk">Reversed navbar layout</string>
 		<string name="simact_chk">Simulate actions for theme testing</string>
@@ -506,9 +507,15 @@
 		<string name="install_complete">Install Complete</string>
 		<string name="unpack_error">Error unpacking image.</string>
 		<string name="repack_error">Error repacking image.</string>
+		<string name="modified_ramdisk_error">ramdisk files have been modified, unable to create ramdisk to flash, fastboot boot twrp and try this option again or use the Install Recovery Ramdisk option.</string>
+		<string name="create_ramdisk_error">failed to create ramdisk to flash.</string>
 		<string name="unpacking_image">Unpacking {1}...</string>
 		<string name="repacking_image">Repacking {1}...</string>
 		<string name="repack_image_hdr">Select Image</string>
+		<string name="reflash_twrp">Flash current TWRP</string>
+		<string name="reflash_twrp_confirm">Flash current TWRP?</string>
+		<string name="reflashing_twrp">Flashing TWRP...</string>
+		<string name="reflash_twrp_complete">Done flashing TWRP</string>
 		<string name="fix_recovery_loop">Fix Recovery Bootloop</string>
 		<string name="fix_recovery_loop_confirm">Fix Recovery Bootloop?</string>
 		<string name="fixing_recovery_loop">Fixing Recovery Bootloop...</string>

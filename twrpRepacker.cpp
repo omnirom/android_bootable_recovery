@@ -129,8 +129,14 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 	if (!Backup_Image_For_Repack(part, REPACK_ORIG_DIR, Repack_Options.Backup_First, gui_lookup("repack", "Repack")))
 		return false;
 	DataManager::SetProgress(.25);
-	gui_msg(Msg("unpacking_image=Unpacking {1}...")(Target_Image));
-	image_ramdisk_format = Unpack_Image(Target_Image, REPACK_NEW_DIR, true);
+	if (Repack_Options.Type == REPLACE_RAMDISK_UNPACKED) {
+		if (!Prepare_Empty_Folder(REPACK_NEW_DIR))
+			return false;
+		image_ramdisk_format = "gzip";
+	} else {
+		gui_msg(Msg("unpacking_image=Unpacking {1}...")(Target_Image));
+		image_ramdisk_format = Unpack_Image(Target_Image, REPACK_NEW_DIR, true);
+	}
 	if (image_ramdisk_format.empty())
 		return false;
 	DataManager::SetProgress(.5);
@@ -142,6 +148,16 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 			LOGERR("Failed to copy ramdisk\n");
 			return false;
 		}
+	} else if (Repack_Options.Type == REPLACE_RAMDISK_UNPACKED) {
+			if (TWFunc::copy_file(Target_Image, REPACK_ORIG_DIR "ramdisk.cpio", 0644)) {
+				LOGERR("Failed to copy ramdisk\n");
+				return false;
+			}
+			if (TWFunc::copy_file(Target_Image, REPACK_NEW_DIR "ramdisk.cpio", 0644)) {
+				LOGERR("Failed to copy ramdisk\n");
+				return false;
+			}
+		path = REPACK_ORIG_DIR;
 	} else if (Repack_Options.Type == REPLACE_RAMDISK) {
 		// Repack the ramdisk
 		if (TWFunc::copy_file(REPACK_NEW_DIR "ramdisk.cpio", REPACK_ORIG_DIR "ramdisk.cpio", 0644)) {
@@ -193,7 +209,7 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 	}
 	DataManager::SetProgress(1);
 	TWFunc::removeDir(REPACK_ORIG_DIR, false);
-	if (part->Is_SlotSelect() && Repack_Options.Type == REPLACE_RAMDISK) {
+	if (part->Is_SlotSelect()) { if (Repack_Options.Type == REPLACE_RAMDISK || Repack_Options.Type == REPLACE_RAMDISK_UNPACKED) {
 		LOGINFO("Switching slots to flash ramdisk to both partitions\n");
 		string Current_Slot = PartitionManager.Get_Active_Slot_Display();
 		if (Current_Slot == "A")
@@ -243,7 +259,33 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 		}
 		DataManager::SetProgress(1);
 		TWFunc::removeDir(REPACK_ORIG_DIR, false);
-	}
+	}}
 	TWFunc::removeDir(REPACK_NEW_DIR, false);
 	return true;
+}
+
+bool twrpRepacker::Flash_Current_Twrp() {
+if (!TWFunc::Path_Exists("/ramdisk-files.txt")) {
+			LOGERR("can not find ramdisk-files.txt");
+			return false;
+		}
+		Repack_Options_struct Repack_Options;
+		Repack_Options.Disable_Verity = false;
+		Repack_Options.Disable_Force_Encrypt = false;
+		Repack_Options.Type = REPLACE_RAMDISK_UNPACKED;
+		Repack_Options.Backup_First = DataManager::GetIntValue("tw_repack_backup_first") != 0;
+		std::string verifyfiles = "cd / && sha256sum -c ramdisk-files.sha256sum";
+		if (TWFunc::Exec_Cmd(verifyfiles) != 0) {
+		gui_msg(Msg(msg::kError, "modified_ramdisk_error=ramdisk files have been modified, unable to create ramdisk to flash, fastboot boot twrp and try this option again or use the Install Recovery Ramdisk option."));
+			return false;
+		}
+		std::string command = "cd / && /sbin/cpio -H newc -o < ramdisk-files.txt > /tmp/currentramdisk.cpio && /sbin/gzip -f /tmp/currentramdisk.cpio";
+		if (TWFunc::Exec_Cmd(command) != 0) {
+			gui_msg(Msg(msg::kError, "create_ramdisk_error=failed to create ramdisk to flash."));
+			return false;
+		}
+		if (!Repack_Image_And_Flash("/tmp/currentramdisk.cpio.gz", Repack_Options))
+			return false;
+       else
+       return true;
 }

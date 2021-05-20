@@ -568,6 +568,13 @@
 				<listitem name="{@skip_digest_zip_chk=Skip Digest check before installing zip}">
 					<data variable="tw_skip_digest_check_zip"/>
 				</listitem>
+				<listitem name="{@auto_reflashtwrp_chk=Automatically Reflash TWRP after flashing a ROM}">
+					<conditions>
+						<condition var1="tw_has_boot_slots" var2="1"/>
+						<condition var1="tw_has_repack_tools" var2="1"/>
+					</conditions>
+					<data variable="tw_auto_reflashtwrp"/>
+				</listitem>
 				<listitem name="{@install_reboot_chk=Reboot after installation is complete}">
 					<data variable="tw_install_reboot"/>
 				</listitem>
@@ -3760,6 +3767,13 @@
 				<listitem name="{@unmount_sys_install=Unmount System before installing a ZIP}">
 					<data variable="tw_unmount_system"/>
 				</listitem>
+				<listitem name="{@auto_reflashtwrp_chk=Automatically Reflash TWRP after flashing a ROM}">
+					<conditions>
+						<condition var1="tw_has_boot_slots" var2="1"/>
+						<condition var1="tw_has_repack_tools" var2="1"/>
+					</conditions>
+					<data variable="tw_auto_reflashtwrp"/>
+				</listitem>
 			</listbox>
 
 			<action>
@@ -4313,6 +4327,22 @@
 						<action function="set">tw_repack_kernel=0</action>
 						<action function="page">repackselect</action>
 					</actions>
+				</listitem>
+				<listitem name="{@reflash_twrp=Flash Current TWRP}">
+					<conditions>
+						<condition var1="tw_has_boot_slots" var2="1"/>
+						<condition var1="tw_has_repack_tools" var2="1"/>
+					</conditions>
+					<actions>
+						<action function="set">tw_repack_kernel=0</action>
+						<action function="set">tw_back=advanced</action>
+						<action function="set">tw_action=reflashtwrp</action>
+						<action function="set">tw_text1={@reflash_twrp_confirm=Flash Current TWRP?}</action>
+						<action function="set">tw_action_text1={@reflashing_twrp=Flashing TWRP...}</action>
+						<action function="set">tw_complete_text1={@reflash_twrp_complete=Done Flashing TWRP}</action>
+						<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+						<action function="page">confirm_action</action>
+						</actions>
 				</listitem>
 				<listitem name="{@install_kernel=Install Kernel}">
 					<conditions>

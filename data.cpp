@@ -755,6 +755,8 @@ void DataManager::SetDefaultValues()
 	mPersist.SetValue(TW_TIME_ZONE_GUISEL, "CST6;CDT,M3.2.0,M11.1.0");
 	mPersist.SetValue(TW_TIME_ZONE_GUIOFFSET, "0");
 	mPersist.SetValue(TW_TIME_ZONE_GUIDST, "1");
+        mPersist.SetValue(TW_AUTO_REFLASHTWRP_VAR, "0");
+
 	mData.SetValue(TW_ACTION_BUSY, "0");
 	mData.SetValue("tw_wipe_cache", "0");
 	mData.SetValue("tw_wipe_dalvik", "0");
