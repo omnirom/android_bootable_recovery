@@ -17,6 +17,10 @@ ifeq ($(TW_SUPPORT_INPUT_1_2_HAPTICS),true)
     endif
 endif
 
+ifeq ($(TW_USE_SAMSUNG_HAPTICS),true)
+    LOCAL_CFLAGS += -DTW_USE_SAMSUNG_HAPTICS=1
+endif
+
 ifneq ($(TW_BOARD_CUSTOM_GRAPHICS),)
     $(warning ****************************************************************************)
     $(warning * TW_BOARD_CUSTOM_GRAPHICS support has been deprecated in TWRP.            *)
