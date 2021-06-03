@@ -33,6 +33,25 @@ cc_defaults {
     ],
 }
 
+python_library_host {
+    name: "care_map_proto_py",
+    srcs: [
+        "care_map.proto",
+    ],
+    proto: {type: "lite", canonical_path_from_root: false},
+    version: {
+        py2: {
+            enabled: true,
+        },
+        py3: {
+            enabled: true,
+        },
+    },
+    visibility: [
+        "//build/make/tools/releasetools:__subpackages__",
+    ],
+}
+
 cc_library_static {
     name: "libupdate_verifier",
 
