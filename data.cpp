@@ -146,6 +146,16 @@ void DataManager::get_device_id(void) {
 #endif
 
 #ifndef TW_FORCE_CPUINFO_FOR_DEVICE_ID
+#ifdef TW_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID
+	// Check serial number system property
+	if (property_get("ro.serialno", line, "")) {
+		snprintf(device_id, DEVID_MAX, "%s", line);
+		sanitize_device_id(device_id);
+		mConst.SetValue("device_id", device_id);
+		return;
+	}
+#endif
+
 	// Check the cmdline to see if the serial number was supplied
 	fp = fopen("/proc/cmdline", "rt");
 	if (fp != NULL) {
@@ -577,9 +587,16 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue("false", "0");
 
 	mConst.SetValue(TW_VERSION_VAR, TW_VERSION_STR);
+
+#ifndef TW_NO_HAPTICS
 	mPersist.SetValue("tw_button_vibrate", "80");
 	mPersist.SetValue("tw_keyboard_vibrate", "40");
 	mPersist.SetValue("tw_action_vibrate", "160");
+	mConst.SetValue("tw_disable_haptics", "0");
+#else
+	LOGINFO("TW_NO_HAPTICS := true\n");
+	mConst.SetValue("tw_disable_haptics", "1");
+#endif
 
 	TWPartition *store = PartitionManager.Get_Default_Storage_Partition();
 	if (store)
@@ -705,6 +722,10 @@ void DataManager::SetDefaultValues()
 	printf("TW_HAS_DOWNLOAD_MODE := true\n");
 	mConst.SetValue(TW_DOWNLOAD_MODE, "1");
 #endif
+#ifdef TW_HAS_EDL_MODE
+	printf("TW_HAS_EDL_MODE := true\n");
+	mConst.SetValue(TW_EDL_MODE, "1");
+#endif
 #ifdef TW_INCLUDE_CRYPTO
 	mConst.SetValue(TW_HAS_CRYPTO, "1");
 	printf("TW_INCLUDE_CRYPTO := true\n");
@@ -757,10 +778,10 @@ void DataManager::SetDefaultValues()
 	mPersist.SetValue("tw_military_time", "0");
 
 #ifdef TW_INCLUDE_CRYPTO
-	mConst.SetValue(TW_USE_SHA2, "1");
-	mConst.SetValue(TW_NO_SHA2, "0");
+	mPersist.SetValue(TW_USE_SHA2, "1");
+	mPersist.SetValue(TW_NO_SHA2, "0");
 #else
-	mConst.SetValue(TW_NO_SHA2, "1");
+	mPersist.SetValue(TW_NO_SHA2, "1");
 #endif
 
 #ifdef TW_NO_SCREEN_TIMEOUT
@@ -888,14 +909,21 @@ void DataManager::SetDefaultValues()
 #ifdef TW_OEM_BUILD
 	LOGINFO("TW_OEM_BUILD := true\n");
 	mConst.SetValue("tw_oem_build", "1");
+	mConst.SetValue("tw_app_installed_in_system", "0");
 #else
 	mConst.SetValue("tw_oem_build", "0");
 	mPersist.SetValue("tw_app_prompt", "1");
 	mPersist.SetValue("tw_app_install_system", "1");
 	mData.SetValue("tw_app_install_status", "0"); // 0 = no status, 1 = not installed, 2 = already installed
+	mData.SetValue("tw_app_installed_in_system", "0");
 #endif
 
-        mData.SetValue("tw_enable_adb_backup", "0");
+	mData.SetValue("tw_enable_adb_backup", "0");
+
+	if (TWFunc::Path_Exists("/sbin/magiskboot"))
+		mConst.SetValue("tw_has_repack_tools", "1");
+	else
+		mConst.SetValue("tw_has_repack_tools", "0");
 
 	pthread_mutex_unlock(&m_valuesLock);
 }
@@ -1021,33 +1049,43 @@ void DataManager::Output_Version(void)
 	string Path;
 	char version[255];
 
-	if (!PartitionManager.Mount_By_Path("/cache", false)) {
-		LOGINFO("Unable to mount '%s' to write version number.\n", Path.c_str());
+	std::string cacheDir = TWFunc::get_cache_dir();
+	if (cacheDir.empty()) {
+		LOGINFO("Unable to find cache directory\n");
 		return;
 	}
-	if (!TWFunc::Path_Exists("/cache/recovery/.")) {
-		LOGINFO("Recreating /cache/recovery folder.\n");
-		if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) {
-			LOGERR("DataManager::Output_Version -- Unable to make /cache/recovery\n");
+
+	std::string recoveryCacheDir = cacheDir + "recovery/";
+
+	if (cacheDir == NON_AB_CACHE_DIR) {
+		if (!PartitionManager.Mount_By_Path(NON_AB_CACHE_DIR, false)) {
+			LOGINFO("Unable to mount '%s' to write version number.\n", Path.c_str());
 			return;
 		}
 	}
-	Path = "/cache/recovery/.version";
-	if (TWFunc::Path_Exists(Path)) {
-		unlink(Path.c_str());
+	if (!TWFunc::Path_Exists(recoveryCacheDir)) {
+		LOGINFO("Recreating %s folder.\n", recoveryCacheDir.c_str());
+		if (!TWFunc::Create_Dir_Recursive(recoveryCacheDir.c_str(), S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, 0, 0)) {
+			LOGERR("DataManager::Output_Version -- Unable to make %s: %s\n", recoveryCacheDir.c_str(), strerror(errno));
+			return;
+		}
 	}
-	FILE *fp = fopen(Path.c_str(), "w");
+	std::string verPath = recoveryCacheDir + ".version";
+	if (TWFunc::Path_Exists(verPath)) {
+		unlink(verPath.c_str());
+	}
+	FILE *fp = fopen(verPath.c_str(), "w");
 	if (fp == NULL) {
-		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(Path)(strerror(errno)));
+		gui_msg(Msg(msg::kError, "error_opening_strerr=Error opening: '{1}' ({2})")(verPath)(strerror(errno)));
 		return;
 	}
 	strcpy(version, TW_VERSION_STR);
 	fwrite(version, sizeof(version[0]), strlen(version) / sizeof(version[0]), fp);
 	fclose(fp);
-	TWFunc::copy_file("/etc/recovery.fstab", "/cache/recovery/recovery.fstab", 0644);
+	TWFunc::copy_file("/etc/recovery.fstab", recoveryCacheDir + "recovery.fstab", 0644);
 	PartitionManager.Output_Storage_Fstab();
 	sync();
-	LOGINFO("Version number saved to '%s'\n", Path.c_str());
+	LOGINFO("Version number saved to '%s'\n", verPath.c_str());
 #endif
 }
 
@@ -1060,10 +1098,6 @@ void DataManager::ReadSettingsFile(void)
 
 	GetValue(TW_IS_ENCRYPTED, is_enc);
 	GetValue(TW_HAS_DATA_MEDIA, has_data_media);
-	if (is_enc == 1 && has_data_media == 1) {
-		LOGINFO("Cannot load settings -- encrypted.\n");
-		return;
-	}
 
 	memset(mkdir_path, 0, sizeof(mkdir_path));
 	memset(settings_file, 0, sizeof(settings_file));
@@ -1100,9 +1134,11 @@ string DataManager::GetSettingsStoragePath(void)
 
 void DataManager::Vibrate(const string& varName)
 {
+#ifndef TW_NO_HAPTICS
 	int vib_value = 0;
 	GetValue(varName, vib_value);
 	if (vib_value) {
 		vibrate(vib_value);
 	}
+#endif
 }

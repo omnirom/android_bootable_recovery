@@ -57,7 +57,7 @@
 
 #endif
 
-static void
+__attribute__((unused)) static void
 D(const char *msg, ...)
 {
     va_list ap;
@@ -69,7 +69,7 @@ D(const char *msg, ...)
     fflush(stdout);
 }
 
-static void
+__attribute__((unused)) static void
 E(const char *msg, ...)
 {
     va_list ap;

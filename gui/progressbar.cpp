@@ -45,7 +45,6 @@ extern "C" {
 
 GUIProgressBar::GUIProgressBar(xml_node<>* node) : GUIObject(node)
 {
-	xml_attribute<>* attr;
 	xml_node<>* child;
 
 	mEmptyBar = NULL;
@@ -79,8 +78,12 @@ GUIProgressBar::GUIProgressBar(xml_node<>* node) : GUIObject(node)
 		mCurValVar = LoadAttrString(child, "name");
 	}
 
-	mRenderW = mEmptyBar->GetWidth();
-	mRenderH = mEmptyBar->GetHeight();
+	if (mEmptyBar && mEmptyBar->GetResource()) {
+		mRenderW = mEmptyBar->GetWidth();
+		mRenderH = mEmptyBar->GetHeight();
+	} else {
+		mRenderW = mRenderH = 0;
+	}
 }
 
 int GUIProgressBar::Render(void)

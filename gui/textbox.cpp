@@ -81,6 +81,9 @@ size_t GUITextBox::GetItemCount()
 
 void GUITextBox::RenderItem(size_t itemindex, int yPos, bool selected __unused)
 {
+	if (!mFont || !mFont->GetResource())
+		return;
+
 	// Set the color for the font
 	gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, mFontColor.alpha);
 

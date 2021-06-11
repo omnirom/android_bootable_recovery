@@ -44,8 +44,17 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		mIconSelected = LoadAttrImage(child, "selected");
 		mIconUnselected = LoadAttrImage(child, "unselected");
 	}
-	int iconWidth = std::max(mIconSelected->GetWidth(), mIconUnselected->GetWidth());
-	int iconHeight = std::max(mIconSelected->GetHeight(), mIconUnselected->GetHeight());
+	int iconWidth = 0, iconHeight = 0;
+	if (mIconSelected && mIconSelected->GetResource() && mIconUnselected && mIconUnselected->GetResource()) {
+		iconWidth = std::max(mIconSelected->GetWidth(), mIconUnselected->GetWidth());
+		iconHeight = std::max(mIconSelected->GetHeight(), mIconUnselected->GetHeight());
+	} else if (mIconSelected && mIconSelected->GetResource()) {
+		iconWidth = mIconSelected->GetWidth();
+		iconHeight = mIconSelected->GetHeight();
+	} else if (mIconUnselected && mIconUnselected->GetResource()) {
+		iconWidth = mIconUnselected->GetWidth();
+		iconHeight = mIconUnselected->GetHeight();
+	}
 	SetMaxIconSize(iconWidth, iconHeight);
 
 	// Handle the result variable
@@ -93,8 +102,10 @@ GUIListBox::GUIListBox(xml_node<>* node) : GUIScrollList(node)
 		item.selected = (child->value() == currentValue);
 		item.action = NULL;
 		xml_node<>* action = child->first_node("action");
+		if (!action)
+			action = child->first_node("actions");
 		if (action) {
-			item.action = new GUIAction(action);
+			item.action = new GUIAction(child);
 			allowSelection = true;
 		}
 		xml_node<>* variable_name = child->first_node("data");

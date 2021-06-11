@@ -48,7 +48,6 @@ static int fb_get_format(const struct fb *fb)
 {
     int ao = fb->alpha_offset;
     int ro = fb->red_offset;
-    int go = fb->green_offset;
     int bo = fb->blue_offset;
 
 #define FB_FORMAT_UNKNOWN   0

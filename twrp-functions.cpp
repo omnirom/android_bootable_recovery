@@ -37,6 +37,7 @@
 #include <sstream>
 #include <cctype>
 #include <algorithm>
+#include <selinux/label.h>
 #include "twrp-functions.hpp"
 #include "twcommon.h"
 #include "gui/gui.hpp"
@@ -58,6 +59,8 @@ extern "C" {
 	#include "libcrecovery/common.h"
 }
 
+struct selabel_handle *selinux_handle;
+
 /* Execute a command */
 int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 	FILE* exec;
@@ -74,7 +77,7 @@ int TWFunc::Exec_Cmd(const string& cmd, string &result) {
 	return ret;
 }
 
-int TWFunc::Exec_Cmd(const string& cmd) {
+int TWFunc::Exec_Cmd(const string& cmd, bool Show_Errors) {
 	pid_t pid;
 	int status;
 	switch(pid = fork())
@@ -88,7 +91,7 @@ int TWFunc::Exec_Cmd(const string& cmd) {
 			break;
 		default:
 		{
-			if (TWFunc::Wait_For_Child(pid, &status, cmd) != 0)
+			if (TWFunc::Wait_For_Child(pid, &status, cmd, Show_Errors) != 0)
 				return -1;
 			else
 				return 0;
@@ -118,18 +121,20 @@ string TWFunc::Get_Path(const string& Path) {
 		return Path;
 }
 
-int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name) {
+int TWFunc::Wait_For_Child(pid_t pid, int *status, string Child_Name, bool Show_Errors) {
 	pid_t rc_pid;
 
 	rc_pid = waitpid(pid, status, 0);
 	if (rc_pid > 0) {
 		if (WIFSIGNALED(*status)) {
-			gui_msg(Msg(msg::kError, "pid_signal={1} process ended with signal: {2}")(Child_Name)(WTERMSIG(*status))); // Seg fault or some other non-graceful termination
+			if (Show_Errors)
+				gui_msg(Msg(msg::kError, "pid_signal={1} process ended with signal: {2}")(Child_Name)(WTERMSIG(*status))); // Seg fault or some other non-graceful termination
 			return -1;
 		} else if (WEXITSTATUS(*status) == 0) {
 			LOGINFO("%s process ended with RC=%d\n", Child_Name.c_str(), WEXITSTATUS(*status)); // Success
 		} else {
-			gui_msg(Msg(msg::kError, "pid_error={1} process ended with ERROR: {2}")(Child_Name)(WEXITSTATUS(*status))); // Graceful exit, but there was an error
+			if (Show_Errors)
+				gui_msg(Msg(msg::kError, "pid_error={1} process ended with ERROR: {2}")(Child_Name)(WEXITSTATUS(*status))); // Graceful exit, but there was an error
 			return -1;
 		}
 	} else { // no PID returned
@@ -152,7 +157,6 @@ int TWFunc::Wait_For_Child_Timeout(pid_t pid, int *status, const string& Child_N
 	if (retpid == 0 && timeout == 0) {
 		LOGERR("%s took too long, killing process\n", Child_Name.c_str());
 		kill(pid, SIGKILL);
-		int died = 0;
 		for (timeout = 5; retpid == 0 && timeout; --timeout) {
 			sleep(1);
 			retpid = waitpid(pid, status, WNOHANG);
@@ -180,10 +184,7 @@ int TWFunc::Wait_For_Child_Timeout(pid_t pid, int *status, const string& Child_N
 
 bool TWFunc::Path_Exists(string Path) {
 	struct stat st;
-	if (stat(Path.c_str(), &st) != 0)
-		return false;
-	else
-		return true;
+	return stat(Path.c_str(), &st) == 0;
 }
 
 Archive_Type TWFunc::Get_File_Type(string fn) {
@@ -408,7 +409,7 @@ string TWFunc::Get_Root_Path(const string& Path) {
 void TWFunc::install_htc_dumlock(void) {
 	int need_libs = 0;
 
-	if (!PartitionManager.Mount_By_Path("/system", true))
+	if (!PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true))
 		return;
 
 	if (!PartitionManager.Mount_By_Path("/data", true))
@@ -500,48 +501,107 @@ void TWFunc::GUI_Operation_Text(string Read_Value, string Partition_Name, string
 }
 
 void TWFunc::Copy_Log(string Source, string Destination) {
+	int logPipe[2];
+	int pigz_pid;
+	int destination_fd;
+	std::string destLogBuffer;
+
 	PartitionManager.Mount_By_Path(Destination, false);
-	FILE *destination_log = fopen(Destination.c_str(), "a");
-	if (destination_log == NULL) {
-		LOGERR("TWFunc::Copy_Log -- Can't open destination log file: '%s'\n", Destination.c_str());
-	} else {
-		FILE *source_log = fopen(Source.c_str(), "r");
-		if (source_log != NULL) {
-			fseek(source_log, Log_Offset, SEEK_SET);
-			char buffer[4096];
-			while (fgets(buffer, sizeof(buffer), source_log))
-				fputs(buffer, destination_log); // Buffered write of log file
-			Log_Offset = ftell(source_log);
-			fflush(source_log);
-			fclose(source_log);
+
+	size_t extPos = Destination.find(".gz");
+	std::string uncompressedLog(Destination);
+	uncompressedLog.replace(extPos, Destination.length(), "");
+
+	if (Path_Exists(Destination)) {
+		Archive_Type type = Get_File_Type(Destination);
+		if (type == COMPRESSED) {
+			std::string destFileBuffer;
+			std::string getCompressedContents = "pigz -c -d " + Destination;
+			if (Exec_Cmd(getCompressedContents, destFileBuffer) < 0) {
+				LOGINFO("Unable to get destination logfile contents.\n");
+				return;
+			}
+			destLogBuffer.append(destFileBuffer);
 		}
-		fflush(destination_log);
-		fclose(destination_log);
+	} else if (Path_Exists(uncompressedLog)) {
+		std::ifstream uncompressedIfs(uncompressedLog);
+		std::stringstream uncompressedSS;
+		uncompressedSS << uncompressedIfs.rdbuf();
+		uncompressedIfs.close();
+		std::string uncompressedLogBuffer(uncompressedSS.str());
+		destLogBuffer.append(uncompressedLogBuffer);
+		std::remove(uncompressedLog.c_str());
 	}
+
+	std::ifstream ifs(Source);
+	std::stringstream ss;
+	ss << ifs.rdbuf();
+	std::string srcLogBuffer(ss.str());
+	ifs.close();
+
+	if (pipe(logPipe) < 0) {
+		LOGINFO("Unable to open pipe to write to persistent log file: %s\n", Destination.c_str());
+	}
+
+	destination_fd = open(Destination.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+
+	pigz_pid = fork();
+	if (pigz_pid < 0) {
+		LOGINFO("fork() failed\n");
+		close(destination_fd);
+		close(logPipe[0]);
+		close(logPipe[1]);
+	} else if (pigz_pid == 0) {
+		close(logPipe[1]);
+		dup2(logPipe[0], fileno(stdin));
+		dup2(destination_fd, fileno(stdout));
+		if (execlp("pigz", "pigz", "-", NULL) < 0) {
+			close(destination_fd);
+			close(logPipe[0]);
+			_exit(-1);
+		}
+	} else {
+		close(logPipe[0]);
+		if (write(logPipe[1], destLogBuffer.c_str(), destLogBuffer.size()) < 0) {
+			LOGINFO("Unable to append to persistent log: %s\n", Destination.c_str());
+			close(logPipe[1]);
+			close(destination_fd);
+			return;
+		}
+		if (write(logPipe[1], srcLogBuffer.c_str(), srcLogBuffer.size()) < 0) {
+			LOGINFO("Unable to append to persistent log: %s\n", Destination.c_str());
+			close(logPipe[1]);
+			close(destination_fd);
+			return;
+		}
+		close(logPipe[1]);
+	}
+	close(destination_fd);
 }
 
 void TWFunc::Update_Log_File(void) {
-	// Copy logs to cache so the system can find out what happened.
-	if (PartitionManager.Mount_By_Path("/cache", false)) {
-		if (!TWFunc::Path_Exists("/cache/recovery/.")) {
-			LOGINFO("Recreating /cache/recovery folder.\n");
-			if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0)
-				LOGINFO("Unable to create /cache/recovery folder.\n");
+	std::string recoveryDir = get_cache_dir() + "recovery/";
+
+	if (get_cache_dir() == NON_AB_CACHE_DIR) {
+		if (!PartitionManager.Mount_By_Path(NON_AB_CACHE_DIR, false)) {
+			LOGINFO("Failed to mount %s for TWFunc::Update_Log_File\n", NON_AB_CACHE_DIR);
 		}
-		Copy_Log(TMP_LOG_FILE, "/cache/recovery/log");
-		copy_file("/cache/recovery/log", "/cache/recovery/last_log", 600);
-		chown("/cache/recovery/log", 1000, 1000);
-		chmod("/cache/recovery/log", 0600);
-		chmod("/cache/recovery/last_log", 0640);
-	} else if (PartitionManager.Mount_By_Path("/data", false) && TWFunc::Path_Exists("/data/cache/recovery/.")) {
-		Copy_Log(TMP_LOG_FILE, "/data/cache/recovery/log");
-		copy_file("/data/cache/recovery/log", "/data/cache/recovery/last_log", 600);
-		chown("/data/cache/recovery/log", 1000, 1000);
-		chmod("/data/cache/recovery/log", 0600);
-		chmod("/data/cache/recovery/last_log", 0640);
-	} else {
-		LOGINFO("Failed to mount /cache or find /data/cache for TWFunc::Update_Log_File\n");
 	}
+
+	if (!TWFunc::Path_Exists(recoveryDir)) {
+		LOGINFO("Recreating %s folder.\n", recoveryDir.c_str());
+		if (!Create_Dir_Recursive(recoveryDir,  S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP, 0, 0)) {
+			LOGINFO("Unable to create %s folder.\n", recoveryDir.c_str());
+		}
+	}
+
+	std::string logCopy = recoveryDir + "log.gz";
+	std::string lastLogCopy = recoveryDir + "last_log.gz";
+	copy_file(logCopy, lastLogCopy, 600);
+	Copy_Log(TMP_LOG_FILE, logCopy);
+	chown(logCopy.c_str(), 1000, 1000);
+	chmod(logCopy.c_str(), 0600);
+	chmod(lastLogCopy.c_str(), 0640);
 
 	// Reset bootloader message
 	TWPartition* Part = PartitionManager.Find_Partition_By_Path("/misc");
@@ -556,12 +616,13 @@ void TWFunc::Update_Log_File(void) {
 		}
 	}
 
-	if (PartitionManager.Mount_By_Path("/cache", false)) {
-		if (unlink("/cache/recovery/command") && errno != ENOENT) {
-			LOGINFO("Can't unlink %s\n", "/cache/recovery/command");
+	if (get_cache_dir() == NON_AB_CACHE_DIR) {
+		if (PartitionManager.Mount_By_Path("/cache", false)) {
+			if (unlink("/cache/recovery/command") && errno != ENOENT) {
+				LOGINFO("Can't unlink %s\n", "/cache/recovery/command");
+			}
 		}
 	}
-
 	sync();
 }
 
@@ -621,6 +682,13 @@ int TWFunc::tw_reboot(RebootCommand command)
 			return property_set(ANDROID_RB_PROPERTY, "reboot,download");
 #else
 			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "download");
+#endif
+		case rb_edl:
+			check_and_run_script("/sbin/rebootedl.sh", "reboot edl");
+#ifdef ANDROID_RB_PROPERTY
+			return property_set(ANDROID_RB_PROPERTY, "reboot,edl");
+#else
+			return __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, (void*) "edl");
 #endif
 		default:
 			return -1;
@@ -685,10 +753,23 @@ int TWFunc::removeDir(const string path, bool skipParent) {
 }
 
 int TWFunc::copy_file(string src, string dst, int mode) {
-	LOGINFO("Copying file %s to %s\n", src.c_str(), dst.c_str());
-	ifstream srcfile(src.c_str(), ios::binary);
-	ofstream dstfile(dst.c_str(), ios::binary);
+	PartitionManager.Mount_By_Path(src, false);
+	PartitionManager.Mount_By_Path(dst, false);
+	if (!Path_Exists(src)) {
+		LOGINFO("Unable to find source file %s\n", src.c_str());
+		return -1;
+	}
+	std::ifstream srcfile(src, ios::binary);
+	std::ofstream dstfile(dst, ios::binary);
 	dstfile << srcfile.rdbuf();
+	if (!dstfile.bad()) {
+		LOGINFO("Copied file %s to %s\n", src.c_str(), dst.c_str());
+	}
+	else {
+		LOGINFO("Unable to copy file %s to %s\n", src.c_str(), dst.c_str());
+		return -1;
+	}
+
 	srcfile.close();
 	dstfile.close();
 	if (chmod(dst.c_str(), mode) != 0)
@@ -810,19 +891,19 @@ string TWFunc::Get_Current_Date() {
 }
 
 string TWFunc::System_Property_Get(string Prop_Name) {
-	bool mount_state = PartitionManager.Is_Mounted_By_Path("/system");
+	bool mount_state = PartitionManager.Is_Mounted_By_Path(PartitionManager.Get_Android_Root_Path());
 	std::vector<string> buildprop;
 	string propvalue;
-	if (!PartitionManager.Mount_By_Path("/system", true))
+	if (!PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), true))
 		return propvalue;
 	string prop_file = "/system/build.prop";
 	if (!TWFunc::Path_Exists(prop_file))
-		prop_file = "/system/system/build.prop"; // for devices with system as a root file system (e.g. Pixel)
+		prop_file = PartitionManager.Get_Android_Root_Path() + "/system/build.prop"; // for devices with system as a root file system (e.g. Pixel)
 	if (TWFunc::read_file(prop_file, buildprop) != 0) {
-		LOGINFO("Unable to open /system/build.prop for getting '%s'.\n", Prop_Name.c_str());
+		LOGINFO("Unable to open build.prop for getting '%s'.\n", Prop_Name.c_str());
 		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
 		if (!mount_state)
-			PartitionManager.UnMount_By_Path("/system", false);
+			PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
 		return propvalue;
 	}
 	int line_count = buildprop.size();
@@ -835,12 +916,12 @@ string TWFunc::System_Property_Get(string Prop_Name) {
 		if (propname == Prop_Name) {
 			propvalue = buildprop.at(index).substr(end_pos + 1, buildprop.at(index).size());
 			if (!mount_state)
-				PartitionManager.UnMount_By_Path("/system", false);
+				PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
 			return propvalue;
 		}
 	}
 	if (!mount_state)
-		PartitionManager.UnMount_By_Path("/system", false);
+		PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
 	return propvalue;
 }
 
@@ -866,10 +947,11 @@ void TWFunc::Auto_Generate_Backup_Name() {
 		space_check = Backup_Name.substr(Backup_Name.size() - 1, 1);
 	}
 	replace(Backup_Name.begin(), Backup_Name.end(), ' ', '_');
-	DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
-	if (PartitionManager.Check_Backup_Name(false) != 0) {
-		LOGINFO("Auto generated backup name '%s' contains invalid characters, using date instead.\n", Backup_Name.c_str());
+	if (PartitionManager.Check_Backup_Name(Backup_Name, false, true) != 0) {
+		LOGINFO("Auto generated backup name '%s' is not valid, using date instead.\n", Backup_Name.c_str());
 		DataManager::SetValue(TW_BACKUP_NAME, Get_Current_Date());
+	} else {
+		DataManager::SetValue(TW_BACKUP_NAME, Backup_Name);
 	}
 }
 
@@ -923,7 +1005,7 @@ void TWFunc::Fixup_Time_On_Boot(const string& time_paths /* = "" */)
 
 	std::vector<std::string> paths; // space separated list of paths
 	if (time_paths.empty()) {
-		paths = Split_String("/data/system/time/ /data/time/", " ");
+		paths = Split_String("/data/system/time/ /data/time/ /data/vendor/time/", " ");
 		if (!PartitionManager.Mount_By_Path("/data", false))
 			return;
 	} else {
@@ -1096,14 +1178,14 @@ std::string TWFunc::to_string(unsigned long value) {
 }
 
 void TWFunc::Disable_Stock_Recovery_Replace(void) {
-	if (PartitionManager.Mount_By_Path("/system", false)) {
+	if (PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), false)) {
 		// Disable flashing of stock recovery
 		if (TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
 			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
 			gui_msg("rename_stock=Renamed stock recovery file in /system to prevent the stock ROM from replacing TWRP.");
 			sync();
 		}
-		PartitionManager.UnMount_By_Path("/system", false);
+		PartitionManager.UnMount_By_Path(PartitionManager.Get_Android_Root_Path(), false);
 	}
 }
 
@@ -1154,5 +1236,83 @@ int TWFunc::stream_adb_backup(string &Restore_Name) {
 	if (ret != 0)
 		return -1;
 	return ret;
+}
+
+std::string TWFunc::get_cache_dir() {
+	if (PartitionManager.Find_Partition_By_Path(NON_AB_CACHE_DIR) == NULL) {
+		if (PartitionManager.Find_Partition_By_Path(AB_CACHE_DIR) == NULL) {
+			if (PartitionManager.Find_Partition_By_Path(PERSIST_CACHE_DIR) == NULL) {
+				LOGINFO("Unable to find a directory to store TWRP logs.");
+				return "";
+			}
+			return PERSIST_CACHE_DIR;
+		} else {
+			return AB_CACHE_DIR;
+		}
+	}
+	else {
+		return NON_AB_CACHE_DIR;
+	}
+}
+
+void TWFunc::check_selinux_support() {
+	if (TWFunc::Path_Exists("/prebuilt_file_contexts")) {
+		if (TWFunc::Path_Exists("/file_contexts")) {
+			printf("Renaming regular /file_contexts -> /file_contexts.bak\n");
+			rename("/file_contexts", "/file_contexts.bak");
+		}
+		printf("Moving /prebuilt_file_contexts -> /file_contexts\n");
+		rename("/prebuilt_file_contexts", "/file_contexts");
+	}
+	struct selinux_opt selinux_options[] = {
+		{ SELABEL_OPT_PATH, "/file_contexts" }
+	};
+	selinux_handle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
+	if (!selinux_handle)
+		printf("No file contexts for SELinux\n");
+	else
+		printf("SELinux contexts loaded from /file_contexts\n");
+	{ // Check to ensure SELinux can be supported by the kernel
+		char *contexts = NULL;
+		std::string cacheDir = TWFunc::get_cache_dir();
+		std::string se_context_check = cacheDir + "recovery/";
+		int ret = 0;
+
+		if (cacheDir == NON_AB_CACHE_DIR) {
+			PartitionManager.Mount_By_Path(NON_AB_CACHE_DIR, false);
+		}
+		if (TWFunc::Path_Exists(se_context_check)) {
+			ret = lgetfilecon(se_context_check.c_str(), &contexts);
+			if (ret < 0) {
+				LOGINFO("Could not check %s SELinux contexts, using /sbin/teamwin instead which may be inaccurate.\n", se_context_check.c_str());
+				lgetfilecon("/sbin/teamwin", &contexts);
+			}
+		}
+		if (ret < 0) {
+			gui_warn("no_kernel_selinux=Kernel does not have support for reading SELinux contexts.");
+		} else {
+			free(contexts);
+			gui_msg("full_selinux=Full SELinux support is present.");
+		}
+	}
+}
+
+bool TWFunc::Is_TWRP_App_In_System() {
+	if (PartitionManager.Mount_By_Path(PartitionManager.Get_Android_Root_Path(), false)) {
+		string base_path = PartitionManager.Get_Android_Root_Path();
+		if (TWFunc::Path_Exists(PartitionManager.Get_Android_Root_Path() + "/system"))
+			base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
+		string install_path = base_path + "/priv-app";
+		if (!TWFunc::Path_Exists(install_path))
+			install_path = base_path + "/app";
+		install_path += "/twrpapp";
+		if (TWFunc::Path_Exists(install_path)) {
+			LOGINFO("App found at '%s'\n", install_path.c_str());
+			DataManager::SetValue("tw_app_installed_in_system", 1);
+			return true;
+		}
+	}
+	DataManager::SetValue("tw_app_installed_in_system", 0);
+	return false;
 }
 #endif // ndef BUILD_TWRPTAR_MAIN

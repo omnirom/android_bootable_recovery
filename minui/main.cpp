@@ -89,11 +89,11 @@ int main() {
 	gr_color(255, 255, 255, 255);
 	gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 	gr_color(255, 0, 0, 255);
-	gr_text(10, 10, "RED red RED", false);
+	gr_text(gr_sys_font(), 10, 10, "RED red RED", false);
 	gr_color(0, 255, 0, 255);
-	gr_text(10, 50, "GREEN green GREEN", false);
+	gr_text(gr_sys_font(), 10, 50, "GREEN green GREEN", false);
 	gr_color(0, 0, 255, 255);
-	gr_text(10, 90, "BLUE blue BLUE", false);
+	gr_text(gr_sys_font(), 10, 90, "BLUE blue BLUE", false);
 	gr_flip();
 	sleep(3);
 	printf("PNG test with /res/images/test.png\n");

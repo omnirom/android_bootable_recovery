@@ -24,8 +24,7 @@ LOCAL_CFLAGS := \
   -D_FILE_OFFSET_BITS=64 \
   -Werror \
   -Wall \
-  -Wextra \
-  -Wno-unused-parameter
+  -Wextra
 LOCAL_SHARED_LIBRARIES := liblog
 LOCAL_STATIC_LIBRARIES := libbootloader_message libfs_mgr libbase
 LOCAL_POST_INSTALL_CMD := \

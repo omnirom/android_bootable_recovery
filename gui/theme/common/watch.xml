@@ -166,6 +166,16 @@
 			<font resource="font_m" spacing="%partitionlist_spacing%" color="%text_color%" highlightcolor="%fileselector_highlight_font_color%"/>
 		</style>
 
+		<style name="advanced_listbox">
+			<highlight color="%fileselector_highlight_color%"/>
+			<fastscroll linecolor="%fileselector_linecolor%" rectcolor="%accent_color%" w="%fastscroll_w%" linew="%fastscroll_linew%" rectw="%fastscroll_rectw%" recth="%fastscroll_recth%"/>
+			<separator color="%fileselector_linecolor%" height="%fileselector_separatorheight%"/>
+			<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%"/>
+			<icon selected="handle" unselected="handle"/>
+			<background color="%background_color%"/>
+			<font resource="font_m" spacing="%fileselector_spacing%" color="%text_color%" highlightcolor="%accent_color%"/>
+		</style>
+
 		<style name="slider">
 			<placement x="%center_x%" y="%slider_y%"/>
 			<font resource="font_l" color="%text_color%"/>
@@ -706,6 +716,7 @@
 			<template name="console"/>
 
 			<button style="main_button_half_height">
+				<condition var1="tw_ab_device" var2="0"/>
 				<placement x="%col1_x_left%" y="%row13_y%"/>
 				<text>{@wipe_cache_dalvik_btn=Wipe cache/dalvik}</text>
 				<actions>
@@ -718,7 +729,23 @@
 					<action function="set">tw_text1={@wipe_cache_dalvik_confirm=Wipe Cache &amp; Dalvik?}</action>
 					<action function="set">tw_action_text1={@wiping_cache_dalvik=Wiping Cache &amp; Dalvik...}</action>
 					<action function="set">tw_complete_text1={@wipe_cache_dalvik_complete=Cache &amp; Dalvik Wipe Complete}</action>
-					<action function="set">tw_slider_text={@swipe_wipe_s=   Wipe}</action>
+					<action function="set">tw_slider_text={@swipe_wipe=Swipe to Wipe}</action>
+					<action function="page">confirm_action</action>
+				</actions>
+			</button>
+
+			<button style="main_button_half_height">
+				<condition var1="tw_ab_device" var2="1"/>
+				<placement x="%indent%" y="%row21a_y%"/>
+				<text>{@wipe_dalvik_btn=Wipe Dalvik}</text>
+				<actions>
+					<action function="set">tw_back=flash_done</action>
+					<action function="set">tw_action=wipe</action>
+					<action function="set">tw_action_param=dalvik</action>
+					<action function="set">tw_text1={@wipe_dalvik_confirm=Wipe Dalvik?}</action>
+					<action function="set">tw_action_text1={@wiping_cache_dalvik=Wiping Dalvik...}</action>
+					<action function="set">tw_complete_text1={@wipe_dalvik_complete=Dalvik Wipe Complete}</action>
+					<action function="set">tw_slider_text={@swipe_wipe=Swipe to Wipe}</action>
 					<action function="page">confirm_action</action>
 				</actions>
 			</button>
@@ -3342,6 +3369,24 @@
 					<action function="page">rebootcheck</action>
 				</actions>
 			</button>
+			<button style="main_button">
+				<condition var1="tw_edl_mode" var2="1"/>
+				<placement x="%col1_x_right%" y="%row11_y%"/>
+				<text>{@rb_edl_btn=Edl}</text>
+				<actions>
+					<action function="set">tw_back=reboot</action>
+					<action function="set">tw_action=reboot</action>
+					<action function="set">tw_action_param=edl</action>
+					<action function="set">tw_reboot_param=edl</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_text1={@no_os1=No OS Installed! Are you}</action>
+					<action function="set">tw_text2={@no_osrb=sure you wish to reboot?}</action>
+					<action function="set">tw_action_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_complete_text1={@rebooting=Rebooting...}</action>
+					<action function="set">tw_slider_text={@swipe_reboot_s=   Reboot}</action>
+					<action function="page">rebootcheck</action>
+				</actions>
+			</button>
 
 			<action>
 				<touch key="home"/>
@@ -3518,6 +3563,7 @@
 			</button>
 
 			<button style="main_button">
+				<condition var1="tw_disable_haptics" var2="0"/>
 				<placement x="%col1_x_right%" y="%row6_y%"/>
 				<text>{@settings_vibration_btn=Vibration}</text>
 				<action function="page">settings_vibration</action>
@@ -4068,42 +4114,116 @@
 				<action function="page">fixcontexts</action>
 			</button>
 
-			<button style="main_button">
-				<placement x="%col1_x_left%" y="%row6_y%"/>
-				<text>{@reload_theme_btn=Reload Theme}</text>
-				<action function="reload"/>
+			<button>
+				<placement x="%btn4_col4_x%" y="%row11_y%"/>
+				<highlight color="%highlight_color%"/>
+				<image resource="q_btn_arrow_right"/>
+				<action function="page">advanced2</action>
 			</button>
 
-			<button style="main_button">
-				<condition var1="tw_allow_partition_sdcard" var2="1"/>
-				<placement x="%col1_x_right%" y="%row6_y%"/>
-				<text>{@part_sd_s_btn=SD Card}</text>
-				<actions>
-					<action function="set">partitionlisterror=0</action>
-					<action function="page">partsdcardsel</action>
-				</actions>
-			</button>
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
 
-			<button style="main_button">
-				<condition var1="tw_show_dumlock" var2="1"/>
+			<action>
+				<touch key="back"/>
+				<action function="page">main3</action>
+			</action>
+		</page>
+
+		<page name="advanced2">
+			<template name="page"/>
+
+			<template name="statusbar"/>
+
+			<text style="text_m">
+				<placement x="%col1_x_left%" y="%row1_header_y%"/>
+				<text>{@advanced_hdr=Advanced}</text>
+			</text>
+
+			<listbox style="advanced_listbox">
+				<placement x="%indent%" y="%row2_header_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<listitem name="{@reload_theme_btn=Reload Theme}">
+					<action function="reload"/>
+				</listitem>
+				<listitem name="{@part_sd_btn=Partition SD Card}">
+					<condition var1="tw_allow_partition_sdcard" var2="1"/>
+					<actions>
+						<action function="set">partitionlisterror=0</action>
+						<action function="page">partsdcardsel</action>
+					</actions>
+				</listitem>
+				<listitem name="{@dumlock_btn=HTC Dumlock}">
+					<condition var1="tw_show_dumlock" var2="1"/>
+					<action function="page">htcdumlock</action>
+				</listitem>
+				<listitem name="{@inject_twrp_btn=Inject TWRP}">
+					<condition var1="tw_has_injecttwrp" var2="1"/>
+					<actions>
+						<action function="set">tw_back=advanced</action>
+						<action function="set">tw_action=reinjecttwrp</action>
+						<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
+						<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
+						<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
+						<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+						<action function="page">confirm_action</action>
+					</actions>
+				</listitem>
+				<listitem name="{@install_twrp_ramdisk=Install Recovery Ramdisk}">
+					<conditions>
+						<condition var1="tw_has_boot_slots" var2="1"/>
+						<condition var1="tw_has_repack_tools" var2="1"/>
+					</conditions>
+					<actions>
+						<action function="set">tw_repack_kernel=0</action>
+						<action function="page">repackselect</action>
+					</actions>
+				</listitem>
+				<listitem name="{@install_kernel=Install Kernel}">
+					<conditions>
+						<condition var1="tw_has_boot_slots" var2="1"/>
+						<condition var1="tw_has_repack_tools" var2="1"/>
+					</conditions>
+					<actions>
+						<action function="set">tw_repack_kernel=1</action>
+						<action function="page">repackselect</action>
+					</actions>
+				</listitem>
+				<listitem name="{@fix_recovery_loop=Fix Recovery Bootloop}">
+					<conditions>
+						<condition var1="tw_has_boot_slots" var2="1"/>
+						<condition var1="tw_has_repack_tools" var2="1"/>
+					</conditions>
+					<actions>
+						<action function="set">tw_back=advanced</action>
+						<action function="set">tw_action=fixabrecoverybootloop</action>
+						<action function="set">tw_text1={@fix_recovery_loop_confirm=Fix Recovery Bootloop?}</action>
+						<action function="set">tw_action_text1={@fixing_recovery_loop=Fixing Recovery Bootloop...}</action>
+						<action function="set">tw_complete_text1={@fix_recovery_loop_complete=Fix Recovery Bootloop Complete}</action>
+						<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+						<action function="page">confirm_action</action>
+					</actions>
+				</listitem>
+				<listitem name="{@uninstall_twrp_system_app=Uninstall TWRP App from System}">
+					<condition var1="tw_app_installed_in_system" var2="1"/>
+					<actions>
+						<action function="set">tw_back=advanced</action>
+						<action function="set">tw_action=uninstalltwrpsystemapp</action>
+						<action function="set">tw_text1={@uninstall_twrp_system_app_confirm=Uninstall TWRP App from System?}</action>
+						<action function="set">tw_action_text1={@uninstalling_twrp_system_app=Uninstalling TWRP App from System...}</action>
+						<action function="set">tw_complete_text1={@uninstall_twrp_system_app_complete=Uninstall TWRP App from System Complete}</action>
+						<action function="set">tw_slider_text={@swipe_to_confirm=Swipe to Confirm}</action>
+						<action function="page">confirm_action</action>
+					</actions>
+				</listitem>
+			</listbox>
+
+			<button>
 				<placement x="%col1_x_left%" y="%row11_y%"/>
-				<text>{@dumlock_btn=HTC Dumlock}</text>
-				<action function="page">htcdumlock</action>
-			</button>
-
-			<button style="main_button">
-				<condition var1="tw_has_injecttwrp" var2="1"/>
-				<placement x="%col1_x_right%" y="%row11_y%"/>
-				<text>{@inject_twrp_btn=Inject TWRP}</text>
-				<actions>
-					<action function="set">tw_back=advanced</action>
-					<action function="set">tw_action=reinjecttwrp</action>
-					<action function="set">tw_text1={@inject_twrp_confirm=Re-Inject TWRP?}</action>
-					<action function="set">tw_action_text1={@injecting_twrp=Re-Injecting TWRP...}</action>
-					<action function="set">tw_complete_text1={@inject_twrp_complete=TWRP Injection Complete}</action>
-					<action function="set">tw_slider_text={@swipe_confirm=   Confirm}</action>
-					<action function="page">confirm_action</action>
-				</actions>
+				<highlight color="%highlight_color%"/>
+				<image resource="q_btn_arrow_left"/>
+				<action function="page">advanced</action>
 			</button>
 
 			<action>
@@ -4500,6 +4620,121 @@
 			<action>
 				<touch key="back"/>
 				<action function="page">advanced</action>
+			</action>
+		</page>
+
+		<page name="repackselect">
+			<template name="page"/>
+
+			<template name="statusbar"/>
+
+			<text style="text_m">
+				<placement x="%col1_x_left%" y="%row1_header_y%"/>
+				<text>{@repack_image_hdr=Select Image}</text>
+			</text>
+
+			<fileselector>
+				<placement x="%indent%" y="%row2_header_y%" w="%content_width%" h="%fileselector_install_height%"/>
+				<text>%tw_zip_location%</text>
+				<filter extn=".img" folders="1" files="1"/>
+				<path name="tw_zip_location" default="/sdcard"/>
+				<data name="tw_filename"/>
+				<selection name="tw_file"/>
+			</fileselector>
+
+			<button>
+				<placement x="%btn4_col4_x%" y="%row11_y%"/>
+				<highlight color="%highlight_color%"/>
+				<image resource="q_btn_storage"/>
+				<actions>
+					<action function="set">tw_storagetext={@install_hdr=Install} &gt; {@select_storage_hdr=Select Storage}</action>
+					<action function="set">tw_back=install</action>
+					<action function="page">select_storage</action>
+				</actions>
+			</button>
+
+			<action>
+				<conditions>
+					<condition var1="tw_filename" op="modified"/>
+				</conditions>
+				<action function="page">repackconfirm</action>
+			</action>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">advanced</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
+			</action>
+		</page>
+
+		<page name="repackconfirm">
+			<template name="page"/>
+
+			<template name="statusbar"/>
+
+			<text style="text_m">
+				<condition var1="tw_repack_kernel" var2="1"/>
+				<placement x="%col1_x_left%" y="%row1_header_y%"/>
+				<text>{@repack_kernel_confirm=Install Kernel?}</text>
+			</text>
+
+			<text style="text_m">
+				<condition var1="tw_repack_kernel" var2="0"/>
+				<placement x="%col1_x_left%" y="%row1_header_y%"/>
+				<text>{@repack_ramdisk_confirm=Install Recovery?}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row2_y%"/>
+				<text>{@folder=Folder:}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row3_y%"/>
+				<text>%tw_zip_location%</text>
+			</text>
+
+			<text style="text_m_accent">
+				<placement x="%indent%" y="%row4_y%"/>
+				<text>{@file=File:}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%indent%" y="%row5_y%"/>
+				<text>%tw_file%</text>
+			</text>
+
+			<checkbox>
+				<placement x="%indent%" y="%row7_y%"/>
+				<text>{@repack_backup_first=Back up existing image first}</text>
+				<data variable="tw_repack_backup_first"/>
+			</checkbox>
+
+			<slider>
+				<text>{@swipe_to_install=Swipe to Install}</text>
+				<actions>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=repackimage</action>
+					<action function="set">tw_action_param=/boot</action>
+					<action function="set">tw_action_text1={@installing=Installing...}</action>
+					<action function="set">tw_action_text2=</action>
+					<action function="set">tw_complete_text1={@install_complete=Install Complete}</action>
+					<action function="page">action_page</action>
+				</actions>
+			</slider>
+
+			<action>
+				<touch key="back"/>
+				<action function="page">repackselect</action>
+			</action>
+
+			<action>
+				<touch key="home"/>
+				<action function="page">main</action>
 			</action>
 		</page>
 

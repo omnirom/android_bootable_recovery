@@ -78,7 +78,7 @@ otherdisplay = otherdoc.getElementsByTagName('display')
 for disnode in otherdisplay:
 	if disnode.nodeType == disnode.ELEMENT_NODE:
 		language.appendChild(disnode)
-		otherlang = disnode.firstChild.data
+		otherlang = disnode.firstChild.data.encode("utf-8")
 		print otherlang
 
 # resources
@@ -128,7 +128,7 @@ for resnode in enres:
 							resources.appendChild(others)
 						break
 				if found == False:
-					print "'%s' present in English and not in %s" % (child.attributes['name'].value, otherlang)
+					print "'%s' present in English and not in %s" % (child.attributes['name'].value.encode("utf-8"), otherlang)
 					notfound_err = "NOT FOUND " + child.toxml()
 					notfound_comment = doc.createComment(notfound_err)
 					resources.appendChild(notfound_comment)

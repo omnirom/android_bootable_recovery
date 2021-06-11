@@ -54,9 +54,6 @@ extern "C" {
 }
 #endif
 
-#include <selinux/label.h>
-struct selabel_handle *selinux_handle;
-
 //extern int adb_server_main(int is_daemon, int server_port, int /* reply_fd */);
 
 TWPartitionManager PartitionManager;
@@ -128,45 +125,6 @@ int main(int argc, char **argv) {
 	PartitionManager.Output_Partition_Logging();
 	// Load up all the resources
 	gui_loadResources();
-
-	if (TWFunc::Path_Exists("/prebuilt_file_contexts")) {
-		if (TWFunc::Path_Exists("/file_contexts")) {
-			printf("Renaming regular /file_contexts -> /file_contexts.bak\n");
-			rename("/file_contexts", "/file_contexts.bak");
-		}
-		printf("Moving /prebuilt_file_contexts -> /file_contexts\n");
-		rename("/prebuilt_file_contexts", "/file_contexts");
-	}
-	struct selinux_opt selinux_options[] = {
-		{ SELABEL_OPT_PATH, "/file_contexts" }
-	};
-	selinux_handle = selabel_open(SELABEL_CTX_FILE, selinux_options, 1);
-	if (!selinux_handle)
-		printf("No file contexts for SELinux\n");
-	else
-		printf("SELinux contexts loaded from /file_contexts\n");
-	{ // Check to ensure SELinux can be supported by the kernel
-		char *contexts = NULL;
-
-		if (PartitionManager.Mount_By_Path("/cache", false) && TWFunc::Path_Exists("/cache/recovery")) {
-			lgetfilecon("/cache/recovery", &contexts);
-			if (!contexts) {
-				lsetfilecon("/cache/recovery", "test");
-				lgetfilecon("/cache/recovery", &contexts);
-			}
-		} else {
-			LOGINFO("Could not check /cache/recovery SELinux contexts, using /sbin/teamwin instead which may be inaccurate.\n");
-			lgetfilecon("/sbin/teamwin", &contexts);
-		}
-		if (!contexts) {
-			gui_warn("no_kernel_selinux=Kernel does not have support for reading SELinux contexts.");
-		} else {
-			free(contexts);
-			gui_msg("full_selinux=Full SELinux support is present.");
-		}
-	}
-
-	PartitionManager.Mount_By_Path("/cache", false);
 
 	bool Shutdown = false;
 	bool SkipDecryption = false;
@@ -272,7 +230,6 @@ int main(int argc, char **argv) {
 	LOGINFO("Backup of TWRP ramdisk done.\n");
 #endif
 
-	TWFunc::Update_Log_File();
 	// Offer to decrypt if the device is encrypted
 	if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
 		if (SkipDecryption) {
@@ -283,10 +240,12 @@ int main(int argc, char **argv) {
 				LOGERR("Failed to start decrypt GUI page.\n");
 			} else {
 				// Check for and load custom theme if present
+				TWFunc::check_selinux_support();
 				gui_loadCustomResources();
 			}
 		}
 	} else if (datamedia) {
+		TWFunc::check_selinux_support();
 		if (tw_get_default_metadata(DataManager::GetSettingsStoragePath().c_str()) != 0) {
 			LOGINFO("Failed to get default contexts and file mode for storage files.\n");
 		} else {
@@ -294,17 +253,20 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	// Read the settings file
-	DataManager::ReadSettingsFile();
-	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
-	GUIConsole::Translate_Now();
-
 	// Fixup the RTC clock on devices which require it
 	if (crash_counter == 0)
 		TWFunc::Fixup_Time_On_Boot();
 
+	// Read the settings file
+	TWFunc::Update_Log_File();
+	DataManager::ReadSettingsFile();
+	PageManager::LoadLanguage(DataManager::GetStrValue("tw_language"));
+	GUIConsole::Translate_Now();
+
 	// Run any outstanding OpenRecoveryScript
-	if ((DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 || SkipDecryption) && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(SCRIPT_FILE_CACHE))) {
+	std::string cacheDir = TWFunc::get_cache_dir();
+	std::string orsFile = cacheDir + "/recovery/openrecoveryscript";
+	if ((DataManager::GetIntValue(TW_IS_ENCRYPTED) == 0 || SkipDecryption) && (TWFunc::Path_Exists(SCRIPT_FILE_TMP) || TWFunc::Path_Exists(orsFile))) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
 	}
 
@@ -333,7 +295,7 @@ int main(int argc, char **argv) {
 
 #ifndef TW_OEM_BUILD
 	// Check if system has never been changed
-	TWPartition* sys = PartitionManager.Find_Partition_By_Path("/system");
+	TWPartition* sys = PartitionManager.Find_Partition_By_Path(PartitionManager.Get_Android_Root_Path());
 	TWPartition* ven = PartitionManager.Find_Partition_By_Path("/vendor");
 
 	if (sys) {
@@ -383,8 +345,11 @@ int main(int argc, char **argv) {
 		TWFunc::tw_reboot(rb_bootloader);
 	else if (Reboot_Arg == "download")
 		TWFunc::tw_reboot(rb_download);
+	else if (Reboot_Arg == "edl")
+		TWFunc::tw_reboot(rb_edl);
 	else
 		TWFunc::tw_reboot(rb_system);
 
 	return 0;
 }
+

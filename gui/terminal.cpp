@@ -530,7 +530,11 @@ private:
 		switch (ch)
 		{
 			case 7: // BEL
+
+#ifndef TW_NO_HAPTICS
 				DataManager::Vibrate("tw_button_vibrate");
+#endif
+
 				break;
 			case 8: // BS
 				left();
@@ -861,9 +865,12 @@ size_t GUITerminal::GetItemCount()
 	return engine->getLinesCount();
 }
 
-void GUITerminal::RenderItem(size_t itemindex, int yPos, bool selected)
+void GUITerminal::RenderItem(size_t itemindex, int yPos, bool selected __unused)
 {
 	const TerminalEngine::Line& line = engine->getLine(itemindex);
+	
+	if (!mFont || !mFont->GetResource())
+		return;
 
 	gr_color(mFontColor.red, mFontColor.green, mFontColor.blue, mFontColor.alpha);
 	// later: handle attributes here
@@ -887,7 +894,7 @@ void GUITerminal::RenderItem(size_t itemindex, int yPos, bool selected)
 	}
 }
 
-void GUITerminal::NotifySelect(size_t item_selected)
+void GUITerminal::NotifySelect(size_t item_selected __unused)
 {
 	// do nothing - terminal ignores selections
 }
@@ -897,8 +904,10 @@ void GUITerminal::InitAndResize()
 	// make sure the shell is started
 	engine->initPty();
 	// send window resize
-	int charWidth = gr_ttf_measureEx("N", mFont->GetResource());
-	engine->setSize(mRenderW / charWidth, GetDisplayItemCount(), mRenderW, mRenderH);
+	if (mFont && mFont->GetResource()) {
+		int charWidth = gr_ttf_measureEx("N", mFont->GetResource());
+		engine->setSize(mRenderW / charWidth, GetDisplayItemCount(), mRenderW, mRenderH);
+	}
 }
 
 void GUITerminal::SetPageFocus(int inFocus)

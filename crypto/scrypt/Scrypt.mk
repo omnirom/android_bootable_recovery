@@ -27,7 +27,11 @@ LOCAL_CFLAGS += $(target_c_flags)
 LOCAL_C_INCLUDES += $(target_c_includes) $(commands_recovery_local_path)/crypto/scrypt/lib/util
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE:= libscrypttwrp_static
-LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+    LOCAL_REQUIRED_MODULES := $(local_additional_dependencies)
+else
+    LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+endif
 include $(BUILD_STATIC_LIBRARY)
 
 ########################################
@@ -42,5 +46,9 @@ LOCAL_C_INCLUDES += $(host_c_includes) $(commands_recovery_local_path)/crypto/sc
 LOCAL_LDLIBS += -ldl
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE:= libscrypttwrp_static
-LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+    LOCAL_REQUIRED_MODULES := $(local_additional_dependencies)
+else
+    LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+endif
 include $(BUILD_HOST_STATIC_LIBRARY)

@@ -35,6 +35,8 @@
 #include "../gui/placement.h"
 #include "minui.h"
 #include "graphics.h"
+// For std::min and std::max
+#include <algorithm>
 
 struct GRFont {
     GRSurface* texture;
@@ -42,7 +44,6 @@ struct GRFont {
     int cheight;
 };
 
-static GRFont* gr_font = NULL;
 static minui_backend* gr_backend = NULL;
 
 static int overscan_percent = OVERSCAN_PERCENT;
@@ -52,11 +53,6 @@ static int overscan_offset_y = 0;
 static unsigned char gr_current_r = 255;
 static unsigned char gr_current_g = 255;
 static unsigned char gr_current_b = 255;
-static unsigned char gr_current_a = 255;
-static unsigned char rgb_555[2];
-static unsigned char gr_current_r5 = 31;
-static unsigned char gr_current_g5 = 63;
-static unsigned char gr_current_b5 = 31;
 
 GRSurface* gr_draw = NULL;
 
@@ -64,19 +60,12 @@ static GGLContext *gr_context = 0;
 GGLSurface gr_mem_surface;
 static int gr_is_curr_clr_opaque = 0;
 
-static bool outside(int x, int y)
-{
-    return x < 0 || x >= gr_draw->width || y < 0 || y >= gr_draw->height;
-}
-
 int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width, int placement, int scale)
 {
     GGLContext *gl = gr_context;
     void* vfont = pFont;
     GRFont *font = (GRFont*) pFont;
-    unsigned off;
-    unsigned cwidth;
-    int y_scale = 0, measured_width, measured_height, ret, new_height;
+    int y_scale = 0, measured_width, measured_height, new_height;
 
     if (!s || strlen(s) == 0 || !font)
         return 0;
@@ -118,32 +107,51 @@ int gr_textEx_scaleW(int x, int y, const char *s, void* pFont, int max_width, in
         else if (placement == BOTTOM_LEFT || placement == BOTTOM_RIGHT)
             y -= measured_height;
     }
-    return gr_ttf_textExWH(gl, x, y + y_scale, s, vfont, measured_width + x, -1);
+    return gr_ttf_textExWH(gl, x, y + y_scale, s, vfont, measured_width + x, -1, gr_draw);
 }
 
 void gr_clip(int x, int y, int w, int h)
 {
     GGLContext *gl = gr_context;
+
+#if TW_ROTATION == 0
     gl->scissor(gl, x, y, w, h);
+#elif TW_ROTATION == 90
+    gl->scissor(gl, gr_draw->width - y - h, x, h, w);
+#elif TW_ROTATION == 270
+    gl->scissor(gl, y, gr_draw->height - x - w, h, w);
+#else
+    int t_disp = gr_draw->height - y - h;
+    int l_disp = gr_draw->width - x - w;
+    gl->scissor(gl, l_disp, t_disp, w, h);
+#endif
     gl->enable(gl, GGL_SCISSOR_TEST);
 }
 
 void gr_noclip()
 {
     GGLContext *gl = gr_context;
-    gl->scissor(gl, 0, 0, gr_fb_width(), gr_fb_height());
+    gl->scissor(gl, 0, 0,
+                gr_draw->width - 2 * overscan_offset_x,
+                gr_draw->height - 2 * overscan_offset_y);
     gl->disable(gl, GGL_SCISSOR_TEST);
 }
 
 void gr_line(int x0, int y0, int x1, int y1, int width)
 {
     GGLContext *gl = gr_context;
+    int x0_disp, y0_disp, x1_disp, y1_disp;
+
+    x0_disp = ROTATION_X_DISP(x0, y0, gr_draw);
+    y0_disp = ROTATION_Y_DISP(x0, y0, gr_draw);
+    x1_disp = ROTATION_X_DISP(x1, y1, gr_draw);
+    y1_disp = ROTATION_Y_DISP(x1, y1, gr_draw);
 
     if(gr_is_curr_clr_opaque)
         gl->disable(gl, GGL_BLEND);
 
-    const int coords0[2] = { x0 << 4, y0 << 4 };
-    const int coords1[2] = { x1 << 4, y1 << 4 };
+    const int coords0[2] = { x0_disp << 4, y0_disp << 4 };
+    const int coords1[2] = { x1_disp << 4, y1_disp << 4 };
     gl->linex(gl, coords0, coords1, width << 4);
 
     if(gr_is_curr_clr_opaque)
@@ -170,7 +178,11 @@ gr_surface gr_render_circle(int radius, unsigned char r, unsigned char g, unsign
     surface->height = diameter;
     surface->stride = diameter;
     surface->data = (GGLubyte*)data;
+#if defined(RECOVERY_BGRA)
+    surface->format = GGL_PIXEL_FORMAT_BGRA_8888;
+#else
     surface->format = GGL_PIXEL_FORMAT_RGBA_8888;
+#endif
 
     for(ry = -radius; ry <= radius; ++ry)
         for(rx = -radius; rx <= radius; ++rx)
@@ -227,17 +239,29 @@ void gr_clear()
 void gr_fill(int x, int y, int w, int h)
 {
     GGLContext *gl = gr_context;
+    int x0_disp, y0_disp, x1_disp, y1_disp;
+    int l_disp, r_disp, t_disp, b_disp;
 
     if(gr_is_curr_clr_opaque)
         gl->disable(gl, GGL_BLEND);
 
-    gl->recti(gl, x, y, x + w, y + h);
+    x0_disp = ROTATION_X_DISP(x, y, gr_draw);
+    y0_disp = ROTATION_Y_DISP(x, y, gr_draw);
+    x1_disp = ROTATION_X_DISP(x + w, y + h, gr_draw);
+    y1_disp = ROTATION_Y_DISP(x + w, y + h, gr_draw);
+    l_disp = std::min(x0_disp, x1_disp);
+    r_disp = std::max(x0_disp, x1_disp);
+    t_disp = std::min(y0_disp, y1_disp);
+    b_disp = std::max(y0_disp, y1_disp);
+
+    gl->recti(gl, l_disp, t_disp, r_disp, b_disp);
 
     if(gr_is_curr_clr_opaque)
         gl->enable(gl, GGL_BLEND);
 }
 
-void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy) {
+void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy)
+{
     if (gr_context == NULL) {
         return;
     }
@@ -248,14 +272,49 @@ void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy) {
     if(surface->format == GGL_PIXEL_FORMAT_RGBX_8888)
         gl->disable(gl, GGL_BLEND);
 
+    int dx0_disp, dy0_disp, dx1_disp, dy1_disp;
+    int l_disp, r_disp, t_disp, b_disp;
+
+    // Figuring out display coordinates works for TW_ROTATION == 0 too,
+    // and isn't as expensive as allocating and rotating another surface,
+    // so we do this anyway.
+    dx0_disp = ROTATION_X_DISP(dx, dy, gr_draw);
+    dy0_disp = ROTATION_Y_DISP(dx, dy, gr_draw);
+    dx1_disp = ROTATION_X_DISP(dx + w, dy + h, gr_draw);
+    dy1_disp = ROTATION_Y_DISP(dx + w, dy + h, gr_draw);
+    l_disp = std::min(dx0_disp, dx1_disp);
+    r_disp = std::max(dx0_disp, dx1_disp);
+    t_disp = std::min(dy0_disp, dy1_disp);
+    b_disp = std::max(dy0_disp, dy1_disp);
+
+#if TW_ROTATION != 0
+    // Do not perform relatively expensive operation if not needed
+    GGLSurface surface_rotated;
+    surface_rotated.version = sizeof(surface_rotated);
+    // Skip the **(TW_ROTATION == 0)** || (TW_ROTATION == 180) check
+    // because we are under a TW_ROTATION != 0 conditional compilation statement
+    surface_rotated.width   = (TW_ROTATION == 180) ? surface->width  : surface->height;
+    surface_rotated.height  = (TW_ROTATION == 180) ? surface->height : surface->width;
+    surface_rotated.stride  = surface_rotated.width;
+    surface_rotated.format  = surface->format;
+    surface_rotated.data    = (GGLubyte*) malloc(surface_rotated.stride * surface_rotated.height * 4);
+    surface_ROTATION_transform((gr_surface) &surface_rotated, (const gr_surface) surface, 4);
+
+    gl->bindTexture(gl, &surface_rotated);
+#else
     gl->bindTexture(gl, surface);
+#endif
     gl->texEnvi(gl, GGL_TEXTURE_ENV, GGL_TEXTURE_ENV_MODE, GGL_REPLACE);
     gl->texGeni(gl, GGL_S, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
     gl->texGeni(gl, GGL_T, GGL_TEXTURE_GEN_MODE, GGL_ONE_TO_ONE);
     gl->enable(gl, GGL_TEXTURE_2D);
-    gl->texCoord2i(gl, sx - dx, sy - dy);
-    gl->recti(gl, dx, dy, dx + w, dy + h);
+    gl->texCoord2i(gl, sx - l_disp, sy - t_disp);
+    gl->recti(gl, l_disp, t_disp, r_disp, b_disp);
     gl->disable(gl, GGL_TEXTURE_2D);
+
+#if TW_ROTATION != 0
+    free(surface_rotated.data);
+#endif
 
     if(surface->format == GGL_PIXEL_FORMAT_RGBX_8888)
         gl->enable(gl, GGL_BLEND);
@@ -378,12 +437,16 @@ void gr_exit(void)
 
 int gr_fb_width(void)
 {
-    return gr_draw->width - 2*overscan_offset_x;
+    return (TW_ROTATION == 0 || TW_ROTATION == 180) ?
+            gr_draw->width  - 2 * overscan_offset_x :
+            gr_draw->height - 2 * overscan_offset_y;
 }
 
 int gr_fb_height(void)
 {
-    return gr_draw->height - 2*overscan_offset_y;
+    return (TW_ROTATION == 0 || TW_ROTATION == 180) ?
+            gr_draw->height - 2 * overscan_offset_y :
+            gr_draw->width  - 2 * overscan_offset_x;
 }
 
 void gr_fb_blank(bool blank)

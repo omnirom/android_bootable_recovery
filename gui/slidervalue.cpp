@@ -172,7 +172,10 @@ GUISliderValue::GUISliderValue(xml_node<>* node) : GUIObject(node)
 		mSliderH = LoadAttrIntScaleY(child, "sliderh", mSliderH);
 	}
 
-	mFontHeight = mFont->GetHeight();
+	if (mFont && mFont->GetResource())
+		mFontHeight = mFont->GetHeight();
+	else
+		mFontHeight = 0;
 
 	if (mShowCurr)
 	{

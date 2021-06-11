@@ -1,0 +1,8 @@
+service sys_servicemanager /system/bin/servicemanager
+    user root
+    group root
+    setenv PATH /system/bin
+    setenv LD_LIBRARY_PATH /system/lib64:/system/lib
+    disabled
+    oneshot
+    seclabel u:r:vold:s0

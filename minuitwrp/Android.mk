@@ -21,7 +21,11 @@ ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
   LOCAL_CFLAGS += -DMSM_BSP
   LOCAL_SRC_FILES += graphics_overlay.cpp
   ifeq ($(TARGET_PREBUILT_KERNEL),)
-    LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+      LOCAL_REQUIRED_MODULES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
+    else
+      LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
+    endif
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
   else
     ifeq ($(TARGET_CUSTOM_KERNEL_HEADERS),)
@@ -34,7 +38,7 @@ else
   LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minuitwrp/include
   # The header files required for adf graphics can cause compile errors
   # with adf graphics.
-  ifneq ($(wildcard system/core/adf/Android.mk),)
+  ifneq ($(wildcard system/core/adf/Android.*),)
     LOCAL_CFLAGS += -DHAS_ADF
     LOCAL_SRC_FILES += graphics_adf.cpp
     LOCAL_WHOLE_STATIC_LIBRARIES += libadf
@@ -45,7 +49,7 @@ ifeq ($(TW_NEW_ION_HEAP), true)
   LOCAL_CFLAGS += -DNEW_ION_HEAP
 endif
 
-ifneq ($(wildcard external/libdrm/Android.mk),)
+ifneq ($(wildcard external/libdrm/Android.*),)
   LOCAL_CFLAGS += -DHAS_DRM
   LOCAL_SRC_FILES += graphics_drm.cpp
   ifneq ($(wildcard external/libdrm/Android.common.mk),)
@@ -141,12 +145,40 @@ endif
 ifeq ($(TW_SCREEN_BLANK_ON_BOOT), true)
     LOCAL_CFLAGS += -DTW_SCREEN_BLANK_ON_BOOT
 endif
+ifeq ($(TW_NO_SCREEN_BLANK), true)
+  LOCAL_CFLAGS += -DTW_NO_SCREEN_BLANK
+endif
+ifneq ($(TW_BRIGHTNESS_PATH),)
+  LOCAL_CFLAGS += -DTW_BRIGHTNESS_PATH=\"$(TW_BRIGHTNESS_PATH)\"
+endif
+ifneq ($(TW_SECONDARY_BRIGHTNESS_PATH),)
+  LOCAL_CFLAGS += -DTW_SECONDARY_BRIGHTNESS_PATH=\"$(TW_SECONDARY_BRIGHTNESS_PATH)\"
+endif
+ifneq ($(TW_MAX_BRIGHTNESS),)
+  LOCAL_CFLAGS += -DTW_MAX_BRIGHTNESS=$(TW_MAX_BRIGHTNESS)
+else
+  LOCAL_CFLAGS += -DTW_MAX_BRIGHTNESS=255
+endif
+ifneq ($(TW_DEFAULT_BRIGHTNESS),)
+  LOCAL_CFLAGS += -DTW_DEFAULT_BRIGHTNESS=\"$(TW_DEFAULT_BRIGHTNESS)\"
+endif
+
 ifeq ($(TW_FBIOPAN), true)
     LOCAL_CFLAGS += -DTW_FBIOPAN
 endif
 
-ifeq ($(BOARD_HAS_FLIPPED_SCREEN), true)
-LOCAL_CFLAGS += -DBOARD_HAS_FLIPPED_SCREEN
+ifneq ($(TW_ROTATION),)
+  ifeq (,$(filter 0 90 180 270, $(TW_ROTATION)))
+    $(error TW_ROTATION must be set to 0, 90, 180 or 270. Currently set to $(TW_ROTATION))
+  endif
+  LOCAL_CFLAGS += -DTW_ROTATION=$(TW_ROTATION)
+else
+  # Support for old flag
+  ifeq ($(BOARD_HAS_FLIPPED_SCREEN), true)
+    LOCAL_CFLAGS += -DTW_ROTATION=180
+  else
+    LOCAL_CFLAGS += -DTW_ROTATION=0
+  endif
 endif
 
 ifeq ($(TW_IGNORE_MAJOR_AXIS_0), true)
@@ -179,7 +211,7 @@ endif
 LOCAL_CLANG := true
 
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
-LOCAL_SHARED_LIBRARIES += libft2 libz libc libcutils libpng libutils
+LOCAL_SHARED_LIBRARIES += libft2 libz libc libcutils libpng libutils libc++
 ifneq ($(TW_INCLUDE_JPEG),)
     LOCAL_SHARED_LIBRARIES += libjpeg
 endif

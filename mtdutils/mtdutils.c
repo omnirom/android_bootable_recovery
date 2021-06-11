@@ -605,16 +605,12 @@ off_t mtd_find_write_start(MtdWriteContext *ctx, off_t pos) {
     return pos;
 }
 
-#define BLOCK_SIZE    2048
-#define SPARE_SIZE    (BLOCK_SIZE >> 5)
+#define MTD_BLOCK_SIZE    2048
+#define SPARE_SIZE    (MTD_BLOCK_SIZE >> 5)
 #define HEADER_SIZE 2048
 
 int cmd_mtd_restore_raw_partition(const char *partition_name, const char *filename)
 {
-    const MtdPartition *ptn;
-    MtdWriteContext *write;
-    void *data;
-
     FILE* f = fopen(filename, "rb");
     if (f == NULL) {
         fprintf(stderr, "error opening %s", filename);
@@ -676,9 +672,8 @@ int cmd_mtd_backup_raw_partition(const char *partition_name, const char *filenam
 {
     MtdReadContext *in;
     const MtdPartition *partition;
-    char buf[BLOCK_SIZE + SPARE_SIZE];
+    char buf[MTD_BLOCK_SIZE + SPARE_SIZE];
     size_t partition_size;
-    size_t read_size;
     size_t total;
     int fd;
     int wrote;
@@ -724,7 +719,7 @@ int cmd_mtd_backup_raw_partition(const char *partition_name, const char *filenam
     }
 
     total = 0;
-    while ((len = mtd_read_data(in, buf, BLOCK_SIZE)) > 0) {
+    while ((len = mtd_read_data(in, buf, MTD_BLOCK_SIZE)) > 0) {
         wrote = write(fd, buf, len);
         if (wrote != len) {
             close(fd);
@@ -732,7 +727,7 @@ int cmd_mtd_backup_raw_partition(const char *partition_name, const char *filenam
             printf("error writing %s", filename);
             return -1;
         }
-        total += BLOCK_SIZE;
+        total += MTD_BLOCK_SIZE;
     }
 
     mtd_read_close(in);
@@ -749,8 +744,6 @@ int cmd_mtd_erase_raw_partition(const char *partition_name)
 {
     MtdWriteContext *out;
     size_t erased;
-    size_t total_size;
-    size_t erase_size;
 
     if (mtd_scan_partitions() <= 0)
     {
@@ -784,13 +777,13 @@ int cmd_mtd_erase_raw_partition(const char *partition_name)
     return 0;
 }
 
-int cmd_mtd_erase_partition(const char *partition, const char *filesystem)
+int cmd_mtd_erase_partition(const char *partition, const char *filesystem __unused)
 {
     return cmd_mtd_erase_raw_partition(partition);
 }
 
 
-int cmd_mtd_mount_partition(const char *partition, const char *mount_point, const char *filesystem, int read_only)
+int cmd_mtd_mount_partition(const char *partition, const char *mount_point, const char *filesystem __unused, int read_only)
 {
     mtd_scan_partitions();
     const MtdPartition *p;
@@ -804,7 +797,7 @@ int cmd_mtd_mount_partition(const char *partition, const char *mount_point, cons
 int cmd_mtd_get_partition_device(const char *partition, char *device)
 {
     mtd_scan_partitions();
-    MtdPartition *p = mtd_find_partition_by_name(partition);
+    const MtdPartition *p = mtd_find_partition_by_name(partition);
     if (p == NULL)
         return -1;
     sprintf(device, "/dev/block/mtdblock%d", p->device_index);

@@ -23,23 +23,31 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 
 //
 // Graphics.
 //
 
 struct GRSurface {
-    int width;
-    int height;
-    int row_bytes;
-    int pixel_bytes;
-    unsigned char* data;
+  int width;
+  int height;
+  int row_bytes;
+  int pixel_bytes;
+  unsigned char* data;
 };
 
 struct GRFont {
-    GRSurface* texture;
-    int char_width;
-    int char_height;
+  GRSurface* texture;
+  int char_width;
+  int char_height;
+};
+
+enum GRRotation {
+  ROTATION_NONE = 0,
+  ROTATION_RIGHT = 1,
+  ROTATION_DOWN = 2,
+  ROTATION_LEFT = 3,
 };
 
 int gr_init();
@@ -65,14 +73,17 @@ void gr_set_font(__attribute__ ((unused))const char* name);
 
 const GRFont* gr_sys_font();
 int gr_init_font(const char* name, GRFont** dest);
-void gr_text(const GRFont* font, int x, int y, const char *s, bool bold);
-int gr_measure(const GRFont* font, const char *s);
-void gr_font_size(const GRFont* font, int *x, int *y);
+void gr_text(const GRFont* font, int x, int y, const char* s, bool bold);
+int gr_measure(const GRFont* font, const char* s);
+void gr_font_size(const GRFont* font, int* x, int* y);
 #endif
 
 void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(GRSurface* surface);
 unsigned int gr_get_height(GRSurface* surface);
+
+// Set rotation, flips gr_fb_width/height if 90 degree rotation difference
+void gr_rotate(GRRotation rotation);
 
 //
 // Input events.
@@ -152,6 +163,9 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface);
 // these specialized images from Android resources.
 int res_create_localized_alpha_surface(const char* name, const char* locale,
                                        GRSurface** pSurface);
+
+// Return a list of locale strings embedded in |png_name|. Return a empty list in case of failure.
+std::vector<std::string> get_locales_in_png(const std::string& png_name);
 
 // Free a surface allocated by any of the res_create_*_surface()
 // functions.

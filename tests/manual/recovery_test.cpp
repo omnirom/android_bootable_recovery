@@ -209,7 +209,7 @@ TEST_P(ResourceTest, ValidateLocale) {
     ASSERT_GT(height, y + 1 + h) << "Locale: " << kLocale << " is not found in the file.";
     char* loc = reinterpret_cast<char*>(&row[5]);
     if (matches_locale(loc, kLocale.c_str())) {
-      EXPECT_TRUE(android::base::StartsWith(loc, kLocale.c_str()));
+      EXPECT_TRUE(android::base::StartsWith(loc, kLocale));
       break;
     } else {
       for (int i = 0; i < h; ++i, ++y) {

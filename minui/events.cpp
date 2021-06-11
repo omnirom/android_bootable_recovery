@@ -15,6 +15,7 @@
  */
 
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <linux/input.h>
 #include <stdio.h>
@@ -23,7 +24,6 @@
 #include <sys/epoll.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <errno.h>
 
 #include <functional>
 

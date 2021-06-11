@@ -24,7 +24,7 @@
 class twrpDigestDriver {
 public:
 
-	static bool Check_Restore_File_Digest(const string& Filename);		//Check the digest of a TWRP partition backup
+	static bool Check_File_Digest(const string& Filename);		//Check the digest of a TWRP partition backup
 	static bool Check_Digest(string Full_Filename);				//Check to make sure the digest is correct
 	static bool Write_Digest(string Full_Filename);				//Write the digest to a file
 	static bool Make_Digest(string Full_Filename);				//Create the digest for a partition backup

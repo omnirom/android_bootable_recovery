@@ -50,7 +50,6 @@ static void overlay_exit(minui_backend*);
 
 static GRSurface gr_framebuffer;
 static GRSurface* gr_draw = NULL;
-static int displayed_buffer;
 
 static fb_var_screeninfo vi;
 static int fb_fd = -1;
@@ -100,7 +99,6 @@ static minui_backend my_backend = {
 
 bool target_has_overlay(char *version)
 {
-    int ret;
     int mdp_version;
     bool overlay_supported = false;
 
@@ -325,9 +323,13 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.w = gr_fb.width;
             overlayL.dst_rect.h = gr_fb.height;
             overlayL.alpha = 0xFF;
-#ifdef BOARD_HAS_FLIPPED_SCREEN
-            overlayL.flags = MDP_ROT_180;
-#endif
+            // If this worked, life would have been so much easier
+            //switch (TW_ROTATION) {
+                //case   0:  overlayL.flags = MDP_ROT_NOP; break;
+                //case  90:  overlayL.flags = MDP_ROT_90;  break;
+                //case 180:  overlayL.flags = MDP_ROT_180; break;
+                //case 270:  overlayL.flags = MDP_ROT_270; break;
+            //}
             overlayL.transp_mask = MDP_TRANSP_NOP;
             overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
@@ -365,9 +367,13 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayL.dst_rect.w = lWidth;
             overlayL.dst_rect.h = height;
             overlayL.alpha = 0xFF;
-#ifdef BOARD_HAS_FLIPPED_SCREEN
-            overlayL.flags = MDP_ROT_180;
-#endif
+            // If this worked, life would have been so much easier
+            //switch (TW_ROTATION) {
+                //case   0:  overlayL.flags = MDP_ROT_NOP; break;
+                //case  90:  overlayL.flags = MDP_ROT_90;  break;
+                //case 180:  overlayL.flags = MDP_ROT_180; break;
+                //case 270:  overlayL.flags = MDP_ROT_270; break;
+            //}
             overlayL.transp_mask = MDP_TRANSP_NOP;
             overlayL.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayL);
@@ -395,11 +401,14 @@ int allocate_overlay(int fd, GRSurface gr_fb)
             overlayR.dst_rect.w = rWidth;
             overlayR.dst_rect.h = height;
             overlayR.alpha = 0xFF;
-#ifdef BOARD_HAS_FLIPPED_SCREEN
-            overlayR.flags = MDSS_MDP_RIGHT_MIXER | MDP_ROT_180;
-#else
             overlayR.flags = MDSS_MDP_RIGHT_MIXER;
-#endif
+            // If this worked, life would have been so much easier
+            //switch (TW_ROTATION) {
+                //case   0:  overlayR.flags |= MDP_ROT_NOP; break;
+                //case  90:  overlayR.flags |= MDP_ROT_90;  break;
+                //case 180:  overlayR.flags |= MDP_ROT_180; break;
+                //case 270:  overlayR.flags |= MDP_ROT_270; break;
+            //}
             overlayR.transp_mask = MDP_TRANSP_NOP;
             overlayR.id = MSMFB_NEW_REQUEST;
             ret = ioctl(fd, MSMFB_OVERLAY_SET, &overlayR);
@@ -491,12 +500,10 @@ int overlay_display_frame(int fd, void* data, size_t size)
 static GRSurface* overlay_flip(minui_backend* backend __unused) {
 #if defined(RECOVERY_BGRA)
     // In case of BGRA, do some byte swapping
-    unsigned int idx;
-    unsigned char tmp;
     unsigned char* ucfb_vaddr = (unsigned char*)gr_draw->data;
-    for (idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes);
+    for (int idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes);
             idx += 4) {
-        tmp = ucfb_vaddr[idx];
+        unsigned char tmp = ucfb_vaddr[idx];
         ucfb_vaddr[idx    ] = ucfb_vaddr[idx + 2];
         ucfb_vaddr[idx + 2] = tmp;
     }

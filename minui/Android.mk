@@ -13,6 +13,9 @@
 # limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
+
+# libminui (static library)
+# ===============================
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
@@ -29,17 +32,21 @@ ifeq ($(TW_TARGET_USES_QCOM_BSP), true)
   LOCAL_CFLAGS += -DMSM_BSP
   LOCAL_SRC_FILES += graphics_overlay.cpp
   ifeq ($(TARGET_PREBUILT_KERNEL),)
-    LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
+    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
+      LOCAL_REQUIRED_MODULES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
+    else
+      LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
+    endif
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
   else
     ifeq ($(TARGET_CUSTOM_KERNEL_HEADERS),)
-      LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+      LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
     else
       LOCAL_C_INCLUDES += $(TARGET_CUSTOM_KERNEL_HEADERS)
     endif
   endif
 else
-  LOCAL_C_INCLUDES += $(commands_recovery_local_path)/minui/include
+  LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
   # The header files required for adf graphics can cause compile errors
   # with adf graphics.
   LOCAL_SRC_FILES += graphics_adf.cpp
@@ -50,7 +57,7 @@ ifeq ($(TW_NEW_ION_HEAP), true)
   LOCAL_CFLAGS += -DNEW_ION_HEAP
 endif
 
-LOCAL_STATIC_LIBRARIES += libpng
+LOCAL_STATIC_LIBRARIES += libpng libbase
 ifneq ($(wildcard external/libdrm/Android.common.mk),)
 LOCAL_WHOLE_STATIC_LIBRARIES += libdrm_platform
 else
@@ -61,11 +68,7 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     LOCAL_WHOLE_STATIC_LIBRARIES += libsync_recovery
 endif
 
-LOCAL_STATIC_LIBRARIES := \
-    libpng \
-    libbase
-
-LOCAL_CFLAGS += -Werror -std=c++14
+LOCAL_CFLAGS += -Wall -Werror -std=c++14 -Wno-unused-private-field
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
@@ -114,8 +117,16 @@ ifeq ($(wildcard system/core/healthd/animation.h),)
     TARGET_GLOBAL_CFLAGS += -DTW_NO_MINUI_CUSTOM_FONTS
     CLANG_TARGET_GLOBAL_CFLAGS += -DTW_NO_MINUI_CUSTOM_FONTS
 endif
+ifneq ($(TARGET_RECOVERY_DEFAULT_ROTATION),)
+  LOCAL_CFLAGS += -DDEFAULT_ROTATION=$(TARGET_RECOVERY_DEFAULT_ROTATION)
+else
+  LOCAL_CFLAGS += -DDEFAULT_ROTATION=ROTATION_NONE
+endif
+
 include $(BUILD_STATIC_LIBRARY)
 
+# libminui (shared library)
+# ===============================
 # Used by OEMs for factory test images.
 include $(CLEAR_VARS)
 LOCAL_CLANG := true
@@ -125,8 +136,7 @@ LOCAL_SHARED_LIBRARIES := \
     libpng \
     libbase
 
-LOCAL_CFLAGS := -Werror
-
+LOCAL_CFLAGS := -Wall -Werror -std=c++14 -Wno-unused-private-field
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 include $(BUILD_SHARED_LIBRARY)

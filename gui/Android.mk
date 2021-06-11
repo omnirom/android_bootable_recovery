@@ -41,6 +41,7 @@ endif
 LOCAL_SHARED_LIBRARIES += libminuitwrp libc libstdc++ libaosprecovery libselinux
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     LOCAL_SHARED_LIBRARIES += libziparchive
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../otautil/include
 else
     LOCAL_SHARED_LIBRARIES += libminzip
     LOCAL_CFLAGS += -DUSE_MINZIP
@@ -87,6 +88,7 @@ LOCAL_C_INCLUDES += \
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 23; echo $$?),0)
     LOCAL_C_INCLUDES += external/stlport/stlport
+    LOCAL_CFLAGS += -DUSE_FUSE_SIDELOAD22
 endif
 
 LOCAL_CFLAGS += -DTWRES=\"$(TWRES_PATH)\"
@@ -107,7 +109,7 @@ define TW_THEME_WARNING_MSG
   Could not find ui.xml for TW_THEME: $(TW_THEME)
   Set TARGET_SCREEN_WIDTH and TARGET_SCREEN_HEIGHT to automatically select
   an appropriate theme, or set TW_THEME to one of the following:
-    $(notdir $(wildcard $(commands_recovery_local_path)/gui/theme/*_*))
+    $(notdir $(wildcard $(LOCAL_PATH)/theme/*_*))
 ****************************************************************************
 endef
 define TW_CUSTOM_THEME_WARNING_MSG
@@ -117,15 +119,15 @@ define TW_CUSTOM_THEME_WARNING_MSG
   Expected to find custom theme's ui.xml at:
     $(TWRP_THEME_LOC)/ui.xml
   Please fix this or set TW_THEME to one of the following:
-    $(notdir $(wildcard $(commands_recovery_local_path)/gui/theme/*_*))
+    $(notdir $(wildcard $(LOCAL_PATH)/theme/*_*))
 ****************************************************************************
 endef
 
-TWRP_RES := $(commands_recovery_local_path)/gui/theme/common/fonts
-TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/languages
+TWRP_RES := $(LOCAL_PATH)/theme/common/fonts
+TWRP_RES += $(LOCAL_PATH)/theme/common/languages
 ifeq ($(TW_EXTRA_LANGUAGES),true)
-    TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/fonts
-    TWRP_RES += $(commands_recovery_local_path)/gui/theme/extra-languages/languages
+    TWRP_RES += $(LOCAL_PATH)/theme/extra-languages/fonts
+    TWRP_RES += $(LOCAL_PATH)/theme/extra-languages/languages
 endif
 
 ifeq ($(TW_CUSTOM_THEME),)
@@ -163,13 +165,13 @@ ifeq ($(TW_CUSTOM_THEME),)
         endif
     endif
 
-    TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/theme/$(TW_THEME)
+    TWRP_THEME_LOC := $(LOCAL_PATH)/theme/$(TW_THEME)
     ifeq ($(wildcard $(TWRP_THEME_LOC)/ui.xml),)
         $(warning $(TW_THEME_WARNING_MSG))
         $(error Theme selection failed; exiting)
     endif
 
-    TWRP_RES += $(commands_recovery_local_path)/gui/theme/common/$(word 1,$(subst _, ,$(TW_THEME))).xml
+    TWRP_RES += $(LOCAL_PATH)/theme/common/$(word 1,$(subst _, ,$(TW_THEME))).xml
     # for future copying of used include xmls and fonts:
     # UI_XML := $(TWRP_THEME_LOC)/ui.xml
     # TWRP_INCLUDE_XMLS := $(shell xmllint --xpath '/recovery/include/xmlfile/@name' $(UI_XML)|sed -n 's/[^\"]*\"\([^\"]*\)\"[^\"]*/\1\n/gp'|sort|uniq)

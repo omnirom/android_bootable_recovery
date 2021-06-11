@@ -46,7 +46,7 @@ void exfat_closedir(struct exfat* ef, struct exfat_iterator* it)
 	it->current = NULL;
 }
 
-struct exfat_node* exfat_readdir(struct exfat* ef, struct exfat_iterator* it)
+struct exfat_node* exfat_readdir(struct exfat* ef __unused, struct exfat_iterator* it)
 {
 	if (it->current == NULL)
 		it->current = it->parent->child;

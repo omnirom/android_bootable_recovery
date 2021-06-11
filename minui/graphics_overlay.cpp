@@ -47,7 +47,6 @@
 #define ALIGN(x, align) (((x) + ((align)-1)) & ~((align)-1))
 
 MinuiBackendOverlay::MinuiBackendOverlay() :
-  gr_draw(nullptr),
   fb_fd(-1),
   isMDP5(false),
   leftSplit(0),
@@ -76,7 +75,6 @@ static memInfo mem_info;
 
 bool MinuiBackendOverlay::target_has_overlay()
 {
-    int ret;
     int mdp_version;
     bool overlay_supported = false;
     fb_fix_screeninfo fi;
@@ -450,12 +448,10 @@ GRSurface* MinuiBackendOverlay::Flip() {
     if (double_buffered) {
 #if defined(RECOVERY_BGRA)
         // In case of BGRA, do some byte swapping
-        unsigned int idx;
-        unsigned char tmp;
         unsigned char* ucfb_vaddr = (unsigned char*)gr_draw->data;
-        for (idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes);
+        for (int idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes);
                 idx += 4) {
-            tmp = ucfb_vaddr[idx];
+            unsigned char tmp = ucfb_vaddr[idx];
             ucfb_vaddr[idx    ] = ucfb_vaddr[idx + 2];
             ucfb_vaddr[idx + 2] = tmp;
         }
@@ -524,6 +520,7 @@ int MinuiBackendOverlay::free_overlay(int fd)
 }
 
 GRSurface* MinuiBackendOverlay::Init() {
+	gr_draw = NULL; // this should be in the constructor but 9.0 was throwing a compile error
 	if (!target_has_overlay())
 	    return NULL;
 

@@ -327,7 +327,7 @@ int check_mount_point(const char *device, int *mount_flags,
 		retval = check_getmntinfo(device, mount_flags, mtpt, mtlen);
 #else
 #ifdef __GNUC__
- #warning "Can't use getmntent or getmntinfo to check for mounted filesystems!"
+ //#warning "Can't use getmntent or getmntinfo to check for mounted filesystems!"
 #endif
 		*mount_flags = 0;
 #endif /* HAVE_GETMNTINFO */

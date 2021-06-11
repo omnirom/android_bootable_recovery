@@ -136,7 +136,6 @@ done:
 static int adf_device_init(adf_pdata *pdata, adf_device *dev)
 {
     adf_id_t intf_id;
-    int intf_fd;
     int err;
 
     err = adf_find_simple_post_configuration(dev, &pdata->format, 1, &intf_id,

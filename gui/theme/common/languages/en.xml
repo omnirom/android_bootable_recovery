@@ -98,7 +98,8 @@
 		<string name="successful">Successful</string>
 		<string name="install_failed">Installation Failed</string>
 		<string name="install_successful">Installation Successful</string>
-		<string name="wipe_cache_dalvik_btn">Wipe cache/dalvik</string>
+		<string name="wipe_cache_dalvik_btn">Wipe Cache/Dalvik</string>
+		<string name="wipe_dalvik_btn">Wipe Dalvik</string>
 		<string name="reboot_system_btn">Reboot System</string>
 		<string name="install_sel_target">Select Target Partition</string>
 		<string name="flash_image_select">Select Partition to Flash Image:</string>
@@ -106,8 +107,10 @@
 		<string name="flashing_image">Flashing Image...</string>
 		<string name="image_flashed">Image Flashed</string>
 		<string name="wipe_cache_dalvik_confirm">Wipe Cache &amp; Dalvik?</string>
+		<string name="wipe_dalvik_confirm">Wipe Dalvik?</string>
 		<string name="wiping_cache_dalvik">Wiping Cache &amp; Dalvik...</string>
 		<string name="wipe_cache_dalvik_complete">Cache &amp; Dalvik Wipe Complete</string>
+		<string name="wipe_dalvik_complete">Dalvik Wipe Complete</string>
 		<string name="swipe_wipe">Swipe to Wipe</string>
 		<string name="swipe_wipe_s">   Wipe</string>
 		<string name="no_os1">No OS Installed! Are you</string>
@@ -123,6 +126,10 @@
 		<string name="reboot_install_app_system">Install as a System App</string>
 		<string name="reboot_installing_app">Installing App...</string>
 		<string name="swipe_to_install_app">Swipe to Install TWRP App</string>
+		<string name="uninstall_twrp_system_app">Uninstall TWRP App from System</string>
+		<string name="uninstall_twrp_system_app_confirm">Uninstall TWRP App from System?</string>
+		<string name="uninstalling_twrp_system_app">Uninstalling TWRP App from System...</string>
+		<string name="uninstall_twrp_system_app_complete">Uninstall TWRP App from System Complete</string>
 		<string name="swipe_flash">Swipe to confirm Flash</string>
 		<string name="confirm_action">Confirm Action</string>
 		<string name="back_cancel">Press back button to cancel.</string>
@@ -284,6 +291,7 @@
 		<string name="rb_recovery_btn">Recovery</string>
 		<string name="rb_bootloader_btn">Bootloader</string>
 		<string name="rb_download_btn">Download</string>
+		<string name="rb_edl_btn">Edl</string>
 		<string name="turning_off">Turning Off...</string>
 		<string name="swipe_power_off">Swipe to Power Off</string>
 		<string name="swipe_power_off_s">Power Off</string>
@@ -318,6 +326,7 @@
 		<string name="settings_tz_btn">Time Zone</string>
 		<string name="settings_screen_btn">Screen</string>
 		<string name="settings_screen_bright_btn">Screen Brightness</string>
+		<string name="vibration_disabled">Vibration is disabled for this device</string>
 		<string name="settings_vibration_btn">Vibration</string>
 		<string name="settings_language_btn">Language</string>
 		<string name="time_zone_hdr">Time Zone</string>
@@ -480,6 +489,28 @@
 		<string name="install_cancel">Do Not Install</string>
 		<string name="sel_storage_list">Select Storage</string>
 		<string name="ok_btn">OK</string>
+		<string name="install_twrp_ramdisk">Install Recovery Ramdisk</string>
+		<string name="install_kernel">Install Kernel</string>
+		<string name="repack_kernel_confirm_hdr">Install Kernel</string>
+		<string name="repack_ramdisk_confirm_hdr">Install Recovery</string>
+		<string name="repack_kernel_confirm">Install Kernel?</string>
+		<string name="repack_ramdisk_confirm">Install Recovery?</string>
+		<string name="repack_backup_first">Back up existing image first</string>
+		<string name="repack">Repack</string>
+		<string name="swipe_to_install">Swipe to Install</string>
+		<string name="installing">Installing...</string>
+		<string name="install_complete">Install Complete</string>
+		<string name="unpack_error">Error unpacking image.</string>
+		<string name="repack_error">Error repacking image.</string>
+		<string name="unpacking_image">Unpacking {1}...</string>
+		<string name="repacking_image">Repacking {1}...</string>
+		<string name="repack_image_hdr">Select Image</string>
+		<string name="fix_recovery_loop">Fix Recovery Bootloop</string>
+		<string name="fix_recovery_loop_confirm">Fix Recovery Bootloop?</string>
+		<string name="fixing_recovery_loop">Fixing Recovery Bootloop...</string>
+		<string name="fix_recovery_loop_complete">Fix Recovery Bootloop Complete</string>
+		<string name="fixing_recovery_loop_patch">Patching kernel...</string>
+		<string name="fix_recovery_loop_patch_error">Error patching kernel.</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel does not have support for reading SELinux contexts.</string>
@@ -531,9 +562,10 @@
 		<string name="unable_find_part_path">Unable to find partition for path '{1}'</string>
 		<string name="update_part_details">Updating partition details...</string>
 		<string name="update_part_details_done">...done</string>
-		<string name="wiping_dalvik">Wiping Dalvik Cache Directories...</string>
+		<string name="wiping_dalvik">Wiping Dalvik Directories...</string>
 		<string name="cleaned">Cleaned: {1}...</string>
-		<string name="dalvik_done">-- Dalvik Cache Directories Wipe Complete!</string>
+		<string name="cache_dalvik_done">-- Dalvik Cache Directories Wipe Complete!</string>
+		<string name="dalvik_done">-- Dalvik Directory Wipe Complete!</string>
 		<string name="no_andsec">No android secure partitions found.</string>
 		<string name="unable_to_locate">Unable to locate {1}.</string>
 		<string name="wiping_datamedia">Wiping internal storage -- /data/media...</string>

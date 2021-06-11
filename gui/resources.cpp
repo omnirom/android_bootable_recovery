@@ -294,38 +294,38 @@ AnimationResource* ResourceManager::FindAnimation(const std::string& name) const
 
 std::string ResourceManager::FindString(const std::string& name) const
 {
-	if (this != NULL) {
+	//if (this != NULL) {
 		std::map<std::string, string_resource_struct>::const_iterator it = mStrings.find(name);
 		if (it != mStrings.end())
 			return it->second.value;
 		LOGERR("String resource '%s' not found. No default value.\n", name.c_str());
 		PageManager::AddStringResource("NO DEFAULT", name, "[" + name + ("]"));
-	} else {
+	/*} else {
 		LOGINFO("String resources not loaded when looking for '%s'. No default value.\n", name.c_str());
-	}
+	}*/
 	return "[" + name + ("]");
 }
 
 std::string ResourceManager::FindString(const std::string& name, const std::string& default_string) const
 {
-	if (this != NULL) {
+	//if (this != NULL) {
 		std::map<std::string, string_resource_struct>::const_iterator it = mStrings.find(name);
 		if (it != mStrings.end())
 			return it->second.value;
 		LOGERR("String resource '%s' not found. Using default value.\n", name.c_str());
 		PageManager::AddStringResource("DEFAULT", name, default_string);
-	} else {
+	/*} else {
 		LOGINFO("String resources not loaded when looking for '%s'. Using default value.\n", name.c_str());
-	}
+	}*/
 	return default_string;
 }
 
 void ResourceManager::DumpStrings() const
 {
-	if (this == NULL) {
+	/*if (this == NULL) {
 		gui_print("No string resources\n");
 		return;
-	}
+	}*/
 	std::map<std::string, string_resource_struct>::const_iterator it;
 	gui_print("Dumping all strings:\n");
 	for (it = mStrings.begin(); it != mStrings.end(); it++)
@@ -363,7 +363,7 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipWrap* pZip, std::str
 		if (type == "font")
 		{
 			FontResource* res = new FontResource(child, pZip);
-			if (res->GetResource())
+			if (res && res->GetResource())
 				mFonts.push_back(res);
 			else {
 				error = true;
@@ -393,7 +393,7 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipWrap* pZip, std::str
 		else if (type == "image")
 		{
 			ImageResource* res = new ImageResource(child, pZip);
-			if (res->GetResource())
+			if (res && res->GetResource())
 				mImages.push_back(res);
 			else {
 				error = true;
@@ -403,7 +403,7 @@ void ResourceManager::LoadResources(xml_node<>* resList, ZipWrap* pZip, std::str
 		else if (type == "animation")
 		{
 			AnimationResource* res = new AnimationResource(child, pZip);
-			if (res->GetResourceCount())
+			if (res && res->GetResourceCount())
 				mAnimations.push_back(res);
 			else {
 				error = true;

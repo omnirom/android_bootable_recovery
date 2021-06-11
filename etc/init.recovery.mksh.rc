@@ -1,0 +1,2 @@
+on init
+    export ENV /etc/mkshrc

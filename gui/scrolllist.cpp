@@ -32,7 +32,6 @@ const int SCROLLING_FLOOR = 2; // minimum pixels for scrolling to stop
 
 GUIScrollList::GUIScrollList(xml_node<>* node) : GUIObject(node)
 {
-	xml_attribute<>* attr;
 	xml_node<>* child;
 
 	firstDisplayedItem = mItemSpacing = mFontHeight = mSeparatorH = y_offset = scrollingSpeed = 0;
@@ -265,8 +264,10 @@ int GUIScrollList::Render(void)
 		}
 
 		// render the text
-		gr_color(mHeaderFontColor.red, mHeaderFontColor.green, mHeaderFontColor.blue, mHeaderFontColor.alpha);
-		gr_textEx_scaleW(mRenderX + IconOffsetX + 5, yPos + (int)(mHeaderH / 2), mLastHeaderValue.c_str(), mFont->GetResource(), mRenderW, TEXT_ONLY_RIGHT, 0);
+		if (mFont && mFont->GetResource()) {
+			gr_color(mHeaderFontColor.red, mHeaderFontColor.green, mHeaderFontColor.blue, mHeaderFontColor.alpha);
+			gr_textEx_scaleW(mRenderX + IconOffsetX + 5, yPos + (int)(mHeaderH / 2), mLastHeaderValue.c_str(), mFont->GetResource(), mRenderW, TEXT_ONLY_RIGHT, 0);
+		}
 
 		// Add the separator
 		gr_color(mHeaderSeparatorColor.red, mHeaderSeparatorColor.green, mHeaderSeparatorColor.blue, mHeaderSeparatorColor.alpha);
@@ -345,9 +346,11 @@ void GUIScrollList::RenderStdItem(int yPos, bool selected, ImageResource* icon, 
 	}
 
 	// render label text
-	int textX = mRenderX + maxIconWidth + 5;
-	int textY = yPos + (iconAndTextH / 2);
-	gr_textEx_scaleW(textX, textY, text, mFont->GetResource(), mRenderW, TEXT_ONLY_RIGHT, 0);
+	if (mFont && mFont->GetResource()) {
+		int textX = mRenderX + maxIconWidth + 5;
+		int textY = yPos + (iconAndTextH / 2);
+		gr_textEx_scaleW(textX, textY, text, mFont->GetResource(), mRenderW, TEXT_ONLY_RIGHT, 0);
+	}
 }
 
 int GUIScrollList::Update(void)
@@ -505,7 +508,10 @@ int GUIScrollList::NotifyTouch(TOUCH_STATE state, int x, int y)
 			NotifySelect(selectedItem);
 			mUpdate = 1;
 
+#ifndef TW_NO_HAPTICS
 			DataManager::Vibrate("tw_button_vibrate");
+#endif
+
 			selectedItem = NO_ITEM;
 		} else {
 			// Start kinetic scrolling
@@ -610,6 +616,8 @@ void GUIScrollList::SetPageFocus(int inFocus)
 
 bool GUIScrollList::AddLines(std::vector<std::string>* origText, std::vector<std::string>* origColor, size_t* lastCount, std::vector<std::string>* rText, std::vector<std::string>* rColor)
 {
+	if (!mFont || !mFont->GetResource())
+		return false;
 	if (*lastCount == origText->size())
 		return false; // nothing to add
 

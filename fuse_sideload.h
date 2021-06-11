@@ -17,31 +17,39 @@
 #ifndef __FUSE_SIDELOAD_H
 #define __FUSE_SIDELOAD_H
 
-// define the filenames created by the sideload FUSE filesystem
-#define FUSE_SIDELOAD_HOST_MOUNTPOINT "/sideload"
-#define FUSE_SIDELOAD_HOST_FILENAME "package.zip"
-#define FUSE_SIDELOAD_HOST_PATHNAME (FUSE_SIDELOAD_HOST_MOUNTPOINT "/" FUSE_SIDELOAD_HOST_FILENAME)
-#define FUSE_SIDELOAD_HOST_EXIT_FLAG "exit"
-#define FUSE_SIDELOAD_HOST_EXIT_PATHNAME (FUSE_SIDELOAD_HOST_MOUNTPOINT "/" FUSE_SIDELOAD_HOST_EXIT_FLAG)
+#ifdef USE_FUSE_SIDELOAD22
+#include "fuse_sideload22.h"
+#else
+
+#include <functional>
+
+// Define the filenames created by the sideload FUSE filesystem.
+static constexpr const char* FUSE_SIDELOAD_HOST_MOUNTPOINT = "/sideload";
+static constexpr const char* FUSE_SIDELOAD_HOST_FILENAME = "package.zip";
+static constexpr const char* FUSE_SIDELOAD_HOST_PATHNAME = "/sideload/package.zip";
+static constexpr const char* FUSE_SIDELOAD_HOST_EXIT_FLAG = "exit";
+static constexpr const char* FUSE_SIDELOAD_HOST_EXIT_PATHNAME = "/sideload/exit";
 
 struct provider_vtab {
-    // read a block
-    int (*read_block)(void* cookie, uint32_t block, uint8_t* buffer, uint32_t fetch_size);
+  // read a block
+  std::function<int(uint32_t block, uint8_t* buffer, uint32_t fetch_size)> read_block;
 
-    // close down
-    void (*close)(void* cookie);
+  // close down
+  std::function<void(void)> close;
 };
 
-int run_fuse_sideload(struct provider_vtab* vtab, void* cookie,
-                      uint64_t file_size, uint32_t block_size);
+int run_fuse_sideload(const provider_vtab& vtab, uint64_t file_size, uint32_t block_size,
+                      const char* mount_point = FUSE_SIDELOAD_HOST_MOUNTPOINT);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int run_old_fuse_sideload(struct provider_vtab* vtab, void* cookie,
+int run_old_fuse_sideload(const struct provider_vtab& vtab, void* cookie,
                       uint64_t file_size, uint32_t block_size);
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif

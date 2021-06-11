@@ -1,4 +1,8 @@
 subdirs = [
-//    "bootloader_message",
+//    "applypatch",
+    "bootloader_message",
+//    "edify",
+//    "otafault",
 //    "otautil",
+//    "uncrypt",
 ]

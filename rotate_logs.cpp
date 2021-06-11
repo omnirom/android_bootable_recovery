@@ -31,85 +31,77 @@
 static const std::string LAST_KMSG_FILTER = "recovery/last_kmsg";
 static const std::string LAST_LOG_FILTER = "recovery/last_log";
 
-ssize_t logbasename(
-        log_id_t /* logId */,
-        char /* prio */,
-        const char *filename,
-        const char * /* buf */, size_t len,
-        void *arg) {
-    bool* doRotate  = static_cast<bool*>(arg);
-    if (LAST_KMSG_FILTER.find(filename) != std::string::npos ||
-            LAST_LOG_FILTER.find(filename) != std::string::npos) {
-        *doRotate = true;
-    }
-    return len;
+ssize_t logbasename(log_id_t /* id */, char /* prio */, const char* filename, const char* /* buf */,
+                    size_t len, void* arg) {
+  bool* do_rotate = static_cast<bool*>(arg);
+  if (LAST_KMSG_FILTER.find(filename) != std::string::npos ||
+      LAST_LOG_FILTER.find(filename) != std::string::npos) {
+    *do_rotate = true;
+  }
+  return len;
 }
 
-ssize_t logrotate(
-        log_id_t logId,
-        char prio,
-        const char *filename,
-        const char *buf, size_t len,
-        void *arg) {
-    bool* doRotate  = static_cast<bool*>(arg);
-    if (!*doRotate) {
-        return __android_log_pmsg_file_write(logId, prio, filename, buf, len);
-    }
+ssize_t logrotate(log_id_t id, char prio, const char* filename, const char* buf, size_t len,
+                  void* arg) {
+  bool* do_rotate = static_cast<bool*>(arg);
+  if (!*do_rotate) {
+    return __android_log_pmsg_file_write(id, prio, filename, buf, len);
+  }
 
-    std::string name(filename);
-    size_t dot = name.find_last_of('.');
-    std::string sub = name.substr(0, dot);
+  std::string name(filename);
+  size_t dot = name.find_last_of('.');
+  std::string sub = name.substr(0, dot);
 
-    if (LAST_KMSG_FILTER.find(sub) == std::string::npos &&
-            LAST_LOG_FILTER.find(sub) == std::string::npos) {
-        return __android_log_pmsg_file_write(logId, prio, filename, buf, len);
-    }
+  if (LAST_KMSG_FILTER.find(sub) == std::string::npos &&
+      LAST_LOG_FILTER.find(sub) == std::string::npos) {
+    return __android_log_pmsg_file_write(id, prio, filename, buf, len);
+  }
 
-    // filename rotation
-    if (dot == std::string::npos) {
-        name += ".1";
+  // filename rotation
+  if (dot == std::string::npos) {
+    name += ".1";
+  } else {
+    std::string number = name.substr(dot + 1);
+    if (!isdigit(number[0])) {
+      name += ".1";
     } else {
-        std::string number = name.substr(dot + 1);
-        if (!isdigit(number[0])) {
-            name += ".1";
-        } else {
-            size_t i;
-            if (!android::base::ParseUint(number.c_str(), &i)) {
-                LOG(ERROR) << "failed to parse uint in " << number;
-                return -1;
-            }
-            name = sub + "." + std::to_string(i + 1);
-        }
+      size_t i;
+      if (!android::base::ParseUint(number.c_str(), &i)) {
+        LOG(ERROR) << "failed to parse uint in " << number;
+        return -1;
+      }
+      name = sub + "." + std::to_string(i + 1);
     }
+  }
 
-    return __android_log_pmsg_file_write(logId, prio, name.c_str(), buf, len);
+  return __android_log_pmsg_file_write(id, prio, name.c_str(), buf, len);
 }
 
 // Rename last_log -> last_log.1 -> last_log.2 -> ... -> last_log.$max.
 // Similarly rename last_kmsg -> last_kmsg.1 -> ... -> last_kmsg.$max.
 // Overwrite any existing last_log.$max and last_kmsg.$max.
 void rotate_logs(const char* last_log_file, const char* last_kmsg_file) {
-    // Logs should only be rotated once.
-    static bool rotated = false;
-    if (rotated) {
-        return;
-    }
-    rotated = true;
+  // Logs should only be rotated once.
+  static bool rotated = false;
+  if (rotated) {
+    return;
+  }
+  rotated = true;
 
-    for (int i = KEEP_LOG_COUNT - 1; i >= 0; --i) {
-        std::string old_log = android::base::StringPrintf("%s", last_log_file);
-        if (i > 0) {
-          old_log += "." + std::to_string(i);
-        }
-        std::string new_log = android::base::StringPrintf("%s.%d", last_log_file, i+1);
-        // Ignore errors if old_log doesn't exist.
-        rename(old_log.c_str(), new_log.c_str());
-
-        std::string old_kmsg = android::base::StringPrintf("%s", last_kmsg_file);
-        if (i > 0) {
-          old_kmsg += "." + std::to_string(i);
-        }
-        std::string new_kmsg = android::base::StringPrintf("%s.%d", last_kmsg_file, i+1);
-        rename(old_kmsg.c_str(), new_kmsg.c_str());
+  for (int i = KEEP_LOG_COUNT - 1; i >= 0; --i) {
+    std::string old_log = android::base::StringPrintf("%s", last_log_file);
+    if (i > 0) {
+      old_log += "." + std::to_string(i);
     }
+    std::string new_log = android::base::StringPrintf("%s.%d", last_log_file, i + 1);
+    // Ignore errors if old_log doesn't exist.
+    rename(old_log.c_str(), new_log.c_str());
+
+    std::string old_kmsg = android::base::StringPrintf("%s", last_kmsg_file);
+    if (i > 0) {
+      old_kmsg += "." + std::to_string(i);
+    }
+    std::string new_kmsg = android::base::StringPrintf("%s.%d", last_kmsg_file, i + 1);
+    rename(old_kmsg.c_str(), new_kmsg.c_str());
+  }
 }

@@ -32,7 +32,7 @@ int rgb565_to_rgb888(const char* src, char* dst, size_t pixel)
     from = (struct rgb565 *) src;
     to = (struct rgb888 *) dst;
 
-    int i = 0;
+    size_t i = 0;
     /* traverse pixel of the row */
     while(i++ < pixel) {
 
@@ -53,7 +53,7 @@ int rgb565_to_rgb888(const char* src, char* dst, size_t pixel)
 
 int argb8888_to_rgb888(const char* src, char* dst, size_t pixel)
 {
-    int i;
+    size_t i;
     struct argb8888  *from;
     struct rgb888  *to;
 
@@ -77,7 +77,7 @@ int argb8888_to_rgb888(const char* src, char* dst, size_t pixel)
 
 int abgr8888_to_rgb888(const char* src, char* dst, size_t pixel)
 {
-    int i;
+    size_t i;
     struct abgr8888  *from;
     struct rgb888  *to;
 
@@ -101,7 +101,7 @@ int abgr8888_to_rgb888(const char* src, char* dst, size_t pixel)
 
 int bgra8888_to_rgb888(const char* src, char* dst, size_t pixel)
 {
-    int i;
+    size_t i;
     struct bgra8888  *from;
     struct rgb888  *to;
 
@@ -125,7 +125,7 @@ int bgra8888_to_rgb888(const char* src, char* dst, size_t pixel)
 
 int rgba8888_to_rgb888(const char* src, char* dst, size_t pixel)
 {
-    int i;
+    size_t i;
     struct rgba8888  *from;
     struct rgb888  *to;
 
@@ -164,19 +164,19 @@ stdio_write_func (png_structp png, png_bytep data, png_size_t size)
 }
 
 static void
-png_simple_output_flush_fn (png_structp png_ptr)
+png_simple_output_flush_fn (__attribute__((unused)) png_structp png_ptr)
 {
 }
 
 static void
-png_simple_error_callback (png_structp png,
+png_simple_error_callback (__attribute__((unused)) png_structp png,
                        png_const_charp error_msg)
 {
     E("png error: %s\n", error_msg);
 }
 
 static void
-png_simple_warning_callback (png_structp png,
+png_simple_warning_callback (__attribute__((unused)) png_structp png,
                          png_const_charp error_msg)
 {
     fprintf(stderr, "png warning: %s\n", error_msg);

@@ -19,21 +19,11 @@
 
 #include "screen_ui.h"
 
-#include <string>
-
 class WearRecoveryUI : public ScreenRecoveryUI {
  public:
   WearRecoveryUI();
 
-  bool Init(const std::string& locale) override;
-
   void SetStage(int current, int max) override;
-
-  // printing messages
-  void Print(const char* fmt, ...) override;
-  void PrintOnScreenOnly(const char* fmt, ...) override __printflike(2, 3);
-  void ShowFile(const char* filename) override;
-  void ShowFile(FILE* fp) override;
 
   // menu display
   void StartMenu(const char* const* headers, const char* const* items,
@@ -50,30 +40,13 @@ class WearRecoveryUI : public ScreenRecoveryUI {
 
   int GetProgressBaseline() const override;
 
-  bool InitTextParams() override;
-
   void update_progress_locked() override;
 
-  void PrintV(const char*, bool, va_list) override;
-
  private:
-  GRSurface* backgroundIcon[5];
-
-  static const int kMaxCols = 96;
-  static const int kMaxRows = 96;
-
-  // Number of text rows seen on screen
-  int visible_text_rows;
-
-  const char* const* menu_headers_;
-  int menu_start, menu_end;
-
-  pthread_t progress_t;
-
   void draw_background_locked() override;
   void draw_screen_locked() override;
 
-  void PutChar(char);
+  int menu_start, menu_end;
 };
 
 #endif  // RECOVERY_WEAR_UI_H

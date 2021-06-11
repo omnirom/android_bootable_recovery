@@ -32,9 +32,9 @@
 
 int main(int argc, char **argv) {
 	int index;
-	int pos = 0;
+	size_t pos = 0;
 	bool ret = false;
-	int maxpos = sizeof(TWRPARG + 2);
+	size_t maxpos = strlen(TWRPARG) + 2;
 	std::string command;
 	twrpback tw;
 
@@ -45,10 +45,10 @@ int main(int argc, char **argv) {
 	}
 
 	pos = command.find(TWRP_BACKUP_ARG);
-	if (pos < 0 || pos > (maxpos + sizeof(TWRP_BACKUP_ARG) + 1)) {
+	if (pos == std::string::npos || pos > (maxpos + strlen(TWRP_BACKUP_ARG) + 1)) {
 		pos = command.find(TWRP_RESTORE_ARG);
 	}
-	if (pos < 0 || pos > maxpos + sizeof(TWRP_STREAM_ARG + 1)) {
+	if (pos == std::string::npos || pos > maxpos + strlen(TWRP_STREAM_ARG) + 1) {
 		pos = command.find(TWRP_STREAM_ARG);
 	}
 

@@ -16,39 +16,15 @@
 
 #include "wear_ui.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <stdlib.h>
+#include <pthread.h>
+#include <stdio.h>  // TODO: Remove after killing the call to sprintf().
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
 
 #include <string>
-#include <vector>
 
 #include <android-base/properties.h>
 #include <android-base/strings.h>
-#include <android-base/stringprintf.h>
 #include <minui/minui.h>
-
-#include "common.h"
-#include "device.h"
-
-// There's only (at most) one of these objects, and global callbacks
-// (for pthread_create, and the input event system) need to find it,
-// so use a global variable.
-static WearRecoveryUI* self = NULL;
-
-// Return the current time as a double (including fractions of a second).
-static double now() {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return tv.tv_sec + tv.tv_usec / 1000000.0;
-}
 
 WearRecoveryUI::WearRecoveryUI()
     : kProgressBarBaseline(RECOVERY_UI_PROGRESS_BAR_BASELINE),
@@ -61,10 +37,6 @@ WearRecoveryUI::WearRecoveryUI()
   loop_frames = 60;
 
   touch_screen_allowed_ = true;
-
-  for (size_t i = 0; i < 5; i++) backgroundIcon[i] = NULL;
-
-  self = this;
 }
 
 int WearRecoveryUI::GetProgressBaseline() const {
@@ -80,24 +52,12 @@ void WearRecoveryUI::draw_background_locked() {
   gr_fill(0, 0, gr_fb_width(), gr_fb_height());
 
   if (currentIcon != NONE) {
-    GRSurface* surface;
-    if (currentIcon == INSTALLING_UPDATE || currentIcon == ERASING) {
-      if (!intro_done) {
-        surface = introFrames[current_frame];
-      } else {
-        surface = loopFrames[current_frame];
-      }
-    } else {
-      surface = backgroundIcon[currentIcon];
-    }
-
-    int width = gr_get_width(surface);
-    int height = gr_get_height(surface);
-
-    int x = (gr_fb_width() - width) / 2;
-    int y = (gr_fb_height() - height) / 2;
-
-    gr_blit(surface, 0, 0, width, height, x, y);
+    GRSurface* frame = GetCurrentFrame();
+    int frame_width = gr_get_width(frame);
+    int frame_height = gr_get_height(frame);
+    int frame_x = (gr_fb_width() - frame_width) / 2;
+    int frame_y = (gr_fb_height() - frame_height) / 2;
+    gr_blit(frame, 0, 0, frame_width, frame_height, frame_x, frame_y);
   }
 }
 
@@ -173,8 +133,7 @@ void WearRecoveryUI::draw_screen_locked() {
     // display from the bottom up, until we hit the top of the
     // screen, the bottom of the menu, or we've displayed the
     // entire text buffer.
-    int ty;
-    int row = (text_top_ + text_rows_ - 1) % text_rows_;
+    int row = text_row_;
     size_t count = 0;
     for (int ty = gr_fb_height() - char_height_ - kMarginHeight; ty > y + 2 && count < text_rows_;
          ty -= char_height_, ++count) {
@@ -191,64 +150,7 @@ void WearRecoveryUI::update_progress_locked() {
   gr_flip();
 }
 
-bool WearRecoveryUI::InitTextParams() {
-  if (!ScreenRecoveryUI::InitTextParams()) {
-    return false;
-  }
-
-  text_cols_ = (gr_fb_width() - (kMarginWidth * 2)) / char_width_;
-
-  if (text_rows_ > kMaxRows) text_rows_ = kMaxRows;
-  if (text_cols_ > kMaxCols) text_cols_ = kMaxCols;
-
-  visible_text_rows = (gr_fb_height() - (kMarginHeight * 2)) / char_height_;
-  return true;
-}
-
-bool WearRecoveryUI::Init(const std::string& locale) {
-  if (!ScreenRecoveryUI::Init(locale)) {
-    return false;
-  }
-
-  LoadBitmap("icon_error", &backgroundIcon[ERROR]);
-  backgroundIcon[NO_COMMAND] = backgroundIcon[ERROR];
-
-  // This leaves backgroundIcon[INSTALLING_UPDATE] and backgroundIcon[ERASING]
-  // as NULL which is fine since draw_background_locked() doesn't use them.
-
-  return true;
-}
-
-void WearRecoveryUI::SetStage(int current, int max) {
-}
-
-void WearRecoveryUI::Print(const char* fmt, ...) {
-  char buf[256];
-  va_list ap;
-  va_start(ap, fmt);
-  vsnprintf(buf, 256, fmt, ap);
-  va_end(ap);
-
-  fputs(buf, stdout);
-
-  // This can get called before ui_init(), so be careful.
-  pthread_mutex_lock(&updateMutex);
-  if (text_rows_ > 0 && text_cols_ > 0) {
-    char* ptr;
-    for (ptr = buf; *ptr != '\0'; ++ptr) {
-      if (*ptr == '\n' || text_col_ >= text_cols_) {
-        text_[text_row_][text_col_] = '\0';
-        text_col_ = 0;
-        text_row_ = (text_row_ + 1) % text_rows_;
-        if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
-      }
-      if (*ptr != '\n') text_[text_row_][text_col_++] = *ptr;
-    }
-    text_[text_row_][text_col_] = '\0';
-    update_screen_locked();
-  }
-  pthread_mutex_unlock(&updateMutex);
-}
+void WearRecoveryUI::SetStage(int /* current */, int /* max */) {}
 
 void WearRecoveryUI::StartMenu(const char* const* headers, const char* const* items,
                                int initial_selection) {
@@ -268,7 +170,7 @@ void WearRecoveryUI::StartMenu(const char* const* headers, const char* const* it
     show_menu = true;
     menu_sel = initial_selection;
     menu_start = 0;
-    menu_end = visible_text_rows - 1 - kMenuUnusableRows;
+    menu_end = text_rows_ - 1 - kMenuUnusableRows;
     if (menu_items <= menu_end) menu_end = menu_items;
     update_screen_locked();
   }
@@ -295,107 +197,4 @@ int WearRecoveryUI::SelectMenu(int sel) {
   }
   pthread_mutex_unlock(&updateMutex);
   return sel;
-}
-
-void WearRecoveryUI::ShowFile(FILE* fp) {
-  std::vector<off_t> offsets;
-  offsets.push_back(ftello(fp));
-  ClearText();
-
-  struct stat sb;
-  fstat(fileno(fp), &sb);
-
-  bool show_prompt = false;
-  while (true) {
-    if (show_prompt) {
-      Print("--(%d%% of %d bytes)--",
-            static_cast<int>(100 * (double(ftello(fp)) / double(sb.st_size))),
-            static_cast<int>(sb.st_size));
-      Redraw();
-      while (show_prompt) {
-        show_prompt = false;
-        int key = WaitKey();
-        if (key == KEY_POWER || key == KEY_ENTER) {
-          return;
-        } else if (key == KEY_UP || key == KEY_VOLUMEUP) {
-          if (offsets.size() <= 1) {
-            show_prompt = true;
-          } else {
-            offsets.pop_back();
-            fseek(fp, offsets.back(), SEEK_SET);
-          }
-        } else {
-          if (feof(fp)) {
-            return;
-          }
-          offsets.push_back(ftello(fp));
-        }
-      }
-      ClearText();
-    }
-
-    int ch = getc(fp);
-    if (ch == EOF) {
-      text_row_ = text_top_ = text_rows_ - 2;
-      show_prompt = true;
-    } else {
-      PutChar(ch);
-      if (text_col_ == 0 && text_row_ >= text_rows_ - 2) {
-        text_top_ = text_row_;
-        show_prompt = true;
-      }
-    }
-  }
-}
-
-void WearRecoveryUI::PutChar(char ch) {
-  pthread_mutex_lock(&updateMutex);
-  if (ch != '\n') text_[text_row_][text_col_++] = ch;
-  if (ch == '\n' || text_col_ >= text_cols_) {
-    text_col_ = 0;
-    ++text_row_;
-  }
-  pthread_mutex_unlock(&updateMutex);
-}
-
-void WearRecoveryUI::ShowFile(const char* filename) {
-  FILE* fp = fopen_path(filename, "re");
-  if (fp == nullptr) {
-    Print("  Unable to open %s: %s\n", filename, strerror(errno));
-    return;
-  }
-  ShowFile(fp);
-  fclose(fp);
-}
-
-void WearRecoveryUI::PrintOnScreenOnly(const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  PrintV(fmt, false, ap);
-  va_end(ap);
-}
-
-void WearRecoveryUI::PrintV(const char* fmt, bool copy_to_stdout, va_list ap) {
-  std::string str;
-  android::base::StringAppendV(&str, fmt, ap);
-
-  if (copy_to_stdout) {
-    fputs(str.c_str(), stdout);
-  }
-
-  pthread_mutex_lock(&updateMutex);
-  if (text_rows_ > 0 && text_cols_ > 0) {
-    for (const char* ptr = str.c_str(); *ptr != '\0'; ++ptr) {
-      if (*ptr == '\n' || text_col_ >= text_cols_) {
-        text_[text_row_][text_col_] = '\0';
-        text_col_ = 0;
-        text_row_ = (text_row_ + 1) % text_rows_;
-        if (text_row_ == text_top_) text_top_ = (text_top_ + 1) % text_rows_;
-      }
-      if (*ptr != '\n') text_[text_row_][text_col_++] = *ptr;
-    }
-    text_[text_row_][text_col_] = '\0';
-    update_screen_locked();
-  }
-  pthread_mutex_unlock(&updateMutex);
 }

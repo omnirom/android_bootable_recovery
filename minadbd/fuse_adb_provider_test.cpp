@@ -46,8 +46,8 @@ TEST(fuse_adb_provider, read_block_adb) {
 
   uint32_t block = 1234U;
   const char expected_block[] = "00001234";
-  ASSERT_EQ(0, read_block_adb(static_cast<void*>(&data), block,
-                              reinterpret_cast<uint8_t*>(block_data), sizeof(expected_data) - 1));
+  ASSERT_EQ(0, read_block_adb(data, block, reinterpret_cast<uint8_t*>(block_data),
+                              sizeof(expected_data) - 1));
 
   // Check that read_block_adb requested the right block.
   char block_req[sizeof(expected_block)] = {};
@@ -84,7 +84,7 @@ TEST(fuse_adb_provider, read_block_adb_fail_write) {
   signal(SIGPIPE, SIG_IGN);
 
   char buf[1];
-  ASSERT_EQ(-EIO, read_block_adb(static_cast<void*>(&data), 0, reinterpret_cast<uint8_t*>(buf), 1));
+  ASSERT_EQ(-EIO, read_block_adb(data, 0, reinterpret_cast<uint8_t*>(buf), 1));
 
   close(sockets[0]);
 }

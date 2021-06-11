@@ -14,24 +14,107 @@
  * limitations under the License.
  */
 
-#include "DirUtil.h"
+#include "otautil/DirUtil.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
 #include <dirent.h>
-#include <limits.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <utime.h>
 
 #include <string>
 
 #include <selinux/label.h>
 #include <selinux/selinux.h>
 
-typedef enum { DMISSING, DDIR, DILLEGAL } DirStatus;
+enum class DirStatus { DMISSING, DDIR, DILLEGAL };
+
+static DirStatus dir_status(const std::string& path) {
+  struct stat sb;
+  if (stat(path.c_str(), &sb) == 0) {
+    // Something's there; make sure it's a directory.
+    if (S_ISDIR(sb.st_mode)) {
+      return DirStatus::DDIR;
+    }
+    errno = ENOTDIR;
+    return DirStatus::DILLEGAL;
+  } else if (errno != ENOENT) {
+    // Something went wrong, or something in the path is bad. Can't do anything in this situation.
+    return DirStatus::DILLEGAL;
+  }
+  return DirStatus::DMISSING;
+}
+
+int mkdir_recursively(const std::string& input_path, mode_t mode, bool strip_filename,
+                      const selabel_handle* sehnd) {
+  // Check for an empty string before we bother making any syscalls.
+  if (input_path.empty()) {
+    errno = ENOENT;
+    return -1;
+  }
+
+  // Allocate a path that we can modify; stick a slash on the end to make things easier.
+  std::string path = input_path;
+  if (strip_filename) {
+    // Strip everything after the last slash.
+    size_t pos = path.rfind('/');
+    if (pos == std::string::npos) {
+      errno = ENOENT;
+      return -1;
+    }
+    path.resize(pos + 1);
+  } else {
+    // Make sure that the path ends in a slash.
+    path.push_back('/');
+  }
+
+  // See if it already exists.
+  DirStatus ds = dir_status(path);
+  if (ds == DirStatus::DDIR) {
+    return 0;
+  } else if (ds == DirStatus::DILLEGAL) {
+    return -1;
+  }
+
+  // Walk up the path from the root and make each level.
+  size_t prev_end = 0;
+  while (prev_end < path.size()) {
+    size_t next_end = path.find('/', prev_end + 1);
+    if (next_end == std::string::npos) {
+      break;
+    }
+    std::string dir_path = path.substr(0, next_end);
+    // Check this part of the path and make a new directory if necessary.
+    switch (dir_status(dir_path)) {
+      case DirStatus::DILLEGAL:
+        // Could happen if some other process/thread is messing with the filesystem.
+        return -1;
+      case DirStatus::DMISSING: {
+        char* secontext = nullptr;
+        if (sehnd) {
+          selabel_lookup(const_cast<selabel_handle*>(sehnd), &secontext, dir_path.c_str(), mode);
+          setfscreatecon(secontext);
+        }
+        int err = mkdir(dir_path.c_str(), mode);
+        if (secontext) {
+          freecon(secontext);
+          setfscreatecon(nullptr);
+        }
+        if (err != 0) {
+          return -1;
+        }
+        break;
+      }
+      default:
+        // Already exists.
+        break;
+    }
+    prev_end = next_end;
+  }
+  return 0;
+}
 
 static DirStatus
 getPathDirStatus(const char *path)
@@ -44,17 +127,17 @@ getPathDirStatus(const char *path)
         /* Something's there; make sure it's a directory.
          */
         if (S_ISDIR(st.st_mode)) {
-            return DDIR;
+            return DirStatus::DDIR;
         }
         errno = ENOTDIR;
-        return DILLEGAL;
+        return DirStatus::DILLEGAL;
     } else if (errno != ENOENT) {
         /* Something went wrong, or something in the path
          * is bad.  Can't do anything in this situation.
          */
-        return DILLEGAL;
+        return DirStatus::DILLEGAL;
     }
-    return DMISSING;
+    return DirStatus::DMISSING;
 }
 
 int
@@ -90,9 +173,9 @@ dirCreateHierarchy(const char *path, int mode,
     /* See if it already exists.
      */
     ds = getPathDirStatus(cpath.c_str());
-    if (ds == DDIR) {
+    if (ds == DirStatus::DDIR) {
         return 0;
-    } else if (ds == DILLEGAL) {
+    } else if (ds == DirStatus::DILLEGAL) {
         return -1;
     }
 
@@ -124,12 +207,12 @@ dirCreateHierarchy(const char *path, int mode,
          * if necessary.
          */
         ds = getPathDirStatus(path_start);
-        if (ds == DILLEGAL) {
+        if (ds == DirStatus::DILLEGAL) {
             /* Could happen if some other process/thread is
              * messing with the filesystem.
              */
             return -1;
-        } else if (ds == DMISSING) {
+        } else if (ds == DirStatus::DMISSING) {
             int err;
 
             char *secontext = NULL;

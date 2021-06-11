@@ -45,6 +45,8 @@ LOCAL_CFLAGS := \
 	-DFUSE_USE_VERSION=26 \
 	-fno-strict-aliasing
 
+LOCAL_CFLAGS += -Wno-pointer-arith -Wno-sign-compare -Wno-unused-parameter
+
 LOCAL_MODULE := libfusetwrp
 LOCAL_MODULE_TAGS := optional
 

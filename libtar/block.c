@@ -357,7 +357,8 @@ th_read(TAR *t)
 				if (*start == '2')
 				{
 					start++;
-					if (start + sizeof(struct ext4_encryption_policy) != '\n')
+					char *newline_check = start + sizeof(struct ext4_encryption_policy);
+					if (*newline_check != '\n')
 						printf("did not find newline char in expected location, continuing anyway...\n");
 					memcpy(t->th_buf.eep, start, sizeof(struct ext4_encryption_policy));
 #ifdef DEBUG

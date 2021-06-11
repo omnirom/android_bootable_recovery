@@ -64,7 +64,7 @@ GUIText::GUIText(xml_node<>* node)
 
 	// Load the font, and possibly override the color
 	mFont = LoadAttrFont(FindNode(node, "font"), "resource");
-	if (!mFont)
+	if (!mFont || !mFont->GetResource())
 		return;
 	mColor = LoadAttrColor(FindNode(node, "font"), "color", mColor);
 	mHighlightColor = LoadAttrColor(FindNode(node, "font"), "highlightcolor", mColor);

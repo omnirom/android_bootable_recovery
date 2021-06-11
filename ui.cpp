@@ -48,12 +48,16 @@
 static constexpr int UI_WAIT_KEY_TIMEOUT_SEC = 120;
 static constexpr const char* BRIGHTNESS_FILE = "/sys/class/leds/lcd-backlight/brightness";
 static constexpr const char* MAX_BRIGHTNESS_FILE = "/sys/class/leds/lcd-backlight/max_brightness";
+static constexpr const char* BRIGHTNESS_FILE_SDM =
+    "/sys/class/backlight/panel0-backlight/brightness";
+static constexpr const char* MAX_BRIGHTNESS_FILE_SDM =
+    "/sys/class/backlight/panel0-backlight/max_brightness";
 
 RecoveryUI::RecoveryUI()
-    : locale_(""),
-      rtl_locale_(false),
-      brightness_normal_(50),
+    : brightness_normal_(50),
       brightness_dimmed_(25),
+      brightness_file_(BRIGHTNESS_FILE),
+      max_brightness_file_(MAX_BRIGHTNESS_FILE),
       touch_screen_allowed_(false),
       kTouchLowThreshold(RECOVERY_UI_TOUCH_LOW_THRESHOLD),
       kTouchHighThreshold(RECOVERY_UI_TOUCH_HIGH_THRESHOLD),
@@ -103,12 +107,17 @@ bool RecoveryUI::InitScreensaver() {
   if (brightness_normal_ == 0 || brightness_dimmed_ > brightness_normal_) {
     return false;
   }
-
+  if (access(brightness_file_.c_str(), R_OK | W_OK)) {
+    brightness_file_ = BRIGHTNESS_FILE_SDM;
+  }
+  if (access(max_brightness_file_.c_str(), R_OK)) {
+    max_brightness_file_ = MAX_BRIGHTNESS_FILE_SDM;
+  }
   // Set the initial brightness level based on the max brightness. Note that reading the initial
   // value from BRIGHTNESS_FILE doesn't give the actual brightness value (bullhead, sailfish), so
   // we don't have a good way to query the default value.
   std::string content;
-  if (!android::base::ReadFileToString(MAX_BRIGHTNESS_FILE, &content)) {
+  if (!android::base::ReadFileToString(max_brightness_file_, &content)) {
     PLOG(WARNING) << "Failed to read max brightness";
     return false;
   }
@@ -122,7 +131,7 @@ bool RecoveryUI::InitScreensaver() {
   brightness_normal_value_ = max_value * brightness_normal_ / 100.0;
   brightness_dimmed_value_ = max_value * brightness_dimmed_ / 100.0;
   if (!android::base::WriteStringToFile(std::to_string(brightness_normal_value_),
-                                        BRIGHTNESS_FILE)) {
+                                        brightness_file_)) {
     PLOG(WARNING) << "Failed to set brightness";
     return false;
   }
@@ -132,10 +141,7 @@ bool RecoveryUI::InitScreensaver() {
   return true;
 }
 
-bool RecoveryUI::Init(const std::string& locale) {
-  // Set up the locale info.
-  SetLocale(locale);
-
+bool RecoveryUI::Init(const std::string& /* locale */) {
   ev_init(std::bind(&RecoveryUI::OnInputEvent, this, std::placeholders::_1, std::placeholders::_2),
           touch_screen_allowed_);
 
@@ -435,13 +441,13 @@ int RecoveryUI::WaitKey() {
         // Lower the brightness level: NORMAL -> DIMMED; DIMMED -> OFF.
         if (screensaver_state_ == ScreensaverState::NORMAL) {
           if (android::base::WriteStringToFile(std::to_string(brightness_dimmed_value_),
-                                               BRIGHTNESS_FILE)) {
+                                               brightness_file_)) {
             LOG(INFO) << "Brightness: " << brightness_dimmed_value_ << " (" << brightness_dimmed_
                       << "%)";
             screensaver_state_ = ScreensaverState::DIMMED;
           }
         } else if (screensaver_state_ == ScreensaverState::DIMMED) {
-          if (android::base::WriteStringToFile("0", BRIGHTNESS_FILE)) {
+          if (android::base::WriteStringToFile("0", brightness_file_)) {
             LOG(INFO) << "Brightness: 0 (off)";
             screensaver_state_ = ScreensaverState::OFF;
           }
@@ -456,7 +462,7 @@ int RecoveryUI::WaitKey() {
 
         // Reset the brightness to normal.
         if (android::base::WriteStringToFile(std::to_string(brightness_normal_value_),
-                                             BRIGHTNESS_FILE)) {
+                                             brightness_file_)) {
           screensaver_state_ = ScreensaverState::NORMAL;
           LOG(INFO) << "Brightness: " << brightness_normal_value_ << " (" << brightness_normal_
                     << "%)";
@@ -573,24 +579,4 @@ void RecoveryUI::SetEnableReboot(bool enabled) {
   pthread_mutex_lock(&key_queue_mutex);
   enable_reboot = enabled;
   pthread_mutex_unlock(&key_queue_mutex);
-}
-
-void RecoveryUI::SetLocale(const std::string& new_locale) {
-  this->locale_ = new_locale;
-  this->rtl_locale_ = false;
-
-  if (!new_locale.empty()) {
-    size_t underscore = new_locale.find('_');
-    // lang has the language prefix prior to '_', or full string if '_' doesn't exist.
-    std::string lang = new_locale.substr(0, underscore);
-
-    // A bit cheesy: keep an explicit list of supported RTL languages.
-    if (lang == "ar" ||  // Arabic
-        lang == "fa" ||  // Persian (Farsi)
-        lang == "he" ||  // Hebrew (new language code)
-        lang == "iw" ||  // Hebrew (old language code)
-        lang == "ur") {  // Urdu
-      rtl_locale_ = true;
-    }
-  }
 }

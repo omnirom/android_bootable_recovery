@@ -106,6 +106,5 @@ private:
 
 	std::vector<TarListStruct> *ItemList;
 	int output_fd;                                                                  // this stores the output fd that gzip will read from
-	int adb_control_twrp_fd, adb_control_bu_fd;                                     // fds for twrp to twrp bu and bu to twrp control fifos
 	unsigned thread_id;
 };

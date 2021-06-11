@@ -117,26 +117,30 @@ static int create_service_thread(void (*func)(int, const std::string&), const st
 }
 #endif
 
-int service_to_fd(const char* name, const atransport* transport) {
-    int ret = -1;
-
-    if (!strncmp(name, "sideload:", 9)) {
-        // this exit status causes recovery to print a special error
-        // message saying to use a newer adb (that supports
-        // sideload-host).
-        exit(3);
-    } else if (!strncmp(name, "sideload-host:", 14)) {
-#if PLATFORM_SDK_VERSION < 26
-        char* arg = strdup(name + 14);
+#if PLATFORM_SDK_VERSION >= 28
+int service_to_fd(const char* name, atransport* /* transport */) {
 #else
-        std::string arg(name + 14);
+int service_to_fd(const char* name, const atransport* transport __unused) {
 #endif
-        ret = create_service_thread(sideload_host_service, arg);
-    }
-    if (ret >= 0) {
-        close_on_exec(ret);
-    }
-    return ret;
+  int ret = -1;
+
+  if (!strncmp(name, "sideload:", 9)) {
+    // this exit status causes recovery to print a special error
+    // message saying to use a newer adb (that supports
+    // sideload-host).
+    exit(3);
+  } else if (!strncmp(name, "sideload-host:", 14)) {
+#if PLATFORM_SDK_VERSION < 26
+    char* arg = strdup(name + 14);
+#else
+    std::string arg(name + 14);
+#endif
+    ret = create_service_thread(sideload_host_service, arg);
+  }
+  if (ret >= 0) {
+    close_on_exec(ret);
+  }
+  return ret;
 }
 
 #if PLATFORM_SDK_VERSION == 23

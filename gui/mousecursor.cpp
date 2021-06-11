@@ -78,7 +78,7 @@ void MouseCursor::LoadData(xml_node<>* node)
 	{
 		m_color = LoadAttrColor(child, "color", m_color);
 		m_image = LoadAttrImage(child, "resource");
-		if (m_image)
+		if (m_image && m_image->GetResource())
 		{
 			mRenderW = m_image->GetWidth();
 			mRenderH = m_image->GetHeight();
@@ -99,7 +99,7 @@ int MouseCursor::Render(void)
 	if (!m_present)
 		return 0;
 
-	if (m_image)
+	if (m_image && m_image->GetResource())
 	{
 		gr_blit(m_image->GetResource(), 0, 0, mRenderW, mRenderH, mRenderX, mRenderY);
 	}

@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <fstream>
 
 #include "../common.h"
 
@@ -38,6 +38,9 @@
 
 #define VIBRATOR_TIMEOUT_FILE	"/sys/class/timed_output/vibrator/enable"
 #define VIBRATOR_TIME_MS    50
+
+#define LEDS_HAPTICS_DURATION_FILE	"/sys/class/leds/vibrator/duration"
+#define LEDS_HAPTICS_ACTIVATE_FILE	"/sys/class/leds/vibrator/activate"
 
 #ifndef SYN_REPORT
 #define SYN_REPORT          0x00
@@ -101,34 +104,41 @@ static struct pollfd ev_fds[MAX_DEVICES];
 static struct ev evs[MAX_DEVICES];
 static unsigned ev_count = 0;
 static struct timeval lastInputStat;
-static unsigned long lastInputMTime;
+static time_t lastInputMTime;
 static int has_mouse = 0;
 
 static inline int ABS(int x) {
     return x<0?-x:x;
 }
 
+int write_to_file(const std::string& fn, const std::string& line) {
+	FILE *file;
+	file = fopen(fn.c_str(), "w");
+	if (file != NULL) {
+		fwrite(line.c_str(), line.size(), 1, file);
+		fclose(file);
+		return 0;
+	}
+	LOGI("Cannot find file %s\n", fn.c_str());
+	return -1;
+}
+
+#ifndef TW_NO_HAPTICS
 int vibrate(int timeout_ms)
 {
-    char str[20];
-    int fd;
-    int ret;
-
     if (timeout_ms > 10000) timeout_ms = 1000;
+    char tout[6];
+    sprintf(tout, "%i", timeout_ms);
 
-    fd = open(VIBRATOR_TIMEOUT_FILE, O_WRONLY);
-    if (fd < 0)
-        return -1;
-
-    ret = snprintf(str, sizeof(str), "%d", timeout_ms);
-    ret = write(fd, str, ret);
-    close(fd);
-
-    if (ret < 0)
-       return -1;
+    if (std::ifstream(LEDS_HAPTICS_ACTIVATE_FILE).good()) {
+        write_to_file(LEDS_HAPTICS_DURATION_FILE, tout);
+        write_to_file(LEDS_HAPTICS_ACTIVATE_FILE, "1");
+    } else
+        write_to_file(VIBRATOR_TIMEOUT_FILE, tout);
 
     return 0;
 }
+#endif
 
 /* Returns empty tokens */
 static char *vk_strtok_r(char *str, const char *delim, char **save_str)
@@ -360,7 +370,7 @@ void ev_exit(void)
 	ev_count = 0;
 }
 
-static int vk_inside_display(__s32 value, struct input_absinfo *info, int screen_size)
+/*static int vk_inside_display(__s32 value, struct input_absinfo *info, int screen_size)
 {
     int screen_pos;
 
@@ -369,7 +379,7 @@ static int vk_inside_display(__s32 value, struct input_absinfo *info, int screen
 
     screen_pos = (value - info->minimum) * (screen_size - 1) / (info->maximum - info->minimum);
     return (screen_pos >= 0 && screen_pos < screen_size);
-}
+}*/
 
 static int vk_tp_to_screen(struct position *p, int *x, int *y)
 {
@@ -716,7 +726,9 @@ static int vk_modify(struct ev *e, struct input_event *ev)
 
                 last_virt_key = e->vks[i].scancode;
 
+#ifndef TW_NO_HAPTICS
                 vibrate(VIBRATOR_TIME_MS);
+#endif
 
                 // Mark that all further movement until lift is discard,
                 // and make sure we don't come back into this area
@@ -782,7 +794,7 @@ int ev_get(struct input_event *ev, int timeout_ms)
     return -2;
 }
 
-int ev_wait(int timeout)
+int ev_wait(int timeout __unused)
 {
     return -1;
 }
@@ -792,7 +804,7 @@ void ev_dispatch(void)
     return;
 }
 
-int ev_get_input(int fd, short revents, struct input_event *ev)
+int ev_get_input(int fd __unused, short revents __unused, struct input_event *ev __unused)
 {
     return -1;
 }

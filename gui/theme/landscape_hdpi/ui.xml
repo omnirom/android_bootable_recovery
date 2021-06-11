@@ -295,6 +295,7 @@
 			</text>
 
 			<fill color="#000000">
+				<condition var1="tw_busy" var2="0"/>
 				<placement x="0" y="%navbar_y%" w="%screen_width%" h="%navbar_height%"/>
 			</fill>
 
