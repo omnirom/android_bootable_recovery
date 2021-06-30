@@ -45,8 +45,8 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
     $(TARGET_RECOVERY_UI_LIB)
 
 LOCAL_SHARED_LIBRARIES := \
-    libbase \
-    liblog \
+    libbase.recovery \
+    liblog.recovery \
     librecovery_ui.recovery
 
 include $(BUILD_SHARED_LIBRARY)
