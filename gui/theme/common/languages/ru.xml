@@ -744,7 +744,6 @@
 		<string name="flash_ab_both_slots">Прошить в оба слота</string>
 		<string name="ozip_decrypt_decryption">Начало расшифровки Ozip...</string>
 		<string name="ozip_decrypt_finish">Расшифровка Ozip завершена!</string>
-		<string name="fbe_wipe_msg">ВНИМАНИЕ: {1} очищен. Устройство необходимо перезагрузить в ОС (не в рекавери) для установки начальной политики FBE после очистки.</string>
 		<string name="fastboot_button">Fastboot</string>
 		<string name="enable_adb">Включить ADB</string>
 		<string name="enable_fastboot">Включить Fastboot</string>

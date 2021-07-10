@@ -751,6 +751,7 @@
 		<string name="flash_ab_both_slots">Flash to both slots</string>
 		<string name="ozip_decrypt_decryption">Starting Ozip Decryption...</string>
 		<string name="ozip_decrypt_finish">Ozip Decryption Finished!</string>
+		<string name="data_media_fbe_msg">TWRP will not recreate /data/media on an FBE device. Please reboot into your rom to create /data/media</string>
 		<string name="restore_system_context">Unable to get default context for {1} -- Android may not boot.</string>
 		<string name="change_twrp_folder_btn">Change TWRP folder</string>
 		<string name="change_twrp_folder_on_process">Changing TWRP folder</string>

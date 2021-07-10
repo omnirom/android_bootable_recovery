@@ -737,7 +737,6 @@
 		<string name="flash_ab_both_slots">Beide slots flashen</string>
 		<string name="ozip_decrypt_decryption">Ozip-ontsleutelen...</string>
 		<string name="ozip_decrypt_finish">Ozip-ontsleutelen gereed!</string>
-		<string name="fbe_wipe_msg">WAARSCHUWING: {1} gewist. FBE-apparaat dient opgestart te worden in Android, niet Recovery, om initieel FBE-beleid in werking te zetten na het wissen.</string>
 		<string name="fastboot_button">Fastboot</string>
 		<string name="enable_adb">ADB inschakelen</string>
 		<string name="enable_fastboot">Fastboot inschakelen</string>

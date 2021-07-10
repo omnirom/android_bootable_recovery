@@ -2068,6 +2068,10 @@ bool TWPartition::Wipe_Encryption() {
 #ifndef TW_OEM_BUILD
 		gui_msg("format_data_msg=You may need to reboot recovery to be able to use /data again.");
 #endif
+		if (Is_FBE) {
+			gui_msg(Msg(msg::kWarning, "data_media_fbe_msg=TWRP will not recreate /data/media on an FBE device. Please reboot into your rom to create /data/media."));
+		}
+
 		ret = true;
 		if (!Key_Directory.empty())
 			ret = PartitionManager.Wipe_By_Path(Key_Directory);

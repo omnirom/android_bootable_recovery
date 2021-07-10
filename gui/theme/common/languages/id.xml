@@ -743,7 +743,6 @@
 		<string name="flash_ab_both_slots">Flash ke kedua slot</string>
 		<string name="ozip_decrypt_decryption">Mulai mendekripsi Ozip ...</string>
 		<string name="ozip_decrypt_finish">Mendeskripsi Ozip selesai!</string>
-		<string name="fbe_wipe_msg">PERINGATAN: {1} dihapus. Perangkat FBE harus di-boot ke Android dan bukan Recovery untuk mengatur kebijakan FBE awal setelah penghapusan.</string>
 		<string name="fastboot_button">Fastboot</string>
 		<string name="enable_adb">Aktifkan ADB</string>
 		<string name="enable_fastboot">Aktifkan Fastboot</string>
