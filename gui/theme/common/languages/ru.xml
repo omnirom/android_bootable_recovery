@@ -19,11 +19,11 @@
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
-		<string name="data_backup">Data (искл. Storage)</string>
-		<string name="sdcard">SDcard</string>
-		<string name="internal">Память устройства</string>
-		<string name="microsd">Micro SDCard</string>
-		<string name="usbotg">USB OTG</string>
+		<string name="data_backup">Data (искл. внутр.память)</string>
+		<string name="sdcard">SD-карта</string>
+		<string name="internal">Внутренняя память</string>
+		<string name="microsd">MicroSD-карта</string>
+		<string name="usbotg">USB-накопитель</string>
 		<string name="android_secure">Android Secure</string>
 		<string name="dalvik">Dalvik/ART Cache</string>
 		<!-- This is a rarely used partition on a Micro SD card for a very old app2sd system -->
@@ -224,8 +224,9 @@
 		<string name="enc_disabled">выключено - установите пароль для включения</string>
 		<string name="enc_enabled">включено</string>
 		<string name="enable_backup_comp_chk">Использовать сжатие</string>
-		<string name="skip_digest_backup_chk" version="2">Пропустить вычисление контрольных сумм</string>
+		<string name="skip_digest_backup_chk" version="2">Не создавать контрольные суммы</string>
 		<string name="disable_backup_space_chk" version="2">Отключить проверку свободного места</string>
+		<string name="skip_digest_zip_chk">Не проверять контрольные суммы ZIP</string>
 		<string name="current_boot_slot">Текущий слот: %tw_active_slot%</string>
 		<string name="boot_slot_a">Слот A</string>
 		<string name="boot_slot_b">Слот B</string>
@@ -292,7 +293,7 @@
 		<string name="rb_recovery_btn">Рекавери</string>
 		<string name="rb_bootloader_btn">Загрузчик</string>
 		<string name="rb_download_btn">Режим загрузки</string>
-		<string name="rb_edl_btn">Edl</string>
+		<string name="rb_edl_btn">EDL</string>
 		<string name="turning_off">Выключение...</string>
 		<string name="swipe_power_off">Свайп для выключения</string>
 		<string name="swipe_power_off_s">Выключение</string>
@@ -392,7 +393,7 @@
 		<string name="copy_log_complete" version="2">Копирование лога завершено.</string>
 		<string name="fix_context_btn">Исправить контекст</string>
 		<string name="part_sd_btn">Разметка SD-карты</string>
-		<string name="part_sd_s_btn">Разм-ка SD</string>
+		<string name="part_sd_s_btn">Разметка SD</string>
 		<string name="file_manager_btn">Проводник</string>
 		<string name="language_hdr">Язык</string>
 		<string name="terminal_btn">Терминал</string>
@@ -459,6 +460,8 @@
 		<string name="fm_set_perms_hdr">Установить права</string>
 		<string name="fm_perms">Права:</string>
 		<string name="fm_complete">Операция завершена</string>
+		<string name="fm_open_terminal_btn">Открыть терминал здесь</string>
+		<string name="fm_edit_file">Изменить файл</string>
 		<string name="decrypt_data_hdr">Расшифровать данные</string>
 		<string name="decrypt_data_enter_pass">Введите пароль.</string>
 		<string name="decrypt_data_failed">Пароль неверный, попробуйте снова!</string>
@@ -468,8 +471,8 @@
 		<string name="decrypt_data_vold_os_missing">Отсутствуют файлы необходимые для расшифровки vold: {1}</string>
 		<string name="term_hdr">Команда терминала</string>
 		<string name="term_s_hdr">Терминал</string>
-		<string name="term_kill_btn">УБИТЬ</string>
-		<string name="term_sel_folder_hdr">Перейдите к стартовой папке</string>
+		<string name="term_kill_btn">Остановить</string>
+		<string name="term_sel_folder_hdr">Перейдите к начальной папке</string>
 		<string name="adb_sideload_hdr">ADB Sideload</string>
 		<string name="sideload_wipe_dalvik_chk">Очистка Dalvik Cache</string>
 		<string name="sideload_wipe_cache_chk">Очистка Cache</string>
@@ -737,16 +740,25 @@
 		<string name="unmount_system">Размонтирование System...</string>
 		<string name="unmount_system_err">Ошибка размонтирования System</string>
 		<string name="flash_ab_inactive">Прошивка A/B ZIP в неактивный слот: {1}</string>
-        <string name="flash_ab_reboot">Для прошивки дополнительных ZIP перезагрузите рекавери для переключения на обновлённый слот.</string>
+		<string name="flash_ab_reboot">Для прошивки дополнительных ZIP перезагрузите рекавери для переключения на обновлённый слот.</string>
+		<string name="flash_ab_both_slots">Прошить в оба слота</string>
 		<string name="ozip_decrypt_decryption">Начало расшифровки Ozip...</string>
 		<string name="ozip_decrypt_finish">Расшифровка Ozip завершена!</string>
-		<string name="change_twrp_folder_btn">Изменить папку TWRP</string>
-		<string name="change_twrp_folder_on_process">Изменение папки TWRP</string>
+		<string name="fbe_wipe_msg">ВНИМАНИЕ: {1} очищен. Устройство необходимо перезагрузить в ОС (не в рекавери) для установки начальной политики FBE после очистки.</string>
+		<string name="fastboot_button">Fastboot</string>
+		<string name="enable_adb">Включить ADB</string>
+		<string name="enable_fastboot">Включить Fastboot</string>
+		<string name="fastboot_console_msg">Переход в режим Fastboot...</string>
+		<!-- Android Rescue Party trigger -->
+		<string name="rescue_party0">Обнаружен сбой Android Rescue Party! Возможные решения:</string>
+		<string name="rescue_party1"> 1. Очистить Cache и/или</string>
+		<string name="rescue_party2"> 2. Форматировать Data и/или</string>
+		<string name="rescue_party3"> 3. Заново установить прошивку.</string>
+		<string name="rescue_party4">Проблема: </string>
+		<string name="restore_system_context">Невозможно получить контекст по умолчанию для {1} -- Android может не загрузиться.</string>
+		<string name="change_twrp_folder_btn">Сменить папку TWRP</string>
+		<string name="change_twrp_folder_on_process">Смена папки TWRP</string>
 		<string name="change_twrp_folder_after_process">Папка TWRP изменена на</string>
 		<string name="tw_folder_exists">Папка с таким именем уже существует!</string>
-		<string name="fm_open_terminal_btn">Открыть терминал здесь</string>
-		<string name="fm_edit_file">Изменить файл</string>
-		<string name="flash_ab_both_slots">Прошить на оба слота</string>
-		<string name="restore_system_context">Невозможно получить контекст по умолчанию для {1} -- Android может не загрузиться.</string>
 	</resources>
 </language>
