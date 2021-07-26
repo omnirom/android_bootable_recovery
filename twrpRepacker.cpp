@@ -118,6 +118,7 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 		return false;
 	}
 	DataManager::SetProgress(0);
+	PartitionManager.Update_System_Details();
 	TWPartition* part = PartitionManager.Find_Partition_By_Path("/boot");
 	if (part)
 		gui_msg(Msg("unpacking_image=Unpacking {1}...")(part->Get_Display_Name()));
