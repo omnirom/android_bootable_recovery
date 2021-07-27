@@ -131,8 +131,6 @@ GRSurface* MinuiBackendFbdev::Init() {
   SetDisplayedFramebuffer(0);
 
   printf("framebuffer: %d (%zu x %zu)\n", fb_fd.get(), gr_draw->width, gr_draw->height);
-
-  Blank(true);
   Blank(false);
 
   return gr_draw;
