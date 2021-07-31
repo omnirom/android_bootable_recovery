@@ -197,9 +197,9 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 		LOGINFO("Switching slots to flash ramdisk to both partitions\n");
 		string Current_Slot = PartitionManager.Get_Active_Slot_Display();
 		if (Current_Slot == "A")
-			PartitionManager.Set_Active_Slot("B");
+			PartitionManager.Override_Active_Slot("B");
 		else
-			PartitionManager.Set_Active_Slot("A");
+			PartitionManager.Override_Active_Slot("A");
 		DataManager::SetProgress(.25);
 		if (!Backup_Image_For_Repack(part, REPACK_ORIG_DIR, Repack_Options.Backup_First, gui_lookup("repack", "Repack")))
 			return false;
@@ -243,8 +243,4 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 		}
 		DataManager::SetProgress(1);
 		TWFunc::removeDir(REPACK_ORIG_DIR, false);
-		PartitionManager.Set_Active_Slot(Current_Slot);
-	}
-	TWFunc::removeDir(REPACK_NEW_DIR, false);
-	return true;
 }

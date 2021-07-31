@@ -2973,6 +2973,12 @@ void TWPartitionManager::Remove_Partition_By_Path(string Path) {
 	}
 }
 
+void TWPartitionManager::Override_Active_Slot(const string& Slot) {
+	LOGINFO("Overriding slot to '%s'\n", Slot.c_str());
+	Active_Slot_Display = Slot;
+	DataManager::SetValue("tw_active_slot", Slot);
+}
+
 void TWPartitionManager::Set_Active_Slot(const string& Slot) {
 	if (Slot != "A" && Slot != "B") {
 		LOGERR("Set_Active_Slot invalid slot '%s'\n", Slot.c_str());
