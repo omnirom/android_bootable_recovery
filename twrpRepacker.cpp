@@ -243,4 +243,7 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 		}
 		DataManager::SetProgress(1);
 		TWFunc::removeDir(REPACK_ORIG_DIR, false);
+	}
+	TWFunc::removeDir(REPACK_NEW_DIR, false);
+	return true;
 }
