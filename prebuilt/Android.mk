@@ -655,22 +655,12 @@ ifneq ($(TW_EXCLUDE_BASH), true)
 	LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)/sbin
 	LOCAL_REQUIRED_MODULES := bash
 
-    ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
-        LOCAL_POST_INSTALL_CMD += \
-            mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/bash; \
-            cp -rf external/bash/etc/* $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/bash/; \
-            sed -i 's/ro.cm.device/ro.product.device/' $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/bash/bashrc; \
-            sed -i 's/ro.lineage.device/ro.product.device/' $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/bash/bashrc; \
-            sed -i 's/ro.omni.device/ro.product.device/' $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/bash/bashrc; \
-            sed -i '/export TERM/d' $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/bash/bashrc;
-    else
-        LOCAL_POST_INSTALL_CMD += \
-            mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc/bash; \
-            cp -rf external/bash/etc/* $(TARGET_RECOVERY_ROOT_OUT)/system/etc/bash/; \
-            sed -i 's/ro.cm.device/ro.product.device/' $(TARGET_RECOVERY_ROOT_OUT)/system/etc/bash/bashrc; \
-            sed -i 's/ro.lineage.device/ro.product.device/' $(TARGET_RECOVERY_ROOT_OUT)/system/etc/bash/bashrc; \
-            sed -i 's/ro.omni.device/ro.product.device/' $(TARGET_RECOVERY_ROOT_OUT)/system/etc/bash/bashrc; \
-            sed -i '/export TERM/d' $(TARGET_RECOVERY_ROOT_OUT)/system/etc/bash/bashrc;
-    endif
+LOCAL_POST_INSTALL_CMD += \
+    mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/etc/bash; \
+    cp -rf external/bash/etc/* $(TARGET_RECOVERY_ROOT_OUT)/sbin/etc/bash/; \
+    sed -i 's/ro.cm.device/ro.product.device/' $(TARGET_RECOVERY_ROOT_OUT)/sbin/etc/bash/bashrc; \
+    sed -i 's/ro.lineage.device/ro.product.device/' $(TARGET_RECOVERY_ROOT_OUT)/sbin/etc/bash/bashrc; \
+    sed -i 's/ro.omni.device/ro.product.device/' $(TARGET_RECOVERY_ROOT_OUT)/sbin/etc/bash/bashrc; \
+    sed -i '/export TERM/d' $(TARGET_RECOVERY_ROOT_OUT)/sbin/etc/bash/bashrc;
 	include $(BUILD_PHONY_PACKAGE)
 endif
