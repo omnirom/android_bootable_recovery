@@ -1982,9 +1982,10 @@ int GUIAction::togglebacklight(std::string arg __unused)
 int GUIAction::setbootslot(std::string arg)
 {
 	operation_start("Set Boot Slot");
-	if (!simulate)
+	if (!simulate) {
+		PartitionManager.UnMount_By_Path("/vendor",true);
 		PartitionManager.Set_Active_Slot(arg);
-	else
+	} else
 		simulate_progress_bar();
 	operation_end(0);
 	return 0;
