@@ -641,17 +641,10 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)/sbin
 LOCAL_REQUIRED_MODULES := nano libncurses
-ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
-    LOCAL_POST_INSTALL_CMD += \
-        mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/nano; \
-        cp -rf external/nano/etc/* external/nano/syntax/*.nanorc $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/nano/; \
-        cp -rf external/libncurses/lib/terminfo $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/;
-else
-    LOCAL_POST_INSTALL_CMD += \
-        mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc/nano; \
-        cp -rf external/nano/etc/* external/nano/syntax/*.nanorc $(TARGET_RECOVERY_ROOT_OUT)/system/etc/nano/; \
-        cp -rf external/libncurses/lib/terminfo $(TARGET_RECOVERY_ROOT_OUT)/system/etc/;
-endif
+LOCAL_POST_INSTALL_CMD += \
+    mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/etc/nano; \
+    cp -rf external/nano/etc/* external/nano/syntax/*.nanorc $(TARGET_RECOVERY_ROOT_OUT)/sbin/etc/nano/; \
+    cp -rf external/libncurses/lib/terminfo $(TARGET_RECOVERY_ROOT_OUT)/sbin/etc/;
 include $(BUILD_PHONY_PACKAGE)
 
 ifneq ($(TW_EXCLUDE_BASH), true)
