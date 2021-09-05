@@ -740,7 +740,9 @@
 		<string name="twrp_adbbu_option">--twrp option is required to enable twrp adb backup</string>
 		<string name="partition_not_found">path: {1} not found in partititon list</string>
 		<string name="copy_kernel_log">Copied kernel log to {1}</string>
+		<string name="copy_logcat">Copied logcat to {1}</string>
 		<string name="include_kernel_log">Include Kernel Log</string>
+		<string name="include_logcat">Include Logcat</string>
 		<string name="sha2_chk">Use SHA2 for hashing</string>
 		<string name="unable_set_boot_slot">Error changing bootloader boot slot to {1}</string>
 		<string name="unmount_sys_install">Unmount System before installing a ZIP</string>

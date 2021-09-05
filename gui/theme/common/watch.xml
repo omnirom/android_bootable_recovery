@@ -266,6 +266,13 @@
 				<data variable="tw_include_kernel_log" value="1"/>
 			</checkbox>
 
+			<checkbox>
+				<condition var1="tw_logcat_exists" var2="1"/>
+				<placement x="%indent%" y="%row2_y%"/>
+				<text>{@include_logcat=Include Logcat}</text>
+				<data variable="tw_include_logcat" value="1"/>
+			</checkbox>
+
 			<slider>
 				<text>{@swipe_confirm=   Confirm}</text>
 				<actions>

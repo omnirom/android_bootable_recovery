@@ -2998,7 +2998,7 @@
 						<action function="set">tw_slider_text={@swipe_reboot=Swipe to Reboot}</action>
 						<action function="page">rebootcheck</action>
 					</actions>
-				</button>
+				</listitem>
 			</listbox>
 
 			<text style="text_m">
@@ -3586,7 +3586,14 @@
 			</text>
 
 			<checkbox>
+				<condition var1="tw_logcat_exists" var2="1"/>
 				<placement x="%indent%" y="%row4_y%"/>
+				<text>{@include_logcat=Include Logcat}</text>
+				<data variable="tw_include_logcat" value="1"/>
+			</checkbox>
+
+			<checkbox>
+				<placement x="%indent%" y="%row6_y%"/>
 				<text>{@include_kernel_log=Include Kernel Log}</text>
 				<data variable="tw_include_kernel_log" value="1"/>
 			</checkbox>

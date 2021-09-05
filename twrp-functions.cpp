@@ -1231,6 +1231,17 @@ void TWFunc::copy_kernel_log(string curr_storage) {
 	tw_set_default_metadata(dmesgDst.c_str());
 }
 
+void TWFunc::copy_logcat(string curr_storage) {
+	std::string logcatDst = curr_storage + "/logcat.txt";
+	std::string logcatCmd = "logcat -d";
+
+	std::string result;
+	Exec_Cmd(logcatCmd, result, false);
+	write_to_file(logcatDst, result);
+	gui_msg(Msg("copy_logcat=Copied logcat to {1}")(logcatDst));
+	tw_set_default_metadata(logcatDst.c_str());
+}
+
 bool TWFunc::isNumber(string strtocheck) {
 	int num = 0;
 	std::istringstream iss(strtocheck);
