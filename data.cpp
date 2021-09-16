@@ -781,6 +781,12 @@ void DataManager::SetDefaultValues()
 #endif
 	mPersist.SetValue(TW_UNMOUNT_SYSTEM, "1");
 
+#if defined BOARD_USES_RECOVERY_AS_BOOT && defined BOARD_BUILD_SYSTEM_ROOT_IMAGE
+	mConst.SetValue("tw_uses_initramfs", "1");
+#else
+	mConst.SetValue("tw_uses_initramfs", "0");
+#endif
+
 #ifdef TW_NO_SCREEN_TIMEOUT
 	mConst.SetValue("tw_screen_timeout_secs", "0");
 	mConst.SetValue("tw_no_screen_timeout", "1");
