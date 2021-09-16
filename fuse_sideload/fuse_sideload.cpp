@@ -225,7 +225,7 @@ static int handle_release(void* /* data */, fuse_data* /* fd */, const fuse_in_h
 
 // Fetch a block from the host into fd->curr_block and fd->block_data.
 // Returns 0 on successful fetch, negative otherwise.
-static int fetch_block(fuse_data* fd, uint32_t block) {
+static int fetch_block(fuse_data* fd, uint64_t block) {
   if (block == fd->curr_block) {
     return 0;
   }
