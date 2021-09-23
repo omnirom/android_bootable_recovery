@@ -104,10 +104,19 @@ enum class PixelFormat : int {
   ARGB = 4,
 };
 
-// Initializes the graphics backend and loads font file. Returns 0 on success, or -1 on error. Note
-// that the font initialization failure would be non-fatal, as caller may not need to draw any text
-// at all. Caller can check the font initialization result via gr_sys_font() as needed.
+enum class GraphicsBackend : int {
+  UNKNOWN = 0,
+  DRM = 1,
+  FBDEV = 2,
+};
+
+// Initializes the default graphics backend and loads font file. Returns 0 on success, or -1 on
+// error. Note that the font initialization failure would be non-fatal, as caller may not need to
+// draw any text at all. Caller can check the font initialization result via gr_sys_font() as
+// needed.
 int gr_init();
+// Supports backend selection for minui client.
+int gr_init(std::initializer_list<GraphicsBackend> backends);
 
 // Frees the allocated resources. The function is idempotent, and safe to be called if gr_init()
 // didn't finish successfully.
