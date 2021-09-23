@@ -42,6 +42,9 @@ static constexpr uint32_t alpha_mask = 0xff000000;
 static GRSurface* gr_draw = nullptr;
 static GRRotation rotation = GRRotation::NONE;
 static PixelFormat pixel_format = PixelFormat::UNKNOWN;
+// The graphics backend list that provides fallback options for the default backend selection.
+// For example, it will fist try DRM, then try FBDEV if DRM is unavailable.
+constexpr auto default_backends = { GraphicsBackend::DRM, GraphicsBackend::FBDEV };
 
 static bool outside(int x, int y) {
   auto swapped = (rotation == GRRotation::LEFT || rotation == GRRotation::RIGHT);
@@ -340,7 +343,22 @@ void gr_flip() {
   gr_draw = gr_backend->Flip();
 }
 
+std::unique_ptr<MinuiBackend> create_backend(GraphicsBackend backend) {
+  switch (backend) {
+    case GraphicsBackend::DRM:
+      return std::make_unique<MinuiBackendDrm>();
+    case GraphicsBackend::FBDEV:
+      return std::make_unique<MinuiBackendFbdev>();
+    default:
+      return nullptr;
+  }
+}
+
 int gr_init() {
+  return gr_init(default_backends);
+}
+
+int gr_init(std::initializer_list<GraphicsBackend> backends) {
   // pixel_format needs to be set before loading any resources or initializing backends.
   std::string format = android::base::GetProperty("ro.minui.pixel_format", "");
   if (format == "ABGR_8888") {
@@ -361,19 +379,22 @@ int gr_init() {
            ret);
   }
 
-  auto backend = std::unique_ptr<MinuiBackend>{ std::make_unique<MinuiBackendDrm>() };
-  gr_draw = backend->Init();
-
-  if (!gr_draw) {
-    backend = std::make_unique<MinuiBackendFbdev>();
-    gr_draw = backend->Init();
+  std::unique_ptr<MinuiBackend> minui_backend;
+  for (GraphicsBackend backend : backends) {
+    minui_backend = create_backend(backend);
+    if (!minui_backend) {
+      printf("gr_init: minui_backend %d is a nullptr\n", backend);
+      continue;
+    }
+    gr_draw = minui_backend->Init();
+    if (gr_draw) break;
   }
 
   if (!gr_draw) {
     return -1;
   }
 
-  gr_backend = backend.release();
+  gr_backend = minui_backend.release();
 
   int overscan_percent = android::base::GetIntProperty("ro.minui.overscan_percent", 0);
   overscan_offset_x = gr_draw->width * overscan_percent / 100;
