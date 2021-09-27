@@ -127,6 +127,7 @@ int gr_fb_height();
 
 void gr_flip();
 void gr_fb_blank(bool blank);
+void gr_fb_blank(bool blank, int index);
 
 // Clears entire surface to current color.
 void gr_clear();
