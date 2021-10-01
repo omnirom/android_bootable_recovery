@@ -512,8 +512,8 @@
 		<string name="unpacking_image">Unpacking {1}...</string>
 		<string name="repacking_image">Repacking {1}...</string>
 		<string name="repack_image_hdr">Select Image</string>
-		<string name="reflash_twrp">Flash current TWRP</string>
-		<string name="reflash_twrp_confirm">Flash current TWRP?</string>
+		<string name="reflash_twrp">Flash Current TWRP</string>
+		<string name="reflash_twrp_confirm">Flash Current TWRP?</string>
 		<string name="reflashing_twrp">Flashing TWRP...</string>
 		<string name="reflash_twrp_complete">Done flashing TWRP</string>
 		<string name="fix_recovery_loop">Fix Recovery Bootloop</string>
