@@ -512,6 +512,7 @@
 		<string name="unpacking_image">Unpacking {1}...</string>
 		<string name="repacking_image">Repacking {1}...</string>
 		<string name="repack_image_hdr">Select Image</string>
+		<string name="repack_overwrite_warning">If device was previously rooted, then root has been overwritten and will need to be reinstalled.</string>
 		<string name="reflash_twrp">Flash Current TWRP</string>
 		<string name="reflash_twrp_confirm">Flash Current TWRP?</string>
 		<string name="reflashing_twrp">Flashing TWRP...</string>
