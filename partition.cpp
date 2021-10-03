@@ -1749,10 +1749,7 @@ bool TWPartition::Wipe(string New_File_System) {
 			}
 		}
 
-		if (Has_Data_Media && recreate_media) {
-			Recreate_Media_Folder();
-		}
-		if (Is_Storage && Mount(false))
+		if (Is_Storage && Mount(false) && !Is_FBE)
 			PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
 	}
 
@@ -2059,17 +2056,18 @@ bool TWPartition::Wipe_Encryption() {
 	Is_Encrypted = false;
 	if (Wipe(Fstab_File_System)) {
 		Has_Data_Media = Save_Data_Media;
-		if (Has_Data_Media && !Symlink_Mount_Point.empty()) {
-			Recreate_Media_Folder();
-			if (Mount(false))
-				PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
-		}
 		DataManager::SetValue(TW_IS_ENCRYPTED, 0);
 #ifndef TW_OEM_BUILD
 		gui_msg("format_data_msg=You may need to reboot recovery to be able to use /data again.");
 #endif
 		if (Is_FBE) {
 			gui_msg(Msg(msg::kWarning, "data_media_fbe_msg=TWRP will not recreate /data/media on an FBE device. Please reboot into your rom to create /data/media."));
+		} else {
+			if (Has_Data_Media && !Symlink_Mount_Point.empty()) {
+				Recreate_Media_Folder();
+				if (Mount(false))
+					PartitionManager.Add_MTP_Storage(MTP_Storage_ID);
+			}
 		}
 
 		ret = true;
