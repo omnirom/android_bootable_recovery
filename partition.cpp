@@ -733,8 +733,8 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 bool TWPartition::Decrypt_FBE_DE() {
 if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
 		DataManager::SetValue(TW_IS_FBE, 1);
-		property_set("ro.crypto.state", "encrypted");
-		property_set("ro.crypto.type", "file");
+		PartitionManager.Set_Crypto_State();
+		PartitionManager.Set_Crypto_Type("file");
 		LOGINFO("File Based Encryption is present\n");
 #ifdef TW_INCLUDE_FBE
 	Is_FBE = true;
@@ -755,7 +755,7 @@ if (TWFunc::Path_Exists("/data/unencrypted/key/version")) {
 	while (!Decrypt_DE() && --retry_count)
 		usleep(2000);
 	if (retry_count > 0) {
-		property_set("ro.crypto.state", "encrypted");
+		PartitionManager.Set_Crypto_State();
 		Is_Encrypted = true;
 		Is_Decrypted = false;
 		DataManager::SetValue(TW_IS_ENCRYPTED, 1);

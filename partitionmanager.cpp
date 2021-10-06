@@ -113,9 +113,18 @@ TWPartitionManager::TWPartitionManager(void) {
 #endif
 }
 
-int TWPartitionManager::Set_FDE_Encrypt_Status(void) {
-	property_set("ro.crypto.state", "encrypted");
-	property_set("ro.crypto.type", "block");
+void TWPartitionManager::Set_Crypto_State() {
+	char crypto_state[PROPERTY_VALUE_MAX];
+	property_get("ro.crypto.state", crypto_state, "error");
+	if (strcmp(crypto_state, "error") == 0)
+		property_set("ro.crypto.state", "encrypted");
+}
+
+int TWPartitionManager::Set_Crypto_Type(const char* crypto_type) {
+	char type_prop[PROPERTY_VALUE_MAX];
+	property_get("ro.crypto.type", type_prop, "error");
+	if (strcmp(type_prop, "error") == 0)
+		property_set("ro.crypto.type", crypto_type);
 	// Sleep for a bit so that services can start if needed
 	sleep(1);
 	return 0;
@@ -303,9 +312,9 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 #ifdef TW_INCLUDE_CRYPTO
 	TWPartition* Decrypt_Data = Find_Partition_By_Path("/data");
 	if (Decrypt_Data && Decrypt_Data->Is_Encrypted && !Decrypt_Data->Is_Decrypted) {
-		property_set("ro.crypto.state", "encrypted");
+		Set_Crypto_State();
 		if (!Decrypt_Data->Key_Directory.empty() && Mount_By_Path(Decrypt_Data->Key_Directory, false)) {
-		property_set("ro.crypto.type", "file");
+		Set_Crypto_Type("file");
 #ifdef TW_INCLUDE_FBE_METADATA_DECRYPT
 			if (e4crypt_mount_metadata_encrypted(Decrypt_Data->Mount_Point, false, Decrypt_Data->Key_Directory, Decrypt_Data->Actual_Block_Device, &Decrypt_Data->Decrypted_Block_Device)) {
 				LOGINFO("Successfully decrypted metadata encrypted data partition with new block device: '%s'\n", Decrypt_Data->Decrypted_Block_Device.c_str());
@@ -349,7 +358,8 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error,
 				}
 			}
 		} else {
-			Set_FDE_Encrypt_Status();
+			Set_Crypto_State();
+			Set_Crypto_Type("block");
 			int password_type = cryptfs_get_password_type();
 			if (password_type == CRYPT_TYPE_DEFAULT) {
 				LOGINFO("Device is encrypted with the default password, attempting to decrypt.\n");
@@ -1799,7 +1809,7 @@ void TWPartitionManager::Check_Users_Decryption_Status() {
 
 int TWPartitionManager::Decrypt_Device(string Password, int user_id) {
 #ifdef TW_INCLUDE_CRYPTO
-	char crypto_state[PROPERTY_VALUE_MAX], crypto_blkdev[PROPERTY_VALUE_MAX];
+	char crypto_blkdev[PROPERTY_VALUE_MAX];
 	std::vector<TWPartition*>::iterator iter;
 
 	// Mount any partitions that need to be mounted for decrypt
@@ -1810,10 +1820,8 @@ int TWPartitionManager::Decrypt_Device(string Password, int user_id) {
 	}
 	property_set("twrp.mount_to_decrypt", "1");
 
-	property_get("ro.crypto.state", crypto_state, "error");
-	if (strcmp(crypto_state, "error") == 0) {
-		Set_FDE_Encrypt_Status();
-	}
+	Set_Crypto_State();
+	Set_Crypto_Type("block");
 
 	if (DataManager::GetIntValue(TW_IS_FBE)) {
 #ifdef TW_INCLUDE_FBE
