@@ -111,14 +111,14 @@ def main(argv):
   logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
                       format=logging_format)
 
-  with open(args.input_care_map, 'r') as input_care_map:
+  with open(args.input_care_map, 'rb') as input_care_map:
     content = input_care_map.read()
 
   if args.parse_proto:
     result = ParseProtoMessage(content, args.fingerprint_enabled).encode()
   else:
     care_map_proto = GenerateCareMapProtoFromLegacyFormat(
-        content.rstrip().splitlines(), args.fingerprint_enabled)
+        content.decode().rstrip().splitlines(), args.fingerprint_enabled)
     result = care_map_proto.SerializeToString()
 
   with open(args.output_file, 'wb') as output:
