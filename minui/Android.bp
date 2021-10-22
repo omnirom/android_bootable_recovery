@@ -24,6 +24,7 @@ package {
 cc_library {
     name: "libminui",
     recovery_available: true,
+    vendor_available: true,
 
     defaults: [
         "recovery_defaults",
@@ -51,4 +52,15 @@ cc_library {
         "libpng",
         "libz",
     ],
+
+    target: {
+        vendor: {
+            exclude_static_libs: [
+                "libsync",
+            ],
+            shared_libs: [
+                "libsync",
+            ],
+        },
+    },
 }
