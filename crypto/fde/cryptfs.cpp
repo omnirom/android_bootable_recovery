@@ -1082,7 +1082,7 @@ static int load_crypto_mapping_table(struct crypt_mnt_ftr *crypt_ftr,
   for (i = 0; i < TABLE_LOAD_RETRIES; i++) {
     int ret = ioctl(fd, DM_TABLE_LOAD, io);
     if (!ret)  {
-      SLOGI("ioctl err: %d", ret);
+      SLOGI("ioctl err: %d\n", ret);
       break;
     }
     usleep(500000);
