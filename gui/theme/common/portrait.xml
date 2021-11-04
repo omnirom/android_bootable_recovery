@@ -4719,6 +4719,11 @@
 				<action function="page">decrypt_pattern</action>
 			</action>
 
+			<action>
+				<condition var1="tw_crypto_pwtype" var2="3"/>
+				<action function="page">decrypt_pin</action>
+			</action>
+
 			<text style="text_l">
 				<placement x="%col1_x_header%" y="%row3_header_y%"/>
 				<text>{@mount_hdr=Mount}</text>
@@ -4853,6 +4858,69 @@
 				<text>{@sel_lang_btn=Select Language}</text>
 				<action function="overlay">select_language</action>
 			</button>
+		</page>
+
+		<page name="decrypt_pin">
+			<template name="page"/>
+
+			<text style="text_l">
+				<placement x="%col1_x_header%" y="%row3_header_y%"/>
+				<text>{@mount_hdr=Mount}</text>
+			</text>
+
+			<text style="text_m">
+				<placement x="%col1_x_header%" y="%row4_header_y%"/>
+				<text>{@decrypt_data_hdr=Decrypt Data}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<condition var1="tw_is_fbe" op="!=" var2="1"/>
+				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<text>{@decrypt_data_enter_pass=Enter PIN:}</text>
+			</text>
+
+			<text style="text_m_accent">
+				<condition var1="tw_is_fbe" var2="1"/>
+				<placement x="%center_x%" y="%row2_y%" placement="5"/>
+				<text>{@decrypt_data_enter_pass_fbe=Enter PIN for User [%tw_crypto_user_id%]}</text>
+			</text>
+
+			<input>
+				<placement x="%indent%" y="%row3_input_y%" w="%content_width%" h="%input_height%"/>
+				<text>%tw_crypto_display%</text>
+				<data name="tw_crypto_password" mask="*" maskvariable="tw_crypto_display"/>
+				<restrict minlen="1" maxlen="254"/>
+				<action function="page">trydecrypt</action>
+			</input>
+
+			<fill color="%accent_color%">
+				<placement x="%indent%" y="row4a_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<fill color="%text_fail_color%">
+				<condition var1="tw_password_fail" var2="1"/>
+				<placement x="%indent%" y="row4a_y" w="%content_width%" h="input_line_width" placement="1"/>
+			</fill>
+
+			<text style="text_m_fail">
+				<condition var1="tw_password_fail" var2="1"/>
+				<placement x="%indent%" y="%row5_y%"/>
+				<text>{@decrypt_data_failed=PIN failed, please try again!}</text>
+			</text>
+
+			<button style="main_button_half_height">
+				<placement x="%indent%" y="%row10_y%"/>
+				<text>{@cancel_btn=Cancel}</text>
+				<action function="page">canceldecrypt</action>
+			</button>
+
+			<button style="main_button_half_height">
+				<placement x="%center_x%" y="%row10_y%"/>
+				<text>{@sel_lang_btn=Select Language}</text>
+				<action function="overlay">select_language</action>
+			</button>
+
+			<template name="keyboardnum"/>
 		</page>
 
 		<page name="trydecrypt">

@@ -638,5 +638,29 @@
 				</layout4>
 			</keyboard>
 		</template>
+
+		<template name="keyboardnum">
+			<keyboard>
+				<condition var1="tw_hide_kb" var2="0"/>
+				<placement x="0" y="%keyboard_y%" w="480" h="284"/>
+				<keymargin x="4" y="4"/>
+				<background color="#111111"/>
+				<key-alphanumeric color="#111111" font="keylabel" textcolor="#EEEEEE"/>
+				<key-other color="#111111" font="keylabel-small" textcolor="#5b5b5bff"/>
+				<longpress font="keylabel-longpress" textcolor="#5b5b5bff" x="6" y="0"/>
+				<keylabel key="0:c:8" text="Bksp" resource="backspace"/>
+				<keylabel key="0:action" text="Enter" resource="enter"/>
+				<keylabel key=" " text="Space" resource="space"/>
+				<highlight color="%highlight_color%"/>
+				<capshighlight color="%highlight_color%"/>
+				<layout1>
+					<keysize height="70" width="94"/>
+					<row1 key01="100:" key02="1" key03="2" key04="3" key05="100:"/>
+					<row2 key01="100:" key02="4" key03="5" key04="6" key05="100:"/>
+					<row3 key01="100:" key02="7" key03="8" key04="9" key05="100:"/>
+					<row4 key01="100:" key02="94:c:8" key03="0" key04="95:action" key05="100:"/>
+				</layout1>
+			</keyboard>
+		</template>
 	</templates>
 </recovery>
