@@ -265,7 +265,7 @@
 		<string name="rb_recovery_btn">リカバリ</string>
 		<string name="rb_bootloader_btn">ブートローダー</string>
 		<string name="rb_download_btn">ダウンロード</string>
-		<string name="rb_edl_btn">Edl</string>
+		<string name="rb_edl_btn">EDL</string>
 		<string name="turning_off">電源を切っています...</string>
 		<string name="swipe_power_off">スワイプで電源を切る</string>
 		<string name="swipe_power_off_s">電源を切る</string>

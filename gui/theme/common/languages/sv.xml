@@ -101,7 +101,7 @@
 		<string name="rb_system_btn">System</string>
 		<string name="rb_bootloader_btn">Bootloader</string>
 		<string name="rb_download_btn">Ladda ner</string>
-		<string name="rb_edl_btn">Edl</string>
+		<string name="rb_edl_btn">EDL</string>
 		<string name="turning_off">Stänger av...</string>
 		<string name="settings_hdr">Inställningar</string>
 		<string name="settings_gen_s_hdr">Allmänt</string>

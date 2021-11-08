@@ -260,7 +260,7 @@
         <string name="rb_recovery_btn">Récupération</string>
         <string name="rb_bootloader_btn">Amorçage</string>
         <string name="rb_download_btn">Télécharger</string>
-		<string name="rb_edl_btn">Edl</string>
+		<string name="rb_edl_btn">EDL</string>
         <string name="turning_off">Arrêt en cours...</string>
         <string name="swipe_power_off">Glisser pour éteindre</string>
         <string name="swipe_power_off_s">Éteindre</string>

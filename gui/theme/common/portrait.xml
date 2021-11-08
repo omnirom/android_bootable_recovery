@@ -2983,7 +2983,7 @@
 					</actions>
 				</listitem>
 
-				<listitem name="{@rb_edl_btn=Edl}">
+				<listitem name="{@rb_edl_btn=EDL}">
 					<condition var1="tw_edl_mode" var2="1"/>
 					<actions>
 						<action function="set">tw_back=reboot</action>

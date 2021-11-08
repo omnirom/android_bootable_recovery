@@ -262,7 +262,7 @@
 		<string name="rb_recovery_btn">Obnovitev</string>
 		<string name="rb_bootloader_btn">Zagonski nalagalnik</string>
 		<string name="rb_download_btn">Prejmi</string>
-		<string name="rb_edl_btn">Edl</string>
+		<string name="rb_edl_btn">EDL</string>
 		<string name="turning_off">Izklapljanje …</string>
 		<string name="swipe_power_off">Povlecite za izklop</string>
 		<string name="swipe_power_off_s">Izklopi</string>

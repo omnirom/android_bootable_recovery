@@ -3491,7 +3491,7 @@
 			<button style="main_button">
 				<condition var1="tw_edl_mode" var2="1"/>
 				<placement x="%col1_x_right%" y="%row11_y%"/>
-				<text>{@rb_edl_btn=Edl}</text>
+				<text>{@rb_edl_btn=EDL}</text>
 				<actions>
 					<action function="set">tw_back=reboot</action>
 					<action function="set">tw_action=reboot</action>

@@ -264,7 +264,7 @@
 		<string name="rb_recovery_btn">Recovery</string>
 		<string name="rb_bootloader_btn">Bootloader</string>
 		<string name="rb_download_btn">Descarga</string>
-		<string name="rb_edl_btn">Edl</string>
+		<string name="rb_edl_btn">EDL</string>
 		<string name="turning_off">Apagando...</string>
 		<string name="swipe_power_off">Desliza para Apagar</string>
 		<string name="swipe_power_off_s">Apagar</string>

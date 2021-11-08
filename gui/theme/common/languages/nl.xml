@@ -287,7 +287,7 @@
 		<string name="rb_recovery_btn">Recovery</string>
 		<string name="rb_bootloader_btn">Bootloader</string>
 		<string name="rb_download_btn">Download</string>
-		<string name="rb_edl_btn">Edl</string>
+		<string name="rb_edl_btn">EDL</string>
 		<string name="turning_off">Wordt uitgeschakeld...</string>
 		<string name="swipe_power_off">Veeg om uit te schakelen</string>
 		<string name="swipe_power_off_s">Uitschakelen</string>
