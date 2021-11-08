@@ -1735,22 +1735,30 @@ void TWPartitionManager::Parse_Users() {
 			user.userId = to_string(userId);
 
 			// Attempt to get name of user. Fallback to user ID if this fails.
-			char* userFile = PageManager::LoadFileToBuffer("/data/system/users/" + to_string(userId) + ".xml", NULL);
-			if (userFile == NULL) 
-				user.userName = to_string(userId);
-			else {
-				xml_document<> *userXml = new xml_document<>();
-				userXml->parse<0>(userFile);
-				xml_node<>* userNode = userXml->first_node("user");
-				if (userNode == nullptr) {
+			std::string path = "/data/system/users/" + to_string(userId) + ".xml";
+			if ((atoi(TWFunc::System_Property_Get("ro.build.version.sdk").c_str()) > 30) && TWFunc::Path_Exists(path)) {
+				if(!TWFunc::Check_Xml_Format(path))
 					user.userName = to_string(userId);
-				} else {
-					xml_node<>* nameNode = userNode->first_node("name");
-					if (nameNode == nullptr)
+			}
+			else {
+				char* userFile = PageManager::LoadFileToBuffer(path, NULL);
+				if (userFile == NULL) {
+					user.userName = to_string(userId);
+				}
+				else {
+					xml_document<> *userXml = new xml_document<>();
+					userXml->parse<0>(userFile);
+					xml_node<>* userNode = userXml->first_node("user");
+					if (userNode == nullptr) {
 						user.userName = to_string(userId);
-					else {
-						string userName = nameNode->value();
-						user.userName = userName + " (" + to_string(userId) + ")";
+					} else {
+						xml_node<>* nameNode = userNode->first_node("name");
+						if (nameNode == nullptr)
+							user.userName = to_string(userId);
+						else {
+							string userName = nameNode->value();
+							user.userName = userName + " (" + to_string(userId) + ")";
+						}
 					}
 				}
 			}
@@ -2876,6 +2884,16 @@ bool TWPartitionManager::Decrypt_Adopted() {
 		LOGERR("Cannot decrypt adopted storage because /data will not mount\n");
 		return false;
 	}
+
+	// In Android 12 xml format changed. Previously it was human-readable format with xml tags
+	// now it's ABX (Android Binary Xml). Sadly, rapidxml can't parse it, so check xml format firstly
+	std::string path = "/data/system/storage.xml";
+	if ((atoi(TWFunc::System_Property_Get("ro.build.version.sdk").c_str()) > 30) && TWFunc::Path_Exists(path))
+		if(!TWFunc::Check_Xml_Format(path)) {
+			LOGINFO("Android 12+: storage.xml is in ABX format. Skipping adopted storage decryption\n");
+			return false;
+		}
+
 	LOGINFO("Decrypt adopted storage starting\n");
 	char* xmlFile = PageManager::LoadFileToBuffer("/data/system/storage.xml", NULL);
 	xml_document<> *doc = NULL;

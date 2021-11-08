@@ -1519,4 +1519,20 @@ string TWFunc::Check_For_TwrpFolder(){
 exit:
 	return TW_DEFAULT_RECOVERY_FOLDER;
 }
+
+bool TWFunc::Check_Xml_Format(const std::string filename) {
+	std::string buffer(' ', 4);
+	std::string abx_hdr("ABX\x00", 4);
+	std::ifstream File;
+	File.open(filename);
+	if (File.is_open()) {
+		File.get(&buffer[0], buffer.size());
+		File.close();
+		// Android Binary Xml start from these bytes
+		if(!buffer.compare(0, abx_hdr.size(), abx_hdr))
+			return false; // bad format, not possible to parse
+	}
+	return true; // good format, possible to parse
+}
+
 #endif // ndef BUILD_TWRPTAR_MAIN
