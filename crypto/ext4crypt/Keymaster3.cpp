@@ -25,6 +25,8 @@
 #define ERROR 1
 #define LOG(x) std::cout
 
+static const std::string kPkmBlob("pKMblob\x00", 8);
+
 using namespace ::keystore;
 using android::hardware::hidl_string;
 
@@ -178,6 +180,14 @@ KeymasterOperation Keymaster::begin(KeyPurpose purpose, const std::string& key,
             *outParams = _outParams;
         mOpHandle = operationHandle;
     };
+
+    // In A12 keymaster_key_blob format changed:
+    // it have useless for us bytes in beginning, so remove them to correctly handle key
+    std::string kmKey = dump::toString(keyBlob);
+    if (!kmKey.compare(0, kPkmBlob.size(), kPkmBlob)) {
+        kmKey.erase(0, kPkmBlob.size());
+        keyBlob = blob2hidlVec(kmKey);
+    }
 
     auto error = mDevice->begin(purpose, keyBlob, inParams.hidl_data(), hidlCb);
     if (!error.isOk()) {
