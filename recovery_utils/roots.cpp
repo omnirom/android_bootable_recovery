@@ -33,8 +33,7 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
-#include <cryptfs.h>
-#include <ext4_utils/wipe.h>
+#include <ext4_utils/ext4_utils.h>
 #include <fs_mgr.h>
 #include <fs_mgr/roots.h>
 
@@ -161,29 +160,16 @@ int format_volume(const std::string& volume, const std::string& directory) {
     needs_projid = android::base::GetBoolProperty("external_storage.projid.enabled", false);
   }
 
-  // If there's a key_loc that looks like a path, it should be a block device for storing encryption
-  // metadata. Wipe it too.
-  if (!v->key_loc.empty() && v->key_loc[0] == '/') {
-    LOG(INFO) << "Wiping " << v->key_loc;
-    int fd = open(v->key_loc.c_str(), O_WRONLY | O_CREAT, 0644);
-    if (fd == -1) {
-      PLOG(ERROR) << "format_volume: Failed to open " << v->key_loc;
-      return -1;
-    }
-    wipe_block_device(fd, get_file_size(fd));
-    close(fd);
-  }
-
   int64_t length = 0;
   if (v->length > 0) {
     length = v->length;
-  } else if (v->length < 0 || v->key_loc == "footer") {
+  } else if (v->length < 0) {
     android::base::unique_fd fd(open(v->blk_device.c_str(), O_RDONLY));
     if (fd == -1) {
       PLOG(ERROR) << "format_volume: failed to open " << v->blk_device;
       return -1;
     }
-    length = get_file_size(fd.get(), v->length ? -v->length : CRYPT_FOOTER_OFFSET);
+    length = get_file_size(fd.get(), -v->length);
     if (length <= 0) {
       LOG(ERROR) << "get_file_size: invalid size " << length << " for " << v->blk_device;
       return -1;
