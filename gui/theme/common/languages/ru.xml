@@ -317,6 +317,7 @@
 		<string name="settings_gen_s_hdr">Основные</string>
 		<string name="settings_gen_btn">Основные</string>
 		<string name="use_rmrf_chk">Использовать rm -rf вместо форматирования</string>
+		<string name="auto_reflashtwrp_chk">Автоматически перепрошивать TWRP после установки прошивки</string>
 		<string name="use24clock_chk">Использовать 24-часовой формат времени</string>
 		<string name="rev_navbar_chk">Инвертировать порядок навигационных кнопок</string>
 		<string name="simact_chk">Имитация действий для тестирования темы</string>
@@ -334,7 +335,7 @@
 		<string name="time_zone_hdr">Часовой пояс</string>
 		<string name="sel_tz_list">Выбор часового пояса:</string>
 		<!-- Translator note: if it does not make sense to translate the locations or if it makes more sense,
-			 feel free to change the location listed or drop the location entirely and just call it UTC -6 -->
+				feel free to change the location listed or drop the location entirely and just call it UTC -6 -->
 		<string name="utcm11">(UTC-11, SST) о.Мидуэй, Самоа</string>
 		<string name="utcm10">(UTC-10, HAST) Гавайи</string>
 		<string name="utcm9">(UTC-9, AKST) Аляска</string>
@@ -506,9 +507,16 @@
 		<string name="install_complete">Установка завершена</string>
 		<string name="unpack_error">Ошибка распаковки образа.</string>
 		<string name="repack_error">Ошибка перепаковки образа.</string>
+		<string name="modified_ramdisk_error">файлы рамдиска были изменены, неудалось создать рамдиск для установки, используйте fastboot boot twrp и попробуйте эту функцию снова или воспользуйтесь Установка рекавери в ramdisk.</string>
+		<string name="create_ramdisk_error">неудалось создать рамдиск для установки.</string>
 		<string name="unpacking_image">Распаковка {1}...</string>
 		<string name="repacking_image">Перепаковка {1}...</string>
 		<string name="repack_image_hdr">Выбор образа</string>
+		<string name="repack_overwrite_warning">Если устройство ранее было рутовано, тогда рут перезапишется и нужно будет переустановить его.</string>
+		<string name="reflash_twrp">Установить текущее TWRP</string>
+		<string name="reflash_twrp_confirm">Установить текущее TWRP?</string>
+		<string name="reflashing_twrp">Установка TWRP...</string>
+		<string name="reflash_twrp_complete">TWRP успешно установлено</string>
 		<string name="fix_recovery_loop">Исправить циклическую перезагрузку рекавери</string>
 		<string name="fix_recovery_loop_confirm">Исправить циклическую перезагрузку рекавери?</string>
 		<string name="fixing_recovery_loop">Исправление циклической перезагрузки рекавери...</string>
@@ -518,16 +526,16 @@
 		<string name="decrypt_users">Расшифровка пользователей</string>
 		<string name="decrypt_users_selection">Выберите ID пользователя для расшифровки</string>
 		<string name="select_user">Выбор пользователя</string>
-        <string name="backup_storage_undecrypt_warning">В резервную копию не включены некоторые файлы пользователя {1}, потому что пользователь не расшифрован.</string>
-        <string name="decrypting_user_fbe">Попытка расшифровать FBE пользователя {1}...</string>
+		<string name="backup_storage_undecrypt_warning">В резервную копию не включены некоторые файлы пользователя {1}, потому что пользователь не расшифрован.</string>
+		<string name="decrypting_user_fbe">Попытка расшифровать FBE пользователя {1}...</string>
 		<string name="decrypt_user_success_fbe">Пользователь {1} расшифрован успешно</string>
 		<string name="decrypt_user_fail_fbe">Ошибка расшифровки пользователя {1}</string>
 		<string name="decrypt_data_enter_pass_fbe">Введите пароль пользователя [%tw_crypto_user_id%]</string>
 		<string name="decrypt_data_enter_pattern_fbe">Введите шаблон пользователя [%tw_crypto_user_id%]</string>
 		<string name="multiuser_warning1">Не все пользователи расшифрованы!</string>
-        <string name="multiuser_warning2">Резервное копирование или восстановление могут завершиться неудачно!</string>
+		<string name="multiuser_warning2">Резервное копирование или восстановление могут завершиться неудачно!</string>
 		<string name="multiuser_warning_accept">Всё равно продолжить</string>
-        <string name="multiuser_warning_hdr">Предупреждение о нескольких пользователях</string>
+		<string name="multiuser_warning_hdr">Предупреждение о нескольких пользователях</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Чтение SELinux-контекста не поддерживается ядром.</string>
@@ -628,7 +636,7 @@
 		<string name="cannot_resize">Невозможно изменить размер {1}.</string>
 		<string name="repair_resize">Восстановление {1} перед изменением размера.</string>
 		<string name="unable_resize">Не удаётся изменить размер {1}.</string>
-		<string name="no_digest_found" version="2">Отсутствует файл контрольной суммы для '{1}'. Пожалуйста отмените выбор проверки контрольных сумм при восстановлении.</string>
+		<string name="no_digest_found" version="2">Отсутствует файл контрольной суммы для '{1}'. Пожалуйста, отмените выбор проверки контрольных сумм при восстановлении.</string>
 		<string name="digest_fail_match" version="2">Контрольная сумма не соответствует '{1}'.</string>
 		<string name="digest_matched" version="2">Контрольная сумма соответствует '{1}'.</string>
 		<string name="fail_decrypt_tar">Не удаётся расшифровать tar-файл '{1}'</string>
@@ -733,7 +741,9 @@
 		<string name="twrp_adbbu_option">-- эта опция позволяет делать резервное копирование по ADB</string>
 		<string name="partition_not_found">путь: {1} отсутствует в списке разделов.</string>
 		<string name="copy_kernel_log">Kernel Log скопирован в {1}</string>
+		<string name="copy_logcat">Logcat скопирован в {1}</string>
 		<string name="include_kernel_log">Добавить Kernel Log</string>
+		<string name="include_logcat">Добавить Logcat</string>
 		<string name="sha2_chk">Использовать SHA2 для контрольных сумм (иначе - MD5)</string>
 		<string name="unable_set_boot_slot">Ошибка смены слота загрузки bootloader на {1}</string>
 		<string name="unmount_sys_install">Размонтировать System перед установкой ZIP</string>
@@ -744,16 +754,7 @@
 		<string name="flash_ab_both_slots">Прошить в оба слота</string>
 		<string name="ozip_decrypt_decryption">Начало расшифровки Ozip...</string>
 		<string name="ozip_decrypt_finish">Расшифровка Ozip завершена!</string>
-		<string name="fastboot_button">Fastboot</string>
-		<string name="enable_adb">Включить ADB</string>
-		<string name="enable_fastboot">Включить Fastboot</string>
-		<string name="fastboot_console_msg">Переход в режим Fastboot...</string>
-		<!-- Android Rescue Party trigger -->
-		<string name="rescue_party0">Обнаружен сбой Android Rescue Party! Возможные решения:</string>
-		<string name="rescue_party1"> 1. Очистить Cache и/или</string>
-		<string name="rescue_party2"> 2. Форматировать Data и/или</string>
-		<string name="rescue_party3"> 3. Заново установить прошивку.</string>
-		<string name="rescue_party4">Проблема: </string>
+		<string name="data_media_fbe_msg">TWRP не пересоздаёт /data/media на FBE устройствах. Пожалуйста, перезагрузитесь в систему чтобы создать /data/media</string>
 		<string name="restore_system_context">Невозможно получить контекст по умолчанию для {1} -- Android может не загрузиться.</string>
 		<string name="change_twrp_folder_btn">Сменить папку TWRP</string>
 		<string name="change_twrp_folder_on_process">Смена папки TWRP</string>
