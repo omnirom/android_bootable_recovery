@@ -2996,11 +2996,11 @@
 
 			<text style="text_m">
 				<condition var1="tw_has_boot_slots" var2="1"/>
-				<placement x="%center_x%" y="%row15_y%" placement="5"/>
+				<placement x="%center_x%" y="%row17_y%" placement="5"/>
 				<text>{@current_boot_slot=Current Slot: %tw_active_slot%}</text>
 			</text>
 
-			<button style="main_button_half_height">
+			<button style="main_button">
 				<condition var1="tw_has_boot_slots" var2="1"/>
 				<placement x="%indent%" y="%row19_y%"/>
 				<text>{@boot_slot_a=Slot A}</text>
@@ -3016,7 +3016,7 @@
 				</actions>
 			</button>
 
-			<button style="main_button_half_height">
+			<button style="main_button">
 				<condition var1="tw_has_boot_slots" var2="1"/>
 				<placement x="%center_x%" y="%row19_y%"/>
 				<text>{@boot_slot_b=Slot B}</text>
