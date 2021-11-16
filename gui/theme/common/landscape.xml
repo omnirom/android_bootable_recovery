@@ -2734,13 +2734,6 @@
 		</page>
 
 		<page name="reboot">
-			<action>
-				<action function="checkforapp"></action>
-				<action function="page">reboot2</action>
-			</action>
-		</page>
-
-		<page name="reboot2">
 			<template name="page"/>
 
 			<text style="text_l">
@@ -2844,17 +2837,6 @@
 					</actions>
 				</listitem>
 			</listbox>
-
-			<button style="main_button">
-				<condition var1="tw_app_install_status" var2="1"/>
-				<placement x="%center_x%" y="%row12_y%"/>
-				<text>{@reboot_install_app_hdr=Install TWRP App}</text>
-				<actions>
-					<action function="set">tw_back=reboot</action>
-					<action function="set">tw_appinstall_title={@reboot_hdr=Reboot}</action>
-					<action function="page">installapp</action>
-				</actions>
-			</button>
 
 			<text style="text_m">
 				<condition var1="tw_has_boot_slots" var2="1"/>

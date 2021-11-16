@@ -3393,13 +3393,6 @@
 		</page>
 
 		<page name="reboot">
-			<action>
-				<action function="checkforapp"></action>
-				<action function="page">reboot2</action>
-			</action>
-		</page>
-
-		<page name="reboot2">
 			<template name="page"/>
 
 			<template name="statusbar"/>
