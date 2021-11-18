@@ -46,6 +46,9 @@ on init
     symlink /dev/binderfs/binder /dev/binder
     chmod 0666 /dev/binderfs/binder
 
+    # Start essential services
+    start servicemanager
+
 on boot
     ifup lo
     hostname localhost
