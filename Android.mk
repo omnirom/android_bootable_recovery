@@ -530,11 +530,11 @@ ifeq ($(TWRP_INCLUDE_LOGCAT), true)
             ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
                 LOCAL_POST_INSTALL_CMD += \
                     $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc; \
-                    cp $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/;
+                    cp -f $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/;
             else
                 LOCAL_POST_INSTALL_CMD += \
                     $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc; \
-                    cp $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system/etc/;
+                    cp -f $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system/etc/;
             endif
         endif
     endif
