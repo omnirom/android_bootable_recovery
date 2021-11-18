@@ -55,6 +55,7 @@ on boot
     domainname localdomain
 
     class_start default
+    class_start hal
 
 on firmware_mounts_complete
    rm /dev/.booting
