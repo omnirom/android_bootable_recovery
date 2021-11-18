@@ -216,6 +216,7 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 		else
 			PartitionManager.Override_Active_Slot("A");
 		DataManager::SetProgress(.25);
+		PartitionManager.Update_System_Details();
 		if (!Backup_Image_For_Repack(part, REPACK_ORIG_DIR, Repack_Options.Backup_First, gui_lookup("repack", "Repack")))
 			return false;
 		if (TWFunc::copy_file(REPACK_NEW_DIR "ramdisk.cpio", REPACK_ORIG_DIR "ramdisk.cpio", 0644)) {
