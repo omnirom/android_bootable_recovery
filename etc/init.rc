@@ -38,12 +38,24 @@ on init
     write /proc/sys/kernel/panic_on_oops 1
     write /proc/sys/vm/max_map_count 1000000
 
+    # Mount binderfs
+    mkdir /dev/binderfs
+    mount binder binder /dev/binderfs stats=global
+    chmod 0755 /dev/binderfs
+
+    symlink /dev/binderfs/binder /dev/binder
+    chmod 0666 /dev/binderfs/binder
+
+    # Start essential services
+    start servicemanager
+
 on boot
     ifup lo
     hostname localhost
     domainname localdomain
 
     class_start default
+    class_start hal
 
 on firmware_mounts_complete
    rm /dev/.booting
