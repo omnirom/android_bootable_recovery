@@ -1396,6 +1396,7 @@ int TWFunc::Property_Override(string Prop_Name, string Prop_Value) {
 #endif
 }
 
+#ifdef USE_EXT4
 bool TWFunc::Get_Encryption_Policy(ext4_encryption_policy &policy, std::string path) {
 #ifdef TW_INCLUDE_FBE
 	if (!TWFunc::Path_Exists(path)) {
@@ -1426,6 +1427,7 @@ bool TWFunc::Set_Encryption_Policy(std::string path, const ext4_encryption_polic
 #endif
 	return true;
 }
+#endif
 
 string TWFunc::Check_For_TwrpFolder(){
 	string oldFolder = "";

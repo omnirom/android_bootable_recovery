@@ -185,8 +185,6 @@ endif
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 28; echo $$?),0)
         LOCAL_CFLAGS += -DUSE_EXT4
-    endif
-    ifeq ($(shell test $(PLATFORM_SDK_VERSION) -le 28; echo $$?),0)
         LOCAL_C_INCLUDES += system/extras/ext4_utils \
             system/extras/ext4_utils/include \
 	    $(commands_TWRP_local_path)/crypto/ext4crypt

@@ -24,7 +24,8 @@
 
 #ifdef USE_FSCRYPT
 #include <ext4_utils/ext4_crypt.h>
-#else
+#endif
+#ifdef USE_EXT4
 #include "ext4crypt_tar.h"
 #endif
 
@@ -121,8 +122,10 @@ public:
 	static bool Is_TWRP_App_In_System(); // Check if the TWRP app is installed in the system partition
 	static void checkforapp();
 	static int Property_Override(string Prop_Name, string Prop_Value); // Override properties (including ro. properties)
+#ifdef USE_EXT4
 	static bool Get_Encryption_Policy(ext4_encryption_policy &policy, std::string path); // return encryption policy for path
 	static bool Set_Encryption_Policy(std::string path, const ext4_encryption_policy &policy); // set encryption policy for path
+#endif
 	static string Check_For_TwrpFolder();
 	static bool Check_Xml_Format(const std::string filename); // Return whether a xml is in plain xml or ABX format
 
