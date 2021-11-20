@@ -1522,7 +1522,7 @@ exit:
 	return TW_DEFAULT_RECOVERY_FOLDER;
 }
 
-bool TWFunc::Check_Xml_Format(const std::string filename) {
+bool TWFunc::Check_Xml_Format(const char* filename) {
 	std::string buffer(' ', 4);
 	std::string abx_hdr("ABX\x00", 4);
 	std::ifstream File;
