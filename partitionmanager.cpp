@@ -3007,6 +3007,7 @@ void TWPartitionManager::Override_Active_Slot(const string& Slot) {
 	LOGINFO("Overriding slot to '%s'\n", Slot.c_str());
 	Active_Slot_Display = Slot;
 	DataManager::SetValue("tw_active_slot", Slot);
+	PartitionManager.Update_System_Details();
 }
 
 void TWPartitionManager::Set_Active_Slot(const string& Slot) {

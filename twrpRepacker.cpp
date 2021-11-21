@@ -217,7 +217,6 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 		else
 			PartitionManager.Override_Active_Slot("A");
 		DataManager::SetProgress(.25);
-		PartitionManager.Update_System_Details();
 		if (!Backup_Image_For_Repack(part, REPACK_ORIG_DIR, Repack_Options.Backup_First, gui_lookup("repack", "Repack")))
 			return false;
 		if (TWFunc::copy_file(REPACK_NEW_DIR "ramdisk.cpio", REPACK_ORIG_DIR "ramdisk.cpio", 0644)) {
@@ -262,6 +261,11 @@ bool twrpRepacker::Repack_Image_And_Flash(const std::string& Target_Image, const
 	}}
 	TWFunc::removeDir(REPACK_NEW_DIR, false);
 	gui_msg(Msg(msg::kWarning, "repack_overwrite_warning=If device was previously rooted, then root has been overwritten and will need to be reinstalled."));
+	string Current_Slot = PartitionManager.Get_Active_Slot_Display();
+		if (Current_Slot == "A")
+			PartitionManager.Override_Active_Slot("B");
+		else
+			PartitionManager.Override_Active_Slot("A");
 	return true;
 }
 
