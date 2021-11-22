@@ -468,8 +468,8 @@ endif
 ifneq ($(TW_USE_TOOLBOX), true)
     ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?),0)
         LOCAL_POST_INSTALL_CMD += \
-            $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin && \
-            ln -sf /sbin/busybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
+            $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin; \
+            ln -sf /sbin/busybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh;
     endif
 else
     ifneq ($(wildcard external/toybox/Android.mk),)
@@ -527,11 +527,11 @@ ifeq ($(TWRP_INCLUDE_LOGCAT), true)
             TWRP_REQUIRED_MODULES += event-log-tags
             ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
                 LOCAL_POST_INSTALL_CMD += \
-                    $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc; \
+                    mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc; \
                     cp -f $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system_root/system/etc/;
             else
                 LOCAL_POST_INSTALL_CMD += \
-                    $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc; \
+                    mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc; \
                     cp -f $(TARGET_OUT_ETC)/event-log-tags $(TARGET_RECOVERY_ROOT_OUT)/system/etc/;
             endif
         endif
@@ -618,7 +618,7 @@ else
     LOCAL_ADDITIONAL_DEPENDENCIES := file_contexts.bin
 endif
 LOCAL_POST_INSTALL_CMD += \
-    $(hide) cp -f $(PRODUCT_OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts
+    cp -f $(PRODUCT_OUT)/obj/ETC/file_contexts.bin_intermediates/file_contexts.concat.tmp $(TARGET_RECOVERY_ROOT_OUT)/file_contexts;
 
 include $(BUILD_PHONY_PACKAGE)
 
