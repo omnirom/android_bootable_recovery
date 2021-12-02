@@ -182,7 +182,7 @@ int format_volume(const std::string& volume, const std::string& directory) {
   // to get any failure in the process. In order to avoid it, let's simply wipe
   // the raw disk if we don't reserve any space, which behaves exactly same as booting
   // after "fastboot -w".
-  if (!v->metadata_encryption.empty() && length == 0) {
+  if (!v->metadata_key_dir.empty() && length == 0) {
     android::base::unique_fd fd(open(v->blk_device.c_str(), O_RDWR));
     if (fd == -1) {
       PLOG(ERROR) << "format_volume: failed to open " << v->blk_device;
