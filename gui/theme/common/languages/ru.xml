@@ -507,8 +507,8 @@
 		<string name="install_complete">Установка завершена</string>
 		<string name="unpack_error">Ошибка распаковки образа.</string>
 		<string name="repack_error">Ошибка перепаковки образа.</string>
-		<string name="modified_ramdisk_error">файлы рамдиска были изменены, неудалось создать рамдиск для установки, используйте fastboot boot twrp и попробуйте эту функцию снова или воспользуйтесь Установка рекавери в ramdisk.</string>
-		<string name="create_ramdisk_error">неудалось создать рамдиск для установки.</string>
+		<string name="modified_ramdisk_error">файлы рамдиска были изменены, не удалось создать рамдиск для установки, используйте fastboot boot twrp и попробуйте эту функцию снова или воспользуйтесь Установка рекавери в ramdisk.</string>
+		<string name="create_ramdisk_error">не удалось создать рамдиск для установки.</string>
 		<string name="unpacking_image">Распаковка {1}...</string>
 		<string name="repacking_image">Перепаковка {1}...</string>
 		<string name="repack_image_hdr">Выбор образа</string>
