@@ -68,6 +68,11 @@ LOCAL_REQUIRED_MODULES += \
     sload_f2fs.recovery
 endif
 
+LOCAL_REQUIRED_MODULES += \
+    mkfs.erofs.recovery \
+    dump.erofs.recovery \
+    fsck.erofs.recovery
+
 # On A/B devices recovery-persist reads the recovery related file from the persist storage and
 # copies them into /data/misc/recovery. Then, for both A/B and non-A/B devices, recovery-persist
 # parses the last_install file and reports the embedded update metrics. Also, the last_install file
