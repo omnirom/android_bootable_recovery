@@ -138,7 +138,14 @@ cc_test {
         "unit/*.cpp",
     ],
 
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+
     static_libs: libapplypatch_static_libs + librecovery_static_libs + [
+        "android.hardware.health-translate-ndk",
+        "android.hardware.health-V1-ndk",
+        "libhealthshim",
         "librecovery_ui",
         "libfusesideload",
         "libminui",
