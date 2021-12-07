@@ -31,6 +31,7 @@ cc_defaults {
     shared_libs: [
         "android.hardware.health@2.0",
         "libbase",
+        "libbinder_ndk",
         "libext4_utils",
         "libfs_mgr",
         "libhidlbase",
@@ -42,8 +43,10 @@ cc_defaults {
         "libotautil",
 
         // External dependencies.
+        "android.hardware.health-translate-ndk",
         "libfstab",
         "libhealthhalutils",
+        "libhealthshim",
     ],
 }
 
@@ -68,6 +71,15 @@ cc_library_static {
 
     header_libs: [
         "libvold_headers",
+    ],
+
+    shared_libs: [
+        // The following cannot be placed in librecovery_utils_defaults,
+        // because at the time of writing, android.hardware.health-V1-ndk.so
+        // is not installed to the system image yet. (It is installed
+        // to the recovery ramdisk.) Hence, minadbd_test must link to it
+        // statically.
+        "android.hardware.health-V1-ndk",
     ],
 
     export_include_dirs: [
