@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
 
   // We can't require authentication for sideloading. http://b/22025550.
   auth_required = false;
+  socket_access_allowed = false;
 
   init_transport_registration();
   usb_init();
