@@ -17,7 +17,7 @@
 #include "fuzzer/FuzzedDataProvider.h"
 
 #include "install/install.h"
-#include "install/package.h"
+#include "otautil/package.h"
 #include "recovery_ui/stub_ui.h"
 
 std::unique_ptr<Package> CreatePackage(std::vector<uint8_t>& content) {

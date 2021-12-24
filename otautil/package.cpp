@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "install/package.h"
+#include "otautil/package.h"
 
 #include <string.h>
 #include <unistd.h>
