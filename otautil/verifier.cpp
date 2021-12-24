@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "install/verifier.h"
+#include "otautil/verifier.h"
 
 #include <errno.h>
 #include <stdio.h>

@@ -34,16 +34,21 @@ cc_library_static {
 
     // Minimal set of files to support host build.
     srcs: [
+        "asn1_decoder.cpp",
         "dirutil.cpp",
+        "package.cpp",
         "paths.cpp",
         "rangeset.cpp",
         "sysutil.cpp",
+        "verifier.cpp",
     ],
 
     shared_libs: [
         "libbase",
+        "libcrypto",
         "libcutils",
         "libselinux",
+        "libziparchive",
     ],
 
     export_include_dirs: [
