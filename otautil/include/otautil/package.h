@@ -26,7 +26,7 @@
 
 #include <ziparchive/zip_archive.h>
 
-#include "verifier.h"
+#include "otautil/verifier.h"
 
 enum class PackageType {
   kMemory,

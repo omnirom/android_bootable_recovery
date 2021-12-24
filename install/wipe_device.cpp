@@ -35,7 +35,7 @@
 
 #include "bootloader_message/bootloader_message.h"
 #include "install/install.h"
-#include "install/package.h"
+#include "otautil/package.h"
 #include "recovery_ui/device.h"
 #include "recovery_ui/ui.h"
 
