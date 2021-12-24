@@ -46,13 +46,13 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 
-#include "install/package.h"
 #include "install/spl_check.h"
-#include "install/verifier.h"
 #include "install/wipe_data.h"
 #include "otautil/error_code.h"
+#include "otautil/package.h"
 #include "otautil/paths.h"
 #include "otautil/sysutil.h"
+#include "otautil/verifier.h"
 #include "private/setup_commands.h"
 #include "recovery_ui/ui.h"
 #include "recovery_utils/roots.h"
