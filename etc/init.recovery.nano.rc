@@ -1,3 +1,3 @@
 on fs
     export TERMINFO /sbin/etc/terminfo
-    export TERM pcansi
+    export TERM bg1.25
