@@ -161,6 +161,11 @@ int main(int argc, char **argv) {
 #if defined(TW_INCLUDE_LIBRESETPROP) && defined(TW_OVERRIDE_SYSTEM_PROPS)
 			stringstream override_props(EXPAND(TW_OVERRIDE_SYSTEM_PROPS));
 			string current_prop;
+			std::vector<std::string> build_prop_list = {"build.prop"};
+#ifdef TW_SYSTEM_BUILD_PROP_ADDITIONAL_PATHS
+			std::vector<std::string> additional_build_prop_list = TWFunc::Split_String(TW_SYSTEM_BUILD_PROP_ADDITIONAL_PATHS, ";");
+			build_prop_list.insert(build_prop_list.end(), additional_build_prop_list.begin(), additional_build_prop_list.end());
+#endif
 			while (getline(override_props, current_prop, ';')) {
 				string other_prop;
 				if (current_prop.find("=") != string::npos) {
@@ -171,15 +176,19 @@ int main(int argc, char **argv) {
 				}
 				other_prop = android::base::Trim(other_prop);
 				current_prop = android::base::Trim(current_prop);
-				string sys_val = TWFunc::System_Property_Get(other_prop, SarPartitionManager, "/s");
-				if (!sys_val.empty()) {
-					LOGINFO("Overriding %s with value: \"%s\" from system property %s\n", current_prop.c_str(), sys_val.c_str(), other_prop.c_str());
-					int error = TWFunc::Property_Override(current_prop, sys_val);
-					if (error) {
-						LOGERR("Failed overriding property %s, error_code: %d\n", current_prop.c_str(), error);
+
+				for (auto&& prop_file:build_prop_list) {
+					string sys_val = TWFunc::System_Property_Get(other_prop, SarPartitionManager, "/s", prop_file);
+					if (!sys_val.empty()) {
+						LOGINFO("Overriding %s with value: \"%s\" from system property %s from %s\n", current_prop.c_str(), sys_val.c_str(), other_prop.c_str(), prop_file.c_str());
+						int error = TWFunc::Property_Override(current_prop, sys_val);
+						if (error) {
+							LOGERR("Failed overriding property %s, error_code: %d\n", current_prop.c_str(), error);
+						}
+						break;
+					} else {
+						LOGINFO("Not overriding %s with empty value from system property %s from %s\n", current_prop.c_str(), other_prop.c_str(), prop_file.c_str());
 					}
-				} else {
-					LOGINFO("Not overriding %s with empty value from system property %s\n", current_prop.c_str(), other_prop.c_str());
 				}
 			}
 #endif
