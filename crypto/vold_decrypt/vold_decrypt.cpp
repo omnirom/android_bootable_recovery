@@ -243,6 +243,7 @@ bool Service_Exists(const string& initrc_svc) {
 	return (Get_Service_State(initrc_svc) != "error");
 }
 
+#ifdef TW_CRYPTO_SYSTEM_VOLD_SERVICES
 bool Is_Service_Running(const string& initrc_svc) {
 	return (Get_Service_State(initrc_svc) == "running");
 }
@@ -250,6 +251,7 @@ bool Is_Service_Running(const string& initrc_svc) {
 bool Is_Service_Stopped(const string& initrc_svc) {
 	return (Get_Service_State(initrc_svc) == "stopped");
 }
+#endif
 
 bool Start_Service(const string& initrc_svc, int utimeout = SLEEP_MAX_USEC) {
 	string res = "error";
@@ -293,9 +295,11 @@ bool is_Firmware_Mounted(void) {
 	return is_mounted;
 }
 
+#ifdef TW_CRYPTO_SYSTEM_VOLD_SERVICES
 bool will_VendorBin_Be_Symlinked(void) {
 	return (!is_Vendor_Mounted() && TWFunc::Path_Exists("/system/vendor"));
 }
+#endif
 
 bool Symlink_Vendor_Folder(void) {
 	bool is_vendor_symlinked = false;
