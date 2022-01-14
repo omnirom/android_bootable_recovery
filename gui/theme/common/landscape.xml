@@ -3159,6 +3159,12 @@
 				<text>{@vibration_hdr=Vibration}</text>
 			</text>
 
+			<text style="text_m">
+				<condition var1="tw_disable_haptics" var2="1"/>
+				<placement x="col1_x_left" y="%row4_y%" w="%content_width%"/>
+				<text>{@vibration_disabled=Vibration Disabled for Device}</text>
+			</text>
+
 			<template name="tabs_settings"/>
 
 			<fill color="%text_color%">
@@ -3166,18 +3172,21 @@
 			</fill>
 
 			<slidervalue>
+				<condition var1="tw_disable_haptics" var2="0"/>
 				<placement x="col1_x_left" y="%row4_y%" w="%content_width%"/>
 				<text>{@button_vibration=Button Vibration:}</text>
 				<data variable="tw_button_vibrate" min="0" max="300"/>
 			</slidervalue>
 
 			<slidervalue>
+				<condition var1="tw_disable_haptics" var2="0"/>
 				<placement x="col1_x_left" y="%row9_y%" w="%content_width%"/>
 				<text>{@kb_vibration=Keyboard Vibration:}</text>
 				<data variable="tw_keyboard_vibrate" min="0" max="300"/>
 			</slidervalue>
 
 			<slidervalue>
+				<condition var1="tw_disable_haptics" var2="0"/>
 				<placement x="col1_x_left" y="%row14_y%" w="%content_width%"/>
 				<text>{@act_vibration=Action Vibration:}</text>
 				<data variable="tw_action_vibrate" min="0" max="500"/>

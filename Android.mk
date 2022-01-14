@@ -281,6 +281,9 @@ endif
 ifeq ($(TW_NO_EXFAT_FUSE), true)
     LOCAL_CFLAGS += -DTW_NO_EXFAT_FUSE
 endif
+ifeq ($(TW_NO_HAPTICS), true)
+    LOCAL_CFLAGS += -DTW_NO_HAPTICS
+endif
 ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     TW_INCLUDE_CRYPTO := true
 endif
