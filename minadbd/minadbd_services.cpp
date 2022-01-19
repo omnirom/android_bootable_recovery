@@ -305,7 +305,7 @@ static void WipeDeviceService(unique_fd fd, const std::string& args) {
   }
 }
 
-asocket* daemon_service_to_socket(std::string_view) {
+asocket* daemon_service_to_socket(std::string_view, atransport*) {
   return nullptr;
 }
 
