@@ -504,8 +504,9 @@ int GUIScrollList::NotifyTouch(TOUCH_STATE state, int x, int y)
 			// We've selected an item!
 			NotifySelect(selectedItem);
 			mUpdate = 1;
-
+		#ifndef TW_NO_HAPTICS
 			DataManager::Vibrate("tw_button_vibrate");
+		#endif
 			selectedItem = NO_ITEM;
 		} else {
 			// Start kinetic scrolling

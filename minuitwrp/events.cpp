@@ -108,6 +108,7 @@ static inline int ABS(int x) {
     return x<0?-x:x;
 }
 
+#ifndef TW_NO_HAPTICS
 int vibrate(int timeout_ms)
 {
     char str[20];
@@ -129,6 +130,7 @@ int vibrate(int timeout_ms)
 
     return 0;
 }
+#endif
 
 /* Returns empty tokens */
 static char *vk_strtok_r(char *str, const char *delim, char **save_str)
@@ -715,9 +717,9 @@ static int vk_modify(struct ev *e, struct input_event *ev)
                 ev->value = 1;
 
                 last_virt_key = e->vks[i].scancode;
-
+            #ifndef TW_NO_HAPTICS
                 vibrate(VIBRATOR_TIME_MS);
-
+            #endif
                 // Mark that all further movement until lift is discard,
                 // and make sure we don't come back into this area
                 discard = 1;

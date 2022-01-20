@@ -530,9 +530,16 @@ void DataManager::SetDefaultValues()
 	mConst.SetValue("false", "0");
 
 	mConst.SetValue(TW_VERSION_VAR, TW_VERSION_STR);
+
+#ifndef TW_NO_HAPTICS
 	mPersist.SetValue("tw_button_vibrate", "80");
 	mPersist.SetValue("tw_keyboard_vibrate", "40");
 	mPersist.SetValue("tw_action_vibrate", "160");
+	mConst.SetValue("tw_disable_haptics", "0");
+#else
+	LOGINFO("TW_NO_HAPTICS := true\n");
+	mConst.SetValue("tw_disable_haptics", "1");
+#endif
 
 	TWPartition *store = PartitionManager.Get_Default_Storage_Partition();
 	if (store)
@@ -1047,9 +1054,11 @@ string DataManager::GetSettingsStoragePath(void)
 
 void DataManager::Vibrate(const string& varName)
 {
+#ifndef TW_NO_HAPTICS
 	int vib_value = 0;
 	GetValue(varName, vib_value);
 	if (vib_value) {
 		vibrate(vib_value);
 	}
+#endif	
 }
