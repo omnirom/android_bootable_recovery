@@ -304,6 +304,16 @@ bool WriteMiscVirtualAbMessage(const misc_virtual_ab_message& message, std::stri
                                        offsetof(misc_system_space_layout, virtual_ab_message), err);
 }
 
+bool ReadMiscMemtagMessage(misc_memtag_message* message, std::string* err) {
+  return ReadMiscPartitionSystemSpace(message, sizeof(*message),
+                                      offsetof(misc_system_space_layout, memtag_message), err);
+}
+
+bool WriteMiscMemtagMessage(const misc_memtag_message& message, std::string* err) {
+  return WriteMiscPartitionSystemSpace(&message, sizeof(message),
+                                       offsetof(misc_system_space_layout, memtag_message), err);
+}
+
 extern "C" bool write_reboot_bootloader(void) {
   std::string err;
   return write_reboot_bootloader(&err);
