@@ -111,6 +111,34 @@ class Keymaster {
     DISALLOW_COPY_AND_ASSIGN(Keymaster);
 };
 
+namespace dump {
+
+template<typename T>
+std::string toHexString(T t, bool prefix = true) {
+    std::ostringstream os;
+    if (prefix) { os << std::showbase; }
+    os << std::hex << t;
+    return os.str();
+}
+
+template<typename Array>
+std::string arrayToHexString(const Array &a, size_t size) {
+    using android::hardware::toString;
+    std::string os;
+    for (size_t i = 0; i < size; ++i) {
+        os += toHexString(a[i]);
+    }
+    return os;
+}
+
+template<typename T>
+std::string toString(const hardware::hidl_vec<T> &a) {
+    std::string os;
+    os += arrayToHexString(a, a.size());
+    return os;
+}
+
+}  // namespace dump
 }  // namespace vold
 }  // namespace android
 
