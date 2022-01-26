@@ -267,6 +267,35 @@ int ev_get_input(int fd, uint32_t epevents, input_event* ev) {
   return -1;
 }
 
+int ev_sync_sw_state(const ev_set_sw_callback& set_sw_cb) {
+  // Use unsigned long to match ioctl's parameter type.
+  unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];  // NOLINT
+  unsigned long sw_bits[BITS_TO_LONGS(SW_MAX)];  // NOLINT
+
+  for (size_t i = 0; i < g_ev_dev_count; ++i) {
+    memset(ev_bits, 0, sizeof(ev_bits));
+    memset(sw_bits, 0, sizeof(sw_bits));
+
+    if (ioctl(ev_fdinfo[i].fd, EVIOCGBIT(0, sizeof(ev_bits)), ev_bits) == -1) {
+      continue;
+    }
+    if (!test_bit(EV_SW, ev_bits)) {
+      continue;
+    }
+    if (ioctl(ev_fdinfo[i].fd, EVIOCGSW(sizeof(sw_bits)), sw_bits) == -1) {
+      continue;
+    }
+
+    for (int code = 0; code <= SW_MAX; code++) {
+      if (test_bit(code, sw_bits)) {
+        set_sw_cb(code, 1);
+      }
+    }
+  }
+
+  return 0;
+}
+
 int ev_sync_key_state(const ev_set_key_callback& set_key_cb) {
   // Use unsigned long to match ioctl's parameter type.
   unsigned long ev_bits[BITS_TO_LONGS(EV_MAX)];    // NOLINT
