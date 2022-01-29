@@ -5,7 +5,7 @@
 		<author>TeamWin</author>
 		<title>TWRP</title>
 		<description>splash screen</description>
-		<themeversion>4</themeversion>
+		<themeversion>{themeversion}</themeversion>
 	</details>
 
 	<resources>

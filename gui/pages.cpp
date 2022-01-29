@@ -56,9 +56,7 @@ extern "C" {
 #include "objects.hpp"
 #include "blanktimer.hpp"
 
-// version 2 requires theme to handle power button as action togglebacklight
-// version 4 adds listbox support to reboot page
-#define TW_THEME_VERSION 4
+#include "../variables.h"
 
 #define TW_THEME_VER_ERR -2
 

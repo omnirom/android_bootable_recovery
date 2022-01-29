@@ -6,7 +6,7 @@
 		<title>Backup Naowz</title>
 		<description>Default basic theme</description>
 		<preview>preview.png</preview>
-		<themeversion>4</themeversion>
+		<themeversion>{themeversion}</themeversion>
 	</details>
 
 	<include>

@@ -147,6 +147,12 @@
 #define TW_UNMOUNT_SYSTEM           "tw_unmount_system"
 #define TW_AUTO_REFLASHTWRP_VAR     "tw_auto_reflashtwrp"
 
+// Theme versioning
+// version 2 requires theme to handle power button as action togglebacklight
+// version 4 adds listbox support to reboot page
+// version 5 adds File Manager options, nano & Flash Current TWRP
+#define TW_THEME_VERSION 5
+
 // Also used:
 //   tw_boot_is_mountable
 //   tw_system_is_mountable
