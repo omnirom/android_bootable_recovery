@@ -154,11 +154,9 @@ int format_volume(const std::string& volume, const std::string& directory) {
   }
 
   bool needs_casefold = false;
-  bool needs_projid = false;
 
   if (volume == "/data") {
     needs_casefold = android::base::GetBoolProperty("external_storage.casefold.enabled", false);
-    needs_projid = android::base::GetBoolProperty("external_storage.projid.enabled", false);
   }
 
   int64_t length = 0;
@@ -202,11 +200,10 @@ int format_volume(const std::string& volume, const std::string& directory) {
       "/system/bin/mke2fs", "-F", "-t", "ext4", "-b", std::to_string(kBlockSize),
     };
 
-    // Project ID's require wider inodes. The Quotas themselves are enabled by tune2fs on boot.
-    if (needs_projid) {
-      mke2fs_args.push_back("-I");
-      mke2fs_args.push_back("512");
-    }
+    // Following is added for Project ID's quota as they require wider inodes.
+    // The Quotas themselves are enabled by tune2fs on boot.
+    mke2fs_args.push_back("-I");
+    mke2fs_args.push_back("512");
 
     if (v->fs_mgr_flags.ext_meta_csum) {
       mke2fs_args.push_back("-O");
@@ -255,10 +252,10 @@ int format_volume(const std::string& volume, const std::string& directory) {
     "-g",
     "android",
   };
-  if (needs_projid) {
-    make_f2fs_cmd.push_back("-O");
-    make_f2fs_cmd.push_back("project_quota,extra_attr");
-  }
+
+  make_f2fs_cmd.push_back("-O");
+  make_f2fs_cmd.push_back("project_quota,extra_attr");
+
   if (needs_casefold) {
     make_f2fs_cmd.push_back("-O");
     make_f2fs_cmd.push_back("casefold");
