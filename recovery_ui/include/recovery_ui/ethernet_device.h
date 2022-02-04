@@ -27,6 +27,7 @@ class EthernetRecoveryUI;
 class EthernetDevice : public Device {
  public:
   explicit EthernetDevice(EthernetRecoveryUI* ui);
+  explicit EthernetDevice(EthernetRecoveryUI* ui, std::string interface);
 
   void PreRecovery() override;
   void PreFastboot() override;
@@ -36,7 +37,7 @@ class EthernetDevice : public Device {
   void SetTitleIPv6LinkLocalAddress(const bool interface_up);
 
   android::base::unique_fd ctl_sock_;
-  static const std::string interface;
+  std::string interface_;
 };
 
 #endif  // _ETHERNET_RECOVERY_DEVICE_H
