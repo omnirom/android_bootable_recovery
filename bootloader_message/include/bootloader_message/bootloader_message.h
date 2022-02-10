@@ -114,7 +114,7 @@ struct misc_memtag_message {
 static_assert(sizeof(struct misc_virtual_ab_message) == 64,
               "struct misc_virtual_ab_message has wrong size");
 static_assert(sizeof(struct misc_memtag_message) == 64,
-              "struct misc_virtual_ab_message has wrong size");
+              "struct misc_memtag_message has wrong size");
 #endif
 
 // This struct is not meant to be used directly, rather, it is to make
