@@ -25,6 +25,6 @@
 // Starts FUSE with the package from |path| as the data source. And installs the package from
 // |FUSE_SIDELOAD_HOST_PATHNAME|. The |path| can point to the location of a package zip file or a
 // block map file with the prefix '@'; e.g. /sdcard/package.zip, @/cache/recovery/block.map.
-InstallResult InstallWithFuseFromPath(std::string_view path, RecoveryUI* ui);
+InstallResult InstallWithFuseFromPath(std::string_view path, Device* device);
 
 InstallResult ApplyFromSdcard(Device* device);
