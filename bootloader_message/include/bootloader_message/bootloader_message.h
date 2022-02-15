@@ -93,18 +93,35 @@ struct misc_virtual_ab_message {
   uint8_t reserved[57];
 } __attribute__((packed));
 
+struct misc_memtag_message {
+  uint8_t version;
+  uint32_t magic; // magic string for treble compat
+  uint32_t memtag_mode;
+  uint8_t reserved[55];
+} __attribute__((packed));
+
 #define MISC_VIRTUAL_AB_MESSAGE_VERSION 2
 #define MISC_VIRTUAL_AB_MAGIC_HEADER 0x56740AB0
+
+#define MISC_MEMTAG_MESSAGE_VERSION 1
+#define MISC_MEMTAG_MAGIC_HEADER 0x5afefe5a
+#define MISC_MEMTAG_MODE_MEMTAG 0x1
+#define MISC_MEMTAG_MODE_MEMTAG_ONCE 0x2
+#define MISC_MEMTAG_MODE_MEMTAG_KERNEL 0x4
+#define MISC_MEMTAG_MODE_MEMTAG_KERNEL_ONCE 0x8
 
 #if (__STDC_VERSION__ >= 201112L) || defined(__cplusplus)
 static_assert(sizeof(struct misc_virtual_ab_message) == 64,
               "struct misc_virtual_ab_message has wrong size");
+static_assert(sizeof(struct misc_memtag_message) == 64,
+              "struct misc_memtag_message has wrong size");
 #endif
 
 // This struct is not meant to be used directly, rather, it is to make
 // computation of offsets easier. New fields must be added to the end.
 struct misc_system_space_layout {
   misc_virtual_ab_message virtual_ab_message;
+  misc_memtag_message memtag_message;
 } __attribute__((packed));
 
 #ifdef __cplusplus
@@ -172,6 +189,9 @@ bool write_wipe_package(const std::string& package_data, std::string* err);
 bool ReadMiscVirtualAbMessage(misc_virtual_ab_message* message, std::string* err);
 bool WriteMiscVirtualAbMessage(const misc_virtual_ab_message& message, std::string* err);
 
+// Read or write the memtag message from system space in /misc.
+bool ReadMiscMemtagMessage(misc_memtag_message* message, std::string* err);
+bool WriteMiscMemtagMessage(const misc_memtag_message& message, std::string* err);
 #else
 
 #include <stdbool.h>

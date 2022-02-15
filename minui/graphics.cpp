@@ -495,6 +495,10 @@ void gr_fb_blank(bool blank) {
   gr_backend->Blank(blank);
 }
 
+void gr_fb_blank(bool blank, int index) {
+  gr_backend->Blank(blank, static_cast<MinuiBackend::DrmConnector>(index));
+}
+
 void gr_rotate(GRRotation rot) {
   rotation = rot;
 }

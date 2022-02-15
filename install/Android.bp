@@ -105,12 +105,9 @@ cc_library_static {
 
     srcs: [
         "adb_install.cpp",
-        "asn1_decoder.cpp",
         "fuse_install.cpp",
         "install.cpp",
-        "package.cpp",
         "snapshot_utils.cpp",
-        "verifier.cpp",
         "wipe_data.cpp",
         "wipe_device.cpp",
         "spl_check.cpp",

@@ -43,6 +43,10 @@ void MinuiBackendFbdev::Blank(bool blank) {
   if (ret < 0) perror("ioctl(): blank");
 }
 
+void MinuiBackendFbdev::Blank(bool blank, DrmConnector index) {
+  fprintf(stderr, "Unsupported multiple connectors, blank = %d, index = %d\n", blank, index);
+}
+
 void MinuiBackendFbdev::SetDisplayedFramebuffer(size_t n) {
   if (n > 1 || !double_buffered) return;
 
