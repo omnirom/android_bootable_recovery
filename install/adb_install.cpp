@@ -90,11 +90,12 @@ static bool WriteStatusToFd(MinadbdCommandStatus status, int fd) {
 
 // Installs the package from FUSE. Returns the installation result and whether it should continue
 // waiting for new commands.
-static auto AdbInstallPackageHandler(RecoveryUI* ui, InstallResult* result) {
+static auto AdbInstallPackageHandler(Device* device, InstallResult* result) {
   // How long (in seconds) we wait for the package path to be ready. It doesn't need to be too long
   // because the minadbd service has already issued an install command. FUSE_SIDELOAD_HOST_PATHNAME
   // will start to exist once the host connects and starts serving a package. Poll for its
   // appearance. (Note that inotify doesn't work with FUSE.)
+  auto ui = device->GetUI();
   constexpr int ADB_INSTALL_TIMEOUT = 15;
   bool should_continue = true;
   *result = INSTALL_ERROR;
@@ -114,7 +115,7 @@ static auto AdbInstallPackageHandler(RecoveryUI* ui, InstallResult* result) {
     auto package =
         Package::CreateFilePackage(FUSE_SIDELOAD_HOST_PATHNAME,
                                    std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
-    *result = InstallPackage(package.get(), FUSE_SIDELOAD_HOST_PATHNAME, false, 0, ui);
+    *result = InstallPackage(package.get(), FUSE_SIDELOAD_HOST_PATHNAME, false, 0, device);
     break;
   }
 
@@ -348,7 +349,7 @@ InstallResult ApplyFromAdb(Device* device, bool rescue_mode, Device::BuiltinActi
 
   InstallResult install_result = INSTALL_ERROR;
   std::map<MinadbdCommand, CommandFunction> command_map{
-    { MinadbdCommand::kInstall, std::bind(&AdbInstallPackageHandler, ui, &install_result) },
+    { MinadbdCommand::kInstall, std::bind(&AdbInstallPackageHandler, device, &install_result) },
     { MinadbdCommand::kRebootAndroid, std::bind(&AdbRebootHandler, MinadbdCommand::kRebootAndroid,
                                                 &install_result, reboot_action) },
     { MinadbdCommand::kRebootBootloader,
