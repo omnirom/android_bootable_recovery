@@ -146,10 +146,11 @@ static bool StartInstallPackageFuse(std::string_view path) {
   return run_fuse_sideload(std::move(fuse_data_provider)) == 0;
 }
 
-InstallResult InstallWithFuseFromPath(std::string_view path, RecoveryUI* ui) {
+InstallResult InstallWithFuseFromPath(std::string_view path, Device* device) {
   // We used to use fuse in a thread as opposed to a process. Since accessing
   // through fuse involves going from kernel to userspace to kernel, it leads
   // to deadlock when a page fault occurs. (Bug: 26313124)
+  auto ui = device->GetUI();
   pid_t child;
   if ((child = fork()) == 0) {
     bool status = StartInstallPackageFuse(path);
@@ -183,8 +184,8 @@ InstallResult InstallWithFuseFromPath(std::string_view path, RecoveryUI* ui) {
     auto package =
         Package::CreateFilePackage(FUSE_SIDELOAD_HOST_PATHNAME,
                                    std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
-    result =
-        InstallPackage(package.get(), FUSE_SIDELOAD_HOST_PATHNAME, false, 0 /* retry_count */, ui);
+    result = InstallPackage(package.get(), FUSE_SIDELOAD_HOST_PATHNAME, false, 0 /* retry_count */,
+                            device);
     break;
   }
 
@@ -226,7 +227,7 @@ InstallResult ApplyFromSdcard(Device* device) {
   ui->Print("\n-- Install %s ...\n", path.c_str());
   SetSdcardUpdateBootloaderMessage();
 
-  auto result = InstallWithFuseFromPath(path, ui);
+  auto result = InstallWithFuseFromPath(path, device);
   ensure_path_unmounted(SDCARD_ROOT);
   return result;
 }
