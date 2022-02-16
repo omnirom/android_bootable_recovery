@@ -752,20 +752,20 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         status = INSTALL_ERROR;
       } else if (install_with_fuse || should_use_fuse) {
         LOG(INFO) << "Installing package " << update_package << " with fuse";
-        status = InstallWithFuseFromPath(update_package, ui);
+        status = InstallWithFuseFromPath(update_package, device);
       } else if (auto memory_package = Package::CreateMemoryPackage(
                      update_package,
                      std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
                  memory_package != nullptr) {
         status = InstallPackage(memory_package.get(), update_package, should_wipe_cache,
-                                retry_count, ui);
+                                retry_count, device);
       } else {
         // We may fail to memory map the package on 32 bit builds for packages with 2GiB+ size.
         // In such cases, we will try to install the package with fuse. This is not the default
         // installation method because it introduces a layer of indirection from the kernel space.
         LOG(WARNING) << "Failed to memory map package " << update_package
                      << "; falling back to install with fuse";
-        status = InstallWithFuseFromPath(update_package, ui);
+        status = InstallWithFuseFromPath(update_package, device);
       }
       if (status != INSTALL_SUCCESS) {
         ui->Print("Installation aborted.\n");
