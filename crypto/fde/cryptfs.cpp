@@ -114,6 +114,7 @@ constexpr size_t INTERMEDIATE_BUF_SIZE =
 static_assert(INTERMEDIATE_BUF_SIZE == SCRYPT_LEN,
               "Mismatch of intermediate key sizes");
 
+static const std::string kPkmBlob("pKMblob\x00", 8);
 #define KEY_IN_FOOTER  "footer"
 
 #define DEFAULT_HEX_PASSWORD "64656661756c745f70617373776f7264"
@@ -469,6 +470,14 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
 
     int rc = -1;
 
+    // In A12 keymaster_key_blob format changed:
+    // it have useless for us bytes in beginning, so remove them to correctly handle key
+    std::string kmKey( &ftr->keymaster_blob[0], &ftr->keymaster_blob[0]+ftr->keymaster_blob_size );
+    if (!kmKey.compare(0, kPkmBlob.size(), kPkmBlob)) {
+        kmKey.erase(0, kPkmBlob.size());
+    }
+    keymaster_key_blob_t key = { reinterpret_cast<const uint8_t*>(kmKey.c_str()), kmKey.size() };
+
 #if TW_KEYMASTER_MAX_API >= 1
     keymaster0_device_t *keymaster0_dev = 0;
     keymaster1_device_t *keymaster1_dev = 0;
@@ -492,8 +501,8 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
 
         rc = keymaster0_dev->sign_data(keymaster0_dev,
                                       &params,
-                                      ftr->keymaster_blob,
-                                      ftr->keymaster_blob_size,
+                                      key.key_material,
+                                      key.key_material_size,
                                       to_sign,
                                       to_sign_size,
                                       signature,
@@ -502,7 +511,6 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
     }
 #if TW_KEYMASTER_MAX_API >= 1
     else if (keymaster1_dev) {
-        keymaster_key_blob_t key = { ftr->keymaster_blob, ftr->keymaster_blob_size };
         keymaster_key_param_t params[] = {
             keymaster_param_enum(KM_TAG_PADDING, KM_PAD_NONE),
             keymaster_param_enum(KM_TAG_DIGEST, KM_DIGEST_NONE),
@@ -559,7 +567,6 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
     }
 #if TW_KEYMASTER_MAX_API > 1
     else if (keymaster2_dev) {
-        keymaster_key_blob_t key = { ftr->keymaster_blob, ftr->keymaster_blob_size };
         keymaster_key_param_t params[] = {
             keymaster_param_enum(KM_TAG_PADDING, KM_PAD_NONE),
             keymaster_param_enum(KM_TAG_DIGEST, KM_DIGEST_NONE),
