@@ -134,6 +134,10 @@ cc_test {
 
     test_suites: ["device-tests"],
 
+    tidy_timeout_srcs: [
+        "unit/commands_test.cpp",
+    ],
+
     srcs: [
         "unit/*.cpp",
     ],
@@ -190,6 +194,10 @@ cc_test_host {
     defaults: [
         "recovery_test_defaults",
         "libupdater_defaults",
+    ],
+
+    tidy_timeout_srcs: [
+        "unit/host/imgdiff_test.cpp",
     ],
 
     srcs: [
