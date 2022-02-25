@@ -101,7 +101,7 @@ static void RunSimulation(std::string_view src_tf, std::string_view ota_package,
   // TODO(xunchang) check the recovery&system has the expected contents.
 }
 
-class UpdateSimulatorTest : public ::testing::Test {
+class DISABLED_UpdateSimulatorTest : public ::testing::Test {
  protected:
   void SetUp() override {
     std::vector<string> props = {
@@ -147,7 +147,7 @@ class UpdateSimulatorTest : public ::testing::Test {
   string sparse_system_string_;
 };
 
-TEST_F(UpdateSimulatorTest, TargetFile_ExtractImage) {
+TEST_F(DISABLED_UpdateSimulatorTest, TargetFile_ExtractImage) {
   TemporaryFile zip_file;
   AddZipEntries(zip_file.release(), { { "META/misc_info.txt", "extfs_sparse_flag=-s" },
                                       { "IMAGES/system.img", sparse_system_string_ } });
@@ -166,7 +166,7 @@ TEST_F(UpdateSimulatorTest, TargetFile_ExtractImage) {
   ASSERT_EQ(expected_content, content);
 }
 
-TEST_F(UpdateSimulatorTest, TargetFile_ParseFstabInfo) {
+TEST_F(DISABLED_UpdateSimulatorTest, TargetFile_ParseFstabInfo) {
   TemporaryFile zip_file;
   AddZipEntries(zip_file.release(),
                 { { "META/misc_info.txt", "" },
@@ -195,7 +195,7 @@ TEST_F(UpdateSimulatorTest, TargetFile_ParseFstabInfo) {
   EXPECT_EQ(expected, transformed);
 }
 
-TEST_F(UpdateSimulatorTest, BuildInfo_ParseTargetFile) {
+TEST_F(DISABLED_UpdateSimulatorTest, BuildInfo_ParseTargetFile) {
   std::map<string, string> entries = {
     { "META/misc_info.txt", "" },
     { "SYSTEM/build.prop", build_prop_string_ },
@@ -240,7 +240,7 @@ TEST_F(UpdateSimulatorTest, BuildInfo_ParseTargetFile) {
   }
 }
 
-TEST_F(UpdateSimulatorTest, RunUpdateSmoke) {
+TEST_F(DISABLED_UpdateSimulatorTest, RunUpdateSmoke) {
   string recovery_img_string = "recovery.img";
   string boot_img_string = "boot.img";
 
@@ -326,7 +326,7 @@ TEST_F(UpdateSimulatorTest, RunUpdateSmoke) {
   RunSimulation(src_tf.path, ota_package.path, true);
 }
 
-TEST_F(UpdateSimulatorTest, RunUpdateUnrecognizedFunction) {
+TEST_F(DISABLED_UpdateSimulatorTest, RunUpdateUnrecognizedFunction) {
   std::map<string, string> src_entries{
     { "META/misc_info.txt", "extfs_sparse_flag=-s" },
     { "IMAGES/system.img", sparse_system_string_ },
@@ -350,7 +350,7 @@ TEST_F(UpdateSimulatorTest, RunUpdateUnrecognizedFunction) {
   RunSimulation(src_tf.path, ota_package.path, false);
 }
 
-TEST_F(UpdateSimulatorTest, RunUpdateApplyPatchFailed) {
+TEST_F(DISABLED_UpdateSimulatorTest, RunUpdateApplyPatchFailed) {
   string recovery_img_string = "recovery.img";
   string boot_img_string = "boot.img";
 
