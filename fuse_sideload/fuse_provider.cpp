@@ -118,11 +118,16 @@ bool FuseBlockDataProvider::ReadBlockAlignedData(uint8_t* buffer, uint32_t fetch
   }
 
   if (uint64_t tailing_bytes = fetch_size % source_block_size_; tailing_bytes != 0) {
-    // Calculate the offset to last partial block.
+    // Calculate the offset to last partial block. Two possibilities as below:
+    // 1: fetch_size < source_block_size_, the read_ranges is a blank range_set.
+    //    Get the last block num through GetBlockNumber() of the offset block.
+    // 2: fetch_size >= source_block_size_, the last block num is already stored
+    //    in read-ranges by GetSubRanges() above.
     uint64_t tailing_offset =
         read_ranges.value()
             ? static_cast<uint64_t>((read_ranges->cend() - 1)->second) * source_block_size_
-            : static_cast<uint64_t>(start_block) * source_block_size_;
+            : static_cast<uint64_t>(ranges_.GetBlockNumber(offset / source_block_size_)) *
+                  source_block_size_;
     if (!android::base::ReadFullyAtOffset(fd_, next_out, tailing_bytes, tailing_offset)) {
       PLOG(ERROR) << "Failed to read tailing " << tailing_bytes << " bytes at offset "
                   << tailing_offset;
