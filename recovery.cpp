@@ -207,8 +207,7 @@ static InstallResult prompt_and_wipe_data(Device* device) {
 
     if (ask_to_wipe_data(device)) {
       CHECK(device->GetReason().has_value());
-      bool convert_fbe = device->GetReason().value() == "convert_fbe";
-      if (WipeData(device, convert_fbe)) {
+      if (WipeData(device)) {
         return INSTALL_SUCCESS;
       } else {
         return INSTALL_ERROR;
@@ -437,10 +436,10 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
         save_current_log = true;
         if (ui->IsTextVisible()) {
           if (ask_to_wipe_data(device)) {
-            WipeData(device, false);
+            WipeData(device);
           }
         } else {
-          WipeData(device, false);
+          WipeData(device);
           return Device::NO_ACTION;
         }
         break;
@@ -794,8 +793,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
   } else if (should_wipe_data) {
     save_current_log = true;
     CHECK(device->GetReason().has_value());
-    bool convert_fbe = device->GetReason().value() == "convert_fbe";
-    if (!WipeData(device, convert_fbe)) {
+    if (!WipeData(device)) {
       status = INSTALL_ERROR;
     }
   } else if (should_prompt_and_wipe_data) {
