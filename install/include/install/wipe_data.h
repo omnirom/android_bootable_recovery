@@ -27,4 +27,4 @@ struct selabel_handle;
 bool WipeCache(RecoveryUI* ui, const std::function<bool()>& confirm);
 
 // Returns true on success.
-bool WipeData(Device* device, bool convert_fbe);
+bool WipeData(Device* device);
