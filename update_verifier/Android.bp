@@ -73,6 +73,10 @@ cc_library_static {
         "libvold_binder",
     ],
 
+    whole_static_libs: [
+	"libsnapshot_snapuserd",
+    ],
+
     shared_libs: [
         "android.hardware.boot@1.0",
         "libbase",
