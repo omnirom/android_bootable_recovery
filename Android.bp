@@ -94,6 +94,8 @@ cc_defaults {
     shared_libs: [
         "android.hardware.boot@1.0",
         "android.hardware.boot@1.1",
+        "android.hardware.boot-V1-ndk",
+        "libboot_control_client",
         "libbase",
         "libbootloader_message",
         "libcrypto",
@@ -158,6 +160,7 @@ cc_binary {
 
     shared_libs: [
         "android.hardware.health-V1-ndk", // from librecovery_utils
+        "android.hardware.boot-V1-ndk",
         "librecovery_ui",
     ],
 
