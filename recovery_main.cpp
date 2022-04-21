@@ -73,12 +73,12 @@ static bool IsDeviceUnlocked() {
   return "orange" == android::base::GetProperty("ro.boot.verifiedbootstate", "");
 }
 
-static void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity,
-                     const char* /* tag */, const char* /* file */, unsigned int /* line */,
-                     const char* message) {
-  static constexpr char log_characters[] = "VDIWEF";
+static void UiLogger(android::base::LogId log_buffer_id, android::base::LogSeverity severity,
+                     const char* tag, const char* file, unsigned int line, const char* message) {
+  android::base::KernelLogger(log_buffer_id, severity, tag, file, line, message);
+  static constexpr auto&& log_characters = "VDIWEF";
   if (severity >= android::base::ERROR && ui != nullptr) {
-    ui->Print("E:%s\n", message);
+    ui->Print("ERROR: %10s: %s\n", tag, message);
   } else {
     fprintf(stdout, "%c:%s\n", log_characters[severity], message);
   }
