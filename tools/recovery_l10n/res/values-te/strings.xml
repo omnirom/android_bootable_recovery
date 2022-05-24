@@ -10,5 +10,5 @@
     <string name="recovery_try_again" msgid="7168248750158873496">"మళ్లీ ప్రయత్నించు"</string>
     <string name="recovery_factory_data_reset" msgid="7321351565602894783">"ఫ్యాక్టరీ డేటా రీసెట్"</string>
     <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"వినియోగదారు డేటా మొత్తాన్ని తొలగించాలా?\n\n ఈ చర్యను రద్దు చేయలేరు!"</string>
-    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"రద్దు చేయి"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"రద్దు చేయండి"</string>
 </resources>
