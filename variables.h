@@ -17,7 +17,7 @@
 #ifndef _VARIABLES_HEADER_
 #define _VARIABLES_HEADER_
 
-#define TW_MAIN_VERSION_STR       "3.6.1_9"
+#define TW_MAIN_VERSION_STR       "3.6.2_9"
 #define TW_VERSION_STR TW_MAIN_VERSION_STR TW_DEVICE_VERSION
 #define TW_SETTINGS_FILE            ".twrps"
 #define TW_RECOVERY_NAME            "TWRP"
