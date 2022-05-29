@@ -1543,7 +1543,7 @@ bool TWFunc::Check_Xml_Format(const char* filename) {
 		File.close();
 		// Android Binary Xml start from these bytes
 		if(!buffer.compare(0, abx_hdr.size(), abx_hdr))
-			return false; // bad format, not possible to parse
+			return false; // ABX format - requires conversion
 	}
 	return true; // good format, possible to parse
 }

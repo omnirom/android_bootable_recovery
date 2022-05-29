@@ -180,6 +180,7 @@ ifeq ($(TW_OEM_BUILD),true)
     TW_EXCLUDE_TZDATA := true
     TW_EXCLUDE_NANO := true
     TW_EXCLUDE_BASH := true
+    TW_EXCLUDE_PYTHON := true
 endif
 
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
@@ -586,6 +587,9 @@ endif
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
     TWRP_REQUIRED_MODULES += sload.f2fs
 endif
+endif
+ifneq ($(TW_EXCLUDE_PYTHON),true)
+    TWRP_REQUIRED_MODULES += python3_twrp
 endif
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
