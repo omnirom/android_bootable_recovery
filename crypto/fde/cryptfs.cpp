@@ -470,6 +470,7 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
 
     int rc = -1;
 
+#if TW_KEYMASTER_MAX_API >= 1
     // In A12 keymaster_key_blob format changed:
     // it have useless for us bytes in beginning, so remove them to correctly handle key
     std::string kmKey( &ftr->keymaster_blob[0], &ftr->keymaster_blob[0]+ftr->keymaster_blob_size );
@@ -477,6 +478,7 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
         kmKey.erase(0, kPkmBlob.size());
     }
     keymaster_key_blob_t key = { reinterpret_cast<const uint8_t*>(kmKey.c_str()), kmKey.size() };
+#endif
 
 #if TW_KEYMASTER_MAX_API >= 1
     keymaster0_device_t *keymaster0_dev = 0;
@@ -501,8 +503,13 @@ static int keymaster_sign_object(struct crypt_mnt_ftr *ftr,
 
         rc = keymaster0_dev->sign_data(keymaster0_dev,
                                       &params,
+#if TW_KEYMASTER_MAX_API > 1
                                       key.key_material,
                                       key.key_material_size,
+#else
+				      ftr->keymaster_blob,
+				      ftr->keymaster_blob_size,
+#endif
                                       to_sign,
                                       to_sign_size,
                                       signature,
