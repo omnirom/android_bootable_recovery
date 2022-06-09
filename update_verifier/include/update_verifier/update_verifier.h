@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include <snapuserd/snapuserd_client.h>
 #include "otautil/rangeset.h"
 
 // The update verifier performs verification upon the first boot to a new slot on A/B devices.
@@ -68,4 +69,8 @@ class UpdateVerifier {
 
   // The function to read the device property; default value: android::base::GetProperty()
   std::function<std::string(const std::string&)> property_reader_;
+
+  // Check if snapuserd daemon has already completed the update verification
+  // Applicable only for VABC with userspace snapshots
+  bool CheckVerificationStatus();
 };
