@@ -77,6 +77,10 @@ static void copy_file(const char* source, const char* destination) {
   }
 }
 
+static bool file_exists(const char* filename) {
+  return access(filename, R_OK) == 0;
+}
+
 static bool rotated = false;
 
 ssize_t logsave(
@@ -141,7 +145,7 @@ int main(int argc, char **argv) {
     if (has_cache) {
       // Collects and reports the non-a/b update metrics from last_install; and removes the file
       // to avoid duplicate report.
-      if (access(LAST_INSTALL_FILE_IN_CACHE, F_OK) && unlink(LAST_INSTALL_FILE_IN_CACHE) == -1) {
+      if (file_exists(LAST_INSTALL_FILE_IN_CACHE) && unlink(LAST_INSTALL_FILE_IN_CACHE) == -1) {
         PLOG(ERROR) << "Failed to unlink " << LAST_INSTALL_FILE_IN_CACHE;
       }
 
@@ -152,9 +156,9 @@ int main(int argc, char **argv) {
       }
     }
 
-    /* Is there something in pmsg? */
-    if (access(LAST_PMSG_FILE, R_OK)) {
-        return 0;
+    /* Is there something in pmsg? If not, no need to proceed. */
+    if (!file_exists(LAST_PMSG_FILE)) {
+      return 0;
     }
 
     // Take last pmsg file contents and send it off to the logsave
@@ -164,18 +168,18 @@ int main(int argc, char **argv) {
     // For those device without /cache, the last_install file has been copied to
     // /data/misc/recovery from pmsg. Looks for the sideload history only.
     if (!has_cache) {
-      if (access(LAST_INSTALL_FILE, F_OK) && unlink(LAST_INSTALL_FILE) == -1) {
+      if (file_exists(LAST_INSTALL_FILE) && unlink(LAST_INSTALL_FILE) == -1) {
         PLOG(ERROR) << "Failed to unlink " << LAST_INSTALL_FILE;
       }
     }
 
     /* Is there a last console log too? */
     if (rotated) {
-        if (!access(LAST_CONSOLE_FILE, R_OK)) {
-            copy_file(LAST_CONSOLE_FILE, LAST_KMSG_FILE);
-        } else if (!access(ALT_LAST_CONSOLE_FILE, R_OK)) {
-            copy_file(ALT_LAST_CONSOLE_FILE, LAST_KMSG_FILE);
-        }
+      if (file_exists(LAST_CONSOLE_FILE)) {
+        copy_file(LAST_CONSOLE_FILE, LAST_KMSG_FILE);
+      } else if (file_exists(ALT_LAST_CONSOLE_FILE)) {
+        copy_file(ALT_LAST_CONSOLE_FILE, LAST_KMSG_FILE);
+      }
     }
 
     return 0;
