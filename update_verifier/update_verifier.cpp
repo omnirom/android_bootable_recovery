@@ -52,6 +52,7 @@
 #include <future>
 #include <thread>
 
+#include <android-base/chrono_utils.h>
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
@@ -188,7 +189,28 @@ bool UpdateVerifier::ReadBlocks(const std::string partition_name,
   return ret;
 }
 
+bool UpdateVerifier::CheckVerificationStatus() {
+  auto client =
+      android::snapshot::SnapuserdClient::Connect(android::snapshot::kSnapuserdSocket, 5s);
+  if (!client) {
+    LOG(ERROR) << "Unable to connect to snapuserd";
+    return false;
+  }
+
+  return client->QueryUpdateVerification();
+}
+
 bool UpdateVerifier::VerifyPartitions() {
+  const bool userspace_snapshots =
+      android::base::GetBoolProperty("ro.virtual_ab.userspace.snapshots.enabled", false);
+
+  if (userspace_snapshots && CheckVerificationStatus()) {
+    LOG(INFO) << "Partitions verified by snapuserd daemon";
+    return true;
+  }
+
+  LOG(INFO) << "Partitions not verified by snapuserd daemon";
+
   auto dm_block_devices = FindDmPartitions();
   if (dm_block_devices.empty()) {
     LOG(ERROR) << "No dm-enabled block device is found.";
