@@ -109,6 +109,7 @@ struct misc_memtag_message {
 #define MISC_MEMTAG_MODE_MEMTAG_ONCE 0x2
 #define MISC_MEMTAG_MODE_MEMTAG_KERNEL 0x4
 #define MISC_MEMTAG_MODE_MEMTAG_KERNEL_ONCE 0x8
+#define MISC_MEMTAG_MODE_MEMTAG_OFF 0x10
 
 #if (__STDC_VERSION__ >= 201112L) || defined(__cplusplus)
 static_assert(sizeof(struct misc_virtual_ab_message) == 64,
