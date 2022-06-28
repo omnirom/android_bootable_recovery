@@ -25,6 +25,7 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 
+#include "bootloader_message/bootloader_message.h"
 #include "install/snapshot_utils.h"
 #include "otautil/dirutil.h"
 #include "recovery_ui/ui.h"
@@ -99,6 +100,12 @@ bool WipeData(Device* device) {
     if (volume_for_mount_point(METADATA_ROOT) != nullptr) {
       success &= EraseVolume(METADATA_ROOT, ui);
     }
+  }
+  ui->Print("Resetting memtag message...\n");
+  std::string err;
+  if (!WriteMiscMemtagMessage({}, &err)) {
+    ui->Print("Failed to reset memtag message: %s\n", err.c_str());
+    success = false;
   }
   if (success) {
     success &= device->PostWipeData();
