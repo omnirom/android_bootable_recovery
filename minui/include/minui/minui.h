@@ -102,6 +102,7 @@ enum class PixelFormat : int {
   RGBX = 2,
   BGRA = 3,
   ARGB = 4,
+  RGBA = 5, // LSB Alpha
 };
 
 enum class GraphicsBackend : int {
