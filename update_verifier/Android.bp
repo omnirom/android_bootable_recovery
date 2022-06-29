@@ -74,11 +74,12 @@ cc_library_static {
     ],
 
     whole_static_libs: [
-	"libsnapshot_snapuserd",
+        "libsnapshot_snapuserd",
     ],
 
     shared_libs: [
         "android.hardware.boot@1.0",
+        "libboot_control_client",
         "libbase",
         "libcutils",
         "libbinder",
@@ -118,6 +119,7 @@ cc_binary {
         "libprotobuf-cpp-lite",
         "libbinder",
         "libutils",
+        "libboot_control_client",
     ],
 
     init_rc: [
