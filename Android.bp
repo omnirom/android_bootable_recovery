@@ -115,6 +115,8 @@ cc_defaults {
         "librecovery_utils",
         "libotautil",
         "libsnapshot_nobinder",
+        "libsnapshot_cow",
+        "liblz4",
         "update_metadata-protos",
     ],
 }
