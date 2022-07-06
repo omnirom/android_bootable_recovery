@@ -588,16 +588,15 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?),0)
     TWRP_REQUIRED_MODULES += sload.f2fs
 endif
 endif
-ifneq ($(TW_EXCLUDE_PYTHON),true)
-    TWRP_REQUIRED_MODULES += python3_twrp
-endif
-
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26; echo $$?),0)
     TWRP_REQUIRED_MODULES += ld.config.txt
     TWRP_REQUIRED_MODULES += init.recovery.ldconfig.rc
     LOCAL_POST_INSTALL_CMD += \
         sed 's/\(namespace.default.search.paths\)\s\{1,\}=/namespace.default.search.paths  = \/sbin\n\1 +=/' \
             $(TARGET_OUT_ETC)/ld.config*.txt > $(TARGET_RECOVERY_ROOT_OUT)/sbin/ld.config.txt;
+    ifneq ($(TW_EXCLUDE_PYTHON),true)
+        TWRP_REQUIRED_MODULES += python3_twrp
+    endif
 endif
 
 ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 25; echo $$?),0)
