@@ -216,6 +216,7 @@ cc_test_host {
     ],
 
     test_suites: ["general-tests"],
+    test_config: "RecoveryHostTest.xml",
 
     data: ["testdata/*"],
 
