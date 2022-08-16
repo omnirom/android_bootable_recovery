@@ -153,32 +153,57 @@ static void TransformRgbToDraw(const uint8_t* input_row, uint8_t* output_row, in
                                int width) {
   const uint8_t* ip = input_row;
   uint8_t* op = output_row;
+  PixelFormat pixel_format = gr_pixel_format();
 
   switch (channels) {
     case 1:
       // expand gray level to RGBX
       for (int x = 0; x < width; ++x) {
-        *op++ = *ip;
-        *op++ = *ip;
-        *op++ = *ip;
-        *op++ = 0xff;
+        if (pixel_format == PixelFormat::RGBA) {
+          *op++ = 0xff;
+          *op++ = *ip;
+          *op++ = *ip;
+          *op++ = *ip;
+        } else {
+          *op++ = *ip;
+          *op++ = *ip;
+          *op++ = *ip;
+          *op++ = 0xff;
+        }
         ip++;
       }
       break;
 
     case 3:
-      // expand RGBA to RGBX
       for (int x = 0; x < width; ++x) {
-        *op++ = *ip++;
-        *op++ = *ip++;
-        *op++ = *ip++;
-        *op++ = 0xff;
+        // expand RGBA to RGBX
+        if (pixel_format == PixelFormat::RGBA) {
+            *op++ = 0xff;
+            *op++ = *ip++;
+            *op++ = *ip++;
+            *op++ = *ip++;
+        } else {
+            *op++ = *ip++;
+            *op++ = *ip++;
+            *op++ = *ip++;
+            *op++ = 0xff;
+        }
       }
       break;
 
     case 4:
-      // copy RGBA to RGBX
-      memcpy(output_row, input_row, width * 4);
+      if (pixel_format == PixelFormat::RGBA) {
+        for (int x = 0; x < width; ++x) {
+            *op++ = *(ip + 3);
+            *op++ = *ip++;
+            *op++ = *ip++;
+            *op++ = *ip++;
+            ip++;
+        }
+      } else {
+        // copy RGBA to RGBX
+        memcpy(output_row, input_row, width * 4);
+      }
       break;
   }
 }
@@ -201,6 +226,8 @@ int res_create_display_surface(const char* name, GRSurface** pSurface) {
   PixelFormat pixel_format = gr_pixel_format();
   if (pixel_format == PixelFormat::ARGB || pixel_format == PixelFormat::BGRA) {
     png_set_bgr(png_ptr);
+  } else if (pixel_format == PixelFormat::RGBA) {
+    png_set_swap_alpha(png_ptr);
   }
 
   for (png_uint_32 y = 0; y < height; ++y) {
@@ -273,6 +300,8 @@ int res_create_multi_display_surface(const char* name, int* frames, int* fps,
 
   if (gr_pixel_format() == PixelFormat::ARGB || gr_pixel_format() == PixelFormat::BGRA) {
     png_set_bgr(png_ptr);
+  } else if (gr_pixel_format() == PixelFormat::RGBA) {
+    png_set_swap_alpha(png_ptr);
   }
 
   for (png_uint_32 y = 0; y < height; ++y) {
@@ -314,11 +343,6 @@ int res_create_alpha_surface(const char* name, GRSurface** pSurface) {
   auto surface = GRSurface::Create(width, height, width, 1);
   if (!surface) {
     return -8;
-  }
-
-  PixelFormat pixel_format = gr_pixel_format();
-  if (pixel_format == PixelFormat::ARGB || pixel_format == PixelFormat::BGRA) {
-    png_set_bgr(png_ptr);
   }
 
   for (png_uint_32 y = 0; y < height; ++y) {
