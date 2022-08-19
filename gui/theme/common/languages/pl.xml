@@ -19,6 +19,7 @@
 		<string name="recovery">Recovery</string>
 		<string name="cache">Cache</string>
 		<string name="data">Data</string>
+		<string name="data_backup">Data (bez pamięci wewn.)</string>
 		<string name="sdcard">Karta SD</string>
 		<string name="internal">Pamięć Wewnętrzna</string>
 		<string name="microsd">Karta Micro SD</string>
@@ -29,6 +30,7 @@
 		<string name="sdext">SD-EXT</string>
 		<string name="adopted_data">Adopted Data</string>
 		<string name="adopted_storage">Adopted Storage</string>
+		<string name="autostorage">Pamięć</string>
 
 		<!-- GUI XML strings -->
 		<string name="twrp_header">Projekt Team Win Recovery</string>
@@ -97,6 +99,7 @@
 		<string name="install_failed">Instalacja nieudana</string>
 		<string name="install_successful">Instalacja zakończona pomyślnie</string>
 		<string name="wipe_cache_dalvik_btn">Wyczyść Cache/Dalvik</string>
+		<string name="wipe_dalvik_btn">Wyczyść Dalvik</string>
 		<string name="reboot_system_btn">Uruchom System</string>
 		<string name="install_sel_target">Wybierz partycję docelową</string>
 		<string name="flash_image_select">Wybierz partycję do zainstalowania obrazu:</string>
@@ -104,8 +107,10 @@
 		<string name="flashing_image">Instalowanie obrazu...</string>
 		<string name="image_flashed">Obraz zainstalowany</string>
 		<string name="wipe_cache_dalvik_confirm">Wyczyścić Cache &amp; Dalvik?</string>
+		<string name="wipe_dalvik_confirm">Wyczyścić Dalvik?</string>
 		<string name="wiping_cache_dalvik">Czyszczenie Cache &amp; Dalvik...</string>
 		<string name="wipe_cache_dalvik_complete">Czyszczenie Cache &amp; Dalvik zakończone</string>
+		<string name="wipe_dalvik_complete">Czyszczenie Dalvik zakończone</string>
 		<string name="swipe_wipe">Przesuń, aby wyczyścić</string>
 		<string name="swipe_wipe_s">   Wyczyść</string>
 		<string name="no_os1">Brak zainstalowanego systemu! Jesteś</string>
@@ -114,6 +119,17 @@
 		<string name="rebooting">Restartowanie...</string>
 		<string name="swipe_reboot">Przesuń, aby zrestartować</string>
 		<string name="swipe_reboot_s">   Zrestartuj</string>
+		<string name="reboot_install_app_hdr">Zainstaluj aplikację TWRP</string>
+		<string name="reboot_install_app1">Czy chcesz zainstalować oficjalną aplikację TWRP?</string>
+		<string name="reboot_install_app2">Aplikacja może sprawdzać dostępność nowych wydań TWRP.</string>
+		<string name="reboot_install_app_prompt_install">Informuj o możliwości instalacji aplikacji TWRP, jeśli jej nie zainstalowano</string>
+		<string name="reboot_install_app_system">Zainstaluj jako systemową</string>
+		<string name="reboot_installing_app">Instalowanie aplikacji...</string>
+		<string name="swipe_to_install_app">Przesuń, aby zainstalować aplikację TWRP</string>
+		<string name="uninstall_twrp_system_app">Odinstaluj aplikację TWRP z systemu</string>
+		<string name="uninstall_twrp_system_app_confirm">Odinstalować aplikację TWRP z systemu?</string>
+		<string name="uninstalling_twrp_system_app">Dezinstalacja aplikacji TWRP z systemu...</string>
+		<string name="uninstall_twrp_system_app_complete">Dezinstalacja aplikacji TWRP ukończona</string>
 		<string name="swipe_flash">Przesuń, aby zainstalować</string>
 		<string name="confirm_action">Potwierdź czynność</string>
 		<string name="back_cancel">Naciśnij wstecz, aby anulować.</string>
@@ -125,6 +141,7 @@
 		<string name="factory_reset2">(nie czyści pamięci wewnętrznej)</string>
 		<string name="factory_reset3">W większości przypadków jest to</string>
 		<string name="factory_reset4">jedyne czyszczenie jakiego potrzebujesz.</string>
+		<string name="factory_reset5">(nie czyści użytkowników/ekranu blokady)</string>
 		<string name="factory_resetting">Przywracanie ustawień fabrycznych...</string>
 		<string name="advanced_wipe_hdr">Zaawansowane czyszczenie</string>
 		<string name="advanced_wipe_btn">Zaaw. czyszczenie</string>
@@ -208,7 +225,13 @@
 		<string name="enc_enabled">włączone</string>
 		<string name="enable_backup_comp_chk">Włącz kompresję</string>
 		<string name="skip_digest_backup_chk" version="2">Pomiń generowanie Digest kopii zapasowej</string>
-		<string name="disable_backup_space_chk">Wyłącz sprawdzanie wolnego miejsca</string>
+		<string name="disable_backup_space_chk" version="2">Wyłącz sprawdzanie wolnego miejsca</string>
+		<string name="skip_digest_zip_chk">Pomiń sprawdzanie Digest przed instalacją pliku zip</string>
+		<string name="current_boot_slot">Obecny slot: %tw_active_slot%</string>
+		<string name="boot_slot_a">Slot A</string>
+		<string name="boot_slot_b">Slot B</string>
+		<string name="changing_boot_slot">Zmiana slotu uruchamiania</string>
+		<string name="changing_boot_slot_complete">Zmiana slotu uruchamiania ukończona</string>
 		<string name="refresh_sizes_btn">Odśwież rozmiary</string>
 		<string name="swipe_backup">Przesuń, aby wykonać kopię</string>
 		<string name="append_date_btn">Dodaj datę</string>
@@ -294,6 +317,7 @@
 		<string name="settings_gen_s_hdr">Główne</string>
 		<string name="settings_gen_btn">Główne</string>
 		<string name="use_rmrf_chk">Używaj rm -rf zamiast formatowania</string>
+		<string name="auto_reflashtwrp_chk">Automatycznie wgrywaj TWRP po wgraniu ROM-u</string>
 		<string name="use24clock_chk">Użyj 24-godzinnego zegara</string>
 		<string name="rev_navbar_chk">Odwrócony układ paska nawigacji</string>
 		<string name="simact_chk">Symuluj akcje do testowania motywów</string>
@@ -305,6 +329,7 @@
 		<string name="settings_tz_btn">Strefa czasowa</string>
 		<string name="settings_screen_btn">Ekran</string>
 		<string name="settings_screen_bright_btn">Jasność ekranu</string>
+		<string name="vibration_disabled">Wibracje są wyłączone na tym urządzeniu</string>
 		<string name="settings_vibration_btn">Wibracje</string>
 		<string name="settings_language_btn">Język</string>
 		<string name="time_zone_hdr">Strefa czasowa</string>
@@ -365,8 +390,8 @@
 		<string name="set_language_btn">Wybierz język</string>
 		<string name="advanced_hdr">Zaawansowane</string>
 		<string name="copy_log_confirm">Skopiować log na kartę SD?</string>
-		<string name="copying_log">Kopiowanie pliku log na kartę SD...</string>
-		<string name="copy_log_complete">Kopiowanie pliku log zakończone</string>
+		<string name="copying_log" version="2">Kopiowanie pliku log na kartę SD...</string>
+		<string name="copy_log_complete" version="2">Kopiowanie pliku log zakończone</string>
 		<string name="fix_context_btn">Uprawnienia</string>
 		<string name="part_sd_btn">Partycjonowanie</string>
 		<string name="part_sd_s_btn">Karta SD</string>
@@ -436,12 +461,15 @@
 		<string name="fm_set_perms_hdr">Ustaw uprawnienia</string>
 		<string name="fm_perms">Uprawnienia:</string>
 		<string name="fm_complete">Działanie na plikach zakończone</string>
+		<string name="fm_open_terminal_btn">Otwórz tu terminal</string>
+		<string name="fm_edit_file">Edytuj plik</string>
 		<string name="decrypt_data_hdr">Deszyfrowanie danych</string>
 		<string name="decrypt_data_enter_pass">Wprowadź hasło.</string>
 		<string name="decrypt_data_failed">Hasło nieprawidłowe, spróbuj ponownie!</string>
 		<string name="decrypt_data_failed_pattern">Wzór nieprawidłowy, spróbuj ponownie!</string>
 		<string name="decrypt_data_enter_pattern">Wprowadź wzór.</string>
 		<string name="decrypt_data_trying">Próbuję rozszyfrować</string>
+		<string name="decrypt_data_vold_os_missing">Brakuje plików niezbędnych do zdeszyfrowania vold: {1}</string>
 		<string name="term_hdr">Polecenia Terminala</string>
 		<string name="term_s_hdr">Terminal</string>
 		<string name="term_kill_btn">ZABIJ</string>
@@ -466,6 +494,48 @@
 		<string name="install_cancel">Nie instaluj</string>
 		<string name="sel_storage_list">Wybierz pamięć</string>
 		<string name="ok_btn">OK</string>
+		<string name="install_twrp_ramdisk">Instaluj Ramdisk Recovery</string>
+		<string name="install_kernel">Instaluj Kernel</string>
+		<string name="repack_kernel_confirm_hdr">Instalacja Kernel</string>
+		<string name="repack_ramdisk_confirm_hdr">Instalacja Recovery</string>
+		<string name="repack_kernel_confirm">Zainstalować Kernel?</string>
+		<string name="repack_ramdisk_confirm">Zainstalować Recovery?</string>
+		<string name="repack_backup_first">Najpierw wykonaj kopię obecnego obrazu</string>
+		<string name="repack">Przepakuj</string>
+		<string name="swipe_to_install">Przesuń, aby zainstalować</string>
+		<string name="installing">Instalacja...</string>
+		<string name="install_complete">Instalacja ukończona</string>
+		<string name="unpack_error">Błąd przy rozpakowywaniu obrazu.</string>
+		<string name="repack_error">Błąd przy przepakowywaniu obrazu.</string>
+		<string name="modified_ramdisk_error">pliki ramdisku zostały zmodyfikowane, nie można utworzyć ramdisku do wgrania, uruchom twrp w trybie fastboot i ponów tę operację lub użyj opcji Instaluj Ramdisk Recovery.</string>
+		<string name="create_ramdisk_error">nie udało się utworzyć ramdisku do wgrania.</string>
+		<string name="unpacking_image">Rozpakowywanie {1}...</string>
+		<string name="repacking_image">Przepakowywanie {1}...</string>
+		<string name="repack_image_hdr">Wybierz obraz</string>
+		<string name="repack_overwrite_warning">Jeśli urządzenie zostało przedtem zrootowane, root zniknie i trzeba będzie zainstalować go ponownie.</string>
+		<string name="reflash_twrp">Wgraj Obecne TWRP</string>
+		<string name="reflash_twrp_confirm">Wgrać obecne TWRP?</string>
+		<string name="reflashing_twrp">Wgrywanie TWRP...</string>
+		<string name="reflash_twrp_complete">Ukończono wgrywanie TWRP</string>
+		<string name="fix_recovery_loop">Napraw Bootloop Recovery</string>
+		<string name="fix_recovery_loop_confirm">Naprawić bootloop recovery?</string>
+		<string name="fixing_recovery_loop">Naprawianie bootloopa Recovery...</string>
+		<string name="fix_recovery_loop_complete">Ukończono naprawianie bootloopa Recovery</string>
+		<string name="fixing_recovery_loop_patch">Patchowanie kernela...</string>
+		<string name="fix_recovery_loop_patch_error">Błąd przy patchowaniu kernela.</string>
+		<string name="decrypt_users">Deszyfruj użytkowników</string>
+		<string name="decrypt_users_selection">Wybierz ID użytkownika do zdeszyfrowania</string>
+		<string name="select_user">Wybierz użytkownika</string>
+		<string name="backup_storage_undecrypt_warning">Kopia zapasowa nie będzie zawierać pewnych plików użytkownika {1}, ponieważ nie jest on odszyfrowany.</string>
+		<string name="decrypting_user_fbe">Próba zdeszyfrowania FBE dla użytkownika {1}...</string>
+		<string name="decrypt_user_success_fbe">Pomyślnie zdeszyfrowano użytkownika {1}</string>
+		<string name="decrypt_user_fail_fbe">Nie udało się zdeszyfrować użytkownika {1}</string>
+		<string name="decrypt_data_enter_pass_fbe">Wprowadź hasło dla użytkownika [%tw_crypto_user_id%]</string>
+		<string name="decrypt_data_enter_pattern_fbe">Wprowadź wzór dla użytkownika [%tw_crypto_user_id%]</string>
+		<string name="multiuser_warning1">Nie wszyscy użytkownicy są zdeszyfrowani!</string>
+		<string name="multiuser_warning2">Operacje tworzenia kopii zapasowej lub jej przywrócenia mogą się nie powieść!</string>
+		<string name="multiuser_warning_accept">Kontynuuj mimo to</string>
+		<string name="multiuser_warning_hdr">Ostrzeżenie dot. wielu użytkowników</string>
 
 		<!-- Various console messages - these consist of user displayed messages, oftentimes errors -->
 		<string name="no_kernel_selinux">Kernel nie posiada obsługi odczytu uprawnień SELinux.</string>
@@ -519,6 +589,7 @@
 		<string name="update_part_details_done">...ukończono</string>
 		<string name="wiping_dalvik">Czyszczenie katalogów Dalvik Cache...</string>
 		<string name="cleaned">Wyczyszczono: {1}...</string>
+		<string name="cache_dalvik_done">-- Czyszczenie katalogów Dalvik Cache zakończone!</string>
 		<string name="dalvik_done">-- Czyszczenie Dalvik Cache zakończone!</string>
 		<string name="no_andsec">Nie znaleziono partycji android_secure.</string>
 		<string name="unable_to_locate">Nie można zlokalizować {1}.</string>
@@ -529,6 +600,7 @@
 		<string name="fail_decrypt">Niepowodzenie rozszyfrowywania danych.</string>
 		<string name="no_crypto_support">Brak obsługi crypto w tej kompilacji.</string>
 		<string name="decrypt_success_dev">Dane pomyślnie rozszyfrowane, nowe urządzenie blokowe: '{1}'</string>
+		<string name="decrypt_success_nodev">Dane pomyślnie rozszyfrowane</string>
 		<string name="done">Ukończono.</string>
 		<string name="start_partition_sd">Partycjonowanie Karty SD...</string>
 		<string name="partition_sd_locate">Nie można zlokalizować urządzenia do partycjonowania.</string>
@@ -568,7 +640,7 @@
 		<string name="digest_fail_match" version="2">Digest nie pasuje do '{1}'.</string>
 		<string name="digest_matched" version="2">Digest matched for '{1}'.</string>
 		<string name="fail_decrypt_tar">Nie udało się odszyfrować pliku tar '{1}'</string>
-		<string name="format_data_msg">Może być konieczne ponowne uruchomienie recovery, aby móc ponownie użyć /date.</string>
+		<string name="format_data_msg">Może być konieczne ponowne uruchomienie recovery, aby móc ponownie użyć /data.</string>
 		<string name="format_data_err">Nie można sformatować, aby usunąć szyfrowanie.</string>
 		<string name="formatting_using">Formatowanie {1} przy użyciu {2}...</string>
 		<string name="unable_to_wipe">Nie można wyczyścić {1}.</string>
@@ -576,6 +648,7 @@
 		<string name="remove_all">Usuwanie wszystkich plików w '{1}'</string>
 		<string name="wiping_data">Czyszczenie Data bez /data/media ...</string>
 		<string name="backing_up">Tworzenie kopii zapasowej {1}...</string>
+		<string name="backup_storage_warning">Kopie zapasowe {1} nie zawierają plików z pamięci wewnętrznej, takich jak zdjęcia czy pobrane elementy.</string>
 		<string name="backing">Tworzenie kopii zapasowej</string>
 		<string name="backup_size">Rozmiar kopii zapasowej '{1}' to 0 bajtów.</string>
 		<string name="datamedia_fs_restore">UWAGA: Ta kopia /data została wykonana w sytemie plików {1}! Kopia może się nie uruchomić jeśli nie wrócisz do {1}.</string>
@@ -617,6 +690,7 @@
 		<string name="ors_complete">Ukończono Skrypt OpenRecovery</string>
 		<string name="no_updater_binary">Nie można znaleźć '{1}' w pliku zip.</string>
 		<string name="check_for_digest" version="2">Sprawdzanie pliku Digest...</string>
+		<string name="invalid_zip_format">Nieprawidłowy format pliku zip!</string>
 		<string name="fail_sysmap">Nieudane mapowanie pliku '{1}'</string>
 		<string name="verify_zip_sig">Weryfikowanie sygnatury pliku zip...</string>
 		<string name="verify_zip_fail">Niewłaściwa sygnatura pliku zip!</string>
@@ -639,7 +713,7 @@
 		<!-- These 2 items are saved in the data manager instead of resource manager, so %llu, etc is correct instead of {1} -->
 		<string name="file_progress">%llu z %llu plików, %i%%</string>
 		<string name="size_progress">%lluMB z %lluMB, %i%%</string>
-		<string name="decrypt_cmd">Próba odszyfrowania partycji danych poprzez linię poleceń.</string>
+		<string name="decrypt_cmd" version="2">Próba odszyfrowania partycji danych poprzez linię poleceń.</string>
 		<string name="base_pkg_err">Nie udało się załadować pakietów podstawowych.</string>
 		<string name="simulating">Symulowanie działań...</string>
 		<string name="backup_cancel">Anulowano wykonywanie kopii zapasowej</string>
@@ -662,6 +736,63 @@
 		<string name="change_fs_err">Niepowodzenie zmiany systemu plików.</string>
 		<string name="theme_ver_err">Wersja niestandardowego motywu nie zgadza się z wersją TWRP. Użyto domyślnego motywu.</string>
 		<string name="up_a_level">(Cofnij)</string>
-		<string name="install_reboot">Ponowne uruchomienie za 5 sekund</string>
+		<string name="install_reboot" version="2">Ponowne uruchomienie za %tw_sleep% sekund</string>
+		<string name="adbbackup_error">Błąd z ADB Backup. Kończenie..."</string>
+		<string name="adbbackup_control_error">Nie można zapisać do kanału kontroli adb</string>
+		<string name="twrp_adbbu_option">parametr --twrp jest wymagany, aby włączyć kopię zapasową adb twrp</string>
+		<string name="partition_not_found">ścieżka: {1} nieznaleziona na liście partycji</string>
+		<string name="copy_kernel_log">Skopiowano log kernela do {1}</string>
+		<string name="copy_logcat">Skopiowano logcat do {1}</string>
+		<string name="include_kernel_log">Skopiuj log kernela</string>
+		<string name="include_logcat">Skopiuj logcat</string>
+		<string name="sha2_chk">Użyj SHA2 do haszowania</string>
+		<string name="unable_set_boot_slot">Błąd przy zmienianiu slotu bootowania bootloadera na {1}</string>
+		<string name="unmount_sys_install">Odmontuj /system przed instalacją pliku ZIP</string>
+		<string name="unmount_system">Odmontowywanie /system...</string>
+		<string name="unmount_system_err">Błąd przy odmontowywaniu /system</string>
+		<string name="flash_ab_inactive">Wgrywanie pliku zip A/B do nieaktywnego slotu: {1}</string>
+		<string name="flash_ab_reboot">Aby wgrać dodatkowe pliki zip, uruchom ponownie recovery w celu przejścia na zaktualizowany slot.</string>
+		<string name="flash_ab_both_slots">Wgraj na oba sloty</string>
+		<string name="ozip_decrypt_decryption">Rozpoczynanie deszyfrowania Ozip...</string>
+		<string name="ozip_decrypt_finish">Deszyfrowanie Ozip zakończone!</string>
+		<string name="fastboot_button">Fastboot</string>
+		<string name="enable_adb">Włącz ADB</string>
+		<string name="enable_fastboot">Włącz Fastboot</string>
+		<string name="fastboot_console_msg">Jesteś w trybie Fastboot...</string>
+		<string name="data_media_fbe_msg">TWRP nie utworzy ponownie katalogu /data/media na urządzeniu z FBE. Uruchom swój ROM, aby utworzyć /data/media</string>
+		<!-- Android Rescue Party trigger -->
+		<string name="rescue_party0">Wywołano Android Rescue Party! Co może pomóc? Spróbuj:</string>
+		<string name="rescue_party1"> 1. wyczyścić cache i/lub</string>
+		<string name="rescue_party2"> 2. sformatować partycję /data i/lub</string>
+		<string name="rescue_party3"> 3. wgrać ROM z czyszczeniem danych.</string>
+		<string name="rescue_party4">Zgłoszony problem: </string>
+		<string name="restore_system_context">Nie można uzyskać domyślnego kontekstu dla {1} -- Android może się nie uruchomić.</string>
+		<string name="change_twrp_folder_btn">Zmień folder TWRP</string>
+		<string name="change_twrp_folder_on_process">Zmienianie folderu TWRP</string>
+		<string name="change_twrp_folder_after_process">Folder TWRP zmieniony na</string>
+		<string name="tw_folder_exists">Folder o tej nazwie już istnieje!</string>
+		<string name="unmap_super_devices">Odmapuj urządzenia Super</string>
+		<string name="unmap_super_devices_confirm">Odmapować wszystkie urządzenia Super?</string>
+		<string name="unmapping_super_devices">Odmapowanie urządzeń Super...</string>
+		<string name="unmap_super_devices_complete">Odmapowano wszystkie urządzenia Super</string>
+		<string name="remove_dynamic_groups_confirm">Odmapować wszystkie urządzenia Super?</string>
+		<string name="remove_dynamic_groups">Odmapowywanie urządzeń Super...</string>
+		<string name="remove_dynamic_groups_complete">Odmapowano wszystkie urządzenia Super</string>
+		<string name="mount_vab_partitions">Urządzenia na partycji /super mogą nie zostać zamontowane do momentu ponownego uruchomienia recovery.</string>
+		<string name="merges_snapshots">Połącz migawki</string>
+		<string name="merge_snapshots_confirm">Połączyć migawki?</string>
+		<string name="merging_snapshots">Łączenie migawek...</string>
+		<string name="merging_snapshots_complete">Złączono migawki</string>
+		<string name="restore_pin_password">Przywrócić z włączonym PIN-em/hasłem?</string>
+		<string name="restore_pattern">Przywrócić z włączonym wzorem?</string>
+		<string name="restore_pin">Przywrócić z włączonym PIN-em?</string>
+		<string name="continue_restore_encrypted">Kontynuować przywracanie?</string>
+		<string name="restore_with_pin_password1">Włączony PIN/hasło</string>
+		<string name="restore_with_pin_password2">PIN/hasło powinny być wyłączone przed rozpoczęciem przywracania</string>
+		<string name="restore_with_pin1">PIN jest włączony</string>
+		<string name="restore_with_pin2">PIN powinien być wyłączony przed rozpoczęciem przywracania</string>
+		<string name="restore_with_pattern1">Wzór jest włączony</string>
+		<string name="restore_with_pattern2">Wzór powinien być wyłączony przed rozpoczęciem przywracania</string>
+		<string name="reboot_after_restore">Po pierwszym uruchomieniu Androida zaleca się jednorazowo ponownie uruchomić urządzenie.</string>
 	</resources>
 </language>
