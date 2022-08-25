@@ -10,5 +10,5 @@
     <string name="recovery_try_again" msgid="7168248750158873496">"Reîncercați"</string>
     <string name="recovery_factory_data_reset" msgid="7321351565602894783">"Revenire la setările din fabrică"</string>
     <string name="recovery_wipe_data_confirmation" msgid="5439823343348043954">"Ștergeți toate datele utilizatorului?\n\n ACEST LUCRU NU POATE FI ANULAT!"</string>
-    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Anulați"</string>
+    <string name="recovery_cancel_wipe_data" msgid="66987687653647384">"Anulează"</string>
 </resources>
