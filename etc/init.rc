@@ -102,7 +102,7 @@ on property:service.adb.root=1
 on fs && property:sys.usb.configfs=1
     mount configfs none /config
     mkdir /config/usb_gadget/g1 0770 shell shell
-    write /config/usb_gadget/g1/idVendor 0x18D1
+    write /config/usb_gadget/g1/idVendor 0x${ro.recovery.usb.vid}
     mkdir /config/usb_gadget/g1/strings/0x409 0770
     write /config/usb_gadget/g1/strings/0x409/serialnumber ${ro.serialno}
     write /config/usb_gadget/g1/strings/0x409/manufacturer ${ro.product.manufacturer}
@@ -114,7 +114,7 @@ on fs && property:sys.usb.configfs=1
 
 on fs && property:sys.usb.configfs=0
     write /sys/class/android_usb/android0/f_ffs/aliases adb,fastboot
-    write /sys/class/android_usb/android0/idVendor 18D1
+    write /sys/class/android_usb/android0/idVendor ${ro.recovery.usb.vid}
     write /sys/class/android_usb/android0/iManufacturer ${ro.product.manufacturer}
     write /sys/class/android_usb/android0/iProduct ${ro.product.model}
     write /sys/class/android_usb/android0/iSerial ${ro.serialno}
@@ -139,19 +139,19 @@ on property:sys.usb.config=none && property:sys.usb.configfs=0
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=adb && property:sys.usb.configfs=0
-    write /sys/class/android_usb/android0/idProduct D001
+    write /sys/class/android_usb/android0/idProduct ${ro.recovery.usb.adb.pid}
     write /sys/class/android_usb/android0/functions adb
     write /sys/class/android_usb/android0/enable 1
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=sideload && property:sys.usb.configfs=0
-    write /sys/class/android_usb/android0/idProduct D001
+    write /sys/class/android_usb/android0/idProduct ${ro.recovery.usb.adb.pid}
     write /sys/class/android_usb/android0/functions adb
     write /sys/class/android_usb/android0/enable 1
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=fastboot && property:sys.usb.configfs=0
-    write /sys/class/android_usb/android0/idProduct 4EE0
+    write /sys/class/android_usb/android0/idProduct ${ro.recovery.usb.fastboot.pid}
     write /sys/class/android_usb/android0/functions fastboot
     write /sys/class/android_usb/android0/enable 1
     setprop sys.usb.state ${sys.usb.config}
@@ -166,21 +166,21 @@ on property:sys.usb.config=none && property:sys.usb.configfs=1
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=sideload && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
-    write /config/usb_gadget/g1/idProduct 0xD001
+    write /config/usb_gadget/g1/idProduct 0x${ro.recovery.usb.adb.pid}
     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb"
     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=adb && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
-    write /config/usb_gadget/g1/idProduct 0xD001
+    write /config/usb_gadget/g1/idProduct 0x${ro.recovery.usb.adb.pid}
     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb"
     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=fastboot && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
-    write /config/usb_gadget/g1/idProduct 0x4EE0
+    write /config/usb_gadget/g1/idProduct 0x${ro.recovery.usb.fastboot.pid}
     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "fastboot"
     symlink /config/usb_gadget/g1/functions/ffs.fastboot /config/usb_gadget/g1/configs/b.1/f1
     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
