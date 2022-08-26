@@ -200,6 +200,10 @@ void MinuiBackendDrm::Blank(bool blank, DrmConnector index) {
   }
 }
 
+bool MinuiBackendDrm::HasMultipleConnectors() {
+  return (drm[DRM_SEC].GRSurfaceDrms[0] && drm[DRM_SEC].GRSurfaceDrms[1]);
+}
+
 static drmModeCrtc* find_crtc_for_connector(int fd, drmModeRes* resources,
                                             drmModeConnector* connector) {
   // Find the encoder. If we already have one, just use it.
