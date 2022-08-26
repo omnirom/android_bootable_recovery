@@ -502,3 +502,7 @@ void gr_fb_blank(bool blank, int index) {
 void gr_rotate(GRRotation rot) {
   rotation = rot;
 }
+
+bool gr_has_multiple_connectors() {
+  return gr_backend->HasMultipleConnectors();
+}
