@@ -80,6 +80,10 @@ class StubRecoveryUI : public RecoveryUI {
   }
 
   void SetTitle(const std::vector<std::string>& /* lines */) override {}
+
+  int SetSwCallback(int /* code */, int /* value */) override {
+    return 0;
+  }
 };
 
 #endif  // RECOVERY_STUB_UI_H
