@@ -245,6 +245,9 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
       const std::vector<std::string>& backup_headers, const std::vector<std::string>& backup_items,
       const std::function<int(int, bool)>& key_handler) override;
 
+  // For Lid switch handle
+  int SetSwCallback(int code, int value) override;
+
  protected:
   static constexpr int kMenuIndent = 4;
 
@@ -403,6 +406,9 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
   bool rtl_locale_;
 
   std::mutex updateMutex;
+
+  // Switch the display to active one after graphics is ready
+  bool is_graphics_available;
 
  private:
   void SetLocale(const std::string&);
