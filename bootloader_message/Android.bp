@@ -45,6 +45,7 @@ cc_library {
         "libbootloader_message_defaults",
     ],
     recovery_available: true,
+    vendor_available: true,
     host_supported: true,
 
     target: {
