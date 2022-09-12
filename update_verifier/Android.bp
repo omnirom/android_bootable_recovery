@@ -39,14 +39,6 @@ python_library_host {
         "care_map.proto",
     ],
     proto: {type: "lite", canonical_path_from_root: false},
-    version: {
-        py2: {
-            enabled: true,
-        },
-        py3: {
-            enabled: true,
-        },
-    },
     visibility: [
         "//build/make/tools/releasetools:__subpackages__",
     ],
@@ -145,12 +137,7 @@ python_binary_host {
     },
 
     version: {
-        py2: {
-            enabled: false,
-            embedded_launcher: false,
-        },
         py3: {
-            enabled: true,
             embedded_launcher: true,
         },
     },
