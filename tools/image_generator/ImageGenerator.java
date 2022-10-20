@@ -16,6 +16,8 @@
 
 package com.android.recovery.tools;
 
+import static java.util.Map.entry;
+
 import com.ibm.icu.text.BreakIterator;
 
 import org.apache.commons.cli.CommandLine;
@@ -111,49 +113,43 @@ public class ImageGenerator {
     // https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
     private static final String DEFAULT_FONT_NAME = "Roboto-Regular";
     private static final Map<String, String> LANGUAGE_TO_FONT_MAP =
-            new TreeMap<String, String>() {
-                {
-                    put("am", "NotoSansEthiopic-VF");
-                    put("ar", "NotoNaskhArabicUI-Regular");
-                    put("as", "NotoSansBengaliUI-VF");
-                    put("bn", "NotoSansBengaliUI-VF");
-                    put("fa", "NotoNaskhArabicUI-Regular");
-                    put("gu", "NotoSansGujaratiUI-Regular");
-                    put("hi", "NotoSansDevanagariUI-VF");
-                    put("hy", "NotoSansArmenian-VF");
-                    put("iw", "NotoSansHebrew-Regular");
-                    put("ja", "NotoSansCJK-Regular");
-                    put("ka", "NotoSansGeorgian-VF");
-                    put("ko", "NotoSansCJK-Regular");
-                    put("km", "NotoSansKhmerUI-Regular");
-                    put("kn", "NotoSansKannadaUI-VF");
-                    put("lo", "NotoSansLaoUI-Regular");
-                    put("ml", "NotoSansMalayalamUI-VF");
-                    put("mr", "NotoSansDevanagariUI-VF");
-                    put("my", "NotoSansMyanmarUI-Regular");
-                    put("ne", "NotoSansDevanagariUI-VF");
-                    put("or", "NotoSansOriya-Regular");
-                    put("pa", "NotoSansGurmukhiUI-VF");
-                    put("si", "NotoSansSinhalaUI-VF");
-                    put("ta", "NotoSansTamilUI-VF");
-                    put("te", "NotoSansTeluguUI-VF");
-                    put("th", "NotoSansThaiUI-Regular");
-                    put("ur", "NotoNaskhArabicUI-Regular");
-                    put("zh", "NotoSansCJK-Regular");
-                }
-            };
+            Map.ofEntries(
+                entry("am", "NotoSansEthiopic-VF"),
+                entry("ar", "NotoNaskhArabicUI-Regular"),
+                entry("as", "NotoSansBengaliUI-VF"),
+                entry("bn", "NotoSansBengaliUI-VF"),
+                entry("fa", "NotoNaskhArabicUI-Regular"),
+                entry("gu", "NotoSansGujaratiUI-Regular"),
+                entry("hi", "NotoSansDevanagariUI-VF"),
+                entry("hy", "NotoSansArmenian-VF"),
+                entry("iw", "NotoSansHebrew-Regular"),
+                entry("ja", "NotoSansCJK-Regular"),
+                entry("ka", "NotoSansGeorgian-VF"),
+                entry("ko", "NotoSansCJK-Regular"),
+                entry("km", "NotoSansKhmerUI-Regular"),
+                entry("kn", "NotoSansKannadaUI-VF"),
+                entry("lo", "NotoSansLaoUI-Regular"),
+                entry("ml", "NotoSansMalayalamUI-VF"),
+                entry("mr", "NotoSansDevanagariUI-VF"),
+                entry("my", "NotoSansMyanmarUI-Regular"),
+                entry("ne", "NotoSansDevanagariUI-VF"),
+                entry("or", "NotoSansOriya-Regular"),
+                entry("pa", "NotoSansGurmukhiUI-VF"),
+                entry("si", "NotoSansSinhalaUI-VF"),
+                entry("ta", "NotoSansTamilUI-VF"),
+                entry("te", "NotoSansTeluguUI-VF"),
+                entry("th", "NotoSansThaiUI-Regular"),
+                entry("ur", "NotoNaskhArabicUI-Regular"),
+                entry("zh", "NotoSansCJK-Regular"));
 
     // Languages that write from right to left.
     private static final Set<String> RTL_LANGUAGE =
-            new HashSet<String>() {
-                {
-                    add("ar"); // Arabic
-                    add("fa"); // Persian
-                    add("he"); // Hebrew
-                    add("iw"); // Hebrew
-                    add("ur"); // Urdu
-                }
-            };
+            Set.of(
+                "ar",  // Arabic
+                "fa",  // Persian
+                "he",  // Hebrew
+                "iw",  // Hebrew
+                "ur"); // Urdu
 
     /** Exception to indicate the failure to find the translated text strings. */
     public static class LocalizedStringNotFoundException extends Exception {
