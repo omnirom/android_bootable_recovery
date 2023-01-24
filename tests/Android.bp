@@ -148,7 +148,7 @@ cc_test {
 
     static_libs: libapplypatch_static_libs + librecovery_static_libs + [
         "android.hardware.health-translate-ndk",
-        "android.hardware.health-V1-ndk",
+        "android.hardware.health-V2-ndk",
         "libhealthshim",
         "librecovery_ui",
         "libfusesideload",
