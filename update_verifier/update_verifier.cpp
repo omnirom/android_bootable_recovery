@@ -150,7 +150,6 @@ bool UpdateVerifier::ReadBlocks(const std::string partition_name,
       static constexpr size_t kBlockSize = 4096;
       std::vector<uint8_t> buf(1024 * kBlockSize);
 
-      size_t block_count = 0;
       for (const auto& [range_start, range_end] : group) {
         if (lseek64(fd.get(), static_cast<off64_t>(range_start) * kBlockSize, SEEK_SET) == -1) {
           PLOG(ERROR) << "lseek to " << range_start << " failed";
@@ -166,9 +165,7 @@ bool UpdateVerifier::ReadBlocks(const std::string partition_name,
           }
           remain -= to_read;
         }
-        block_count += (range_end - range_start);
       }
-      LOG(INFO) << "Finished reading " << block_count << " blocks on " << dm_block_device;
       return true;
     };
 
@@ -179,8 +176,8 @@ bool UpdateVerifier::ReadBlocks(const std::string partition_name,
   for (auto& t : threads) {
     ret = t.get() && ret;
   }
-  LOG(INFO) << "Finished reading blocks on " << dm_block_device << " with " << thread_num
-            << " threads.";
+  LOG(INFO) << "Finished reading blocks on partition " << partition_name << " @ " << dm_block_device
+            << " with " << thread_num << " threads.";
   return ret;
 }
 
