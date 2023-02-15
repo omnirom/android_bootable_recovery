@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3742fcfc_e77dde55",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1002985
+      },
+      "writtenOn": "2023-02-15T20:58:33Z",
+      "side": 1,
+      "message": "make twrp",
+      "revId": "9f5dd3139e7a4bcd503c5bcc0cc195f5ed932a10",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55"
+    }
+  ]
+}
