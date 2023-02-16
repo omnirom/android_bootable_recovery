@@ -209,11 +209,7 @@ bool update_bootloader_message_in_struct(bootloader_message* boot,
   memset(boot->command, 0, sizeof(boot->command));
   memset(boot->recovery, 0, sizeof(boot->recovery));
 
-  if (android::base::GetBoolProperty("ro.boot.quiescent", false)) {
-    strlcpy(boot->command, "boot-recovery,quiescent", sizeof(boot->command));
-  } else {
-    strlcpy(boot->command, "boot-recovery", sizeof(boot->command));
-  }
+  strlcpy(boot->command, "boot-recovery", sizeof(boot->command));
 
   std::string recovery = "recovery\n";
   for (const auto& s : options) {
