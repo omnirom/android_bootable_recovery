@@ -137,7 +137,7 @@ added to `$ADB_VENDOR_KEYS`.
 Note that this mechanism applies to both of normal boot and recovery modes.
 
  * **Option 2:** Allow `adbd` to connect without authentication.
-   * `adbd` is compiled with `ALLOW_ADBD_NO_AUTH` (only on debuggable builds).
+   * bootloader is unlocked (`ro.boot.verifiedbootstate` is `orange`) or debuggable build.
    * `ro.adb.secure` has a value of `0`.
 
 Both of the two conditions need to be satisfied. Although `ro.adb.secure` is a runtime property, its
