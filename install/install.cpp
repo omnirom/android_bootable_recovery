@@ -70,6 +70,8 @@ static constexpr int VERIFICATION_PROGRESS_TIME = 60;
 static constexpr float VERIFICATION_PROGRESS_FRACTION = 0.25;
 // The charater used to separate dynamic fingerprints. e.x. sargo|aosp-sargo
 static const char* FINGERPRING_SEPARATOR = "|";
+static constexpr auto&& RELEASE_KEYS_TAG = "release-keys";
+
 static std::condition_variable finish_log_temperature;
 static bool isInStringList(const std::string& target_token, const std::string& str_list,
                            const std::string& deliminator);
@@ -213,6 +215,7 @@ bool CheckPackageMetadata(const std::map<std::string, std::string>& metadata, Ot
   // We allow the package to not have any serialno; and we also allow it to carry multiple serial
   // numbers split by "|"; e.g. serialno=serialno1|serialno2|serialno3 ... We will fail the
   // verification if the device's serialno doesn't match any of these carried numbers.
+
   auto pkg_serial_no = get_value(metadata, "serialno");
   if (!pkg_serial_no.empty()) {
     auto device_serial_no = android::base::GetProperty("ro.serialno", "");
@@ -226,6 +229,21 @@ bool CheckPackageMetadata(const std::map<std::string, std::string>& metadata, Ot
       LOG(ERROR) << "Package is for serial " << pkg_serial_no;
       return false;
     }
+  } else if (ota_type == OtaType::BRICK) {
+    const auto device_build_tag = android::base::GetProperty("ro.build.tags", "");
+    if (device_build_tag.empty()) {
+      LOG(ERROR) << "Unable to determine device build tags, serial number is missing from package. "
+                    "Rejecting the brick OTA package.";
+      return false;
+    }
+    if (device_build_tag == RELEASE_KEYS_TAG) {
+      LOG(ERROR) << "Device is release key build, serial number is missing from package. "
+                    "Rejecting the brick OTA package.";
+      return false;
+    }
+    LOG(INFO)
+        << "Serial number is missing from brick OTA package, permitting anyway because device is "
+        << device_build_tag;
   }
 
   if (ota_type == OtaType::AB) {
