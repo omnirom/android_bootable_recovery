@@ -182,13 +182,17 @@ bool WipeAbDevice(Device* device, size_t wipe_package_size) {
     LOG(ERROR) << "Failed to open wipe package";
     return false;
   }
+  return WipeAbDevice(device, wipe_package.get());
+}
 
-  if (!CheckWipePackage(wipe_package.get(), ui)) {
+bool WipeAbDevice(Device* device, Package* wipe_package) {
+  auto ui = device->GetUI();
+  if (!CheckWipePackage(wipe_package, ui)) {
     LOG(ERROR) << "Failed to verify wipe package";
     return false;
   }
 
-  auto partition_list = GetWipePartitionList(wipe_package.get());
+  auto partition_list = GetWipePartitionList(wipe_package);
   if (partition_list.empty()) {
     LOG(ERROR) << "Empty wipe ab partition list";
     return false;

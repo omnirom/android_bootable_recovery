@@ -48,6 +48,7 @@
 
 #include "install/spl_check.h"
 #include "install/wipe_data.h"
+#include "install/wipe_device.h"
 #include "otautil/error_code.h"
 #include "otautil/package.h"
 #include "otautil/paths.h"
@@ -71,6 +72,8 @@ static constexpr float VERIFICATION_PROGRESS_FRACTION = 0.25;
 // The charater used to separate dynamic fingerprints. e.x. sargo|aosp-sargo
 static const char* FINGERPRING_SEPARATOR = "|";
 static constexpr auto&& RELEASE_KEYS_TAG = "release-keys";
+// If brick packages are smaller than |MEMORY_PACKAGE_LIMIT|, read the entire package into memory
+static constexpr size_t MEMORY_PACKAGE_LIMIT = 1024 * 1024;
 
 static std::condition_variable finish_log_temperature;
 static bool isInStringList(const std::string& target_token, const std::string& str_list,
@@ -382,7 +385,20 @@ static InstallResult TryUpdateBinary(Package* package, bool* wipe_cache,
     return INSTALL_CORRUPT;
   }
 
-  bool package_is_ab = get_value(metadata, "ota-type") == OtaTypeToString(OtaType::AB);
+  const bool package_is_ab = get_value(metadata, "ota-type") == OtaTypeToString(OtaType::AB);
+  const bool package_is_brick = get_value(metadata, "ota-type") == OtaTypeToString(OtaType::BRICK);
+  if (package_is_brick) {
+    LOG(INFO) << "Installing a brick package";
+    if (package->GetType() == PackageType::kFile &&
+        package->GetPackageSize() < MEMORY_PACKAGE_LIMIT) {
+      std::vector<uint8_t> content(package->GetPackageSize());
+      if (package->ReadFullyAtOffset(content.data(), content.size(), 0)) {
+        auto memory_package = Package::CreateMemoryPackage(std::move(content), {});
+        return WipeAbDevice(device, memory_package.get()) ? INSTALL_SUCCESS : INSTALL_ERROR;
+      }
+    }
+    return WipeAbDevice(device, package) ? INSTALL_SUCCESS : INSTALL_ERROR;
+  }
   bool device_supports_ab = android::base::GetBoolProperty("ro.build.ab_update", false);
   bool ab_device_supports_nonab =
       android::base::GetBoolProperty("ro.virtual_ab.allow_non_ab", false);
