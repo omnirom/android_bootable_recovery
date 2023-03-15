@@ -24,6 +24,7 @@
 
 // Wipes the current A/B device, with a secure wipe of all the partitions in RECOVERY_WIPE.
 bool WipeAbDevice(Device* device, size_t wipe_package_size);
+bool WipeAbDevice(Device* device, Package* wipe_package);
 
 // Reads the "recovery.wipe" entry in the zip archive returns a list of partitions to wipe.
 std::vector<std::string> GetWipePartitionList(Package* wipe_package);
