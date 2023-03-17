@@ -117,6 +117,7 @@ cc_defaults {
         "libsnapshot_nobinder",
         "libsnapshot_cow",
         "liblz4",
+        "libzstd",
         "update_metadata-protos",
     ],
 }
